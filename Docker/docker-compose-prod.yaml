@@ -1,0 +1,10 @@
+version:  "3.9"
+services:
+  app:
+    image: sourcehub-app:latest
+    command: bash -lc ". ./venv/bin/activate && python app/main.py"
+    ports:
+      - "8000:8000"
+  scrapeworker:
+    image: sourcehub-app:latest
+    command: bash -lc ". ./venv/bin/activate && python scrapeworker/main.py"
