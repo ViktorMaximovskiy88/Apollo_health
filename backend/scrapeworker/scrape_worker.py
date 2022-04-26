@@ -6,20 +6,24 @@ import xxhash
 import tempfile
 import os
 import pathlib
-import random
 import re
 import aiofiles
-from tenacity._asyncio import AsyncRetrying
 from dateutil import parser
 from beanie.odm.operators.update.general import Inc
 from urllib.parse import urlparse, urljoin
 from backend.common.models.site import Site
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from playwright.async_api import async_playwright, ElementHandle, Playwright, APIResponse
+from playwright.async_api import (
+    async_playwright,
+    ElementHandle,
+    Playwright,
+    APIResponse,
+)
 from playwright_stealth import stealth_async
 from backend.common.models.user import User
 from backend.common.core.config import config
+from backend.scrapeworker.rate_limiter import RateLimiter
 
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
@@ -29,12 +33,13 @@ class ScrapeWorker:
     def __init__(self, scrape_task: SiteScrapeTask, site: Site) -> None:
         self.scrape_task = scrape_task
         self.site = site
-        self.last_request_time = datetime.now()
-        self.wait_between_requests = 1
         self.seen_urls = []
         self.doc_client = DocumentStorageClient()
         self.logger = Logger()
-        self.redis = redis.from_url(config['REDIS_URL'], password=config['REDIS_PASSWORD'])
+        self.rate_limiter = RateLimiter()
+        self.redis = redis.from_url(
+            config["REDIS_URL"], password=config["REDIS_PASSWORD"]
+        )
         self.user = None
 
     async def get_user(self):
@@ -45,20 +50,6 @@ class ScrapeWorker:
         return self.user
 
     content_types = ["application/pdf"]
-
-    def wait_exponential_backoff(self, retry_state):
-        time_since_last_request = datetime.now() - self.last_request_time
-        remaining_wait = (
-            self.wait_between_requests - time_since_last_request.total_seconds()
-        )
-        if remaining_wait > 0:
-            return remaining_wait + random.random()
-        else:
-            return 0
-
-    def increase_exponential_backoff(self, retry_state):
-        self.wait_between_requests *= 2
-        print(f"Wait set to {self.wait_between_requests}")
 
     async def extract_url_and_context_metadata(self, link_handle: ElementHandle):
         href = await link_handle.get_attribute("href")
@@ -75,16 +66,16 @@ class ScrapeWorker:
         """
         closest_heading = await link_handle.evaluate(closest_heading_expression)
         url = urljoin(self.site.base_url, href)
-        return url, { "link_text": link_text, "closest_heading": closest_heading }
+        return url, {"link_text": link_text, "closest_heading": closest_heading}
 
     def skip_url(self, url):
         parsed = urlparse(url)
         base = urlparse(self.site.base_url)
-        if base.netloc != parsed.netloc: # skip if url is not a different page
+        if base.netloc != parsed.netloc:  # skip if url is not a different page
             return True
-        if parsed.scheme not in ["https", "http"]: # mailto, tel, etc
+        if parsed.scheme not in ["https", "http"]:  # mailto, tel, etc
             return True
-        if url in self.seen_urls: # skip if we've already seen this url
+        if url in self.seen_urls:  # skip if we've already seen this url
             return True
         return False
 
@@ -144,14 +135,15 @@ class ScrapeWorker:
                         dates[date] += 1
         return dates
 
-    def select_effective_date(self, dates):
-        most_common_count = 0
-        most_common_date = None
-        for date, count in dates.items():
-            if count > most_common_count:
-                most_common_date = date
-                most_common_count = count
-        return most_common_date
+    def select_effective_date(self, dates: dict[datetime, int]) -> datetime:
+        """
+        Select effective date as the highest date not in the future
+        """
+
+        now = datetime.now()
+        dates_in_the_past = filter(lambda d: now > d, dates.keys())
+        effective_date = max(dates_in_the_past)
+        return effective_date
 
     def select_title(self, metadata, url):
         filename_no_ext = pathlib.Path(os.path.basename(url)).with_suffix("")
@@ -185,7 +177,7 @@ class ScrapeWorker:
         async with self.playwright_request_context(playwright) as context:
             self.seen_urls.append(url)
             response: APIResponse | None = None
-            async for attempt in AsyncRetrying(wait=self.wait_exponential_backoff, before_sleep=self.increase_exponential_backoff):
+            async for attempt in self.rate_limiter.attempt_with_backoff():
                 with attempt:
                     response = await context.get(url)
             if not response:
@@ -202,7 +194,6 @@ class ScrapeWorker:
     async def tempfile_path(self, url: str, body: bytes):
         hash = xxhash.xxh128()
         with tempfile.NamedTemporaryFile() as temp:
-            print(f"writing {url} file to tempfile {temp.name}")
             async with aiofiles.open(temp.name, "wb") as fd:
                 hash.update(body)
                 await fd.write(body)
@@ -211,7 +202,8 @@ class ScrapeWorker:
     @asynccontextmanager
     async def download_to_tempfile(self, url: str, p: Playwright):
         body = self.redis.get(url)
-        if body == 'DISCARD': return
+        if body == "DISCARD":
+            return
 
         if body:
             print(f"Using cached {url}")
@@ -219,10 +211,10 @@ class ScrapeWorker:
             print(f"Attempting download {url}")
             async with self.download_url(url, p) as response:
                 if self.skip_based_on_response(response):
-                    self.redis.set(url, 'DISCARD', ex=60*60*1) # 1 hour
+                    self.redis.set(url, "DISCARD", ex=60 * 60 * 1)  # 1 hour
                     return
                 body = await response.body()
-                self.redis.set(url, body, ex=60*60*1) # 1 hour
+                self.redis.set(url, body, ex=60 * 60 * 1)  # 1 hour
 
         async with self.tempfile_path(url, body) as (temp_path, hash):
             yield temp_path, hash
@@ -239,9 +231,13 @@ class ScrapeWorker:
             document = None
             if not self.doc_client.document_exists(dest_path):
                 self.doc_client.write_document(dest_path, temp_path)
-                await self.scrape_task.update(Inc({SiteScrapeTask.new_documents_found: 1}))
+                await self.scrape_task.update(
+                    Inc({SiteScrapeTask.new_documents_found: 1})
+                )
             else:
-                document = await RetrievedDocument.find_one(RetrievedDocument.checksum == checksum)
+                document = await RetrievedDocument.find_one(
+                    RetrievedDocument.checksum == checksum
+                )
 
             metadata = await self.extract_pdf_metadata(temp_path)
             text = await self.extract_pdf_text(temp_path)
@@ -260,7 +256,9 @@ class ScrapeWorker:
                     last_seen=now,
                     name=title,
                 )
-                await update_and_log_diff(self.logger, await self.get_user(), document, updates)
+                await update_and_log_diff(
+                    self.logger, await self.get_user(), document, updates
+                )
             else:
                 document = RetrievedDocument(
                     name=title,
@@ -289,7 +287,7 @@ class ScrapeWorker:
                 yield p, page
             finally:
                 await browser.close()
-        
+
     async def run_scrape(self):
         async with self.playwright_context(self.site.base_url) as (p, page):
             link_handles = await page.query_selector_all("a[href$=pdf]")

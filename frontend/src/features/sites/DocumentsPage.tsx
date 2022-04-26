@@ -1,22 +1,25 @@
-import { Button, Popconfirm, Table } from 'antd';
+import { Popconfirm, Button, Table } from 'antd';
 import Title from 'antd/lib/typography/Title';
 import { format, parseISO } from 'date-fns';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ChangeLogModal } from '../change_log/ChangeLogModal';
 import {
   useDeleteDocumentMutation,
-  useGetChangeLogQuery,
   useGetDocumentsQuery,
-} from './documentsApi';
-import { RetrievedDocument } from './types';
+} from '../documents/documentsApi';
+import { RetrievedDocument } from '../documents/types';
+import { useGetChangeLogQuery } from './sitesApi';
 
-export function DocumentsHomePage() {
+export function DocumentsPage() {
   const [searchParams] = useSearchParams();
+  const params = useParams();
   const [deleteDocument] = useDeleteDocumentMutation();
   const scrapeTaskId = searchParams.get('scrape_task_id');
+  const siteId = params.siteId;
   const { data: documents } = useGetDocumentsQuery({
     scrape_task_id: scrapeTaskId,
+    site_id: siteId,
   });
 
   const columns = [
@@ -63,9 +66,11 @@ export function DocumentsHomePage() {
       key: 'url',
       render: (doc: RetrievedDocument) => {
         return (
-          <a target="_blank" rel="noreferrer" href={doc.url}>
-            Link
-          </a>
+          <div className="w-48 whitespace-nowrap text-ellipsis overflow-hidden">
+            <a target="_blank" rel="noreferrer" href={doc.url}>
+              {doc.url}
+            </a>
+          </div>
         );
       },
     },
@@ -75,12 +80,6 @@ export function DocumentsHomePage() {
       render: (doc: RetrievedDocument) => {
         return (
           <>
-            <ButtonLink to={`${doc._id}/edit`}>Edit</ButtonLink>
-            {doc.automated_content_extraction && (
-              <ButtonLink to={`/extractions/?retrieved_document_id=${doc._id}`}>
-                Extraction
-              </ButtonLink>
-            )}
             <ChangeLogModal
               target={doc}
               useChangeLogQuery={useGetChangeLogQuery}

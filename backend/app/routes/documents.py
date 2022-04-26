@@ -1,12 +1,13 @@
+from datetime import datetime
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
+from backend.common.models.content_extraction_task import ContentExtractionTask
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 
 from backend.common.models.user import User
 from backend.app.utils.logger import (
     Logger,
-    create_and_log,
     get_logger,
     update_and_log_diff,
 )
@@ -34,6 +35,7 @@ async def read_documents(
     scrape_task_id: PydanticObjectId | None = None,
     site_id: PydanticObjectId | None = None,
     logical_document_id: PydanticObjectId | None = None,
+    automated_content_extraction: bool | None = None,
     current_user: User = Depends(get_current_user),
 ):
     query = {}
@@ -43,6 +45,10 @@ async def read_documents(
         query[RetrievedDocument.scrape_task_id] = scrape_task_id
     if logical_document_id:
         query[RetrievedDocument.logical_document_id] = logical_document_id
+    if automated_content_extraction:
+        query[
+            RetrievedDocument.automated_content_extraction
+        ] = automated_content_extraction
 
     documents: list[RetrievedDocument] = (
         await RetrievedDocument.find_many(query).sort("-collection_time").to_list()
@@ -56,7 +62,8 @@ async def download_document(
     current_user: User = Depends(get_current_user),
 ):
     client = DocumentStorageClient()
-    return StreamingResponse(client.read_document_stream(f"{target.checksum}.pdf"))
+    stream = client.read_document_stream(f"{target.checksum}.pdf")
+    return StreamingResponse(stream, media_type="application/pdf")
 
 
 @router.get("/{id}", response_model=RetrievedDocument)
@@ -67,17 +74,6 @@ async def read_document(
     return target
 
 
-@router.put("/", response_model=RetrievedDocument, status_code=status.HTTP_201_CREATED)
-async def add_document(
-    site_id: PydanticObjectId,
-    current_user: User = Depends(get_current_user),
-    logger: Logger = Depends(get_logger),
-):
-    site_scrape_task = RetrievedDocument(site_id=site_id)
-    await create_and_log(logger, current_user, site_scrape_task)
-    return site_scrape_task
-
-
 @router.post("/{id}", response_model=RetrievedDocument)
 async def update_document(
     updates: UpdateRetrievedDocument,
@@ -86,6 +82,23 @@ async def update_document(
     logger: Logger = Depends(get_logger),
 ):
     updated = await update_and_log_diff(logger, current_user, target, updates)
+
+    ace_turned_on = (
+        updates.automated_content_extraction and not target.automated_content_extraction
+    )
+    ace_class_changed = (
+        target.automated_content_extraction_class
+        != updates.automated_content_extraction_class
+    )
+    if ace_turned_on or ace_class_changed:
+        task = ContentExtractionTask(
+            site_id=target.site_id,
+            scrape_task_id=target.scrape_task_id,
+            retrieved_document_id=target.id,
+            queued_time=datetime.now(),
+        )
+        await task.save()
+
     return updated
 
 

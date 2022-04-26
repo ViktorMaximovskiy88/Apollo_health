@@ -14,7 +14,6 @@ class SiteScrapeTask(BaseDocument):
     documents_found: int = 0
     new_documents_found: int = 0
     worker_id: UUID | None = None
-    disabled: bool = False
 
 
 class UpdateSiteScrapeTask(BaseModel):
@@ -24,5 +23,4 @@ class UpdateSiteScrapeTask(BaseModel):
     end_time: datetime | None = None
     status: str | None = None
     documents_found: int | None = None
-    new_documents_found: int| None = None
-    disabled: bool | None = None
+    new_documents_found: int | None = None

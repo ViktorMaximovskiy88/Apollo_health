@@ -1,4 +1,6 @@
+from contextlib import contextmanager
 import os
+import tempfile
 from backend.common.storage.settings import settings
 import boto3
 from botocore.client import Config
@@ -27,12 +29,20 @@ class DocumentStorageClient:
 
     def write_document(self, document_name, temp_document_path):
         self.bucket.upload_file(
-            Filename=temp_document_path, Key=self.get_full_path(document_name),
-            ExtraArgs={ 'ContentType': 'application/pdf' }
+            Filename=temp_document_path,
+            Key=self.get_full_path(document_name),
+            ExtraArgs={"ContentType": "application/pdf"},
         )
 
     def read_document(self, document_name):
         return self.read_document_stream(document_name).read()
+
+    @contextmanager
+    def read_document_to_tempfile(self, document_name):
+        with tempfile.NamedTemporaryFile() as temp:
+            doc = self.read_document(document_name)
+            temp.write(doc)
+            yield temp.name
 
     def read_document_stream(self, document_name):
         return self.bucket.Object(self.get_full_path(document_name)).get()["Body"]

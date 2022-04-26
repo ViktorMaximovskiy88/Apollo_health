@@ -36,7 +36,7 @@ export function UserForm(props: {
         <Input />
       </Form.Item>
       <Form.Item name="password" label="Password">
-        <Input type="password"/>
+        <Input type="password" />
       </Form.Item>
       <Form.Item name="is_admin" label="Is Admin" valuePropName="checked">
         <Switch />

@@ -6,12 +6,20 @@ import {
   Route,
   Routes,
   useLocation,
+  useParams,
 } from 'react-router-dom';
 import { DocumentsHomePage } from './features/documents/DcoumentsHomePage';
 import { DocumentEditPage } from './features/documents/DocumentEditPage';
+import { ExtractionEditPage } from './features/extractions/ExtractionEditPage';
+import { ExtractionHomePage } from './features/extractions/ExtractionHomePage';
+import { DocExtractionPage } from './features/sites/DocExtractionPage';
+import { DocumentsPage } from './features/sites/DocumentsPage';
+import { ExtractionsPage } from './features/sites/ExtractionsPage';
+import { ScrapesPage } from './features/sites/ScrapesPage';
 import { SiteCreatePage } from './features/sites/SiteCreatePage';
 import { SiteEditPage } from './features/sites/SiteEditPage';
 import { SitePage } from './features/sites/SitePage';
+import { useGetSiteQuery } from './features/sites/sitesApi';
 import { SitesHomePage } from './features/sites/SitesHomePage';
 import { UserCreatePage } from './features/users/UserCreatePage';
 import { UserEditPage } from './features/users/UserEditPage';
@@ -19,17 +27,35 @@ import { UsersHomePage } from './features/users/UserHomePage';
 
 function TopNav() {
   const location = useLocation();
+  const params = useParams();
+  const siteId = params.siteId;
+  const { data: site } = useGetSiteQuery(siteId, { skip: !siteId });
   const current = location.pathname.split('/')[1];
   const sections = [
-    { key: 'home', label: 'Dashboard' },
     { key: 'sites', label: 'Sites' },
-    { key: 'documents', label: 'Documents' },
     { key: 'users', label: 'Users' },
   ];
   return (
     <Layout className="h-screen">
-      <Layout.Header className="p-0 h-10 leading-10">
-        <Menu mode="horizontal" selectedKeys={[current]}>
+      <Layout.Header className="p-0 h-10 bg-white leading-10">
+        <Menu
+          mode="horizontal"
+          selectedKeys={[current]}
+          className="justify-end"
+        >
+          <div className="flex mr-auto">
+            <Menu.Item key={'sites'}>
+              <Link to={`/sites`}>Source Hub</Link>
+            </Menu.Item>
+            {site?._id === params.siteId && (
+              <Link
+                style={{ marginTop: -1 }}
+                to={`/sites/${params.siteId}/scrapes`}
+              >
+                {site?.name}
+              </Link>
+            )}
+          </div>
           {sections.map(({ key, label }) => (
             <Menu.Item key={key}>
               <Link to={`/${key}`}>{label}</Link>
@@ -37,7 +63,7 @@ function TopNav() {
           ))}
         </Menu>
       </Layout.Header>
-      <Layout className="p-4 bg-white overflow-auto">
+      <Layout className="bg-white overflow-auto">
         <Outlet />
       </Layout>
     </Layout>
@@ -48,14 +74,12 @@ function AppHomePage() {
   return <>{'Home'}</>;
 }
 
-function SiteRoutes() {
+function ExtractionRoutes() {
   return (
     <Routes>
-      <Route index element={<SitesHomePage />} />
-      <Route path="new" element={<SiteCreatePage />} />
-      <Route path=":siteId">
-        <Route index element={<SitePage />} />
-        <Route path="edit" element={<SiteEditPage />} />
+      <Route index element={<ExtractionHomePage />} />
+      <Route path=":extractionId">
+        <Route path="edit" element={<ExtractionEditPage />} />
       </Route>
     </Routes>
   );
@@ -76,8 +100,8 @@ function DocumentRoutes() {
   return (
     <Routes>
       <Route index element={<DocumentsHomePage />} />
-      <Route path=":docId" >
-        <Route path="edit" element={<DocumentEditPage/>}/>
+      <Route path=":docId">
+        <Route path="edit" element={<DocumentEditPage />} />
       </Route>
     </Routes>
   );
@@ -88,8 +112,34 @@ function App() {
     <Routes>
       <Route path="/" element={<TopNav />}>
         <Route path="/home/*" element={<AppHomePage />} />
-        <Route path="/sites/*" element={<SiteRoutes />} />
+        <Route path="/sites">
+          <Route index element={<SitesHomePage />} />
+          <Route path="new" element={<SiteCreatePage />} />
+          <Route path=":siteId">
+            <Route path="edit" element={<SiteEditPage />} />
+            <Route element={<SitePage />}>
+              <Route path="scrapes" element={<ScrapesPage />} />
+              <Route path="documents">
+                <Route index element={<DocumentsPage />} />
+                <Route path=":docId">
+                  <Route path="edit" element={<DocumentEditPage />} />
+                </Route>
+              </Route>
+              <Route path="extraction">
+                <Route index element={<ExtractionsPage />} />
+                <Route path="document/:docId">
+                  <Route index element={<DocExtractionPage />} />
+                  <Route
+                    path=":extractionId"
+                    element={<ExtractionEditPage />}
+                  />
+                </Route>
+              </Route>
+            </Route>
+          </Route>
+        </Route>
         <Route path="/documents/*" element={<DocumentRoutes />} />
+        <Route path="/extractions/*" element={<ExtractionRoutes />} />
         <Route path="/users/*" element={<UserRoutes />} />
         <Route path="/" element={<Navigate replace to="/home" />} />
       </Route>

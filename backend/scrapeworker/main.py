@@ -46,27 +46,36 @@ async def start_worker_async():
                 await worker.run_scrape()
                 typer.secho(f"Finished Task {scrape_task.id}", fg=typer.colors.BLUE)
                 now = datetime.now()
-                await site.update(Set({
-                    Site.last_status: "FINISHED",
-                    Site.last_run_time: now
-                }))
+                await site.update(
+                    Set({Site.last_status: "FINISHED", Site.last_run_time: now})
+                )
                 await scrape_task.update(
-                    Set({
-                        SiteScrapeTask.status: "FINISHED",
-                        SiteScrapeTask.end_time: now,
-                    }))
+                    Set(
+                        {
+                            SiteScrapeTask.status: "FINISHED",
+                            SiteScrapeTask.end_time: now,
+                        }
+                    )
+                )
             except Exception as ex:
                 now = datetime.now()
                 typer.secho(f"Task Failed {scrape_task.id}", fg=typer.colors.RED)
-                await site.update(Set({
-                    Site.last_status: "FAILED",
-                    Site.last_run_time: now,
-                }))
+                await site.update(
+                    Set(
+                        {
+                            Site.last_status: "FAILED",
+                            Site.last_run_time: now,
+                        }
+                    )
+                )
                 await scrape_task.update(
-                    Set({
-                        SiteScrapeTask.status: "FAILED",
-                        SiteScrapeTask.end_time: now,
-                    }))
+                    Set(
+                        {
+                            SiteScrapeTask.status: "FAILED",
+                            SiteScrapeTask.end_time: now,
+                        }
+                    )
+                )
                 raise ex
         await asyncio.sleep(5)
 

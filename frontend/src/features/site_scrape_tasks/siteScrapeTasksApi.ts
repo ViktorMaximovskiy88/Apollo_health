@@ -12,18 +12,34 @@ export const siteScrapeTasksApi = createApi({
       providesTags: (_r, _e, id) => [{ type: 'SiteScrapeTask' as const, id }],
     }),
     runSiteScrapeTask: builder.mutation<SiteScrapeTask, string>({
-      query: (siteId) => ({ url: `/site-scrape-tasks/?site_id=${siteId}`, method: 'PUT' }),
+      query: (siteId) => ({
+        url: `/site-scrape-tasks/?site_id=${siteId}`,
+        method: 'PUT',
+      }),
       invalidatesTags: (_r, _e, id) => [{ type: 'SiteScrapeTask', id }],
     }),
-    updateSiteScrapeTask: builder.mutation<SiteScrapeTask, Partial<SiteScrapeTask>>({
-      query: (body) => ({ url: `/site-scrape-tasks/${body._id}`, method: 'POST', body }),
+    updateSiteScrapeTask: builder.mutation<
+      SiteScrapeTask,
+      Partial<SiteScrapeTask>
+    >({
+      query: (body) => ({
+        url: `/site-scrape-tasks/${body._id}`,
+        method: 'POST',
+        body,
+      }),
       invalidatesTags: (_r, _e, { _id: id }) => [
         { type: 'SiteScrapeTask', id },
         { type: 'ChangeLog', id },
       ],
     }),
-    deleteSiteScrapeTask: builder.mutation<void, Pick<SiteScrapeTask, '_id'> & Partial<SiteScrapeTask>>({
-      query: ({ _id: id }) => ({ url: `/site-scrape-tasks/${id}`, method: 'DELETE' }),
+    deleteSiteScrapeTask: builder.mutation<
+      void,
+      Pick<SiteScrapeTask, '_id'> & Partial<SiteScrapeTask>
+    >({
+      query: ({ _id: id }) => ({
+        url: `/site-scrape-tasks/${id}`,
+        method: 'DELETE',
+      }),
       invalidatesTags: (_r, _e, { _id: id }) => [
         { type: 'SiteScrapeTask', id },
         { type: 'ChangeLog', id },

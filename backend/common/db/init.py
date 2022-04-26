@@ -1,6 +1,10 @@
 from beanie import init_beanie
 from backend.common.db.settings import settings
 from backend.common.models.change_log import ChangeLog
+from backend.common.models.content_extraction_task import (
+    ContentExtractionResult,
+    ContentExtractionTask,
+)
 
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
@@ -22,5 +26,5 @@ def get_motor_db() -> AsyncIOMotorDatabase:
 async def init_db():
     await init_beanie(
         database=get_motor_db(),
-        document_models=[User, ChangeLog, Site, SiteScrapeTask, RetrievedDocument],
+        document_models=[User, ChangeLog, Site, SiteScrapeTask, RetrievedDocument, ContentExtractionTask, ContentExtractionResult],  # type: ignore
     )

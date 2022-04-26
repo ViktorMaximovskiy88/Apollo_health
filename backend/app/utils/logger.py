@@ -39,13 +39,22 @@ async def get_logger(background_tasks: BackgroundTasks):
     return Logger(background_tasks)
 
 
-async def create_and_log(logger: Logger, current_user: User, target: Document, session: AsyncIOMotorClientSession | None = None):
+async def create_and_log(
+    logger: Logger,
+    current_user: User,
+    target: Document,
+    session: AsyncIOMotorClientSession | None = None,
+):
     await target.save(session=session)
     await logger.background_log_change(current_user, target, "CREATE")
 
 
 async def update_and_log_diff(
-    logger: Logger, current_user: User, target: Document, updates: BaseModel, session: AsyncIOMotorClientSession | None = None
+    logger: Logger,
+    current_user: User,
+    target: Document,
+    updates: BaseModel,
+    session: AsyncIOMotorClientSession | None = None,
 ):
     original = target.dict()
     await target.update(Set(updates.dict(exclude_unset=True)), session=session)

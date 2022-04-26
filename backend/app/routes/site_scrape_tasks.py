@@ -62,9 +62,11 @@ async def start_scrape_task(
     # NOTE: Could use a transaction here
     await create_and_log(logger, current_user, site_scrape_task)
     await Site.find_one(Site.id == site_id).update(
-        Set({
-            Site.last_status: site_scrape_task.status,
-        })
+        Set(
+            {
+                Site.last_status: site_scrape_task.status,
+            }
+        )
     )
     return site_scrape_task
 

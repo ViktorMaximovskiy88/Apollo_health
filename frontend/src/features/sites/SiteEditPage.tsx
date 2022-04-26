@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Site } from './types';
 import { SiteForm } from './SiteForm';
 import { useGetSiteQuery, useUpdateSiteMutation } from './sitesApi';
+import { Layout } from 'antd';
 
 export function SiteEditPage() {
   const params = useParams();
@@ -17,11 +18,11 @@ export function SiteEditPage() {
     navigate(-1);
   }
   return (
-    <div>
+    <Layout className="p-4 bg-transparent">
       <div className="flex">
         <Title level={4}>Edit Site</Title>
       </div>
       <SiteForm onFinish={tryUpdateSite} initialValues={site} />
-    </div>
+    </Layout>
   );
 }

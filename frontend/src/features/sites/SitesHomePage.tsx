@@ -1,4 +1,4 @@
-import { Button, Popconfirm, Table, Tag } from 'antd';
+import { Button, Layout, Menu, Popconfirm, Table, Tag } from 'antd';
 import { BaseButtonProps } from 'antd/lib/button/button';
 import {
   MouseEventHandler,
@@ -60,7 +60,7 @@ export function SitesHomePage() {
       title: 'Name',
       key: 'name',
       render: (site: Site) => {
-        return <ButtonLink to={site._id}>{site.name}</ButtonLink>;
+        return <ButtonLink to={`${site._id}/scrapes`}>{site.name}</ButtonLink>;
       },
     },
     {
@@ -106,7 +106,7 @@ export function SitesHomePage() {
     },
   ];
   return (
-    <div>
+    <Layout className="p-4 bg-transparent">
       <div className="flex">
         <SiteBreadcrumbs />
         <Link className="ml-auto" to="new">
@@ -114,6 +114,6 @@ export function SitesHomePage() {
         </Link>
       </div>
       <Table dataSource={formattedSites} columns={columns} />
-    </div>
+    </Layout>
   );
 }

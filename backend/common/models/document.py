@@ -21,6 +21,9 @@ class RetrievedDocument(BaseDocument):
     document_type: str | None = None
     identified_dates: list[datetime] = []
 
+    automated_content_extraction: bool = False
+    automated_content_extraction_class: str | None = None
+
 
 class UpdateRetrievedDocument(BaseModel):
     site_id: PydanticObjectId | None = None
@@ -38,3 +41,6 @@ class UpdateRetrievedDocument(BaseModel):
     document_type: str | None = None
     metadata: dict | None = None
     context_metadata: dict | None = None
+
+    automated_content_extraction: bool | None = None
+    automated_content_extraction_class: str | None = None
