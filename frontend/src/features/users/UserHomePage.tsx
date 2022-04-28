@@ -1,4 +1,4 @@
-import { Button, Popconfirm, Table, Tag } from 'antd';
+import { Layout, Button, Popconfirm, Table, Tag } from 'antd';
 import Title from 'antd/lib/typography/Title';
 import { Link } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
@@ -21,7 +21,7 @@ export function UsersHomePage() {
       title: 'Name',
       key: 'name',
       render: (user: User) => {
-        return <ButtonLink to={user._id}>{user.full_name}</ButtonLink>;
+        return <ButtonLink to={`${user._id}/edit`}>{user.full_name}</ButtonLink>;
       },
     },
     { title: 'Email', key: 'email', dataIndex: 'email' },
@@ -49,7 +49,6 @@ export function UsersHomePage() {
       render: (user: User) => {
         return (
           <>
-            <ButtonLink to={`${user._id}/edit`}>Edit</ButtonLink>
             <ChangeLogModal
               target={user}
               useChangeLogQuery={useGetChangeLogQuery}
@@ -68,7 +67,7 @@ export function UsersHomePage() {
     },
   ];
   return (
-    <div>
+    <Layout className="bg-transparent p-4">
       <div className="flex">
         <Title className="inline-block" level={4}>
           Users
@@ -78,6 +77,6 @@ export function UsersHomePage() {
         </Link>
       </div>
       <Table dataSource={formattedUsers} columns={columns} />
-    </div>
+    </Layout>
   );
 }

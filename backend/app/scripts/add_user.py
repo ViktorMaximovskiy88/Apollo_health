@@ -25,6 +25,7 @@ async def create_admin_user(
         hashed_password=get_password_hash(plain_pass),
     )
     await user.save()
+    print(user.email, plain_pass)
     return user, plain_pass
 
 

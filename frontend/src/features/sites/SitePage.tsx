@@ -17,7 +17,7 @@ import Title from 'antd/lib/typography/Title';
 
 export function SitePage() {
   const subpages = [
-    { key: 'scrapes', label: 'Scapes' },
+    { key: 'scrapes', label: 'Collections' },
     { key: 'documents', label: 'Documents' },
     { key: 'extraction', label: 'Content Extraction' },
   ];

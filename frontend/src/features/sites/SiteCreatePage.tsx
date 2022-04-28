@@ -1,3 +1,4 @@
+import { Layout } from 'antd';
 import Title from 'antd/lib/typography/Title';
 import { useNavigate } from 'react-router-dom';
 import { Site } from './types';
@@ -14,11 +15,11 @@ export function SiteCreatePage() {
   }
 
   return (
-    <div>
+    <Layout className="bg-transparent p-4">
       <div className="flex">
         <Title level={3}>Create Site</Title>
       </div>
       <SiteForm onFinish={tryAddSite} />
-    </div>
+    </Layout>
   );
 }

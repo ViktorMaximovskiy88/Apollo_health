@@ -141,7 +141,7 @@ function App() {
         <Route path="/documents/*" element={<DocumentRoutes />} />
         <Route path="/extractions/*" element={<ExtractionRoutes />} />
         <Route path="/users/*" element={<UserRoutes />} />
-        <Route path="/" element={<Navigate replace to="/home" />} />
+        <Route path="/" element={<Navigate replace to="/sites" />} />
       </Route>
     </Routes>
   );

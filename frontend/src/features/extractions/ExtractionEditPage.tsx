@@ -11,7 +11,7 @@ export function ExtractionEditPage() {
   if (!extractions) return null;
 
   const firstRow = extractions[0];
-  const header = Object.keys(firstRow.result);
+  const header = Object.keys((firstRow || {result: []}).result);
   const columns = [
     {
       title: 'Page',

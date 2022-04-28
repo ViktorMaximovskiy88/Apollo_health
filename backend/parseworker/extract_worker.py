@@ -62,7 +62,7 @@ class ExtractWorker:
             await result.save()
 
     def skip_table(self, table: list[list[str]]):
-        return table[0][0] == "$"
+        return table[0][0] == "$" or table[0][0] == "Drug Tier" or not table[0][0]
 
     async def process_page(self, page):
         tables = page.extract_tables()

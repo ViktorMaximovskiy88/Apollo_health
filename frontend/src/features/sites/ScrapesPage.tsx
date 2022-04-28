@@ -20,7 +20,7 @@ export function ScrapesPage() {
   const siteId = params.siteId;
   const { data: site } = useGetSiteQuery(siteId);
   const { data: scrapeTasks } = useGetScrapeTasksForSiteQuery(siteId, {
-    pollingInterval: 5000,
+    pollingInterval: 1000,
     skip: !siteId,
   });
   const [runScrape] = useRunSiteScrapeTaskMutation();
@@ -88,9 +88,9 @@ export function ScrapesPage() {
   return (
     <Layout className="bg-white">
       <div className="flex">
-        <Title level={4}>Scrapes</Title>
+        <Title level={4}>Collections</Title>
         <Button onClick={() => runScrape(site._id)} className="ml-auto">
-          Run Scrape
+          Run Collection
         </Button>
       </div>
       <Table

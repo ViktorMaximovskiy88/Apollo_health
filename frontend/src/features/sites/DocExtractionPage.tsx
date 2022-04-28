@@ -21,7 +21,7 @@ export function DocExtractionPage() {
   const [runExtractionForDoc] = useRunExtractionTaskMutation();
   const { data: documents } = useGetExtractionTasksForDocQuery(docId, {
     skip: !docId,
-    pollingInterval: 5000,
+    pollingInterval: 1000,
   });
   const { data: doc } = useGetDocumentQuery(docId, { skip: !docId });
 

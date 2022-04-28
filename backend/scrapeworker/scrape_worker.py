@@ -135,15 +135,17 @@ class ScrapeWorker:
                         dates[date] += 1
         return dates
 
-    def select_effective_date(self, dates: dict[datetime, int]) -> datetime:
+    def select_effective_date(self, dates: dict[datetime, int]) -> datetime | None:
         """
         Select effective date as the highest date not in the future
         """
 
         now = datetime.now()
-        dates_in_the_past = filter(lambda d: now > d, dates.keys())
-        effective_date = max(dates_in_the_past)
-        return effective_date
+        dates_in_the_past = list(filter(lambda d: now > d, dates.keys()))
+        if dates_in_the_past:
+            return max(dates_in_the_past)
+        else:
+            return None
 
     def select_title(self, metadata, url):
         filename_no_ext = pathlib.Path(os.path.basename(url)).with_suffix("")

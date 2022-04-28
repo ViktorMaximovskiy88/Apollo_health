@@ -32,6 +32,7 @@ async def read_sites(
     current_user: User = Depends(get_current_user),
 ):
     sites: list[Site] = await Site.find_many({}).to_list()
+    sites.reverse()
     return sites
 
 

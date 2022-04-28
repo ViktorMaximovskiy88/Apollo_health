@@ -59,6 +59,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
   ];
 
   const extractionOptions = [
+    { value: 'BasicTableExtraction', label: 'Basic Table Extraction' },
     { value: 'UHCFormularyExtraction', label: 'UHC Formulary Extraction' },
   ];
 
@@ -67,6 +68,8 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
       const date = format(parseISO(d), 'yyyy-MM-dd');
       return { value: date, label: date };
     }) || [];
+  const today = format(new Date(), 'yyyy-MM-dd');
+  dateOptions.push({value: today, label: today });
 
   return (
     <Form
