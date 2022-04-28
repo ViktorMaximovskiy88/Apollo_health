@@ -3,8 +3,15 @@ services:
   dev:
     image: sourcehub-dev:latest
     command: sleep infinity
+    ports:
+      - "8000:8000"
+    environment:
+      SSH_AUTH_SOCK: $SSH_AUTH_SOCK
     volumes:
       - dev:/home/user/workspace
+      - type: bind
+        source: $SSH_AUTH_SOCK
+        target: $SSH_AUTH_SOCK
   mongo:
     image: mongo:5.0
     environment:
