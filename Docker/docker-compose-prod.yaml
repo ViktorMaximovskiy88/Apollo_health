@@ -8,3 +8,6 @@ services:
   scrapeworker:
     image: sourcehub-app:latest
     command: bash -lc ". ./venv/bin/activate && python scrapeworker/main.py"
+  parseworker:
+    image: sourcehub-app:latest
+    command: bash -lc ". ./venv/bin/activate && python parseworker/main.py"
