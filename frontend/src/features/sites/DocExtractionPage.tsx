@@ -1,6 +1,6 @@
 import { Button, Table } from 'antd';
 import Title from 'antd/lib/typography/Title';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
 import {
   useGetExtractionTasksForDocQuery,

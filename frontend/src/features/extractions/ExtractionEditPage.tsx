@@ -5,7 +5,7 @@ import { useGetExtractionTaskResultsQuery } from './extractionsApi';
 import { ContentExtractionResult } from './types';
 
 export function ExtractionEditPage() {
-  const { docId, siteId, extractionId } = useParams();
+  const { extractionId } = useParams();
   const { data: extractions } = useGetExtractionTaskResultsQuery(extractionId);
 
   if (!extractions) return null;

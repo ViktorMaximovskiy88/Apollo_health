@@ -1,4 +1,4 @@
-import { Button, Table } from 'antd';
+import { Table } from 'antd';
 import Title from 'antd/lib/typography/Title';
 
 export function ExtractionHomePage() {

@@ -2,10 +2,9 @@ import { Button, Form, Select, Space, Switch } from 'antd';
 import { Input } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { format, parse, parseISO } from 'date-fns';
-import { FieldData } from 'rc-field-form/lib/interface';
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useGetDocumentQuery, useUpdateDocumentMutation } from './documentsApi';
+import { useUpdateDocumentMutation } from './documentsApi';
 import { RetrievedDocument } from './types';
 
 export function DocumentForm(props: { doc: RetrievedDocument }) {
@@ -53,10 +52,15 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
   };
 
   const documentTypes = [
-    { value: 'PA', label: 'Prior Authorization' },
-    { value: 'ST', label: 'Step Therapy' },
+    { value: 'Authorization Policy', label: 'Authorization Policy' },
+    { value: 'Provider Guide', label: 'Provider Guide' },
+    { value: 'Treatment Request Form', label: 'Treatment Request Form' },
+    { value: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
+    { value: 'Covered Treatment List', label: 'Covered Treatment List' },
+    { value: 'Regulatory Document', label: 'Regulatory Document' },
     { value: 'Formulary', label: 'Formulary' },
-  ];
+    { value: 'Internal Reference', label: 'Internal Reference' },
+  ]
 
   const extractionOptions = [
     { value: 'BasicTableExtraction', label: 'Basic Table Extraction' },

@@ -14,6 +14,7 @@ class SiteScrapeTask(BaseDocument):
     documents_found: int = 0
     new_documents_found: int = 0
     worker_id: UUID | None = None
+    error_message: str | None = None
 
 
 class UpdateSiteScrapeTask(BaseModel):
@@ -24,3 +25,4 @@ class UpdateSiteScrapeTask(BaseModel):
     status: str | None = None
     documents_found: int | None = None
     new_documents_found: int | None = None
+    error_message: str | None = None

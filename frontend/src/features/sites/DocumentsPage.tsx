@@ -42,15 +42,7 @@ export function DocumentsPage() {
       title: 'Document Type',
       key: 'document_type',
       render: (doc: RetrievedDocument) => {
-        if (doc.document_type === 'PA') {
-          return <>Prior Authorization</>;
-        } else if (doc.document_type === 'ST') {
-          return <>Step Therapy</>;
-        } else if (doc.document_type === 'Formulary') {
-          return <>Formulary</>;
-        } else {
-          return null;
-        }
+        return <>{doc.document_type}</>;
       },
     },
     {

@@ -1,5 +1,5 @@
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 
 from backend.common.models.site import NewSite, Site, UpdateSite
 from backend.common.models.site_scrape_task import SiteScrapeTask
@@ -61,6 +61,29 @@ async def create_site(
     await create_and_log(logger, current_user, new_site)
     return new_site
 
+@router.post("/upload", response_model=list[Site])
+async def upload_sites(
+    file: UploadFile,
+    current_user: User = Depends(get_current_user),
+    logger: Logger = Depends(get_logger),
+):
+    new_sites = []
+    file.file
+    for line in file.file:
+        line = line.decode('utf-8')
+        name, base_url, scrape_method, tags, cron = line.split("\t")
+        new_site = Site(
+            name=name,
+            base_url=base_url,  # type: ignore
+            scrape_method=scrape_method,
+            tags=tags.split(','),
+            disabled=False,
+            cron=cron,
+        )
+        new_sites.append(new_site)
+        await create_and_log(logger, current_user, new_site)
+
+    return new_sites
 
 @router.post("/{id}", response_model=Site)
 async def update_site(

@@ -5,7 +5,7 @@ description = ""
 authors = ["Matthew Brown <mbrown@bhei.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "3.10"
 fastapi = {extras = ["all"], version = "^0.75.0"}
 python-decouple = "^3.6"
 passlib = "^1.7.4"
@@ -25,6 +25,10 @@ tenacity = "^8.0.1"
 xxhash = "^3.0.0"
 playwright-stealth = "^1.0.5"
 redis = "^4.2.2"
+gensim = "^4.2.0"
+xgboost = "^1.6.1"
+scikit-learn = "^1.1.0"
+scipy = ">=1.8.0"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"

@@ -1,13 +1,9 @@
-import { Popconfirm, Button, Table } from 'antd';
+import { Table } from 'antd';
 import Title from 'antd/lib/typography/Title';
 import { format, parseISO } from 'date-fns';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { ButtonLink } from '../../components/ButtonLink';
 import { ChangeLogModal } from '../change_log/ChangeLogModal';
-import {
-  useDeleteDocumentMutation,
-  useGetDocumentsQuery,
-} from '../documents/documentsApi';
+import { useGetDocumentsQuery } from '../documents/documentsApi';
 import { RetrievedDocument } from '../documents/types';
 import { useGetChangeLogQuery } from './sitesApi';
 

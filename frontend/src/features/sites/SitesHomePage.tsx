@@ -1,10 +1,11 @@
-import { Button, Layout, Menu, Popconfirm, Table, Tag } from 'antd';
+import { Button, Layout, Popconfirm, Table, Tag, Upload } from 'antd';
 import { BaseButtonProps } from 'antd/lib/button/button';
 import {
   MouseEventHandler,
   AnchorHTMLAttributes,
   ButtonHTMLAttributes,
   RefAttributes,
+  useState,
 } from 'react';
 import { Link } from 'react-router-dom';
 import { ChangeLogModal } from '../change_log/ChangeLogModal';
@@ -15,6 +16,9 @@ import {
   useGetSitesQuery,
 } from './sitesApi';
 import { SiteBreadcrumbs } from './SiteBreadcrumbs';
+import { LoadingOutlined, UploadOutlined } from '@ant-design/icons';
+import { UploadChangeParam } from 'antd/lib/upload';
+import { UploadFile } from 'antd/lib/upload/interface';
 
 type ButtonLinkProps = { to?: string } & JSX.IntrinsicAttributes &
   Partial<
@@ -50,8 +54,9 @@ function ButtonLink(props: ButtonLinkProps) {
 }
 
 export function SitesHomePage() {
-  const { data: sites } = useGetSitesQuery();
+  const { data: sites, refetch } = useGetSitesQuery();
   const [deleteSite] = useDeleteSiteMutation();
+  const [uploading, setUploading] = useState(false);
   const formattedSites =
     sites?.filter((u) => !u.disabled).map((u) => ({ ...u, key: u._id })) || [];
   const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
@@ -105,13 +110,27 @@ export function SitesHomePage() {
       },
     },
   ];
+  const onChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
+    if (info.file.status === 'uploading') {
+      setUploading(true);
+    }
+    if (info.file.status === 'done') {
+      setUploading(false);
+      refetch()
+    }
+  }
   return (
     <Layout className="p-4 bg-transparent">
       <div className="flex">
         <SiteBreadcrumbs />
-        <Link className="ml-auto" to="new">
-          <Button>Create Site</Button>
-        </Link>
+        <div className="ml-auto space-x-2">
+          <Link to="new">
+            <Button>Create Site</Button>
+          </Link>
+          <Upload name="file" accept="csv,txt,xlsx" action="/api/v1/sites/upload" showUploadList={false} onChange={onChange}>
+            <Button icon={uploading ? <LoadingOutlined/> : <UploadOutlined/>} />
+          </Upload>
+        </div>
       </div>
       <Table dataSource={formattedSites} columns={columns} />
     </Layout>
