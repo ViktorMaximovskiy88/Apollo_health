@@ -41,7 +41,7 @@ curl -fsSL https://get.docker.com | sudo sh
 
 # Install PyEnv and Python
 curl -fsSL https://pyenv.run | bash
-echo "export PATH='\$HOME/.pyenv/bin:\$HOME/.pyenv/shims:\$HOME/.local/bin:\$PATH'" >> ~/.bashrc
+echo "export PATH=\"\$HOME/.pyenv/bin:\$HOME/.pyenv/shims:\$HOME/.local/bin:\$PATH\"" >> ~/.bashrc
 export PATH="$HOME/.pyenv/bin:$HOME/.pyenv/shims:$PATH"
 pyenv install 3.10.3
 pyenv global 3.10.3
@@ -105,11 +105,11 @@ cd frontend
 yarn start
 ```
 
+If everything has gone well, go to http://localhost:3000/login and you should see the Source Hub login screen.
 
-If everything has gone well, http://localhost:3000 should show up with the Source Hub login screen.
+The first time you start the app, if no admin account exists, one will be created with a random password. That password will be displayed in the Python Terminal session, so copy the credentials and attempt a login.  You might see 401 error at this point.   
 
-The first time you start the app, if no admin account exists, one will be created with a random password. That password will be displayed in the Python Terminal session, so copy it the credentials and attempt a login.  you might see 401 error at this point.   
-Login by going to http://localhost:3000/login page with automatically generated user.  This should address 401 error.
+Login by going to http://localhost:3000/login page with automatically generated user. This should address 401 error.
 If you're in and no errors, create a new user with your own email and password on the users page, then login by going to http://localhost:3000/login and using your new credentials.
 
 If that succeeds, try creating a site. I recommend Molina HealthCare OH Drug at https://www.molinahealthcare.com/providers/oh/duals/drug/formulary.aspx. Once created, go into it and click the 'Run Collection' button and hope for the best, watching the logs for activity/errors.

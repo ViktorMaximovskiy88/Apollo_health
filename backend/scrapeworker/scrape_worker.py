@@ -14,6 +14,7 @@ from backend.common.models.user import User
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.downloader import DocDownloader
 from backend.scrapeworker.effective_date import extract_dates, select_effective_date
+from backend.scrapeworker.proxy import proxy_settings
 from backend.scrapeworker.rate_limiter import RateLimiter
 
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
@@ -76,7 +77,7 @@ class ScrapeWorker:
         if self.skip_url(url):
             return
 
-        async with self.downloader.download_to_tempfile(url) as (temp_path, checksum):
+        async for (temp_path, checksum) in self.downloader.download_to_tempfile(url):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
 
             dest_path = f"{checksum}.pdf"
@@ -136,9 +137,10 @@ class ScrapeWorker:
     @asynccontextmanager
     async def playwright_context(self, base_url):
         print(f"Creating context for {base_url}")
-        page = await self.browser.new_page()
+        context = await self.browser.new_context(proxy=proxy_settings())
+        page = await context.new_page()
         await stealth_async(page)
-        await page.goto(base_url)
+        await page.goto(base_url, wait_until="networkidle")
         try:
             yield page
         finally:

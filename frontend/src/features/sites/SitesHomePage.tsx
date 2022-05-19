@@ -1,12 +1,5 @@
 import { Button, Layout, Popconfirm, Table, Tag, Upload } from 'antd';
-import { BaseButtonProps } from 'antd/lib/button/button';
-import {
-  MouseEventHandler,
-  AnchorHTMLAttributes,
-  ButtonHTMLAttributes,
-  RefAttributes,
-  useState,
-} from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChangeLogModal } from '../change_log/ChangeLogModal';
 import { Site } from './types';
@@ -19,39 +12,7 @@ import { SiteBreadcrumbs } from './SiteBreadcrumbs';
 import { LoadingOutlined, UploadOutlined } from '@ant-design/icons';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
-
-type ButtonLinkProps = { to?: string } & JSX.IntrinsicAttributes &
-  Partial<
-    {
-      href: string;
-      target?: string | undefined;
-      onClick?: MouseEventHandler<HTMLElement> | undefined;
-    } & BaseButtonProps &
-      Omit<AnchorHTMLAttributes<any>, 'type' | 'onClick'> & {
-        htmlType?: 'button' | 'submit' | 'reset' | undefined;
-        onClick?: MouseEventHandler<HTMLElement> | undefined;
-      } & Omit<ButtonHTMLAttributes<any>, 'type' | 'onClick'>
-  > &
-  RefAttributes<HTMLElement>;
-
-function ButtonLink(props: ButtonLinkProps) {
-  const { children, to, ...otherProps } = props;
-  if (to) {
-    return (
-      <Link to={to}>
-        <Button type="link" size="small" {...otherProps}>
-          {children}
-        </Button>
-      </Link>
-    );
-  } else {
-    return (
-      <Button type="link" size="small" {...otherProps}>
-        {children}
-      </Button>
-    );
-  }
-}
+import { ButtonLink } from '../../components/ButtonLink';
 
 export function SitesHomePage() {
   const { data: sites, refetch } = useGetSitesQuery();
@@ -72,7 +33,7 @@ export function SitesHomePage() {
       title: 'Tags',
       key: 'tags',
       render: (site: Site) => {
-        return site.tags.map((tag) => {
+        return site.tags.filter((tag) => tag).map((tag) => {
           const simpleHash = tag
             .split('')
             .map((c) => c.charCodeAt(0))
@@ -127,7 +88,7 @@ export function SitesHomePage() {
           <Link to="new">
             <Button>Create Site</Button>
           </Link>
-          <Upload name="file" accept="csv,txt,xlsx" action="/api/v1/sites/upload" showUploadList={false} onChange={onChange}>
+          <Upload name="file" accept=".csv,.txt,.xlsx" action="/api/v1/sites/upload" showUploadList={false} onChange={onChange}>
             <Button icon={uploading ? <LoadingOutlined/> : <UploadOutlined/>} />
           </Upload>
         </div>

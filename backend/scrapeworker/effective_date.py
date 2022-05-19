@@ -12,12 +12,14 @@ def extract_dates(text):
         "[0-9][0-9]?-[0-9][0-9]?-[0-9]{4}",  # dd-MM-yyyy
         "[0-9][0-9]?/[0-9][0-9]?/[0-9]{4}",  # dd/MM/yyyy
         "(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).? [0-9][0-9]?, [0-9][0-9][0-9][0-9]",  # M d, yyyy
+        "[0-9][0-9]? (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).? [0-9][0-9][0-9][0-9]",  # d M yyyy
+        "[0-9][0-9]? (January|February|March|April|May|June|July|August|September|October|November|December),? [0-9][0-9][0-9][0-9]",  #d M yyyy
         "(January|February|March|April|May|June|July|August|September|October|November|December) [0-9][0-9]?, [0-9][0-9][0-9][0-9]",  # M d, yyyy
         "(January|February|March|April|May|June|July|August|September|October|November|December),? [0-9][0-9][0-9][0-9]",  # M d, yyyy
         "(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).?,? [0-9]{4}",  # M, yyyy
-        "[0-9][0-9]?/[0-9]{2}",              # MM/yy
+        "[0-9][0-9]?/[0-9]{2}", # MM/yy
     ]
-    date_rgxs = [re.compile(fmt) for fmt in date_formats]
+    date_rgxs = [re.compile(fmt, flags=re.IGNORECASE) for fmt in date_formats]
     for line in text.split("\n"):
         for i, rgx in enumerate(date_rgxs):
             match = rgx.finditer(line)

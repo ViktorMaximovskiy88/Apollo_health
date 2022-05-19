@@ -5,7 +5,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ChangeLogModal } from '../change_log/ChangeLogModal';
 import { useGetDocumentsQuery } from '../documents/documentsApi';
 import { RetrievedDocument } from '../documents/types';
-import { useGetChangeLogQuery } from './sitesApi';
+import { useGetChangeLogQuery } from '../sites/sitesApi';
 
 export function ExtractionsPage() {
   const [searchParams] = useSearchParams();

@@ -1,5 +1,8 @@
+import io
+import zipfile
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from openpyxl import load_workbook
 
 from backend.common.models.site import NewSite, Site, UpdateSite
 from backend.common.models.site_scrape_task import SiteScrapeTask
@@ -61,6 +64,25 @@ async def create_site(
     await create_and_log(logger, current_user, new_site)
     return new_site
 
+def get_lines_from_xlsx(file: UploadFile):
+    wb = load_workbook(io.BytesIO(file.file.read()))
+    sheet = wb[wb.sheetnames[0]]
+    for i, line in enumerate(sheet.values):
+        if i == 0: continue # skip header
+        yield line
+
+def get_lines_from_text_file(file: UploadFile):
+    for line in file.file:
+        line = line.decode("utf-8").strip()
+        name, base_url, scrape_method, tags, cron = line.split("\t")
+        yield (name, base_url, scrape_method, tags, cron)
+
+def get_lines_from_upload(file: UploadFile):
+    try:
+        return get_lines_from_xlsx(file)
+    except zipfile.BadZipFile:
+        return get_lines_from_text_file(file)
+
 @router.post("/upload", response_model=list[Site])
 async def upload_sites(
     file: UploadFile,
@@ -68,15 +90,18 @@ async def upload_sites(
     logger: Logger = Depends(get_logger),
 ):
     new_sites = []
-    file.file
-    for line in file.file:
-        line = line.decode('utf-8')
-        name, base_url, scrape_method, tags, cron = line.split("\t")
+    for line in get_lines_from_upload(file):
+        name, base_url, scrape_method, tags, cron = line   # type: ignore
+        tags = tags.split(',') if tags else []
+
+        if await Site.find_one(Site.base_url == base_url):
+            continue
+
         new_site = Site(
             name=name,
-            base_url=base_url,  # type: ignore
+            base_url=base_url,
             scrape_method=scrape_method,
-            tags=tags.split(','),
+            tags=tags,
             disabled=False,
             cron=cron,
         )

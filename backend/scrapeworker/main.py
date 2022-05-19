@@ -88,6 +88,11 @@ async def worker_fn(worker_id, playwright, browser):
         if not site:
             raise Exception("Site not found")
 
+        now = datetime.now()
+        await site.update(
+            Set({Site.last_status: "IN_PROGRESS", Site.last_run_time: now})
+        )
+
         worker = ScrapeWorker(playwright, browser, scrape_task, site)
         try:
             await worker.run_scrape()

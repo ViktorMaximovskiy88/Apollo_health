@@ -5,14 +5,14 @@ import { ButtonLink } from '../../components/ButtonLink';
 import {
   useGetExtractionTasksForDocQuery,
   useRunExtractionTaskMutation,
-} from '../extractions/extractionsApi';
+} from './extractionsApi';
 import {
   format,
   formatDistance,
   formatDistanceToNow,
   parseISO,
 } from 'date-fns';
-import { ExtractionTask } from '../extractions/types';
+import { ExtractionTask } from './types';
 import { useGetDocumentQuery } from '../documents/documentsApi';
 
 export function DocExtractionPage() {

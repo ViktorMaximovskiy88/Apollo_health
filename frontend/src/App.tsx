@@ -10,12 +10,7 @@ import {
 } from 'react-router-dom';
 import { DocumentsHomePage } from './features/documents/DcoumentsHomePage';
 import { DocumentEditPage } from './features/documents/DocumentEditPage';
-import { ExtractionEditPage } from './features/extractions/ExtractionEditPage';
-import { ExtractionHomePage } from './features/extractions/ExtractionHomePage';
-import { DocExtractionPage } from './features/sites/DocExtractionPage';
-import { DocumentsPage } from './features/sites/DocumentsPage';
-import { ExtractionsPage } from './features/sites/ExtractionsPage';
-import { ScrapesPage } from './features/sites/ScrapesPage';
+import { ScrapesPage } from './features/site_scrape_tasks/ScrapesPage';
 import { SiteCreatePage } from './features/sites/SiteCreatePage';
 import { SiteEditPage } from './features/sites/SiteEditPage';
 import { SitePage } from './features/sites/SitePage';
@@ -24,6 +19,10 @@ import { SitesHomePage } from './features/sites/SitesHomePage';
 import { UserCreatePage } from './features/users/UserCreatePage';
 import { UserEditPage } from './features/users/UserEditPage';
 import { UsersHomePage } from './features/users/UserHomePage';
+import { DocumentsPage } from './features/sites/DocumentsPage';
+import { ExtractionsPage } from './features/extractions/ExtractionsPage';
+import { DocExtractionPage } from './features/extractions/DocExtractionPage';
+import { ExtractionEditPage } from './features/extractions/ExtractionEditPage';
 
 function TopNav() {
   const location = useLocation();
@@ -72,17 +71,6 @@ function TopNav() {
 
 function AppHomePage() {
   return <>{'Home'}</>;
-}
-
-function ExtractionRoutes() {
-  return (
-    <Routes>
-      <Route index element={<ExtractionHomePage />} />
-      <Route path=":extractionId">
-        <Route path="edit" element={<ExtractionEditPage />} />
-      </Route>
-    </Routes>
-  );
 }
 
 function UserRoutes() {
@@ -138,8 +126,6 @@ function App() {
             </Route>
           </Route>
         </Route>
-        <Route path="/documents/*" element={<DocumentRoutes />} />
-        <Route path="/extractions/*" element={<ExtractionRoutes />} />
         <Route path="/users/*" element={<UserRoutes />} />
         <Route path="/" element={<Navigate replace to="/sites" />} />
       </Route>

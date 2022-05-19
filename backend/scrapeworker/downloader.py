@@ -5,6 +5,7 @@ import tempfile
 import aiofiles
 from backend.common.core.config import config
 from playwright.async_api import APIResponse, Playwright
+from backend.scrapeworker.proxy import proxy_settings
 
 from backend.scrapeworker.rate_limiter import RateLimiter
 
@@ -21,6 +22,8 @@ class DocDownloader():
     content_types = ["application/pdf"]
 
     def skip_based_on_response(self, response: APIResponse):
+        if not response.ok:
+            return True
         if response.headers["content-type"] not in self.content_types:
             return True
         return False
@@ -36,7 +39,7 @@ class DocDownloader():
             "Upgrade-Insecure-Requests": "1",
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36",
         }
-        context = await self.playwright.request.new_context(extra_http_headers=headers)
+        context = await self.playwright.request.new_context(extra_http_headers=headers, proxy=proxy_settings())  # type: ignore
         try:
             yield context
         finally:
@@ -55,7 +58,6 @@ class DocDownloader():
 
             print(f"Downloaded {url}, got {response.status}")
             try:
-                assert response.ok
                 yield response
             finally:
                 await response.dispose()
@@ -70,7 +72,6 @@ class DocDownloader():
             yield temp.name, hash.hexdigest()
 
 
-    @asynccontextmanager
     async def download_to_tempfile(self, url: str):
         body = self.redis.get(url)
         if body == "DISCARD":

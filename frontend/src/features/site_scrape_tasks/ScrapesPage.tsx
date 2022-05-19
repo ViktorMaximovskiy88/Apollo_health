@@ -1,12 +1,12 @@
 import { Button, Layout, Table } from 'antd';
 import { useParams } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
-import { useGetSiteQuery } from './sitesApi';
-import { SiteScrapeTask } from '../site_scrape_tasks/types';
+import { useGetSiteQuery } from '../sites/sitesApi';
+import { SiteScrapeTask } from './types';
 import {
   useGetScrapeTasksForSiteQuery,
   useRunSiteScrapeTaskMutation,
-} from '../site_scrape_tasks/siteScrapeTasksApi';
+} from './siteScrapeTasksApi';
 import {
   format,
   formatDistance,

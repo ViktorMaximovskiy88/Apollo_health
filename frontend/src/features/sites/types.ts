@@ -6,5 +6,6 @@ export interface Site extends BaseDocument {
   scrape_method: string;
   tags: string[];
   disabled: boolean;
+  last_status: string;
   cron: string;
 }
