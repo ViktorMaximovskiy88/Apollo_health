@@ -50,7 +50,7 @@ pyenv global 3.10.3
 curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 source ~/.nvm/nvm.sh
 nvm install node 18
-npm install yarn
+npm install yarn -g
 
 # Install Poetry
 curl -sSL https://install.python-poetry.org | python3
