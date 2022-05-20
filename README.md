@@ -42,7 +42,7 @@ curl -fsSL https://get.docker.com | sudo sh
 # Install PyEnv and Python
 curl -fsSL https://pyenv.run | bash
 echo "export PATH=\"\$HOME/.pyenv/bin:\$HOME/.pyenv/shims:\$HOME/.local/bin:\$PATH\"" >> ~/.bashrc
-export PATH="$HOME/.pyenv/bin:$HOME/.pyenv/shims:$PATH"
+export PATH="$HOME/.pyenv/bin:$HOME/.pyenv/shims:$HOME/.local/bin:$PATH"
 pyenv install 3.10.3
 pyenv global 3.10.3
 
