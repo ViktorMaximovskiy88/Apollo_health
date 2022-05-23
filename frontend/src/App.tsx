@@ -8,7 +8,7 @@ import {
   useLocation,
   useParams,
 } from 'react-router-dom';
-import { DocumentsHomePage } from './features/documents/DcoumentsHomePage';
+import { DocumentsHomePage } from './features/documents/DocumentsHomePage';
 import { DocumentEditPage } from './features/documents/DocumentEditPage';
 import { ScrapesPage } from './features/site_scrape_tasks/ScrapesPage';
 import { SiteCreatePage } from './features/sites/SiteCreatePage';
