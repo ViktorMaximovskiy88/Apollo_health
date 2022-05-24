@@ -78,7 +78,7 @@ async def start_worker_async():
 
 @app.command()
 def start_worker():
-    typer.secho(f"Starting Parse Worder", fg=typer.colors.GREEN)
+    typer.secho(f"Starting Parse Worker", fg=typer.colors.GREEN)
     asyncio.run(start_worker_async())
 
 
