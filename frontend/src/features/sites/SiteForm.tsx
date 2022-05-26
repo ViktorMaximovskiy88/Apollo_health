@@ -46,7 +46,7 @@ export function SiteForm(props: {
             <Input />
           </Form.Item>
 
-          <Form.Item label="Base Url" name="base_url" >
+          <Form.Item label="Base Url" name="base_url" shouldUpdate>
             <Row gutter={8}>
               <Col span={21}>
                 <Form.Item
@@ -59,19 +59,22 @@ export function SiteForm(props: {
                 </Form.Item>
               </Col>
               <Col span={3}>
-                <Button
-                  href={formInstance.getFieldValue("base_url")}
-                  disabled={formInstance.getFieldError("base_url").length !== 0}
-                  type="text"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  <LinkOutlined />
-                </Button>
+                <Form.Item shouldUpdate noStyle>
+                  {() => (
+                    <Button
+                      href={formInstance.getFieldValue("base_url")}
+                      disabled={formInstance.getFieldError("base_url").length !== 0}
+                      type="text"
+                      target="_blank"
+                      rel="noreferrer noopener"
+                    >
+                      <LinkOutlined />
+                    </Button>
+                  )}
+                </Form.Item>
               </Col>
             </Row>
           </Form.Item>
-
           <Form.Item name="scrape_method" label="Scrape Method">
             <Select options={scrapes} />
           </Form.Item>
