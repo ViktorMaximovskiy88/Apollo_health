@@ -1,10 +1,9 @@
-import { Form, Input, Select, Space, Button, Layout, Row, Col } from 'antd';
+import { Form, Input, Select, Space, Button, Row, Col } from 'antd';
 import { LinkOutlined } from '@ant-design/icons'
 import { useForm } from 'antd/lib/form/Form';
 import { Link } from 'react-router-dom';
 import { Site } from './types';
 
-const { Content, Sider } = Layout
 
 export function SiteForm(props: {
   onFinish: (user: Partial<Site>) => void;
