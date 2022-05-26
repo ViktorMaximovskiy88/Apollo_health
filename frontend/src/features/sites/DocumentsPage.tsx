@@ -20,7 +20,7 @@ export function DocumentsPage() {
   const { data: documents } = useGetDocumentsQuery({
     scrape_task_id: scrapeTaskId,
     site_id: siteId,
-  });
+  }, { pollingInterval: 5000 });
 
   const columns = [
     {
