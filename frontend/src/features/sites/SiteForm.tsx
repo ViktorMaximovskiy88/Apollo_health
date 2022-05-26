@@ -1,7 +1,10 @@
-import { Form, Input, Select, Space, Button } from 'antd';
+import { Form, Input, Select, Space, Button, Layout, Row, Col } from 'antd';
+import { LinkOutlined } from '@ant-design/icons'
 import { useForm } from 'antd/lib/form/Form';
 import { Link } from 'react-router-dom';
 import { Site } from './types';
+
+const { Content, Sider } = Layout
 
 export function SiteForm(props: {
   onFinish: (user: Partial<Site>) => void;
@@ -21,6 +24,13 @@ export function SiteForm(props: {
     { value: '0 16 1 * *', label: 'Monthly' },
   ];
 
+  const validateMessages = {
+    required: '${label} is required!',
+    types: {
+      url: "${label} is not a valid url!"
+    }
+  }
+
   return (
     <Form
       layout="vertical"
@@ -29,36 +39,62 @@ export function SiteForm(props: {
       requiredMark={false}
       onFinish={props.onFinish}
       initialValues={props.initialValues}
+      validateMessages={validateMessages}
     >
-      <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-        <Input />
-      </Form.Item>
-      <Form.Item
-        name="base_url"
-        label="Base Url"
-        rules={[{ required: true, type: 'url' }]}
-      >
-        <Input />
-      </Form.Item>
-      <Form.Item name="scrape_method" label="Scrape Method">
-        <Select options={scrapes} />
-      </Form.Item>
-      <Form.Item name="cron" label="Schedule">
-        <Select options={schedules} />
-      </Form.Item>
-      <Form.Item name="tags" label="Tags">
-        <Select mode="tags" />
-      </Form.Item>
-      <Form.Item>
-        <Space>
-          <Button type="primary" htmlType="submit">
-            Submit
-          </Button>
-          <Link to="/sites">
-            <Button htmlType="submit">Cancel</Button>
-          </Link>
-        </Space>
-      </Form.Item>
-    </Form>
+      {(_, formInstance) => (
+        <>
+          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+
+          <Form.Item label="Base Url" name="base_url" >
+            <Row gutter={8}>
+              <Col span={21}>
+                <Form.Item
+                  label="Base Url"
+                  name="base_url"
+                  noStyle
+                  rules={[{ required: true, type: 'url' }]}
+                >
+                  <Input />
+                </Form.Item>
+              </Col>
+              <Col span={3}>
+                <Button
+                  href={formInstance.getFieldValue("base_url")}
+                  disabled={formInstance.getFieldError("base_url").length !== 0}
+                  type="text"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  <LinkOutlined />
+                </Button>
+              </Col>
+            </Row>
+          </Form.Item>
+
+          <Form.Item name="scrape_method" label="Scrape Method">
+            <Select options={scrapes} />
+          </Form.Item>
+          <Form.Item name="cron" label="Schedule">
+            <Select options={schedules} />
+          </Form.Item>
+          <Form.Item name="tags" label="Tags">
+            <Select mode="tags" />
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit">
+                Submit
+              </Button>
+              <Link to="/sites">
+                <Button htmlType="submit">Cancel</Button>
+              </Link>
+            </Space>
+          </Form.Item>
+        </>
+      )
+      }
+    </Form >
   );
 }
