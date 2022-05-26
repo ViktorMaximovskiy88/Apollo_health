@@ -11,6 +11,8 @@ export function SiteForm(props: {
 }) {
   const [form] = useForm();
 
+  const hasError = (fieldName: string): boolean => !!form.getFieldsError().filter(({ errors, name }) => name[0] && name[0] === fieldName && errors.length).length
+
   const scrapes = [
     { value: 'SimpleDocumentScrape', label: 'Simple Document Scrape' },
     { value: 'BrowserDocumentScrape', label: 'Browser Document Scrape' },
@@ -40,63 +42,58 @@ export function SiteForm(props: {
       initialValues={props.initialValues}
       validateMessages={validateMessages}
     >
-      {(_, formInstance) => (
-        <>
-          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
+      <Form.Item name="name" label="Name" rules={[{ required: true }]}>
+        <Input />
+      </Form.Item>
 
-          <Form.Item label="Base Url" name="base_url" shouldUpdate>
-            <Row gutter={8}>
-              <Col span={21}>
-                <Form.Item
-                  label="Base Url"
-                  name="base_url"
-                  noStyle
-                  rules={[{ required: true, type: 'url' }]}
+      <Form.Item label="Base Url" name="base_url" shouldUpdate>
+        <Row gutter={8}>
+          <Col span={21}>
+            <Form.Item
+              label="Base Url"
+              name="base_url"
+              noStyle
+              rules={[{ required: true, type: 'url' }]}
+            >
+              <Input />
+            </Form.Item>
+          </Col>
+          <Col span={3}>
+            <Form.Item shouldUpdate noStyle>
+              {() => (
+                <Button
+                  href={form.getFieldValue("base_url")}
+                  disabled={hasError("base_url")}
+                  type="text"
+                  target="_blank"
+                  rel="noreferrer noopener"
                 >
-                  <Input />
-                </Form.Item>
-              </Col>
-              <Col span={3}>
-                <Form.Item shouldUpdate noStyle>
-                  {() => (
-                    <Button
-                      href={formInstance.getFieldValue("base_url")}
-                      disabled={formInstance.getFieldError("base_url").length !== 0}
-                      type="text"
-                      target="_blank"
-                      rel="noreferrer noopener"
-                    >
-                      <LinkOutlined />
-                    </Button>
-                  )}
-                </Form.Item>
-              </Col>
-            </Row>
-          </Form.Item>
-          <Form.Item name="scrape_method" label="Scrape Method">
-            <Select options={scrapes} />
-          </Form.Item>
-          <Form.Item name="cron" label="Schedule">
-            <Select options={schedules} />
-          </Form.Item>
-          <Form.Item name="tags" label="Tags">
-            <Select mode="tags" />
-          </Form.Item>
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">
-                Submit
-              </Button>
-              <Link to="/sites">
-                <Button htmlType="submit">Cancel</Button>
-              </Link>
-            </Space>
-          </Form.Item>
-        </>
-      )
-      }
+                  <LinkOutlined />
+                </Button>
+              )}
+            </Form.Item>
+          </Col>
+        </Row>
+      </Form.Item>
+      <Form.Item name="scrape_method" label="Scrape Method">
+        <Select options={scrapes} />
+      </Form.Item>
+      <Form.Item name="cron" label="Schedule">
+        <Select options={schedules} />
+      </Form.Item>
+      <Form.Item name="tags" label="Tags">
+        <Select mode="tags" />
+      </Form.Item>
+      <Form.Item>
+        <Space>
+          <Button type="primary" htmlType="submit">
+            Submit
+          </Button>
+          <Link to="/sites">
+            <Button htmlType="submit">Cancel</Button>
+          </Link>
+        </Space>
+      </Form.Item>
     </Form >
   );
 }
