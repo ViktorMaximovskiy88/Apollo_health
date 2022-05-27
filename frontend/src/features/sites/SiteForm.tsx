@@ -1,9 +1,8 @@
 import { Form, Input, Select, Space, Button, Row, Col } from 'antd';
-import { LinkOutlined } from '@ant-design/icons'
+import { LinkOutlined } from '@ant-design/icons';
 import { useForm } from 'antd/lib/form/Form';
 import { Link } from 'react-router-dom';
 import { Site } from './types';
-
 
 export function SiteForm(props: {
   onFinish: (user: Partial<Site>) => void;
@@ -11,7 +10,12 @@ export function SiteForm(props: {
 }) {
   const [form] = useForm();
 
-  const hasError = (fieldName: string): boolean => !!form.getFieldsError().filter(({ errors, name }) => name[0] && name[0] === fieldName && errors.length).length
+  const hasError = (fieldName: string): boolean =>
+    !!form
+      .getFieldsError()
+      .filter(
+        ({ errors, name }) => name[0] && name[0] === fieldName && errors.length
+      ).length;
 
   const scrapes = [
     { value: 'SimpleDocumentScrape', label: 'Simple Document Scrape' },
@@ -28,9 +32,9 @@ export function SiteForm(props: {
   const validateMessages = {
     required: '${label} is required!',
     types: {
-      url: "${label} is not a valid url!"
-    }
-  }
+      url: '${label} is not a valid url!',
+    },
+  };
 
   return (
     <Form
@@ -62,8 +66,8 @@ export function SiteForm(props: {
             <Form.Item shouldUpdate noStyle>
               {() => (
                 <Button
-                  href={form.getFieldValue("base_url")}
-                  disabled={hasError("base_url")}
+                  href={form.getFieldValue('base_url')}
+                  disabled={hasError('base_url')}
                   type="text"
                   target="_blank"
                   rel="noreferrer noopener"
@@ -94,6 +98,6 @@ export function SiteForm(props: {
           </Link>
         </Space>
       </Form.Item>
-    </Form >
+    </Form>
   );
 }
