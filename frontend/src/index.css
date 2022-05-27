@@ -5,3 +5,11 @@
 .ant-tabs-pdf-viewer .ant-tabs-content {
   height: 100%;
 }
+:global(.ant-btn-text):hover {
+  background-color: var(--secondary-hover-color);
+  border-color: var(--secondary-hover-color);
+}
+:global(.ant-btn-text):focus {
+  background-color: var(--secondary-focus-color);
+  border-color: var(--secondary-focus-color);
+}
