@@ -8,7 +8,7 @@ from urllib.parse import urlparse, urljoin
 from backend.common.models.site import Site
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from playwright.async_api import ElementHandle
+from playwright.async_api import ElementHandle, Browser
 from playwright_stealth import stealth_async
 from backend.common.models.user import User
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
@@ -23,7 +23,9 @@ from backend.scrapeworker.xpdf_wrapper import pdfinfo, pdftotext
 
 
 class ScrapeWorker:
-    def __init__(self, playwright, browser, scrape_task: SiteScrapeTask, site: Site) -> None:
+    def __init__(
+        self, playwright, browser: Browser, scrape_task: SiteScrapeTask, site: Site
+    ) -> None:
         self.playwright = playwright
         self.browser = browser
         self.scrape_task = scrape_task
@@ -42,7 +44,9 @@ class ScrapeWorker:
             raise Exception("No user found")
         return self.user
 
-    async def extract_url_and_context_metadata(self, link_handle: ElementHandle):
+    async def extract_url_and_context_metadata(
+        self, base_url: str, link_handle: ElementHandle
+    ):
         href = await link_handle.get_attribute("href")
         link_text = await link_handle.text_content()
         closest_heading_expression = """
@@ -56,7 +60,7 @@ class ScrapeWorker:
         }
         """
         closest_heading = await link_handle.evaluate(closest_heading_expression)
-        url = urljoin(self.site.base_url, href)
+        url = urljoin(base_url, href)
         return url, {"link_text": link_text, "closest_heading": closest_heading}
 
     def skip_url(self, url):
@@ -72,14 +76,15 @@ class ScrapeWorker:
         title = metadata.get("Title") or metadata.get("Subject") or str(filename_no_ext)
         return title
 
-    async def attempt_download(self, link_handle: ElementHandle):
-        url, context_metadata = await self.extract_url_and_context_metadata(link_handle)
+    async def attempt_download(self, base_url: str, link_handle: ElementHandle):
+        url, context_metadata = await self.extract_url_and_context_metadata(
+            base_url, link_handle
+        )
         if self.skip_url(url):
             return
 
         async for (temp_path, checksum) in self.downloader.download_to_tempfile(url):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
-
             dest_path = f"{checksum}.pdf"
             document = None
             if not self.doc_client.document_exists(dest_path):
@@ -135,9 +140,9 @@ class ScrapeWorker:
                 await create_and_log(self.logger, await self.get_user(), document)
 
     @asynccontextmanager
-    async def playwright_context(self, base_url):
+    async def playwright_context(self, base_url: str):
         print(f"Creating context for {base_url}")
-        context = await self.browser.new_context(proxy=proxy_settings())
+        context = await self.browser.new_context(proxy=proxy_settings())  # type: ignore
         page = await context.new_page()
         await stealth_async(page)
         await page.goto(base_url, wait_until="networkidle")
@@ -146,11 +151,23 @@ class ScrapeWorker:
         finally:
             await page.close()
 
+    def construct_selector(self):
+        extensions = self.site.scrape_method_configuration.document_extensions
+        keywords = self.site.scrape_method_configuration.url_keywords
+        ext_selectors = [f'a[href$="{ext}"]' for ext in extensions]
+        wrd_selectors = [f'a[href*="{word}"]' for word in keywords]
+        selector = ",".join(ext_selectors + wrd_selectors)
+        return selector
+
+    def active_base_urls(self):
+        return [url for url in self.site.base_urls if url.status == "ACTIVE"]
+
     async def run_scrape(self):
-        async with self.playwright_context(self.site.base_url) as page:
-            link_handles = await page.query_selector_all("a[href$=pdf]")
-            print(f"Found {len(link_handles)} links")
-            downloads = []
-            for link_handle in link_handles:
-                downloads.append(self.attempt_download(link_handle))
-            await asyncio.gather(*downloads)
+        for base_url in self.active_base_urls():
+            async with self.playwright_context(base_url.url) as page:
+                link_handles = await page.query_selector_all(self.construct_selector())
+                print(f"Found {len(link_handles)} links")
+                downloads = []
+                for link_handle in link_handles:
+                    downloads.append(self.attempt_download(base_url.url, link_handle))
+                await asyncio.gather(*downloads)
