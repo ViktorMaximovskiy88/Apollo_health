@@ -19,12 +19,8 @@ class DocDownloader():
         )
         pass
 
-    content_types = ["application/pdf"]
-
     def skip_based_on_response(self, response: APIResponse):
         if not response.ok:
-            return True
-        if response.headers["content-type"] not in self.content_types:
             return True
         return False
 

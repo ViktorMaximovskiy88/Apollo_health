@@ -116,12 +116,13 @@ If that succeeds, try creating a site. I recommend Molina HealthCare OH Drug at 
 
 ### Windows Install
 # Installers
-Install node using Installer from https://nodejs.org/en/download/.  This should install npm
-Install Docker Desktop from https://docs.docker.com/desktop/windows/install/.  The same Install will be used in WSL environment
-Install 10.3.4 Python for Windows from https://www.python.org/downloads/.  If you have any other older version installed, make sure that 10.3.4 becomes the default version.  Check version by running 'python --version' command.  This might require changing PATH environment variable
-Install Visual Studio Code
-Install Git
+ - Install node using Installer from https://nodejs.org/en/download/.  This should install npm
+ - Install Docker Desktop from https://docs.docker.com/desktop/windows/install/.  The same Install will be used in WSL environment
+ - Install 10.3.4 Python for Windows from https://www.python.org/downloads/.  If you have any other older version installed, make sure that 10.3.4 becomes the default version.  Check version by running 'python --version' command.  This might require changing PATH environment variable
+ - Install Visual Studio Code
+ - Install Git
 
+```bash
 # Install Yarn
 npm install yarn -g
 
@@ -129,19 +130,19 @@ npm install yarn -g
 pip install poetry
 
 # Create and Clone Repo
-` Open Command Prompt in directory where you want to install the project.  
+## Open Command Prompt in directory where you want to install the project.  
 git clone https://mmitdev@dev.azure.com/mmitdev/Apollo/_git/Apollo
 cd Apollo
 
 # Build Frontend
-` Last step will generate 'build' directory inside 'frontend' directory, which is required to run server code
+## Last step will generate 'build' directory inside 'frontend' directory, which is required to run server code
 cd frontend 
 yarn install
 yarn build
 yarn run build
 
 # Create Virtual Env and activate it
-` Before you do this step, check again that python version is 3.10.4.  Make sure that you are in 'Apollo' directory
+## Before you do this step, check again that python version is 3.10.4.  Make sure that you are in 'Apollo' directory
 cd ..
 python -m venv .venv
 call .venv\Scripts\activate.bat
@@ -150,26 +151,37 @@ call .venv\Scripts\activate.bat
 # Build Backend
 cd backend 
 poetry install && playwright install chromium && playwright install-deps
+```
 
 ### Starting Services
 Each service should run in it's own terminal. Use your editors built in terminal management for pane splitting or a tool like tmux.
 
+```bash
 # Start Local Mongo/Minio/Redis
 docker compose -f ./Docker/docker-compose-dev.yaml up
+```
 
+```bash
 # Webserver
-` Make sure you are in apollo folder
+## Make sure you are in apollo folder
 python backend/app/main.py
+```
 
+```bash
 # Scrape Worker
 python backend/scrapeworker/main.py
+```
 
+```bash
 # Parse Worker
 python backend/parseworker/main.py
+```
 
+```bash
 # Frontend
 cd frontend
 yarn start
+```
 
 # WSL2
 In case we run into problems running system on Windows, we checked an option running using WSL2
