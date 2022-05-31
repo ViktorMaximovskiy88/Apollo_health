@@ -74,11 +74,13 @@ export function ScrapesPage() {
       title: 'Document Count',
       key: 'documents_found',
       render: (task: SiteScrapeTask) => {
+        const linksFound = `(${task.links_found} Links)`;
+        const docsCount = `${task.documents_found} Documents ${!!task.links_found && task.documents_found !== task.links_found ? linksFound  : ''} ` //task.documents_found !== task.links_found
         return (
           <ButtonLink
             to={`/sites/${task.site_id}/documents?scrape_task_id=${task._id}`}
           >
-            {task.documents_found} Documents
+            {docsCount}
           </ButtonLink>
         );
       },

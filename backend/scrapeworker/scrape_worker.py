@@ -72,11 +72,8 @@ class ScrapeWorker:
         title = metadata.get("Title") or metadata.get("Subject") or str(filename_no_ext)
         return title
 
-    async def attempt_download(self, link_handle: ElementHandle):
-        url, context_metadata = await self.extract_url_and_context_metadata(link_handle)
-        if self.skip_url(url):
-            return
-
+    async def attempt_download(self, url, context_metadata):
+        
         async for (temp_path, checksum) in self.downloader.download_to_tempfile(url):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
 
@@ -140,7 +137,7 @@ class ScrapeWorker:
         context = await self.browser.new_context(proxy=proxy_settings())
         page = await context.new_page()
         await stealth_async(page)
-        await page.goto(base_url, wait_until="networkidle")
+        await page.goto(base_url, wait_until="networkidle") #await page.goto(base_url, wait_until="domcontentloaded")#
         try:
             yield page
         finally:
@@ -151,6 +148,14 @@ class ScrapeWorker:
             link_handles = await page.query_selector_all("a[href$=pdf]")
             print(f"Found {len(link_handles)} links")
             downloads = []
+            urls=set()
             for link_handle in link_handles:
-                downloads.append(self.attempt_download(link_handle))
+                url, context_metadata = await self.extract_url_and_context_metadata(link_handle)       
+       
+                #check that think link is unique
+                if not url in urls:
+                    urls.add(url)
+                    if not self.skip_url(url):
+                        await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
+                        downloads.append(self.attempt_download(url, context_metadata))
             await asyncio.gather(*downloads)
