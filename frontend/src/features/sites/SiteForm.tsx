@@ -1,5 +1,6 @@
-import { Button, Col, Form, Input, Row, Select, Space } from 'antd';
-import { LinkOutlined } from '@ant-design/icons';
+/* eslint-disable no-template-curly-in-string */ // because of antd syntax
+import { Button, Form, Input, Select, Space } from 'antd';
+import { LinkOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { useForm } from 'antd/lib/form/Form';
 import { Link } from 'react-router-dom';
 import { Site } from './types';
@@ -10,12 +11,17 @@ export function SiteForm(props: {
 }) {
   const [form] = useForm();
 
-  const hasError = (fieldName: string): boolean =>
-    !!form
-      .getFieldsError()
-      .filter(
-        ({ errors, name }) => name[0] && name[0] === fieldName && errors.length
-      ).length;
+  const hasError = (fieldName: string, fieldIndex: number): boolean => {
+    const errors = form.getFieldsError()
+    const fieldErrors = errors.filter(({ errors, name }) => {
+      const [currentFieldName, currentFieldIndex] = name
+      if (!currentFieldName) return false
+      if (currentFieldName !== fieldName) return false
+      if (currentFieldIndex !== fieldIndex) return false
+      return errors.length > 0
+    })
+    return fieldErrors.length > 0
+  };
 
   const scrapes = [
     { value: 'SimpleDocumentScrape', label: 'Simple Document Scrape' },
@@ -35,6 +41,25 @@ export function SiteForm(props: {
       url: '${label} is not a valid url!',
     },
   };
+  const extensions = [
+    { value: 'pdf', label: 'PDF (.pdf)' },
+    { value: 'xlsx', label: 'Excel (.xlsx)' },
+    { value: 'docx', label: 'Word (.docx)' },
+  ];
+
+  let initialValues: Partial<Site> | undefined = props.initialValues
+  if (!initialValues) {
+    initialValues = {
+      scrape_method: 'SimpleDocumentScrape',
+      cron: '0 16 * * *',
+      tags: [],
+      base_urls: [{ url: '', name: '', status: 'ACTIVE' }],
+      scrape_method_configuration: {
+        document_extensions: ['pdf'],
+        url_keywords: [],
+      },
+    }
+  }
 
   return (
     <Form
@@ -43,44 +68,105 @@ export function SiteForm(props: {
       wrapperCol={{ span: 7 }}
       requiredMark={false}
       onFinish={props.onFinish}
-      initialValues={props.initialValues}
+      initialValues={initialValues}
       validateMessages={validateMessages}
     >
       <Form.Item name="name" label="Name" rules={[{ required: true }]}>
         <Input />
       </Form.Item>
 
-      <Form.Item label="Base Url" name="base_url" shouldUpdate>
-        <Row gutter={8}>
-          <Col span={21}>
-            <Form.Item
-              label="Base Url"
-              name="base_url"
-              noStyle
-              rules={[{ required: true, type: 'url' }]}
-            >
-              <Input />
+      <Form.List
+        name="base_urls"
+      >
+        {(fields, { add, remove }, { errors }) => (
+          <>
+            {fields.map(({ key, name, ...field }, index) => (
+              <Form.Item
+                key={key}
+                className="mb-2"
+              >
+                <Input.Group className="space-x-2 flex">
+                  <Form.Item
+                    {...field}
+                    name={[name, 'url']}
+                    rules={[{ required: true, type: 'url' }]}
+                    label="URL"
+                    className="grow mb-0"
+                  >
+                    <Input />
+                  </Form.Item>
+
+                  <Form.Item
+                    {...field}
+                    name={[name, 'name']}
+                    label="Label"
+                    className="mb-0"
+                  >
+                    <Input />
+                  </Form.Item>
+
+                  <Form.Item
+                    {...field}
+                    name={[name, 'status']}
+                    label="Status"
+                    className="mb-0"
+                  >
+                    <Select options={[{ value: 'ACTIVE', label: 'Active' }, { value: 'INACTIVE', label: 'Inactive' }]} />
+                  </Form.Item>
+                  <Form.Item label=" " shouldUpdate className='mb-0'>
+                    {() => (
+                      <Button
+                        className='p-0 focus:border focus:border-offset-2 focus:border-blue-500'
+                        href={form.getFieldValue("base_urls")[index].url}
+                        disabled={hasError('base_urls', index)}
+                        type="text"
+                        target="_blank"
+                        rel="noreferrer noopener"
+                      >
+                        <LinkOutlined
+                          className='text-gray-500 hover:text-blue-500 focus:text-blue-500'
+                        />
+                      </Button>
+                    )}
+                  </Form.Item>
+                  {fields.length > 1 ? (
+                    <Form.Item
+                      label=" "
+                      className="mb-0"
+                    >
+                      <MinusCircleOutlined
+                        className="text-gray-500"
+                        onClick={() => remove(name)}
+                      />
+                    </Form.Item>
+                  ) : null}
+
+                </Input.Group>
+              </Form.Item>
+            ))}
+            <Form.Item>
+              <Button
+                type="dashed"
+                onClick={() => add({ url: '', name: '', status: 'ACTIVE' })}
+                icon={<PlusOutlined />}
+              >
+                Add URL
+              </Button>
+              <Form.ErrorList errors={errors} />
             </Form.Item>
-          </Col>
-          <Col span={3}>
-            <Form.Item shouldUpdate noStyle>
-              {() => (
-                <Button
-                  href={form.getFieldValue('base_url')}
-                  disabled={hasError('base_url')}
-                  type="text"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  <LinkOutlined />
-                </Button>
-              )}
-            </Form.Item>
-          </Col>
-        </Row>
-      </Form.Item>
+          </>
+        )}
+      </Form.List>
       <Form.Item name="scrape_method" label="Scrape Method">
         <Select options={scrapes} />
+      </Form.Item>
+      <Form.Item name="scrape_method_configuration">
+        <Form.Item name={["scrape_method_configuration", "document_extensions"]} label="Document Extensions">
+          <Select mode="multiple" options={extensions} />
+        </Form.Item>
+        <Form.Item name={["scrape_method_configuration", "url_keywords"]} label="URL Keywords">
+          <Select mode="tags" />
+        </Form.Item>
       </Form.Item>
       <Form.Item name="cron" label="Schedule">
         <Select options={schedules} />
