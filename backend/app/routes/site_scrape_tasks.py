@@ -1,7 +1,7 @@
 from datetime import datetime
 from beanie import PydanticObjectId
 from beanie.odm.operators.update.general import Set
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from backend.common.models.site import Site
 
 from backend.common.models.site_scrape_task import SiteScrapeTask, UpdateSiteScrapeTask
@@ -18,7 +18,6 @@ router = APIRouter(
     prefix="/site-scrape-tasks",
     tags=["SiteScrapeTasks"],
 )
-
 
 async def get_target(id: PydanticObjectId):
     user = await SiteScrapeTask.get(id)
@@ -70,6 +69,36 @@ async def start_scrape_task(
     )
     return site_scrape_task
 
+@router.post("/bulk-run")
+async def runBulkByType(
+    req: Request,
+    logger: Logger = Depends(get_logger),
+    current_user: User = Depends(get_current_user)
+):
+    bulk_type = req.query_params['type'];
+
+    query = {}
+    if bulk_type == "unrun":
+        query = {"last_status":None}
+    elif bulk_type == "failed":
+        query = {"last_status":"FAILED"}
+    elif bulk_type == "all":
+        query = {"last_status": { "$ne" : "IN_PROGRESS"}}
+
+    sites: list[Site] = await Site.find_many(query).to_list()
+
+    for site in sites:
+        site_scrape_task = SiteScrapeTask(site_id=site.id, queued_time=datetime.now())
+        await create_and_log(logger, current_user, site_scrape_task)
+        await Site.find_one(Site.id == site.id).update(
+            Set(
+                {
+                    Site.last_status: site_scrape_task.status,
+                }
+            )
+        )
+    return {"success":True}
+
 
 @router.post("/{id}", response_model=SiteScrapeTask)
 async def update_scrape_task(
@@ -96,3 +125,12 @@ async def delete_site_scrape_task(
         logger, current_user, target, UpdateSiteScrapeTask(disabled=True)
     )
     return {"success": True}
+
+
+
+
+
+
+
+
+
