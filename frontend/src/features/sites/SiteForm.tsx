@@ -74,7 +74,6 @@ export function SiteForm(props: {
       <Form.Item name="name" label="Name" rules={[{ required: true }]}>
         <Input />
       </Form.Item>
-
       <Form.List
         name="base_urls"
       >
