@@ -119,7 +119,7 @@ export function SiteForm(props: {
                         className='p-0 focus:border focus:border-offset-2 focus:border-blue-500'
                         href={form.getFieldValue("base_urls")[index].url}
                         disabled={hasError('base_urls', index)}
-                        type="text"
+                        type="link"
                         target="_blank"
                         rel="noreferrer noopener"
                       >
