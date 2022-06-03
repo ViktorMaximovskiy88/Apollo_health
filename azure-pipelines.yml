@@ -1,0 +1,44 @@
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  DOCKER_BUILDKIT: 1
+
+stages:
+  - stage: build 
+    displayName: Build Stage
+    jobs:
+      - job: buildSourceHub
+        displayName: Build SourceHub
+        steps:
+          - task: Docker@2
+            displayName: Build Source HubBase Image
+            inputs:
+              # TODO: Change to buildAndPush once container registry can be connected
+              command: build
+              repository: sourcehub-base
+              Dockerfile: Docker/base.Dockerfile
+              tags: |
+                latest
+          - task: Docker@2
+            displayName: Build SourceHub App Image
+            inputs:
+              command: build
+              repository: sourcehub-app
+              Dockerfile: Docker/app.Dockerfile
+              buildContext: $(Build.SourcesDirectory)
+              tags: |
+                $(Build.BuildNumber)
+                $(Build.SourceVersion)
+      - job: validateDeploy
+        displayName: Validate Deployment Code 
+        steps:
+          - script: |
+              choco install terraform --version 1.1.7 -y
+              choco install terragrunt --version 0.36.1 -y
+          # TODO: Add Terraform validate once Service Connection to AWS configured

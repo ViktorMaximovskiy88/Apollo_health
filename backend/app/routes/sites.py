@@ -1,10 +1,16 @@
 import io
+import pymongo
 import zipfile
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from openpyxl import load_workbook
 
-from backend.common.models.site import NewSite, Site, UpdateSite
+from backend.common.models.site import (
+    NewSite,
+    ScrapeMethodConfiguration,
+    Site,
+    UpdateSite,
+)
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.app.utils.logger import (
@@ -34,8 +40,7 @@ async def get_target(id: PydanticObjectId):
 async def read_sites(
     current_user: User = Depends(get_current_user),
 ):
-    sites: list[Site] = await Site.find_many({}).to_list()
-    sites.reverse()
+    sites: list[Site] = await Site.find_many({}).sort("-last_run_time", "id").to_list()
     return sites
 
 
@@ -55,8 +60,9 @@ async def create_site(
 ):
     new_site = Site(
         name=site.name,
-        base_url=site.base_url,
+        base_urls=site.base_urls,
         scrape_method=site.scrape_method,
+        scrape_method_configuration=site.scrape_method_configuration,
         tags=site.tags,
         disabled=False,
         cron=site.cron,
@@ -64,24 +70,29 @@ async def create_site(
     await create_and_log(logger, current_user, new_site)
     return new_site
 
+
 def get_lines_from_xlsx(file: UploadFile):
     wb = load_workbook(io.BytesIO(file.file.read()))
     sheet = wb[wb.sheetnames[0]]
     for i, line in enumerate(sheet.values):
-        if i == 0: continue # skip header
+        if i == 0:
+            continue  # skip header
         yield line
+
 
 def get_lines_from_text_file(file: UploadFile):
     for line in file.file:
         line = line.decode("utf-8").strip()
-        name, base_url, scrape_method, tags, cron = line.split("\t")
-        yield (name, base_url, scrape_method, tags, cron)
+        name, base_urls, scrape_method, tags, cron = line.split("\t")
+        yield (name, base_urls, scrape_method, tags, cron)
+
 
 def get_lines_from_upload(file: UploadFile):
     try:
         return get_lines_from_xlsx(file)
     except zipfile.BadZipFile:
         return get_lines_from_text_file(file)
+
 
 @router.post("/upload", response_model=list[Site])
 async def upload_sites(
@@ -91,16 +102,21 @@ async def upload_sites(
 ):
     new_sites = []
     for line in get_lines_from_upload(file):
-        name, base_url, scrape_method, tags, cron = line   # type: ignore
-        tags = tags.split(',') if tags else []
+        name, base_urls, scrape_method, tags, cron = line  # type: ignore
+        tags = tags.split(",") if tags else []
+        base_urls = base_urls.split(",") if base_urls else []
+        scrape_method_configuration = ScrapeMethodConfiguration(
+            document_extensions=[], url_keywords=[]
+        )
 
-        if await Site.find_one(Site.base_url == base_url):
+        if await Site.find_one(Site.base_urls == base_urls):
             continue
 
         new_site = Site(
             name=name,
-            base_url=base_url,
+            base_urls=base_urls,
             scrape_method=scrape_method,
+            scrape_method_configuration=scrape_method_configuration,
             tags=tags,
             disabled=False,
             cron=cron,
@@ -109,6 +125,7 @@ async def upload_sites(
         await create_and_log(logger, current_user, new_site)
 
     return new_sites
+
 
 @router.post("/{id}", response_model=Site)
 async def update_site(

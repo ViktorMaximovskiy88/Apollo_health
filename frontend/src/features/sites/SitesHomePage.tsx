@@ -13,9 +13,10 @@ import { LoadingOutlined, UploadOutlined } from '@ant-design/icons';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
 import { ButtonLink } from '../../components/ButtonLink';
+import { format, parseISO } from 'date-fns';
 
 export function SitesHomePage() {
-  const { data: sites, refetch } = useGetSitesQuery();
+  const { data: sites, refetch } = useGetSitesQuery(undefined, { pollingInterval: 5000 });
   const [deleteSite] = useDeleteSiteMutation();
   const [uploading, setUploading] = useState(false);
   const formattedSites =
@@ -27,6 +28,33 @@ export function SitesHomePage() {
       key: 'name',
       render: (site: Site) => {
         return <ButtonLink to={`${site._id}/scrapes`}>{site.name}</ButtonLink>;
+      },
+    },
+    {
+      title: 'Last Run Time',
+      key: 'last_run_time',
+      render: (site: Site) => {
+        if (!site.last_run_time) return null;
+        return <>{format(parseISO(site.last_run_time), 'yyyy-MM-dd p')}</>;
+      },
+    },
+    {
+      title: 'Last Status',
+      key: 'last_status',
+      render: (site: Site) => {
+        const status = site.last_status
+        if (status === 'FINISHED') {
+          return <span className="text-green-500">Success</span>
+        } else if (status === 'CANCELLED') {
+          return <span className="">Cancelled</span>
+        } else if (status === 'QUEUED') {
+          return <span className="text-yellow-500">Queued</span>
+        } else if (status === 'FAILED') {
+          return <span className="text-red-500">Failed</span>
+        } else if (status === 'IN_PROGRESS') {
+          return <span className="text-blue-500">In Progress</span>
+        }
+        return <></>
       },
     },
     {

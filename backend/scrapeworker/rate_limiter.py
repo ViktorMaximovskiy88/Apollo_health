@@ -19,6 +19,7 @@ class RateLimiter:
             await self.wait()
 
     def increase_wait(self):
+        print('increased_wait', self.wait_between_requests)
         if self.wait_between_requests < 64:
             self.wait_between_requests *= 2
 
