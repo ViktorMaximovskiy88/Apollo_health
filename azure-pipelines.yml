@@ -1,7 +1,12 @@
 name: $(Date:yyyyMMdd)$(Rev:.r)
 
 trigger:
-  - main
+  branches:
+    include:
+      - main
+  tags:
+    include:
+      - 'v*'
 
 pool:
   vmImage: ubuntu-latest
@@ -17,14 +22,23 @@ stages:
         displayName: Build SourceHub
         steps:
           - task: Docker@2
-            displayName: Build Source HubBase Image
+            displayName: Build Source Hub Base Image
             inputs:
-              # TODO: Change to buildAndPush once container registry can be connected
               command: build
               repository: sourcehub-base
               Dockerfile: Docker/base.Dockerfile
               tags: |
                 latest
+          - task: ECRPushImage@1
+            displayName: Push SourceHub Base Image to ECR
+            inputs:
+              awsCredentials: "Apollo-AWS-Dev-Apollo"
+              regionName: 'us-east-1'
+              imageSource: 'imagename'
+              sourceImageName: 'sourcehub-base'
+              sourceImageTag: 'latest'
+              repositoryName: 'sourcehub-base'
+              pushTag: 'latest'
           - task: Docker@2
             displayName: Build SourceHub App Image
             inputs:
@@ -35,10 +49,86 @@ stages:
               tags: |
                 $(Build.BuildNumber)
                 $(Build.SourceVersion)
+          - task: ECRPushImage@1
+            displayName: Push SourceHub App Image to ECR
+            inputs:
+              awsCredentials: "Apollo-AWS-Dev-Apollo"
+              regionName: 'us-east-1'
+              imageSource: 'imagename'
+              sourceImageName: 'sourcehub-app'
+              sourceImageTag: '$(Build.SourceVersion)'
+              repositoryName: 'sourcehub-app'
+              pushTag: '$(Build.SourceVersion)'
       - job: validateDeploy
         displayName: Validate Deployment Code 
         steps:
-          - script: |
-              choco install terraform --version 1.1.7 -y
-              choco install terragrunt --version 0.36.1 -y
-          # TODO: Add Terraform validate once Service Connection to AWS configured
+          - task: TerraformInstaller@0
+            displayName: Install Terraform on Agent
+            inputs:
+              terraformVersion: '1.1.7'
+          - task: AWSShellScript@1
+            displayName: Terraform Init, Validate, and Plan (Dev)
+            inputs:
+              awsCredentials: "Apollo-AWS-Dev-Apollo"
+              regionName: 'us-east-1'
+              scriptType: 'inline'
+              inlineScript: |
+                  terraform init -backend-config=$(System.DefaultWorkingDirectory)/deploy/live/tfvars/dev.s3.tfbackend
+                  terraform validate
+                  terraform plan -var-file=$(System.DefaultWorkingDirectory)/deploy/live/tfvars/dev.tfvars -var='sourcehub-app-version=$(Build.SourceVersion)' -var='sourcehub-scrapeworker-version=$(Build.SourceVersion)' -var='sourcehub-parseworker-version=$(Build.SourceVersion)'
+              disableAutoCwd: true
+              workingDirectory: '$(System.DefaultWorkingDirectory)/deploy/live'
+  - stage: development
+    displayName: Development Stage
+    dependsOn: build
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature/')))
+    jobs:
+      - deployment: dev_deployment
+        displayName: Deploy to SourceHub Dev
+        environment: SourceHub-Dev
+        strategy:
+            runOnce:
+              deploy:
+                steps:
+                  - template: .azure-pipelines/source-hub.deploy.yml
+                    parameters:
+                      environment: dev
+                      awsCredentials: "Apollo-AWS-Dev-Apollo"
+  - stage: test
+    displayName: Test Stage
+    dependsOn: development
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: tst_deployment
+        displayName: Deploy to SourceHub Test
+        environment: SourceHub-Test
+        strategy:
+            runOnce:
+              deploy:
+                steps:
+                  - template: .azure-pipelines/source-hub.deploy.yml
+                    parameters:
+                      environment: tst
+                      awsCredentials: "Apollo-AWS-Test-Apollo"
+  - stage: production
+    displayName: Production Stage
+    dependsOn: test
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
+    jobs:
+      - deployment: prd_deployment
+        displayName: Deploy to SourceHub Prod
+        environment: SourceHub-Prod
+        strategy:
+            runOnce:
+              deploy:
+                steps:
+                  - template: .azure-pipelines/source-hub.deploy.yml
+                    parameters:
+                      environment: prd
+                      awsCredentials: "Apollo-AWS-Prod-Apollo"
+
+              
+          
+
+
+          
