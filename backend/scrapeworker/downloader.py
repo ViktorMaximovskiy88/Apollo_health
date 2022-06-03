@@ -10,10 +10,9 @@ from backend.scrapeworker.proxy import proxy_settings
 from backend.scrapeworker.rate_limiter import RateLimiter
 
 class DocDownloader():
-    def __init__(self, playwright: Playwright, seen_urls: list[str], rate_limiter: RateLimiter):
+    def __init__(self, playwright: Playwright,  rate_limiter: RateLimiter):
         self.rate_limiter = rate_limiter
         self.playwright = playwright
-        self.seen_urls = seen_urls
         self.redis = redis.from_url(
             config["REDIS_URL"], password=config["REDIS_PASSWORD"]
         )
@@ -48,7 +47,6 @@ class DocDownloader():
     @asynccontextmanager
     async def download_url(self, url):
         async with self.playwright_request_context() as context:
-            self.seen_urls.append(url)
             response: APIResponse | None = None
             async for attempt in self.rate_limiter.attempt_with_backoff():
                 with attempt:

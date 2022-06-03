@@ -28,10 +28,10 @@ class ScrapeWorker:
         self.browser = browser
         self.scrape_task = scrape_task
         self.site = site
-        self.seen_urls = []
+        self.seen_urls = set()
         self.rate_limiter = RateLimiter()
         self.doc_client = DocumentStorageClient()
-        self.downloader = DocDownloader(playwright, self.seen_urls, self.rate_limiter)
+        self.downloader = DocDownloader(playwright, self.rate_limiter)
         self.logger = Logger()
         self.user = None
 
@@ -63,9 +63,14 @@ class ScrapeWorker:
         parsed = urlparse(url)
         if parsed.scheme not in ["https", "http"]:  # mailto, tel, etc
             return True
-        if url in self.seen_urls:  # skip if we've already seen this url
-            return True
         return False
+    
+    def url_not_seen(self, url):
+        # skip if we've already seen this url
+        if url in self.seen_urls:
+            return False
+        self.seen_urls.add(url)
+        return True
 
     def select_title(self, metadata, url):
         filename_no_ext = pathlib.Path(os.path.basename(url)).with_suffix("")
@@ -148,14 +153,12 @@ class ScrapeWorker:
             link_handles = await page.query_selector_all("a[href$=pdf]")
             print(f"Found {len(link_handles)} links")
             downloads = []
-            urls=set()
             for link_handle in link_handles:
                 url, context_metadata = await self.extract_url_and_context_metadata(link_handle)       
        
-                #check that think link is unique
-                if not url in urls:
-                    urls.add(url)
-                    if not self.skip_url(url):
-                        await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
-                        downloads.append(self.attempt_download(url, context_metadata))
+                #check that think link is unique and that we should not skip it
+                if not self.skip_url(url) and self.url_not_seen(url):
+                    await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
+                    downloads.append(self.attempt_download(url, context_metadata))
+                    
             await asyncio.gather(*downloads)
