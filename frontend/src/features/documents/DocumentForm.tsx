@@ -1,5 +1,14 @@
-import { Button, Form, Select, Space, Switch } from 'antd';
-import { Input } from 'antd';
+import {
+  Button,
+  Form,
+  Select,
+  Space,
+  Switch,
+  Radio,
+  Input,
+  DatePicker,
+} from 'antd';
+import type { RadioChangeEvent } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { format, parse, parseISO } from 'date-fns';
 import React, { useState } from 'react';
@@ -7,14 +16,23 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useUpdateDocumentMutation } from './documentsApi';
 import { RetrievedDocument } from './types';
 
+import moment from 'moment';
+
 export function DocumentForm(props: { doc: RetrievedDocument }) {
   const navigate = useNavigate();
   const params = useParams();
   const [updateDoc] = useUpdateDocumentMutation();
   const [form] = useForm();
   const doc = props.doc;
+
   const [automatedExtraction, setAutomatedExtraction] = useState(
     doc.automated_content_extraction
+  );
+
+  const [effectiveDateSelection, setEffectiveDateSelection] = useState(
+    (doc.identified_dates || []).find((date) => date === doc.effective_date)
+      ? 'list'
+      : 'custom'
   );
 
   function checkAutomatedExtraction(modified: Partial<RetrievedDocument>) {
@@ -27,6 +45,11 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     e.preventDefault();
     navigate(-1);
   }
+
+  function onEffectiveDateSelectionChange(e: RadioChangeEvent) {
+    setEffectiveDateSelection(e.target.value);
+  }
+
   async function onFinish(doc: Partial<RetrievedDocument>) {
     await updateDoc({
       ...doc,
@@ -60,7 +83,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     { value: 'Regulatory Document', label: 'Regulatory Document' },
     { value: 'Formulary', label: 'Formulary' },
     { value: 'Internal Reference', label: 'Internal Reference' },
-  ]
+  ];
 
   const extractionOptions = [
     { value: 'BasicTableExtraction', label: 'Basic Table Extraction' },
@@ -72,8 +95,6 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
       const date = format(parseISO(d), 'yyyy-MM-dd');
       return { value: date, label: date };
     }) || [];
-  const today = format(new Date(), 'yyyy-MM-dd');
-  dateOptions.push({value: today, label: today });
 
   return (
     <Form
@@ -90,9 +111,40 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
       <Form.Item name="document_type" label="Document Type">
         <Select options={documentTypes} />
       </Form.Item>
-      <Form.Item name="effective_date" label="Effective Date">
-        <Select options={dateOptions} />
+
+      <Form.Item name="effective_date" label="Effective Date" preserve>
+        <Radio.Group
+          className="mb-1"
+          onChange={onEffectiveDateSelectionChange}
+          defaultValue={effectiveDateSelection}
+        >
+          <Radio value="list">From List</Radio>
+          <Radio value="custom">Custom</Radio>
+        </Radio.Group>
+
+        {effectiveDateSelection === 'list' && (
+          <Select
+            defaultValue={initialValues.effective_date}
+            options={dateOptions}
+            onChange={(value) => {
+              form.setFieldsValue({ effective_date: value });
+            }}
+          />
+        )}
+
+        {effectiveDateSelection === 'custom' && (
+          <DatePicker
+            className="flex"
+            defaultValue={moment(initialValues.effective_date)}
+            onChange={(value: any) => {
+              form.setFieldsValue({
+                effective_date: value.utc().format('YYYY-MM-DD'),
+              });
+            }}
+          />
+        )}
       </Form.Item>
+
       <Form.Item
         name="automated_content_extraction"
         label="Automated Content Extraction"
