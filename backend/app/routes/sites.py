@@ -102,7 +102,7 @@ async def upload_sites(
 ):
     new_sites = []
     for line in get_lines_from_upload(file):
-        name, base_urls, scrape_method, tags, cron = line  # type: ignore
+        name, base_urls, scrape_method, tags, cron: (str, str, str, str, str) = line  # type: ignore
         tags = tags.split(",") if tags else []
         base_urls = base_urls.split(",") if base_urls else []
         scrape_method_configuration = ScrapeMethodConfiguration(
