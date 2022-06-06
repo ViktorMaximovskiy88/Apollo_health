@@ -13,5 +13,6 @@ export interface SiteScrapeTask extends BaseDocument {
     | 'QUEUED'
     | 'FINISHED';
   documents_found: number;
+  links_found: number;
   new_ldocuments_found: number;
 }

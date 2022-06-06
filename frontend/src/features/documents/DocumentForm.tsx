@@ -1,7 +1,7 @@
 import { Button, Form, Select, Space, Switch } from 'antd';
 import { Input } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
-import { format, parse, parseISO } from 'date-fns';
+import { prettyDate, toIsoDateUtc } from '../../common';
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useUpdateDocumentMutation } from './documentsApi';
@@ -16,10 +16,19 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
   const [automatedExtraction, setAutomatedExtraction] = useState(
     doc.automated_content_extraction
   );
+  const [docTypeConfidence, setDocTypeConfidence] = useState(
+    doc.doc_type_confidence
+  );
 
-  function checkAutomatedExtraction(modified: Partial<RetrievedDocument>) {
+  function setFormState(modified: Partial<RetrievedDocument>) {
     if (modified.automated_content_extraction !== undefined) {
       setAutomatedExtraction(modified.automated_content_extraction);
+    } else if (modified.document_type !== undefined) {
+      if (modified.document_type === doc.document_type) {
+        setDocTypeConfidence(doc.doc_type_confidence);
+      } else {
+        setDocTypeConfidence(undefined);
+      }
     }
   }
 
@@ -27,14 +36,10 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     e.preventDefault();
     navigate(-1);
   }
+
   async function onFinish(doc: Partial<RetrievedDocument>) {
     await updateDoc({
       ...doc,
-      effective_date: parse(
-        doc.effective_date || '',
-        'yyyy-MM-dd',
-        0
-      ).toISOString(),
       _id: params.docId,
     });
     navigate(-1);
@@ -42,13 +47,12 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
 
   const initialValues = {
     name: doc.name,
-    effective_date: doc.effective_date
-      ? format(parseISO(doc.effective_date), 'yyyy-MM-dd')
-      : null,
+    effective_date: doc.effective_date,
     document_type: doc.document_type,
     automated_content_extraction: doc.automated_content_extraction,
     automated_content_extraction_class: doc.automated_content_extraction_class,
     url: doc.url,
+    base_url: doc.base_url,
   };
 
   const documentTypes = [
@@ -60,7 +64,11 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     { value: 'Regulatory Document', label: 'Regulatory Document' },
     { value: 'Formulary', label: 'Formulary' },
     { value: 'Internal Reference', label: 'Internal Reference' },
-  ]
+  ];
+
+  const confidencePercent = docTypeConfidence
+    ? `${Math.floor(docTypeConfidence * 100)}%`
+    : '-';
 
   const extractionOptions = [
     { value: 'BasicTableExtraction', label: 'Basic Table Extraction' },
@@ -69,11 +77,11 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
 
   const dateOptions =
     doc.identified_dates?.map((d) => {
-      const date = format(parseISO(d), 'yyyy-MM-dd');
-      return { value: date, label: date };
+      return { value: d, label: prettyDate(d) };
     }) || [];
-  const today = format(new Date(), 'yyyy-MM-dd');
-  dateOptions.push({value: today, label: today });
+
+  const today = prettyDate(new Date().toISOString());
+  dateOptions.push({ value: toIsoDateUtc(today), label: today });
 
   return (
     <Form
@@ -82,14 +90,19 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
       requiredMark={false}
       initialValues={initialValues}
       onFinish={onFinish}
-      onValuesChange={checkAutomatedExtraction}
+      onValuesChange={setFormState}
     >
       <Form.Item name="name" label="Name">
         <Input />
       </Form.Item>
-      <Form.Item name="document_type" label="Document Type">
-        <Select options={documentTypes} />
-      </Form.Item>
+      <div className="flex space-x-2">
+        <Form.Item className="grow" name="document_type" label="Document Type">
+          <Select options={documentTypes} />
+        </Form.Item>
+        <Form.Item label="Confidence">
+          <div className="flex justify-center">{confidencePercent}</div>
+        </Form.Item>
+      </div>
       <Form.Item name="effective_date" label="Effective Date">
         <Select options={dateOptions} />
       </Form.Item>
@@ -108,9 +121,13 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
           <Select options={extractionOptions} />
         </Form.Item>
       )}
+      <Form.Item name="base_url" label="Base URL">
+        <Input disabled />
+      </Form.Item>
       <Form.Item name="url" label="URL">
         <Input disabled />
       </Form.Item>
+
       <Form.Item>
         <Space>
           <Button type="primary" htmlType="submit">

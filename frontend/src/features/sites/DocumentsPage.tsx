@@ -1,6 +1,6 @@
 import { Popconfirm, Button, Table } from 'antd';
 import Title from 'antd/lib/typography/Title';
-import { format, parseISO } from 'date-fns';
+import { prettyDate } from '../../common';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ChangeLogModal } from '../change_log/ChangeLogModal';
@@ -17,17 +17,20 @@ export function DocumentsPage() {
   const [deleteDocument] = useDeleteDocumentMutation();
   const scrapeTaskId = searchParams.get('scrape_task_id');
   const siteId = params.siteId;
-  const { data: documents } = useGetDocumentsQuery({
-    scrape_task_id: scrapeTaskId,
-    site_id: siteId,
-  }, { pollingInterval: 5000 });
+  const { data: documents } = useGetDocumentsQuery(
+    {
+      scrape_task_id: scrapeTaskId,
+      site_id: siteId,
+    },
+    { pollingInterval: 5000 }
+  );
 
   const columns = [
     {
       title: 'Collection Time',
       key: 'collection_time',
       render: (doc: RetrievedDocument) => {
-        return <>{format(parseISO(doc.collection_time), 'yyyy-MM-dd p')}</>;
+        return prettyDate(doc.collection_time);
       },
     },
     {
@@ -46,11 +49,23 @@ export function DocumentsPage() {
       },
     },
     {
+      title: 'Doc Type Confidence',
+      key: 'doc_type_confidence',
+      render: (doc: RetrievedDocument) => {
+        return (
+          <>
+            {doc.doc_type_confidence &&
+              `${Math.round(100 * doc.doc_type_confidence)}%`}
+          </>
+        );
+      },
+    },
+    {
       title: 'Effective Date',
       key: 'effective_date',
       render: (doc: RetrievedDocument) => {
         if (!doc.effective_date) return null;
-        return <>{format(parseISO(doc.effective_date), 'yyyy-MM-dd')}</>;
+        return prettyDate(doc.effective_date);
       },
     },
     {

@@ -6,12 +6,7 @@ import {
   useGetExtractionTasksForDocQuery,
   useRunExtractionTaskMutation,
 } from './extractionsApi';
-import {
-  format,
-  formatDistance,
-  formatDistanceToNow,
-  parseISO,
-} from 'date-fns';
+import { prettyDate, prettyRelativeDate } from '../../common';
 import { ExtractionTask } from './types';
 import { useGetDocumentQuery } from '../documents/documentsApi';
 
@@ -31,29 +26,18 @@ export function DocExtractionPage() {
     {
       title: 'Start Time',
       key: 'start_time',
-      render: (task: ExtractionTask) => {
-        return <>{format(new Date(task.queued_time), 'yyyy-MM-dd p')}</>;
-      },
+      render: (task: ExtractionTask) => prettyDate(task.queued_time),
     },
     {
       title: 'Stop Time',
       key: 'stop_time',
-      render: (task: ExtractionTask) => {
-        if (task.end_time)
-          return <>{format(new Date(task.end_time), 'yyyy-MM-dd p')}</>;
-      },
+      render: (task: ExtractionTask) => prettyDate(task.end_time),
     },
     {
       title: 'Elapsed',
       key: 'elapsed',
-      render: (task: ExtractionTask) => {
-        const startTime = parseISO(task.queued_time);
-        if (task.end_time) {
-          return formatDistance(startTime, new Date(task.end_time));
-        } else {
-          return formatDistanceToNow(startTime);
-        }
-      },
+      render: (task: ExtractionTask) =>
+        prettyRelativeDate(task.queued_time, task.end_time),
     },
     {
       title: 'Status',
