@@ -1,0 +1,27 @@
+parameters:
+  - name: environment
+    displayName: Short Environment (dev, tst, or prd)
+    type: string
+    values:
+      - dev
+      - tst
+      - prd
+  - name: awsCredentials
+    displayName: AWS Service Connection Name
+steps:
+  - checkout: self
+  - task: TerraformInstaller@0
+    displayName: Install Terraform on Agent
+    inputs:
+      terraformVersion: '1.1.7'
+  - task: AWSShellScript@1
+    displayName: Terraform Apply
+    inputs:
+      awsCredentials: ${{ parameters.awsCredentials }}
+      regionName: 'us-east-1'
+      scriptType: 'inline'
+      inlineScript: |
+          terraform init -backend-config=$(System.DefaultWorkingDirectory)/deploy/live/tfvars/${{ parameters.environment }}.s3.tfbackend
+          terraform apply -auto-approve -var-file=$(System.DefaultWorkingDirectory)/deploy/live/tfvars/${{ parameters.environment }}.tfvars -var='sourcehub-app-version=$(Build.SourceVersion)' -var='sourcehub-scrapeworker-version=$(Build.SourceVersion)' -var='sourcehub-parseworker-version=$(Build.SourceVersion)'
+      disableAutoCwd: true
+      workingDirectory: '$(System.DefaultWorkingDirectory)/deploy/live'

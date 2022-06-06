@@ -8,6 +8,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from backend.app.scripts.add_user import create_admin_user
 from backend.common.db.init import init_db
+from backend.common.db.migrations import run_migrations
+from backend.common.core.config import env_type
 from backend.app.routes import sites
 from backend.app.utils.user import get_current_user, get_token_from_request
 from backend.common.models.user import User
@@ -26,6 +28,8 @@ app = FastAPI()
 @app.on_event("startup")
 async def app_init():
     await init_db()
+    if env_type == "dev":
+        await run_migrations()
     if await User.count() == 0:
         user, plain_pass = await create_admin_user()
         print(f"Created admin user with email: {user}, password: {plain_pass}")
