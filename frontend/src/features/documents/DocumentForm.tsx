@@ -58,8 +58,6 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
 
   function onEffectiveDateSelectionChange(e: RadioChangeEvent) {
     setEffectiveDateSelection(e.target.value);
-    if (e.target.value === 'list') {
-    }
   }
 
   async function onFinish(doc: Partial<RetrievedDocument>) {
