@@ -24,7 +24,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
   const [updateDoc] = useUpdateDocumentMutation();
   const [form] = useForm();
   const doc = props.doc;
-
+  console.log(form.getFieldsValue());
   const [automatedExtraction, setAutomatedExtraction] = useState(
     doc.automated_content_extraction
   );
@@ -58,6 +58,8 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
 
   function onEffectiveDateSelectionChange(e: RadioChangeEvent) {
     setEffectiveDateSelection(e.target.value);
+    if (e.target.value === 'list') {
+    }
   }
 
   async function onFinish(doc: Partial<RetrievedDocument>) {
@@ -126,9 +128,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
         </Form.Item>
       </div>
 
-      <Form.Item name="effective_date" label="Effective Date">
-        <Input hidden={true} />
-
+      <Form.Item label="Effective Date">
         <Radio.Group
           className="mb-1"
           onChange={onEffectiveDateSelectionChange}
@@ -138,29 +138,33 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
           <Radio value="custom">Custom</Radio>
         </Radio.Group>
 
-        <Select
-          className={classnames([
-            effectiveDateSelection === 'list' ? 'flex' : 'hidden',
-          ])}
-          defaultValue={existsInList ? initialValues.effective_date : null}
-          options={dateOptions}
-          onChange={(value) => {
-            form.setFieldsValue({ effective_date: value });
-          }}
-        />
+        <Form.Item name="effective_date" noStyle preserve>
+          {effectiveDateSelection === 'list' && (
+            <Select
+              defaultValue={existsInList ? initialValues.effective_date : null}
+              options={dateOptions}
+              onChange={(value) => {
+                form.setFieldsValue({ effective_date: value });
+              }}
+            />
+          )}
 
-        <DatePicker
-          className={classnames([
-            effectiveDateSelection === 'custom' ? 'flex' : 'hidden',
-          ])}
-          defaultValue={moment(initialValues.effective_date)}
-          format={(value) => value.utc().format(DateFormats.DEFAULT_MOMENT_FORMAT)}
-          onChange={(value: any) => {
-            form.setFieldsValue({
-              effective_date: value.utc().startOf('day').toISOString(),
-            });
-          }}
-        />
+          {effectiveDateSelection === 'custom' && (
+            <DatePicker
+              className='flex'
+              defaultValue={moment(initialValues.effective_date)}
+              format={(value) =>
+                value.utc().format(DateFormats.DEFAULT_MOMENT_FORMAT)
+              }
+              onChange={(value: any) => {
+                form.setFieldsValue({
+                  effective_date: value.utc().startOf('day').toISOString(),
+                });
+              }}
+            />
+          )}
+
+        </Form.Item>
       </Form.Item>
 
       <Form.Item
