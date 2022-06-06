@@ -38,7 +38,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
 
   const initialValues = {
     name: doc.name,
-    effective_date: doc.effective_date ? prettyDate(doc.effective_date) : null,
+    effective_date: doc.effective_date,
     document_type: doc.document_type,
     automated_content_extraction: doc.automated_content_extraction,
     automated_content_extraction_class: doc.automated_content_extraction_class,
