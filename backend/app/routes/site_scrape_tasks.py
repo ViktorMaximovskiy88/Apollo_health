@@ -126,15 +126,3 @@ async def update_scrape_task(
         Set({Site.last_status: updates.status}),
     )
     return updated
-
-
-@router.delete("/{id}")
-async def delete_site_scrape_task(
-    target: SiteScrapeTask = Depends(get_target),
-    current_user: User = Depends(get_current_user),
-    logger: Logger = Depends(get_logger),
-):
-    await update_and_log_diff(
-        logger, current_user, target, UpdateSiteScrapeTask(disabled=True)
-    )
-    return {"success": True}
