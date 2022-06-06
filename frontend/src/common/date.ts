@@ -2,7 +2,6 @@ import {
   format,
   formatDistance,
   formatDistanceToNow,
-  parse,
   parseISO,
 } from 'date-fns';
 
@@ -35,20 +34,4 @@ export function prettyRelativeDate(
   } else {
     return formatDistanceToNow(parseISO(startDate));
   }
-}
-
-/**
- * Helper function for sending our dates in ISO format to the server.
- * It ignores the timepart by setting start of day.
- */
-export function toIsoDateUtc(
-  value: string = '',
-  dateFormat = DateFormats.DEFAULT_DATE_FORMAT
-): string {
-  const date: Date = parse(value, dateFormat, 0);
-  return new Date(Date.UTC(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate(),
-  )).toISOString();
 }

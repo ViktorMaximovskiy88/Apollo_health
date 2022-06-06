@@ -1,1 +1,1 @@
-export { prettyDate, prettyRelativeDate, toIsoDateUtc, DateFormats } from './date';
+export { prettyDate, prettyRelativeDate, DateFormats } from './date';
