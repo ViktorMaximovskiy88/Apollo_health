@@ -16,10 +16,19 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
   const [automatedExtraction, setAutomatedExtraction] = useState(
     doc.automated_content_extraction
   );
+  const [docTypeConfidence, setDocTypeConfidence] = useState(
+    doc.doc_type_confidence
+  );
 
-  function checkAutomatedExtraction(modified: Partial<RetrievedDocument>) {
+  function setFormState(modified: Partial<RetrievedDocument>) {
     if (modified.automated_content_extraction !== undefined) {
       setAutomatedExtraction(modified.automated_content_extraction);
+    } else if (modified.document_type !== undefined) {
+      if (modified.document_type === doc.document_type) {
+        setDocTypeConfidence(doc.doc_type_confidence);
+      } else {
+        setDocTypeConfidence(undefined);
+      }
     }
   }
 
@@ -56,6 +65,10 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     { value: 'Internal Reference', label: 'Internal Reference' },
   ];
 
+  const confidencePercent = docTypeConfidence
+    ? `${Math.floor(docTypeConfidence * 100)}%`
+    : '-';
+
   const extractionOptions = [
     { value: 'BasicTableExtraction', label: 'Basic Table Extraction' },
     { value: 'UHCFormularyExtraction', label: 'UHC Formulary Extraction' },
@@ -76,14 +89,21 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
       requiredMark={false}
       initialValues={initialValues}
       onFinish={onFinish}
-      onValuesChange={checkAutomatedExtraction}
+      onValuesChange={setFormState}
     >
       <Form.Item name="name" label="Name">
         <Input />
       </Form.Item>
-      <Form.Item name="document_type" label="Document Type">
-        <Select options={documentTypes} />
-      </Form.Item>
+      <div className="flex space-x-2">
+        <Form.Item className="grow" name="document_type" label="Document Type">
+          <Select options={documentTypes} />
+        </Form.Item>
+        <Form.Item label="Confidence">
+          <div className="flex justify-center">
+            {confidencePercent}
+          </div>
+        </Form.Item>
+      </div>
       <Form.Item name="effective_date" label="Effective Date">
         <Select options={dateOptions} />
       </Form.Item>

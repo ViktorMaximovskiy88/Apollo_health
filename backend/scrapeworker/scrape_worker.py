@@ -102,7 +102,7 @@ class ScrapeWorker:
             dates = extract_dates(text)
             effective_date = select_effective_date(dates)
             title = self.select_title(metadata, url)
-            document_type, _ = classify_doc_type(text)
+            document_type, confidence = classify_doc_type(text)
 
             now = datetime.now()
             datelist = list(dates.keys())
@@ -113,6 +113,7 @@ class ScrapeWorker:
                     context_metadata=context_metadata,
                     effective_date=effective_date,
                     document_type=document_type,
+                    doc_type_confidence=confidence,
                     metadata=metadata,
                     identified_dates=datelist,
                     scrape_task_id=self.scrape_task.id,
@@ -126,6 +127,7 @@ class ScrapeWorker:
                 document = RetrievedDocument(
                     name=title,
                     document_type=document_type,
+                    doc_type_confidence=confidence,
                     effective_date=effective_date,
                     identified_dates=list(dates.keys()),
                     scrape_task_id=self.scrape_task.id,
