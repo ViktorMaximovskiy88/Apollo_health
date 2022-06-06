@@ -52,6 +52,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     automated_content_extraction: doc.automated_content_extraction,
     automated_content_extraction_class: doc.automated_content_extraction_class,
     url: doc.url,
+    base_url: doc.base_url,
   };
 
   const documentTypes = [
@@ -99,9 +100,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
           <Select options={documentTypes} />
         </Form.Item>
         <Form.Item label="Confidence">
-          <div className="flex justify-center">
-            {confidencePercent}
-          </div>
+          <div className="flex justify-center">{confidencePercent}</div>
         </Form.Item>
       </div>
       <Form.Item name="effective_date" label="Effective Date">
@@ -122,9 +121,13 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
           <Select options={extractionOptions} />
         </Form.Item>
       )}
+      <Form.Item name="base_url" label="Base URL">
+        <Input disabled />
+      </Form.Item>
       <Form.Item name="url" label="URL">
         <Input disabled />
       </Form.Item>
+
       <Form.Item>
         <Space>
           <Button type="primary" htmlType="submit">
