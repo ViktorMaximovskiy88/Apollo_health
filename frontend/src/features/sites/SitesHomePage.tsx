@@ -93,16 +93,16 @@ export function SitesHomePage() {
         items={[
           {
             key: 'unrun',
-            label: "Run unrun",
+            label: "Run Unrun",
             
           },
           {
             key: 'failed',
-            label: "Run failed"
+            label: "Run Failed"
           },
           {
             key: 'all',
-            label: "Run all",
+            label: "Run All",
             danger: true
           }
         ]}

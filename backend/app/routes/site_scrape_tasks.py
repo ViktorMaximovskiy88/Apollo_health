@@ -1,7 +1,7 @@
 from datetime import datetime
 from beanie import PydanticObjectId
 from beanie.odm.operators.update.general import Set
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status
 from backend.common.models.site import Site
 
 from backend.common.models.site_scrape_task import SiteScrapeTask, UpdateSiteScrapeTask
@@ -71,32 +71,45 @@ async def start_scrape_task(
 
 @router.post("/bulk-run")
 async def runBulkByType(
-    req: Request,
+    type:str,
     logger: Logger = Depends(get_logger),
     current_user: User = Depends(get_current_user)
 ):
-    bulk_type = req.query_params['type'];
-
-    query = {}
+    bulk_type = type;
+    query = {
+        "disabled":False,
+        "base_url":{ "$exists": True, "$not": { "$size": 0}}
+    }
     if bulk_type == "unrun":
-        query = {"last_status":None}
+        query['last_status'] = None;
     elif bulk_type == "failed":
-        query = {"last_status":"FAILED"}
+        query['last_status'] = "FAILED";
     elif bulk_type == "all":
-        query = {"last_status": { "$ne" : "IN_PROGRESS"}}
+        query['last_status'] = {"$ne":['QUEUED', 'IN_PROGRESS']};
 
-    sites: list[Site] = await Site.find_many(query).to_list()
-
-    for site in sites:
+    async for site in Site.find_many(query):
         site_scrape_task = SiteScrapeTask(site_id=site.id, queued_time=datetime.now())
-        await create_and_log(logger, current_user, site_scrape_task)
-        await Site.find_one(Site.id == site.id).update(
-            Set(
-                {
-                    Site.last_status: site_scrape_task.status,
-                }
-            )
+        update_result = await SiteScrapeTask.get_motor_collection().update_one(
+          { 'site_id': site.id, 'status': { '$in': ['QUEUED', 'IN_PROGRESS', 'CANCELLING'] } },
+          { '$setOnInsert': site_scrape_task.dict() },
+          upsert=True
         )
+
+        insert_id: PydanticObjectId | None = update_result.upserted_id  # type: ignore
+
+        if insert_id:
+            site_scrape_task.id = insert_id
+            await logger.background_log_change(current_user, site_scrape_task, "CREATE")
+            await Site.find_one(Site.id == site.id).update(
+                Set(
+                    {
+                        Site.last_status: site_scrape_task.status,
+                    }
+                )
+            )
+        else:
+          return
+
     return {"success":True}
 
 
@@ -125,12 +138,3 @@ async def delete_site_scrape_task(
         logger, current_user, target, UpdateSiteScrapeTask(disabled=True)
     )
     return {"success": True}
-
-
-
-
-
-
-
-
-
