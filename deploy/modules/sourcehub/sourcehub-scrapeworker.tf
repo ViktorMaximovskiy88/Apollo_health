@@ -26,7 +26,12 @@ resource "aws_ecs_task_definition" "scrapeworker" {
         "-lc",
         ". ./venv/bin/activate && python scrapeworker/main.py"
       ]
-
+      environment = [
+        {
+          name = "S3_ENDPOINT_URL"
+          value = data.aws_service.s3.dns_name
+        }
+      ]
       essential = true
       portMappings = [
         {
