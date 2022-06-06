@@ -24,7 +24,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
   const [updateDoc] = useUpdateDocumentMutation();
   const [form] = useForm();
   const doc = props.doc;
-  console.log(form.getFieldsValue());
+
   const [automatedExtraction, setAutomatedExtraction] = useState(
     doc.automated_content_extraction
   );
@@ -151,7 +151,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
 
           {effectiveDateSelection === 'custom' && (
             <DatePicker
-              className='flex'
+              className="flex"
               defaultValue={moment(initialValues.effective_date)}
               format={(value) =>
                 value.utc().format(DateFormats.DEFAULT_MOMENT_FORMAT)
@@ -163,7 +163,6 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
               }}
             />
           )}
-
         </Form.Item>
       </Form.Item>
 
