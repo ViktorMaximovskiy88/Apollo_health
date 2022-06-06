@@ -17,10 +17,13 @@ export function DocumentsPage() {
   const [deleteDocument] = useDeleteDocumentMutation();
   const scrapeTaskId = searchParams.get('scrape_task_id');
   const siteId = params.siteId;
-  const { data: documents } = useGetDocumentsQuery({
-    scrape_task_id: scrapeTaskId,
-    site_id: siteId,
-  }, { pollingInterval: 5000 });
+  const { data: documents } = useGetDocumentsQuery(
+    {
+      scrape_task_id: scrapeTaskId,
+      site_id: siteId,
+    },
+    { pollingInterval: 5000 }
+  );
 
   const columns = [
     {
@@ -43,6 +46,18 @@ export function DocumentsPage() {
       key: 'document_type',
       render: (doc: RetrievedDocument) => {
         return <>{doc.document_type}</>;
+      },
+    },
+    {
+      title: 'Doc Type Confidence',
+      key: 'doc_type_confidence',
+      render: (doc: RetrievedDocument) => {
+        return (
+          <>
+            {doc.doc_type_confidence &&
+              `${Math.round(100 * doc.doc_type_confidence)}%`}
+          </>
+        );
       },
     },
     {
