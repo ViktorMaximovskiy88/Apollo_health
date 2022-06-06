@@ -4,6 +4,7 @@ import { ButtonLink } from '../../components/ButtonLink';
 import { useGetSiteQuery } from '../sites/sitesApi';
 import { SiteScrapeTask } from './types';
 import {
+  useCancelSiteScrapeTaskMutation,
   useGetScrapeTasksForSiteQuery,
   useRunSiteScrapeTaskMutation,
 } from './siteScrapeTasksApi';
@@ -24,6 +25,8 @@ export function ScrapesPage() {
     skip: !siteId,
   });
   const [runScrape] = useRunSiteScrapeTaskMutation();
+  const [cancelScrape, { isLoading: isCanceling }] =
+    useCancelSiteScrapeTaskMutation();
   if (!site) return null;
 
   const formattedScrapes = scrapeTasks;
@@ -61,6 +64,10 @@ export function ScrapesPage() {
       render: (task: SiteScrapeTask) => {
         if (task.status === 'FAILED') {
           return <span className="text-red-500">Failed</span>;
+        } else if (task.status === 'CANCELED') {
+          return <span className="text-orange-500">Forced End</span>;
+        } else if (task.status === 'CANCELING') {
+          return <span className="text-amber-500">Canceling</span>;
         } else if (task.status === 'IN_PROGRESS') {
           return <span className="text-blue-500">In Progress</span>;
         } else if (task.status === 'QUEUED') {
@@ -83,8 +90,24 @@ export function ScrapesPage() {
         );
       },
     },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (task: SiteScrapeTask) =>
+        task.status === 'IN_PROGRESS' ? (
+          <Button
+            danger
+            type="primary"
+            disabled={isCanceling}
+            onClick={() => cancelScrape(task._id)}
+          >
+            Cancel
+          </Button>
+        ) : (
+          <></>
+        ),
+    },
   ];
-
   return (
     <Layout className="bg-white">
       <div className="flex">

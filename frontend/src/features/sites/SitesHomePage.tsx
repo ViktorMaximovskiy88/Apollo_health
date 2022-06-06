@@ -16,7 +16,9 @@ import { ButtonLink } from '../../components/ButtonLink';
 import { format, parseISO } from 'date-fns';
 
 export function SitesHomePage() {
-  const { data: sites, refetch } = useGetSitesQuery(undefined, { pollingInterval: 5000 });
+  const { data: sites, refetch } = useGetSitesQuery(undefined, {
+    pollingInterval: 5000,
+  });
   const [deleteSite] = useDeleteSiteMutation();
   const [uploading, setUploading] = useState(false);
   const formattedSites =
@@ -42,37 +44,39 @@ export function SitesHomePage() {
       title: 'Last Status',
       key: 'last_status',
       render: (site: Site) => {
-        const status = site.last_status
+        const status = site.last_status;
         if (status === 'FINISHED') {
-          return <span className="text-green-500">Success</span>
-        } else if (status === 'CANCELLED') {
-          return <span className="">Cancelled</span>
+          return <span className="text-green-500">Success</span>;
+        } else if (status === 'CANCELED') {
+          return <span className="text-orange-500">Forced End</span>;
         } else if (status === 'QUEUED') {
-          return <span className="text-yellow-500">Queued</span>
+          return <span className="text-yellow-500">Queued</span>;
         } else if (status === 'FAILED') {
-          return <span className="text-red-500">Failed</span>
+          return <span className="text-red-500">Failed</span>;
         } else if (status === 'IN_PROGRESS') {
-          return <span className="text-blue-500">In Progress</span>
+          return <span className="text-blue-500">In Progress</span>;
         }
-        return <></>
+        return <></>;
       },
     },
     {
       title: 'Tags',
       key: 'tags',
       render: (site: Site) => {
-        return site.tags.filter((tag) => tag).map((tag) => {
-          const simpleHash = tag
-            .split('')
-            .map((c) => c.charCodeAt(0))
-            .reduce((a, b) => a + b);
-          const color = colors[simpleHash % colors.length];
-          return (
-            <Tag color={color} key={tag}>
-              {tag}
-            </Tag>
-          );
-        });
+        return site.tags
+          .filter((tag) => tag)
+          .map((tag) => {
+            const simpleHash = tag
+              .split('')
+              .map((c) => c.charCodeAt(0))
+              .reduce((a, b) => a + b);
+            const color = colors[simpleHash % colors.length];
+            return (
+              <Tag color={color} key={tag}>
+                {tag}
+              </Tag>
+            );
+          });
       },
     },
     {
@@ -105,9 +109,9 @@ export function SitesHomePage() {
     }
     if (info.file.status === 'done') {
       setUploading(false);
-      refetch()
+      refetch();
     }
-  }
+  };
   return (
     <Layout className="p-4 bg-transparent">
       <div className="flex">
@@ -116,8 +120,16 @@ export function SitesHomePage() {
           <Link to="new">
             <Button>Create Site</Button>
           </Link>
-          <Upload name="file" accept=".csv,.txt,.xlsx" action="/api/v1/sites/upload" showUploadList={false} onChange={onChange}>
-            <Button icon={uploading ? <LoadingOutlined/> : <UploadOutlined/>} />
+          <Upload
+            name="file"
+            accept=".csv,.txt,.xlsx"
+            action="/api/v1/sites/upload"
+            showUploadList={false}
+            onChange={onChange}
+          >
+            <Button
+              icon={uploading ? <LoadingOutlined /> : <UploadOutlined />}
+            />
           </Upload>
         </div>
       </div>

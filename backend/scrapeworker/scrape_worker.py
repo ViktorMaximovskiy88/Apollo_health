@@ -22,6 +22,10 @@ from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.xpdf_wrapper import pdfinfo, pdftotext
 
 
+class CancellationException(Exception):
+    pass
+
+
 class ScrapeWorker:
     def __init__(
         self, playwright, browser: Browser, scrape_task: SiteScrapeTask, site: Site
@@ -82,6 +86,10 @@ class ScrapeWorker:
         )
         if self.skip_url(url):
             return
+
+        task = await SiteScrapeTask.find_one(SiteScrapeTask.id == self.scrape_task.id)
+        if task.status == "CANCELING":
+            raise CancellationException("Task was cancelled.")
 
         async for (temp_path, checksum) in self.downloader.download_to_tempfile(url):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))

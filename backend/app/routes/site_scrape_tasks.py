@@ -84,3 +84,19 @@ async def update_scrape_task(
         Set({Site.last_status: updates.status}),
     )
     return updated
+
+
+@router.post("/{id}/cancel", response_model=SiteScrapeTask)
+async def cancel_scrape_task(
+    target: SiteScrapeTask = Depends(get_target),
+    current_user: User = Depends(get_current_user),
+    logger: Logger = Depends(get_logger),
+):
+    updates = UpdateSiteScrapeTask(
+        status="CANCELING",
+    )
+    canceled = await update_and_log_diff(logger, current_user, target, updates)
+    await Site.find_one(Site.id == target.site_id).update(
+        Set({Site.last_status: updates.status}),
+    )
+    return canceled

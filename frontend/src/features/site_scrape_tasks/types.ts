@@ -5,7 +5,13 @@ export interface SiteScrapeTask extends BaseDocument {
   queued_time: string;
   start_time?: string;
   end_time?: string;
-  status: string;
+  status:
+    | 'FAILED'
+    | 'CANCELED'
+    | 'CANCELING'
+    | 'IN_PROGRESS'
+    | 'QUEUED'
+    | 'FINISHED';
   documents_found: number;
   new_ldocuments_found: number;
 }
