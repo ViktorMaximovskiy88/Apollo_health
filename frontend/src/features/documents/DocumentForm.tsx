@@ -15,7 +15,6 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useUpdateDocumentMutation } from './documentsApi';
 import { RetrievedDocument } from './types';
-import classnames from 'classnames';
 import moment from 'moment';
 
 export function DocumentForm(props: { doc: RetrievedDocument }) {
