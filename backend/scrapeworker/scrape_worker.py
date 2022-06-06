@@ -138,6 +138,7 @@ class ScrapeWorker:
                     url=url,
                     context_metadata=context_metadata,
                     metadata=metadata,
+                    base_url=base_url
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
 
