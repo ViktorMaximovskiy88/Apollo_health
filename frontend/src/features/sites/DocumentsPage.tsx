@@ -1,6 +1,6 @@
 import { Popconfirm, Button, Table } from 'antd';
 import Title from 'antd/lib/typography/Title';
-import { format, parseISO } from 'date-fns';
+import { prettyDate } from '../../common';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ChangeLogModal } from '../change_log/ChangeLogModal';
@@ -27,7 +27,7 @@ export function DocumentsPage() {
       title: 'Collection Time',
       key: 'collection_time',
       render: (doc: RetrievedDocument) => {
-        return <>{format(parseISO(doc.collection_time), 'yyyy-MM-dd p')}</>;
+        return prettyDate(doc.collection_time);
       },
     },
     {
@@ -50,7 +50,7 @@ export function DocumentsPage() {
       key: 'effective_date',
       render: (doc: RetrievedDocument) => {
         if (!doc.effective_date) return null;
-        return <>{format(parseISO(doc.effective_date), 'yyyy-MM-dd')}</>;
+        return prettyDate(doc.effective_date);
       },
     },
     {

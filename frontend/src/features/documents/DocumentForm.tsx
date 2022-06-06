@@ -1,7 +1,7 @@
 import { Button, Form, Select, Space, Switch } from 'antd';
 import { Input } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
-import { format, parse, parseISO } from 'date-fns';
+import { prettyDate, toIsoDateUtc } from '../../common';
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useUpdateDocumentMutation } from './documentsApi';
@@ -27,14 +27,10 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     e.preventDefault();
     navigate(-1);
   }
+
   async function onFinish(doc: Partial<RetrievedDocument>) {
     await updateDoc({
       ...doc,
-      effective_date: parse(
-        doc.effective_date || '',
-        'yyyy-MM-dd',
-        0
-      ).toISOString(),
       _id: params.docId,
     });
     navigate(-1);
@@ -42,9 +38,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
 
   const initialValues = {
     name: doc.name,
-    effective_date: doc.effective_date
-      ? format(parseISO(doc.effective_date), 'yyyy-MM-dd')
-      : null,
+    effective_date: doc.effective_date ? prettyDate(doc.effective_date) : null,
     document_type: doc.document_type,
     automated_content_extraction: doc.automated_content_extraction,
     automated_content_extraction_class: doc.automated_content_extraction_class,
@@ -60,7 +54,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     { value: 'Regulatory Document', label: 'Regulatory Document' },
     { value: 'Formulary', label: 'Formulary' },
     { value: 'Internal Reference', label: 'Internal Reference' },
-  ]
+  ];
 
   const extractionOptions = [
     { value: 'BasicTableExtraction', label: 'Basic Table Extraction' },
@@ -69,11 +63,11 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
 
   const dateOptions =
     doc.identified_dates?.map((d) => {
-      const date = format(parseISO(d), 'yyyy-MM-dd');
-      return { value: date, label: date };
+      return { value: d, label: prettyDate(d) };
     }) || [];
-  const today = format(new Date(), 'yyyy-MM-dd');
-  dateOptions.push({value: today, label: today });
+
+  const today = prettyDate(new Date().toISOString());
+  dateOptions.push({ value: toIsoDateUtc(today), label: today });
 
   return (
     <Form
