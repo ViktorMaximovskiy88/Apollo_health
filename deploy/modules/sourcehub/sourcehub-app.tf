@@ -26,7 +26,12 @@ resource "aws_ecs_task_definition" "app" {
         "-lc",
         ". ./venv/bin/activate && python app/main.py"
       ]
-
+      environment = [
+        {
+          name = "S3_ENDPOINT_URL"
+          value = data.aws_service.s3.dns_name
+        }
+      ]
       essential = true
       portMappings = [
         {
@@ -42,7 +47,7 @@ resource "aws_ecs_task_definition" "app" {
           awslogs-stream-prefix = local.service_name
         }
       }
-
+      
       secrets = [
         {
           name = "MONGO_URL"
@@ -67,6 +72,10 @@ resource "aws_ecs_task_definition" "app" {
         {
           name = "REDIS_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_auth_password"
+        },
+        {
+          name = "S3_DOCUMENT_BUCKET"
+          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/docrepo_bucket_name"
         }
       ]
 

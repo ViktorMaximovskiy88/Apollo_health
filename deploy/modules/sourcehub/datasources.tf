@@ -82,3 +82,7 @@ data "aws_lb_listener" "https" {
 data "aws_iam_policy" "docrepo-contributor" {
   name = format("%s-%s-docrepo-contributor-mmit-policy-%02d", local.app_name, var.environment, var.revision)
 }
+
+data "aws_service" "s3" {
+  service_id = "s3"
+}
