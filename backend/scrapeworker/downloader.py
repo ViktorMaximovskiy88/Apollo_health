@@ -4,15 +4,24 @@ import xxhash
 import tempfile
 import aiofiles
 from backend.common.core.config import config
+from backend.common.models.site_scrape_task import SiteScrapeTask
 from playwright.async_api import APIResponse, Playwright
 from backend.scrapeworker.proxy import proxy_settings
 
 from backend.scrapeworker.rate_limiter import RateLimiter
 
-class DocDownloader():
-    def __init__(self, playwright: Playwright,  rate_limiter: RateLimiter):
+
+class CancellationException(Exception):
+    pass
+
+
+class DocDownloader:
+    def __init__(
+        self, playwright: Playwright, rate_limiter: RateLimiter, scrape_task_id: str
+    ):
         self.rate_limiter = rate_limiter
         self.playwright = playwright
+        self.scrape_task_id = scrape_task_id
         self.redis = redis.from_url(
             config["REDIS_URL"], password=config["REDIS_PASSWORD"]
         )
@@ -45,6 +54,14 @@ class DocDownloader():
         async with self.playwright_request_context() as context:
             response: APIResponse | None = None
             async for attempt in self.rate_limiter.attempt_with_backoff():
+                task = await SiteScrapeTask.find_one(
+                    SiteScrapeTask.id == self.scrape_task_id
+                )
+                if task.status == "CANCELED":
+                    return
+                if task.status == "CANCELING":
+                    raise CancellationException("Task was cancelled.")
+
                 with attempt:
                     response = await context.get(url)
             if not response:
@@ -64,7 +81,6 @@ class DocDownloader():
                 hash.update(body)
                 await fd.write(body)
             yield temp.name, hash.hexdigest()
-
 
     async def download_to_tempfile(self, url: str):
         body = self.redis.get(url)

@@ -16,8 +16,7 @@ sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 from backend.common.db.init import init_db
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.scrapeworker.scrape_worker import ScrapeWorker
-from backend.scrapeworker.scrape_worker import CancellationException
+from backend.scrapeworker.scrape_worker import ScrapeWorker, CancellationException
 
 app = typer.Typer()
 

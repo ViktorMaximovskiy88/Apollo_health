@@ -12,7 +12,7 @@ from playwright.async_api import ElementHandle, Browser
 from playwright_stealth import stealth_async
 from backend.common.models.user import User
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
-from backend.scrapeworker.downloader import DocDownloader
+from backend.scrapeworker.downloader import DocDownloader, CancellationException
 from backend.scrapeworker.effective_date import extract_dates, select_effective_date
 from backend.scrapeworker.proxy import proxy_settings
 from backend.scrapeworker.rate_limiter import RateLimiter
@@ -20,10 +20,6 @@ from backend.scrapeworker.rate_limiter import RateLimiter
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.xpdf_wrapper import pdfinfo, pdftotext
-
-
-class CancellationException(Exception):
-    pass
 
 
 class ScrapeWorker:
@@ -37,7 +33,7 @@ class ScrapeWorker:
         self.seen_urls = set()
         self.rate_limiter = RateLimiter()
         self.doc_client = DocumentStorageClient()
-        self.downloader = DocDownloader(playwright, self.rate_limiter)
+        self.downloader = DocDownloader(playwright, self.rate_limiter, scrape_task.id)
         self.logger = Logger()
         self.user = None
 
@@ -72,7 +68,7 @@ class ScrapeWorker:
         if parsed.scheme not in ["https", "http"]:  # mailto, tel, etc
             return True
         return False
-    
+
     def url_not_seen(self, url):
         # skip if we've already seen this url
         if url in self.seen_urls:
@@ -146,7 +142,7 @@ class ScrapeWorker:
                     url=url,
                     context_metadata=context_metadata,
                     metadata=metadata,
-                    base_url=base_url
+                    base_url=base_url,
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
 
@@ -156,7 +152,9 @@ class ScrapeWorker:
         context = await self.browser.new_context(proxy=proxy_settings())  # type: ignore
         page = await context.new_page()
         await stealth_async(page)
-        await page.goto(base_url, wait_until="domcontentloaded")#await page.goto(base_url, wait_until="networkidle") 
+        await page.goto(
+            base_url, wait_until="domcontentloaded"
+        )  # await page.goto(base_url, wait_until="networkidle")
         try:
             yield page
         finally:
@@ -180,12 +178,14 @@ class ScrapeWorker:
                 print(f"Found {len(link_handles)} links")
                 downloads = []
                 for link_handle in link_handles:
-                    url, context_metadata = await self.extract_url_and_context_metadata(base_url.url, link_handle)       
-        
-                    #check that think link is unique and that we should not skip it
+                    url, context_metadata = await self.extract_url_and_context_metadata(
+                        base_url.url, link_handle
+                    )
+
+                    # check that think link is unique and that we should not skip it
                     if not self.skip_url(url) and self.url_not_seen(url):
-                        await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
+                        await self.scrape_task.update(
+                            Inc({SiteScrapeTask.links_found: 1})
+                        )
                         downloads.append(self.attempt_download(url, context_metadata))
                 await asyncio.gather(*downloads)
-            
-                
