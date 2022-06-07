@@ -107,8 +107,6 @@ async def runBulkByType(
                     }
                 )
             )
-        else:
-          return
 
     return {"success":True}
 
