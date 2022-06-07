@@ -5,7 +5,7 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { usersApi } from '../features/users/usersApi';
 import { sitesApi } from '../features/sites/sitesApi';
 import { documentsApi } from '../features/documents/documentsApi';
-import { siteScrapeTasksApi } from '../features/site_scrape_tasks/siteScrapeTasksApi';
+import { siteScrapeTasksApi } from '../features/site-scrape-tasks/siteScrapeTasksApi';
 import { extractionTasksApi } from '../features/extractions/extractionsApi';
 
 const { createReduxHistory, routerMiddleware, routerReducer } =

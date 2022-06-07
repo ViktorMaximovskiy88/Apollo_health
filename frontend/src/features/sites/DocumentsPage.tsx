@@ -3,7 +3,7 @@ import Title from 'antd/lib/typography/Title';
 import { prettyDate } from '../../common';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
-import { ChangeLogModal } from '../change_log/ChangeLogModal';
+import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import {
   useDeleteDocumentMutation,
   useGetDocumentsQuery,

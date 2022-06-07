@@ -10,7 +10,7 @@ import {
 } from 'react-router-dom';
 import { DocumentsHomePage } from './features/documents/DocumentsHomePage';
 import { DocumentEditPage } from './features/documents/DocumentEditPage';
-import { ScrapesPage } from './features/site_scrape_tasks/ScrapesPage';
+import { ScrapesPage } from './features/site-scrape-tasks/ScrapesPage';
 import { SiteCreatePage } from './features/sites/SiteCreatePage';
 import { SiteEditPage } from './features/sites/SiteEditPage';
 import { SitePage } from './features/sites/SitePage';

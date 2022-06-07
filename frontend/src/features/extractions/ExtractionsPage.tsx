@@ -2,7 +2,7 @@ import { Table } from 'antd';
 import Title from 'antd/lib/typography/Title';
 import { prettyDate } from '../../common';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { ChangeLogModal } from '../change_log/ChangeLogModal';
+import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useGetDocumentsQuery } from '../documents/documentsApi';
 import { RetrievedDocument } from '../documents/types';
 import { useGetChangeLogQuery } from '../sites/sitesApi';

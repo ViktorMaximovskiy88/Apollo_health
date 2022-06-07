@@ -2,7 +2,7 @@ import { Layout, Button, Popconfirm, Table, Tag } from 'antd';
 import Title from 'antd/lib/typography/Title';
 import { Link } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
-import { ChangeLogModal } from '../change_log/ChangeLogModal';
+import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { User } from './types';
 import {
   useDeleteUserMutation,
@@ -21,7 +21,9 @@ export function UsersHomePage() {
       title: 'Name',
       key: 'name',
       render: (user: User) => {
-        return <ButtonLink to={`${user._id}/edit`}>{user.full_name}</ButtonLink>;
+        return (
+          <ButtonLink to={`${user._id}/edit`}>{user.full_name}</ButtonLink>
+        );
       },
     },
     { title: 'Email', key: 'email', dataIndex: 'email' },

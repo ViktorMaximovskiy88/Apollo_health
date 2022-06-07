@@ -1,7 +1,7 @@
 import { Button, Layout, Popconfirm, Table, Tag, Upload } from 'antd';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChangeLogModal } from '../change_log/ChangeLogModal';
+import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { Site } from './types';
 import {
   useDeleteSiteMutation,
