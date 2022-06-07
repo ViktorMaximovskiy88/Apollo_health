@@ -6,6 +6,14 @@ export interface BaseUrl {
   status: string;
 }
 
+export enum Status {
+  Failed = 'FAILED',
+  Canceled = 'CANCELED',
+  InProgress = 'IN_PROGRESS',
+  Queued = 'QUEUED',
+  Finished = 'FINISHED',
+}
+
 export interface Site extends BaseDocument {
   name: string;
   base_urls: BaseUrl[];
@@ -17,6 +25,6 @@ export interface Site extends BaseDocument {
   tags: string[];
   disabled: boolean;
   last_run_time?: string;
-  last_status: 'FINISHED' | 'CANCELED' | 'QUEUED' | 'FAILED' | 'IN_PROGRESS';
+  last_status: Status;
   cron: string;
 }

@@ -2,7 +2,7 @@ import { Button, Layout, Table } from 'antd';
 import { useParams } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
 import { useGetSiteQuery } from '../sites/sitesApi';
-import { SiteScrapeTask } from './types';
+import { SiteScrapeTask, Status } from './types';
 import {
   useCancelSiteScrapeTaskMutation,
   useGetScrapeTasksForSiteQuery,
@@ -37,33 +37,35 @@ export function ScrapesPage() {
       title: 'Stop Time',
       key: 'stop_time',
       render: (task: SiteScrapeTask) => {
-        if (task.end_time)
-          return prettyDate(task.end_time);
+        if (task.end_time) return prettyDate(task.end_time);
       },
     },
     {
       title: 'Elapsed',
       key: 'elapsed',
       render: (task: SiteScrapeTask) => {
-        return prettyRelativeDate(task.queued_time, task.end_time)
+        return prettyRelativeDate(task.queued_time, task.end_time);
       },
     },
     {
       title: 'Status',
       key: 'status',
       render: (task: SiteScrapeTask) => {
-        if (task.status === 'FAILED') {
-          return <span className="text-red-500">Failed</span>;
-        } else if (task.status === 'CANCELED') {
-          return <span className="text-orange-500">Forced End</span>;
-        } else if (task.status === 'CANCELING') {
-          return <span className="text-amber-500">Canceling</span>;
-        } else if (task.status === 'IN_PROGRESS') {
-          return <span className="text-blue-500">In Progress</span>;
-        } else if (task.status === 'QUEUED') {
-          return <span className="text-yellow-500">Queued</span>;
-        } else if (task.status === 'FINISHED') {
-          return <span className="text-green-500">Finished</span>;
+        switch (task.status) {
+          case Status.Failed:
+            return <span className="text-red-500">Failed</span>;
+          case Status.Canceled:
+            return <span className="text-orange-500">Forced End</span>;
+          case Status.Canceling:
+            return <span className="text-amber-500">Canceling</span>;
+          case Status.InProgress:
+            return <span className="text-blue-500">In Progress</span>;
+          case Status.Queued:
+            return <span className="text-yellow-500">Queued</span>;
+          case Status.Finished:
+            return <span className="text-green-500">Finished</span>;
+          default:
+            return <></>;
         }
       },
     },

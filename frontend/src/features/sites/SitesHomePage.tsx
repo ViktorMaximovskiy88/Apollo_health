@@ -2,7 +2,7 @@ import { Button, Layout, Popconfirm, Table, Tag, Upload } from 'antd';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { Site } from './types';
+import { Site, Status } from './types';
 import {
   useDeleteSiteMutation,
   useGetChangeLogQuery,
@@ -45,18 +45,20 @@ export function SitesHomePage() {
       key: 'last_status',
       render: (site: Site) => {
         const status = site.last_status;
-        if (status === 'FINISHED') {
-          return <span className="text-green-500">Success</span>;
-        } else if (status === 'CANCELED') {
-          return <span className="text-orange-500">Forced End</span>;
-        } else if (status === 'QUEUED') {
-          return <span className="text-yellow-500">Queued</span>;
-        } else if (status === 'FAILED') {
-          return <span className="text-red-500">Failed</span>;
-        } else if (status === 'IN_PROGRESS') {
-          return <span className="text-blue-500">In Progress</span>;
+        switch (status) {
+          case Status.Finished:
+            return <span className="text-green-500">Success</span>;
+          case Status.Canceled:
+            return <span className="text-orange-500">Forced End</span>;
+          case Status.Queued:
+            return <span className="text-yellow-500">Queued</span>;
+          case Status.Failed:
+            return <span className="text-red-500">Failed</span>;
+          case Status.InProgress:
+            return <span className="text-blue-500">In Progress</span>;
+          default:
+            return <></>;
         }
-        return <></>;
       },
     },
     {
