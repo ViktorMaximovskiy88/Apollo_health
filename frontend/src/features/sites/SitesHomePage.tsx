@@ -114,8 +114,8 @@ export function SitesHomePage() {
       }
     }
     const onMenuSelect = async (key: string) => {
-        const result:any = await runBulk(key);
-        if (result.data.scrapes_launched == 0) {
+        const response:any = await runBulk(key);
+        if (response.data.scrapes_launched == 0) {
             notification.error({
                 message: 'Whoops!',
                 description: "No sites were found!"
@@ -123,7 +123,7 @@ export function SitesHomePage() {
         } else {
             notification.success({
                 message: 'Success!',
-                description: result.data.scrapes_launched + " sites are added to the scrape queue!"
+                description: response.data.scrapes_launched + " sites are added to the scrape queue!"
             });                
         }
         refetch()
