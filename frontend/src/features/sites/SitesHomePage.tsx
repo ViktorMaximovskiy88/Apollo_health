@@ -113,8 +113,8 @@ export function SitesHomePage() {
         refetch()
       }
     }
-    const onMenuSelect = (key: string) => {
-        runBulk(key)
+    const onMenuSelect = async (key: string) => {
+        await runBulk(key)
         refetch()
     }
     const menu = (
@@ -147,7 +147,7 @@ export function SitesHomePage() {
               </Link>
               <Dropdown overlay={menu}>
                 <Space>
-                    <Button>Run <DownOutlined style={{fontSize:"10px"}} /></Button>
+                    <Button>Run <DownOutlined className="text-sm"/></Button>
                 </Space>
               </Dropdown>
               <Upload name="file" accept=".csv,.txt,.xlsx" action="/api/v1/sites/upload" showUploadList={false} onChange={onChange}>

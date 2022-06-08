@@ -78,7 +78,7 @@ async def runBulkByType(
     bulk_type = type;
     query = {
         "disabled":False,
-        "base_url":{ "$exists": True, "$not": { "$size": 0}}
+        "base_urls":{ "$exists": True, "$not": { "$size": 0}}
     }
     if bulk_type == "unrun":
         query['last_status'] = None;
