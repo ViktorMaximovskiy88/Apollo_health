@@ -1,4 +1,4 @@
-import { Button, Layout, Popconfirm, Table, Tag, Upload, Dropdown, Space, Menu } from 'antd';
+import { Button, Layout, Popconfirm, Table, Tag, Upload, Dropdown, Space, Menu, notification } from 'antd';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChangeLogModal } from '../change_log/ChangeLogModal';
@@ -114,7 +114,18 @@ export function SitesHomePage() {
       }
     }
     const onMenuSelect = async (key: string) => {
-        await runBulk(key)
+        const result:any = await runBulk(key);
+        if (result.data.scrapes_launched == 0) {
+            notification.error({
+                message: 'Whoops!',
+                description: "No sites were found!"
+            });
+        } else {
+            notification.success({
+                message: 'Success!',
+                description: result.data.scrapes_launched + " sites are added to the scrape queue!"
+            });                
+        }
         refetch()
     }
     const menu = (

@@ -76,6 +76,7 @@ async def runBulkByType(
     current_user: User = Depends(get_current_user)
 ):
     bulk_type = type;
+    total_scrapes = 0;
     query = {
         "disabled":False,
         "base_urls":{ "$exists": True, "$not": { "$size": 0}}
@@ -96,9 +97,9 @@ async def runBulkByType(
         )
 
         insert_id: PydanticObjectId | None = update_result.upserted_id  # type: ignore
-
         if insert_id:
             site_scrape_task.id = insert_id
+            total_scrapes += 1
             await logger.background_log_change(current_user, site_scrape_task, "CREATE")
             await Site.find_one(Site.id == site.id).update(
                 Set(
@@ -108,7 +109,7 @@ async def runBulkByType(
                 )
             )
 
-    return {"success":True}
+    return {"status": True, "scrapes_launched": total_scrapes}
 
 
 @router.post("/{id}", response_model=SiteScrapeTask)
