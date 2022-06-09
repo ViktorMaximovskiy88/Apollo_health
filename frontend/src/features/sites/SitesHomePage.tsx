@@ -57,7 +57,7 @@ export function SitesHomePage() {
           case Status.InProgress:
             return <span className="text-blue-500">In Progress</span>;
           default:
-            return <></>;
+            return null;
         }
       },
     },

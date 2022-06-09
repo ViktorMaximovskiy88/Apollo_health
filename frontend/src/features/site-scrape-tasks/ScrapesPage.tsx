@@ -70,7 +70,7 @@ export function ScrapesPage() {
           case Status.Finished:
             return <span className="text-green-500">Finished</span>;
           default:
-            return <></>;
+            return null;
         }
       },
     },
@@ -107,9 +107,7 @@ export function ScrapesPage() {
           >
             Cancel
           </Button>
-        ) : (
-          <></>
-        ),
+        ) : null,
     },
   ];
   return (
