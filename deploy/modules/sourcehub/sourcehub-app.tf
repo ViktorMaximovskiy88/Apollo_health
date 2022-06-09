@@ -148,6 +148,13 @@ resource "aws_iam_role" "app-task" {
             "ssmmessages:OpenDataChannel"
           ]
           Resource = "*"
+        },
+        {
+          Effect = "Allow"
+          Action = [
+            "s3:ListAllMyBuckets"
+          ]
+          Resource = "*"
         }
       ]
     })
