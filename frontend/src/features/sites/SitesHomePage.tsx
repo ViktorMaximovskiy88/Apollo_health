@@ -123,7 +123,7 @@ export function SitesHomePage() {
         } else {
             notification.success({
                 message: 'Success!',
-                description: response.data.scrapes_launched + " sites are added to the scrape queue!"
+                description: response.data.scrapes_launched + " sites are added to the collection queue!"
             });                
         }
         refetch()
