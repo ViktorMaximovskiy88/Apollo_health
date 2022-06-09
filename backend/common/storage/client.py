@@ -22,9 +22,7 @@ class DocumentStorageClient:
             )
         else:
             self.s3 = boto3.resource(
-                "s3",
-                endpoint_url=settings.endpoint_url,
-                config=Config(signature_version="s3v4"),
+                "s3"
             )
 
         self.bucket = self.s3.Bucket(settings.document_bucket)
