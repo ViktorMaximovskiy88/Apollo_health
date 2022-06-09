@@ -23,6 +23,9 @@ import { DocumentsPage } from './features/sites/DocumentsPage';
 import { ExtractionsPage } from './features/extractions/ExtractionsPage';
 import { DocExtractionPage } from './features/extractions/DocExtractionPage';
 import { ExtractionEditPage } from './features/extractions/ExtractionEditPage';
+import { WorkQueueHomePage } from './features/work_queue/WorkQueueHomePage';
+import { WorkQueuePage } from './features/work_queue/WorkQueuePage';
+import { ProcessDocumentAssessmentPage, ReadonlyDocumentAssessmentPage } from './features/assessments/DocumentAssessmentPage';
 
 function TopNav() {
   const location = useLocation();
@@ -32,6 +35,7 @@ function TopNav() {
   const current = location.pathname.split('/')[1];
   const sections = [
     { key: 'sites', label: 'Sites' },
+    { key: 'work-queues', label: 'Work Queues' },
     { key: 'users', label: 'Users' },
   ];
   return (
@@ -100,6 +104,16 @@ function App() {
     <Routes>
       <Route path="/" element={<TopNav />}>
         <Route path="/home/*" element={<AppHomePage />} />
+        <Route path="/work-queues">
+          <Route index element={<WorkQueueHomePage />} />
+          <Route path=":queueId">
+            <Route index element={<WorkQueuePage />} />
+            <Route path=":assessmentId">
+              <Route path="process" element={<ProcessDocumentAssessmentPage/> }/>
+              <Route path="read-only" element={<ReadonlyDocumentAssessmentPage/> }/>
+            </Route>
+          </Route>
+        </Route>
         <Route path="/sites">
           <Route index element={<SitesHomePage />} />
           <Route path="new" element={<SiteCreatePage />} />

@@ -5,7 +5,6 @@ from uuid import uuid4
 import traceback
 import typer
 from playwright.async_api import async_playwright
-from playwright_stealth import stealth_async
 
 from datetime import datetime
 import pymongo

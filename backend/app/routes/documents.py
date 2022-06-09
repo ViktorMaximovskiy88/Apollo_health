@@ -20,7 +20,7 @@ router = APIRouter(
 )
 
 
-async def get_target(id: PydanticObjectId):
+async def get_target(id: PydanticObjectId) -> RetrievedDocument:
     doc = await RetrievedDocument.get(id)
     if not doc:
         raise HTTPException(

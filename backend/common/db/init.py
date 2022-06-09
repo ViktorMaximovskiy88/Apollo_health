@@ -6,6 +6,7 @@ from backend.common.models.content_extraction_task import (
     ContentExtractionResult,
     ContentExtractionTask,
 )
+from backend.common.models.document_assessment import DocumentAssessment
 
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
@@ -13,6 +14,8 @@ from backend.common.models.user import User
 from backend.common.models.document import RetrievedDocument
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+
+from backend.common.models.work_queue import WorkQueue
 
 
 @cache
@@ -37,10 +40,12 @@ async def init_db(mock=False):
         database=get_motor_db(mock),
         document_models=[
             User,
+            WorkQueue,
             ChangeLog,
             Site,
             SiteScrapeTask,
             RetrievedDocument,
+            DocumentAssessment,
             ContentExtractionTask,
             ContentExtractionResult,
         ],

@@ -18,6 +18,8 @@ from routes import (
     users,
     documents,
     change_log,
+    work_queues,
+    assessments,
     site_scrape_tasks,
     content_extraction_tasks,
 )
@@ -94,4 +96,6 @@ app.include_router(sites.router, prefix=prefix)
 app.include_router(site_scrape_tasks.router, prefix=prefix)
 app.include_router(documents.router, prefix=prefix)
 app.include_router(content_extraction_tasks.router, prefix=prefix)
+app.include_router(work_queues.router, prefix=prefix)
+app.include_router(assessments.router, prefix=prefix)
 app.mount("/", StaticFiles(directory=frontend_build_dir, html=True), name="static")

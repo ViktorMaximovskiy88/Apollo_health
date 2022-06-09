@@ -7,6 +7,8 @@ import { sitesApi } from '../features/sites/sitesApi';
 import { documentsApi } from '../features/documents/documentsApi';
 import { siteScrapeTasksApi } from '../features/site_scrape_tasks/siteScrapeTasksApi';
 import { extractionTasksApi } from '../features/extractions/extractionsApi';
+import { workQueuesApi } from '../features/work_queue/workQueuesApi';
+import { assessmentsApi } from '../features/assessments/assessmentsApi';
 
 const { createReduxHistory, routerMiddleware, routerReducer } =
   createReduxHistoryContext({ history: createBrowserHistory() });
@@ -18,6 +20,8 @@ export const store = configureStore({
     [siteScrapeTasksApi.reducerPath]: siteScrapeTasksApi.reducer,
     [documentsApi.reducerPath]: documentsApi.reducer,
     [extractionTasksApi.reducerPath]: extractionTasksApi.reducer,
+    [workQueuesApi.reducerPath]: workQueuesApi.reducer,
+    [assessmentsApi.reducerPath]: assessmentsApi.reducer,
     router: routerReducer,
   },
   middleware: (getDefaultMiddleware) =>
@@ -27,6 +31,8 @@ export const store = configureStore({
       siteScrapeTasksApi.middleware,
       documentsApi.middleware,
       extractionTasksApi.middleware,
+      workQueuesApi.middleware,
+      assessmentsApi.middleware,
       routerMiddleware
     ),
 });

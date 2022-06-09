@@ -5,6 +5,7 @@ import os
 import pathlib
 from beanie.odm.operators.update.general import Inc
 from urllib.parse import urlparse, urljoin
+from backend.common.models.document_assessment import DocumentAssessment, Triage
 from backend.common.models.site import Site
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
@@ -137,7 +138,19 @@ class ScrapeWorker:
                     context_metadata=context_metadata,
                     metadata=metadata,
                 )
-                await create_and_log(self.logger, await self.get_user(), document)
+                document = await create_and_log(self.logger, await self.get_user(), document)
+
+                assessment = DocumentAssessment(
+                    name=title,
+                    site_id=self.site.id,
+                    scrape_task_id=self.scrape_task.id,
+                    retrieved_document_id=document.id,
+                    triage=Triage(
+                        effective_date=effective_date,
+                        document_type=document_type
+                    )
+                )
+                document = await create_and_log(self.logger, await self.get_user(), assessment)
 
     @asynccontextmanager
     async def playwright_context(self, base_url: str):

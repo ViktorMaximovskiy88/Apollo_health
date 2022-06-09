@@ -1,3 +1,4 @@
+from typing import TypeVar
 from jsonpatch import JsonPatch, JsonPointer
 from bson import json_util
 from datetime import datetime
@@ -38,15 +39,17 @@ class Logger:
 async def get_logger(background_tasks: BackgroundTasks):
     return Logger(background_tasks)
 
+T = TypeVar("T", bound=Document)
 
 async def create_and_log(
     logger: Logger,
     current_user: User,
-    target: Document,
+    target: T,
     session: AsyncIOMotorClientSession | None = None,
-):
-    await target.save(session=session)
+) -> T:
+    response = await target.save(session=session)
     await logger.background_log_change(current_user, target, "CREATE")
+    return response
 
 
 async def update_and_log_diff(

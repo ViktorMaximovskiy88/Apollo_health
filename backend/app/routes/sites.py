@@ -1,5 +1,4 @@
 import io
-import pymongo
 import zipfile
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
@@ -11,7 +10,6 @@ from backend.common.models.site import (
     Site,
     UpdateSite,
 )
-from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.app.utils.logger import (
     Logger,
@@ -102,7 +100,8 @@ async def upload_sites(
 ):
     new_sites = []
     for line in get_lines_from_upload(file):
-        name, base_urls, scrape_method, tags, cron: (str, str, str, str, str) = line  # type: ignore
+        tuple: (str, str, str, str, str) = line # type: ignore
+        name, base_urls, scrape_method, tags, cron = tuple
         tags = tags.split(",") if tags else []
         base_urls = base_urls.split(",") if base_urls else []
         scrape_method_configuration = ScrapeMethodConfiguration(
