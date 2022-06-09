@@ -213,4 +213,12 @@ resource "aws_ecs_service" "parseworker" {
     ]
   }
   force_new_deployment = true
+  lifecycle {
+    ignore_changes = [
+      desired_count
+    ]
+  }
+  tags = merge(local.effective_tags, {
+    component = "${local.service_name}-parseworker"
+  })
 }

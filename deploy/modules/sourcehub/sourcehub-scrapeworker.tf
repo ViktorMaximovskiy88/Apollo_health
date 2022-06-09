@@ -213,4 +213,13 @@ resource "aws_ecs_service" "scrapeworker" {
     ]
   }
   force_new_deployment = true
+
+  lifecycle {
+    ignore_changes = [
+      desired_count
+    ]
+  }
+  tags = merge(local.effective_tags, {
+    component = "${local.service_name}-scrapeworker"
+  })
 }

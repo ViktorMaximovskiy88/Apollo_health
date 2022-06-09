@@ -86,3 +86,8 @@ data "aws_iam_policy" "docrepo-contributor" {
 data "aws_service" "s3" {
   service_id = "s3"
 }
+
+# TODO: Revisit, don't want to look up by name
+data "aws_ecs_cluster" "cluster" {
+  cluster_name = format("%s-%s-%s-mmit-ecs-%02d", local.app_name, var.environment, local.short_region, var.revision)
+}
