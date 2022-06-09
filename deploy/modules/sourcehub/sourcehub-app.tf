@@ -28,6 +28,10 @@ resource "aws_ecs_task_definition" "app" {
       ]
       environment = [
         {
+          name = "ENV_TYPE"
+          value = var.environment
+        },
+        {
           name = "S3_ENDPOINT_URL"
           value = data.aws_service.s3.dns_name
         }

@@ -6,7 +6,8 @@ from dotenv import dotenv_values
 envs_dir = Path(__file__).parent.joinpath("envs").resolve()
 root_dir = envs_dir.joinpath("../../../..").resolve()
 
-env_type = os.getenv("ENV_TYPE", "dev")
+env_type = os.getenv("ENV_TYPE", "local")
+is_local = env_type == "local"
 
 config = {
     **dotenv_values(envs_dir.joinpath(f"base.env")),
@@ -14,3 +15,6 @@ config = {
     **dotenv_values(root_dir.joinpath(".env")),
     **os.environ,
 }
+
+config["env_type"] = env_type
+config["is_local"] = env_type == "local"
