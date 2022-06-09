@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { createRoot } from 'react-dom/client';
+// import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
 import { store, history } from './app/store';
@@ -22,8 +22,8 @@ const app = (
 
 const useCreateRoot = false;
 if (useCreateRoot) {
-  const root = createRoot(container);
-  root.render(app);
+  // const root = createRoot(container);
+  // root.render(app);
 } else {
   ReactDOM.render(app, container);
 }
