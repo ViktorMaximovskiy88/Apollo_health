@@ -1,4 +1,4 @@
-import { Button, Layout, Table } from 'antd';
+import { Button, Layout, Spin, Table } from 'antd';
 import { useParams } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
 import { useGetSiteQuery } from '../sites/sitesApi';
@@ -55,9 +55,14 @@ export function ScrapesPage() {
           case Status.Failed:
             return <span className="text-red-500">Failed</span>;
           case Status.Canceled:
-            return <span className="text-orange-500">Forced End</span>;
+            return <span className="text-orange-500">Canceled</span>;
           case Status.Canceling:
-            return <span className="text-amber-500">Canceling</span>;
+            return (
+              <>
+                <span className="text-amber-500 mr-2">Canceling</span>
+                <Spin size="small" />
+              </>
+            );
           case Status.InProgress:
             return <span className="text-blue-500">In Progress</span>;
           case Status.Queued:

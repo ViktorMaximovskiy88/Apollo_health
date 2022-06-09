@@ -49,7 +49,7 @@ export function SitesHomePage() {
           case Status.Finished:
             return <span className="text-green-500">Success</span>;
           case Status.Canceled:
-            return <span className="text-orange-500">Forced End</span>;
+            return <span className="text-orange-500">Canceled</span>;
           case Status.Queued:
             return <span className="text-yellow-500">Queued</span>;
           case Status.Failed:
