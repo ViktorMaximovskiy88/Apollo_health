@@ -22,8 +22,8 @@ const app = (
 
 const useCreateRoot = false;
 if (useCreateRoot) {
-  const root = createRoot(container);
-  root.render(app);
+  // const root = createRoot(container);
+  // root.render(app);
 } else {
   ReactDOM.render(app, container);
 }
