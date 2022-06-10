@@ -20,3 +20,8 @@ export interface Site extends BaseDocument {
   last_status: string;
   cron: string;
 }
+
+export interface ActiveUrlResponse {
+  in_use: boolean;
+  site?: Site;
+}

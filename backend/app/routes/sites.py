@@ -1,9 +1,12 @@
 import io
 import pymongo
+import urllib.parse
 import zipfile
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from beanie.operators import ElemMatch
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
 from openpyxl import load_workbook
+from pydantic import BaseModel
 
 from backend.common.models.site import (
     NewSite,
@@ -42,6 +45,29 @@ async def read_sites(
 ):
     sites: list[Site] = await Site.find_many({}).sort("-last_run_time", "id").to_list()
     return sites
+
+
+class ActiveUrlResponse(BaseModel):
+    in_use: bool
+    site: Site | None = None
+
+
+@router.get("/active-url", response_model=ActiveUrlResponse)
+async def check_url(
+    url: str,
+    current_site: str | None = Query(default=None, alias="currentSite"),
+    current_user: User = Depends(get_current_user),
+):
+    site: Site = await Site.find_one(
+        ElemMatch(Site.base_urls, {"url": urllib.parse.unquote(url)}),
+        Site.id != PydanticObjectId(current_site),
+        Site.disabled != True
+    )
+
+    if site:
+        return ActiveUrlResponse(in_use=True, site=site)
+    else:
+        return ActiveUrlResponse(in_use=False)
 
 
 @router.get("/{id}", response_model=Site)
