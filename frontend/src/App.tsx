@@ -8,7 +8,6 @@ import {
   useLocation,
   useParams,
 } from 'react-router-dom';
-import { DocumentsHomePage } from './features/documents/DocumentsHomePage';
 import { DocumentEditPage } from './features/documents/DocumentEditPage';
 import { CollectionsPage } from './features/collections/CollectionsPage';
 import { SiteCreatePage } from './features/sites/SiteCreatePage';
@@ -80,16 +79,6 @@ function UserRoutes() {
       <Route path="new" element={<UserCreatePage />} />
       <Route path=":userId">
         <Route path="edit" element={<UserEditPage />} />
-      </Route>
-    </Routes>
-  );
-}
-function DocumentRoutes() {
-  return (
-    <Routes>
-      <Route index element={<DocumentsHomePage />} />
-      <Route path=":docId">
-        <Route path="edit" element={<DocumentEditPage />} />
       </Route>
     </Routes>
   );
