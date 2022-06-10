@@ -10,7 +10,7 @@ import {
 } from 'antd';
 import type { RadioChangeEvent } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
-import { prettyDate, DateFormats } from '../../common';
+import { prettyDate, prettyDateFromISO } from '../../common';
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useUpdateDocumentMutation } from './documentsApi';
@@ -99,7 +99,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
   const dateOptions = (doc.identified_dates || [])
     .map((d) => ({
       value: d,
-      label: prettyDate(d),
+      label: prettyDateFromISO(d),
     }))
     .sort((a, b) => +new Date(b.value) - +new Date(a.value));
 
@@ -150,7 +150,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
             <DatePicker
               className="flex"
               defaultValue={moment(initialValues.effective_date)}
-              format={(value) => prettyDate(value.toISOString())}
+              format={(value) => prettyDate(value.toDate())}
               onChange={(value: any) => {
                 form.setFieldsValue({
                   effective_date: value.utc().startOf('day').toISOString(),

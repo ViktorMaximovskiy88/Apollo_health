@@ -13,7 +13,7 @@ import { LoadingOutlined, UploadOutlined } from '@ant-design/icons';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
 import { ButtonLink } from '../../components/ButtonLink';
-import { prettyDate } from '../../common';
+import { prettyDateFromISO } from '../../common';
 
 export function SitesHomePage() {
   const { data: sites, refetch } = useGetSitesQuery(undefined, { pollingInterval: 5000 });
@@ -35,7 +35,7 @@ export function SitesHomePage() {
       key: 'last_run_time',
       render: (site: Site) => {
         if (!site.last_run_time) return null;
-        return prettyDate(site.last_run_time);
+        return prettyDateFromISO(site.last_run_time);
       },
     },
     {

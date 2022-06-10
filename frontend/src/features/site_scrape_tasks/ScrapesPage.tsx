@@ -7,7 +7,7 @@ import {
   useGetScrapeTasksForSiteQuery,
   useRunSiteScrapeTaskMutation,
 } from './siteScrapeTasksApi';
-import { prettyDate, prettyRelativeDate } from '../../common';
+import { prettyDateFromISO, prettyRelativeDate } from '../../common';
 import Title from 'antd/lib/typography/Title';
 
 export function ScrapesPage() {
@@ -27,7 +27,7 @@ export function ScrapesPage() {
       title: 'Start Time',
       key: 'start_time',
       render: (task: SiteScrapeTask) => {
-        return prettyDate(task.queued_time);
+        return prettyDateFromISO(task.queued_time);
       },
     },
     {
@@ -35,7 +35,7 @@ export function ScrapesPage() {
       key: 'stop_time',
       render: (task: SiteScrapeTask) => {
         if (task.end_time)
-          return prettyDate(task.end_time);
+          return prettyDateFromISO(task.end_time);
       },
     },
     {

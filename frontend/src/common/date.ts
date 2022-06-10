@@ -13,12 +13,23 @@ export enum DateFormats {
  * Pretty date renders a date in the default format if a date is present.
  * If not render a default missing placeholder value.
  */
-export function prettyDate(
+export function prettyDateFromISO(
   value?: string,
   dateFormat = DateFormats.DEFAULT_DATE_FORMAT
 ): string {
   return value ? format(parseISO(value), dateFormat) : '';
 }
+
+/**
+ * Pretty date renders a date in the default format from a date obj
+ */
+export function prettyDate(
+  value: Date,
+  dateFormat = DateFormats.DEFAULT_DATE_FORMAT
+): string {
+  return format(value, dateFormat);
+}
+
 
 /**
  * Pretty relative date renders a date distance from the start date until the end date.
@@ -34,3 +45,4 @@ export function prettyRelativeDate(
     return formatDistanceToNow(parseISO(startDate));
   }
 }
+
