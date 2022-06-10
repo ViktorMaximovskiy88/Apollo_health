@@ -46,8 +46,8 @@ export const siteScrapeTasksApi = createApi({
       ],
     }),
     cancelSiteScrapeTask: builder.mutation<SiteScrapeTask, string | undefined>({
-      query: (siteId) => ({
-        url: `/site-scrape-tasks/${siteId}/cancel`,
+      query: (siteTaskId) => ({
+        url: `/site-scrape-tasks/${siteTaskId}/cancel`,
         method: 'POST',
       }),
       invalidatesTags: (_r, _e, id) => [
@@ -65,7 +65,7 @@ export const siteScrapeTasksApi = createApi({
         method: 'POST',
       }),
       invalidatesTags: (_r, _e, id) => [{ type: 'SiteScrapeTask', id }],
-    })
+    }),
   }),
 });
 
@@ -76,5 +76,5 @@ export const {
   useDeleteSiteScrapeTaskMutation,
   useCancelSiteScrapeTaskMutation,
   useGetChangeLogQuery,
-  useRunBulkMutation
+  useRunBulkMutation,
 } = siteScrapeTasksApi;
