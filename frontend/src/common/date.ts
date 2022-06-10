@@ -33,17 +33,21 @@ export function prettyDateDistance(
 ): string {
   const startDateTime = DateTime.fromISO(startDate);
   const endDateTime = endDate ? DateTime.fromISO(endDate) : DateTime.now();
-  const duration = endDateTime.diff(startDateTime, ['hours', 'minutes', 'seconds']).toObject();  
-  return Duration.fromObject(smallestUnit(duration)).toHuman();
+  const duration = endDateTime.diff(startDateTime, [
+    'hours',
+    'minutes',
+    'seconds',
+  ]);
+  return stripZeroUnitsFromDuration(duration).toHuman();
 }
 
 // Helper func to strip zero value units
-function smallestUnit(duration: any) : any {
-  return Object.keys(duration as object).reduce((acc, key) => {
-    const value = duration[key];
+function stripZeroUnitsFromDuration(duration: Duration): Duration {
+  const nonZeroUnits: any = {};
+  for (const [unit, value] of Object.entries(duration.toObject())) {
     if (value > 0) {
-      acc[key] = value;
+      nonZeroUnits[unit] = value;
     }
-    return acc;
-  }, {} as any);
+  }
+  return Duration.fromObject(nonZeroUnits);
 }
