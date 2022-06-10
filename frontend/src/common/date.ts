@@ -7,7 +7,6 @@ import {
 
 export enum DateFormats {
   DEFAULT_DATE_FORMAT = 'MMM d, yyyy',
-  DEFAULT_MOMENT_FORMAT = 'MMM D, yyyy',
 }
 
 /**

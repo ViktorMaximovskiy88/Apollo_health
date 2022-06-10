@@ -150,9 +150,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
             <DatePicker
               className="flex"
               defaultValue={moment(initialValues.effective_date)}
-              format={(value) =>
-                value.utc().format(DateFormats.DEFAULT_MOMENT_FORMAT)
-              }
+              format={(value) => prettyDate(value.toISOString())}
               onChange={(value: any) => {
                 form.setFieldsValue({
                   effective_date: value.utc().startOf('day').toISOString(),
