@@ -6,7 +6,7 @@ import {
   useGetExtractionTasksForDocQuery,
   useRunExtractionTaskMutation,
 } from './extractionsApi';
-import { prettyDateFromISO, prettyRelativeDate } from '../../common';
+import { prettyDateFromISO, prettyDateDistance } from '../../common';
 import { ExtractionTask } from './types';
 import { useGetDocumentQuery } from '../documents/documentsApi';
 
@@ -37,7 +37,7 @@ export function DocExtractionPage() {
       title: 'Elapsed',
       key: 'elapsed',
       render: (task: ExtractionTask) =>
-        prettyRelativeDate(task.queued_time, task.end_time),
+        prettyDateDistance(task.queued_time, task.end_time),
     },
     {
       title: 'Status',

@@ -7,7 +7,7 @@ import {
   useGetScrapeTasksForSiteQuery,
   useRunSiteScrapeTaskMutation,
 } from './siteScrapeTasksApi';
-import { prettyDateFromISO, prettyRelativeDate } from '../../common';
+import { prettyDateFromISO, prettyDateDistance } from '../../common';
 import Title from 'antd/lib/typography/Title';
 
 export function ScrapesPage() {
@@ -42,7 +42,7 @@ export function ScrapesPage() {
       title: 'Elapsed',
       key: 'elapsed',
       render: (task: SiteScrapeTask) => {
-        return prettyRelativeDate(task.queued_time, task.end_time)
+        return prettyDateDistance(task.queued_time, task.end_time)
       },
     },
     {
