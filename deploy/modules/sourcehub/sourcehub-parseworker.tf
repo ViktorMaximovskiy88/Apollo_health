@@ -26,7 +26,16 @@ resource "aws_ecs_task_definition" "parseworker" {
         "-lc",
         ". ./venv/bin/activate && python parseworker/main.py"
       ]
-
+      environment = [
+        {
+          name = "ENV_TYPE"
+          value = var.environment
+        },
+        {
+          name = "S3_ENDPOINT_URL"
+          value = data.aws_service.s3.dns_name
+        }
+      ]
       essential = true
       portMappings = [
         {
@@ -128,6 +137,13 @@ resource "aws_iam_role" "parseworker-task" {
             "ssmmessages:OpenDataChannel"
           ]
           Resource = "*"
+        },
+        {
+          Effect = "Allow"
+          Action = [
+            "s3:ListAllMyBuckets"
+          ]
+          Resource = "*"
         }
       ]
     })
@@ -197,4 +213,12 @@ resource "aws_ecs_service" "parseworker" {
     ]
   }
   force_new_deployment = true
+  lifecycle {
+    ignore_changes = [
+      desired_count
+    ]
+  }
+  tags = merge(local.effective_tags, {
+    component = "${local.service_name}-parseworker"
+  })
 }

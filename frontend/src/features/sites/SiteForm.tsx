@@ -1,15 +1,54 @@
-/* eslint-disable no-template-curly-in-string */ // because of antd syntax
 import { Button, Form, Input, Select, Space } from 'antd';
 import { LinkOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { useForm } from 'antd/lib/form/Form';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Site } from './types';
+import { ActiveUrlResponse, Site } from './types';
 
 export function SiteForm(props: {
   onFinish: (user: Partial<Site>) => void;
   initialValues?: Site;
 }) {
   const [form] = useForm();
+  const [urlValidation, setUrlValidation] = useState<{[id: string]: ActiveUrlResponse}>({});
+  const currentSite = props.initialValues ? props.initialValues._id : "";
+
+  async function validateUrl(key: number, value: string) {
+    const checkUrl = encodeURIComponent(value);
+    const url = encodeURI(`/api/v1/sites/active-url?url=${checkUrl}&currentSite=${currentSite}`);
+    const check = await fetch(url);
+    const activeUrlResponse = await check.json();
+
+    setUrlValidation(prevState => {
+      const update = { ...prevState };
+      update[key] = activeUrlResponse;
+      return update;
+    });
+
+    if (activeUrlResponse.in_use) {
+      return Promise.reject(new Error('URL is already in use'));
+    }
+    return Promise.resolve();
+  }
+
+  function createErrorMessage(key: number) {
+    const urlCheck = urlValidation[key];
+    if (urlCheck?.in_use) {
+      return (
+        <p>
+          URL is in use by <a
+            href={`../${urlCheck.site?._id}/scrapes`}
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            {`${urlCheck.site?.name}`}
+          </a>
+        </p>
+      )
+    }
+
+    return undefined;
+  }
 
   const hasError = (fieldName: string, fieldIndex: number): boolean => {
     const errors = form.getFieldsError()
@@ -35,17 +74,20 @@ export function SiteForm(props: {
     { value: '0 16 1 * *', label: 'Monthly' },
   ];
 
+  const extensions = [
+    { value: 'pdf', label: 'PDF (.pdf)' },
+    { value: 'xlsx', label: 'Excel (.xlsx)' },
+    { value: 'docx', label: 'Word (.docx)' },
+  ];
+
+  /* eslint-disable no-template-curly-in-string */
   const validateMessages = {
     required: '${label} is required!',
     types: {
       url: '${label} is not a valid url!',
     },
   };
-  const extensions = [
-    { value: 'pdf', label: 'PDF (.pdf)' },
-    { value: 'xlsx', label: 'Excel (.xlsx)' },
-    { value: 'docx', label: 'Word (.docx)' },
-  ];
+  /* eslint-enable no-template-curly-in-string */
 
   let initialValues: Partial<Site> | undefined = props.initialValues
   if (!initialValues) {
@@ -83,14 +125,26 @@ export function SiteForm(props: {
               <Form.Item
                 key={key}
                 className="mb-2"
+                {...field}
               >
                 <Input.Group className="space-x-2 flex">
                   <Form.Item
-                    {...field}
-                    name={[name, 'url']}
-                    rules={[{ required: true, type: 'url' }]}
-                    label="URL"
                     className="grow mb-0"
+                    hasFeedback
+                    help={createErrorMessage(key)}
+                    {...field}
+                    label="URL"
+                    name={[name, 'url']}
+                    rules={[
+                      {
+                        required: true,
+                        type: 'url',
+                      },
+                      {
+                        validator: ((_, value) => validateUrl(key, value)),
+                      }
+                    ]}
+                    validateTrigger= 'onBlur'
                   >
                     <Input />
                   </Form.Item>

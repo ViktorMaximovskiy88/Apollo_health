@@ -81,7 +81,7 @@ class ScrapeWorker:
         title = metadata.get("Title") or metadata.get("Subject") or str(filename_no_ext)
         return title
 
-    async def attempt_download(self, url, context_metadata):
+    async def attempt_download(self, base_url, url, context_metadata):
 
         task = await SiteScrapeTask.find_one(SiteScrapeTask.id == self.scrape_task.id)
         if task.status == "CANCELING":
@@ -186,5 +186,7 @@ class ScrapeWorker:
                         await self.scrape_task.update(
                             Inc({SiteScrapeTask.links_found: 1})
                         )
-                        downloads.append(self.attempt_download(url, context_metadata))
+                        downloads.append(
+                            self.attempt_download(base_url.url, url, context_metadata)
+                        )
                 await asyncio.gather(*downloads)

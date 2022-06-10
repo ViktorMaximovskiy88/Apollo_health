@@ -26,7 +26,16 @@ resource "aws_ecs_task_definition" "app" {
         "-lc",
         ". ./venv/bin/activate && python app/main.py"
       ]
-
+      environment = [
+        {
+          name = "ENV_TYPE"
+          value = var.environment
+        },
+        {
+          name = "S3_ENDPOINT_URL"
+          value = data.aws_service.s3.dns_name
+        }
+      ]
       essential = true
       portMappings = [
         {
@@ -42,7 +51,7 @@ resource "aws_ecs_task_definition" "app" {
           awslogs-stream-prefix = local.service_name
         }
       }
-
+      
       secrets = [
         {
           name = "MONGO_URL"
@@ -139,6 +148,22 @@ resource "aws_iam_role" "app-task" {
             "ssmmessages:OpenDataChannel"
           ]
           Resource = "*"
+        },
+        {
+          Effect = "Allow"
+          Action = [
+            "s3:ListAllMyBuckets"
+          ]
+          Resource = "*"
+        },
+        {
+          Effect = "Allow"
+          Action = [
+            "ecs:UpdateService"
+          ]
+          Resource = [
+            "arn:aws:ecs:${var.region}:${data.aws_caller_identity.current.account_id}:service/${data.aws_ecs_cluster.cluster.cluster_name}/*"
+          ]
         }
       ]
     })
