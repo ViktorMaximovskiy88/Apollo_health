@@ -13,7 +13,8 @@ import {
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { Site, Status } from './types';
+import { Status } from '../types';
+import { Site } from './types';
 import {
   useDeleteSiteMutation,
   useGetChangeLogQuery,

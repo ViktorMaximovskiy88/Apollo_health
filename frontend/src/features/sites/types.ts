@@ -1,17 +1,9 @@
-import { BaseDocument } from '../types';
+import { BaseDocument, Status } from '../types';
 
 export interface BaseUrl {
   url: string;
   name: string;
   status: string;
-}
-
-export enum Status {
-  Failed = 'FAILED',
-  Canceled = 'CANCELED',
-  InProgress = 'IN_PROGRESS',
-  Queued = 'QUEUED',
-  Finished = 'FINISHED',
 }
 
 export interface Site extends BaseDocument {

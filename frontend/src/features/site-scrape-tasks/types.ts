@@ -1,13 +1,4 @@
-import { BaseDocument } from '../types';
-
-export enum Status {
-  Failed = 'FAILED',
-  Canceled = 'CANCELED',
-  Canceling = 'CANCELING',
-  InProgress = 'IN_PROGRESS',
-  Queued = 'QUEUED',
-  Finished = 'FINISHED',
-}
+import { BaseDocument, Status } from '../types';
 
 export interface SiteScrapeTask extends BaseDocument {
   site_id: string;

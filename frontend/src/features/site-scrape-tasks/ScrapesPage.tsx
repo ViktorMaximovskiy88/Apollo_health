@@ -2,7 +2,8 @@ import { Button, Layout, Spin, Table } from 'antd';
 import { useParams } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
 import { useGetSiteQuery } from '../sites/sitesApi';
-import { SiteScrapeTask, Status } from './types';
+import { Status } from '../types';
+import { SiteScrapeTask } from './types';
 import {
   useCancelSiteScrapeTaskMutation,
   useGetScrapeTasksForSiteQuery,
