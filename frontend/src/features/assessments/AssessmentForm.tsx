@@ -1,4 +1,4 @@
-import { Button, Form, Select, Space, Switch } from 'antd';
+import { Button, Checkbox, Form, Select, Space, Switch } from 'antd';
 import { Input } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { format, parse, parseISO } from 'date-fns';
@@ -15,6 +15,7 @@ export function AssessmentForm(props: {readonly: boolean | undefined, assessment
   const params = useParams();
   const [updateDoc] = useUpdateDocumentAssessmentMutation();
   const [form] = useForm();
+  const [autoTakeNext, setAutoTakeNext] = useState(true);
   const [action, setAction] = useState<SubmitAction | undefined>();
   const assessment = props.assessment;
   const triage = assessment.triage;
@@ -46,15 +47,27 @@ export function AssessmentForm(props: {readonly: boolean | undefined, assessment
     }
 
     await updateDoc(newAssessment);
-    navigate(-1);
+    if (autoTakeNext) {
+      navigate(`/assessments/${params.queueId}/take`);
+    } else {
+      navigate(-1);
+    }
   }
+
+  const identified_dates: string[] = props.document.identified_dates || [];
+
+  const dateOptions =
+    identified_dates.map((d) => {
+      const date = format(parseISO(d), 'yyyy-MM-dd');
+      return { value: date, label: date };
+    }) || [];
+  const today = format(new Date(), 'yyyy-MM-dd');
+  dateOptions.push({value: today, label: today });
 
   const initialValues = {
     name: assessment.name,
     triage: {
-      effective_date: triage.effective_date
-        ? format(parseISO(triage.effective_date), 'yyyy-MM-dd')
-        : null,
+      effective_date: format(parseISO(triage.effective_date || today), 'yyyy-MM-dd'),
       document_type: triage.document_type,
     }
   };
@@ -75,17 +88,8 @@ export function AssessmentForm(props: {readonly: boolean | undefined, assessment
     { value: 'UHCFormularyExtraction', label: 'UHC Formulary Extraction' },
   ];
 
-  const identified_dates: string[] = props.document.identified_dates || [];
-
-  const dateOptions =
-    identified_dates.map((d) => {
-      const date = format(parseISO(d), 'yyyy-MM-dd');
-      return { value: date, label: date };
-    }) || [];
-  const today = format(new Date(), 'yyyy-MM-dd');
-  dateOptions.push({value: today, label: today });
-
   return (
+  <>
     <Form
       layout="vertical"
       form={form}
@@ -103,6 +107,7 @@ export function AssessmentForm(props: {readonly: boolean | undefined, assessment
         <Select options={dateOptions} />
       </Form.Item>
       <Form.Item>
+        <div className="flex">
         <Space>
           {!props.readonly && props.workQueue.submit_actions.map((action) => {
             return (
@@ -119,7 +124,13 @@ export function AssessmentForm(props: {readonly: boolean | undefined, assessment
             Cancel
           </Button>
         </Space>
+        <div className="ml-auto space-x-2">
+          <span>Auto Take From Queue</span>
+          <Checkbox checked={autoTakeNext} onChange={(e) => setAutoTakeNext(e.target.checked)}/>
+        </div>
+        </div>
       </Form.Item>
     </Form>
+  </>
   );
 }

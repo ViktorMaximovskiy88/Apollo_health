@@ -1,4 +1,4 @@
-import { Layout, Button, Popconfirm, Table, Tag } from 'antd';
+import { Layout, Button, Popconfirm, Table } from 'antd';
 import Title from 'antd/lib/typography/Title';
 import { Link } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
@@ -68,7 +68,7 @@ export function WorkQueueHomePage() {
           <Button>Create</Button>
         </Link>
       </div>
-      <Table dataSource={workQueues} columns={columns} />
+      <Table dataSource={workQueues} columns={columns} pagination={{ pageSize: 50 }}/>
     </Layout>
   );
 }
