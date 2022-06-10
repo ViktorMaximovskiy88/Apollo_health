@@ -30,9 +30,9 @@ import {
 } from '@ant-design/icons';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
-import { format, parseISO } from 'date-fns';
 
 import { ButtonLink } from '../../components/ButtonLink';
+import { prettyDateFromISO } from '../../common';
 
 export function SitesHomePage() {
   const { data: sites, refetch } = useGetSitesQuery(undefined, {
@@ -57,7 +57,7 @@ export function SitesHomePage() {
       key: 'last_run_time',
       render: (site: Site) => {
         if (!site.last_run_time) return null;
-        return <>{format(parseISO(site.last_run_time), 'yyyy-MM-dd p')}</>;
+        return prettyDateFromISO(site.last_run_time);
       },
     },
     {

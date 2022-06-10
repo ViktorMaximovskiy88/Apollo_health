@@ -9,7 +9,7 @@ import {
   useGetScrapeTasksForSiteQuery,
   useRunSiteScrapeTaskMutation,
 } from './siteScrapeTasksApi';
-import { prettyDate, prettyRelativeDate } from '../../common';
+import { prettyDateFromISO, prettyDateDistance } from '../../common';
 import Title from 'antd/lib/typography/Title';
 
 export function ScrapesPage() {
@@ -31,21 +31,21 @@ export function ScrapesPage() {
       title: 'Start Time',
       key: 'start_time',
       render: (task: SiteScrapeTask) => {
-        return prettyDate(task.queued_time);
+        return prettyDateFromISO(task.queued_time);
       },
     },
     {
       title: 'Stop Time',
       key: 'stop_time',
       render: (task: SiteScrapeTask) => {
-        if (task.end_time) return prettyDate(task.end_time);
+        if (task.end_time) return prettyDateFromISO(task.end_time);
       },
     },
     {
       title: 'Elapsed',
       key: 'elapsed',
       render: (task: SiteScrapeTask) => {
-        return prettyRelativeDate(task.queued_time, task.end_time);
+        return prettyDateDistance(task.queued_time, task.end_time);
       },
     },
     {
