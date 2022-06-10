@@ -21,6 +21,7 @@ class RetrievedDocument(BaseDocument):
     document_type: str | None = None
     doc_type_confidence: float | None = None
     identified_dates: list[datetime] = []
+    base_url: str | None = None
 
     automated_content_extraction: bool = False
     automated_content_extraction_class: str | None = None

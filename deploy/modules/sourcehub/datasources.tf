@@ -82,3 +82,12 @@ data "aws_lb_listener" "https" {
 data "aws_iam_policy" "docrepo-contributor" {
   name = format("%s-%s-docrepo-contributor-mmit-policy-%02d", local.app_name, var.environment, var.revision)
 }
+
+data "aws_service" "s3" {
+  service_id = "s3"
+}
+
+# TODO: Revisit, don't want to look up by name
+data "aws_ecs_cluster" "cluster" {
+  cluster_name = format("%s-%s-%s-mmit-ecs-%02d", local.app_name, var.environment, local.short_region, var.revision)
+}

@@ -19,7 +19,6 @@ router = APIRouter(
     tags=["SiteScrapeTasks"],
 )
 
-
 async def get_target(id: PydanticObjectId):
     user = await SiteScrapeTask.get(id)
     if not user:
@@ -69,6 +68,48 @@ async def start_scrape_task(
         )
     )
     return site_scrape_task
+
+@router.post("/bulk-run")
+async def runBulkByType(
+    type:str,
+    logger: Logger = Depends(get_logger),
+    current_user: User = Depends(get_current_user)
+):
+    bulk_type = type;
+    total_scrapes = 0;
+    query = {
+        "disabled":False,
+        "base_urls":{ "$exists": True, "$not": { "$size": 0}}
+    }
+    if bulk_type == "unrun":
+        query['last_status'] = None;
+    elif bulk_type == "failed":
+        query['last_status'] = "FAILED";
+    elif bulk_type == "all":
+        query['last_status'] = {"$ne":['QUEUED', 'IN_PROGRESS']};
+
+    async for site in Site.find_many(query):
+        site_scrape_task = SiteScrapeTask(site_id=site.id, queued_time=datetime.now())
+        update_result = await SiteScrapeTask.get_motor_collection().update_one(
+          { 'site_id': site.id, 'status': { '$in': ['QUEUED', 'IN_PROGRESS', 'CANCELLING'] } },
+          { '$setOnInsert': site_scrape_task.dict() },
+          upsert=True
+        )
+
+        insert_id: PydanticObjectId | None = update_result.upserted_id  # type: ignore
+        if insert_id:
+            site_scrape_task.id = insert_id
+            total_scrapes += 1
+            await logger.background_log_change(current_user, site_scrape_task, "CREATE")
+            await Site.find_one(Site.id == site.id).update(
+                Set(
+                    {
+                        Site.last_status: site_scrape_task.status,
+                    }
+                )
+            )
+
+    return {"status": True, "scrapes_launched": total_scrapes}
 
 
 @router.post("/{id}", response_model=SiteScrapeTask)

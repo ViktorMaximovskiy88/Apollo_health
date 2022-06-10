@@ -26,7 +26,16 @@ resource "aws_ecs_task_definition" "scrapeworker" {
         "-lc",
         ". ./venv/bin/activate && python scrapeworker/main.py"
       ]
-
+      environment = [
+        {
+          name = "ENV_TYPE"
+          value = var.environment
+        },
+        {
+          name = "S3_ENDPOINT_URL"
+          value = data.aws_service.s3.dns_name
+        }
+      ]
       essential = true
       portMappings = [
         {
@@ -67,6 +76,10 @@ resource "aws_ecs_task_definition" "scrapeworker" {
         {
           name = "REDIS_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_auth_password"
+        },
+        {
+          name = "S3_DOCUMENT_BUCKET"
+          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/docrepo_bucket_name"
         }
       ]
 
@@ -122,6 +135,13 @@ resource "aws_iam_role" "scrapeworker-task" {
             "ssmmessages:OpenControlChannel",
             "ssmmessages:CreateDataChannel",
             "ssmmessages:OpenDataChannel"
+          ]
+          Resource = "*"
+        },
+        {
+          Effect = "Allow"
+          Action = [
+            "s3:ListAllMyBuckets"
           ]
           Resource = "*"
         }
@@ -193,4 +213,13 @@ resource "aws_ecs_service" "scrapeworker" {
     ]
   }
   force_new_deployment = true
+
+  lifecycle {
+    ignore_changes = [
+      desired_count
+    ]
+  }
+  tags = merge(local.effective_tags, {
+    component = "${local.service_name}-scrapeworker"
+  })
 }

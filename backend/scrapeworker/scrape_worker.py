@@ -81,7 +81,7 @@ class ScrapeWorker:
         title = metadata.get("Title") or metadata.get("Subject") or str(filename_no_ext)
         return title
 
-    async def attempt_download(self, url, context_metadata):
+    async def attempt_download(self, base_url, url, context_metadata ):
 
         async for (temp_path, checksum) in self.downloader.download_to_tempfile(url):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
@@ -138,6 +138,7 @@ class ScrapeWorker:
                     url=url,
                     context_metadata=context_metadata,
                     metadata=metadata,
+                    base_url=base_url
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
 
@@ -176,7 +177,7 @@ class ScrapeWorker:
                     #check that think link is unique and that we should not skip it
                     if not self.skip_url(url) and self.url_not_seen(url):
                         await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
-                        downloads.append(self.attempt_download(url, context_metadata))
+                        downloads.append(self.attempt_download(base_url.url, url, context_metadata))
                 await asyncio.gather(*downloads)
             
                 
