@@ -1,6 +1,6 @@
 import { Table } from 'antd';
 import Title from 'antd/lib/typography/Title';
-import { prettyDate } from '../../common';
+import { prettyDateFromISO } from '../../common';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ChangeLogModal } from '../change_log/ChangeLogModal';
 import { useGetDocumentsQuery } from '../documents/documentsApi';
@@ -23,7 +23,7 @@ export function ExtractionsPage() {
       title: 'Collection Time',
       key: 'collection_time',
       render: (doc: RetrievedDocument) => {
-        return prettyDate(doc.collection_time);
+        return prettyDateFromISO(doc.collection_time);
       },
     },
     {
@@ -54,7 +54,7 @@ export function ExtractionsPage() {
       key: 'effective_date',
       render: (doc: RetrievedDocument) => {
         if (!doc.effective_date) return null;
-        return prettyDate(doc.effective_date);
+        return prettyDateFromISO(doc.effective_date);
       },
     },
     {

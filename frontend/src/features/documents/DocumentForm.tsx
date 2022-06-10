@@ -1,11 +1,21 @@
-import { Button, Form, Select, Space, Switch } from 'antd';
-import { Input } from 'antd';
+import {
+  Button,
+  Form,
+  Select,
+  Space,
+  Switch,
+  Radio,
+  Input,
+  DatePicker,
+} from 'antd';
+import type { RadioChangeEvent } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
-import { prettyDate, toIsoDateUtc } from '../../common';
+import { prettyDate, prettyDateFromISO } from '../../common';
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useUpdateDocumentMutation } from './documentsApi';
 import { RetrievedDocument } from './types';
+import moment from 'moment';
 
 export function DocumentForm(props: { doc: RetrievedDocument }) {
   const navigate = useNavigate();
@@ -13,11 +23,19 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
   const [updateDoc] = useUpdateDocumentMutation();
   const [form] = useForm();
   const doc = props.doc;
+
   const [automatedExtraction, setAutomatedExtraction] = useState(
     doc.automated_content_extraction
   );
   const [docTypeConfidence, setDocTypeConfidence] = useState(
     doc.doc_type_confidence
+  );
+
+  const existsInList = (doc.identified_dates || []).find(
+    (date) => date === doc.effective_date
+  );
+  const [effectiveDateSelection, setEffectiveDateSelection] = useState(
+    existsInList ? 'list' : 'custom'
   );
 
   function setFormState(modified: Partial<RetrievedDocument>) {
@@ -35,6 +53,10 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
   function onCancel(e: React.SyntheticEvent) {
     e.preventDefault();
     navigate(-1);
+  }
+
+  function onEffectiveDateSelectionChange(e: RadioChangeEvent) {
+    setEffectiveDateSelection(e.target.value);
   }
 
   async function onFinish(doc: Partial<RetrievedDocument>) {
@@ -75,13 +97,12 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     { value: 'UHCFormularyExtraction', label: 'UHC Formulary Extraction' },
   ];
 
-  const dateOptions =
-    doc.identified_dates?.map((d) => {
-      return { value: d, label: prettyDate(d) };
-    }) || [];
-
-  const today = prettyDate(new Date().toISOString());
-  dateOptions.push({ value: toIsoDateUtc(today), label: today });
+  const dateOptions = (doc.identified_dates || [])
+    .map((d) => ({
+      value: d,
+      label: prettyDateFromISO(d),
+    }))
+    .sort((a, b) => +new Date(b.value) - +new Date(a.value));
 
   return (
     <Form
@@ -95,6 +116,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
       <Form.Item name="name" label="Name">
         <Input />
       </Form.Item>
+
       <div className="flex space-x-2">
         <Form.Item className="grow" name="document_type" label="Document Type">
           <Select options={documentTypes} />
@@ -103,9 +125,43 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
           <div className="flex justify-center">{confidencePercent}</div>
         </Form.Item>
       </div>
-      <Form.Item name="effective_date" label="Effective Date">
-        <Select options={dateOptions} />
+
+      <Form.Item label="Effective Date">
+        <Radio.Group
+          className="mb-1"
+          onChange={onEffectiveDateSelectionChange}
+          defaultValue={effectiveDateSelection}
+        >
+          <Radio value="list">From List</Radio>
+          <Radio value="custom">Custom</Radio>
+        </Radio.Group>
+
+        <Form.Item name="effective_date" noStyle preserve>
+          {effectiveDateSelection === 'list' && (
+            <Select
+              defaultValue={existsInList ? initialValues.effective_date : null}
+              options={dateOptions}
+              onChange={(value) => {
+                form.setFieldsValue({ effective_date: value });
+              }}
+            />
+          )}
+
+          {effectiveDateSelection === 'custom' && (
+            <DatePicker
+              className="flex"
+              defaultValue={moment(initialValues.effective_date)}
+              format={(value) => prettyDate(value.toDate())}
+              onChange={(value: any) => {
+                form.setFieldsValue({
+                  effective_date: value.utc().startOf('day').toISOString(),
+                });
+              }}
+            />
+          )}
+        </Form.Item>
       </Form.Item>
+
       <Form.Item
         name="automated_content_extraction"
         label="Automated Content Extraction"
