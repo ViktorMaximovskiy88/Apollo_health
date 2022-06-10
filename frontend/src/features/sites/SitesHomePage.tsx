@@ -20,7 +20,7 @@ import {
   useGetChangeLogQuery,
   useGetSitesQuery,
 } from './sitesApi';
-import { useRunBulkMutation } from '../site-scrape-tasks/siteScrapeTasksApi';
+import { useRunBulkMutation } from '../collections/siteScrapeTasksApi';
 
 import { SiteBreadcrumbs } from './SiteBreadcrumbs';
 import {

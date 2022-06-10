@@ -12,7 +12,7 @@ import {
 import { prettyDateFromISO, prettyDateDistance } from '../../common';
 import Title from 'antd/lib/typography/Title';
 
-export function ScrapesPage() {
+export function CollectionsPage() {
   const params = useParams();
   const siteId = params.siteId;
   const { data: site } = useGetSiteQuery(siteId);
