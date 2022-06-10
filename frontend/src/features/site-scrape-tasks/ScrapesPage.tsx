@@ -98,7 +98,7 @@ export function ScrapesPage() {
       title: 'Actions',
       key: 'actions',
       render: (task: SiteScrapeTask) =>
-        task.status === 'IN_PROGRESS' ? (
+        task.status === Status.InProgress || task.status === Status.Queued ? (
           <Button
             danger
             type="primary"
