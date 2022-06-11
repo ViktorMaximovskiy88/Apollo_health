@@ -17,7 +17,6 @@ import { UploadFile } from 'antd/lib/upload/interface';
 import { format, parseISO } from 'date-fns';
 
 import { ButtonLink } from '../../components/ButtonLink';
-import { prettyDate } from '../../common';
 
 export function SitesHomePage() {
     const { data: sites, refetch } = useGetSitesQuery(undefined, { pollingInterval: 5000 });
@@ -115,7 +114,7 @@ export function SitesHomePage() {
     }
     const onMenuSelect = async (key: string) => {
         const response:any = await runBulk(key);
-        if (response.data.scrapes_launched == 0) {
+        if (response.data.scrapes_launched === 0) {
             notification.error({
                 message: 'Whoops!',
                 description: "No sites were found!"

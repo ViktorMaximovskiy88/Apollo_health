@@ -1,4 +1,5 @@
 from datetime import datetime
+from beanie import PydanticObjectId
 from pydantic import BaseModel, HttpUrl
 from backend.common.models.base_document import BaseDocument
 
@@ -6,6 +7,12 @@ from backend.common.models.base_document import BaseDocument
 class ScrapeMethodConfiguration(BaseModel):
     document_extensions: list[str]
     url_keywords: list[str]
+    proxy_exclusions: list[PydanticObjectId] = []
+
+class UpdateScrapeMethodConfiguration(BaseModel):
+    document_extensions: list[str] | None = None
+    url_keywords: list[str] | None = None
+    proxy_exclusions: list[PydanticObjectId] | None = None
 
 
 class BaseUrl(BaseModel):
@@ -25,13 +32,13 @@ class NewSite(BaseModel):
 
 class UpdateSite(BaseModel):
     name: str | None = None
-    base_urls: list[HttpUrl] | None = None
+    base_urls: list[BaseUrl] | None = None
     scrape_method: str | None = None
     tags: list[str] | None = None
     cron: str | None = None
     disabled: bool | None = None
     last_run_time: datetime | None = None
-    scrape_method_configuration: ScrapeMethodConfiguration | None = None
+    scrape_method_configuration: UpdateScrapeMethodConfiguration | None = None
 
 
 class Site(BaseDocument, NewSite):

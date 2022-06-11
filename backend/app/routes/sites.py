@@ -1,20 +1,19 @@
 import io
-import pymongo
 import urllib.parse
 import zipfile
 from beanie import PydanticObjectId
 from beanie.operators import ElemMatch
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
 from openpyxl import load_workbook
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 
 from backend.common.models.site import (
+    BaseUrl,
     NewSite,
     ScrapeMethodConfiguration,
     Site,
     UpdateSite,
 )
-from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.app.utils.logger import (
     Logger,
@@ -58,7 +57,7 @@ async def check_url(
     current_site: str | None = Query(default=None, alias="currentSite"),
     current_user: User = Depends(get_current_user),
 ):
-    site: Site = await Site.find_one(
+    site: Site | None = await Site.find_one(
         ElemMatch(Site.base_urls, {"url": urllib.parse.unquote(url)}),
         Site.id != PydanticObjectId(current_site),
         Site.disabled != True
@@ -100,7 +99,7 @@ async def create_site(
 def get_lines_from_xlsx(file: UploadFile):
     wb = load_workbook(io.BytesIO(file.file.read()))
     sheet = wb[wb.sheetnames[0]]
-    for i, line in enumerate(sheet.values):
+    for i, line in enumerate(sheet.values): # type: ignore
         if i == 0:
             continue  # skip header
         yield line
@@ -126,18 +125,25 @@ async def upload_sites(
     current_user: User = Depends(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    new_sites = []
+    new_sites: list[Site] = []
     for line in get_lines_from_upload(file):
-        name, base_urls, scrape_method, tags, cron = line  # type: ignore
-        tags = tags.split(",") if tags else []
-        base_urls = base_urls.split(",") if base_urls else []
+        name: str
+        base_url_str: str
+        scrape_method: str
+        tag_str: str
+        cron: str
+        name, base_url_str, scrape_method, tag_str, cron = line # type: ignore
+        tags = tag_str.split(",") if tag_str else []
+        base_urls = base_url_str.split(",") if base_url_str else []
         scrape_method_configuration = ScrapeMethodConfiguration(
-            document_extensions=[], url_keywords=[]
+            document_extensions=[],
+            url_keywords=[],
+            proxy_exclusions=[],
         )
 
         if await Site.find_one(Site.base_urls == base_urls):
             continue
-
+        base_urls = list(map(lambda url: BaseUrl(url=HttpUrl(url, scheme='https')), base_urls))
         new_site = Site(
             name=name,
             base_urls=base_urls,
