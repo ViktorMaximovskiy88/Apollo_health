@@ -49,6 +49,13 @@ export const siteScrapeTasksApi = createApi({
       query: (id) => `/change-log/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
     }),
+    runBulk: builder.mutation<SiteScrapeTask, string>({
+      query: (type) => ({
+        url: `/site-scrape-tasks/bulk-run?type=${type}`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_r, _e, id) => [{ type: 'SiteScrapeTask', id }],
+    })
   }),
 });
 
@@ -58,4 +65,5 @@ export const {
   useUpdateSiteScrapeTaskMutation,
   useDeleteSiteScrapeTaskMutation,
   useGetChangeLogQuery,
+  useRunBulkMutation
 } = siteScrapeTasksApi;

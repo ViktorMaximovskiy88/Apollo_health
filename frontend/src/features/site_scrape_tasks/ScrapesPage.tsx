@@ -7,12 +7,7 @@ import {
   useGetScrapeTasksForSiteQuery,
   useRunSiteScrapeTaskMutation,
 } from './siteScrapeTasksApi';
-import {
-  format,
-  formatDistance,
-  formatDistanceToNow,
-  parseISO,
-} from 'date-fns';
+import { prettyDateFromISO, prettyDateDistance } from '../../common';
 import Title from 'antd/lib/typography/Title';
 
 export function ScrapesPage() {
@@ -32,7 +27,7 @@ export function ScrapesPage() {
       title: 'Start Time',
       key: 'start_time',
       render: (task: SiteScrapeTask) => {
-        return <>{format(parseISO(task.queued_time), 'yyyy-MM-dd p')}</>;
+        return prettyDateFromISO(task.queued_time);
       },
     },
     {
@@ -40,19 +35,14 @@ export function ScrapesPage() {
       key: 'stop_time',
       render: (task: SiteScrapeTask) => {
         if (task.end_time)
-          return <>{format(parseISO(task.end_time), 'yyyy-MM-dd p')}</>;
+          return prettyDateFromISO(task.end_time);
       },
     },
     {
       title: 'Elapsed',
       key: 'elapsed',
       render: (task: SiteScrapeTask) => {
-        const startTime = parseISO(task.queued_time);
-        if (task.end_time) {
-          return formatDistance(startTime, parseISO(task.end_time));
-        } else {
-          return formatDistanceToNow(startTime);
-        }
+        return prettyDateDistance(task.queued_time, task.end_time)
       },
     },
     {
@@ -74,11 +64,18 @@ export function ScrapesPage() {
       title: 'Document Count',
       key: 'documents_found',
       render: (task: SiteScrapeTask) => {
+        const linksFound = `(${task.links_found} Links)`;
+        const showLinksFounds =
+          task.links_found > 0 && task.documents_found !== task.links_found;
+        const docsCount = `${task.documents_found} Documents ${
+          showLinksFounds ? linksFound : ''
+        }`;
+
         return (
           <ButtonLink
             to={`/sites/${task.site_id}/documents?scrape_task_id=${task._id}`}
           >
-            {task.documents_found} Documents
+            {docsCount}
           </ButtonLink>
         );
       },

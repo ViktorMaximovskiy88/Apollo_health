@@ -10,14 +10,20 @@ from backend.common.core.config import config
 
 class DocumentStorageClient:
     def __init__(self):
-        self.s3 = boto3.resource(
-            "s3",
-            endpoint_url=settings.endpoint_url,
-            aws_access_key_id=config["AWS_ACCESS_KEY_ID"],
-            aws_secret_access_key=config["AWS_SECRET_ACCESS_KEY"],
-            config=Config(signature_version="s3v4"),
-            region_name=config["AWS_REGION"],
-        )
+        
+        if config["is_local"]:
+            self.s3 = boto3.resource(
+                "s3",
+                endpoint_url=settings.endpoint_url,
+                aws_access_key_id = config["AWS_ACCESS_KEY_ID"],
+                aws_secret_access_key = config["AWS_SECRET_ACCESS_KEY"],
+                config=Config(signature_version="s3v4"),
+                region_name = config["AWS_REGION"]
+            )
+        else:
+            self.s3 = boto3.resource(
+                "s3"
+            )
 
         self.bucket = self.s3.Bucket(settings.document_bucket)
 

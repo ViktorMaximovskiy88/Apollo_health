@@ -19,7 +19,9 @@ class RetrievedDocument(BaseDocument):
     context_metadata: dict = {}
     effective_date: datetime | None = None
     document_type: str | None = None
+    doc_type_confidence: float | None = None
     identified_dates: list[datetime] = []
+    base_url: str | None = None
 
     automated_content_extraction: bool = False
     automated_content_extraction_class: str | None = None
@@ -39,6 +41,7 @@ class UpdateRetrievedDocument(BaseModel):
     disabled: bool | None = None
     name: str | None = None
     document_type: str | None = None
+    doc_type_confidence: float | None = None
     metadata: dict | None = None
     context_metadata: dict | None = None
 

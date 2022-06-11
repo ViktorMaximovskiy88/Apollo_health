@@ -30,10 +30,10 @@ class ScrapeWorker:
         self.browser = browser
         self.scrape_task = scrape_task
         self.site = site
-        self.seen_urls = []
+        self.seen_urls = set()
         self.rate_limiter = RateLimiter()
         self.doc_client = DocumentStorageClient()
-        self.downloader = DocDownloader(playwright, self.seen_urls, self.rate_limiter)
+        self.downloader = DocDownloader(playwright, self.rate_limiter)
         self.logger = Logger()
         self.user = None
 
@@ -67,21 +67,21 @@ class ScrapeWorker:
         parsed = urlparse(url)
         if parsed.scheme not in ["https", "http"]:  # mailto, tel, etc
             return True
-        if url in self.seen_urls:  # skip if we've already seen this url
-            return True
         return False
+    
+    def url_not_seen(self, url):
+        # skip if we've already seen this url
+        if url in self.seen_urls:
+            return False
+        self.seen_urls.add(url)
+        return True
 
     def select_title(self, metadata, url):
         filename_no_ext = pathlib.Path(os.path.basename(url)).with_suffix("")
         title = metadata.get("Title") or metadata.get("Subject") or str(filename_no_ext)
         return title
 
-    async def attempt_download(self, base_url: str, link_handle: ElementHandle):
-        url, context_metadata = await self.extract_url_and_context_metadata(
-            base_url, link_handle
-        )
-        if self.skip_url(url):
-            return
+    async def attempt_download(self, base_url, url, context_metadata ):
 
         async for (temp_path, checksum) in self.downloader.download_to_tempfile(url):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
@@ -102,7 +102,7 @@ class ScrapeWorker:
             dates = extract_dates(text)
             effective_date = select_effective_date(dates)
             title = self.select_title(metadata, url)
-            document_type, _ = classify_doc_type(text)
+            document_type, confidence = classify_doc_type(text)
 
             now = datetime.now()
             datelist = list(dates.keys())
@@ -113,6 +113,7 @@ class ScrapeWorker:
                     context_metadata=context_metadata,
                     effective_date=effective_date,
                     document_type=document_type,
+                    doc_type_confidence=confidence,
                     metadata=metadata,
                     identified_dates=datelist,
                     scrape_task_id=self.scrape_task.id,
@@ -126,6 +127,7 @@ class ScrapeWorker:
                 document = RetrievedDocument(
                     name=title,
                     document_type=document_type,
+                    doc_type_confidence=confidence,
                     effective_date=effective_date,
                     identified_dates=list(dates.keys()),
                     scrape_task_id=self.scrape_task.id,
@@ -136,6 +138,7 @@ class ScrapeWorker:
                     url=url,
                     context_metadata=context_metadata,
                     metadata=metadata,
+                    base_url=base_url
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
 
@@ -145,7 +148,7 @@ class ScrapeWorker:
         context = await self.browser.new_context(proxy=proxy_settings())  # type: ignore
         page = await context.new_page()
         await stealth_async(page)
-        await page.goto(base_url, wait_until="networkidle")
+        await page.goto(base_url, wait_until="domcontentloaded")#await page.goto(base_url, wait_until="networkidle") 
         try:
             yield page
         finally:
@@ -169,5 +172,12 @@ class ScrapeWorker:
                 print(f"Found {len(link_handles)} links")
                 downloads = []
                 for link_handle in link_handles:
-                    downloads.append(self.attempt_download(base_url.url, link_handle))
+                    url, context_metadata = await self.extract_url_and_context_metadata(base_url.url, link_handle)       
+        
+                    #check that think link is unique and that we should not skip it
+                    if not self.skip_url(url) and self.url_not_seen(url):
+                        await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
+                        downloads.append(self.attempt_download(base_url.url, url, context_metadata))
                 await asyncio.gather(*downloads)
+            
+                
