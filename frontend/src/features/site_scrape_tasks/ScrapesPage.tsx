@@ -34,15 +34,14 @@ export function ScrapesPage() {
       title: 'Stop Time',
       key: 'stop_time',
       render: (task: SiteScrapeTask) => {
-        if (task.end_time)
-          return prettyDateFromISO(task.end_time);
+        if (task.end_time) return prettyDateFromISO(task.end_time);
       },
     },
     {
       title: 'Elapsed',
       key: 'elapsed',
       render: (task: SiteScrapeTask) => {
-        return prettyDateDistance(task.queued_time, task.end_time)
+        return prettyDateDistance(task.queued_time, task.end_time);
       },
     },
     {
