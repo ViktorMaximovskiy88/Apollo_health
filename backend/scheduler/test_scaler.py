@@ -1,5 +1,3 @@
-import pytest
-
 from backend.scheduler.main import get_new_cluster_size
 
 def test_scaler_increase():

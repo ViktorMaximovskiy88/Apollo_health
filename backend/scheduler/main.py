@@ -1,18 +1,17 @@
 import asyncio
+from functools import cache
 from pathlib import Path
 import sys
-from uuid import uuid4
 from beanie import PydanticObjectId
+import boto3
 import typer
 
 from datetime import datetime
 
-from beanie.odm.operators.find.comparison import In, NotIn
-from beanie.odm.operators.update.general import Set
-
-from backend.common.models.user import User
-
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
+
+from backend.common.core.config import is_local
+from backend.common.models.user import User
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.app.utils.logger import Logger
 
@@ -92,9 +91,38 @@ async def start_scheduler():
 
         await asyncio.sleep(5)
 
+@cache
+def cluster_arn() -> str:
+    ecs = boto3.client("ecs")
+    clusters = ecs.list_clusters()
+    return clusters['clusterArns'][0]
 
-async def update_cluster_size(size: int | None):
+@cache
+def scrapeworker_service_arn() -> str:
+    ecs = boto3.client("ecs")
+    services = ecs.list_services(cluster=cluster_arn())
+    arns = services['serviceArns']
+    return next(filter(lambda arn: 'scrapeworker' in arn, arns))
+
+def determine_current_instance_count(service_tag: str):
+    ecs = boto3.client("ecs")
+    services = ecs.describe_services(
+        cluster=cluster_arn(),
+        services=[scrapeworker_service_arn()]
+    )
+    return services['services'][0]['desiredCount']
+
+def update_cluster_size(size: int | None):
     print("Settings cluster size to", size)
+
+    ecs_client = boto3.client("ecs")
+    response = ecs_client.update_service(
+        cluster=cluster_arn(),
+        service=scrapeworker_service_arn(),
+        desiredCount=size,
+    )
+    print(response)
+
 
 def get_new_cluster_size(queue_size, active_workers, tasks_per_worker):
     workers_needed = queue_size // tasks_per_worker
@@ -105,18 +133,26 @@ def get_new_cluster_size(queue_size, active_workers, tasks_per_worker):
     return max(workers_needed, 1) # never scale to zero
 
 async def start_scaler():
+    if is_local:
+        typer.secho(f"Cannot run scaler locally", fg=typer.colors.RED)
+        return
+
     while True:
-        queue_size = await SiteScrapeTask.find({ SiteScrapeTask.status: 'QUEUED' }).count()
-        active_workers = 10 # some boto3 call for size of cluster
+        queue_size = await SiteScrapeTask.find(SiteScrapeTask.status == 'QUEUED').count()
+        active_workers = determine_current_instance_count('scrapeworker')
         tasks_per_worker = 5 # some setting
         new_cluster_size = get_new_cluster_size(queue_size, active_workers, tasks_per_worker)
-        await update_cluster_size(new_cluster_size)
+        update_cluster_size(new_cluster_size)
         await asyncio.sleep(30)
+
+async def start_scheduler_and_scaler():
+    await init_db()
+    await asyncio.gather(start_scaler(), start_scheduler())
 
 @app.command()
 def start_worker():
     typer.secho(f"Starting Scheduler", fg=typer.colors.GREEN)
-    asyncio.gather(start_scheduler(), start_scaler())
+    asyncio.run(start_scheduler_and_scaler())
 
 
 if __name__ == "__main__":

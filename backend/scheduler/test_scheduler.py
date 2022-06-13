@@ -1,4 +1,3 @@
-from tkinter import simpledialog
 from beanie import PydanticObjectId
 from pydantic import HttpUrl
 import pytest
