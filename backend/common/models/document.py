@@ -45,6 +45,7 @@ class UpdateRetrievedDocument(BaseModel):
     doc_type_confidence: float | None = None
     metadata: dict | None = None
     context_metadata: dict | None = None
+    lang_code: LangCode | None = None
 
     automated_content_extraction: bool | None = None
     automated_content_extraction_class: str | None = None
