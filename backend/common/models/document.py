@@ -2,7 +2,7 @@ from datetime import datetime
 from beanie import PydanticObjectId
 from pydantic import BaseModel
 from backend.common.models.base_document import BaseDocument
-
+from backend.common.core.enums import LangCode
 
 class RetrievedDocument(BaseDocument):
     site_id: PydanticObjectId | None = None
@@ -22,6 +22,7 @@ class RetrievedDocument(BaseDocument):
     doc_type_confidence: float | None = None
     identified_dates: list[datetime] = []
     base_url: str | None = None
+    lang_code: LangCode | None = None
 
     automated_content_extraction: bool = False
     automated_content_extraction_class: str | None = None
