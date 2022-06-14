@@ -24,12 +24,16 @@ resource "aws_ecs_task_definition" "scrapeworker" {
       command = [
         "/bin/bash",
         "-lc",
-        ". ./venv/bin/activate && python scrapeworker/main.py"
+        ". ./venv/bin/activate && exec python scrapeworker/main.py"
       ]
       environment = [
         {
           name = "ENV_TYPE"
           value = var.environment
+        },
+        {
+          name = "PYTHONUNBUFFERED"
+          value = "1"
         },
         {
           name = "S3_ENDPOINT_URL"
