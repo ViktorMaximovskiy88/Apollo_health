@@ -13,9 +13,11 @@ class DocDownloader():
     def __init__(self, playwright: Playwright,  rate_limiter: RateLimiter):
         self.rate_limiter = rate_limiter
         self.playwright = playwright
-        # self.redis = redis.from_url(
-            # config["REDIS_URL"], password=config["REDIS_PASSWORD"]
-        # )
+        self.redis = redis.from_url(
+            config["REDIS_URL"],
+            username='default',
+            password=config["REDIS_PASSWORD"],
+        )
         pass
 
     def skip_based_on_response(self, response: APIResponse):
@@ -67,7 +69,7 @@ class DocDownloader():
 
 
     async def download_to_tempfile(self, url: str):
-        body = None # self.redis.get(url)
+        body = self.redis.get(url)
         if body == "DISCARD":
             return
 
@@ -77,10 +79,10 @@ class DocDownloader():
             print(f"Attempting download {url}")
             async with self.download_url(url) as response:
                 if self.skip_based_on_response(response):
-                    # self.redis.set(url, "DISCARD", ex=60 * 60 * 1)  # 1 hour
+                    self.redis.set(url, "DISCARD", ex=60 * 60 * 1)  # 1 hour
                     return
                 body = await response.body()
-                # self.redis.set(url, body, ex=60 * 60 * 1)  # 1 hour
+                self.redis.set(url, body, ex=60 * 60 * 1)  # 1 hour
 
         async with self.tempfile_path(url, body) as (temp_path, hash):
             yield temp_path, hash
