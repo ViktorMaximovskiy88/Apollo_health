@@ -4,7 +4,7 @@ export interface BaseDocument {
 
 export enum Status {
   Queued = 'QUEUED',
-  PENDING = 'Pending',
+  Pending = 'PENDING',
   InProgress = 'IN_PROGRESS',
   Finished = 'FINISHED',
   Canceling = 'CANCELING',
