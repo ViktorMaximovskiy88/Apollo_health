@@ -1,5 +1,4 @@
 from backend.common.db.init import get_motor_db, get_motor_client
-from backend.common.db.settings import settings
 from beanie.migrations.database import DBHandler
 from beanie.migrations.runner import MigrationNode
 from beanie.migrations.models import RunningMode, RunningDirections
