@@ -12,11 +12,13 @@ import pymongo
 from pymongo import ReturnDocument
 from beanie.odm.operators.update.general import Set
 
+from backend.scrapeworker.downloader import CancelationException
+
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 from backend.common.db.init import init_db
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.scrapeworker.scrape_worker import ScrapeWorker, CancellationException
+from backend.scrapeworker.scrape_worker import ScrapeWorker
 
 app = typer.Typer()
 
@@ -142,7 +144,7 @@ async def worker_fn(worker_id, playwright, browser):
             await worker.run_scrape()
             task.cancel()
             await log_success(scrape_task, site)
-        except CancellationException as ex:
+        except CancelationException as ex:
             await log_cancellation(scrape_task, site, ex)
         except Exception as ex:
             await log_failure(scrape_task, site, ex)

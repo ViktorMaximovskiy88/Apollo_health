@@ -11,7 +11,7 @@ from backend.scrapeworker.proxy import proxy_settings
 from backend.scrapeworker.rate_limiter import RateLimiter
 
 
-class CancellationException(Exception):
+class CancelationException(Exception):
     pass
 
 
@@ -30,6 +30,14 @@ class DocDownloader:
     def skip_based_on_response(self, response: APIResponse):
         if not response.ok:
             return True
+        return False
+
+    async def task_canceled(self):
+        task = await SiteScrapeTask.find_one(SiteScrapeTask.id == self.scrape_task_id)
+        if task.status == "CANCELED":
+            return True
+        if task.status == "CANCELING":
+            raise CancelationException("Task was canceled.")
         return False
 
     @asynccontextmanager
@@ -54,14 +62,8 @@ class DocDownloader:
         async with self.playwright_request_context() as context:
             response: APIResponse | None = None
             async for attempt in self.rate_limiter.attempt_with_backoff():
-                task = await SiteScrapeTask.find_one(
-                    SiteScrapeTask.id == self.scrape_task_id
-                )
-                if task.status == "CANCELED":
+                if await self.task_canceled():
                     return
-                if task.status == "CANCELING":
-                    raise CancellationException("Task was cancelled.")
-
                 with attempt:
                     response = await context.get(url)
             if not response:

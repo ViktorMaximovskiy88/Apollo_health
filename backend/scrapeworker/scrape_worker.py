@@ -13,7 +13,7 @@ from playwright_stealth import stealth_async
 from backend.common.models.user import User
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.detect_lang import detect_lang
-from backend.scrapeworker.downloader import DocDownloader, CancellationException
+from backend.scrapeworker.downloader import DocDownloader, CancelationException
 from backend.scrapeworker.effective_date import extract_dates, select_effective_date
 from backend.scrapeworker.proxy import proxy_settings
 from backend.scrapeworker.rate_limiter import RateLimiter
@@ -86,7 +86,7 @@ class ScrapeWorker:
 
         task = await SiteScrapeTask.find_one(SiteScrapeTask.id == self.scrape_task.id)
         if task.status == "CANCELING":
-            raise CancellationException("Task was cancelled.")
+            raise CancelationException("Task was canceled.")
 
         async for (temp_path, checksum) in self.downloader.download_to_tempfile(url):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
