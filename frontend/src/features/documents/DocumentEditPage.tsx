@@ -46,8 +46,8 @@ export function DocumentEditPage() {
                   plugins={[defaultLayoutPluginInstance]}
                 />
               </Tabs.TabPane>
-              <Tabs.TabPane tab="Metadata" key="metadata">
-                <Table dataSource={dataSource} columns={columns} />
+              <Tabs.TabPane tab="PDF Metadata" key="metadata">
+                <Table dataSource={dataSource} columns={columns} pagination={false}  />
               </Tabs.TabPane>
             </Tabs>
           </div>

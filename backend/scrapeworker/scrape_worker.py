@@ -15,6 +15,7 @@ from playwright.async_api import ElementHandle, Browser, ProxySettings
 from playwright_stealth import stealth_async
 from backend.common.models.user import User
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
+from backend.scrapeworker.detect_lang import detect_lang
 from backend.scrapeworker.downloader import DocDownloader
 from backend.scrapeworker.effective_date import extract_dates, select_effective_date
 from backend.scrapeworker.proxy import convert_proxies_to_proxy_settings
@@ -110,6 +111,7 @@ class ScrapeWorker:
             effective_date = select_effective_date(dates)
             title = self.select_title(metadata, url)
             document_type, confidence = classify_doc_type(text)
+            lang_code = detect_lang(text)
 
             now = datetime.now()
             datelist = list(dates.keys())
@@ -145,7 +147,8 @@ class ScrapeWorker:
                     url=url,
                     context_metadata=context_metadata,
                     metadata=metadata,
-                    base_url=base_url
+                    base_url=base_url,
+                    lang_code=lang_code,
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
 

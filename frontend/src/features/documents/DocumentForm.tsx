@@ -75,6 +75,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     automated_content_extraction_class: doc.automated_content_extraction_class,
     url: doc.url,
     base_url: doc.base_url,
+    lang_code: doc.lang_code,
   };
 
   const documentTypes = [
@@ -86,6 +87,12 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     { value: 'Regulatory Document', label: 'Regulatory Document' },
     { value: 'Formulary', label: 'Formulary' },
     { value: 'Internal Reference', label: 'Internal Reference' },
+  ];
+
+  const languageCodes = [
+    { value: 'en', label: 'English' },
+    { value: 'es', label: 'Spanish' },
+    { value: 'other', label: 'Other' },
   ];
 
   const confidencePercent = docTypeConfidence
@@ -160,6 +167,10 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
             />
           )}
         </Form.Item>
+      </Form.Item>
+
+      <Form.Item name="lang_code" label="Language">
+        <Select options={languageCodes} />
       </Form.Item>
 
       <Form.Item
