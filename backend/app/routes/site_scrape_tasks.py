@@ -137,13 +137,15 @@ async def cancel_scrape_task(
     target: SiteScrapeTask = Depends(get_target),
     current_user: User = Depends(get_current_user),
 ):
-    acquired = await SiteScrapeTask.get_motor_collection().find_one_and_update(
-        {"_id": target.id, "status": "QUEUED"},
-        {"$set": {"status": "CANCELED"}},
-        return_document=ReturnDocument.AFTER,
+    canceled_queued_task = (
+        await SiteScrapeTask.get_motor_collection().find_one_and_update(
+            {"_id": target.id, "status": "QUEUED"},
+            {"$set": {"status": "CANCELED"}},
+            return_document=ReturnDocument.AFTER,
+        )
     )
-    if acquired:
-        scrape_task = SiteScrapeTask.parse_obj(acquired)
+    if canceled_queued_task:
+        scrape_task = SiteScrapeTask.parse_obj(canceled_queued_task)
         typer.secho(f"Canceled Task {scrape_task.id} ", fg=typer.colors.BLUE)
         return scrape_task
 
