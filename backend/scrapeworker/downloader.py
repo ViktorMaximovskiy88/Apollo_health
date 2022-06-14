@@ -6,6 +6,7 @@ import aiofiles
 from random import choice
 from backend.common.core.config import config
 from playwright.async_api import APIResponse, Playwright, ProxySettings
+from backend.common.models.proxy import Proxy
 
 from backend.scrapeworker.rate_limiter import RateLimiter
 
@@ -43,12 +44,13 @@ class DocDownloader():
             await context.dispose()
 
     @asynccontextmanager
-    async def download_url(self, url, proxies: list[ProxySettings | None] = []):
+    async def download_url(self, url, proxies: list[tuple[Proxy | None, ProxySettings | None]] = []):
         async for attempt in self.rate_limiter.attempt_with_backoff():
             with attempt:
-                proxy = choice(proxies)
+                proxy, proxy_settings = choice(proxies)
+                print(f"Using proxy {proxy and proxy.name}")
                 response: APIResponse | None = None
-                async with self.playwright_request_context(proxy) as context:
+                async with self.playwright_request_context(proxy_settings) as context:
                     response = await context.get(url)
                     if not response:
                         raise Exception(f"Failed to download url {url}")
@@ -69,7 +71,7 @@ class DocDownloader():
             yield temp.name, hash.hexdigest()
 
 
-    async def download_to_tempfile(self, url: str, proxies: list[ProxySettings | None] = []):
+    async def download_to_tempfile(self, url: str, proxies: list[tuple[Proxy | None, ProxySettings | None]] = []):
         body = self.redis.get(url)
         if body == "DISCARD":
             return

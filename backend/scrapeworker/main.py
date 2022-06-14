@@ -110,13 +110,14 @@ async def worker_fn(worker_id, playwright, browser):
         )
 
         worker = ScrapeWorker(playwright, browser, scrape_task, site)
+        task = asyncio.create_task(heartbeat_task(scrape_task))
         try:
-            task = asyncio.create_task(heartbeat_task(scrape_task))
             await worker.run_scrape()
-            task.cancel()
             await log_success(scrape_task, site)
         except Exception as ex:
             await log_failure(scrape_task, site, ex)
+        finally:
+            task.cancel()
 
 
 async def start_worker_async(worker_id):
