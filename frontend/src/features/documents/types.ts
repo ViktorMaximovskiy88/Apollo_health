@@ -23,6 +23,7 @@ export interface RetrievedDocument extends BaseDocument {
   effective_date?: string;
   identified_dates?: string[];
   base_url: string;
+  lang_code: string;
 
   automated_content_extraction: boolean;
   automated_content_extraction_class: string;

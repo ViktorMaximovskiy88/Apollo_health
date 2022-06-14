@@ -33,19 +33,37 @@ export function prettyDateDistance(
 ): string {
   const startDateTime = DateTime.fromISO(startDate);
   const endDateTime = endDate ? DateTime.fromISO(endDate) : DateTime.now();
+
+  // precision
   const duration = endDateTime.diff(startDateTime, [
     'hours',
     'minutes',
     'seconds',
+    'milliseconds',
   ]);
-  return stripZeroUnitsFromDuration(duration).toHuman();
+
+  // display format
+  return stripZeroUnitsFromDuration(duration, [
+    'hours',
+    'minutes',
+    'seconds',
+  ]).toHuman();
 }
 
-// Helper func to strip zero value units
-function stripZeroUnitsFromDuration(duration: Duration): Duration {
+/**
+ * Helper func to strip zero value units and only show units whitelisted
+ * @param duration {Duration}
+ * @param displayUnits {string[]} units that we want to display
+ * @returns
+ */
+function stripZeroUnitsFromDuration(
+  duration: Duration,
+  displayUnits: string[]
+): Duration {
   const nonZeroUnits: any = {};
+  const displayUnitsSet = new Set(displayUnits);
   for (const [unit, value] of Object.entries(duration.toObject())) {
-    if (value > 0) {
+    if (value > 0 && displayUnitsSet.has(unit)) {
       nonZeroUnits[unit] = value;
     }
   }
