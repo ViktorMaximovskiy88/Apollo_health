@@ -4,6 +4,7 @@ from backend.common.core.enums import LangCode
 # detects languages we care about
 # in the event of an unsupported lang or if we cant detect, we set to 'other'
 def detect_lang(text: str) -> LangCode:
+    return LangCode.Other
     lang_codes = set(code.value for code in LangCode)
     _is_reliable, _bytes_found, details = cld2.detect(text)
 
