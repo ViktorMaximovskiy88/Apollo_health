@@ -128,6 +128,7 @@ class ScrapeWorker:
                     scrape_task_id=self.scrape_task.id,
                     last_seen=now,
                     name=title,
+                    lang_code=lang_code,
                 )
                 await update_and_log_diff(
                     self.logger, await self.get_user(), document, updates
