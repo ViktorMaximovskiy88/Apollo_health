@@ -112,6 +112,7 @@ class ScrapeWorker:
             title = self.select_title(metadata, url)
             document_type, confidence = classify_doc_type(text)
             lang_code = detect_lang(text)
+            print(f"{url} as {lang_code}")
 
             now = datetime.now()
             datelist = list(dates.keys())

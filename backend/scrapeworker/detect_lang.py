@@ -1,4 +1,4 @@
-import langid
+import cld3
 import logging
 from backend.common.core.enums import LangCode
 
@@ -8,9 +8,9 @@ from backend.common.core.enums import LangCode
 def detect_lang(text: str) -> LangCode:
     try:
         lang_codes = set(code.value for code in LangCode)
-        lang_code, _ = langid.classify(text)
+        language, probability, is_reliable, proportion = cld3.get_language(text)
 
-        return LangCode(lang_code) if lang_code in lang_codes else LangCode.Other
+        return LangCode(language) if language in lang_codes else LangCode.Other
     except Exception as ex:
         logging.error(ex)
         return LangCode.Unknown

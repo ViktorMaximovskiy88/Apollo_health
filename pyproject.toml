@@ -5,7 +5,7 @@ description = ""
 authors = ["Matthew Brown <mbrown@bhei.com>"]
 
 [tool.poetry.dependencies]
-python = "3.10"
+python = "3.10.3"
 fastapi = {extras = ["all"], version = "^0.75.0"}
 python-decouple = "^3.6"
 passlib = "^1.7.4"
@@ -31,7 +31,7 @@ scikit-learn = "^1.1.0"
 scipy = ">=1.8.0"
 openpyxl = "^3.0.9"
 async-lru = "^1.0.3"
-langid = "^1.1.6"
+pycld3 = "^0.22"
 
 
 [tool.poetry.dev-dependencies]
