@@ -37,10 +37,10 @@ def proxy_settings_internal(proxies: list[Proxy]) -> list[ProxySettings | None]:
     for proxy in proxies:
         if settings := extract_proxy_creds_from_env(proxy):
             proxy_settings.append(settings)
-    
+
     if not proxy_settings:
         raise ProxyCredentailException(f"No credentials for valid proxies of site")
-    
+
     return proxy_settings
 
 def convert_proxies_to_proxy_settings(proxies: list[Proxy]) -> list[ProxySettings | None]:
