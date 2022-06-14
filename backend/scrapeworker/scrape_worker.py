@@ -1,22 +1,24 @@
 import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime
+from random import choice
+from async_lru import alru_cache
 import os
 import pathlib
 from beanie.odm.operators.update.general import Inc
 from urllib.parse import urlparse, urljoin
+from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from playwright.async_api import ElementHandle, Browser
+from playwright.async_api import ElementHandle, Browser, ProxySettings
 from playwright_stealth import stealth_async
 from backend.common.models.user import User
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.detect_lang import detect_lang
 from backend.scrapeworker.downloader import DocDownloader
 from backend.scrapeworker.effective_date import extract_dates, select_effective_date
-from backend.scrapeworker.proxy import proxy_settings
-from backend.scrapeworker.rate_limiter import RateLimiter
+from backend.scrapeworker.proxy import convert_proxies_to_proxy_settings
 
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
@@ -32,18 +34,23 @@ class ScrapeWorker:
         self.scrape_task = scrape_task
         self.site = site
         self.seen_urls = set()
-        self.rate_limiter = RateLimiter()
         self.doc_client = DocumentStorageClient()
-        self.downloader = DocDownloader(playwright, self.rate_limiter)
+        self.downloader = DocDownloader(playwright)
         self.logger = Logger()
-        self.user = None
 
-    async def get_user(self):
-        if not self.user:
-            self.user = await User.by_email("admin@mmitnetwork.com")
-        if not self.user:
+    @alru_cache
+    async def get_user(self) -> User:
+        user = await User.by_email("admin@mmitnetwork.com")
+        if not user:
             raise Exception("No user found")
-        return self.user
+        return user
+
+    @alru_cache
+    async def get_proxy_settings(self) -> list[ProxySettings | None]:
+        proxies = await Proxy.find_all().to_list()
+        proxy_exclusions = self.site.scrape_method_configuration.proxy_exclusions
+        valid_proxies = [proxy for proxy in proxies if proxy.id not in proxy_exclusions]
+        return convert_proxies_to_proxy_settings(valid_proxies)
 
     async def extract_url_and_context_metadata(
         self, base_url: str, link_handle: ElementHandle
@@ -82,9 +89,9 @@ class ScrapeWorker:
         title = metadata.get("Title") or metadata.get("Subject") or str(filename_no_ext)
         return title
 
-    async def attempt_download(self, base_url, url, context_metadata ):
-
-        async for (temp_path, checksum) in self.downloader.download_to_tempfile(url):
+    async def attempt_download(self, base_url, url, context_metadata):
+        proxies = await self.get_proxy_settings()
+        async for (temp_path, checksum) in self.downloader.download_to_tempfile(url, proxies):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
             dest_path = f"{checksum}.pdf"
             document = None
@@ -149,7 +156,8 @@ class ScrapeWorker:
     @asynccontextmanager
     async def playwright_context(self, base_url: str):
         print(f"Creating context for {base_url}")
-        context = await self.browser.new_context(proxy=proxy_settings())  # type: ignore
+        proxy = choice(await self.get_proxy_settings())
+        context = await self.browser.new_context(proxy=proxy) # type: ignore
         page = await context.new_page()
         await stealth_async(page)
         await page.goto(base_url, wait_until="domcontentloaded")#await page.goto(base_url, wait_until="networkidle") 

@@ -21,11 +21,11 @@ class RateLimiter:
     def increase_wait(self):
         print('increased_wait', self.wait_between_requests)
         if self.wait_between_requests < 64:
-            self.wait_between_requests *= 2
+            self.wait_between_requests *= 1.5
 
     def decrease_wait(self):
         if self.wait_between_requests > 1:
-            self.wait_between_requests *= 0.9
+            self.wait_between_requests /= 1.5
 
     async def attempt_with_backoff(self):
         """
