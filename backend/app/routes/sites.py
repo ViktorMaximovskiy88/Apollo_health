@@ -55,12 +55,12 @@ class ActiveUrlResponse(BaseModel):
 @router.get("/active-url", response_model=ActiveUrlResponse)
 async def check_url(
     url: str,
-    current_site: str | None = Query(default=None, alias="currentSite"),
+    current_site: PydanticObjectId | None = Query(default=None, alias="currentSite"),
     current_user: User = Depends(get_current_user),
 ):
-    site: Site = await Site.find_one(
+    site = await Site.find_one(
         ElemMatch(Site.base_urls, {"url": urllib.parse.unquote(url)}),
-        Site.id != PydanticObjectId(current_site),
+        Site.id != current_site,
         Site.disabled != True
     )
 
