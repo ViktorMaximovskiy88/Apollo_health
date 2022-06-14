@@ -1,4 +1,5 @@
-import { Layout, Menu } from 'antd';
+import { useEffect } from 'react';
+import { Layout, Menu, Avatar } from 'antd';
 import {
   Link,
   Navigate,
@@ -8,6 +9,8 @@ import {
   useLocation,
   useParams,
 } from 'react-router-dom';
+
+import { withAuthenticationRequired, User, useAuth0 } from '@auth0/auth0-react';
 import { DocumentsHomePage } from './features/documents/DocumentsHomePage';
 import { DocumentEditPage } from './features/documents/DocumentEditPage';
 import { ScrapesPage } from './features/site_scrape_tasks/ScrapesPage';
@@ -23,6 +26,7 @@ import { DocumentsPage } from './features/sites/DocumentsPage';
 import { ExtractionsPage } from './features/extractions/ExtractionsPage';
 import { DocExtractionPage } from './features/extractions/DocExtractionPage';
 import { ExtractionEditPage } from './features/extractions/ExtractionEditPage';
+import useAccessToken from './app/use-access-token';
 
 function TopNav() {
   const location = useLocation();
@@ -40,7 +44,7 @@ function TopNav() {
         <Menu
           mode="horizontal"
           selectedKeys={[current]}
-          className="justify-end"
+          className="justify-end items-center"
         >
           <div className="flex mr-auto">
             <Menu.Item key={'sites'}>
@@ -96,6 +100,10 @@ function DocumentRoutes() {
 }
 
 function App() {
+
+  // const token = useAccessToken();
+  // console.log(token, +new Date());
+
   return (
     <Routes>
       <Route path="/" element={<TopNav />}>
@@ -133,4 +141,10 @@ function App() {
   );
 }
 
-export default App;
+export default withAuthenticationRequired(App, {
+  loginOptions: { redirectTo: '/sites' },
+  claimCheck: function (user?: User): boolean {
+    console.log(user);
+    return true;
+  },
+});

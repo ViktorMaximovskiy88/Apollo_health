@@ -1,4 +1,4 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change_log/types';
 import { SiteScrapeTask } from './types';
 
@@ -55,7 +55,7 @@ export const siteScrapeTasksApi = createApi({
         method: 'POST',
       }),
       invalidatesTags: (_r, _e, id) => [{ type: 'SiteScrapeTask', id }],
-    })
+    }),
   }),
 });
 
@@ -65,5 +65,5 @@ export const {
   useUpdateSiteScrapeTaskMutation,
   useDeleteSiteScrapeTaskMutation,
   useGetChangeLogQuery,
-  useRunBulkMutation
+  useRunBulkMutation,
 } = siteScrapeTasksApi;

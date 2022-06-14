@@ -1,10 +1,12 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change_log/types';
 import { User } from './types';
 
 export const usersApi = createApi({
   reducerPath: 'usersApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '/api/v1/' }),
+  baseQuery: fetchBaseQuery({
+    baseUrl: '/api/v1/',
+  }),
   tagTypes: ['User', 'ChangeLog'],
   endpoints: (builder) => ({
     getUsers: builder.query<User[], void>({

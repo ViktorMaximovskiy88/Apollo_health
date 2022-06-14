@@ -2,6 +2,7 @@ import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit';
 import { createReduxHistoryContext } from 'redux-first-history';
 import { createBrowserHistory } from 'history';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
+import auth0slice from './auth0-slice';
 import { usersApi } from '../features/users/usersApi';
 import { sitesApi } from '../features/sites/sitesApi';
 import { documentsApi } from '../features/documents/documentsApi';
@@ -19,6 +20,7 @@ export const store = configureStore({
     [documentsApi.reducerPath]: documentsApi.reducer,
     [extractionTasksApi.reducerPath]: extractionTasksApi.reducer,
     router: routerReducer,
+    auth0: auth0slice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(

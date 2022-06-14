@@ -4,6 +4,7 @@ import { useForm } from 'antd/lib/form/Form';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ActiveUrlResponse, Site } from './types';
+import { baseFetch } from '../../app/base-api';
 
 export function SiteForm(props: {
   onFinish: (user: Partial<Site>) => void;
@@ -12,11 +13,15 @@ export function SiteForm(props: {
   const [form] = useForm();
   const [urlValidation, setUrlValidation] = useState<{[id: string]: ActiveUrlResponse}>({});
   const currentSite = props.initialValues ? props.initialValues._id : "";
+  // const {getAccessTokenSilently} = useAuth0();
 
   async function validateUrl(key: number, value: string) {
     const checkUrl = encodeURIComponent(value);
-    const url = encodeURI(`/api/v1/sites/active-url?url=${checkUrl}&currentSite=${currentSite}`);
-    const check = await fetch(url);
+    
+    
+    const check = await baseFetch({
+      url: `/api/v1/sites/active-url?url=${checkUrl}&currentSite=${currentSite}`,
+    });
     const activeUrlResponse = await check.json();
 
     setUrlValidation(prevState => {

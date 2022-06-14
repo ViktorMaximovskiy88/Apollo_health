@@ -6,21 +6,31 @@ import App from './App';
 import { store, history } from './app/store';
 import { Provider } from 'react-redux';
 import { HistoryRouter as Router } from 'redux-first-history/rr6';
+import { Auth0Provider } from '@auth0/auth0-react';
+import settings from './settings';
 
-const container = document.getElementById('root');
-if (!container) throw Error('root element not found');
+function onRedirectCallback(appState: any) {
+  const returnTo = appState?.returnTo || window.location.pathname;
+  history.push(returnTo);  
+}
 
 const app = (
   <React.StrictMode>
-    <Provider store={store}>
-      <Router history={history}>
-        <App />
-      </Router>
-    </Provider>
+    <Auth0Provider
+      {...settings.auth0}
+      onRedirectCallback={onRedirectCallback}
+    >
+      <Provider store={store}>
+        <Router history={history}>
+          <App />
+        </Router>
+      </Provider>
+    </Auth0Provider>
   </React.StrictMode>
 );
 
 const useCreateRoot = false;
+const container = document.getElementById('root');
 if (useCreateRoot) {
   // const root = createRoot(container);
   // root.render(app);

@@ -39,51 +39,6 @@ template_dir = Path(__file__).parent.joinpath("templates")
 templates = Jinja2Templates(directory=template_dir)
 frontend_build_dir = Path(__file__).parent.joinpath("../../frontend/build").resolve()
 
-
-@app.get("/login", response_class=HTMLResponse, tags=["Auth"])
-async def login_page(request: Request):
-    error = request.query_params.get("error")
-    email = request.query_params.get("email", "")
-    html = templates.TemplateResponse(
-        "login.html", {"request": request, "error": error, "email": email}
-    )
-    return html
-
-
-@app.middleware("http")
-async def check_auth(request: Request, call_next: Any):
-    if request.url.path in ["/login", "/api/v1/auth/login"]:
-        return await call_next(request)
-
-    response = None
-    try:
-        await get_current_user(get_token_from_request(request))
-    except HTTPException as ex:
-        if request.url.path.startswith("/api"):
-            headers = ex.headers or {}
-            response = JSONResponse(
-                {"detail": ex.detail}, status_code=ex.status_code, headers=headers
-            )
-        else:
-            response = RedirectResponse(
-                url="/login", status_code=status.HTTP_303_SEE_OTHER
-            )
-
-    if response:
-        return response
-
-    response = await call_next(request)
-
-    if (
-        response.status_code == status.HTTP_404_NOT_FOUND
-        and not request.url.path.startswith("/api")
-    ):
-        with open(frontend_build_dir.joinpath("index.html")) as file:
-            return HTMLResponse(file.read())
-
-    return response
-
-
 app.add_middleware(GZipMiddleware)
 
 prefix = "/api/v1"
