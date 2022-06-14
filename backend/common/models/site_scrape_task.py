@@ -10,6 +10,7 @@ class SiteScrapeTask(BaseDocument):
     queued_time: datetime
     start_time: datetime | None = None
     end_time: datetime | None = None
+    last_active: datetime | None = None
     status: str = "QUEUED"
     documents_found: int = 0
     new_documents_found: int = 0
