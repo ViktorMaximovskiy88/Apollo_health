@@ -5,20 +5,19 @@ from backend.common.storage.settings import settings
 import boto3
 from botocore.client import Config
 from botocore.errorfactory import ClientError
-from backend.common.core.config import config
+from backend.common.core.config import config, is_local
 
 
 class DocumentStorageClient:
     def __init__(self):
         
-        if config["is_local"]:
+        if is_local:
             self.s3 = boto3.resource(
                 "s3",
                 endpoint_url=settings.endpoint_url,
                 aws_access_key_id = config["AWS_ACCESS_KEY_ID"],
                 aws_secret_access_key = config["AWS_SECRET_ACCESS_KEY"],
                 config=Config(signature_version="s3v4"),
-                region_name = config["AWS_REGION"]
             )
         else:
             self.s3 = boto3.resource(

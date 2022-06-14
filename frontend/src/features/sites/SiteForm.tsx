@@ -15,7 +15,8 @@ export function SiteForm(props: {
 
   async function validateUrl(key: number, value: string) {
     const checkUrl = encodeURIComponent(value);
-    const url = encodeURI(`/api/v1/sites/active-url?url=${checkUrl}&currentSite=${currentSite}`);
+    let url = encodeURI(`/api/v1/sites/active-url?url=${checkUrl}`);
+    if (currentSite) url += `&currentSite=${currentSite}`;
     const check = await fetch(url);
     const activeUrlResponse = await check.json();
 

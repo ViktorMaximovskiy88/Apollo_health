@@ -4,8 +4,8 @@ import sys
 from uuid import uuid4
 import traceback
 import typer
+import signal
 from playwright.async_api import async_playwright
-from playwright_stealth import stealth_async
 
 from datetime import datetime
 import pymongo
@@ -19,6 +19,14 @@ from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.scrapeworker.scrape_worker import ScrapeWorker
 
 app = typer.Typer()
+
+accepting_tasks = True
+
+def signal_handler(signum, frame):
+    global accepting_tasks
+    typer.secho(f"Shutdown Requested, no longer accepting tasks", fg=typer.colors.BLUE)
+    accepting_tasks = False
+
 
 async def pull_task_from_queue(worker_id):
     now = datetime.now()
@@ -77,8 +85,16 @@ async def log_failure(scrape_task, site, ex):
         )
     )
 
+async def heartbeat_task(scrape_task: SiteScrapeTask):
+    while True:
+        await scrape_task.update({SiteScrapeTask.last_active: datetime.now()})
+        await asyncio.sleep(1)
+
 async def worker_fn(worker_id, playwright, browser):
     while True:
+        if not accepting_tasks:
+            return
+
         scrape_task = await pull_task_from_queue(worker_id)
         if not scrape_task:
             await asyncio.sleep(5)
@@ -95,7 +111,9 @@ async def worker_fn(worker_id, playwright, browser):
 
         worker = ScrapeWorker(playwright, browser, scrape_task, site)
         try:
+            task = asyncio.create_task(heartbeat_task(scrape_task))
             await worker.run_scrape()
+            task.cancel()
             await log_success(scrape_task, site)
         except Exception as ex:
             await log_failure(scrape_task, site, ex)
@@ -110,10 +128,12 @@ async def start_worker_async(worker_id):
         for _ in range(5):
             workers.append(worker_fn(worker_id, playwright, browser))
         await asyncio.gather(*workers)
+    typer.secho(f"Shutdown Complete", fg=typer.colors.BLUE)
 
 @app.command()
 def start_worker():
     worker_id = uuid4()
+    signal.signal(signal.SIGTERM, signal_handler)
     typer.secho(f"Starting Scrape Worder {worker_id}", fg=typer.colors.GREEN)
     asyncio.run(start_worker_async(worker_id))
 
