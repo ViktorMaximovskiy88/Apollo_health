@@ -6,7 +6,8 @@ from beanie import PydanticObjectId
 import boto3
 import typer
 
-from datetime import datetime
+from datetime import datetime, timedelta
+from beanie.odm.operators.update.general import Set
 
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 
@@ -41,11 +42,15 @@ async def get_schedule_user():
         raise Exception("No schedular found")
     return user
 
-def find_sites_eligible_for_scraping(crons):
+def find_sites_eligible_for_scraping(crons, now=datetime.now()):
     sites = Site.find({
         'cron': { '$in': crons }, # Should be run now
         'disabled': False, # Is active
         'base_urls.status': 'ACTIVE', # has at least one active url
+        '$or': [
+            { 'last_run_time': None }, # has never been run
+            { 'last_run_time': { '$lt': now - timedelta(minutes=1) } }, # has been run in the last minute
+        ],
         'last_status': { '$nin': ['QUEUED', 'IN_PROGRESS', 'CANCELLING'] } # not already in progress
     })
     return sites
@@ -56,11 +61,11 @@ async def enqueue_scrape_task(site_id: PydanticObjectId):
     update_result = await SiteScrapeTask.get_motor_collection().update_one(
         { 'site_id': site_id, 'status': { '$in': ['QUEUED', 'IN_PROGRESS', 'CANCELLING'] } },
         { '$setOnInsert': site_scrape_task.dict() },
-        { 'upsert': True },
+        upsert=True
     )
 
     insert_id: PydanticObjectId | None = update_result.upserted_id  # type: ignore
-    
+
     if not insert_id:
         return None
 
@@ -78,18 +83,19 @@ async def start_scheduler():
     logger = Logger()
     user = await get_schedule_user()
     while True:
-        crons = compute_matching_crons(datetime.now())
-        sites = find_sites_eligible_for_scraping(crons)
+        now = datetime.now()
+        crons = compute_matching_crons(now)
+        sites = find_sites_eligible_for_scraping(crons, now)
 
         async for site in sites:
             site_id: PydanticObjectId = site.id # type: ignore
             site_scrape_task = await enqueue_scrape_task(site_id)
             if site_scrape_task:
                 await log_task_creation(logger, user, site_scrape_task)
-            
+
             await asyncio.sleep(1)
 
-        await asyncio.sleep(5)
+        await asyncio.sleep(15)
 
 @cache
 def cluster_arn() -> str:
@@ -113,6 +119,9 @@ def determine_current_instance_count(service_tag: str):
     return services['services'][0]['desiredCount']
 
 def update_cluster_size(size: int | None):
+    if size is None:
+        return
+
     print("Settings cluster size to", size)
 
     ecs_client = boto3.client("ecs")
@@ -126,7 +135,7 @@ def update_cluster_size(size: int | None):
 
 def get_new_cluster_size(queue_size, active_workers, tasks_per_worker):
     workers_needed = queue_size // tasks_per_worker
-    
+
     if abs(workers_needed - active_workers) < 5:
         return None
 
@@ -145,9 +154,43 @@ async def start_scaler():
         update_cluster_size(new_cluster_size)
         await asyncio.sleep(30)
 
+async def start_hung_task_checker():
+    """
+    Fail tasks that are in progress but are not longer sending a heartbeat
+    """
+    while True:
+        now = datetime.now()
+        tasks = SiteScrapeTask.find({
+            'status': 'IN_PROGRESS',
+            'last_active': { '$lt': now - timedelta(minutes=1) },
+        })
+        message = "Lost task heartbeat"
+        async for task in tasks:
+            message = f"Failing task {task.id} on worker {task.worker_id} due to lost heartbeat"
+            typer.secho(message, fg=typer.colors.RED)
+
+            await Site.find(Site.id == task.site_id).update(
+                Set(
+                    {
+                        Site.last_status: "FAILED",
+                        Site.last_run_time: now,
+                    }
+                )
+            )
+            await task.update(
+                Set(
+                    {
+                        SiteScrapeTask.status: "FAILED",
+                        SiteScrapeTask.error_message: message,
+                        SiteScrapeTask.end_time: now,
+                    }
+                )
+            )
+        await asyncio.sleep(60)
+
 async def start_scheduler_and_scaler():
     await init_db()
-    await asyncio.gather(start_scaler(), start_scheduler())
+    await asyncio.gather(start_scaler(), start_scheduler(), start_hung_task_checker())
 
 @app.command()
 def start_worker():

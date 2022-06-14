@@ -13,7 +13,7 @@ def simple_site(cron):
         scrape_method='',
         scrape_method_configuration=ScrapeMethodConfiguration(
           document_extensions=[],
-          url_keywords=[]  
+          url_keywords=[]
         ),
         disabled=False,
         cron=cron,

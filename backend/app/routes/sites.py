@@ -100,7 +100,7 @@ async def create_site(
 def get_lines_from_xlsx(file: UploadFile):
     wb = load_workbook(io.BytesIO(file.file.read()))
     sheet = wb[wb.sheetnames[0]]
-    for i, line in enumerate(sheet.values):
+    for i, line in enumerate(sheet.values):  # type: ignore
         if i == 0:
             continue  # skip header
         yield line
@@ -128,7 +128,7 @@ async def upload_sites(
 ):
     new_sites = []
     for line in get_lines_from_upload(file):
-        name, base_urls, scrape_method, tags, cron: (str, str, str, str, str) = line  # type: ignore
+        name, base_urls, scrape_method, tags, cron = line  # type: ignore
         tags = tags.split(",") if tags else []
         base_urls = base_urls.split(",") if base_urls else []
         scrape_method_configuration = ScrapeMethodConfiguration(
@@ -139,13 +139,13 @@ async def upload_sites(
             continue
 
         new_site = Site(
-            name=name,
-            base_urls=base_urls,
-            scrape_method=scrape_method,
+            name=name, # type: ignore
+            base_urls=base_urls,  # type: ignore
+            scrape_method=scrape_method,  # type: ignore
             scrape_method_configuration=scrape_method_configuration,
             tags=tags,
             disabled=False,
-            cron=cron,
+            cron=cron,  # type: ignore
         )
         new_sites.append(new_site)
         await create_and_log(logger, current_user, new_site)
