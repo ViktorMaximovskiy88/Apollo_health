@@ -10,7 +10,7 @@ from backend.app.scripts.add_user import create_admin_user
 from backend.common.db.init import init_db
 from backend.common.db.migrations import run_migrations
 from backend.common.core.config import is_local
-from backend.app.routes import sites
+from backend.app.routes import proxies, sites
 from backend.app.utils.user import get_current_user, get_token_from_request
 from backend.common.models.user import User
 from routes import (
@@ -49,4 +49,5 @@ app.include_router(sites.router, prefix=prefix)
 app.include_router(site_scrape_tasks.router, prefix=prefix)
 app.include_router(documents.router, prefix=prefix)
 app.include_router(content_extraction_tasks.router, prefix=prefix)
+app.include_router(proxies.router, prefix=prefix)
 app.mount("/", StaticFiles(directory=frontend_build_dir, html=True), name="static")

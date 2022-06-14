@@ -8,6 +8,7 @@ import { sitesApi } from '../features/sites/sitesApi';
 import { documentsApi } from '../features/documents/documentsApi';
 import { siteScrapeTasksApi } from '../features/site_scrape_tasks/siteScrapeTasksApi';
 import { extractionTasksApi } from '../features/extractions/extractionsApi';
+import { proxiesApi } from '../features/proxies/proxiesApi';
 
 const { createReduxHistory, routerMiddleware, routerReducer } =
   createReduxHistoryContext({ history: createBrowserHistory() });
@@ -19,6 +20,7 @@ export const store = configureStore({
     [siteScrapeTasksApi.reducerPath]: siteScrapeTasksApi.reducer,
     [documentsApi.reducerPath]: documentsApi.reducer,
     [extractionTasksApi.reducerPath]: extractionTasksApi.reducer,
+    [proxiesApi.reducerPath]: proxiesApi.reducer,
     router: routerReducer,
     auth0: auth0slice,
   },
@@ -29,6 +31,7 @@ export const store = configureStore({
       siteScrapeTasksApi.middleware,
       documentsApi.middleware,
       extractionTasksApi.middleware,
+      proxiesApi.middleware,
       routerMiddleware
     ),
 });

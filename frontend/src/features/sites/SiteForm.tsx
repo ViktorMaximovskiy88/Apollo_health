@@ -4,7 +4,7 @@ import { useForm } from 'antd/lib/form/Form';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ActiveUrlResponse, Site } from './types';
-import { baseFetch } from '../../app/base-api';
+import { useGetProxiesQuery } from '../proxies/proxiesApi';
 
 export function SiteForm(props: {
   onFinish: (user: Partial<Site>) => void;
@@ -13,15 +13,14 @@ export function SiteForm(props: {
   const [form] = useForm();
   const [urlValidation, setUrlValidation] = useState<{[id: string]: ActiveUrlResponse}>({});
   const currentSite = props.initialValues ? props.initialValues._id : "";
-  // const {getAccessTokenSilently} = useAuth0();
+  const { data: proxies } = useGetProxiesQuery();
+  const proxyOptions = proxies?.map((proxy) => ({ label: proxy.name, value: proxy._id }));
 
   async function validateUrl(key: number, value: string) {
     const checkUrl = encodeURIComponent(value);
-    
-    
-    const check = await baseFetch({
-      url: `/api/v1/sites/active-url?url=${checkUrl}&currentSite=${currentSite}`,
-    });
+    let url = encodeURI(`/api/v1/sites/active-url?url=${checkUrl}`);
+    if (currentSite) url += `&currentSite=${currentSite}`;
+    const check = await fetch(url);
     const activeUrlResponse = await check.json();
 
     setUrlValidation(prevState => {
@@ -104,6 +103,7 @@ export function SiteForm(props: {
       scrape_method_configuration: {
         document_extensions: ['pdf'],
         url_keywords: [],
+        proxy_exclusions: [],
       },
     }
   }
@@ -224,6 +224,9 @@ export function SiteForm(props: {
         </Form.Item>
         <Form.Item name={["scrape_method_configuration", "url_keywords"]} label="URL Keywords">
           <Select mode="tags" />
+        </Form.Item>
+        <Form.Item name={["scrape_method_configuration", "proxy_exclusions"]} label="Proxy Exclusions">
+          <Select mode="multiple" options={proxyOptions} />
         </Form.Item>
       </Form.Item>
       <Form.Item name="cron" label="Schedule">
