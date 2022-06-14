@@ -18,6 +18,7 @@ from backend.common.db.init import init_db
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.scrapeworker.scrape_worker import ScrapeWorker, CanceledTaskException, NoDocsCollectedException
+from backend.common.core.enums import Status
 
 app = typer.Typer()
 
@@ -35,13 +36,13 @@ async def signal_handler():
 async def pull_task_from_queue(worker_id):
     now = datetime.now()
     acquired = await SiteScrapeTask.get_motor_collection().find_one_and_update(
-        {"status": "QUEUED"},
+        {"status": Status.Queued},
         {
             "$set": {
                 "start_time": now,
                 "last_active": now,
                 "worker_id": worker_id,
-                "status": "IN_PROGRESS",
+                "status": Status.InProgress,
             }
         },
         sort=[("queued_time", pymongo.ASCENDING)],
@@ -58,11 +59,11 @@ async def log_success(
 ):
     typer.secho(f"Finished Task {scrape_task.id}", fg=typer.colors.BLUE)
     now = datetime.now()
-    await site.update(Set({Site.last_status: "FINISHED", Site.last_run_time: now}))
+    await site.update(Set({Site.last_status: Status.Finished, Site.last_run_time: now}))
     await scrape_task.update(
         Set(
             {
-                SiteScrapeTask.status: "FINISHED",
+                SiteScrapeTask.status: Status.Finished,
                 SiteScrapeTask.end_time: now,
             }
         )
@@ -116,6 +117,7 @@ async def heartbeat_task(scrape_task: SiteScrapeTask):
         await asyncio.sleep(10)
 
 
+
 async def worker_fn(worker_id, playwright, browser):
     while True:
         if not accepting_tasks:
@@ -132,7 +134,7 @@ async def worker_fn(worker_id, playwright, browser):
 
         now = datetime.now()
         await site.update(
-            Set({Site.last_status: "IN_PROGRESS", Site.last_run_time: now})
+            Set({Site.last_status: Status.InProgress, Site.last_run_time: now})
         )
 
         worker = ScrapeWorker(playwright, browser, scrape_task, site)

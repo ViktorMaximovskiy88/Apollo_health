@@ -9,6 +9,7 @@ import typer
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask, UpdateSiteScrapeTask
 from backend.common.models.user import User
+from backend.common.core.enums import Status
 from backend.app.utils.logger import (
     Logger,
     create_and_log,
@@ -88,7 +89,7 @@ async def runBulkByType(
     if bulk_type == "unrun":
         query["last_status"] = None
     elif bulk_type == "failed":
-        query["last_status"] = "FAILED"
+        query["last_status"] = Status.Failed
     elif bulk_type == "all":
         query["last_status"] = {"$ne": ["QUEUED", "IN_PROGRESS"]}
 
