@@ -1,7 +1,8 @@
 import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime
-from random import choice
+from random import choice, shuffle
+from typing import AsyncGenerator
 from async_lru import alru_cache
 import os
 import pathlib
@@ -11,7 +12,7 @@ from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from playwright.async_api import ElementHandle, Browser, ProxySettings
+from playwright.async_api import ElementHandle, Browser, BrowserContext, ProxySettings, Page
 from playwright_stealth import stealth_async
 from backend.common.models.user import User
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
@@ -46,7 +47,7 @@ class ScrapeWorker:
         return user
 
     @alru_cache
-    async def get_proxy_settings(self) -> list[ProxySettings | None]:
+    async def get_proxy_settings(self) -> list[tuple[Proxy | None, ProxySettings | None]]:
         proxies = await Proxy.find_all().to_list()
         proxy_exclusions = self.site.scrape_method_configuration.proxy_exclusions
         valid_proxies = [proxy for proxy in proxies if proxy.id not in proxy_exclusions]
@@ -152,18 +153,49 @@ class ScrapeWorker:
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
 
+    async def try_each_proxy(self) -> AsyncGenerator[ProxySettings | None, None]:
+        """
+        Try each proxy in turn, if it fails, try the next one. If they all fail, raise the final exception
+        """
+        proxy_settings = await self.get_proxy_settings()
+        shuffle(proxy_settings)
+        exception: Exception | None = None
+        for proxy, proxy_setting in proxy_settings:
+            print(f"Trying proxy {proxy and proxy.name}")
+            try:
+                yield proxy_setting
+            except Exception as e:
+                exception = e
+                continue
+            else:
+                exception = None
+                break
+
+        if exception:
+            raise exception
+
     @asynccontextmanager
-    async def playwright_context(self, base_url: str):
+    async def playwright_context(self, base_url: str) -> AsyncGenerator[Page, None]:
         print(f"Creating context for {base_url}")
-        proxy = choice(await self.get_proxy_settings())
-        context = await self.browser.new_context(proxy=proxy) # type: ignore
-        page = await context.new_page()
-        await stealth_async(page)
-        await page.goto(base_url, wait_until="domcontentloaded")#await page.goto(base_url, wait_until="networkidle") 
+        proxy_settings = await self.get_proxy_settings()
+        shuffle(proxy_settings)
+        context: BrowserContext | None = None
+        page: Page | None = None
+        async for proxy in self.try_each_proxy():
+            context = await self.browser.new_context(proxy=proxy) # type: ignore
+            page = await context.new_page()
+            await stealth_async(page)
+            await page.goto(base_url, wait_until="domcontentloaded") # await page.goto(base_url, wait_until="networkidle")
+
         try:
-            yield page
+            # The only way to get here is if we successfully created a context and page
+            # so page is not None, but python can't know that
+            yield page # type: ignore
         finally:
-            await page.close()
+            if page:
+                await page.close()
+            if context:
+                await context.close()
 
     def construct_selector(self):
         extensions = self.site.scrape_method_configuration.document_extensions
