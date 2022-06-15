@@ -145,13 +145,13 @@ async def upload_sites(
             continue
         base_urls = list(map(lambda url: BaseUrl(url=HttpUrl(url, scheme='https')), base_urls))
         new_site = Site(
-            name=name, # type: ignore
-            base_urls=base_urls,  # type: ignore
-            scrape_method=scrape_method,  # type: ignore
+            name=name,
+            base_urls=base_urls,
+            scrape_method=scrape_method,
             scrape_method_configuration=scrape_method_configuration,
             tags=tags,
             disabled=False,
-            cron=cron,  # type: ignore
+            cron=cron,
         )
         new_sites.append(new_site)
         await create_and_log(logger, current_user, new_site)

@@ -10,6 +10,8 @@ import typer
 from datetime import datetime, timedelta
 from beanie.odm.operators.update.general import Set
 
+from backend.common.task_queues.unique_task_insert import try_queue_unique_task
+
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 
 from backend.common.core.config import is_local
@@ -50,7 +52,7 @@ def find_sites_eligible_for_scraping(crons, now=datetime.now()):
         'base_urls.status': 'ACTIVE', # has at least one active url
         '$or': [
             { 'last_run_time': None }, # has never been run
-            { 'last_run_time': { '$lt': now - timedelta(minutes=1) } }, # has been run in the last minute
+            { 'last_run_time': { '$lt': now - timedelta(minutes=1) } }, # hasn't been run in the last minute
         ],
         'last_status': { '$nin': ['QUEUED', 'IN_PROGRESS', 'CANCELLING'] } # not already in progress
     })
@@ -58,20 +60,7 @@ def find_sites_eligible_for_scraping(crons, now=datetime.now()):
 
 async def enqueue_scrape_task(site_id: PydanticObjectId):
     site_scrape_task = SiteScrapeTask(site_id=site_id, queued_time=datetime.now())
-
-    update_result = await SiteScrapeTask.get_motor_collection().update_one(
-        { 'site_id': site_id, 'status': { '$in': ['QUEUED', 'IN_PROGRESS', 'CANCELLING'] } },
-        { '$setOnInsert': site_scrape_task.dict() },
-        upsert=True
-    )
-
-    insert_id: PydanticObjectId | None = update_result.upserted_id  # type: ignore
-
-    if not insert_id:
-        return None
-
-    site_scrape_task.id = insert_id
-    return site_scrape_task
+    return await try_queue_unique_task(site_scrape_task)
 
 async def log_task_creation(logger, user, site_scrape_task: SiteScrapeTask):
     await logger.background_log_change(user, site_scrape_task, "CREATE")
