@@ -196,7 +196,6 @@ class ScrapeWorker:
         Try each proxy in turn, if it fails, try the next one. Repeat a few times for good measure.
         """
         proxy_settings = await self.get_proxy_settings()
-        proxy_settings = [(None, None)]
         shuffle(proxy_settings)
         n_proxies = len(proxy_settings)
         async for attempt in AsyncRetrying(stop=stop_after_attempt(3*n_proxies)):
