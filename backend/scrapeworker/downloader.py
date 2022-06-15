@@ -12,10 +12,9 @@ from backend.scrapeworker.rate_limiter import RateLimiter
 
 
 class DocDownloader:
-    def __init__(self, playwright: Playwright, scrape_task_id: str):
+    def __init__(self, playwright: Playwright):
         self.rate_limiter = RateLimiter()
         self.playwright = playwright
-        self.scrape_task_id = scrape_task_id
         # self.redis = redis.from_url(
             # config["REDIS_URL"],
             # username='default',
