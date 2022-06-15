@@ -1,16 +1,18 @@
-import { Button, Layout, Table } from 'antd';
+import { Button, Layout, Spin, Table } from 'antd';
 import { useParams } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
 import { useGetSiteQuery } from '../sites/sitesApi';
+import { Status } from '../types';
 import { SiteScrapeTask } from './types';
 import {
+  useCancelSiteScrapeTaskMutation,
   useGetScrapeTasksForSiteQuery,
   useRunSiteScrapeTaskMutation,
 } from './siteScrapeTasksApi';
 import { prettyDateFromISO, prettyDateDistance } from '../../common';
 import Title from 'antd/lib/typography/Title';
 
-export function ScrapesPage() {
+export function CollectionsPage() {
   const params = useParams();
   const siteId = params.siteId;
   const { data: site } = useGetSiteQuery(siteId);
@@ -19,6 +21,8 @@ export function ScrapesPage() {
     skip: !siteId,
   });
   const [runScrape] = useRunSiteScrapeTaskMutation();
+  const [cancelScrape, { isLoading: isCanceling }] =
+    useCancelSiteScrapeTaskMutation();
   if (!site) return null;
 
   const formattedScrapes = scrapeTasks;
@@ -34,29 +38,40 @@ export function ScrapesPage() {
       title: 'Stop Time',
       key: 'stop_time',
       render: (task: SiteScrapeTask) => {
-        if (task.end_time)
-          return prettyDateFromISO(task.end_time);
+        if (task.end_time) return prettyDateFromISO(task.end_time);
       },
     },
     {
       title: 'Elapsed',
       key: 'elapsed',
       render: (task: SiteScrapeTask) => {
-        return prettyDateDistance(task.queued_time, task.end_time)
+        return prettyDateDistance(task.queued_time, task.end_time);
       },
     },
     {
       title: 'Status',
       key: 'status',
       render: (task: SiteScrapeTask) => {
-        if (task.status === 'FAILED') {
-          return <span className="text-red-500">Failed</span>;
-        } else if (task.status === 'IN_PROGRESS') {
-          return <span className="text-blue-500">In Progress</span>;
-        } else if (task.status === 'QUEUED') {
-          return <span className="text-yellow-500">Queued</span>;
-        } else if (task.status === 'FINISHED') {
-          return <span className="text-green-500">Finished</span>;
+        switch (task.status) {
+          case Status.Failed:
+            return <span className="text-red-500">Failed</span>;
+          case Status.Canceled:
+            return <span className="text-orange-500">Canceled</span>;
+          case Status.Canceling:
+            return (
+              <>
+                <span className="text-amber-500 mr-2">Canceling</span>
+                <Spin size="small" />
+              </>
+            );
+          case Status.InProgress:
+            return <span className="text-blue-500">In Progress</span>;
+          case Status.Queued:
+            return <span className="text-yellow-500">Queued</span>;
+          case Status.Finished:
+            return <span className="text-green-500">Finished</span>;
+          default:
+            return null;
         }
       },
     },
@@ -80,8 +95,22 @@ export function ScrapesPage() {
         );
       },
     },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (task: SiteScrapeTask) =>
+        task.status === Status.InProgress || task.status === Status.Queued ? (
+          <Button
+            danger
+            type="primary"
+            disabled={isCanceling}
+            onClick={() => cancelScrape(task._id)}
+          >
+            Cancel
+          </Button>
+        ) : null,
+    },
   ];
-
   return (
     <Layout className="bg-white">
       <div className="flex">

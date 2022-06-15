@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { ChangeLog } from '../change_log/types';
+import { ChangeLog } from '../change-log/types';
 import { ContentExtractionResult, ExtractionTask } from './types';
 
 export const extractionTasksApi = createApi({
