@@ -33,7 +33,8 @@ class RateLimiter:
         If it succeeds, reduce the wait time, min 1 second.
         """
         async for attempt in AsyncRetrying():
-            if attempt.retry_state.attempt_number > 1:
+            i = attempt.retry_state.attempt_number - 1
+            if i:
                 self.increase_wait()
 
             await self.wait()
@@ -41,5 +42,5 @@ class RateLimiter:
             self.last_request_time = datetime.now()
             yield attempt
 
-            if attempt.retry_state.attempt_number > 1:
+            if i:
                 self.decrease_wait()
