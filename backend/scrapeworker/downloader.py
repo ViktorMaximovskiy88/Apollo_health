@@ -6,20 +6,21 @@ import aiofiles
 from random import shuffle
 from backend.common.core.config import config
 from playwright.async_api import APIResponse, APIRequestContext, Playwright, ProxySettings
+from backend.scrapeworker.rate_limiter import RateLimiter
 from backend.common.models.proxy import Proxy
-
 from backend.scrapeworker.rate_limiter import RateLimiter
 
-class DocDownloader():
-    def __init__(self, playwright: Playwright):
+
+class DocDownloader:
+    def __init__(self, playwright: Playwright, scrape_task_id: str):
         self.rate_limiter = RateLimiter()
         self.playwright = playwright
+        self.scrape_task_id = scrape_task_id
         # self.redis = redis.from_url(
             # config["REDIS_URL"],
             # username='default',
             # password=config["REDIS_PASSWORD"],
         # )
-        pass
 
     def skip_based_on_response(self, response: APIResponse):
         if not response.ok:
@@ -81,8 +82,9 @@ class DocDownloader():
                 await fd.write(body)
             yield temp.name, hash.hexdigest()
 
-
-    async def download_to_tempfile(self, url: str, proxies: list[tuple[Proxy | None, ProxySettings | None]] = []):
+    async def download_to_tempfile(
+        self, url: str, proxies: list[tuple[Proxy | None, ProxySettings | None]] = []
+    ):
         body = None # self.redis.get(url)
         if body == "DISCARD":
             return
