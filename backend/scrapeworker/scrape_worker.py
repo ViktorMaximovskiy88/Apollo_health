@@ -13,7 +13,7 @@ from playwright_stealth import stealth_async
 from backend.common.models.user import User
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.detect_lang import detect_lang
-from backend.scrapeworker.downloader import DocDownloader, CancelationException
+from backend.scrapeworker.downloader import DocDownloader
 from backend.scrapeworker.effective_date import extract_dates, select_effective_date
 from backend.scrapeworker.proxy import proxy_settings
 from backend.scrapeworker.rate_limiter import RateLimiter
@@ -21,6 +21,10 @@ from backend.scrapeworker.rate_limiter import RateLimiter
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.xpdf_wrapper import pdfinfo, pdftotext
+
+
+class CanceledTaskException(Exception):
+    pass
 
 
 class ScrapeWorker:
@@ -83,11 +87,6 @@ class ScrapeWorker:
         return title
 
     async def attempt_download(self, base_url, url, context_metadata):
-
-        task = await SiteScrapeTask.find_one(SiteScrapeTask.id == self.scrape_task.id)
-        if task.status == "CANCELING":
-            raise CancelationException("Task was canceled.")
-
         async for (temp_path, checksum) in self.downloader.download_to_tempfile(url):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
             dest_path = f"{checksum}.pdf"
@@ -149,6 +148,27 @@ class ScrapeWorker:
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
 
+    async def watch_for_cancel(self, tasks):
+        while True:
+            canceling = await SiteScrapeTask.find_one(
+                SiteScrapeTask.id == self.scrape_task.id,
+                SiteScrapeTask.status == "CANCELING",
+            )
+            if canceling:
+                for t in tasks:
+                    t.cancel()
+                raise CanceledTaskException("Task was canceled.")
+            await asyncio.sleep(1)
+
+    async def wait_for_completion_or_cancel(self, downloads):
+        tasks = [asyncio.create_task(download) for download in downloads]
+        await self.watch_for_cancel(tasks)
+        try:
+            await asyncio.gather(*tasks)
+        finally:
+            for t in tasks:
+                t.cancel()
+
     @asynccontextmanager
     async def playwright_context(self, base_url: str):
         print(f"Creating context for {base_url}")
@@ -193,4 +213,4 @@ class ScrapeWorker:
                         downloads.append(
                             self.attempt_download(base_url.url, url, context_metadata)
                         )
-                await asyncio.gather(*downloads)
+                await self.wait_for_completion_or_cancel(downloads)
