@@ -2,10 +2,12 @@ import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime
 from random import shuffle
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Coroutine
 from async_lru import alru_cache
 import os
 import pathlib
+from tenacity._asyncio import AsyncRetrying
+from tenacity.stop import stop_after_attempt
 from beanie.odm.operators.update.general import Inc
 from urllib.parse import urlparse, urljoin
 from backend.common.models.proxy import Proxy
@@ -45,7 +47,7 @@ class ScrapeWorker:
         self.site = site
         self.seen_urls = set()
         self.doc_client = DocumentStorageClient()
-        self.downloader = DocDownloader(playwright, scrape_task.id)
+        self.downloader = DocDownloader(playwright)
         self.logger = Logger()
 
     @alru_cache
@@ -168,8 +170,10 @@ class ScrapeWorker:
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
 
-    async def watch_for_cancel(self, tasks):
+    async def watch_for_cancel(self, tasks: list[asyncio.Task[None]]):
         while True:
+            if all(t.done() for t in tasks):
+                break
             canceling = await SiteScrapeTask.find_one(
                 SiteScrapeTask.id == self.scrape_task.id,
                 SiteScrapeTask.status == "CANCELING",
@@ -180,58 +184,45 @@ class ScrapeWorker:
                 raise CanceledTaskException("Task was canceled.")
             await asyncio.sleep(1)
 
-    async def wait_for_completion_or_cancel(self, downloads):
+    async def wait_for_completion_or_cancel(self, downloads: list[Coroutine[None, None, None]]):
         tasks = [asyncio.create_task(download) for download in downloads]
-        await self.watch_for_cancel(tasks)
         try:
-            await asyncio.gather(*tasks)
-        finally:
-            for t in tasks:
-                t.cancel()
+            await asyncio.gather(self.watch_for_cancel(tasks), *tasks)
+        except asyncio.exceptions.CancelledError:
+            pass
 
-    async def try_each_proxy(self) -> AsyncGenerator[ProxySettings | None, None]:
+    async def try_each_proxy(self):
         """
-        Try each proxy in turn, if it fails, try the next one. If they all fail, raise the final exception
+        Try each proxy in turn, if it fails, try the next one. Repeat a few times for good measure.
         """
         proxy_settings = await self.get_proxy_settings()
+        proxy_settings = [(None, None)]
         shuffle(proxy_settings)
-        exception: Exception | None = None
-        for proxy, proxy_setting in proxy_settings:
-            print(f"Trying proxy {proxy and proxy.name}")
-            try:
-                yield proxy_setting
-            except Exception as e:
-                exception = e
-                continue
-            else:
-                exception = None
-                break
-
-        if exception:
-            raise exception
+        n_proxies = len(proxy_settings)
+        async for attempt in AsyncRetrying(stop=stop_after_attempt(3*n_proxies)):
+            i = attempt.retry_state.attempt_number - 1
+            proxy, proxy_setting = proxy_settings[i % n_proxies]
+            print(f"{i} Trying proxy {proxy and proxy.name} - {proxy_setting and proxy_setting.get('server')}")
+            yield attempt, proxy_setting
 
     @asynccontextmanager
     async def playwright_context(self, base_url: str) -> AsyncGenerator[Page, None]:
         print(f"Creating context for {base_url}")
-        proxy_settings = await self.get_proxy_settings()
-        shuffle(proxy_settings)
         context: BrowserContext | None = None
         page: Page | None = None
-        async for proxy in self.try_each_proxy():
-            context = await self.browser.new_context(proxy=proxy)  # type: ignore
-            page = await context.new_page()
-            await stealth_async(page)
-            await page.goto(
-                base_url, wait_until="domcontentloaded"
-            )  # await page.goto(base_url, wait_until="networkidle")
+        async for attempt, proxy in self.try_each_proxy():
+            with attempt:
+                context = await self.browser.new_context(proxy=proxy) # type: ignore
+                page = await context.new_page()
+                await stealth_async(page)
+                await page.goto(base_url, wait_until="domcontentloaded") # await page.goto(base_url, wait_until="networkidle")
+
+        if not page:
+            raise Exception(f"Could not load {base_url}")
 
         try:
-            # The only way to get here is if we successfully created a context and page
-            # so page is not None, but python can't know that
-            yield page  # type: ignore
+            yield page
         finally:
-            if page:
-                await page.close()
             if context:
                 await context.close()
 
