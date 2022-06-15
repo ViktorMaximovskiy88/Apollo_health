@@ -108,7 +108,7 @@ stages:
               inlineScript: |
                   terraform init -backend-config=$(System.DefaultWorkingDirectory)/deploy/live/tfvars/dev.s3.tfbackend
                   terraform validate
-                  terraform plan -var-file=$(System.DefaultWorkingDirectory)/deploy/live/tfvars/dev.tfvars -var='sourcehub-app-version=$(Build.SourceVersion)' -var='sourcehub-scrapeworker-version=$(Build.SourceVersion)' -var='sourcehub-parseworker-version=$(Build.SourceVersion)'
+                  terraform plan -var-file=$(System.DefaultWorkingDirectory)/deploy/live/tfvars/dev.tfvars -var='sourcehub-app-version=$(Build.SourceVersion)' -var='sourcehub-scrapeworker-version=$(Build.SourceVersion)'  -var='sourcehub-scheduler-version=$(Build.SourceVersion)' -var='sourcehub-parseworker-version=$(Build.SourceVersion)'
               disableAutoCwd: true
               workingDirectory: '$(System.DefaultWorkingDirectory)/deploy/live'
   - stage: development

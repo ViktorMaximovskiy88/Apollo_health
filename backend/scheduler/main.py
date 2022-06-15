@@ -1,6 +1,7 @@
 import asyncio
 from functools import cache
 from pathlib import Path
+import signal
 import sys
 from beanie import PydanticObjectId
 import boto3
@@ -110,7 +111,7 @@ def scrapeworker_service_arn() -> str:
     arns = services['serviceArns']
     return next(filter(lambda arn: 'scrapeworker' in arn, arns))
 
-def determine_current_instance_count(service_tag: str):
+def determine_current_instance_count():
     ecs = boto3.client("ecs")
     services = ecs.describe_services(
         cluster=cluster_arn(),
@@ -148,7 +149,7 @@ async def start_scaler():
 
     while True:
         queue_size = await SiteScrapeTask.find(SiteScrapeTask.status == 'QUEUED').count()
-        active_workers = determine_current_instance_count('scrapeworker')
+        active_workers = determine_current_instance_count()
         tasks_per_worker = 5 # some setting
         new_cluster_size = get_new_cluster_size(queue_size, active_workers, tasks_per_worker)
         update_cluster_size(new_cluster_size)
@@ -161,7 +162,7 @@ async def start_hung_task_checker():
     while True:
         now = datetime.now()
         tasks = SiteScrapeTask.find({
-            'status': 'IN_PROGRESS',
+            'status': { '$in': ['IN_PROGRESS', 'CANCELLING'] },
             'last_active': { '$lt': now - timedelta(minutes=1) },
         })
         message = "Lost task heartbeat"
@@ -188,13 +189,23 @@ async def start_hung_task_checker():
             )
         await asyncio.sleep(60)
 
+background_tasks: list[asyncio.Task] = []
 async def start_scheduler_and_scaler():
     await init_db()
-    await asyncio.gather(start_scaler(), start_scheduler(), start_hung_task_checker())
+    background_tasks.append(asyncio.create_task(start_scaler()))
+    background_tasks.append(asyncio.create_task(start_scheduler()))
+    background_tasks.append(asyncio.create_task(start_hung_task_checker()))
+    await asyncio.gather(*background_tasks)
+
+def signal_handler(signum, frame):
+    typer.secho(f"Shutdown Requested, shutting down", fg=typer.colors.BLUE)
+    for task in background_tasks:
+        task.cancel()
 
 @app.command()
 def start_worker():
     typer.secho(f"Starting Scheduler", fg=typer.colors.GREEN)
+    signal.signal(signal.SIGTERM, signal_handler)
     asyncio.run(start_scheduler_and_scaler())
 
 
