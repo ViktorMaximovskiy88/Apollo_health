@@ -1,4 +1,6 @@
+import asyncio
 from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 import redis
 import xxhash
 import tempfile
@@ -9,6 +11,8 @@ from playwright.async_api import APIResponse, APIRequestContext, Playwright, Pro
 from backend.scrapeworker.rate_limiter import RateLimiter
 from backend.common.models.proxy import Proxy
 from backend.scrapeworker.rate_limiter import RateLimiter
+from tenacity import AttemptManager
+from tenacity._asyncio import AsyncRetrying
 
 
 class DocDownloader:
@@ -21,12 +25,12 @@ class DocDownloader:
             # password=config["REDIS_PASSWORD"],
         # )
 
-    def skip_based_on_response(self, response: APIResponse):
+    def skip_based_on_response(self, response: APIResponse) -> bool:
         if not response.ok:
             return True
         return False
 
-    async def playwright_request_context(self, proxy: ProxySettings | None = None):
+    async def playwright_request_context(self, proxy: ProxySettings | None = None) -> APIRequestContext:
         headers = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
             "Accept-Language": "en-US,en;q=0.9",
@@ -39,14 +43,12 @@ class DocDownloader:
         context = await self.playwright.request.new_context(extra_http_headers=headers, proxy=proxy)  # type: ignore
         return context
 
-    async def rate_limit_with_proxy(self, proxies: list[tuple[Proxy | None, ProxySettings | None]]):
-        shuffle(proxies)
-        n_proxies = len(proxies)
-
+    async def proxy_with_backoff(
+        self, proxies: list[tuple[Proxy | None, ProxySettings | None]]
+    ) -> AsyncGenerator[tuple[AttemptManager, ProxySettings | None], None]:
         async for attempt in self.rate_limiter.attempt_with_backoff():
             i = attempt.retry_state.attempt_number - 1
-            if i > 16:
-                break
+            n_proxies = len(proxies)
             proxy, proxy_settings = proxies[i % n_proxies]
             print(f"{i} Using proxy {proxy and proxy.name} ({proxy_settings and proxy_settings.get('server')})")
             yield attempt, proxy_settings
@@ -55,9 +57,10 @@ class DocDownloader:
     async def download_url(self, url, proxies: list[tuple[Proxy | None, ProxySettings | None]] = []):
         context: APIRequestContext | None = None
         response: APIResponse | None = None
-        async for attempt, proxy_settings in self.rate_limit_with_proxy(proxies):
+        shuffle(proxies)
+        async for attempt, proxy in self.proxy_with_backoff(proxies):
             with attempt:
-                context = await self.playwright_request_context(proxy_settings)
+                context = await self.playwright_request_context(proxy)
                 response = await context.get(url)
                 if not response:
                     raise Exception(f"Failed to download url {url}")

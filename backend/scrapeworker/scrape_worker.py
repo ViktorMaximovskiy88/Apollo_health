@@ -2,7 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime
 from random import shuffle
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Coroutine
 from async_lru import alru_cache
 import os
 import pathlib
@@ -170,8 +170,10 @@ class ScrapeWorker:
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
 
-    async def watch_for_cancel(self, tasks):
+    async def watch_for_cancel(self, tasks: list[asyncio.Task[None]]):
         while True:
+            if all(t.done() for t in tasks):
+                break
             canceling = await SiteScrapeTask.find_one(
                 SiteScrapeTask.id == self.scrape_task.id,
                 SiteScrapeTask.status == "CANCELING",
@@ -182,21 +184,19 @@ class ScrapeWorker:
                 raise CanceledTaskException("Task was canceled.")
             await asyncio.sleep(1)
 
-    async def wait_for_completion_or_cancel(self, downloads):
+    async def wait_for_completion_or_cancel(self, downloads: list[Coroutine[None, None, None]]):
         tasks = [asyncio.create_task(download) for download in downloads]
-        await self.watch_for_cancel(tasks)
         try:
-            await asyncio.gather(*tasks)
-        finally:
-            for t in tasks:
-                t.cancel()
+            await asyncio.gather(self.watch_for_cancel(tasks), *tasks)
+        except asyncio.exceptions.CancelledError:
+            pass
 
     async def try_each_proxy(self):
         """
         Try each proxy in turn, if it fails, try the next one. Repeat a few times for good measure.
         """
         proxy_settings = await self.get_proxy_settings()
-        proxy_settings.append((None, None))
+        proxy_settings = [(None, None)]
         shuffle(proxy_settings)
         n_proxies = len(proxy_settings)
         async for attempt in AsyncRetrying(stop=stop_after_attempt(3*n_proxies)):
