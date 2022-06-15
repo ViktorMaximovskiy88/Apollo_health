@@ -24,7 +24,7 @@ def test_multiple_text_es(caplog):
     assert lang_code == LangCode.Spanish
 
 def test_unsupported_text():
-    italian_text = "piove a catinelle"
-    lang_code = detect_lang(italian_text)
+    unsupported_text = "影響包含對氣候的變化以及自然資源的枯竭程度"
+    lang_code = detect_lang(unsupported_text)
     assert lang_code == LangCode.Other
 

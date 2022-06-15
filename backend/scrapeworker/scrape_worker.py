@@ -1,23 +1,31 @@
 import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime
+from random import shuffle
+from typing import AsyncGenerator
+from async_lru import alru_cache
 import os
 import pathlib
 from beanie.odm.operators.update.general import Inc
 from urllib.parse import urlparse, urljoin
+from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from playwright.async_api import ElementHandle, Browser
+from playwright.async_api import (
+    ElementHandle,
+    Browser,
+    BrowserContext,
+    ProxySettings,
+    Page,
+)
 from playwright_stealth import stealth_async
 from backend.common.models.user import User
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.detect_lang import detect_lang
 from backend.scrapeworker.downloader import DocDownloader
 from backend.scrapeworker.effective_date import extract_dates, select_effective_date
-from backend.scrapeworker.proxy import proxy_settings
-from backend.scrapeworker.rate_limiter import RateLimiter
-
+from backend.scrapeworker.proxy import convert_proxies_to_proxy_settings
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.xpdf_wrapper import pdfinfo, pdftotext
@@ -36,18 +44,25 @@ class ScrapeWorker:
         self.scrape_task = scrape_task
         self.site = site
         self.seen_urls = set()
-        self.rate_limiter = RateLimiter()
         self.doc_client = DocumentStorageClient()
-        self.downloader = DocDownloader(playwright, self.rate_limiter, scrape_task.id)
+        self.downloader = DocDownloader(playwright, scrape_task.id)
         self.logger = Logger()
-        self.user = None
 
-    async def get_user(self):
-        if not self.user:
-            self.user = await User.by_email("admin@mmitnetwork.com")
-        if not self.user:
+    @alru_cache
+    async def get_user(self) -> User:
+        user = await User.by_email("admin@mmitnetwork.com")
+        if not user:
             raise Exception("No user found")
-        return self.user
+        return user
+
+    @alru_cache
+    async def get_proxy_settings(
+        self,
+    ) -> list[tuple[Proxy | None, ProxySettings | None]]:
+        proxies = await Proxy.find_all().to_list()
+        proxy_exclusions = self.site.scrape_method_configuration.proxy_exclusions
+        valid_proxies = [proxy for proxy in proxies if proxy.id not in proxy_exclusions]
+        return convert_proxies_to_proxy_settings(valid_proxies)
 
     async def extract_url_and_context_metadata(
         self, base_url: str, link_handle: ElementHandle
@@ -87,7 +102,10 @@ class ScrapeWorker:
         return title
 
     async def attempt_download(self, base_url, url, context_metadata):
-        async for (temp_path, checksum) in self.downloader.download_to_tempfile(url):
+        proxies = await self.get_proxy_settings()
+        async for (temp_path, checksum) in self.downloader.download_to_tempfile(
+            url, proxies
+        ):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
             dest_path = f"{checksum}.pdf"
             document = None
@@ -108,6 +126,7 @@ class ScrapeWorker:
             title = self.select_title(metadata, url)
             document_type, confidence = classify_doc_type(text)
             lang_code = detect_lang(text)
+            print(f"{url} as {lang_code}")
 
             now = datetime.now()
             datelist = list(dates.keys())
@@ -124,6 +143,7 @@ class ScrapeWorker:
                     scrape_task_id=self.scrape_task.id,
                     last_seen=now,
                     name=title,
+                    lang_code=lang_code,
                 )
                 await update_and_log_diff(
                     self.logger, await self.get_user(), document, updates
@@ -169,19 +189,51 @@ class ScrapeWorker:
             for t in tasks:
                 t.cancel()
 
+    async def try_each_proxy(self) -> AsyncGenerator[ProxySettings | None, None]:
+        """
+        Try each proxy in turn, if it fails, try the next one. If they all fail, raise the final exception
+        """
+        proxy_settings = await self.get_proxy_settings()
+        shuffle(proxy_settings)
+        exception: Exception | None = None
+        for proxy, proxy_setting in proxy_settings:
+            print(f"Trying proxy {proxy and proxy.name}")
+            try:
+                yield proxy_setting
+            except Exception as e:
+                exception = e
+                continue
+            else:
+                exception = None
+                break
+
+        if exception:
+            raise exception
+
     @asynccontextmanager
-    async def playwright_context(self, base_url: str):
+    async def playwright_context(self, base_url: str) -> AsyncGenerator[Page, None]:
         print(f"Creating context for {base_url}")
-        context = await self.browser.new_context(proxy=proxy_settings())  # type: ignore
-        page = await context.new_page()
-        await stealth_async(page)
-        await page.goto(
-            base_url, wait_until="domcontentloaded"
-        )  # await page.goto(base_url, wait_until="networkidle")
+        proxy_settings = await self.get_proxy_settings()
+        shuffle(proxy_settings)
+        context: BrowserContext | None = None
+        page: Page | None = None
+        async for proxy in self.try_each_proxy():
+            context = await self.browser.new_context(proxy=proxy)  # type: ignore
+            page = await context.new_page()
+            await stealth_async(page)
+            await page.goto(
+                base_url, wait_until="domcontentloaded"
+            )  # await page.goto(base_url, wait_until="networkidle")
+
         try:
-            yield page
+            # The only way to get here is if we successfully created a context and page
+            # so page is not None, but python can't know that
+            yield page  # type: ignore
         finally:
-            await page.close()
+            if page:
+                await page.close()
+            if context:
+                await context.close()
 
     def construct_selector(self):
         extensions = self.site.scrape_method_configuration.document_extensions

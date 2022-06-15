@@ -91,7 +91,8 @@ async def runBulkByType(
         query["last_status"] = {"$ne": ["QUEUED", "IN_PROGRESS"]}
 
     async for site in Site.find_many(query):
-        site_scrape_task = SiteScrapeTask(site_id=site.id, queued_time=datetime.now())
+        site_id: PydanticObjectId = site.id # type: ignore
+        site_scrape_task = SiteScrapeTask(site_id=site_id, queued_time=datetime.now())
         update_result = await SiteScrapeTask.get_motor_collection().update_one(
             {
                 "site_id": site.id,

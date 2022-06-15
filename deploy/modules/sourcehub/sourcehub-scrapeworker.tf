@@ -84,6 +84,14 @@ resource "aws_ecs_task_definition" "scrapeworker" {
         {
           name = "S3_DOCUMENT_BUCKET"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/docrepo_bucket_name"
+        },
+        {
+          name = "SMARTPROXY_USERNAME"
+          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/smartproxy_username"
+        },
+        {
+          name = "SMARTPROXY_PASSWORD"
+          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/smartproxy_password"
         }
       ]
 

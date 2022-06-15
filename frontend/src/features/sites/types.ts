@@ -13,12 +13,17 @@ export interface Site extends BaseDocument {
   scrape_method_configuration: {
     document_extensions: string[];
     url_keywords: string[];
+    proxy_exclusions: string[];
   };
   tags: string[];
   disabled: boolean;
   last_run_time?: string;
   last_status: Status;
   cron: string;
+}
+
+export interface Proxy extends BaseDocument {
+  name: string;
 }
 
 export interface ActiveUrlResponse {
