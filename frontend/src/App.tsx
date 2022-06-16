@@ -131,13 +131,10 @@ function App() {
   );
 }
 
-debugger
-export default App;
-
-// export default withAuthenticationRequired(App, {
-//   loginOptions: { redirectTo: '/sites' },
-//   claimCheck: function (user?: User): boolean {
-//     console.log(user);
-//     return true;
-//   },
-// });
+export default withAuthenticationRequired(App, {
+  loginOptions: { redirectTo: '/sites' },
+  claimCheck: function (user?: User): boolean {
+    console.log(user, 'claimCheck');
+    return true;
+  },
+});

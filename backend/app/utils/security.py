@@ -5,8 +5,8 @@ from jose import jwt
 from passlib.context import CryptContext
 
 from backend.app.core.settings import settings
-from backend.app.utils.backends.local import LocalBackend
-from .backends.auth0 import Auth0Backend
+# from backend.app.utils.backends.local import LocalBackend
+from backend.app.utils.backends.auth0 import Auth0Backend
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
@@ -28,7 +28,10 @@ def create_access_token(
     return encoded_jwt
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
+def verify_password(
+    plain_password: str,
+    hashed_password: str,
+) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 

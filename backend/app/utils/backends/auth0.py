@@ -6,7 +6,7 @@ from backend.app.core.settings import settings
 from backend.common.models.user import User
 
 oauth2_scheme = OpenIdConnect(
-    openIdConnectUrl=f"{settings.auth0.issuer}/.well-known/openid-configuration"
+    openIdConnectUrl=f"{settings.auth0.issuer}.well-known/openid-configuration"
 )
 
 class Auth0Backend(object):
@@ -17,6 +17,7 @@ class Auth0Backend(object):
         )
 
     def get_bearer_token(self, authorization: str) -> str:
+        print(authorization)
         return authorization.split(" ")[1]
 
     def get_signing_key(self, token: str) -> str:
@@ -44,7 +45,8 @@ class Auth0Backend(object):
                 audience=settings.auth0.audience,
                 issuer=settings.auth0.issuer,
             )
-        except:
+        except Exception as ex:
+            print(ex)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
@@ -72,7 +74,6 @@ class Auth0Backend(object):
         # load user from DB
         payload = self.authenticate(authorization)
         self.authorize(payload, security_scopes)
-        print(payload)
 
         # temp until auth0 is updated
         payload["email"] = "admin@mmitnetwork.com"
