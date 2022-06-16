@@ -114,7 +114,10 @@ async def log_cancellation(scrape_task, site, ex):
 
 async def heartbeat_task(scrape_task: SiteScrapeTask):
     while True:
-        await scrape_task.update({SiteScrapeTask.last_active: datetime.now()})
+        await SiteScrapeTask.get_motor_collection().update_one(
+            { '_id': scrape_task.id },
+            { '$set': { 'last_active': datetime.now() } }
+        )
         await asyncio.sleep(10)
 
 
