@@ -16,6 +16,7 @@ from backend.app.utils.logger import (
     update_and_log_diff,
 )
 from backend.app.utils.user import get_current_user
+from backend.common.task_queues.unique_task_insert import try_queue_unique_task
 
 router = APIRouter(
     prefix="/site-scrape-tasks",
@@ -93,18 +94,8 @@ async def runBulkByType(
     async for site in Site.find_many(query):
         site_id: PydanticObjectId = site.id # type: ignore
         site_scrape_task = SiteScrapeTask(site_id=site_id, queued_time=datetime.now())
-        update_result = await SiteScrapeTask.get_motor_collection().update_one(
-            {
-                "site_id": site.id,
-                "status": {"$in": ["QUEUED", "IN_PROGRESS", "CANCELLING"]},
-            },
-            {"$setOnInsert": site_scrape_task.dict()},
-            upsert=True,
-        )
-
-        insert_id: PydanticObjectId | None = update_result.upserted_id  # type: ignore
-        if insert_id:
-            site_scrape_task.id = insert_id
+        site_scrape_task = await try_queue_unique_task(site_scrape_task)
+        if site_scrape_task:
             total_scrapes += 1
             await logger.background_log_change(current_user, site_scrape_task, "CREATE")
             await Site.find_one(Site.id == site.id).update(

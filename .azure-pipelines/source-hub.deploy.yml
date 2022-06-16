@@ -22,6 +22,6 @@ steps:
       scriptType: 'inline'
       inlineScript: |
           terraform init -backend-config=$(System.DefaultWorkingDirectory)/deploy/live/tfvars/${{ parameters.environment }}.s3.tfbackend
-          terraform apply -auto-approve -var-file=$(System.DefaultWorkingDirectory)/deploy/live/tfvars/${{ parameters.environment }}.tfvars -var='sourcehub-app-version=$(Build.SourceVersion)' -var='sourcehub-scrapeworker-version=$(Build.SourceVersion)' -var='sourcehub-parseworker-version=$(Build.SourceVersion)'
+          terraform apply -auto-approve -var-file=$(System.DefaultWorkingDirectory)/deploy/live/tfvars/${{ parameters.environment }}.tfvars -var='sourcehub-app-version=$(Build.SourceVersion)' -var='sourcehub-scrapeworker-version=$(Build.SourceVersion)'  -var='sourcehub-scheduler-version=$(Build.SourceVersion)' -var='sourcehub-parseworker-version=$(Build.SourceVersion)'
       disableAutoCwd: true
       workingDirectory: '$(System.DefaultWorkingDirectory)/deploy/live'

@@ -17,22 +17,25 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 
 @cache
-def get_motor_client() -> AsyncIOMotorClient:
-    client = AsyncIOMotorClient(
-        settings.mongo_url,
-        username=settings.mongo_user,
-        password=settings.mongo_password,
-    )
+def get_motor_client(mock=False) -> AsyncIOMotorClient:
+    if mock:
+        from mongomock_motor import AsyncMongoMockClient
+        client = AsyncMongoMockClient()
+    else:
+        client = AsyncIOMotorClient(
+            settings.mongo_url,
+            username=settings.mongo_user,
+            password=settings.mongo_password,
+        )
     return client
 
 
-def get_motor_db() -> AsyncIOMotorDatabase:
-    return get_motor_client()[settings.mongo_db]
+def get_motor_db(mock=False) -> AsyncIOMotorDatabase:
+    return get_motor_client(mock)[settings.mongo_db]
 
-
-async def init_db():
+async def init_db(mock=False):
     await init_beanie(
-        database=get_motor_db(),
+        database=get_motor_db(mock),
         document_models=[
             User,
             Proxy,
