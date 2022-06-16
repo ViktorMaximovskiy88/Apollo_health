@@ -26,4 +26,4 @@ const fetchBaseQuery = (options: any = {}) => {
 };
 
 const baseFetch = fetchBaseQuery();
-export { createApi, fetchBaseQuery, baseFetch };
+export { createApi, fetchBaseQuery, baseFetch, client };
