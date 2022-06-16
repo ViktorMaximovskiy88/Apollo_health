@@ -64,7 +64,7 @@ const columns = [
         dataSource: [
             { id: 'Authorization Policy', label: 'Authorization Policy' },
             { id: 'Provider Guide', label: 'Provider Guide' },
-            { d: 'Treatment Request Form', label: 'Treatment Request Form' },
+            { id: 'Treatment Request Form', label: 'Treatment Request Form' },
             { id: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
             { id: 'Covered Treatment List', label: 'Covered Treatment List' },
             { id: 'Regulatory Document', label: 'Regulatory Document' },
