@@ -52,7 +52,7 @@ def find_sites_eligible_for_scraping(crons, now=datetime.now()):
             { 'last_run_time': None }, # has never been run
             { 'last_run_time': { '$lt': now - timedelta(minutes=1) } }, # hasn't been run in the last minute
         ],
-        'last_status': { '$nin': ['QUEUED', 'IN_PROGRESS', 'CANCELLING'] } # not already in progress
+        'last_status': { '$nin': ['QUEUED', 'IN_PROGRESS', 'CANCELING'] } # not already in progress
     })
     return sites
 
@@ -142,8 +142,11 @@ async def start_hung_task_checker():
     while True:
         now = datetime.now()
         tasks = SiteScrapeTask.find({
-            'status': { '$in': ['IN_PROGRESS', 'CANCELLING'] },
-            'last_active': { '$lt': now - timedelta(minutes=1) },
+            'status': { '$in': ['IN_PROGRESS', 'CANCELING'] },
+            '$or': [
+                { 'last_active': { '$lt': now - timedelta(minutes=5) } },
+                { 'last_active': None }
+            ],
         })
         message = "Lost task heartbeat"
         async for task in tasks:
