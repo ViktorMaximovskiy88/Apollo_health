@@ -38,6 +38,14 @@ resource "aws_ecs_task_definition" "scheduler" {
         {
           name = "S3_ENDPOINT_URL"
           value = data.aws_service.s3.dns_name
+        },
+        {
+          name = "CLUSTER_ARN"
+          value = data.aws_ecs_cluster.ecs-cluster.arn
+        },
+        {
+          name = "SCRAPEWORKER_SERVICE_ARN"
+          value = aws_ecs_service.scrapeworker.arn
         }
       ]
       essential = true
@@ -151,12 +159,20 @@ resource "aws_iam_role" "scheduler-task" {
         {
           Effect = "Allow"
           Action = [
-            "ecs:ListClusters",
-            "ecs:DescribeClusters",
-            "ecs:ListServices",
+            "ecs:DescribeClusters"
+          ]
+          Resource = [
+            data.aws_ecs_cluster.ecs-cluster.arn
+          ]
+        },
+        {
+          Effect = "Allow"
+          Action = [
             "ecs:UpdateService"
           ]
-          Resource = "*"
+          Resource = [
+            aws_ecs_service.scrapeworker.arn
+          ]
         }
       ]
     })
