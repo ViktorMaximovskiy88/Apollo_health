@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '../../app/base-api';
-import { ChangeLog } from '../change_log/types';
+import { ChangeLog } from '../change-log/types';
 import { SiteScrapeTask } from './types';
 
 export const siteScrapeTasksApi = createApi({
@@ -45,6 +45,16 @@ export const siteScrapeTasksApi = createApi({
         { type: 'ChangeLog', id },
       ],
     }),
+    cancelSiteScrapeTask: builder.mutation<SiteScrapeTask, string | undefined>({
+      query: (siteTaskId) => ({
+        url: `/site-scrape-tasks/${siteTaskId}/cancel`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_r, _e, id) => [
+        { type: 'SiteScrapeTask', id },
+        { type: 'ChangeLog', id },
+      ],
+    }),
     getChangeLog: builder.query<ChangeLog[], string>({
       query: (id) => `/change-log/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
@@ -64,6 +74,7 @@ export const {
   useRunSiteScrapeTaskMutation,
   useUpdateSiteScrapeTaskMutation,
   useDeleteSiteScrapeTaskMutation,
+  useCancelSiteScrapeTaskMutation,
   useGetChangeLogQuery,
   useRunBulkMutation,
 } = siteScrapeTasksApi;

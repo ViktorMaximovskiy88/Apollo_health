@@ -6,7 +6,7 @@ import auth0slice from './auth0-slice';
 import { usersApi } from '../features/users/usersApi';
 import { sitesApi } from '../features/sites/sitesApi';
 import { documentsApi } from '../features/documents/documentsApi';
-import { siteScrapeTasksApi } from '../features/site_scrape_tasks/siteScrapeTasksApi';
+import { siteScrapeTasksApi } from '../features/collections/siteScrapeTasksApi';
 import { extractionTasksApi } from '../features/extractions/extractionsApi';
 import { proxiesApi } from '../features/proxies/proxiesApi';
 

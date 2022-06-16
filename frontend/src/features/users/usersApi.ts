@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '../../app/base-api';
-import { ChangeLog } from '../change_log/types';
+import { ChangeLog } from '../change-log/types';
 import { User } from './types';
 
 export const usersApi = createApi({

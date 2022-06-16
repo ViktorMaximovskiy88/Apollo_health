@@ -1,4 +1,4 @@
-import { BaseDocument } from '../types';
+import { BaseDocument, Status } from '../types';
 
 export interface BaseUrl {
   url: string;
@@ -18,7 +18,7 @@ export interface Site extends BaseDocument {
   tags: string[];
   disabled: boolean;
   last_run_time?: string;
-  last_status: string;
+  last_status: Status;
   cron: string;
 }
 
