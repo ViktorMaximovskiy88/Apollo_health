@@ -144,7 +144,7 @@ async def start_hung_task_checker():
         tasks = SiteScrapeTask.find({
             'status': { '$in': ['IN_PROGRESS', 'CANCELING'] },
             '$or': [
-                { 'last_active': { '$lt': now - timedelta(minutes=5) } },
+                { 'last_active': { '$lt': now - timedelta(minutes=1) } },
                 { 'last_active': None }
             ],
         })
