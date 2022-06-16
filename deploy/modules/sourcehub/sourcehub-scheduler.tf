@@ -168,6 +168,7 @@ resource "aws_iam_role" "scheduler-task" {
         {
           Effect = "Allow"
           Action = [
+            "ecs:DescribeServices",
             "ecs:UpdateService"
           ]
           Resource = [

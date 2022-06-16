@@ -1,5 +1,4 @@
 import asyncio
-from functools import cache
 from pathlib import Path
 import signal
 import sys
@@ -10,11 +9,10 @@ import typer
 from datetime import datetime, timedelta
 from beanie.odm.operators.update.general import Set
 
-from backend.common.task_queues.unique_task_insert import try_queue_unique_task
-
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 
-from backend.common.core.config import is_local
+from backend.common.task_queues.unique_task_insert import try_queue_unique_task
+from backend.common.core.config import is_local, config
 from backend.common.models.user import User
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.app.utils.logger import Logger
@@ -87,18 +85,11 @@ async def start_scheduler():
 
         await asyncio.sleep(15)
 
-@cache
-def cluster_arn() -> str:
-    ecs = boto3.client("ecs")
-    clusters = ecs.list_clusters()
-    return clusters['clusterArns'][0]
+def cluster_arn() -> str | None:
+    return config.get('CLUSTER_ARN')
 
-@cache
-def scrapeworker_service_arn() -> str:
-    ecs = boto3.client("ecs")
-    services = ecs.list_services(cluster=cluster_arn())
-    arns = services['serviceArns']
-    return next(filter(lambda arn: 'scrapeworker' in arn, arns))
+def scrapeworker_service_arn() -> str | None:
+    return config.get('SCRAPEWORKER_SERVICE_ARN')
 
 def determine_current_instance_count():
     ecs = boto3.client("ecs")
