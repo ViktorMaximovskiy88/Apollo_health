@@ -1,7 +1,7 @@
 from datetime import datetime
 from beanie import PydanticObjectId
 from beanie.odm.operators.update.general import Set
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Security
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import Site
 
@@ -17,7 +17,8 @@ from backend.app.utils.logger import (
     get_logger,
     update_and_log_diff,
 )
-from backend.app.utils.user import get_current_user
+
+from backend.app.utils.security import backend
 
 router = APIRouter(
     prefix="/extraction-tasks",
@@ -35,10 +36,13 @@ async def get_target(id: PydanticObjectId):
     return task
 
 
-@router.get("/results/", response_model=list[ContentExtractionResult])
+@router.get(
+    "/results/",
+    response_model=list[ContentExtractionResult],
+    dependencies=[Security(backend.get_current_user)],
+)
 async def read_extraction_results(
     extraction_id: PydanticObjectId,
-    current_user: User = Depends(get_current_user),
 ):
     extraction_results: list[ContentExtractionResult] = (
         await ContentExtractionResult.find_many(
@@ -51,10 +55,13 @@ async def read_extraction_results(
     return extraction_results
 
 
-@router.get("/", response_model=list[ContentExtractionTask])
+@router.get(
+    "/",
+    response_model=list[ContentExtractionTask],
+    dependencies=[Security(backend.get_current_user)],
+)
 async def read_extraction_tasks_for_doc(
     retrieved_document_id: PydanticObjectId,
-    current_user: User = Depends(get_current_user),
 ):
     extraction_tasks: list[ContentExtractionTask] = (
         await ContentExtractionTask.find_many(
@@ -66,10 +73,13 @@ async def read_extraction_tasks_for_doc(
     return extraction_tasks
 
 
-@router.get("/{id}", response_model=ContentExtractionTask)
+@router.get(
+    "/{id}",
+    response_model=ContentExtractionTask,
+    dependencies=[Security(backend.get_current_user)],
+)
 async def read_extraction_task(
     target: User = Depends(get_target),
-    current_user: User = Depends(get_current_user),
 ):
     return target
 
@@ -79,11 +89,13 @@ async def get_doc(retrieved_document_id: PydanticObjectId):
 
 
 @router.put(
-    "/", response_model=ContentExtractionTask, status_code=status.HTTP_201_CREATED
+    "/",
+    response_model=ContentExtractionTask,
+    status_code=status.HTTP_201_CREATED,
 )
 async def start_extraction_task(
     doc: RetrievedDocument = Depends(get_doc),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(backend.get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     extraction_task = ContentExtractionTask(
@@ -101,7 +113,7 @@ async def start_extraction_task(
 async def update_extraction_task(
     updates: UpdateContentExtractionTask,
     target: ContentExtractionTask = Depends(get_target),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(backend.get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     # NOTE: Could use a transaction here

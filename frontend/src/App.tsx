@@ -10,7 +10,7 @@ import {
   useParams,
 } from 'react-router-dom';
 
-import { withAuthenticationRequired, User, useAuth0 } from '@auth0/auth0-react';
+import { withAuthenticationRequired, User } from '@auth0/auth0-react';
 import { DocumentsHomePage } from './features/documents/DocumentsHomePage';
 import { DocumentEditPage } from './features/documents/DocumentEditPage';
 import { CollectionsPage } from './features/collections/CollectionsPage';
@@ -131,10 +131,13 @@ function App() {
   );
 }
 
-export default withAuthenticationRequired(App, {
-  loginOptions: { redirectTo: '/sites' },
-  claimCheck: function (user?: User): boolean {
-    console.log(user);
-    return true;
-  },
-});
+debugger
+export default App;
+
+// export default withAuthenticationRequired(App, {
+//   loginOptions: { redirectTo: '/sites' },
+//   claimCheck: function (user?: User): boolean {
+//     console.log(user);
+//     return true;
+//   },
+// });

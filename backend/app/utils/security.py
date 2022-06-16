@@ -5,9 +5,10 @@ from jose import jwt
 from passlib.context import CryptContext
 
 from backend.app.core.settings import settings
+from backend.app.utils.backends.local import LocalBackend
+from .backends.auth0 import Auth0Backend
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 ALGORITHM = "HS256"
 
 
@@ -29,3 +30,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
+
+
+backend = LocalBackend()
+# backend=Auth0Backend()
