@@ -46,6 +46,7 @@ class DocDownloader:
     async def proxy_with_backoff(
         self, proxies: list[tuple[Proxy | None, ProxySettings | None]]
     ) -> AsyncGenerator[tuple[AttemptManager, ProxySettings | None], None]:
+        shuffle(proxies)
         async for attempt in self.rate_limiter.attempt_with_backoff():
             i = attempt.retry_state.attempt_number - 1
             n_proxies = len(proxies)
@@ -57,7 +58,6 @@ class DocDownloader:
     async def download_url(self, url, proxies: list[tuple[Proxy | None, ProxySettings | None]] = []):
         context: APIRequestContext | None = None
         response: APIResponse | None = None
-        shuffle(proxies)
         async for attempt, proxy in self.proxy_with_backoff(proxies):
             with attempt:
                 context = await self.playwright_request_context(proxy)

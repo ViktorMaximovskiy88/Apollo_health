@@ -1,3 +1,4 @@
+import math
 import pytest
 from backend.scrapeworker.rate_limiter import RateLimiter
 
@@ -13,4 +14,4 @@ async def test_retrier():
             if attempt.retry_state.attempt_number == 2:
                 raise Exception("Second Failure")
 
-    assert rl.wait_between_requests == wait_between_requests * 2**2
+    assert math.isclose(rl.wait_between_requests, wait_between_requests * 1.5**2)
