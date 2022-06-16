@@ -45,7 +45,7 @@ resource "aws_ecs_task_definition" "scheduler" {
         },
         {
           name = "SCRAPEWORKER_SERVICE_ARN"
-          value = aws_ecs_service.scrapeworker.arn
+          value = aws_ecs_service.scrapeworker.id
         }
       ]
       essential = true
@@ -171,7 +171,7 @@ resource "aws_iam_role" "scheduler-task" {
             "ecs:UpdateService"
           ]
           Resource = [
-            aws_ecs_service.scrapeworker.arn
+            aws_ecs_service.scrapeworker.id
           ]
         }
       ]
