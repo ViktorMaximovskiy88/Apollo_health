@@ -40,13 +40,6 @@ frontend_build_dir = Path(__file__).parent.joinpath("../../frontend/build").reso
 
 app.add_middleware(GZipMiddleware)
 
-@app.get("/login", response_class=HTMLResponse, tags=["Auth"])
-async def login_page(error: str, email: str, request: Request):
-    html = templates.TemplateResponse(
-        "login.html", {"request": request, "error": error, "email": email}
-    )
-    return html
-
 prefix = "/api/v1"
 app.include_router(auth.router, prefix=prefix)
 app.include_router(users.router, prefix=prefix)

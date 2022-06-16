@@ -16,7 +16,7 @@ config = {
 }
 
 config["env_type"] = env_type
-config["is_local"] = env_type == "local"
+config["is_local"] = is_local
 
 def load_dotenv(env_type):
     load_from_dotenv(envs_dir.joinpath(f"base.env"))

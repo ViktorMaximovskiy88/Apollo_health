@@ -1,11 +1,13 @@
 import jwt
 
 from fastapi import Header, status, HTTPException, Depends
-from fastapi.security import SecurityScopes, OAuth2PasswordBearer
+from fastapi.security import SecurityScopes, OAuth2, HTTPBearer
+from fastapi.openapi.models import OAuthFlowClientCredentials
 from backend.app.core.settings import settings
 from backend.common.models.user import User
+from pydantic import EmailStr, BaseModel
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
+oauth2_scheme = HTTPBearer()
 
 class LocalBackend(object):
     def get_signing_key(self) -> str:
@@ -15,7 +17,9 @@ class LocalBackend(object):
         self,
         authorization: str,
     ) -> dict:
-        token = authorization
+
+        token = authorization.credentials
+        print(token)
 
         if not token:
             raise HTTPException(
@@ -29,11 +33,10 @@ class LocalBackend(object):
             payload = jwt.decode(
                 token,
                 signing_key,
-                algorithms=["RS256"],
-                audience=settings.auth0.audience,
-                issuer=settings.auth0.issuer,
+                algorithms=["HS256"],
             )
-        except:
+        except Exception as ex:
+            print(ex)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
@@ -63,6 +66,9 @@ class LocalBackend(object):
         payload = self.authenticate(authorization)
         self.authorize(payload, security_scopes)
 
-        user = await User.by_email(payload["email"])
-
+        user = await User.by_email(payload["sub"])
         return user
+
+class LocalUserLoginSchema(BaseModel):
+    username: EmailStr
+    password: str        

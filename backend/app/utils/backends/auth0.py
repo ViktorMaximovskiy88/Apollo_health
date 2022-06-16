@@ -1,11 +1,13 @@
 import jwt
 
-from fastapi import Header, status, HTTPException, Depends
-from fastapi.security import SecurityScopes, OAuth2
+from fastapi import status, HTTPException, Depends
+from fastapi.security import SecurityScopes, OpenIdConnect
 from backend.app.core.settings import settings
 from backend.common.models.user import User
 
-oauth2_scheme = OAuth2()
+oauth2_scheme = OpenIdConnect(
+    openIdConnectUrl=f"{settings.auth0.issuer}/.well-known/openid-configuration"
+)
 
 class Auth0Backend(object):
     def __init__(self):
@@ -32,8 +34,8 @@ class Auth0Backend(object):
             )
 
         signing_key = self.get_signing_key(token)
-
         payload = None
+
         try:
             payload = jwt.decode(
                 token,
@@ -66,10 +68,12 @@ class Auth0Backend(object):
         security_scopes: SecurityScopes = SecurityScopes(scopes=["email"]),
         authorization: str = Depends(oauth2_scheme),
     ) -> User:
-        
+
         # load user from DB
         payload = self.authenticate(authorization)
         self.authorize(payload, security_scopes)
+        print(payload)
+
         # temp until auth0 is updated
         payload["email"] = "admin@mmitnetwork.com"
         user = await User.by_email(payload["email"])
