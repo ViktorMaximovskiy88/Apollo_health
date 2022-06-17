@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 
-export default () => {
+const useAccessToken = () => {
   const { isAuthenticated, getAccessTokenSilently } = useAuth0();
-  const [token, setToken] = useState("");
+  const [token, setToken] = useState('');
 
   useMemo(() => {
     if (isAuthenticated && !token) {
@@ -12,7 +12,9 @@ export default () => {
         setToken(token);
       })();
     }
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated, token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return token;
 };
+
+export default useAccessToken;
