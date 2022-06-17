@@ -36,6 +36,7 @@ async def pull_task_from_queue(worker_id):
         {
             "$set": {
                 "start_time": now,
+                "last_active": now,
                 "worker_id": worker_id,
                 "status": "IN_PROGRESS",
             }
@@ -113,8 +114,11 @@ async def log_cancellation(scrape_task, site, ex):
 
 async def heartbeat_task(scrape_task: SiteScrapeTask):
     while True:
-        await scrape_task.update({SiteScrapeTask.last_active: datetime.now()})
-        await asyncio.sleep(1)
+        await SiteScrapeTask.get_motor_collection().update_one(
+            { '_id': scrape_task.id },
+            { '$set': { 'last_active': datetime.now() } }
+        )
+        await asyncio.sleep(10)
 
 
 async def worker_fn(worker_id, playwright, browser):

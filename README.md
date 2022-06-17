@@ -23,6 +23,8 @@ Responsible for handling requests from the frontend, performing CRUD, initiating
 Responsible for downloading documents and assigning an initial document type, effective date etc.
 ### Parse Worker (backend/parseworker)
 Responsible for extracting content for structured documents.
+### Scheduler (backend/scheduler)
+Responsible for running jobs on a schedule, scaling infrastructure to meet demand, and failing/rescheduling abandoned tasks.
 
 ## Development
 These instructions are based on Ubuntu Linux. They should be portable to Windows (via WSL2) and Mac.
@@ -100,6 +102,10 @@ python backend/scrapeworker/main.py
 python backend/parseworker/main.py
 ```
 ```bash
+# Parse Worker
+python backend/scheduler/main.py
+```
+```bash
 # Frontend
 cd frontend
 yarn start
@@ -175,6 +181,11 @@ python backend/scrapeworker/main.py
 ```bash
 # Parse Worker
 python backend/parseworker/main.py
+```
+
+```bash
+# Parse Worker
+python backend/scheduler/main.py
 ```
 
 ```bash

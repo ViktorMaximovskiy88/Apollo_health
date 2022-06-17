@@ -835,6 +835,30 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
+name = "mongomock"
+version = "4.0.0"
+description = "Fake pymongo stub for testing simple MongoDB-dependent code"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+packaging = "*"
+sentinels = "*"
+six = "*"
+
+[[package]]
+name = "mongomock-motor"
+version = "0.0.10"
+description = "Library for mocking AsyncIOMotorClient built on top of mongomock."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+mongomock = ">=3.23.0,<5.0.0"
+
+[[package]]
 name = "motor"
 version = "2.5.1"
 description = "Non-blocking MongoDB driver for Tornado or asyncio"
@@ -1382,6 +1406,14 @@ python-versions = ">=3.8,<3.11"
 numpy = ">=1.17.3,<1.25.0"
 
 [[package]]
+name = "sentinels"
+version = "1.0.0"
+description = "Various objects to denote special meanings in python"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -1626,7 +1658,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.10.3"
-content-hash = "e93e16232eaf811a4d1881eaa53840eab8b781698b7267e14c232b999e8e830c"
+content-hash = "686eccd023add51e0083cef8b73a2807ad5051b9535a73e2468f019c80e05314"
 
 [metadata.files]
 aiofiles = [
@@ -2159,6 +2191,15 @@ markupsafe = [
     {file = "MarkupSafe-2.1.1-cp39-cp39-win32.whl", hash = "sha256:d4306c36ca495956b6d568d276ac11fdd9c30a36f1b6eb928070dc5360b22e1c"},
     {file = "MarkupSafe-2.1.1-cp39-cp39-win_amd64.whl", hash = "sha256:46d00d6cfecdde84d40e572d63735ef81423ad31184100411e6e3388d405e247"},
     {file = "MarkupSafe-2.1.1.tar.gz", hash = "sha256:7f91197cc9e48f989d12e4e6fbc46495c446636dfc81b9ccf50bb0ec74b91d4b"},
+]
+mongomock = [
+    {file = "mongomock-4.0.0-py2.py3-none-any.whl", hash = "sha256:cac9c68dd7715b4ab6ae510c20b4676e5ce751f0a5434d5ad8236d974e2a2b69"},
+    {file = "mongomock-4.0.0.tar.gz", hash = "sha256:b1832c3748d47444c18867373e5cea754c2e6f644a0cfbfd667f178f68bdecfc"},
+]
+mongomock-motor = [
+    {file = "mongomock_motor-0.0.10-py3-none-any.whl", hash = "sha256:90e6d41ff09add9e2f98ea0a2c4776020077ee7534799116a8a2de8de44206a5"},
+    {file = "mongomock_motor-0.0.10-py3.8.egg", hash = "sha256:036f5419669c8427817bf2947d86fbf041d80c163fc539df3b3a544d9ce91152"},
+    {file = "mongomock_motor-0.0.10.tar.gz", hash = "sha256:55ea6609d1c789679f281e2c60677b6b55157cea63f0972d45789051238a0407"},
 ]
 motor = [
     {file = "motor-2.5.1-py3-none-any.whl", hash = "sha256:961fdceacaae2c7236c939166f66415be81be8bbb762da528386738de3a0f509"},
@@ -2708,6 +2749,9 @@ scipy = [
     {file = "scipy-1.8.0-cp39-cp39-win32.whl", hash = "sha256:3d573228c10a3a8c32b9037be982e6440e411b443a6267b067cac72f690b8d56"},
     {file = "scipy-1.8.0-cp39-cp39-win_amd64.whl", hash = "sha256:bb7088e89cd751acf66195d2f00cf009a1ea113f3019664032d9075b1e727b6c"},
     {file = "scipy-1.8.0.tar.gz", hash = "sha256:31d4f2d6b724bc9a98e527b5849b8a7e589bf1ea630c33aa563eda912c9ff0bd"},
+]
+sentinels = [
+    {file = "sentinels-1.0.0.tar.gz", hash = "sha256:7be0704d7fe1925e397e92d18669ace2f619c92b5d4eb21a89f31e026f9ff4b1"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
