@@ -7,13 +7,13 @@ export default () => {
 
   useMemo(() => {
     if (isAuthenticated && !token) {
-      let _token = "";
       (async (): Promise<void> => {
-        _token = await getAccessTokenSilently();
-        setToken(_token);
+        const token = await getAccessTokenSilently();
+        setToken(token);
       })();
     }
   }, [isAuthenticated, token]);
-  
+
+  console.log(token, 'first')
   return token;
 };

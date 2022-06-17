@@ -4,6 +4,7 @@ interface Auth0Config {
   clientId: string;
   audience: string;
   cacheLocation: any;
+  redirectUri: string;
 }
 
 interface Settings {
@@ -16,6 +17,7 @@ const auth0Settings: Auth0Config = {
   clientId: process.env.REACT_APP_AUTH0_CLIENT_ID as string,
   audience: process.env.REACT_APP_AUTH0_AUDIENCE as string,
   cacheLocation: 'localstorage',
+  redirectUri: window.location.origin as string,
 };
 
 const settings: Settings = {

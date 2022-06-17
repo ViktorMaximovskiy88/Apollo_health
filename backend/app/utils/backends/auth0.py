@@ -1,3 +1,4 @@
+import logging
 import jwt
 
 from fastapi import status, HTTPException, Depends
@@ -17,7 +18,6 @@ class Auth0Backend(object):
         )
 
     def get_bearer_token(self, authorization: str) -> str:
-        print(authorization)
         return authorization.split(" ")[1]
 
     def get_signing_key(self, token: str) -> str:
@@ -30,6 +30,7 @@ class Auth0Backend(object):
         token = self.get_bearer_token(authorization)
 
         if not token:
+            logging.error("Missing authorization header token")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
@@ -46,7 +47,7 @@ class Auth0Backend(object):
                 issuer=settings.auth0.issuer,
             )
         except Exception as ex:
-            print(ex)
+            logging.error(ex)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
@@ -59,8 +60,8 @@ class Auth0Backend(object):
         required_scopes = set(security_scopes.scopes)
 
         has_valid_scopes = required_scopes.issubset(user_scopes)
-
         if not has_valid_scopes:
+            logging.error("User is missing the reuqired scopes")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
         return payload

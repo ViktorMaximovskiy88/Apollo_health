@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useGetDocumentQuery } from './documentsApi';
 import { Viewer, Worker } from '@react-pdf-viewer/core';
@@ -10,7 +9,6 @@ import Title from 'antd/lib/typography/Title';
 import { Table, Tabs } from 'antd';
 import { DocumentForm } from './DocumentForm';
 import tw from 'twin.macro';
-import {client} from '../../app/base-api'
 import useAccessToken from '../../app/use-access-token';
 
 

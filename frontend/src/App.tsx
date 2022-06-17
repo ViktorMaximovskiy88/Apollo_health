@@ -134,7 +134,7 @@ function App() {
 export default withAuthenticationRequired(App, {
   loginOptions: { redirectTo: '/sites' },
   claimCheck: function (user?: User): boolean {
-    console.log(user, 'claimCheck');
+    // do claim check here ...
     return true;
   },
 });

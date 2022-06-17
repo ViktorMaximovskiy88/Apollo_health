@@ -1,11 +1,13 @@
+import logging
 import jwt
 
 from fastapi import Header, status, HTTPException, Depends
-from fastapi.security import SecurityScopes, OAuth2, HTTPBearer
-from fastapi.openapi.models import OAuthFlowClientCredentials
+from fastapi.security import SecurityScopes, HTTPBearer
 from backend.app.core.settings import settings
 from backend.common.models.user import User
 from pydantic import EmailStr, BaseModel
+
+
 
 oauth2_scheme = HTTPBearer()
 
@@ -19,9 +21,9 @@ class LocalBackend(object):
     ) -> dict:
 
         token = authorization.credentials
-        print(token)
 
         if not token:
+            logging.error("Missing authorization header token")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
@@ -36,7 +38,7 @@ class LocalBackend(object):
                 algorithms=["HS256"],
             )
         except Exception as ex:
-            print(ex)
+            logging.error(ex)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
@@ -50,8 +52,8 @@ class LocalBackend(object):
         required_scopes = set(security_scopes.scopes)
 
         has_valid_scopes = required_scopes.issubset(user_scopes)
-
         if not has_valid_scopes:
+            logging.error("User is missing the reuqired scopes")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
         return payload
@@ -61,7 +63,6 @@ class LocalBackend(object):
         security_scopes: SecurityScopes = SecurityScopes(scopes=[]),
         authorization: str = Depends(oauth2_scheme),
     ) -> User:
-        print(authorization)
         # load user from DB
         payload = self.authenticate(authorization)
         self.authorize(payload, security_scopes)

@@ -13,7 +13,7 @@ function onRedirectCallback(appState: any) {
   const returnTo = appState?.returnTo || window.location.pathname;
   history.push(returnTo);  
 }
-console.log(settings);
+
 const app = (
   <React.StrictMode>
     <Auth0Provider
