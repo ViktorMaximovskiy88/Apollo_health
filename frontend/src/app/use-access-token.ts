@@ -14,6 +14,5 @@ export default () => {
     }
   }, [isAuthenticated, token]);
 
-  console.log(token, 'first')
   return token;
 };
