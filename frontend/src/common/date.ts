@@ -3,9 +3,9 @@ import { DateTime, Duration } from 'luxon';
 /**
  * Pretty renders a date in the specified format
  * If not render a default missing placeholder value.
- * @param value 
- * @param dateFormat 
- * @returns 
+ * @param value
+ * @param dateFormat
+ * @returns
  */
 export function prettyFromISO(
   value?: string,
@@ -18,9 +18,9 @@ export function prettyFromISO(
 
 /**
  * Short date format
- * @param value 
- * @param dateFormat 
- * @returns 
+ * @param value
+ * @param dateFormat
+ * @returns
  */
 export function prettyDateFromISO(
   value?: string,
@@ -31,9 +31,9 @@ export function prettyDateFromISO(
 
 /**
  * Short datetime format
- * @param value 
- * @param dateFormat 
- * @returns 
+ * @param value
+ * @param dateFormat
+ * @returns
  */
 export function prettyDateTimeFromISO(
   value?: string,
