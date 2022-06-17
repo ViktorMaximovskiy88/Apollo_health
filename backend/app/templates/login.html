@@ -82,7 +82,7 @@
                 <h4>Account is Disabled</h4>
             {% endif %}
             <form id="login-form" method="POST" action="/api/v1/auth/login?redirect=true">
-               <input id="username" type="text" name="username" placeholder="Email" value="{{ email }}"/>
+               <input id="email" type="text" name="email" placeholder="Email" value="{{ email }}"/>
                <input id="password" type="password" name="password" placeholder="Password"/> 
                <button type="submit">Sign In</button>
             </form>
