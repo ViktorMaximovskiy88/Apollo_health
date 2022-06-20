@@ -1,8 +1,7 @@
 from pathlib import Path
 from typing import Any
 from fastapi import FastAPI, Request, status
-from fastapi.exceptions import HTTPException
-from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -11,6 +10,7 @@ from backend.common.db.init import init_db
 from backend.common.db.migrations import run_migrations
 from backend.common.core.config import is_local
 from backend.app.routes import proxies, sites
+
 from backend.common.models.user import User
 from routes import (
     auth,
@@ -37,6 +37,31 @@ async def app_init():
 template_dir = Path(__file__).parent.joinpath("templates")
 templates = Jinja2Templates(directory=template_dir)
 frontend_build_dir = Path(__file__).parent.joinpath("../../frontend/build").resolve()
+
+
+@app.get("/login", response_class=HTMLResponse, tags=["Auth"])
+async def login_page(request: Request):
+    error = request.query_params.get("error")
+    email = request.query_params.get("email", "")
+    html = templates.TemplateResponse(
+        "login.html", {"request": request, "error": error, "email": email}
+    )
+    return html
+
+
+@app.middleware("http")
+async def spa_routing(request: Request, call_next: Any):
+    response = await call_next(request)
+
+    if (
+        response.status_code == status.HTTP_404_NOT_FOUND
+        and not request.url.path.startswith("/api")
+    ):
+        with open(frontend_build_dir.joinpath("index.html")) as file:
+            return HTMLResponse(file.read())
+
+    return response
+
 
 app.add_middleware(GZipMiddleware)
 

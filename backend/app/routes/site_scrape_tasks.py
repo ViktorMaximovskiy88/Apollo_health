@@ -15,7 +15,7 @@ from backend.app.utils.logger import (
     get_logger,
     update_and_log_diff,
 )
-from backend.app.utils.security import backend
+from backend.app.utils.user import get_current_user
 from backend.common.task_queues.unique_task_insert import try_queue_unique_task
 
 router = APIRouter(
@@ -37,7 +37,7 @@ async def get_target(id: PydanticObjectId):
 @router.get(
     "/",
     response_model=list[SiteScrapeTask],
-    dependencies=[Security(backend.get_current_user)],
+    dependencies=[Security(get_current_user)],
 )
 async def read_scrape_tasks_for_site(
     site_id: PydanticObjectId,
@@ -53,7 +53,7 @@ async def read_scrape_tasks_for_site(
 @router.get(
     "/{id}",
     response_model=SiteScrapeTask,
-    dependencies=[Security(backend.get_current_user)],
+    dependencies=[Security(get_current_user)],
 )
 async def read_scrape_task(
     target: User = Depends(get_target),
@@ -65,11 +65,11 @@ async def read_scrape_task(
     "/",
     response_model=SiteScrapeTask,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Security(backend.get_current_user)],
+    dependencies=[Security(get_current_user)],
 )
 async def start_scrape_task(
     site_id: PydanticObjectId,
-    current_user: User = Security(backend.get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     site_scrape_task = SiteScrapeTask(site_id=site_id, queued_time=datetime.now())
@@ -90,7 +90,7 @@ async def start_scrape_task(
 async def runBulkByType(
     type: str,
     logger: Logger = Depends(get_logger),
-    current_user: User = Security(backend.get_current_user),
+    current_user: User = Security(get_current_user),
 ):
     bulk_type = type
     total_scrapes = 0
@@ -124,7 +124,7 @@ async def runBulkByType(
 async def update_scrape_task(
     updates: UpdateSiteScrapeTask,
     target: SiteScrapeTask = Depends(get_target),
-    current_user: User = Security(backend.get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     # NOTE: Could use a transaction here

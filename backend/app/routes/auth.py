@@ -1,11 +1,10 @@
 from datetime import timedelta
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Query, Form
 from fastapi.responses import RedirectResponse
 from backend.app.utils.security import verify_password
 from backend.common.models.user import User, UserAuth
 from backend.app.core.settings import settings
 from backend.app.utils.security import create_access_token
-from typing import Optional
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -21,16 +20,17 @@ def raise_or_redirect(redirect, email, error):
 
 @router.post("/login")
 async def login_access_token(
-    model: UserAuth,
+    email: str = Form(default=''),
+    password: str = Form(default=''),
     redirect: str | None = Query(default=None),
 ):
 
-    user = await User.by_email(model.email)
+    user = await User.by_email(email)
 
-    if not user or not verify_password(model.password, user.hashed_password):
-        return raise_or_redirect(redirect, model.email, "invalid")
+    if not user or not verify_password(password, user.hashed_password):
+        return raise_or_redirect(redirect, email, "invalid")
     elif user.disabled:
-        return raise_or_redirect(redirect, model.email, "disabled")
+        return raise_or_redirect(redirect, email, "disabled")
 
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(

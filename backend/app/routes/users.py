@@ -9,7 +9,7 @@ from backend.app.utils.logger import (
     update_and_log_diff,
 )
 
-from backend.app.utils.security import backend
+from backend.app.utils.user import get_current_user
 
 router = APIRouter(
     prefix="/users",
@@ -28,7 +28,7 @@ async def get_target(id: PydanticObjectId):
 
 @router.get("/whoami", response_model=UserPublic)
 async def read_current_user(
-    current_user: User = Security(backend.get_current_user),
+    current_user: User = Security(get_current_user),
 ) -> User:
     return current_user
 
@@ -36,7 +36,7 @@ async def read_current_user(
 @router.get(
     "/",
     response_model=list[UserPublic],
-    dependencies=[Security(backend.get_current_user)],
+    dependencies=[Security(get_current_user)],
 )
 async def read_users():
     users: list[User] = await User.find_many({}).to_list()
@@ -46,7 +46,7 @@ async def read_users():
 @router.get(
     "/{id}",
     response_model=UserPublic,
-    dependencies=[Security(backend.get_current_user)],
+    dependencies=[Security(get_current_user)],
 )
 async def read_user(
     target: User = Depends(get_target),
@@ -57,7 +57,7 @@ async def read_user(
 @router.put("/", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user: NewUser,
-    current_user: User = Security(backend.get_current_user, scopes=["admin"]),
+    current_user: User = Security(get_current_user, scopes=["admin"]),
     logger: Logger = Depends(get_logger),
 ):
     new_user = User(
@@ -75,7 +75,7 @@ async def create_user(
 async def update_user(
     updates: UserUpdate,
     target: User = Depends(get_target),
-    current_user: User = Security(backend.get_current_user, scopes=["admin"]),
+    current_user: User = Security(get_current_user, scopes=["admin"]),
     logger: Logger = Depends(get_logger),
 ):
     updated = await update_and_log_diff(logger, current_user, target, updates)
@@ -85,7 +85,7 @@ async def update_user(
 @router.delete("/{id}")
 async def delete_user(
     target: User = Depends(get_target),
-    current_user: User = Security(backend.get_current_user, scopes=["admin"]),
+    current_user: User = Security(get_current_user, scopes=["admin"]),
     logger: Logger = Depends(get_logger),
 ):
     await update_and_log_diff(logger, current_user, target, UserUpdate(disabled=True))

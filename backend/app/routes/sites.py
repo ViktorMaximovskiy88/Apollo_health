@@ -29,7 +29,7 @@ from backend.app.utils.logger import (
     get_logger,
     update_and_log_diff,
 )
-from backend.app.utils.security import backend
+from backend.app.utils.user import get_current_user
 
 router = APIRouter(
     prefix="/sites",
@@ -47,7 +47,7 @@ async def get_target(id: PydanticObjectId):
 
 
 @router.get("/", response_model=list[Site], dependencies=[
-    Security(backend.get_current_user)
+    Security(get_current_user)
 ])
 async def read_sites():
     sites: list[Site] = await Site.find_many({}).sort("-last_run_time", "id").to_list()
@@ -60,7 +60,7 @@ class ActiveUrlResponse(BaseModel):
 
 
 @router.get("/active-url", response_model=ActiveUrlResponse, dependencies=[
-    Security(backend.get_current_user)
+    Security(get_current_user)
 ])
 async def check_url(
     url: str,
@@ -79,7 +79,7 @@ async def check_url(
 
 
 @router.get("/{id}", response_model=Site, dependencies=[
-    Security(backend.get_current_user)
+    Security(get_current_user)
 ])
 async def read_site(
     target: User = Depends(get_target),
@@ -90,7 +90,7 @@ async def read_site(
 @router.put("/", response_model=Site, status_code=status.HTTP_201_CREATED)
 async def create_site(
     site: NewSite,
-    current_user: User = Security(backend.get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     new_site = Site(
@@ -131,7 +131,7 @@ def get_lines_from_upload(file: UploadFile):
 @router.post("/upload", response_model=list[Site])
 async def upload_sites(
     file: UploadFile,
-    current_user: User = Security(backend.get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     new_sites: list[Site] = []
@@ -178,7 +178,7 @@ async def upload_sites(
 async def update_site(
     updates: UpdateSite,
     target: Site = Depends(get_target),
-    current_user: User = Security(backend.get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     updated = await update_and_log_diff(logger, current_user, target, updates)
@@ -188,7 +188,7 @@ async def update_site(
 @router.delete("/{id}")
 async def delete_site(
     target: Site = Depends(get_target),
-    current_user: User = Security(backend.get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     await update_and_log_diff(logger, current_user, target, UpdateSite(disabled=True))

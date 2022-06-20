@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useGetDocumentQuery } from './documentsApi';
 import { Viewer, Worker } from '@react-pdf-viewer/core';
+import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
@@ -18,7 +19,7 @@ export function DocumentEditPage() {
 
   const { data: doc } = useGetDocumentQuery(docId);
   const token = useAccessToken()
-
+  const defaultLayoutPluginInstance = defaultLayoutPlugin();
   
   if (!token) return null;
   if (!doc) return null;
@@ -51,6 +52,7 @@ export function DocumentEditPage() {
                 <Viewer
                   withCredentials={true}
                   fileUrl={`/api/v1/documents/${docId}.pdf`}
+                  plugins={[defaultLayoutPluginInstance]}
                   httpHeaders={{
                     Authorization: `Bearer ${token}`,
                   }}

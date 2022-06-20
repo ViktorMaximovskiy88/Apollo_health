@@ -18,7 +18,7 @@ from backend.app.utils.logger import (
     update_and_log_diff,
 )
 
-from backend.app.utils.security import backend
+from backend.app.utils.user import get_current_user
 
 router = APIRouter(
     prefix="/extraction-tasks",
@@ -39,7 +39,7 @@ async def get_target(id: PydanticObjectId):
 @router.get(
     "/results/",
     response_model=list[ContentExtractionResult],
-    dependencies=[Security(backend.get_current_user)],
+    dependencies=[Security(get_current_user)],
 )
 async def read_extraction_results(
     extraction_id: PydanticObjectId,
@@ -58,7 +58,7 @@ async def read_extraction_results(
 @router.get(
     "/",
     response_model=list[ContentExtractionTask],
-    dependencies=[Security(backend.get_current_user)],
+    dependencies=[Security(get_current_user)],
 )
 async def read_extraction_tasks_for_doc(
     retrieved_document_id: PydanticObjectId,
@@ -76,7 +76,7 @@ async def read_extraction_tasks_for_doc(
 @router.get(
     "/{id}",
     response_model=ContentExtractionTask,
-    dependencies=[Security(backend.get_current_user)],
+    dependencies=[Security(get_current_user)],
 )
 async def read_extraction_task(
     target: User = Depends(get_target),
@@ -95,7 +95,7 @@ async def get_doc(retrieved_document_id: PydanticObjectId):
 )
 async def start_extraction_task(
     doc: RetrievedDocument = Depends(get_doc),
-    current_user: User = Security(backend.get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     extraction_task = ContentExtractionTask(
@@ -113,7 +113,7 @@ async def start_extraction_task(
 async def update_extraction_task(
     updates: UpdateContentExtractionTask,
     target: ContentExtractionTask = Depends(get_target),
-    current_user: User = Security(backend.get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     # NOTE: Could use a transaction here

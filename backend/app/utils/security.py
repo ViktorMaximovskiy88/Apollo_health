@@ -5,8 +5,6 @@ from jose import jwt
 from passlib.context import CryptContext
 
 from backend.app.core.settings import settings
-# from backend.app.utils.backends.local import LocalBackend
-from backend.app.utils.backends.auth0 import Auth0Backend
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
@@ -23,7 +21,12 @@ def create_access_token(
         expire = datetime.utcnow() + timedelta(
             minutes=settings.access_token_expire_minutes
         )
-    to_encode = {"exp": expire, "sub": str(subject), "scope": scopes.join(" ")}
+    to_encode = {
+        "aud": "local",
+        "exp": expire,
+        "sub": str(subject),
+        "scope": " ".join(scopes)
+    }
     encoded_jwt = jwt.encode(to_encode, str(settings.secret_key), algorithm=ALGORITHM)
     return encoded_jwt
 
@@ -37,6 +40,3 @@ def verify_password(
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
-
-
-backend = Auth0Backend()  # LocalBackend()

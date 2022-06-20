@@ -11,7 +11,7 @@ from backend.app.utils.logger import (
     get_logger,
     update_and_log_diff,
 )
-from backend.app.utils.security import backend
+from backend.app.utils.user import get_current_user
 from backend.common.storage.client import DocumentStorageClient
 
 router = APIRouter(
@@ -33,7 +33,7 @@ async def get_target(id: PydanticObjectId):
 @router.get(
     "/",
     response_model=list[RetrievedDocument],
-    dependencies=[Security(backend.get_current_user)],
+    dependencies=[Security(get_current_user)],
 )
 async def read_documents(
     scrape_task_id: PydanticObjectId | None = None,
@@ -61,7 +61,7 @@ async def read_documents(
 
 @router.get(
     "/{id}.pdf",
-    dependencies=[Security(backend.get_current_user)],
+    dependencies=[Security(get_current_user)],
 )
 async def download_document(
     target: RetrievedDocument = Depends(get_target),
@@ -74,7 +74,7 @@ async def download_document(
 @router.get(
     "/{id}",
     response_model=RetrievedDocument,
-    dependencies=[Security(backend.get_current_user)],
+    dependencies=[Security(get_current_user)],
 )
 async def read_document(
     target: RetrievedDocument = Depends(get_target),
@@ -86,7 +86,7 @@ async def read_document(
 async def update_document(
     updates: UpdateRetrievedDocument,
     target: RetrievedDocument = Depends(get_target),
-    current_user: User = Security(backend.get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     updated = await update_and_log_diff(logger, current_user, target, updates)
@@ -113,7 +113,7 @@ async def update_document(
 @router.delete("/{id}")
 async def delete_document(
     target: RetrievedDocument = Depends(get_target),
-    current_user: User = Security(backend.get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     await update_and_log_diff(

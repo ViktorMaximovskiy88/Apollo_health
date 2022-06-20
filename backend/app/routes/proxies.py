@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Security
 from backend.common.models.proxy import Proxy
-from backend.app.utils.security import backend
+from backend.app.utils.user import get_current_user
 
 router = APIRouter(
     prefix="/proxies",
@@ -11,7 +11,7 @@ router = APIRouter(
 @router.get(
     "/",
     response_model=list[Proxy],
-    dependencies=[Security(backend.get_current_user)],
+    dependencies=[Security(get_current_user)],
 )
 async def read_proxies():
     proxies: list[Proxy] = await Proxy.find_many({}).to_list()
