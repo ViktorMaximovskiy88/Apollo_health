@@ -41,3 +41,9 @@ variable "sourcehub-parseworker-version" {
   description = "Version tag of the SourceHub parseworker container"
   default = "latest"
 }
+
+variable "sourcehub-scheduler-version" {
+  type = string
+  description = "Version tag of the SourceHub scheduler container"
+  default = "latest"
+}

@@ -1,8 +1,8 @@
 import userEvent from '@testing-library/user-event';
 import { render, screen, waitFor } from '../../test/test-utils';
 import { setupServer } from 'msw/node';
-import { ScrapesPage } from './ScrapesPage';
-import { handlers } from './mocks/scrapesPageHandlers';
+import { CollectionsPage } from './CollectionsPage';
+import { handlers } from './mocks/collectionsPageHandlers';
 import { useParams, Params } from 'react-router-dom';
 
 jest.mock('react-router-dom');
@@ -31,14 +31,14 @@ afterAll(() => {
 });
 afterEach(() => server.resetHandlers());
 
-describe(`ScrapesPage`, () => {
+describe(`CollectionsPage`, () => {
   it(`should respond correctly to running a collection`, async () => {
     const mockedUseParams = useParams as jest.Mock<Params>;
     mockedUseParams.mockImplementation(() => ({
       siteId: 'site-id1',
     }));
 
-    render(<ScrapesPage />);
+    render(<CollectionsPage />);
     await waitFor(() =>
       expect(screen.getByText(/collections/i)).toBeInTheDocument()
     );

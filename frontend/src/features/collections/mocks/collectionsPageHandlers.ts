@@ -1,14 +1,16 @@
 import { rest } from 'msw';
 import scrapesFixture from './scrapes.fixture.json';
 import { SiteScrapeTask } from '../types';
+import {Status} from "../../types"
 
 interface BackendSiteScrapeTask
-  extends Omit<SiteScrapeTask, 'start_time' | 'end_time'> {
+  extends Omit<SiteScrapeTask, 'start_time' | 'end_time' | "status"> {
   _id: string;
   worker_id: string | null;
   start_time: string | null;
   end_time: string | null;
   error_message: null;
+  status: Status | string;
 }
 
 const scrapes: BackendSiteScrapeTask[] = scrapesFixture;
@@ -18,7 +20,7 @@ const createNewScrape = (
 ): BackendSiteScrapeTask => {
   const newScrape = { ...oldScrape };
   newScrape._id = 'unique-id';
-  newScrape.status = 'QUEUED';
+  newScrape.status = Status.Queued;
   newScrape.documents_found = 0;
   newScrape.new_documents_found = 0;
   return newScrape;
@@ -29,14 +31,14 @@ const timeOut = (ms: number): Promise<void> =>
 
 const processScrape = async (scrape: BackendSiteScrapeTask): Promise<void> => {
   await timeOut(1000);
-  scrape.status = 'IN_PROGRESS';
+  scrape.status = Status.InProgress;
   await timeOut(1000);
   scrape.links_found = 284;
   await timeOut(1000);
   scrape.documents_found = 123;
   await timeOut(1000);
   scrape.documents_found = 284;
-  scrape.status = 'FINISHED';
+  scrape.status = Status.Finished;
 };
 
 export const handlers = [

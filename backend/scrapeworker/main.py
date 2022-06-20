@@ -16,11 +16,12 @@ sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 from backend.common.db.init import init_db
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.scrapeworker.scrape_worker import ScrapeWorker
+from backend.scrapeworker.scrape_worker import ScrapeWorker, CanceledTaskException
 
 app = typer.Typer()
 
 accepting_tasks = True
+
 
 def signal_handler(signum, frame):
     global accepting_tasks
@@ -35,6 +36,7 @@ async def pull_task_from_queue(worker_id):
         {
             "$set": {
                 "start_time": now,
+                "last_active": now,
                 "worker_id": worker_id,
                 "status": "IN_PROGRESS",
             }
@@ -47,12 +49,11 @@ async def pull_task_from_queue(worker_id):
         typer.secho(f"Acquired Task {scrape_task.id}", fg=typer.colors.BLUE)
         return scrape_task
 
+
 async def log_success(scrape_task, site):
     typer.secho(f"Finished Task {scrape_task.id}", fg=typer.colors.BLUE)
     now = datetime.now()
-    await site.update(
-        Set({Site.last_status: "FINISHED", Site.last_run_time: now})
-    )
+    await site.update(Set({Site.last_status: "FINISHED", Site.last_run_time: now}))
     await scrape_task.update(
         Set(
             {
@@ -61,6 +62,7 @@ async def log_success(scrape_task, site):
             }
         )
     )
+
 
 async def log_failure(scrape_task, site, ex):
     message = traceback.format_exc()
@@ -85,10 +87,39 @@ async def log_failure(scrape_task, site, ex):
         )
     )
 
+
+async def log_cancellation(scrape_task, site, ex):
+    message = traceback.format_exc()
+    traceback.print_exc()
+    typer.secho(f"Task Canceled {scrape_task.id}", fg=typer.colors.RED)
+    now = datetime.now()
+    await site.update(
+        Set(
+            {
+                Site.last_status: "CANCELED",
+                Site.last_run_time: now,
+            }
+        )
+    )
+    await scrape_task.update(
+        Set(
+            {
+                SiteScrapeTask.status: "CANCELED",
+                SiteScrapeTask.error_message: message,
+                SiteScrapeTask.end_time: now,
+            }
+        )
+    )
+
+
 async def heartbeat_task(scrape_task: SiteScrapeTask):
     while True:
-        await scrape_task.update({SiteScrapeTask.last_active: datetime.now()})
-        await asyncio.sleep(1)
+        await SiteScrapeTask.get_motor_collection().update_one(
+            { '_id': scrape_task.id },
+            { '$set': { 'last_active': datetime.now() } }
+        )
+        await asyncio.sleep(10)
+
 
 async def worker_fn(worker_id, playwright, browser):
     while True:
@@ -110,13 +141,16 @@ async def worker_fn(worker_id, playwright, browser):
         )
 
         worker = ScrapeWorker(playwright, browser, scrape_task, site)
+        task = asyncio.create_task(heartbeat_task(scrape_task))
         try:
-            task = asyncio.create_task(heartbeat_task(scrape_task))
             await worker.run_scrape()
-            task.cancel()
             await log_success(scrape_task, site)
+        except CanceledTaskException as ex:
+            await log_cancellation(scrape_task, site, ex)
         except Exception as ex:
             await log_failure(scrape_task, site, ex)
+        finally:
+            task.cancel()
 
 
 async def start_worker_async(worker_id):
@@ -129,6 +163,7 @@ async def start_worker_async(worker_id):
             workers.append(worker_fn(worker_id, playwright, browser))
         await asyncio.gather(*workers)
     typer.secho(f"Shutdown Complete", fg=typer.colors.BLUE)
+
 
 @app.command()
 def start_worker():

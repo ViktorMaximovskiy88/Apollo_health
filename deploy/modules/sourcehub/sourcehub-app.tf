@@ -155,15 +155,6 @@ resource "aws_iam_role" "app-task" {
             "s3:ListAllMyBuckets"
           ]
           Resource = "*"
-        },
-        {
-          Effect = "Allow"
-          Action = [
-            "ecs:UpdateService"
-          ]
-          Resource = [
-            "arn:aws:ecs:${var.region}:${data.aws_caller_identity.current.account_id}:service/${data.aws_ecs_cluster.cluster.cluster_name}/*"
-          ]
         }
       ]
     })
