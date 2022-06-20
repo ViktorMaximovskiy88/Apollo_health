@@ -1,18 +1,32 @@
-import ReactDataGrid from "@inovua/reactdatagrid-community";
-import DateFilter from "@inovua/reactdatagrid-community/DateFilter";
-import SelectFilter from "@inovua/reactdatagrid-community/SelectFilter";
-import { Button, Spin } from "antd";
-import { useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { collectionTableState, setCollectionTableFilter, setCollectionTableSort } from "../../app/uiSlice";
-import { prettyDateDistance, prettyDateFromISO } from "../../common";
-import { ButtonLink } from "../../components/ButtonLink";
-import { Status } from "../types";
-import { useCancelSiteScrapeTaskMutation, useGetScrapeTasksForSiteQuery } from "./siteScrapeTasksApi";
-import { SiteScrapeTask } from "./types";
+import { useCallback } from 'react';
+import ReactDataGrid from '@inovua/reactdatagrid-community';
+import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
+import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
+import {
+  TypeFilterValue,
+  TypeSortInfo,
+} from '@inovua/reactdatagrid-community/types';
+import { Button, Spin } from 'antd';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  collectionTableState,
+  setCollectionTableFilter,
+  setCollectionTableSort,
+} from '../../app/uiSlice';
+import { prettyDateDistance, prettyDateFromISO } from '../../common';
+import { ButtonLink } from '../../components/ButtonLink';
+import { Status } from '../types';
+import {
+  useCancelSiteScrapeTaskMutation,
+  useGetScrapeTasksForSiteQuery,
+} from './siteScrapeTasksApi';
+import { SiteScrapeTask } from './types';
 
-const createColumns = (cancelScrape: any, isCanceling: boolean) => {
-    return [
+const createColumns = (
+  cancelScrape: (taskId: string) => void,
+  isCanceling: boolean
+) => {
+  return [
     {
       header: 'Start Time',
       name: 'queued_time',
@@ -22,8 +36,8 @@ const createColumns = (cancelScrape: any, isCanceling: boolean) => {
         return {
           dateFormat: 'YYYY-MM-DD',
           highlightWeekends: false,
-          placeholder: 'Select Date'
-        }
+          placeholder: 'Select Date',
+        };
       },
       render: ({ value }: { value: string }) => {
         return prettyDateFromISO(value);
@@ -42,7 +56,7 @@ const createColumns = (cancelScrape: any, isCanceling: boolean) => {
       name: 'status',
       minWidth: 200,
       filterEditor: SelectFilter,
-      filterEditorProps: { 
+      filterEditorProps: {
         placeholder: 'All',
         dataSource: [
           { id: Status.Queued, label: 'Queued' },
@@ -51,7 +65,7 @@ const createColumns = (cancelScrape: any, isCanceling: boolean) => {
           { id: Status.Failed, label: 'Failed' },
           { id: Status.Canceling, label: 'Canceling' },
           { id: Status.Canceled, label: 'Canceled' },
-        ]
+        ],
       },
       render: ({ value: status }: { value: Status }) => {
         switch (status) {
@@ -101,20 +115,35 @@ const createColumns = (cancelScrape: any, isCanceling: boolean) => {
     },
     {
       header: 'Actions',
-      render: ({ data: task }: { data: SiteScrapeTask }) =>
-        task.status === Status.InProgress || task.status === Status.Queued ? (
-          <Button
-            danger
-            type="primary"
-            disabled={isCanceling}
-            onClick={() => cancelScrape(task._id)}
-          >
-            Cancel
-          </Button>
-        ) : null,
+      render: ({ data: task }: { data: SiteScrapeTask }) => {
+        switch (task.status) {
+          case Status.InProgress:
+          case Status.Queued:
+            return (
+              <Button
+                danger
+                type="primary"
+                disabled={isCanceling}
+                onClick={() => cancelScrape(task._id)}
+              >
+                Cancel
+              </Button>
+            );
+          case Status.Failed:
+            return (
+              <>
+                <Button danger onClick={() => alert('log button clicked!')}>
+                  Log
+                </Button>
+              </>
+            );
+          default:
+            return null;
+        }
+      },
     },
   ];
-}
+};
 
 export function CollectionsDataTable(props: { siteId: string }) {
   const siteId = props.siteId;
@@ -124,15 +153,21 @@ export function CollectionsDataTable(props: { siteId: string }) {
   });
   const [cancelScrape, { isLoading: isCanceling }] =
     useCancelSiteScrapeTaskMutation();
-    
+
   const columns = createColumns(cancelScrape, isCanceling);
 
-  const tableState = useSelector(collectionTableState)
-  const dispatch = useDispatch()
-  const onFilterChange = useCallback((filter: any) => dispatch(setCollectionTableFilter(filter)), [dispatch]);
-  const onSortChange = useCallback((sort: any) => dispatch(setCollectionTableSort(sort)), [dispatch]);
+  const tableState = useSelector(collectionTableState);
+  const dispatch = useDispatch();
+  const onFilterChange = useCallback(
+    (filter: TypeFilterValue) => dispatch(setCollectionTableFilter(filter)),
+    [dispatch]
+  );
+  const onSortChange = useCallback(
+    (sort: TypeSortInfo) => dispatch(setCollectionTableSort(sort)),
+    [dispatch]
+  );
 
-  return <>
+  return (
     <ReactDataGrid
       dataSource={scrapeTasks || []}
       columns={columns}
@@ -142,5 +177,5 @@ export function CollectionsDataTable(props: { siteId: string }) {
       defaultSortInfo={tableState.sort}
       onSortInfoChange={onSortChange}
     />
-  </>
+  );
 }
