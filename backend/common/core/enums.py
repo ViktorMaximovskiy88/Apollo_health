@@ -11,12 +11,11 @@ class CollectionMethod(str, Enum):
     Automated = "AUTOMATED"
     Manual = "MANUAL"
 
-
 class Status(str, Enum):
-    Queued = "QUEUED"
-    Pending = "PENDING"
-    InProgress = "IN_PROGRESS"
-    Finished = "FINISHED"
-    Canceling = "CANCELING"
-    Canceled = "CANCELED"
-    Failed = "FAILED"
+    QUEUED = "QUEUED"
+    PENDING = "PENDING"
+    IN_PROGRESS = "IN_PROGRESS"
+    FINISHED = "FINISHED"
+    CANCELING = "CANCELING"
+    CANCELED = "CANCELED"
+    FAILED = "FAILED"

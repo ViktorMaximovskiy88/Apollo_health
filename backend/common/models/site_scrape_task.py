@@ -12,7 +12,7 @@ class SiteScrapeTask(BaseDocument):
     start_time: datetime | None = None
     end_time: datetime | None = None
     last_active: datetime | None = None
-    status: str = Status.Queued
+    status: str = Status.QUEUED
     documents_found: int = 0
     new_documents_found: int = 0
     retrieved_document_ids: list[PydanticObjectId] = []

@@ -27,12 +27,12 @@ async def start_worker_async():
     while True:
         acquired = (
             await ContentExtractionTask.get_motor_collection().find_one_and_update(
-                {"status": Status.Queued},
+                {"status": Status.QUEUED},
                 {
                     "$set": {
                         "start_time": datetime.now(),
                         "worker_id": worker_id,
-                        "status": Status.InProgress,
+                        "status": Status.IN_PROGRESS,
                     }
                 },
                 sort=[("queued_time", pymongo.ASCENDING)],
@@ -57,7 +57,7 @@ async def start_worker_async():
                 await extract_task.update(
                     Set(
                         {
-                            ContentExtractionTask.status: Status.Finished,
+                            ContentExtractionTask.status: Status.FINISHED,
                             ContentExtractionTask.end_time: now,
                         }
                     )
@@ -68,7 +68,7 @@ async def start_worker_async():
                 await extract_task.update(
                     Set(
                         {
-                            ContentExtractionTask.status: Status.Failed,
+                            ContentExtractionTask.status: Status.FAILED,
                             ContentExtractionTask.end_time: now,
                         }
                     )

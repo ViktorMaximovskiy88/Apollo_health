@@ -15,7 +15,7 @@ class ContentExtractionTask(BaseDocument):
     queued_time: datetime
     start_time: datetime | None = None
     end_time: datetime | None = None
-    status: str = Status.Queued
+    status: str = Status.QUEUED
 
     extraction_count: int = 0
 
