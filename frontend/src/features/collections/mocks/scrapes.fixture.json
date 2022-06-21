@@ -1,0 +1,28 @@
+[
+  {
+    "_id": "62a3be35bbd0e0a8de45b853",
+    "site_id": "629133320c8101ebeae35ce0",
+    "queued_time": "2022-06-10T17:57:09.279000",
+    "start_time": "2022-06-10T17:57:09.366000",
+    "end_time": "2022-06-10T18:01:58.351000",
+    "status": "FINISHED",
+    "documents_found": 284,
+    "new_documents_found": 0,
+    "worker_id": "80cafc50-8e8f-4412-85a5-8f2020fee860",
+    "error_message": null,
+    "links_found": 284
+  },
+  {
+    "_id": "62a3b28490e2c320a7d9a0a1",
+    "site_id": "629133320c8101ebeae35ce0",
+    "queued_time": "2022-06-10T17:07:16.855000",
+    "start_time": null,
+    "end_time": null,
+    "status": "CANCELED",
+    "documents_found": 0,
+    "new_documents_found": 0,
+    "worker_id": null,
+    "error_message": null,
+    "links_found": 0
+  }
+]

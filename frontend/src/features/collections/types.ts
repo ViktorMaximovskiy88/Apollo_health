@@ -6,8 +6,8 @@ export interface SiteScrapeTask extends BaseDocument {
   start_time?: string;
   end_time?: string;
   status: Status;
-  documents_found: number;
   links_found: number;
-  new_ldocuments_found: number;
   error_message: string;
+  documents_found: number;
+  new_documents_found: number;
 }
