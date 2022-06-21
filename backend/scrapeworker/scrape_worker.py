@@ -211,7 +211,7 @@ class ScrapeWorker:
         page: Page | None = None
         async for attempt, proxy in self.try_each_proxy():
             with attempt:
-                context = await self.browser.new_context(proxy=proxy) # type: ignore
+                context = await self.browser.new_context(proxy=proxy, ignore_https_errors=True) # type: ignore
                 page = await context.new_page()
                 await stealth_async(page)
                 await page.goto(base_url, wait_until="domcontentloaded") # await page.goto(base_url, wait_until="networkidle")
