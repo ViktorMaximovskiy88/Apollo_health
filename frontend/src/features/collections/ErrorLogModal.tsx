@@ -11,18 +11,19 @@ export function ErrorLogModal({
   setVisible,
   errorTraceback,
 }: ErrorLogModalPropTypes) {
-  const handleOk = () => {
-    setVisible(false);
-  };
-
   return (
     <Modal
       visible={visible}
       title="Error Traceback"
-      onOk={handleOk}
-      onCancel={handleOk}
+      onCancel={() => setVisible(false)}
+      width={1000}
       footer={[
-        <Button className="px-10" type="primary" key="back" onClick={handleOk}>
+        <Button
+          className="px-10"
+          type="primary"
+          key="back"
+          onClick={() => setVisible(false)}
+        >
           Ok
         </Button>,
       ]}
