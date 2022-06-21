@@ -118,13 +118,13 @@ async def cancel_all_site_scrape_task(
     # fetch the site to determine the last_status is either QUEUED or IN_PROGRESS
     site = await Site.find_one({
         "_id":site_id,
-        "status":{ "$in": [ "QUEUED", "IN_PROGRESS" ] }
+        "status":{ "$in": [ "QUEUED" ] }
     })
 
     if site:
         # If the site is found, fetch all tasks and cancel all queued or in progress tasks
         result = await SiteScrapeTask.get_motor_collection().update_many(
-            {"site_id": site_id, "status":{ "$in": [ "QUEUED", "IN_PROGRESS" ] }},
+            {"site_id": site_id, "status":{ "$in": [ "QUEUED" ] }},
             {"$set": {"status": "CANCELED"}}
         )
         await site.update(
