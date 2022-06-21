@@ -42,6 +42,15 @@ describe(`CollectionsPage`, () => {
     await waitFor(() =>
       expect(screen.getByText(/collections/i)).toBeInTheDocument()
     );
+    await waitFor(() => {
+      expect(screen.getByText(/finished/i)).toBeInTheDocument();
+    });
+
+    // fails for some reason
+    await waitFor(() => {
+      expect(screen.getByText(/canceled/i)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/failed/i)).toBeInTheDocument();
     userEvent.click(screen.getByText(/run collection/i));
     await waitFor(() =>
       expect(screen.getByText(/queued/i)).toBeInTheDocument()

@@ -122,7 +122,12 @@ export const createColumns = ({
             );
           case Status.Failed:
             return (
-              <Button danger onClick={() => openErrorModal(task.error_message)}>
+              <Button
+                danger
+                onClick={() =>
+                  openErrorModal(task.error_message || 'traceback not found')
+                }
+              >
                 Log
               </Button>
             );
