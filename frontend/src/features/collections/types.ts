@@ -9,4 +9,5 @@ export interface SiteScrapeTask extends BaseDocument {
   documents_found: number;
   links_found: number;
   new_ldocuments_found: number;
+  error_message: string;
 }
