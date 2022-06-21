@@ -31,3 +31,8 @@ export interface ActiveUrlResponse {
   in_use: boolean;
   site?: Site;
 }
+
+export enum CollectionMethod {
+  Automated = "AUTOMATED",
+  Manual = "MANUAL"
+}

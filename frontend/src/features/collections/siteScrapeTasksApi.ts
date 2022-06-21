@@ -57,12 +57,11 @@ export const siteScrapeTasksApi = createApi({
     }),
     cancelAllSiteScrapeTasks: builder.mutation<SiteScrapeTask, string | undefined>({
       query: (siteId) => ({
-        url: `/site-scrape-tasks/cancel_all?site_id=${siteId}`,
+        url: `/site-scrape-tasks/cancel-all?site_id=${siteId}`,
         method: 'POST',
       }),
       invalidatesTags: (_r, _e, id) => [
-        { type: 'SiteScrapeTask', id },
-        { type: 'ChangeLog', id },
+        { type: 'SiteScrapeTask', id }
       ],
     }),
     getChangeLog: builder.query<ChangeLog[], string>({

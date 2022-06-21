@@ -5,3 +5,7 @@ class LangCode(str, Enum):
     Spanish = "es"
     Other = "other"
     Unknown = "unknown"
+
+class CollectionMethod(str, Enum):
+    Automated = "AUTOMATED"
+    Manual = "MANUAL"

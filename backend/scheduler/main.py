@@ -19,7 +19,7 @@ from backend.app.utils.logger import Logger
 
 from backend.common.db.init import init_db
 from backend.common.models.site import Site
-
+from backend.common.core.enums import CollectionMethod
 app = typer.Typer()
 
 
@@ -47,13 +47,13 @@ def find_sites_eligible_for_scraping(crons, now=datetime.now()):
     sites = Site.find({
         'cron': { '$in': crons }, # Should be run now
         'disabled': False, # Is active
-        'collection_method':{"$ne":"Manual"},
+        'collection_method':{"$ne":CollectionMethod.Manual},
         'base_urls.status': 'ACTIVE', # has at least one active url
         '$or': [
             { 'last_run_time': None }, # has never been run
             { 'last_run_time': { '$lt': now - timedelta(minutes=1) } }, # hasn't been run in the last minute
         ],
-        'last_status': { '$nin': ['QUEUED', 'IN_PROGRESS', 'CANCELLING'] } # not already in progress
+        'last_status': { '$nin': ['QUEUED', 'IN_PROGRESS', 'CANCELING'] } # not already in progress
     })
     return sites
 
@@ -143,8 +143,11 @@ async def start_hung_task_checker():
     while True:
         now = datetime.now()
         tasks = SiteScrapeTask.find({
-            'status': { '$in': ['IN_PROGRESS', 'CANCELLING'] },
-            'last_active': { '$lt': now - timedelta(minutes=1) },
+            'status': { '$in': ['IN_PROGRESS', 'CANCELING'] },
+            '$or': [
+                { 'last_active': { '$lt': now - timedelta(minutes=1) } },
+                { 'last_active': None }
+            ],
         })
         message = "Lost task heartbeat"
         async for task in tasks:

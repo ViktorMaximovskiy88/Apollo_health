@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ActiveUrlResponse, Site } from './types';
 import { useGetProxiesQuery } from '../proxies/proxiesApi';
+import { CollectionMethod } from "./types"
 
 export function SiteForm(props: {
   onFinish: (user: Partial<Site>) => void;
@@ -67,8 +68,8 @@ export function SiteForm(props: {
   };
 
   const collections = [
-    { value: "Automated", label:"Automated" },
-    { value: "Manual", label:"Manual" }
+    { value: CollectionMethod.Automated, label:"Automated" },
+    { value: CollectionMethod.Manual, label:"Manual" }
   ]
 
   const scrapes = [
@@ -102,7 +103,7 @@ export function SiteForm(props: {
   if (!initialValues) {
     initialValues = {
       scrape_method: 'SimpleDocumentScrape',
-      collection_method: 'Automated',
+      collection_method: CollectionMethod.Automated,
       cron: '0 16 * * *',
       tags: [],
       base_urls: [{ url: '', name: '', status: 'ACTIVE' }],
@@ -226,7 +227,7 @@ export function SiteForm(props: {
       
       <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.collection_method !== currentValues.collection_method}>
         {({ getFieldValue }) =>
-          getFieldValue('collection_method') === 'Automated' ? (
+          getFieldValue('collection_method') === CollectionMethod.Automated ? (
             <Form.Item name="scrape_method" label="Scrape Method">
                 <Select options={scrapes} />
             </Form.Item>

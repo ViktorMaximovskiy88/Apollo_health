@@ -1,9 +1,6 @@
 import {
   Button,
   Layout,
-  Popconfirm,
-  Table,
-  Tag,
   Upload,
   Dropdown,
   Space,
@@ -12,14 +9,6 @@ import {
 } from 'antd';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { Status } from '../types';
-import { Site } from './types';
-import {
-  useDeleteSiteMutation,
-  useGetChangeLogQuery,
-  useGetSitesQuery,
-} from './sitesApi';
 import { useRunBulkMutation } from '../collections/siteScrapeTasksApi';
 
 import { SiteBreadcrumbs } from './SiteBreadcrumbs';
@@ -31,116 +20,38 @@ import {
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
 
-import { ButtonLink } from '../../components/ButtonLink';
-import { prettyDateFromISO } from '../../common';
+import { SiteDataTable } from './SiteDataTable';
+import { useGetSitesQuery } from './sitesApi';
 
-export function SitesHomePage() {
-  const { data: sites, refetch } = useGetSitesQuery(undefined, {
-    pollingInterval: 5000,
-  });
-  const [deleteSite] = useDeleteSiteMutation();
-  const [runBulk] = useRunBulkMutation();
+function BulkUpload() {
   const [uploading, setUploading] = useState(false);
-  const formattedSites =
-    sites?.filter((u) => !u.disabled).map((u) => ({ ...u, key: u._id })) || [];
-  const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
-  const columns = [
-    {
-      title: 'Name',
-      key: 'name',
-      render: (site: Site) => {
-        return <ButtonLink to={`${site._id}/scrapes`}>{site.name}</ButtonLink>;
-      },
-    },
-    {
-      title: 'Last Run Time',
-      key: 'last_run_time',
-      render: (site: Site) => {
-        if (!site.last_run_time) return null;
-        return prettyDateFromISO(site.last_run_time);
-      },
-    },
-    {
-      title: 'Last Status',
-      key: 'last_status',
-      render: (site: Site) => {
-        const status = site.last_status;
-        switch (status) {
-          case Status.Finished:
-            return <span className="text-green-500">Success</span>;
-          case Status.Canceled:
-            return <span className="text-orange-500">Canceled</span>;
-          case Status.Queued:
-            return <span className="text-yellow-500">Queued</span>;
-          case Status.Failed:
-            return <span className="text-red-500">Failed</span>;
-          case Status.InProgress:
-            return <span className="text-blue-500">In Progress</span>;
-          default:
-            return null;
-        }
-      },
-    },
-    {
-      title: 'Tags',
-      key: 'tags',
-      render: (site: Site) => {
-        return site.tags
-          .filter((tag) => tag)
-          .map((tag) => {
-            const simpleHash = tag
-              .split('')
-              .map((c) => c.charCodeAt(0))
-              .reduce((a, b) => a + b);
-            const color = colors[simpleHash % colors.length];
-            return (
-              <Tag color={color} key={tag}>
-                {tag}
-              </Tag>
-            );
-          });
-      },
-    },
-    {
-      title:"Method",
-      key:"collection_method",
-      render: (site: Site) => {
-        return <span>{site.collection_method}</span>;
-      }
-    },
-    {
-      title: 'Actions',
-      key: 'action',
-      render: (site: Site) => {
-        return (
-          <>
-            <ButtonLink to={`${site._id}/edit`}>Edit</ButtonLink>
-            <ChangeLogModal
-              target={site}
-              useChangeLogQuery={useGetChangeLogQuery}
-            />
-            <Popconfirm
-              title={`Are you sure you want to delete '${site.name}'?`}
-              okText="Yes"
-              cancelText="No"
-              onConfirm={() => deleteSite(site)}
-            >
-              <ButtonLink danger>Delete</ButtonLink>
-            </Popconfirm>
-          </>
-        );
-      },
-    },
-  ];
+
   const onChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
     if (info.file.status === 'uploading') {
       setUploading(true);
     }
     if (info.file.status === 'done') {
       setUploading(false);
-      refetch();
     }
   };
+  return (
+    <Upload
+      name="file"
+      accept=".csv,.txt,.xlsx"
+      action="/api/v1/sites/upload"
+      showUploadList={false}
+      onChange={onChange}
+    >
+      <Button
+        icon={uploading ? <LoadingOutlined /> : <UploadOutlined />}
+      />
+    </Upload>
+  )
+}
+
+function BulkActions() {
+  const [runBulk] = useRunBulkMutation();
+  const { refetch } = useGetSitesQuery(undefined)
   const onMenuSelect = async (key: string) => {
     const response: any = await runBulk(key);
     if (response.data.scrapes_launched === 0) {
@@ -179,6 +90,18 @@ export function SitesHomePage() {
     />
   );
   return (
+    <Dropdown overlay={menu}>
+      <Space>
+        <Button>
+          Run <DownOutlined className="text-sm" />
+        </Button>
+      </Space>
+    </Dropdown>
+  )
+}
+
+export function SitesHomePage() {
+  return (
     <Layout className="p-4 bg-transparent">
       <div className="flex">
         <SiteBreadcrumbs />
@@ -186,27 +109,11 @@ export function SitesHomePage() {
           <Link to="new">
             <Button>Create Site</Button>
           </Link>
-          <Dropdown overlay={menu}>
-            <Space>
-              <Button>
-                Run <DownOutlined className="text-sm" />
-              </Button>
-            </Space>
-          </Dropdown>
-          <Upload
-            name="file"
-            accept=".csv,.txt,.xlsx"
-            action="/api/v1/sites/upload"
-            showUploadList={false}
-            onChange={onChange}
-          >
-            <Button
-              icon={uploading ? <LoadingOutlined /> : <UploadOutlined />}
-            />
-          </Upload>
+          <BulkActions />
+          <BulkUpload />
         </div>
       </div>
-      <Table dataSource={formattedSites} columns={columns} />
+      <SiteDataTable />
     </Layout>
   );
 }

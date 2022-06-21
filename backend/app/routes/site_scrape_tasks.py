@@ -17,6 +17,7 @@ from backend.app.utils.logger import (
 )
 from backend.app.utils.user import get_current_user
 from backend.common.task_queues.unique_task_insert import try_queue_unique_task
+from backend.common.core.enums import CollectionMethod
 
 router = APIRouter(
     prefix="/site-scrape-tasks",
@@ -83,7 +84,7 @@ async def runBulkByType(
 ):
     bulk_type = type
     total_scrapes = 0
-    query = {"disabled": False, "base_urls": {"$exists": True, "$not": {"$size": 0}}, "collection_method":{"$ne":['Manual']}}
+    query = {"disabled": False, "base_urls": {"$exists": True, "$not": {"$size": 0}}, "collection_method":{"$ne":[CollectionMethod.Manual]}}
     if bulk_type == "unrun":
         query["last_status"] = None
     elif bulk_type == "failed":
@@ -109,7 +110,7 @@ async def runBulkByType(
     return {"status": True, "scrapes_launched": total_scrapes}
 
 
-@router.post("/cancel_all", response_model=SiteScrapeTask)
+@router.post("/cancel-all", response_model=SiteScrapeTask)
 async def cancel_all_site_scrape_task(
     site_id: PydanticObjectId,
     current_user: User = Depends(get_current_user),

@@ -2,7 +2,7 @@ from datetime import datetime
 from beanie import PydanticObjectId
 from pydantic import BaseModel, HttpUrl
 from backend.common.models.base_document import BaseDocument
-
+from backend.common.core.enums import CollectionMethod
 
 class ScrapeMethodConfiguration(BaseModel):
     document_extensions: list[str]
@@ -46,7 +46,7 @@ class UpdateSite(BaseModel):
 class Site(BaseDocument, NewSite):
     disabled: bool
     last_status: str | None = None
-    collection_method: str | None = "Automated"
+    collection_method: str | None = CollectionMethod.Automated
     last_run_time: datetime | None = None
 
 

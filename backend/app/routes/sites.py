@@ -109,8 +109,7 @@ def get_lines_from_xlsx(file: UploadFile):
 def get_lines_from_text_file(file: UploadFile):
     for line in file.file:
         line = line.decode("utf-8").strip()
-        name, base_urls, scrape_method, tags, cron = line.split("\t")
-        yield (name, base_urls, scrape_method, tags, cron)
+        yield line.split("\t")
 
 
 def get_lines_from_upload(file: UploadFile):
@@ -130,16 +129,20 @@ async def upload_sites(
     for line in get_lines_from_upload(file):
         name: str
         base_url_str: str
-        scrape_method: str
-        collection_method: str
         tag_str: str
-        cron: str
-        name, base_url_str, scrape_method, collection_method, tag_str, cron = line # type: ignore
+        doc_ext_str: str
+        url_keyw_str: str
+        collection_method: str
+        scrape_method = 'SimpleDocumentScrape'
+        cron = '0 16 * * *'
+        name, base_url_str, tag_str, doc_ext_str, url_keyw_str, collection_method = line # type: ignore
         tags = tag_str.split(",") if tag_str else []
         base_urls = base_url_str.split(",") if base_url_str else []
+        doc_exts = doc_ext_str.split(",") if doc_ext_str else ['pdf']
+        url_keyws = url_keyw_str.split(",") if url_keyw_str else []
         scrape_method_configuration = ScrapeMethodConfiguration(
-            document_extensions=[],
-            url_keywords=[],
+            document_extensions=doc_exts,
+            url_keywords=url_keyws,
             proxy_exclusions=[],
         )
         if await Site.find_one(Site.base_urls == base_urls):
