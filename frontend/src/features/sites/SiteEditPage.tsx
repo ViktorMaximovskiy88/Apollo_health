@@ -4,17 +4,27 @@ import { Site } from './types';
 import { SiteForm } from './SiteForm';
 import { useGetSiteQuery, useUpdateSiteMutation } from './sitesApi';
 import { Layout } from 'antd';
+import {
+  useCancelAllSiteScrapeTasksMutation,
+} from '../collections/siteScrapeTasksApi';
 
 export function SiteEditPage() {
   const params = useParams();
   const { data: site } = useGetSiteQuery(params.siteId);
   const [updateSite] = useUpdateSiteMutation();
+  const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
   const navigate = useNavigate();
   if (!site) return null;
 
-  async function tryUpdateSite(site: Partial<Site>) {
-    site._id = params.siteId;
-    await updateSite(site);
+  async function tryUpdateSite(update: Partial<Site>) {
+    update._id = params.siteId;
+    await updateSite(update);
+
+    await cancelAllScrapes(params.siteId)
+    
+    if (site!.collection_method === "Automated" && update.collection_method === "Manual") {
+      
+    }
     navigate(-1);
   }
   return (

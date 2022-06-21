@@ -47,6 +47,7 @@ def find_sites_eligible_for_scraping(crons, now=datetime.now()):
     sites = Site.find({
         'cron': { '$in': crons }, # Should be run now
         'disabled': False, # Is active
+        'collection_method':{"$ne":"Manual"},
         'base_urls.status': 'ACTIVE', # has at least one active url
         '$or': [
             { 'last_run_time': None }, # has never been run

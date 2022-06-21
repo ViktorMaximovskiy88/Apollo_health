@@ -115,9 +115,14 @@ export function CollectionsPage() {
     <Layout className="bg-white">
       <div className="flex">
         <Title level={4}>Collections</Title>
-        <Button onClick={() => runScrape(site._id)} className="ml-auto">
-          Run Collection
-        </Button>
+        {
+          site.collection_method === "Automated" ?
+          <Button onClick={() => runScrape(site._id)} className="ml-auto">
+            Run Collection
+          </Button>
+          :
+          null
+        }
       </div>
       <Table
         dataSource={formattedScrapes}

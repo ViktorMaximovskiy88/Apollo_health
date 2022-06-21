@@ -87,6 +87,7 @@ async def create_site(
         name=site.name,
         base_urls=site.base_urls,
         scrape_method=site.scrape_method,
+        collection_method=site.collection_method,
         scrape_method_configuration=site.scrape_method_configuration,
         tags=site.tags,
         disabled=False,
@@ -130,9 +131,10 @@ async def upload_sites(
         name: str
         base_url_str: str
         scrape_method: str
+        collection_method: str
         tag_str: str
         cron: str
-        name, base_url_str, scrape_method, tag_str, cron = line # type: ignore
+        name, base_url_str, scrape_method, collection_method, tag_str, cron = line # type: ignore
         tags = tag_str.split(",") if tag_str else []
         base_urls = base_url_str.split(",") if base_url_str else []
         scrape_method_configuration = ScrapeMethodConfiguration(
@@ -140,7 +142,6 @@ async def upload_sites(
             url_keywords=[],
             proxy_exclusions=[],
         )
-
         if await Site.find_one(Site.base_urls == base_urls):
             continue
         base_urls = list(map(lambda url: BaseUrl(url=HttpUrl(url, scheme='https')), base_urls))
@@ -148,6 +149,7 @@ async def upload_sites(
             name=name,
             base_urls=base_urls,
             scrape_method=scrape_method,
+            collection_method=collection_method,
             scrape_method_configuration=scrape_method_configuration,
             tags=tags,
             disabled=False,

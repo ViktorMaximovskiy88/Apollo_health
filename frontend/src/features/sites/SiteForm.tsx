@@ -66,6 +66,11 @@ export function SiteForm(props: {
     return fieldErrors.length > 0
   };
 
+  const collections = [
+    { value: "Automated", label:"Automated" },
+    { value: "Manual", label:"Manual" }
+  ]
+
   const scrapes = [
     { value: 'SimpleDocumentScrape', label: 'Simple Document Scrape' },
     { value: 'BrowserDocumentScrape', label: 'Browser Document Scrape' },
@@ -97,6 +102,7 @@ export function SiteForm(props: {
   if (!initialValues) {
     initialValues = {
       scrape_method: 'SimpleDocumentScrape',
+      collection_method: 'Automated',
       cron: '0 16 * * *',
       tags: [],
       base_urls: [{ url: '', name: '', status: 'ACTIVE' }],
@@ -107,7 +113,6 @@ export function SiteForm(props: {
       },
     }
   }
-
   return (
     <Form
       layout="vertical"
@@ -215,9 +220,20 @@ export function SiteForm(props: {
           </>
         )}
       </Form.List>
-      <Form.Item name="scrape_method" label="Scrape Method">
-        <Select options={scrapes} />
+      <Form.Item name="collection_method" label="Collection Method">
+        <Select options={collections} />
       </Form.Item>
+      
+      <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.collection_method !== currentValues.collection_method}>
+        {({ getFieldValue }) =>
+          getFieldValue('collection_method') === 'Automated' ? (
+            <Form.Item name="scrape_method" label="Scrape Method">
+                <Select options={scrapes} />
+            </Form.Item>
+          ) : null
+        }
+      </Form.Item>
+      
       <Form.Item name="scrape_method_configuration">
         <Form.Item name={["scrape_method_configuration", "document_extensions"]} label="Document Extensions">
           <Select mode="multiple" options={extensions} />

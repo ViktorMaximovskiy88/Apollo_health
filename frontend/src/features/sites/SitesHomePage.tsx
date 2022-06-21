@@ -102,6 +102,13 @@ export function SitesHomePage() {
       },
     },
     {
+      title:"Method",
+      key:"collection_method",
+      render: (site: Site) => {
+        return <span>{site.collection_method}</span>;
+      }
+    },
+    {
       title: 'Actions',
       key: 'action',
       render: (site: Site) => {
