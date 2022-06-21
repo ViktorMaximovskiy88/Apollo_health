@@ -20,6 +20,7 @@ export function ErrorLogModal({
       visible={visible}
       title="Error Traceback"
       onOk={handleOk}
+      onCancel={handleOk}
       footer={[
         <Button className="px-10" type="primary" key="back" onClick={handleOk}>
           Ok
