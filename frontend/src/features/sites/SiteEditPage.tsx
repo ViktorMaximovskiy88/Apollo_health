@@ -19,11 +19,8 @@ export function SiteEditPage() {
   async function tryUpdateSite(update: Partial<Site>) {
     update._id = params.siteId;
     await updateSite(update);
-
-    await cancelAllScrapes(params.siteId)
-    
     if (site!.collection_method === "Automated" && update.collection_method === "Manual") {
-      
+      await cancelAllScrapes(params.siteId)
     }
     navigate(-1);
   }

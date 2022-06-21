@@ -134,8 +134,6 @@ async def cancel_all_site_scrape_task(
             )
         )
 
-
-
 @router.post("/{id}", response_model=SiteScrapeTask)
 async def update_scrape_task(
     updates: UpdateSiteScrapeTask,
