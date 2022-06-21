@@ -1,4 +1,4 @@
-import { Button, Form, Input, Select, Space } from 'antd';
+import { Button, Form, Input, Select, Space, Radio } from 'antd';
 import { LinkOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { useForm } from 'antd/lib/form/Form';
 import { useState } from 'react';
@@ -222,32 +222,39 @@ export function SiteForm(props: {
         )}
       </Form.List>
       <Form.Item name="collection_method" label="Collection Method">
-        <Select options={collections} />
+        <Radio.Group>
+            {
+                collections.map(col => {
+                  return (
+                    <Radio key={col.value} value={col.value}>{col.label}</Radio>
+                  )
+                })
+            }
+        </Radio.Group>
       </Form.Item>
-      
       <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.collection_method !== currentValues.collection_method}>
         {({ getFieldValue }) =>
-          getFieldValue('collection_method') === CollectionMethod.Automated ? (
+          getFieldValue('collection_method') === CollectionMethod.Automated ? <>
             <Form.Item name="scrape_method" label="Scrape Method">
                 <Select options={scrapes} />
             </Form.Item>
-          ) : null
+            <Form.Item name="scrape_method_configuration">
+              <Form.Item name={["scrape_method_configuration", "document_extensions"]} label="Document Extensions">
+                <Select mode="multiple" options={extensions} />
+              </Form.Item>
+              <Form.Item name={["scrape_method_configuration", "url_keywords"]} label="URL Keywords">
+                <Select mode="tags" />
+              </Form.Item>
+              <Form.Item name={["scrape_method_configuration", "proxy_exclusions"]} label="Proxy Exclusions">
+                <Select mode="multiple" options={proxyOptions} />
+              </Form.Item>
+            </Form.Item>
+            <Form.Item name="cron" label="Schedule">
+              <Select options={schedules} />
+            </Form.Item>
+          </> 
+          : null
         }
-      </Form.Item>
-      
-      <Form.Item name="scrape_method_configuration">
-        <Form.Item name={["scrape_method_configuration", "document_extensions"]} label="Document Extensions">
-          <Select mode="multiple" options={extensions} />
-        </Form.Item>
-        <Form.Item name={["scrape_method_configuration", "url_keywords"]} label="URL Keywords">
-          <Select mode="tags" />
-        </Form.Item>
-        <Form.Item name={["scrape_method_configuration", "proxy_exclusions"]} label="Proxy Exclusions">
-          <Select mode="multiple" options={proxyOptions} />
-        </Form.Item>
-      </Form.Item>
-      <Form.Item name="cron" label="Schedule">
-        <Select options={schedules} />
       </Form.Item>
       <Form.Item name="tags" label="Tags">
         <Select mode="tags" />
