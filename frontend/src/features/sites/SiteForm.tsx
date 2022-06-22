@@ -3,7 +3,7 @@ import { LinkOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/ico
 import { useForm } from 'antd/lib/form/Form';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ActiveUrlResponse, Site } from './types';
+import { ActiveUrlResponse, BaseUrl, Site } from './types';
 import { useGetProxiesQuery } from '../proxies/proxiesApi';
 import useAccessToken from '../../app/use-access-token';
 
@@ -29,7 +29,7 @@ export function SiteForm(props: {
     });
     const activeUrlResponse = await check.json();
 
-    setUrlValidation(prevState => {
+    setUrlValidation((prevState) => {
       const update = { ...prevState };
       update[key] = activeUrlResponse;
       return update;
@@ -38,6 +38,17 @@ export function SiteForm(props: {
     if (activeUrlResponse.in_use) {
       return Promise.reject(new Error('URL is already in use'));
     }
+
+    const baseUrls = form.getFieldsValue().base_urls;
+    const duplicateUrls = baseUrls.filter((baseUrl: BaseUrl) => {
+      if (baseUrl.url === value) return true;
+      return false;
+    });
+
+    if (duplicateUrls.length > 1) {
+      return Promise.reject(new Error('URL is already in use with this site'));
+    }
+
     return Promise.resolve();
   }
 

@@ -16,6 +16,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useUpdateDocumentMutation } from './documentsApi';
 import { RetrievedDocument } from './types';
 import moment from 'moment';
+const { TextArea } = Input;
 
 export function DocumentForm(props: { doc: RetrievedDocument }) {
   const navigate = useNavigate();
@@ -76,6 +77,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     url: doc.url,
     base_url: doc.base_url,
     lang_code: doc.lang_code,
+    link_text: doc.context_metadata?.link_text,
   };
 
   const documentTypes = [
@@ -191,9 +193,14 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
       <Form.Item name="base_url" label="Base URL">
         <Input disabled />
       </Form.Item>
-      <Form.Item name="url" label="URL">
-        <Input disabled />
-      </Form.Item>
+      <div className="flex space-x-2">
+        <Form.Item name="link_text" label="Link Text">
+          <TextArea disabled autoSize={true} />
+        </Form.Item>
+        <Form.Item className="grow" name="url" label="Link URL">
+          <TextArea disabled autoSize={true} />
+        </Form.Item>
+      </div>
 
       <Form.Item>
         <Space>
