@@ -1,8 +1,7 @@
 from pathlib import Path
 from typing import Any
 from fastapi import FastAPI, Request, status
-from fastapi.exceptions import HTTPException
-from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -12,7 +11,6 @@ from backend.common.db.init import init_db
 from backend.common.db.migrations import run_migrations
 from backend.common.core.config import is_local
 from backend.app.routes import proxies, sites
-from backend.app.utils.user import get_current_user, get_token_from_request
 from backend.common.models.user import User
 from routes import (
     auth,

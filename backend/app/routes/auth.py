@@ -1,7 +1,6 @@
 import logging
 from datetime import timedelta
-from fastapi import APIRouter, HTTPException, status, Query, Form
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, HTTPException, status
 from backend.app.utils.security import verify_password
 from backend.common.models.user import User, UserAuth
 from backend.app.core.settings import settings

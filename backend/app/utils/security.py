@@ -1,6 +1,6 @@
+import jwt
 from datetime import datetime, timedelta
 from typing import Any, Union, List
-import jwt
 from passlib.context import CryptContext
 from backend.app.core.settings import settings
 
