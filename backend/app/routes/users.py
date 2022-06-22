@@ -9,7 +9,7 @@ from backend.app.utils.logger import (
     update_and_log_diff,
 )
 
-from backend.app.utils.user import get_current_user
+from backend.app.utils.user import get_current_user, get_current_admin_user
 
 router = APIRouter(
     prefix="/users",
@@ -57,7 +57,7 @@ async def read_user(
 @router.put("/", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user: NewUser,
-    current_user: User = Security(get_current_user, scopes=["admin"]),
+    current_user: User = Security(get_current_admin_user),
     logger: Logger = Depends(get_logger),
 ):
     new_user = User(
@@ -75,7 +75,7 @@ async def create_user(
 async def update_user(
     updates: UserUpdate,
     target: User = Depends(get_target),
-    current_user: User = Security(get_current_user, scopes=["admin"]),
+    current_user: User = Security(get_current_admin_user),
     logger: Logger = Depends(get_logger),
 ):
     updated = await update_and_log_diff(logger, current_user, target, updates)
@@ -85,7 +85,7 @@ async def update_user(
 @router.delete("/{id}")
 async def delete_user(
     target: User = Depends(get_target),
-    current_user: User = Security(get_current_user, scopes=["admin"]),
+    current_user: User = Security(get_current_admin_user),
     logger: Logger = Depends(get_logger),
 ):
     await update_and_log_diff(logger, current_user, target, UserUpdate(disabled=True))
