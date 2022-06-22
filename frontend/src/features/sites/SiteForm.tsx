@@ -238,7 +238,7 @@ export function SiteForm(props: {
       <Form.Item
         name="scrape_method"
         label="Scrape Method"
-        wrapperCol={{ sm: 10 }}
+        wrapperCol={{ sm: 10, md: 6 }}
       >
         <Select options={scrapes} />
       </Form.Item>
@@ -262,7 +262,7 @@ export function SiteForm(props: {
           <Select mode="multiple" options={proxyOptions} />
         </Form.Item>
       </Form.Item>
-      <Form.Item name="cron" label="Schedule" wrapperCol={{ sm: 10 }}>
+      <Form.Item name="cron" label="Schedule" wrapperCol={{ sm: 10, md: 6 }}>
         <Select options={schedules} />
       </Form.Item>
       <Form.Item name="tags" label="Tags">
