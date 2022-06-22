@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ActiveUrlResponse, BaseUrl, Site } from './types';
 import { useGetProxiesQuery } from '../proxies/proxiesApi';
-import useAccessToken from '../../app/use-access-token';
+import { fetchWithAuth } from '../../app/base-api';
 
 export function SiteForm(props: {
   onFinish: (user: Partial<Site>) => void;
@@ -16,17 +16,12 @@ export function SiteForm(props: {
   const currentSite = props.initialValues ? props.initialValues._id : "";
   const { data: proxies } = useGetProxiesQuery();
   const proxyOptions = proxies?.map((proxy) => ({ label: proxy.name, value: proxy._id }));
-  const token = useAccessToken();
 
   async function validateUrl(key: number, value: string) {
     const checkUrl = encodeURIComponent(value);
     let url = encodeURI(`/api/v1/sites/active-url?url=${checkUrl}`);
     if (currentSite) url += `&currentSite=${currentSite}`;
-    const check = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const check = await fetchWithAuth(url);
     const activeUrlResponse = await check.json();
 
     setUrlValidation((prevState) => {

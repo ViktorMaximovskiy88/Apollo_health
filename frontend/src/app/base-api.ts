@@ -25,5 +25,24 @@ const fetchBaseQuery = (options: any = {}) => {
   });
 };
 
-const baseFetch = fetchBaseQuery();
-export { createApi, fetchBaseQuery, baseFetch, client };
+// we are supporting the Request object or url string
+const fetchWithAuth = async (resource: any, init: any = {}) => {
+  const token = await client.getTokenSilently();
+  if (typeof resource == 'string') {
+    return fetch(resource, {
+      ...init,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  } else {
+    return fetch({
+      ...resource,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+};
+
+export { createApi, fetchBaseQuery, fetchWithAuth, client };
