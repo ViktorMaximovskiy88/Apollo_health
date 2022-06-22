@@ -113,47 +113,17 @@
                 const scopes = "openid profile email";
 
                 const result = await response.json();
-                debugger
-
+                const [header, payload, signature] = result.access_token.split(".")
+                
                 const decoded = {
-                    "encoded": {
-                        "header": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjBYQ2JhbzkwcWFIRFZGV3R0U1JwMyJ9",
-                        "payload": "eyJnaXZlbl9uYW1lIjoiamVmZiIsImZhbWlseV9uYW1lIjoibCIsIm5pY2tuYW1lIjoiamVmZmxvaW9sYSIsIm5hbWUiOiJqZWZmIGwiLCJwaWN0dXJlIjoiaHR0cHM6Ly9zLmdyYXZhdGFyLmNvbS9hdmF0YXIvMDJkMTUyZWIwMGNhMGM4MTY2ODJiY2Q0N2Q0NGY2Mjg_cz00ODAmcj1wZyZkPWh0dHBzJTNBJTJGJTJGY2RuLmF1dGgwLmNvbSUyRmF2YXRhcnMlMkZqbC5wbmciLCJ1cGRhdGVkX2F0IjoiMjAyMi0wNi0yMVQyMjozMzoxMy45ODFaIiwiZW1haWwiOiJqZWZmbG9pb2xhQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiaXNzIjoiaHR0cHM6Ly9qbG9pb2xhLWRldi1hcGkudXMuYXV0aDAuY29tLyIsInN1YiI6ImF1dGgwfDYyYjI0NTY4ODY4NmYwODAxZDExYzNiYiIsImF1ZCI6Im50Z0dRN0xYQndCamU3dzVEb3VHWVFTYmJwMjRyaUlHIiwiaWF0IjoxNjU1ODk5NDI3LCJleHAiOjE2NTU5MzU0MjcsIm5vbmNlIjoiUW41WE1IbGtOMFpQZUhWa1NTNXJUbjVtUjFnMVkxUjJNWEI2Vm1KdlVFZDZTR1J5UWtod01GSndlQT09In0",
-                        "signature": "UF5BtJeLJTiDXtF9A7-8EOsvCqoQIBXIegkbfLh79sWtrQ8Q7QTdRkrsdM36ZIdD3if7YBb607f9E2zCXNYVZMieQbfMb0fQa9Yl48H223grk7IKDGrc_UlUDdF1sJSmFfhBBnG1k2d2jojNtRi1KnCDAcI-TKCNCRcSEfWq078BRXFmDSFOb7kP-VIyTRCOeyaXux7l8Oe7ljg_2t8TStkJNjpkFGfMDEapkF0o_hTHptoHD0qCgKssToPNnnCxW2U5HiMvuJs2-TmCaFUenX5Lcav41-NcNUssax_gIcL_qcFFhbJIjZ_1SMFJc-nixIlAqyntdOXJKcpRm0VilQ"
-                    },
+                    "encoded": { header, payload, signature },
                     "header": {
-                        "alg": "RS256",
+                        "alg": "HS256",
                         "typ": "JWT",
-                        "kid": "0XCbao90qaHDVFWttSRp3"
+                        "kid": "local"
                     },
-                    "claims": {
-                        "__raw": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjBYQ2JhbzkwcWFIRFZGV3R0U1JwMyJ9.eyJnaXZlbl9uYW1lIjoiamVmZiIsImZhbWlseV9uYW1lIjoibCIsIm5pY2tuYW1lIjoiamVmZmxvaW9sYSIsIm5hbWUiOiJqZWZmIGwiLCJwaWN0dXJlIjoiaHR0cHM6Ly9zLmdyYXZhdGFyLmNvbS9hdmF0YXIvMDJkMTUyZWIwMGNhMGM4MTY2ODJiY2Q0N2Q0NGY2Mjg_cz00ODAmcj1wZyZkPWh0dHBzJTNBJTJGJTJGY2RuLmF1dGgwLmNvbSUyRmF2YXRhcnMlMkZqbC5wbmciLCJ1cGRhdGVkX2F0IjoiMjAyMi0wNi0yMVQyMjozMzoxMy45ODFaIiwiZW1haWwiOiJqZWZmbG9pb2xhQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiaXNzIjoiaHR0cHM6Ly9qbG9pb2xhLWRldi1hcGkudXMuYXV0aDAuY29tLyIsInN1YiI6ImF1dGgwfDYyYjI0NTY4ODY4NmYwODAxZDExYzNiYiIsImF1ZCI6Im50Z0dRN0xYQndCamU3dzVEb3VHWVFTYmJwMjRyaUlHIiwiaWF0IjoxNjU1ODk5NDI3LCJleHAiOjE2NTU5MzU0MjcsIm5vbmNlIjoiUW41WE1IbGtOMFpQZUhWa1NTNXJUbjVtUjFnMVkxUjJNWEI2Vm1KdlVFZDZTR1J5UWtod01GSndlQT09In0.UF5BtJeLJTiDXtF9A7-8EOsvCqoQIBXIegkbfLh79sWtrQ8Q7QTdRkrsdM36ZIdD3if7YBb607f9E2zCXNYVZMieQbfMb0fQa9Yl48H223grk7IKDGrc_UlUDdF1sJSmFfhBBnG1k2d2jojNtRi1KnCDAcI-TKCNCRcSEfWq078BRXFmDSFOb7kP-VIyTRCOeyaXux7l8Oe7ljg_2t8TStkJNjpkFGfMDEapkF0o_hTHptoHD0qCgKssToPNnnCxW2U5HiMvuJs2-TmCaFUenX5Lcav41-NcNUssax_gIcL_qcFFhbJIjZ_1SMFJc-nixIlAqyntdOXJKcpRm0VilQ",
-                        "given_name": "jeff",
-                        "family_name": "l",
-                        "nickname": "jeffloiola",
-                        "name": "jeff l",
-                        "picture": "https://s.gravatar.com/avatar/02d152eb00ca0c816682bcd47d44f628?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fjl.png",
-                        "updated_at": "2022-06-21T22:33:13.981Z",
-                        "email": "jeffloiola@gmail.com",
-                        "email_verified": false,
-                        "iss": "https://jloiola-dev-api.us.auth0.com/",
-                        "sub": "auth0|62b245688686f0801d11c3bb",
-                        "aud": "ntgGQ7LXBwBje7w5DouGYQSbbp24riIG",
-                        "iat": 1655899427,
-                        "exp": 1655935427,
-                        "nonce": "Qn5XMHlkN0ZPeHVkSS5rTn5mR1g1Y1R2MXB6VmJvUEd6SGRyQkhwMFJweA=="
-                    },
-                    "user": {
-                        "given_name": "jeff",
-                        "family_name": "l",
-                        "nickname": "jeffloiola",
-                        "name": "jeff l",
-                        "picture": "https://s.gravatar.com/avatar/02d152eb00ca0c816682bcd47d44f628?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fjl.png",
-                        "updated_at": "2022-06-21T22:33:13.981Z",
-                        "email": "jeffloiola@gmail.com",
-                        "email_verified": false,
-                        "sub": "auth0|62b245688686f0801d11c3bb"
-                    }
+                    "claims": {},
+                    "user": {}
                 };
 
 
@@ -162,17 +132,19 @@
                     "body": {
                         "client_id": clientId,
                         "access_token": result.access_token,
-                        "id_token": null,  // todo
+                        "id_token": null,
                         "scope": scopes,
                         "decodedToken": decoded,
-                        "expires_in": 86400, // todo
+                        "expires_in": 86400,
                         "token_type": "Bearer",
                         "oauthTokenScope": scopes,
                         "audience": audience,
-                    }, "expiresAt": 1655935427  // todo
+                    },
+                    "expiresAt": result.access_token.exp  // todo
                 }
 
                 localStorage.setItem(auth0Key, JSON.stringify(auth0Value))
+                
                 // expires 1 day in utc ....
                 document.cookie = `auth0.${clientId}.is.authenticated=true; path=/`;
                 window.location = 'http://localhost:3000/sites'
