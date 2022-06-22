@@ -108,11 +108,17 @@
                     }
                 });
 
+                const result = await response.json();
+
+                if(!response.ok || result.status_code >= 400) {
+                    console.error(result)
+                    return
+                }
+
                 const clientId = '00000000000000000000000000000000';
                 const audience = 'http://localhost:8000/api/v1';
                 const scopes = "openid profile email";
 
-                const result = await response.json();
                 const [header, payload, signature] = result.access_token.split(".")
                 
                 const decoded = {
