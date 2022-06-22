@@ -20,6 +20,7 @@ export interface RetrievedDocument extends BaseDocument {
   checksum: string;
   name?: string;
   metadata?: { [key: string]: string };
+  context_metadata?: { [key: string]: string };
   effective_date?: string;
   identified_dates?: string[];
   base_url: string;
