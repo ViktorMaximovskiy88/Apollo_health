@@ -5,7 +5,7 @@ import { Button, Spin } from "antd";
 import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { collectionTableState, setCollectionTableFilter, setCollectionTableSort } from "../../app/uiSlice";
-import { prettyDateDistance, prettyDateFromISO } from "../../common";
+import { prettyDateDistance, prettyDateTimeFromISO } from "../../common";
 import { ButtonLink } from "../../components/ButtonLink";
 import { Status } from "../types";
 import { useCancelSiteScrapeTaskMutation, useGetScrapeTasksForSiteQuery } from "./siteScrapeTasksApi";
@@ -26,7 +26,7 @@ const createColumns = (cancelScrape: any, isCanceling: boolean) => {
         }
       },
       render: ({ value }: { value: string }) => {
-        return prettyDateFromISO(value);
+        return prettyDateTimeFromISO(value);
       },
     },
     {

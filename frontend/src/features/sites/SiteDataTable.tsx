@@ -5,7 +5,7 @@ import { Tag, Popconfirm } from "antd";
 import { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setSiteTableFilter, setSiteTableSort, siteTableState } from "../../app/uiSlice";
-import { prettyDateFromISO } from "../../common";
+import { prettyDateTimeFromISO } from "../../common";
 import { ButtonLink } from "../../components/ButtonLink";
 import { ChangeLogModal } from "../change-log/ChangeLogModal";
 import { Status } from "../types";
@@ -38,7 +38,7 @@ const createColumns = (deleteSite: any) => {
       },
       render: ({ value: last_run_time } : { value: string | undefined }) => {
         if (!last_run_time) return null;
-        return prettyDateFromISO(last_run_time);
+        return prettyDateTimeFromISO(last_run_time);
       },
     },
     {
