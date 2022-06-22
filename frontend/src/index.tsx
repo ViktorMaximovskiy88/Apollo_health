@@ -18,7 +18,6 @@ function onRedirectCallback(appState: any) {
 }
 
 const app = (
-  <React.StrictMode>
     <Auth0Provider
       {...settings.auth0}
       onRedirectCallback={onRedirectCallback}
@@ -29,7 +28,6 @@ const app = (
         </Router>
       </Provider>
     </Auth0Provider>
-  </React.StrictMode>
 );
 
 

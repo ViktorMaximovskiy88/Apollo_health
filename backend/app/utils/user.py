@@ -54,19 +54,15 @@ async def get_current_user(token: str = Depends(get_token)):
         )
 
     email = payload.get(email_key)
-    
     user = await User.by_email(email)
 
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authorized user could not be found",
-        )
+    if not user:
+        logging.error(f"User not found: email={email}")
+        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     if user.disabled:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="User is disabled"
-        )
+        logging.error(f"User account disabled: email={email}")
+        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     # check perms
 

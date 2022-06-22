@@ -6,7 +6,7 @@ from backend.app.core.settings import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
-
+email_key = "http://mmit.com/email"
 
 def create_access_token(
     subject: Union[str, Any],
@@ -26,6 +26,7 @@ def create_access_token(
         "sub": str(subject),
         "scope": " ".join(scopes)
     }
+    to_encode[email_key] = subject
 
     encoded_jwt = jwt.encode(
         to_encode,
