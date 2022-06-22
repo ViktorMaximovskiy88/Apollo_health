@@ -21,6 +21,7 @@ def create_access_token(
         )
 
     to_encode = {
+        "aud": settings.auth0.audience,
         "exp": expire,
         "sub": str(subject),
         "scope": " ".join(scopes)

@@ -35,14 +35,16 @@ def get_token(
 # key, aud, email key name
 def get_provider_detail(token: str):
     header = jwt.get_unverified_header(token)
-    if 'kid' in header:
-        return (jwks_client.get_signing_key_from_jwt(token).key, header['alg'], "email", settings.auth0.audience)
+    if 'kid' in header and header['kid'] == 'local':
+        return (str(settings.secret_key), header['alg'], "sub")
     else:
-        return (str(settings.secret_key), header['alg'], "sub", "local")
+        return (jwks_client.get_signing_key_from_jwt(token).key, header['alg'], "email")
+
 
 async def get_current_user(token: str = Depends(get_token)):
     try:
-        [signing_key, algorithm, email_key, audience] = get_provider_detail(token)
+        audience = settings.auth0.audience
+        [signing_key, algorithm, email_key] = get_provider_detail(token)
         payload = jwt.decode(token, signing_key, algorithms=[algorithm], audience=audience)
     except Exception as ex:
         logging.error(ex)
