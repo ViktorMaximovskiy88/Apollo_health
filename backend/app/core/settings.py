@@ -7,6 +7,7 @@ class Auth0Settings(BaseSettings):
     wellknown_url: HttpUrl = Field(env='auth0_wellknown_url')
     audience: str = Field(env='auth0_audience')
     issuer: str = Field(env='auth0_issuer')
+    email_key: str = Field(default='https://mmit.com/email')
 
 class Settings(BaseSettings):
     secret_key: str
