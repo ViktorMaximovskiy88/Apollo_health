@@ -1,6 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-// import { createRoot } from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import './index.css';
 import '@inovua/reactdatagrid-community/index.css'
 import App from './App';
@@ -33,11 +32,7 @@ const app = (
   </React.StrictMode>
 );
 
-const useCreateRoot = false;
+
 const container = document.getElementById('root');
-if (useCreateRoot) {
-  // const root = createRoot(container);
-  // root.render(app);
-} else {
-  ReactDOM.render(app, container);
-}
+const root = createRoot(container as Element);
+root.render(app);

@@ -88,10 +88,6 @@ function UserRoutes() {
 }
 
 function App() {
-
-  // const token = useAccessToken();
-  // console.log(token, +new Date());
-
   return (
     <Routes>
       <Route path="/" element={<TopNav />}>
@@ -132,7 +128,6 @@ function App() {
 export default withAuthenticationRequired(App, {
   loginOptions: { redirectTo: '/sites' },
   claimCheck: function (user?: User): boolean {
-    // do claim check here ...
     return true;
   },
 });

@@ -35,7 +35,6 @@ class UserPublic(UserUpdate):
 
 class User(BaseDocument, UserPublic):
     hashed_password: str
-    auth0_user_id: str | None
 
     @classmethod
     async def by_email(cls, email: str) -> Optional["User"]:

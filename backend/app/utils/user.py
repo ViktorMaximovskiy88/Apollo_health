@@ -32,19 +32,20 @@ def get_token(
     return bearer_token or cookie_token
 
 
-# key, aud, email key name
+# key, alg
 def get_provider_detail(token: str):
     header = jwt.get_unverified_header(token)
     if 'kid' in header and header['kid'] == 'local':
-        return (str(settings.secret_key), header['alg'], "sub")
+        return (str(settings.secret_key), header['alg'])
     else:
-        return (jwks_client.get_signing_key_from_jwt(token).key, header['alg'], "email")
+        return (jwks_client.get_signing_key_from_jwt(token).key, header['alg'])
 
 
 async def get_current_user(token: str = Depends(get_token)):
     try:
+        email_key = "http://mmit.com/email"
         audience = settings.auth0.audience
-        [signing_key, algorithm, email_key] = get_provider_detail(token)
+        [signing_key, algorithm] = get_provider_detail(token)
         payload = jwt.decode(token, signing_key, algorithms=[algorithm], audience=audience)
     except Exception as ex:
         logging.error(ex)
@@ -54,8 +55,6 @@ async def get_current_user(token: str = Depends(get_token)):
 
     email = payload.get(email_key)
     
-    #TODO remove when auth0 returns this to us ....
-    email = "admin@mmitnetwork.com"
     user = await User.by_email(email)
 
     if user is None:
@@ -68,6 +67,8 @@ async def get_current_user(token: str = Depends(get_token)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="User is disabled"
         )
+
+    # check perms
 
     return user
 

@@ -1,45 +1,16 @@
 import { DateTime, Duration } from 'luxon';
 
 /**
- * Pretty renders a date in the specified format
+ * Pretty date renders a date in the default format if a date is present.
  * If not render a default missing placeholder value.
- * @param value
- * @param dateFormat
- * @returns
- */
-export function prettyFromISO(
-  value?: string,
-  dateFormat = DateTime.DATETIME_FULL_WITH_SECONDS
-): string {
-  return value
-    ? DateTime.fromISO(value, { zone: 'utc' }).toLocaleString(dateFormat)
-    : '';
-}
-
-/**
- * Short date format
- * @param value
- * @param dateFormat
- * @returns
  */
 export function prettyDateFromISO(
   value?: string,
   dateFormat = DateTime.DATE_MED
 ): string {
-  return prettyFromISO(value, dateFormat);
-}
-
-/**
- * Short datetime format
- * @param value
- * @param dateFormat
- * @returns
- */
-export function prettyDateTimeFromISO(
-  value?: string,
-  dateFormat = DateTime.DATETIME_MED
-): string {
-  return prettyFromISO(value, dateFormat);
+  return value
+    ? DateTime.fromISO(value, { zone: 'utc' }).toLocaleString(dateFormat)
+    : '';
 }
 
 /**
