@@ -19,15 +19,15 @@ async def login_access_token(
 
     if not user:
         logging.error(f"User not found: email={email}")
-        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-
-    if not verify_password(model.password, user.hashed_password):
-        logging.error(f"User password incorrect: email={email}")
-        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     if user.disabled:
         logging.error(f"User account disabled: email={email}")
-        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
+    if not verify_password(model.password, user.hashed_password):
+        logging.error(f"User password incorrect: email={email}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(

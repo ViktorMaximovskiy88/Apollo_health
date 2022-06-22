@@ -43,7 +43,7 @@ def get_provider_detail(token: str):
 
 async def get_current_user(token: str = Depends(get_token)):
     try:
-        email_key = "http://mmit.com/email"
+        email_key = "https://mmit.com/email"
         audience = settings.auth0.audience
         [signing_key, algorithm] = get_provider_detail(token)
         payload = jwt.decode(token, signing_key, algorithms=[algorithm], audience=audience)
@@ -58,11 +58,11 @@ async def get_current_user(token: str = Depends(get_token)):
 
     if not user:
         logging.error(f"User not found: email={email}")
-        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     if user.disabled:
         logging.error(f"User account disabled: email={email}")
-        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     # check perms
 
