@@ -84,6 +84,7 @@
         <div class="login-header">
             <h1>Source Hub</h1>
         </div>
+        <h4 id="error">Invalid user or credentials</h4>
         <form id="login-form" method="POST" action="/api/v1/auth/authorize?{{ redirect }}">
             <input id="email" type="text" name="email" placeholder="Email" value="{{ email }}" />
             <input id="password" type="password" name="password" placeholder="Password" />
@@ -107,11 +108,13 @@
                         'Content-Type': 'application/json'
                     }
                 });
-
+                const error = document.getElementById("error");
                 const result = await response.json();
-
+                error.style.display = "none";
+                
                 if(!response.ok || result.status_code >= 400) {
                     console.error(result)
+                    error.style.display = "block";
                     return
                 }
 
