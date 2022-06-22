@@ -1,9 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Any, Union, List
-
-from jose import jwt
+import jwt
 from passlib.context import CryptContext
-
 from backend.app.core.settings import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -21,13 +19,20 @@ def create_access_token(
         expire = datetime.utcnow() + timedelta(
             minutes=settings.access_token_expire_minutes
         )
+
     to_encode = {
-        "aud": "local",
         "exp": expire,
         "sub": str(subject),
         "scope": " ".join(scopes)
     }
-    encoded_jwt = jwt.encode(to_encode, str(settings.secret_key), algorithm=ALGORITHM)
+
+    encoded_jwt = jwt.encode(
+        to_encode,
+        str(settings.secret_key),
+        algorithm=ALGORITHM,
+        headers={"kid": "local"},
+    )
+
     return encoded_jwt
 
 

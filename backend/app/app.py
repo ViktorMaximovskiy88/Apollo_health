@@ -1,15 +1,18 @@
 from pathlib import Path
 from typing import Any
 from fastapi import FastAPI, Request, status
-from fastapi.responses import RedirectResponse
+from fastapi.exceptions import HTTPException
+from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from backend.app.scripts.add_user import create_admin_user
 from backend.common.db.init import init_db
 from backend.common.db.migrations import run_migrations
 from backend.common.core.config import is_local
 from backend.app.routes import proxies, sites
-
+from backend.app.utils.user import get_current_user, get_token_from_request
 from backend.common.models.user import User
 from routes import (
     auth,
@@ -22,6 +25,15 @@ from routes import (
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+       "http://localhost:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.on_event("startup")
 async def app_init():
@@ -32,7 +44,22 @@ async def app_init():
         user, plain_pass = await create_admin_user()
         print(f"Created admin user with email: {user}, password: {plain_pass}")
 
+
+template_dir = Path(__file__).parent.joinpath("templates")
+templates = Jinja2Templates(directory=template_dir)
 frontend_build_dir = Path(__file__).parent.joinpath("../../frontend/build").resolve()
+
+# liveness, readiness (this) and startup probes
+@app.get("/", include_in_schema=False)
+async def ready_check():
+    return {"ok" : True}
+
+
+@app.get("/api/v1/auth/authorize", response_class=HTMLResponse, tags=["Auth"])
+async def login_page(request: Request):
+    return templates.TemplateResponse(
+        "login.html", {"request": request}
+    )
 
 app.add_middleware(GZipMiddleware)
 
@@ -47,14 +74,15 @@ app.include_router(content_extraction_tasks.router, prefix=prefix)
 app.include_router(proxies.router, prefix=prefix)
 
 @app.middleware("http")
-async def spa_routing(request: Request, call_next: Any):
+async def frontend_routing(request: Request, call_next: Any):
     response = await call_next(request)
 
     if (
         response.status_code == status.HTTP_404_NOT_FOUND
         and not request.url.path.startswith("/api")
     ):
-        return RedirectResponse(url="/")
+        with open(frontend_build_dir.joinpath("index.html")) as file:
+            return HTMLResponse(file.read())
 
     return response
 

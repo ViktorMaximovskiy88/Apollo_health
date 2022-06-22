@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 from fastapi import APIRouter, HTTPException, status, Query, Form
 from fastapi.responses import RedirectResponse
@@ -9,28 +10,25 @@ from backend.app.utils.security import create_access_token
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
-def raise_or_redirect(redirect, email, error):
-    if redirect:
-        return RedirectResponse(
-            f"/login?email={email}&error={error}", status_code=status.HTTP_303_SEE_OTHER
-        )
-    else:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
 
-
-@router.post("/login")
+@router.post("/authorize")
 async def login_access_token(
-    email: str = Form(default=''),
-    password: str = Form(default=''),
-    redirect: str | None = Query(default=None),
+    model: UserAuth
 ):
-
+    email = model.email
     user = await User.by_email(email)
 
-    if not user or not verify_password(password, user.hashed_password):
-        return raise_or_redirect(redirect, email, "invalid")
-    elif user.disabled:
-        return raise_or_redirect(redirect, email, "disabled")
+    if not user:
+        logging.error(f"User not found: email={email}")
+        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
+    if not verify_password(model.password, user.hashed_password):
+        logging.error(f"User password incorrect: email={email}")
+        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
+    if user.disabled:
+        logging.error(f"User account disabled: email={email}")
+        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
@@ -39,11 +37,4 @@ async def login_access_token(
         expires_delta=access_token_expires,
     )
 
-    if redirect:
-        response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
-        response.set_cookie(
-            key="access_token", value=access_token, httponly=True, samesite="strict"
-        )
-        return response
-    else:
-        return {"access_token": access_token}
+    return {"access_token": access_token}

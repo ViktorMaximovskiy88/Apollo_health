@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { Layout, Menu, Avatar } from 'antd';
+import { Layout, Menu } from 'antd';
 import {
   Link,
   Navigate,
@@ -26,7 +25,6 @@ import { DocumentsPage } from './features/sites/DocumentsPage';
 import { ExtractionsPage } from './features/extractions/ExtractionsPage';
 import { DocExtractionPage } from './features/extractions/DocExtractionPage';
 import { ExtractionEditPage } from './features/extractions/ExtractionEditPage';
-import useAccessToken from './app/use-access-token';
 
 function TopNav() {
   const location = useLocation();
