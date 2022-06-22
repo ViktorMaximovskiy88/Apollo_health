@@ -5,7 +5,7 @@ import { useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { extractedDocumentTableState, setExtractedDocumentTableFilter, setExtractedDocumentTableSort } from "../../app/uiSlice";
-import { prettyDateFromISO } from "../../common";
+import { prettyDateFromISO, prettyDateTimeFromISO } from "../../common";
 import { ChangeLogModal } from "../change-log/ChangeLogModal";
 import { useGetDocumentsQuery } from "../documents/documentsApi";
 import { RetrievedDocument } from "../documents/types";
@@ -25,7 +25,7 @@ const columns = [
         }
       },
       render: ({ value: collection_time }: { value: string }) => {
-        return prettyDateFromISO(collection_time);
+        return prettyDateTimeFromISO(collection_time);
       },
     },
     {

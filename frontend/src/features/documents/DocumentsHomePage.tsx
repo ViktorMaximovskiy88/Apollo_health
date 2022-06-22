@@ -1,6 +1,6 @@
 import { Button, Popconfirm, Table } from 'antd';
 import Title from 'antd/lib/typography/Title';
-import { prettyDateFromISO } from '../../common';
+import { prettyDateFromISO, prettyDateTimeFromISO } from '../../common';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
@@ -24,7 +24,7 @@ export function DocumentsHomePage() {
       title: 'Collection Time',
       key: 'collection_time',
       render: (doc: RetrievedDocument) => {
-        return prettyDateFromISO(doc.collection_time);
+        return prettyDateTimeFromISO(doc.collection_time);
       },
     },
     {
