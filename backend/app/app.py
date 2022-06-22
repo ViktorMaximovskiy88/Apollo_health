@@ -49,7 +49,7 @@ app.include_router(proxies.router, prefix=prefix)
 @app.middleware("http")
 async def spa_routing(request: Request, call_next: Any):
     response = await call_next(request)
-    print(response)
+
     if (
         response.status_code == status.HTTP_404_NOT_FOUND
         and not request.url.path.startswith("/api")

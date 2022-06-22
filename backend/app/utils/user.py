@@ -40,7 +40,7 @@ def get_provider_detail(token: str):
     else:
         return (str(settings.secret_key), header['alg'], "sub", "local")
 
-async def get_current_user(token: str | None = Depends(get_token)):
+async def get_current_user(token: str = Depends(get_token)):
     try:
         [signing_key, algorithm, email_key, audience] = get_provider_detail(token)
         payload = jwt.decode(token, signing_key, algorithms=[algorithm], audience=audience)
@@ -54,18 +54,17 @@ async def get_current_user(token: str | None = Depends(get_token)):
     
     #TODO remove when auth0 returns this to us ....
     email = "admin@mmitnetwork.com"
-
     user = await User.by_email(email)
 
     if user is None:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authorized user could not be found",
         )
 
     if user.disabled:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="User is disabled"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User is disabled"
         )
 
     return user
