@@ -128,7 +128,7 @@ export const createColumns = ({
                   openErrorModal(task.error_message || 'traceback not found')
                 }
               >
-                Log
+                Error Log
               </Button>
             );
           default:
