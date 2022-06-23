@@ -11,7 +11,7 @@ function queryString(params: DocumentQuery) {
 
 export const documentsApi = createApi({
   reducerPath: 'documentsApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '/api/v1/' }),
+  baseQuery: fetchBaseQuery(),
   tagTypes: ['RetrievedDocument', 'ChangeLog'],
   endpoints: (builder) => ({
     getDocuments: builder.query<RetrievedDocument[], DocumentQuery>({

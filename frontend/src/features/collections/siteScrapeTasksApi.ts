@@ -4,7 +4,7 @@ import { SiteScrapeTask } from './types';
 
 export const siteScrapeTasksApi = createApi({
   reducerPath: 'siteScrapeTasksApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '/api/v1/' }),
+  baseQuery: fetchBaseQuery(),
   tagTypes: ['SiteScrapeTask', 'ChangeLog'],
   endpoints: (builder) => ({
     getScrapeTasksForSite: builder.query<SiteScrapeTask[], string | undefined>({

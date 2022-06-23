@@ -3,7 +3,7 @@ import { Proxy } from './types';
 
 export const proxiesApi = createApi({
   reducerPath: 'proxiesApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '/api/v1/' }),
+  baseQuery: fetchBaseQuery(),
   tagTypes: ['Proxy'],
   endpoints: (builder) => ({
     getProxies: builder.query<Proxy[], void>({

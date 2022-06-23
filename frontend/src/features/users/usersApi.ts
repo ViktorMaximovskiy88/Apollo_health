@@ -4,9 +4,7 @@ import { User } from './types';
 
 export const usersApi = createApi({
   reducerPath: 'usersApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: '/api/v1/',
-  }),
+  baseQuery: fetchBaseQuery(),
   tagTypes: ['User', 'ChangeLog'],
   endpoints: (builder) => ({
     getUsers: builder.query<User[], void>({

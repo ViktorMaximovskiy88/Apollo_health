@@ -4,7 +4,7 @@ import { Site } from './types';
 
 export const sitesApi = createApi({
   reducerPath: 'sitesApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '/api/v1/' }),
+  baseQuery: fetchBaseQuery(),
   tagTypes: ['Site', 'ChangeLog'],
   endpoints: (builder) => ({
     getSites: builder.query<Site[], void>({
