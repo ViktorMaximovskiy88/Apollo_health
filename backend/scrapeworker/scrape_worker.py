@@ -33,6 +33,9 @@ from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.xpdf_wrapper import pdfinfo, pdftotext
 
+# Scrapeworker workflow 'exceptions'
+class NoDocsCollectedException(Exception):
+    pass
 
 class CanceledTaskException(Exception):
     pass
@@ -187,7 +190,12 @@ class ScrapeWorker:
             await asyncio.sleep(1)
 
     async def wait_for_completion_or_cancel(self, downloads: list[Coroutine[None, None, None]]):
+
+        if len(downloads) == 0:
+            raise NoDocsCollectedException("No documents collected.")
+
         tasks = [asyncio.create_task(download) for download in downloads]
+
         try:
             await asyncio.gather(self.watch_for_cancel(tasks), *tasks)
         except asyncio.exceptions.CancelledError:
