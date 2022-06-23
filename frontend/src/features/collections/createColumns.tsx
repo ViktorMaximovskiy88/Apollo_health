@@ -1,7 +1,7 @@
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Button, Spin } from 'antd';
-import { prettyDateDistance, prettyDateFromISO } from '../../common';
+import { prettyDateDistance, prettyDateTimeFromISO } from '../../common';
 import { ButtonLink } from '../../components/ButtonLink';
 import { Status } from '../types';
 import { SiteScrapeTask } from './types';
@@ -31,7 +31,7 @@ export const createColumns = ({
         };
       },
       render: ({ value }: { value: string }) => {
-        return prettyDateFromISO(value);
+        return prettyDateTimeFromISO(value);
       },
     },
     {

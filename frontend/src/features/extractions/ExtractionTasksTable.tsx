@@ -5,7 +5,7 @@ import { useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams } from "react-router-dom";
 import { extractionTaskTableState, setExtractionTaskTableFilter, setExtractionTaskTableSort } from "../../app/uiSlice";
-import { prettyDateDistance, prettyDateFromISO } from "../../common";
+import { prettyDateDistance, prettyDateTimeFromISO } from "../../common";
 import { ButtonLink } from "../../components/ButtonLink";
 import { Status } from "../types";
 import { useGetExtractionTasksForDocQuery } from "./extractionsApi";
@@ -26,7 +26,7 @@ const columns = [
         }
       },
       render: ({ value: queued_time }: { value: string }) =>
-        prettyDateFromISO(queued_time)
+        prettyDateTimeFromISO(queued_time)
     },
     {
       header: 'Elapsed',
