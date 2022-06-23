@@ -72,7 +72,8 @@ async def start_scrape_task(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    site_scrape_task = SiteScrapeTask(site_id=site_id, queued_time=datetime.now())
+    site_scrape_task = SiteScrapeTask(
+        site_id=site_id, queued_time=datetime.now())
 
     # NOTE: Could use a transaction here
     await create_and_log(logger, current_user, site_scrape_task)
@@ -94,7 +95,8 @@ async def runBulkByType(
 ):
     bulk_type = type
     total_scrapes = 0
-    query = {"disabled": False, "base_urls": {"$exists": True, "$not": {"$size": 0}}}
+    query = {"disabled": False, "base_urls": {
+        "$exists": True, "$not": {"$size": 0}}}
     if bulk_type == "unrun":
         query["last_status"] = None
     elif bulk_type == "failed":
@@ -104,7 +106,8 @@ async def runBulkByType(
 
     async for site in Site.find_many(query):
         site_id: PydanticObjectId = site.id  # type: ignore
-        site_scrape_task = SiteScrapeTask(site_id=site_id, queued_time=datetime.now())
+        site_scrape_task = SiteScrapeTask(
+            site_id=site_id, queued_time=datetime.now())
         site_scrape_task = await try_queue_unique_task(site_scrape_task)
         if site_scrape_task:
             total_scrapes += 1
@@ -135,7 +138,11 @@ async def update_scrape_task(
     return updated
 
 
-@router.post("/{id}/cancel", response_model=SiteScrapeTask)
+@router.post(
+    "/{id}/cancel",
+    response_model=SiteScrapeTask,
+    dependencies=[Security(get_current_user)],
+)
 async def cancel_scrape_task(
     target: SiteScrapeTask = Depends(get_target),
 ):
@@ -162,5 +169,6 @@ async def cancel_scrape_task(
     )
     if acquired:
         scrape_task = SiteScrapeTask.parse_obj(acquired)
-        typer.secho(f"Set Task {scrape_task.id} 'Canceling'", fg=typer.colors.BLUE)
+        typer.secho(
+            f"Set Task {scrape_task.id} 'Canceling'", fg=typer.colors.BLUE)
         return scrape_task

@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Any
 from fastapi import FastAPI, Request, status
 from fastapi.responses import HTMLResponse
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -23,16 +22,6 @@ from routes import (
 
 app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-       "http://localhost:3000",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 @app.on_event("startup")
 async def app_init():
     await init_db()
@@ -47,9 +36,9 @@ template_dir = Path(__file__).parent.joinpath("templates")
 templates = Jinja2Templates(directory=template_dir)
 frontend_build_dir = Path(__file__).parent.joinpath("../../frontend/build").resolve()
 
-# liveness, readiness (this) and startup probes
-@app.get("/", include_in_schema=False)
-async def ready_check():
+# liveness
+@app.get("/ping", include_in_schema=False)
+async def ping():
     return {"ok" : True}
 
 

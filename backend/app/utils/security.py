@@ -1,6 +1,6 @@
 import jwt
 from datetime import datetime, timedelta
-from typing import Any, Union, List
+from typing import Any, Union
 from passlib.context import CryptContext
 from backend.app.core.settings import settings
 
@@ -10,7 +10,7 @@ ALGORITHM = "HS256"
 def create_access_token(
     subject: Union[str, Any],
     expires_delta: timedelta,
-    scopes: List[str] = [],
+    scopes: list[str] = [],
 ) -> str:
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
