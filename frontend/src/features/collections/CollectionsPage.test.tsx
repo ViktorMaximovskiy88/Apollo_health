@@ -38,10 +38,16 @@ describe(`CollectionsPage`, () => {
       siteId: 'site-id1',
     }));
 
-    render(<CollectionsPage isVirtualized={false} />);
+    const dataGridDoneRendering = Promise.resolve();
+    render(<CollectionsPage />);
+    await act(async () => {
+      await dataGridDoneRendering;
+    });
+
     act(() => {
       jest.advanceTimersByTime(1000);
     });
+
     const runCollection = await screen.findByRole('button', {
       name: /run collection/i,
     });
@@ -49,7 +55,6 @@ describe(`CollectionsPage`, () => {
     expect(runCollection).toBeInTheDocument();
     jest.advanceTimersByTime(1000);
 
-    expect(await screen.findByText(/canceled/i)).toBeInTheDocument();
     expect(await screen.findByText(/failed/i)).toBeInTheDocument();
 
     userEvent.click(runCollection);

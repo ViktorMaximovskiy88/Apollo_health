@@ -19,13 +19,11 @@ import { createColumns } from './createColumns';
 interface DataTablePropTypes {
   siteId: string;
   openErrorModal: (errorTraceback: string) => void;
-  isVirtualized?: boolean;
 }
 
 export function CollectionsDataTable({
   siteId,
   openErrorModal,
-  isVirtualized = true, // false for testing
 }: DataTablePropTypes) {
   const { data: scrapeTasks } = useGetScrapeTasksForSiteQuery(siteId, {
     pollingInterval: 3000,
@@ -52,7 +50,6 @@ export function CollectionsDataTable({
 
   return (
     <ReactDataGrid
-      virtualized={isVirtualized}
       dataSource={scrapeTasks || []}
       columns={columns}
       rowHeight={50}
