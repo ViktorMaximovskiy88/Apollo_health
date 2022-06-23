@@ -1,18 +1,26 @@
-import ReactDataGrid from "@inovua/reactdatagrid-community";
-import DateFilter from "@inovua/reactdatagrid-community/DateFilter";
-import SelectFilter from "@inovua/reactdatagrid-community/SelectFilter";
-import { Button, Spin } from "antd";
-import { useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { collectionTableState, setCollectionTableFilter, setCollectionTableSort } from "../../app/uiSlice";
-import { prettyDateDistance, prettyDateTimeFromISO } from "../../common";
-import { ButtonLink } from "../../components/ButtonLink";
-import { Status } from "../types";
-import { useCancelSiteScrapeTaskMutation, useGetScrapeTasksForSiteQuery } from "./siteScrapeTasksApi";
-import { SiteScrapeTask } from "./types";
+import ReactDataGrid from '@inovua/reactdatagrid-community';
+import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
+import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
+import { Button, Spin, Tooltip } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  collectionTableState,
+  setCollectionTableFilter,
+  setCollectionTableSort,
+} from '../../app/uiSlice';
+import { prettyDateDistance, prettyDateTimeFromISO } from '../../common';
+import { ButtonLink } from '../../components/ButtonLink';
+import { Status } from '../types';
+import {
+  useCancelSiteScrapeTaskMutation,
+  useGetScrapeTasksForSiteQuery,
+} from './siteScrapeTasksApi';
+import { SiteScrapeTask } from './types';
 
 const createColumns = (cancelScrape: any, isCanceling: boolean) => {
-    return [
+  return [
     {
       header: 'Start Time',
       name: 'queued_time',
@@ -22,8 +30,8 @@ const createColumns = (cancelScrape: any, isCanceling: boolean) => {
         return {
           dateFormat: 'YYYY-MM-DD',
           highlightWeekends: false,
-          placeholder: 'Select Date'
-        }
+          placeholder: 'Select Date',
+        };
       },
       render: ({ value }: { value: string }) => {
         return prettyDateTimeFromISO(value);
@@ -42,7 +50,7 @@ const createColumns = (cancelScrape: any, isCanceling: boolean) => {
       name: 'status',
       minWidth: 200,
       filterEditor: SelectFilter,
-      filterEditorProps: { 
+      filterEditorProps: {
         placeholder: 'All',
         dataSource: [
           { id: Status.Queued, label: 'Queued' },
@@ -51,12 +59,29 @@ const createColumns = (cancelScrape: any, isCanceling: boolean) => {
           { id: Status.Failed, label: 'Failed' },
           { id: Status.Canceling, label: 'Canceling' },
           { id: Status.Canceled, label: 'Canceled' },
-        ]
+        ],
       },
-      render: ({ value: status }: { value: Status }) => {
+      render: ({
+        value: status,
+        data,
+      }: {
+        value: Status;
+        data: SiteScrapeTask;
+      }) => {
         switch (status) {
           case Status.Failed:
-            return <span className="text-red-500">Failed</span>;
+            return (
+              <>
+                <span className="text-red-500">
+                  Failed&nbsp;
+                  {data.error_message && (
+                    <Tooltip placement="right" title={data.error_message}>
+                      <InfoCircleOutlined />
+                    </Tooltip>
+                  )}
+                </span>
+              </>
+            );
           case Status.Canceled:
             return <span className="text-orange-500">Canceled</span>;
           case Status.Canceling:
@@ -114,7 +139,7 @@ const createColumns = (cancelScrape: any, isCanceling: boolean) => {
         ) : null,
     },
   ];
-}
+};
 
 export function CollectionsDataTable(props: { siteId: string }) {
   const siteId = props.siteId;
@@ -124,23 +149,31 @@ export function CollectionsDataTable(props: { siteId: string }) {
   });
   const [cancelScrape, { isLoading: isCanceling }] =
     useCancelSiteScrapeTaskMutation();
-    
+
   const columns = createColumns(cancelScrape, isCanceling);
 
-  const tableState = useSelector(collectionTableState)
-  const dispatch = useDispatch()
-  const onFilterChange = useCallback((filter: any) => dispatch(setCollectionTableFilter(filter)), [dispatch]);
-  const onSortChange = useCallback((sort: any) => dispatch(setCollectionTableSort(sort)), [dispatch]);
+  const tableState = useSelector(collectionTableState);
+  const dispatch = useDispatch();
+  const onFilterChange = useCallback(
+    (filter: any) => dispatch(setCollectionTableFilter(filter)),
+    [dispatch]
+  );
+  const onSortChange = useCallback(
+    (sort: any) => dispatch(setCollectionTableSort(sort)),
+    [dispatch]
+  );
 
-  return <>
-    <ReactDataGrid
-      dataSource={scrapeTasks || []}
-      columns={columns}
-      rowHeight={50}
-      defaultFilterValue={tableState.filter}
-      onFilterValueChange={onFilterChange}
-      defaultSortInfo={tableState.sort}
-      onSortInfoChange={onSortChange}
-    />
-  </>
+  return (
+    <>
+      <ReactDataGrid
+        dataSource={scrapeTasks || []}
+        columns={columns}
+        rowHeight={50}
+        defaultFilterValue={tableState.filter}
+        onFilterValueChange={onFilterChange}
+        defaultSortInfo={tableState.sort}
+        onSortInfoChange={onSortChange}
+      />
+    </>
+  );
 }
