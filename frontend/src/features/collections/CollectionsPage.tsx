@@ -6,7 +6,11 @@ import Title from 'antd/lib/typography/Title';
 import { CollectionsDataTable } from './CollectionsDataTable';
 import { ErrorLogModal } from './ErrorLogModal';
 
-export function CollectionsPage() {
+interface CollectionsPagePropTypes {
+  isVirtualized?: boolean; // false for testing
+}
+
+export function CollectionsPage(props: CollectionsPagePropTypes) {
   const [modalVisible, setModalVisible] = useState(false);
   const [errorTraceback, setErrorTraceback] = useState('');
 
@@ -34,7 +38,11 @@ export function CollectionsPage() {
             Run Collection
           </Button>
         </div>
-        <CollectionsDataTable siteId={siteId} openErrorModal={openErrorModal} />
+        <CollectionsDataTable
+          siteId={siteId}
+          openErrorModal={openErrorModal}
+          {...props}
+        />
       </Layout>
     </>
   );

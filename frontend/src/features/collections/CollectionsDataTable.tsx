@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import {
   TypeFilterValue,
@@ -19,11 +19,13 @@ import { createColumns } from './createColumns';
 interface DataTablePropTypes {
   siteId: string;
   openErrorModal: (errorTraceback: string) => void;
+  isVirtualized?: boolean;
 }
 
 export function CollectionsDataTable({
   siteId,
   openErrorModal,
+  isVirtualized = true, // false for testing
 }: DataTablePropTypes) {
   const { data: scrapeTasks } = useGetScrapeTasksForSiteQuery(siteId, {
     pollingInterval: 3000,
@@ -32,7 +34,10 @@ export function CollectionsDataTable({
   const [cancelScrape, { isLoading: isCanceling }] =
     useCancelSiteScrapeTaskMutation();
 
-  const columns = createColumns({ cancelScrape, isCanceling, openErrorModal });
+  const columns = useMemo(
+    () => createColumns({ cancelScrape, isCanceling, openErrorModal }),
+    [cancelScrape, isCanceling, openErrorModal]
+  );
 
   const tableState = useSelector(collectionTableState);
   const dispatch = useDispatch();
@@ -47,6 +52,7 @@ export function CollectionsDataTable({
 
   return (
     <ReactDataGrid
+      virtualized={isVirtualized}
       dataSource={scrapeTasks || []}
       columns={columns}
       rowHeight={50}
