@@ -3,6 +3,7 @@ from pathlib import Path
 import sys
 from uuid import uuid4
 import traceback
+from beanie import PydanticObjectId
 import typer
 import signal
 from playwright.async_api import async_playwright
@@ -49,8 +50,10 @@ async def pull_task_from_queue(worker_id):
         typer.secho(f"Acquired Task {scrape_task.id}", fg=typer.colors.BLUE)
         return scrape_task
 
-
-async def log_success(scrape_task, site):
+async def log_success(
+    scrape_task: SiteScrapeTask,
+    site: Site
+):
     typer.secho(f"Finished Task {scrape_task.id}", fg=typer.colors.BLUE)
     now = datetime.now()
     await site.update(Set({Site.last_status: "FINISHED", Site.last_run_time: now}))

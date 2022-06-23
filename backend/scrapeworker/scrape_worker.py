@@ -8,6 +8,7 @@ import os
 import pathlib
 from tenacity._asyncio import AsyncRetrying
 from tenacity.stop import stop_after_attempt
+from beanie.odm.operators.update.array import Push
 from beanie.odm.operators.update.general import Inc
 from urllib.parse import urlparse, urljoin
 from backend.common.models.proxy import Proxy
@@ -169,6 +170,7 @@ class ScrapeWorker:
                     lang_code=lang_code,
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
+            await self.scrape_task.update(Push({SiteScrapeTask.retrieved_document_ids: document.id}))
 
     async def watch_for_cancel(self, tasks: list[asyncio.Task[None]]):
         while True:
