@@ -10,6 +10,7 @@ export interface Site extends BaseDocument {
   name: string;
   base_urls: BaseUrl[];
   scrape_method: string;
+  collection_method:string;
   scrape_method_configuration: {
     document_extensions: string[];
     url_keywords: string[];
@@ -29,4 +30,9 @@ export interface Proxy extends BaseDocument {
 export interface ActiveUrlResponse {
   in_use: boolean;
   site?: Site;
+}
+
+export enum CollectionMethod {
+  Automated = "AUTOMATED",
+  Manual = "MANUAL"
 }

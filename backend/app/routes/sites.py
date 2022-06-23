@@ -88,6 +88,7 @@ async def create_site(
         name=site.name,
         base_urls=site.base_urls,
         scrape_method=site.scrape_method,
+        collection_method=site.collection_method,
         scrape_method_configuration=site.scrape_method_configuration,
         tags=site.tags,
         disabled=False,
@@ -132,9 +133,10 @@ async def upload_sites(
         tag_str: str
         doc_ext_str: str
         url_keyw_str: str
-        scrape_method = "SimpleDocumentScrape"
-        cron = "0 16 * * *"
-        name, base_url_str, tag_str, doc_ext_str, url_keyw_str = line  # type: ignore
+        collection_method: str
+        scrape_method = 'SimpleDocumentScrape'
+        cron = '0 16 * * *'
+        name, base_url_str, tag_str, doc_ext_str, url_keyw_str, collection_method = line # type: ignore
         tags = tag_str.split(",") if tag_str else []
         base_urls = base_url_str.split(",") if base_url_str else []
         doc_exts = doc_ext_str.split(",") if doc_ext_str else ["pdf"]
@@ -144,7 +146,6 @@ async def upload_sites(
             url_keywords=url_keyws,
             proxy_exclusions=[],
         )
-
         if await Site.find_one(Site.base_urls == base_urls):
             continue
         base_urls = list(
@@ -154,6 +155,7 @@ async def upload_sites(
             name=name,
             base_urls=base_urls,
             scrape_method=scrape_method,
+            collection_method=collection_method,
             scrape_method_configuration=scrape_method_configuration,
             tags=tags,
             disabled=False,

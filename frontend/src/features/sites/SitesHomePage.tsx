@@ -25,6 +25,7 @@ import { useGetSitesQuery } from './sitesApi';
 
 function BulkUpload() {
   const [uploading, setUploading] = useState(false);
+
   const onChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
     if (info.file.status === 'uploading') {
       setUploading(true);
