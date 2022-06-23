@@ -1,1 +1,6 @@
-export { prettyDateFromISO, prettyDate, prettyDateDistance } from './date';
+export {
+  prettyDateFromISO,
+  prettyDateTimeFromISO,
+  prettyDate,
+  prettyDateDistance,
+} from './date';

@@ -40,7 +40,7 @@ class DocDownloader:
             "Upgrade-Insecure-Requests": "1",
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36",
         }
-        context = await self.playwright.request.new_context(extra_http_headers=headers, proxy=proxy)  # type: ignore
+        context = await self.playwright.request.new_context(extra_http_headers=headers, proxy=proxy, ignore_https_errors=True)  # type: ignore
         return context
 
     async def proxy_with_backoff(

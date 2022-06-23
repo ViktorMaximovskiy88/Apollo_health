@@ -3,7 +3,7 @@ import { LinkOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/ico
 import { useForm } from 'antd/lib/form/Form';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ActiveUrlResponse, Site } from './types';
+import { ActiveUrlResponse, BaseUrl, Site } from './types';
 import { useGetProxiesQuery } from '../proxies/proxiesApi';
 import { CollectionMethod } from "./types"
 
@@ -12,10 +12,15 @@ export function SiteForm(props: {
   initialValues?: Site;
 }) {
   const [form] = useForm();
-  const [urlValidation, setUrlValidation] = useState<{[id: string]: ActiveUrlResponse}>({});
-  const currentSite = props.initialValues ? props.initialValues._id : "";
+  const [urlValidation, setUrlValidation] = useState<{
+    [id: string]: ActiveUrlResponse;
+  }>({});
+  const currentSite = props.initialValues ? props.initialValues._id : '';
   const { data: proxies } = useGetProxiesQuery();
-  const proxyOptions = proxies?.map((proxy) => ({ label: proxy.name, value: proxy._id }));
+  const proxyOptions = proxies?.map((proxy) => ({
+    label: proxy.name,
+    value: proxy._id,
+  }));
 
   async function validateUrl(key: number, value: string) {
     const checkUrl = encodeURIComponent(value);
@@ -24,7 +29,7 @@ export function SiteForm(props: {
     const check = await fetch(url);
     const activeUrlResponse = await check.json();
 
-    setUrlValidation(prevState => {
+    setUrlValidation((prevState) => {
       const update = { ...prevState };
       update[key] = activeUrlResponse;
       return update;
@@ -33,6 +38,17 @@ export function SiteForm(props: {
     if (activeUrlResponse.in_use) {
       return Promise.reject(new Error('URL is already in use'));
     }
+
+    const baseUrls = form.getFieldsValue().base_urls;
+    const duplicateUrls = baseUrls.filter((baseUrl: BaseUrl) => {
+      if (baseUrl.url === value) return true;
+      return false;
+    });
+
+    if (duplicateUrls.length > 1) {
+      return Promise.reject(new Error('URL is already in use with this site'));
+    }
+
     return Promise.resolve();
   }
 
@@ -41,30 +57,31 @@ export function SiteForm(props: {
     if (urlCheck?.in_use) {
       return (
         <p>
-          URL is in use by <a
+          URL is in use by{' '}
+          <a
             href={`../${urlCheck.site?._id}/scrapes`}
-            target='_blank'
-            rel='noopener noreferrer'
+            target="_blank"
+            rel="noopener noreferrer"
           >
             {`${urlCheck.site?.name}`}
           </a>
         </p>
-      )
+      );
     }
 
     return undefined;
   }
 
   const hasError = (fieldName: string, fieldIndex: number): boolean => {
-    const errors = form.getFieldsError()
+    const errors = form.getFieldsError();
     const fieldErrors = errors.filter(({ errors, name }) => {
-      const [currentFieldName, currentFieldIndex] = name
-      if (!currentFieldName) return false
-      if (currentFieldName !== fieldName) return false
-      if (currentFieldIndex !== fieldIndex) return false
-      return errors.length > 0
-    })
-    return fieldErrors.length > 0
+      const [currentFieldName, currentFieldIndex] = name;
+      if (!currentFieldName) return false;
+      if (currentFieldName !== fieldName) return false;
+      if (currentFieldIndex !== fieldIndex) return false;
+      return errors.length > 0;
+    });
+    return fieldErrors.length > 0;
   };
 
   const collections = [
@@ -99,7 +116,7 @@ export function SiteForm(props: {
   };
   /* eslint-enable no-template-curly-in-string */
 
-  let initialValues: Partial<Site> | undefined = props.initialValues
+  let initialValues: Partial<Site> | undefined = props.initialValues;
   if (!initialValues) {
     initialValues = {
       scrape_method: 'SimpleDocumentScrape',
@@ -112,13 +129,19 @@ export function SiteForm(props: {
         url_keywords: [],
         proxy_exclusions: [],
       },
-    }
+    };
   }
   return (
     <Form
       layout="vertical"
       form={form}
-      wrapperCol={{ span: 7 }}
+      wrapperCol={{
+        xs: { span: 24 },
+        sm: { span: 24 },
+        md: { span: 24 },
+        lg: { span: 16 },
+        xl: { span: 12 },
+      }}
       requiredMark={false}
       onFinish={props.onFinish}
       initialValues={initialValues}
@@ -127,17 +150,11 @@ export function SiteForm(props: {
       <Form.Item name="name" label="Name" rules={[{ required: true }]}>
         <Input />
       </Form.Item>
-      <Form.List
-        name="base_urls"
-      >
+      <Form.List name="base_urls">
         {(fields, { add, remove }, { errors }) => (
           <>
             {fields.map(({ key, name, ...field }, index) => (
-              <Form.Item
-                key={key}
-                className="mb-2"
-                {...field}
-              >
+              <Form.Item key={key} className="mb-2" {...field}>
                 <Input.Group className="space-x-2 flex">
                   <Form.Item
                     className="grow mb-0"
@@ -152,12 +169,12 @@ export function SiteForm(props: {
                         type: 'url',
                       },
                       {
-                        validator: ((_, value) => validateUrl(key, value)),
-                      }
+                        validator: (_, value) => validateUrl(key, value),
+                      },
                     ]}
-                    validateTrigger= 'onBlur'
+                    validateTrigger="onBlur"
                   >
-                    <Input />
+                    <Input.TextArea autoSize={{ minRows: 1, maxRows: 3 }} />
                   </Form.Item>
 
                   <Form.Item
@@ -175,36 +192,35 @@ export function SiteForm(props: {
                     label="Status"
                     className="mb-0"
                   >
-                    <Select options={[{ value: 'ACTIVE', label: 'Active' }, { value: 'INACTIVE', label: 'Inactive' }]} />
+                    <Select
+                      options={[
+                        { value: 'ACTIVE', label: 'Active' },
+                        { value: 'INACTIVE', label: 'Inactive' },
+                      ]}
+                    />
                   </Form.Item>
-                  <Form.Item label=" " shouldUpdate className='mb-0'>
+                  <Form.Item label=" " shouldUpdate className="mb-0">
                     {() => (
                       <Button
-                        className='p-0 focus:border focus:border-offset-2 focus:border-blue-500'
-                        href={form.getFieldValue("base_urls")[index].url}
+                        className="p-0 focus:border focus:border-offset-2 focus:border-blue-500"
+                        href={form.getFieldValue('base_urls')[index].url}
                         disabled={hasError('base_urls', index)}
                         type="link"
                         target="_blank"
                         rel="noreferrer noopener"
                       >
-                        <LinkOutlined
-                          className='text-gray-500 hover:text-blue-500 focus:text-blue-500'
-                        />
+                        <LinkOutlined className="text-gray-500 hover:text-blue-500 focus:text-blue-500" />
                       </Button>
                     )}
                   </Form.Item>
                   {fields.length > 1 ? (
-                    <Form.Item
-                      label=" "
-                      className="mb-0"
-                    >
+                    <Form.Item label=" " className="mb-0">
                       <MinusCircleOutlined
                         className="text-gray-500"
                         onClick={() => remove(name)}
                       />
                     </Form.Item>
                   ) : null}
-
                 </Input.Group>
               </Form.Item>
             ))}
