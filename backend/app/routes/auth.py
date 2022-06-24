@@ -29,11 +29,9 @@ async def login_access_token(
         logging.error(f"User password incorrect: email={email}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
         user.email,
         scopes=[],
-        expires_delta=access_token_expires,
     )
 
     return {"access_token": access_token}

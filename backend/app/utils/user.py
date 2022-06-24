@@ -1,7 +1,7 @@
 import jwt
 import logging
 
-from fastapi import Depends, Request, status
+from fastapi import Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.exceptions import HTTPException
 from backend.app.core.settings import settings
@@ -22,7 +22,7 @@ def get_provider_detail(token: str):
     else:
         return (jwks_client.get_signing_key_from_jwt(token).key, header['alg'])
 
-async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(scheme)):
+async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(scheme)) -> User:
     
     try:
         token = auth.credentials

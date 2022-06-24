@@ -7,35 +7,40 @@ from backend.app.core.settings import settings
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
 
+def create_auth_payload(sub: str, aud: str, exp: int, scope: str, iss: str,):
+    payload =  {
+        "iss": iss,
+        "aud": aud,
+        "exp": exp,
+        "sub": sub,
+        "scope": scope,
+    }
+    payload[settings.auth0.email_key] = sub
+    return payload
+    
 def create_access_token(
     subject: Union[str, Any],
-    expires_delta: timedelta,
     scopes: list[str] = [],
 ) -> str:
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(
-            minutes=settings.access_token_expire_minutes
-        )
 
-    to_encode = {
-        "aud": settings.auth0.audience,
-        "exp": expire,
-        "sub": str(subject),
-        "scope": " ".join(scopes)
-    }
-    to_encode[settings.auth0.email_key] = subject
+    expire = datetime.utcnow() + timedelta(
+        minutes=settings.access_token_expire_minutes
+    )
 
-    encoded_jwt = jwt.encode(
-        to_encode,
-        str(settings.secret_key),
+    payload = create_auth_payload(
+        aud=settings.auth0.audience,
+        exp=expire,
+        sub=str(subject),
+        iss=settings.auth0.issuer,
+        scope=" ".join(scopes),
+    )
+
+    return jwt.encode(
+        payload,
+        settings.secret_key,
         algorithm=ALGORITHM,
         headers={"kid": "local"},
     )
-
-    return encoded_jwt
-
 
 def verify_password(
     plain_password: str,
