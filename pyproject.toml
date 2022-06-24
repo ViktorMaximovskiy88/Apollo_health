@@ -30,7 +30,7 @@ xgboost = "^1.6.1"
 scikit-learn = "^1.1.0"
 scipy = ">=1.8.0"
 openpyxl = "^3.0.9"
-mongomock-motor = "^0.0.10"
+async-lru = "^1.0.3"
 pycld2 = "^0.41"
 
 [tool.poetry.dev-dependencies]

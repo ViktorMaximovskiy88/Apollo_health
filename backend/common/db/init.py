@@ -6,6 +6,7 @@ from backend.common.models.content_extraction_task import (
     ContentExtractionResult,
     ContentExtractionTask,
 )
+from backend.common.models.proxy import Proxy
 
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
@@ -37,6 +38,7 @@ async def init_db(mock=False):
         database=get_motor_db(mock),
         document_models=[
             User,
+            Proxy,
             ChangeLog,
             Site,
             SiteScrapeTask,
