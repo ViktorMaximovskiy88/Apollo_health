@@ -13,7 +13,7 @@ from backend.common.core.config import is_local
 from backend.app.routes import proxies, sites
 from backend.app.utils.user import get_current_user, get_token_from_request
 from backend.common.models.user import User
-from routes import (
+from backend.app.routes import (
     auth,
     users,
     documents,

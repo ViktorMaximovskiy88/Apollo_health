@@ -1,14 +1,11 @@
-import { Button, Form, Input, Select, Space } from 'antd';
-import {
-  LinkOutlined,
-  MinusCircleOutlined,
-  PlusOutlined,
-} from '@ant-design/icons';
+import { Button, Form, Input, Select, Space, Radio } from 'antd';
+import { LinkOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { useForm } from 'antd/lib/form/Form';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ActiveUrlResponse, BaseUrl, Site } from './types';
 import { useGetProxiesQuery } from '../proxies/proxiesApi';
+import { CollectionMethod } from "./types"
 
 export function SiteForm(props: {
   onFinish: (user: Partial<Site>) => void;
@@ -87,6 +84,11 @@ export function SiteForm(props: {
     return fieldErrors.length > 0;
   };
 
+  const collections = [
+    { value: CollectionMethod.Automated, label:"Automated" },
+    { value: CollectionMethod.Manual, label:"Manual" }
+  ]
+
   const scrapes = [
     { value: 'SimpleDocumentScrape', label: 'Simple Document Scrape' },
     { value: 'BrowserDocumentScrape', label: 'Browser Document Scrape' },
@@ -118,6 +120,7 @@ export function SiteForm(props: {
   if (!initialValues) {
     initialValues = {
       scrape_method: 'SimpleDocumentScrape',
+      collection_method: CollectionMethod.Automated,
       cron: '0 16 * * *',
       tags: [],
       base_urls: [{ url: '', name: '', status: 'ACTIVE' }],
@@ -128,7 +131,6 @@ export function SiteForm(props: {
       },
     };
   }
-
   return (
     <Form
       layout="vertical"
@@ -235,35 +237,40 @@ export function SiteForm(props: {
           </>
         )}
       </Form.List>
-      <Form.Item
-        name="scrape_method"
-        label="Scrape Method"
-        wrapperCol={{ sm: 10, md: 6 }}
-      >
-        <Select options={scrapes} />
+      <Form.Item name="collection_method" label="Collection Method">
+        <Radio.Group>
+            {
+                collections.map(col => {
+                  return (
+                    <Radio key={col.value} value={col.value}>{col.label}</Radio>
+                  )
+                })
+            }
+        </Radio.Group>
       </Form.Item>
-      <Form.Item name="scrape_method_configuration">
-        <Form.Item
-          name={['scrape_method_configuration', 'document_extensions']}
-          label="Document Extensions"
-        >
-          <Select mode="multiple" options={extensions} />
-        </Form.Item>
-        <Form.Item
-          name={['scrape_method_configuration', 'url_keywords']}
-          label="URL Keywords"
-        >
-          <Select mode="tags" />
-        </Form.Item>
-        <Form.Item
-          name={['scrape_method_configuration', 'proxy_exclusions']}
-          label="Proxy Exclusions"
-        >
-          <Select mode="multiple" options={proxyOptions} />
-        </Form.Item>
-      </Form.Item>
-      <Form.Item name="cron" label="Schedule" wrapperCol={{ sm: 10, md: 6 }}>
-        <Select options={schedules} />
+      <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.collection_method !== currentValues.collection_method}>
+        {({ getFieldValue }) =>
+          getFieldValue('collection_method') === CollectionMethod.Automated ? <>
+            <Form.Item name="scrape_method" label="Scrape Method">
+                <Select options={scrapes} />
+            </Form.Item>
+            <Form.Item name="scrape_method_configuration">
+              <Form.Item name={["scrape_method_configuration", "document_extensions"]} label="Document Extensions">
+                <Select mode="multiple" options={extensions} />
+              </Form.Item>
+              <Form.Item name={["scrape_method_configuration", "url_keywords"]} label="URL Keywords">
+                <Select mode="tags" />
+              </Form.Item>
+              <Form.Item name={["scrape_method_configuration", "proxy_exclusions"]} label="Proxy Exclusions">
+                <Select mode="multiple" options={proxyOptions} />
+              </Form.Item>
+            </Form.Item>
+            <Form.Item name="cron" label="Schedule">
+              <Select options={schedules} />
+            </Form.Item>
+          </> 
+          : null
+        }
       </Form.Item>
       <Form.Item name="tags" label="Tags">
         <Select mode="tags" />

@@ -1,15 +1,18 @@
 import { rest } from 'msw';
 import scrapesFixture from './scrapes.fixture.json';
 import { SiteScrapeTask } from '../types';
-import {Status} from "../../types"
+import { Status } from '../../types';
 
 interface BackendSiteScrapeTask
-  extends Omit<SiteScrapeTask, 'start_time' | 'end_time' | "status"> {
+  extends Omit<
+    SiteScrapeTask,
+    'start_time' | 'end_time' | 'status' | 'error_message'
+  > {
   _id: string;
   worker_id: string | null;
   start_time: string | null;
   end_time: string | null;
-  error_message: null;
+  error_message: string | null;
   status: Status | string;
 }
 

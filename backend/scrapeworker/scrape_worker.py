@@ -11,6 +11,7 @@ import os
 import pathlib
 from tenacity._asyncio import AsyncRetrying
 from tenacity.stop import stop_after_attempt
+from beanie.odm.operators.update.array import Push
 from beanie.odm.operators.update.general import Inc
 from urllib.parse import urlparse, urljoin
 from backend.common.models.proxy import Proxy
@@ -35,6 +36,9 @@ from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.xpdf_wrapper import pdfinfo, pdftotext
 
+# Scrapeworker workflow 'exceptions'
+class NoDocsCollectedException(Exception):
+    pass
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -177,6 +181,7 @@ class ScrapeWorker:
                     lang_code=lang_code,
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
+            await self.scrape_task.update(Push({SiteScrapeTask.retrieved_document_ids: document.id}))
 
     async def watch_for_cancel(self, tasks: list[asyncio.Task[None]]):
         while True:
@@ -193,7 +198,12 @@ class ScrapeWorker:
             await asyncio.sleep(1)
 
     async def wait_for_completion_or_cancel(self, downloads: list[Coroutine[None, None, None]]):
+
+        if len(downloads) == 0:
+            raise NoDocsCollectedException("No documents collected.")
+
         tasks = [asyncio.create_task(download) for download in downloads]
+
         try:
             await asyncio.gather(self.watch_for_cancel(tasks), *tasks)
         except asyncio.exceptions.CancelledError:

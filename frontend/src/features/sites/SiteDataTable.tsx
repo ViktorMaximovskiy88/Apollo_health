@@ -1,20 +1,51 @@
-import ReactDataGrid from "@inovua/reactdatagrid-community";
-import DateFilter from "@inovua/reactdatagrid-community/DateFilter";
-import SelectFilter from "@inovua/reactdatagrid-community/SelectFilter";
-import { Tag, Popconfirm } from "antd";
-import { useCallback, useMemo } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { setSiteTableFilter, setSiteTableSort, siteTableState } from "../../app/uiSlice";
+import ReactDataGrid from '@inovua/reactdatagrid-community';
+import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
+import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
+import { Popconfirm, Tag, notification } from 'antd';
+import { useCallback, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  setSiteTableFilter,
+  setSiteTableSort,
+  siteTableState,
+} from '../../app/uiSlice';
 import { prettyDateTimeFromISO } from "../../common";
-import { ButtonLink } from "../../components/ButtonLink";
-import { ChangeLogModal } from "../change-log/ChangeLogModal";
-import { Status } from "../types";
-import { useDeleteSiteMutation, useGetChangeLogQuery, useGetSitesQuery } from "./sitesApi";
-import { Site } from "./types";
+import { isErrorWithData } from '../../common/helpers';
+import { ButtonLink } from '../../components/ButtonLink';
+import { ChangeLogModal } from '../change-log/ChangeLogModal';
+import { Status } from '../types';
+import {
+  useDeleteSiteMutation,
+  useGetChangeLogQuery,
+  useGetSitesQuery,
+} from './sitesApi';
+import { Site } from './types';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
 const createColumns = (deleteSite: any) => {
+  async function handleDeleteSite(site: Site) {
+    try {
+      await deleteSite(site).unwrap();
+      notification.success({
+        message: 'Site Deleted',
+        description: `Successfully deleted ${site.name}`,
+      });
+    } catch (err) {
+      if (isErrorWithData(err)) {
+        notification.error({
+          message: `Can't Delete ${site.name}`,
+          description: `${err.data.detail}`,
+        });
+      } else {
+        notification.error({
+          message: "Can't Delete Site",
+          description: JSON.stringify(err),
+        });
+      }
+    }
+  }
+
   return [
     {
       header: 'Name',
@@ -33,10 +64,10 @@ const createColumns = (deleteSite: any) => {
         return {
           dateFormat: 'YYYY-MM-DD',
           highlightWeekends: false,
-          placeholder: 'Select Date'
-        }
+          placeholder: 'Select Date',
+        };
       },
-      render: ({ value: last_run_time } : { value: string | undefined }) => {
+      render: ({ value: last_run_time }: { value: string | undefined }) => {
         if (!last_run_time) return null;
         return prettyDateTimeFromISO(last_run_time);
       },
@@ -46,7 +77,7 @@ const createColumns = (deleteSite: any) => {
       name: 'last_status',
       minWidth: 200,
       filterEditor: SelectFilter,
-      filterEditorProps: { 
+      filterEditorProps: {
         placeholder: 'All',
         dataSource: [
           { id: Status.Finished, label: 'Success' },
@@ -54,9 +85,9 @@ const createColumns = (deleteSite: any) => {
           { id: Status.Queued, label: 'Queued' },
           { id: Status.Failed, label: 'Failed' },
           { id: Status.InProgress, label: 'In Progress' },
-        ]
+        ],
       },
-      render: ({ value: status } : { value: Status }) => {
+      render: ({ value: status }: { value: Status }) => {
         switch (status) {
           case Status.Finished:
             return <span className="text-green-500">Success</span>;
@@ -76,7 +107,7 @@ const createColumns = (deleteSite: any) => {
     {
       header: 'Tags',
       name: 'tags',
-      render: ({ value } : { value: string[] }) => {
+      render: ({ value }: { value: string[] }) => {
         return value
           .filter((tag) => tag)
           .map((tag) => {
@@ -97,7 +128,7 @@ const createColumns = (deleteSite: any) => {
       header: 'Actions',
       name: 'action',
       minWidth: 180,
-      render: ({ data: site } : { data: Site}) => {
+      render: ({ data: site }: { data: Site }) => {
         return (
           <>
             <ButtonLink to={`${site._id}/edit`}>Edit</ButtonLink>
@@ -109,7 +140,7 @@ const createColumns = (deleteSite: any) => {
               title={`Are you sure you want to delete '${site.name}'?`}
               okText="Yes"
               cancelText="No"
-              onConfirm={() => deleteSite(site)}
+              onConfirm={() => handleDeleteSite(site)}
             >
               <ButtonLink danger>Delete</ButtonLink>
             </Popconfirm>
@@ -118,7 +149,7 @@ const createColumns = (deleteSite: any) => {
       },
     },
   ];
-}
+};
 
 export function SiteDataTable() {
   const { data: sites } = useGetSitesQuery(undefined, {
