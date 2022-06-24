@@ -86,7 +86,7 @@ resource "aws_ecs_task_definition" "app" {
       # healthCheck = {
       #   command = [
       #     "CMD-SHELL",
-      #     "curl -f http://localhost:8000/ || exit 1"
+      #     "curl -f http://localhost:8000/ping || exit 1"
       #   ]
       #   interval = 60
       #   retries = 3
@@ -271,7 +271,7 @@ resource "aws_ecs_service" "app" {
 resource "aws_alb_target_group" "app-http" {
   name = format("%s-%s-%s-http", local.app_name, var.environment, local.service_name)
   health_check {
-    path = "/"
+    path = "/ping"
     matcher = "200-299,303"
   }
   port                 = 80
