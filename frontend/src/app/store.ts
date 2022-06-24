@@ -8,6 +8,7 @@ import { documentsApi } from '../features/documents/documentsApi';
 import { siteScrapeTasksApi } from '../features/collections/siteScrapeTasksApi';
 import { extractionTasksApi } from '../features/extractions/extractionsApi';
 import { proxiesApi } from '../features/proxies/proxiesApi';
+import { rtkAuth } from '../common/auth-middleware';
 import uiReducer from './uiSlice';
 
 const { createReduxHistory, routerMiddleware, routerReducer } =
@@ -32,7 +33,8 @@ export const store = configureStore({
       documentsApi.middleware,
       extractionTasksApi.middleware,
       proxiesApi.middleware,
-      routerMiddleware
+      routerMiddleware,
+      rtkAuth,
     ),
 });
 
