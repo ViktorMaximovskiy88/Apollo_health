@@ -2,35 +2,17 @@ import jwt
 import logging
 
 from fastapi import Depends, Request, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.exceptions import HTTPException
 from backend.app.core.settings import settings
 from backend.common.models.user import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
+scheme = HTTPBearer(auto_error=False)
 
 jwks_client = jwt.PyJWKClient(
     settings.auth0.wellknown_url,
     cache_keys=True,
 )
-
-def get_token_from_request(request: Request) -> str | None:
-    cookie_token = request.cookies.get("access_token")
-    bearer_token = request.headers.get("Authorization", "").split(" ")[-1]
-    return cookie_token or bearer_token
-
-
-def get_cookie_token(request: Request):
-    cookie_token = request.cookies.get("access_token")
-    return cookie_token
-
-
-def get_token(
-    bearer_token: str | None = Depends(oauth2_scheme),
-    cookie_token: str | None = Depends(get_cookie_token),
-):
-    return bearer_token or cookie_token
-
 
 # key, alg
 def get_provider_detail(token: str):
@@ -40,13 +22,16 @@ def get_provider_detail(token: str):
     else:
         return (jwks_client.get_signing_key_from_jwt(token).key, header['alg'])
 
-
-async def get_current_user(token: str = Depends(get_token)):
+async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(scheme)):
+    
     try:
+        token = auth.credentials
         email_key = settings.auth0.email_key
         audience = settings.auth0.audience
+
         [signing_key, algorithm] = get_provider_detail(token)
         payload = jwt.decode(token, signing_key, algorithms=[algorithm], audience=audience)
+
     except Exception as ex:
         logging.error(ex)
         raise HTTPException(
