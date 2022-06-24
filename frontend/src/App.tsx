@@ -1,4 +1,4 @@
-import { Layout, Menu } from 'antd';
+import { Layout, Menu, Avatar } from 'antd';
 import {
   Link,
   Navigate,
@@ -25,10 +25,12 @@ import { DocumentsPage } from './features/sites/DocumentsPage';
 import { ExtractionsPage } from './features/extractions/ExtractionsPage';
 import { DocExtractionPage } from './features/extractions/DocExtractionPage';
 import { ExtractionEditPage } from './features/extractions/ExtractionEditPage';
+import { useAuth0 } from '@auth0/auth0-react';
 
 function TopNav() {
   const location = useLocation();
   const params = useParams();
+  const { user, logout } = useAuth0();
   const siteId = params.siteId;
   const { data: site } = useGetSiteQuery(siteId, { skip: !siteId });
   const current = location.pathname.split('/')[1];
@@ -62,6 +64,17 @@ function TopNav() {
               <Link to={`/${key}`}>{label}</Link>
             </Menu.Item>
           ))}
+          <Menu.Item key={'profile'}>
+            <Menu.SubMenu title={`${user?.given_name} ${user?.family_name}`}>
+              <Menu.Item
+                onClick={() => {
+                  logout();
+                }}
+              >
+                Logout
+              </Menu.Item>
+            </Menu.SubMenu>
+          </Menu.Item>
         </Menu>
       </Layout.Header>
       <Layout className="bg-white overflow-auto">
