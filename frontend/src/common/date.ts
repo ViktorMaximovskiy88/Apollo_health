@@ -1,16 +1,47 @@
 import { DateTime, Duration } from 'luxon';
 
 /**
- * Pretty date renders a date in the default format if a date is present.
+ * Pretty renders a date in the specified format
  * If not render a default missing placeholder value.
+ * @param value
+ * @param dateFormat
+ * @returns
+ */
+export function prettyFromISO(
+  value?: string,
+  dateFormat = DateTime.DATETIME_FULL_WITH_SECONDS
+): string {
+  return value
+    ? DateTime.fromISO(value, { zone: 'utc' })
+        .toLocal()
+        .toLocaleString(dateFormat)
+    : '';
+}
+
+/**
+ * Short date format
+ * @param value
+ * @param dateFormat
+ * @returns
  */
 export function prettyDateFromISO(
   value?: string,
   dateFormat = DateTime.DATE_MED
 ): string {
-  return value
-    ? DateTime.fromISO(value, { zone: 'utc' }).toLocaleString(dateFormat)
-    : '';
+  return prettyFromISO(value, dateFormat);
+}
+
+/**
+ * Short datetime format
+ * @param value
+ * @param dateFormat
+ * @returns
+ */
+export function prettyDateTimeFromISO(
+  value?: string,
+  dateFormat = DateTime.DATETIME_MED
+): string {
+  return prettyFromISO(value, dateFormat);
 }
 
 /**
@@ -20,7 +51,9 @@ export function prettyDate(
   value: Date,
   dateFormat = DateTime.DATE_MED
 ): string {
-  return DateTime.fromJSDate(value, { zone: 'utc' }).toLocaleString(dateFormat);
+  return DateTime.fromJSDate(value, { zone: 'utc' })
+    .toLocal()
+    .toLocaleString(dateFormat);
 }
 
 /**

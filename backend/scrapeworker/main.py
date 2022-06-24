@@ -3,6 +3,7 @@ from pathlib import Path
 import sys
 from uuid import uuid4
 import traceback
+from beanie import PydanticObjectId
 import typer
 import signal
 from playwright.async_api import async_playwright
@@ -16,11 +17,12 @@ sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 from backend.common.db.init import init_db
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.scrapeworker.scrape_worker import ScrapeWorker
+from backend.scrapeworker.scrape_worker import ScrapeWorker, CanceledTaskException, NoDocsCollectedException
 
 app = typer.Typer()
 
 accepting_tasks = True
+
 
 def signal_handler(signum, frame):
     global accepting_tasks
@@ -48,12 +50,13 @@ async def pull_task_from_queue(worker_id):
         typer.secho(f"Acquired Task {scrape_task.id}", fg=typer.colors.BLUE)
         return scrape_task
 
-async def log_success(scrape_task, site):
+async def log_success(
+    scrape_task: SiteScrapeTask,
+    site: Site
+):
     typer.secho(f"Finished Task {scrape_task.id}", fg=typer.colors.BLUE)
     now = datetime.now()
-    await site.update(
-        Set({Site.last_status: "FINISHED", Site.last_run_time: now})
-    )
+    await site.update(Set({Site.last_status: "FINISHED", Site.last_run_time: now}))
     await scrape_task.update(
         Set(
             {
@@ -63,15 +66,13 @@ async def log_success(scrape_task, site):
         )
     )
 
-async def log_failure(scrape_task, site, ex):
-    message = traceback.format_exc()
-    traceback.print_exc()
-    typer.secho(f"Task Failed {scrape_task.id}", fg=typer.colors.RED)
+
+async def log_error_status(scrape_task, site, message, status):
     now = datetime.now()
     await site.update(
         Set(
             {
-                Site.last_status: "FAILED",
+                Site.last_status: status,
                 Site.last_run_time: now,
             }
         )
@@ -79,17 +80,39 @@ async def log_failure(scrape_task, site, ex):
     await scrape_task.update(
         Set(
             {
-                SiteScrapeTask.status: "FAILED",
+                SiteScrapeTask.status: status,
                 SiteScrapeTask.error_message: message,
                 SiteScrapeTask.end_time: now,
             }
         )
     )
 
+async def log_failure(scrape_task, site, ex):
+    message = traceback.format_exc()
+    traceback.print_exc()
+    typer.secho(f"Task Failed {scrape_task.id}", fg=typer.colors.RED)
+    await log_error_status(scrape_task=scrape_task, site=site, message=message, status="FAILED",)
+
+
+async def log_cancellation(scrape_task, site, ex):
+    typer.secho(f"Task Canceled {scrape_task.id}", fg=typer.colors.RED)
+    message = str(ex)
+    await log_error_status(scrape_task=scrape_task, site=site, message=message, status="CANCELED",)
+
+
+async def log_not_found(scrape_task, site, ex):
+    message = str(ex)
+    await log_error_status(scrape_task=scrape_task, site=site, message=message, status="FAILED",)
+
+
 async def heartbeat_task(scrape_task: SiteScrapeTask):
     while True:
-        await scrape_task.update({SiteScrapeTask.last_active: datetime.now()})
+        await SiteScrapeTask.get_motor_collection().update_one(
+            { '_id': scrape_task.id },
+            { '$set': { 'last_active': datetime.now() } }
+        )
         await asyncio.sleep(10)
+
 
 async def worker_fn(worker_id, playwright, browser):
     while True:
@@ -111,13 +134,18 @@ async def worker_fn(worker_id, playwright, browser):
         )
 
         worker = ScrapeWorker(playwright, browser, scrape_task, site)
+        task = asyncio.create_task(heartbeat_task(scrape_task))
         try:
-            task = asyncio.create_task(heartbeat_task(scrape_task))
             await worker.run_scrape()
-            task.cancel()
             await log_success(scrape_task, site)
+        except CanceledTaskException as ex:
+            await log_cancellation(scrape_task, site, ex)
+        except NoDocsCollectedException as ex:
+            await log_not_found(scrape_task, site, ex)
         except Exception as ex:
             await log_failure(scrape_task, site, ex)
+        finally:
+            task.cancel()
 
 
 async def start_worker_async(worker_id):
@@ -130,6 +158,7 @@ async def start_worker_async(worker_id):
             workers.append(worker_fn(worker_id, playwright, browser))
         await asyncio.gather(*workers)
     typer.secho(f"Shutdown Complete", fg=typer.colors.BLUE)
+
 
 @app.command()
 def start_worker():

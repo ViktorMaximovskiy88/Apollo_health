@@ -1,17 +1,27 @@
 import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime
-from random import choice
+from random import shuffle
+from typing import AsyncGenerator, Coroutine
 from async_lru import alru_cache
 import os
 import pathlib
+from tenacity._asyncio import AsyncRetrying
+from tenacity.stop import stop_after_attempt
+from beanie.odm.operators.update.array import Push
 from beanie.odm.operators.update.general import Inc
 from urllib.parse import urlparse, urljoin
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from playwright.async_api import ElementHandle, Browser, ProxySettings
+from playwright.async_api import (
+    ElementHandle,
+    Browser,
+    BrowserContext,
+    ProxySettings,
+    Page,
+)
 from playwright_stealth import stealth_async
 from backend.common.models.user import User
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
@@ -19,10 +29,16 @@ from backend.scrapeworker.detect_lang import detect_lang
 from backend.scrapeworker.downloader import DocDownloader
 from backend.scrapeworker.effective_date import extract_dates, select_effective_date
 from backend.scrapeworker.proxy import convert_proxies_to_proxy_settings
-
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.xpdf_wrapper import pdfinfo, pdftotext
+
+# Scrapeworker workflow 'exceptions'
+class NoDocsCollectedException(Exception):
+    pass
+
+class CanceledTaskException(Exception):
+    pass
 
 
 class ScrapeWorker:
@@ -46,7 +62,9 @@ class ScrapeWorker:
         return user
 
     @alru_cache
-    async def get_proxy_settings(self) -> list[ProxySettings | None]:
+    async def get_proxy_settings(
+        self,
+    ) -> list[tuple[Proxy | None, ProxySettings | None]]:
         proxies = await Proxy.find_all().to_list()
         proxy_exclusions = self.site.scrape_method_configuration.proxy_exclusions
         valid_proxies = [proxy for proxy in proxies if proxy.id not in proxy_exclusions]
@@ -76,7 +94,7 @@ class ScrapeWorker:
         if parsed.scheme not in ["https", "http"]:  # mailto, tel, etc
             return True
         return False
-    
+
     def url_not_seen(self, url):
         # skip if we've already seen this url
         if url in self.seen_urls:
@@ -91,7 +109,9 @@ class ScrapeWorker:
 
     async def attempt_download(self, base_url, url, context_metadata):
         proxies = await self.get_proxy_settings()
-        async for (temp_path, checksum) in self.downloader.download_to_tempfile(url, proxies):
+        async for (temp_path, checksum) in self.downloader.download_to_tempfile(
+            url, proxies
+        ):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
             dest_path = f"{checksum}.pdf"
             document = None
@@ -112,6 +132,7 @@ class ScrapeWorker:
             title = self.select_title(metadata, url)
             document_type, confidence = classify_doc_type(text)
             lang_code = detect_lang(text)
+            print(f"{url} as {lang_code}")
 
             now = datetime.now()
             datelist = list(dates.keys())
@@ -128,6 +149,7 @@ class ScrapeWorker:
                     scrape_task_id=self.scrape_task.id,
                     last_seen=now,
                     name=title,
+                    lang_code=lang_code,
                 )
                 await update_and_log_diff(
                     self.logger, await self.get_user(), document, updates
@@ -151,19 +173,67 @@ class ScrapeWorker:
                     lang_code=lang_code,
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
+            await self.scrape_task.update(Push({SiteScrapeTask.retrieved_document_ids: document.id}))
+
+    async def watch_for_cancel(self, tasks: list[asyncio.Task[None]]):
+        while True:
+            if all(t.done() for t in tasks):
+                break
+            canceling = await SiteScrapeTask.find_one(
+                SiteScrapeTask.id == self.scrape_task.id,
+                SiteScrapeTask.status == "CANCELING",
+            )
+            if canceling:
+                for t in tasks:
+                    t.cancel()
+                raise CanceledTaskException("Task was canceled.")
+            await asyncio.sleep(1)
+
+    async def wait_for_completion_or_cancel(self, downloads: list[Coroutine[None, None, None]]):
+
+        if len(downloads) == 0:
+            raise NoDocsCollectedException("No documents collected.")
+
+        tasks = [asyncio.create_task(download) for download in downloads]
+
+        try:
+            await asyncio.gather(self.watch_for_cancel(tasks), *tasks)
+        except asyncio.exceptions.CancelledError:
+            pass
+
+    async def try_each_proxy(self):
+        """
+        Try each proxy in turn, if it fails, try the next one. Repeat a few times for good measure.
+        """
+        proxy_settings = await self.get_proxy_settings()
+        shuffle(proxy_settings)
+        n_proxies = len(proxy_settings)
+        async for attempt in AsyncRetrying(stop=stop_after_attempt(3*n_proxies)):
+            i = attempt.retry_state.attempt_number - 1
+            proxy, proxy_setting = proxy_settings[i % n_proxies]
+            print(f"{i} Trying proxy {proxy and proxy.name} - {proxy_setting and proxy_setting.get('server')}")
+            yield attempt, proxy_setting
 
     @asynccontextmanager
-    async def playwright_context(self, base_url: str):
+    async def playwright_context(self, base_url: str) -> AsyncGenerator[Page, None]:
         print(f"Creating context for {base_url}")
-        proxy = choice(await self.get_proxy_settings())
-        context = await self.browser.new_context(proxy=proxy) # type: ignore
-        page = await context.new_page()
-        await stealth_async(page)
-        await page.goto(base_url, wait_until="domcontentloaded")#await page.goto(base_url, wait_until="networkidle") 
+        context: BrowserContext | None = None
+        page: Page | None = None
+        async for attempt, proxy in self.try_each_proxy():
+            with attempt:
+                context = await self.browser.new_context(proxy=proxy, ignore_https_errors=True) # type: ignore
+                page = await context.new_page()
+                await stealth_async(page)
+                await page.goto(base_url, wait_until="domcontentloaded") # await page.goto(base_url, wait_until="networkidle")
+
+        if not page:
+            raise Exception(f"Could not load {base_url}")
+
         try:
             yield page
         finally:
-            await page.close()
+            if context:
+                await context.close()
 
     def construct_selector(self):
         extensions = self.site.scrape_method_configuration.document_extensions
@@ -183,12 +253,16 @@ class ScrapeWorker:
                 print(f"Found {len(link_handles)} links")
                 downloads = []
                 for link_handle in link_handles:
-                    url, context_metadata = await self.extract_url_and_context_metadata(base_url.url, link_handle)       
-        
-                    #check that think link is unique and that we should not skip it
+                    url, context_metadata = await self.extract_url_and_context_metadata(
+                        base_url.url, link_handle
+                    )
+
+                    # check that think link is unique and that we should not skip it
                     if not self.skip_url(url) and self.url_not_seen(url):
-                        await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
-                        downloads.append(self.attempt_download(base_url.url, url, context_metadata))
-                await asyncio.gather(*downloads)
-            
-                
+                        await self.scrape_task.update(
+                            Inc({SiteScrapeTask.links_found: 1})
+                        )
+                        downloads.append(
+                            self.attempt_download(base_url.url, url, context_metadata)
+                        )
+                await self.wait_for_completion_or_cancel(downloads)

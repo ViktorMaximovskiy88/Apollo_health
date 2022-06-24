@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { ChangeLog } from '../change_log/types';
+import { ChangeLog } from '../change-log/types';
 import { Site } from './types';
 
 export const sitesApi = createApi({
@@ -27,6 +27,7 @@ export const sitesApi = createApi({
       query: (body) => ({ url: `/sites/${body._id}`, method: 'POST', body }),
       invalidatesTags: (_r, _e, { _id: id }) => [
         { type: 'Site', id },
+        { type: 'Site', id: 'LIST' },
         { type: 'ChangeLog', id },
       ],
     }),
@@ -34,6 +35,7 @@ export const sitesApi = createApi({
       query: ({ _id: id }) => ({ url: `/sites/${id}`, method: 'DELETE' }),
       invalidatesTags: (_r, _e, { _id: id }) => [
         { type: 'Site', id },
+        { type: 'Site', id: 'LIST' },
         { type: 'ChangeLog', id },
       ],
     }),

@@ -1,6 +1,6 @@
 import asyncio
-from functools import cache
 from pathlib import Path
+import signal
 import sys
 from beanie import PydanticObjectId
 import boto3
@@ -11,14 +11,15 @@ from beanie.odm.operators.update.general import Set
 
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 
-from backend.common.core.config import is_local
+from backend.common.task_queues.unique_task_insert import try_queue_unique_task
+from backend.common.core.config import is_local, config
 from backend.common.models.user import User
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.app.utils.logger import Logger
 
 from backend.common.db.init import init_db
 from backend.common.models.site import Site
-
+from backend.common.core.enums import CollectionMethod
 app = typer.Typer()
 
 
@@ -46,31 +47,19 @@ def find_sites_eligible_for_scraping(crons, now=datetime.now()):
     sites = Site.find({
         'cron': { '$in': crons }, # Should be run now
         'disabled': False, # Is active
+        'collection_method':{"$ne":CollectionMethod.Manual},
         'base_urls.status': 'ACTIVE', # has at least one active url
         '$or': [
             { 'last_run_time': None }, # has never been run
-            { 'last_run_time': { '$lt': now - timedelta(minutes=1) } }, # has been run in the last minute
+            { 'last_run_time': { '$lt': now - timedelta(minutes=1) } }, # hasn't been run in the last minute
         ],
-        'last_status': { '$nin': ['QUEUED', 'IN_PROGRESS', 'CANCELLING'] } # not already in progress
+        'last_status': { '$nin': ['QUEUED', 'IN_PROGRESS', 'CANCELING'] } # not already in progress
     })
     return sites
 
 async def enqueue_scrape_task(site_id: PydanticObjectId):
     site_scrape_task = SiteScrapeTask(site_id=site_id, queued_time=datetime.now())
-
-    update_result = await SiteScrapeTask.get_motor_collection().update_one(
-        { 'site_id': site_id, 'status': { '$in': ['QUEUED', 'IN_PROGRESS', 'CANCELLING'] } },
-        { '$setOnInsert': site_scrape_task.dict() },
-        upsert=True
-    )
-
-    insert_id: PydanticObjectId | None = update_result.upserted_id  # type: ignore
-
-    if not insert_id:
-        return None
-
-    site_scrape_task.id = insert_id
-    return site_scrape_task
+    return await try_queue_unique_task(site_scrape_task)
 
 async def log_task_creation(logger, user, site_scrape_task: SiteScrapeTask):
     await logger.background_log_change(user, site_scrape_task, "CREATE")
@@ -97,20 +86,13 @@ async def start_scheduler():
 
         await asyncio.sleep(15)
 
-@cache
-def cluster_arn() -> str:
-    ecs = boto3.client("ecs")
-    clusters = ecs.list_clusters()
-    return clusters['clusterArns'][0]
+def cluster_arn() -> str | None:
+    return config.get('CLUSTER_ARN')
 
-@cache
-def scrapeworker_service_arn() -> str:
-    ecs = boto3.client("ecs")
-    services = ecs.list_services(cluster=cluster_arn())
-    arns = services['serviceArns']
-    return next(filter(lambda arn: 'scrapeworker' in arn, arns))
+def scrapeworker_service_arn() -> str | None:
+    return config.get('SCRAPEWORKER_SERVICE_ARN')
 
-def determine_current_instance_count(service_tag: str):
+def determine_current_instance_count():
     ecs = boto3.client("ecs")
     services = ecs.describe_services(
         cluster=cluster_arn(),
@@ -148,7 +130,7 @@ async def start_scaler():
 
     while True:
         queue_size = await SiteScrapeTask.find(SiteScrapeTask.status == 'QUEUED').count()
-        active_workers = determine_current_instance_count('scrapeworker')
+        active_workers = determine_current_instance_count()
         tasks_per_worker = 5 # some setting
         new_cluster_size = get_new_cluster_size(queue_size, active_workers, tasks_per_worker)
         update_cluster_size(new_cluster_size)
@@ -161,8 +143,11 @@ async def start_hung_task_checker():
     while True:
         now = datetime.now()
         tasks = SiteScrapeTask.find({
-            'status': 'IN_PROGRESS',
-            'last_active': { '$lt': now - timedelta(minutes=1) },
+            'status': { '$in': ['IN_PROGRESS', 'CANCELING'] },
+            '$or': [
+                { 'last_active': { '$lt': now - timedelta(minutes=1) } },
+                { 'last_active': None }
+            ],
         })
         message = "Lost task heartbeat"
         async for task in tasks:
@@ -188,13 +173,23 @@ async def start_hung_task_checker():
             )
         await asyncio.sleep(60)
 
+background_tasks: list[asyncio.Task] = []
 async def start_scheduler_and_scaler():
     await init_db()
-    await asyncio.gather(start_scaler(), start_scheduler(), start_hung_task_checker())
+    background_tasks.append(asyncio.create_task(start_scaler()))
+    background_tasks.append(asyncio.create_task(start_scheduler()))
+    background_tasks.append(asyncio.create_task(start_hung_task_checker()))
+    await asyncio.gather(*background_tasks)
+
+def signal_handler(signum, frame):
+    typer.secho(f"Shutdown Requested, shutting down", fg=typer.colors.BLUE)
+    for task in background_tasks:
+        task.cancel()
 
 @app.command()
 def start_worker():
     typer.secho(f"Starting Scheduler", fg=typer.colors.GREEN)
+    signal.signal(signal.SIGTERM, signal_handler)
     asyncio.run(start_scheduler_and_scaler())
 
 
