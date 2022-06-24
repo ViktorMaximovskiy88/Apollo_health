@@ -6,10 +6,11 @@ ENV LANG=en_US.utf8 DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
     apt-get install -y make build-essential libssl-dev zlib1g-dev \
-        libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev \
-        libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev git \
-        neovim htop lsof sudo software-properties-common poppler-utils \
-        gfortran libblas-dev liblapack-dev
+    libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev \
+    libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev git \
+    neovim htop lsof sudo software-properties-common poppler-utils \
+    gfortran libblas-dev liblapack-dev \
+    g++ protobuf-compiler libprotobuf-dev        
 
 ARG UNAME=user
 ARG HOME_DIR=/home/${UNAME}/

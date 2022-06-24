@@ -5,10 +5,12 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { usersApi } from '../features/users/usersApi';
 import { sitesApi } from '../features/sites/sitesApi';
 import { documentsApi } from '../features/documents/documentsApi';
-import { siteScrapeTasksApi } from '../features/site_scrape_tasks/siteScrapeTasksApi';
+import { siteScrapeTasksApi } from '../features/collections/siteScrapeTasksApi';
 import { extractionTasksApi } from '../features/extractions/extractionsApi';
 import { workQueuesApi } from '../features/work_queue/workQueuesApi';
 import { assessmentsApi } from '../features/assessments/assessmentsApi';
+import { proxiesApi } from '../features/proxies/proxiesApi';
+import uiReducer from './uiSlice';
 
 const { createReduxHistory, routerMiddleware, routerReducer } =
   createReduxHistoryContext({ history: createBrowserHistory() });
@@ -22,6 +24,8 @@ export const store = configureStore({
     [extractionTasksApi.reducerPath]: extractionTasksApi.reducer,
     [workQueuesApi.reducerPath]: workQueuesApi.reducer,
     [assessmentsApi.reducerPath]: assessmentsApi.reducer,
+    [proxiesApi.reducerPath]: proxiesApi.reducer,
+    ui: uiReducer,
     router: routerReducer,
   },
   middleware: (getDefaultMiddleware) =>
@@ -33,6 +37,7 @@ export const store = configureStore({
       extractionTasksApi.middleware,
       workQueuesApi.middleware,
       assessmentsApi.middleware,
+      proxiesApi.middleware,
       routerMiddleware
     ),
 });

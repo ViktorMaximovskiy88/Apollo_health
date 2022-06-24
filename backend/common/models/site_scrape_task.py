@@ -10,11 +10,14 @@ class SiteScrapeTask(BaseDocument):
     queued_time: datetime
     start_time: datetime | None = None
     end_time: datetime | None = None
+    last_active: datetime | None = None
     status: str = "QUEUED"
     documents_found: int = 0
     new_documents_found: int = 0
+    retrieved_document_ids: list[PydanticObjectId] = []
     worker_id: UUID | None = None
     error_message: str | None = None
+    links_found: int = 0
 
 
 class UpdateSiteScrapeTask(BaseModel):
@@ -26,3 +29,11 @@ class UpdateSiteScrapeTask(BaseModel):
     documents_found: int | None = None
     new_documents_found: int | None = None
     error_message: str | None = None
+
+
+# Deprecated
+class NoDocIdScrapeTask(SiteScrapeTask):
+    retrieved_document_id: None = None
+
+    class Collection:
+        name = "SiteScrapeTask"

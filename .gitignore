@@ -43,6 +43,7 @@ pip-delete-this-directory.txt
 htmlcov/
 .tox/
 .nox/
+/coverage
 .coverage
 .coverage.*
 .cache
@@ -175,3 +176,5 @@ terraform.rc
 # Terragrunt debug output file (when using `--terragrunt-debug` option)
 # See: https://terragrunt.gruntwork.io/docs/reference/cli-options/#terragrunt-debug
 terragrunt-debug.tfvars.json
+
+.DS_Store

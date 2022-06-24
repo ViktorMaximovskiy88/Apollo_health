@@ -1,5 +1,4 @@
 from datetime import datetime
-import pytest
 
 from backend.scheduler.main import compute_matching_crons
 

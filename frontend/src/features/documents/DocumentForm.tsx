@@ -1,11 +1,22 @@
-import { Button, Form, Select, Space, Switch } from 'antd';
-import { Input } from 'antd';
+import {
+  Button,
+  Form,
+  Select,
+  Space,
+  Switch,
+  Radio,
+  Input,
+  DatePicker,
+} from 'antd';
+import type { RadioChangeEvent } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
-import { format, parse, parseISO } from 'date-fns';
+import { prettyDate, prettyDateFromISO } from '../../common';
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useUpdateDocumentMutation } from './documentsApi';
 import { RetrievedDocument } from './types';
+import moment from 'moment';
+const { TextArea } = Input;
 
 export function DocumentForm(props: { doc: RetrievedDocument }) {
   const navigate = useNavigate();
@@ -13,13 +24,30 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
   const [updateDoc] = useUpdateDocumentMutation();
   const [form] = useForm();
   const doc = props.doc;
+
   const [automatedExtraction, setAutomatedExtraction] = useState(
     doc.automated_content_extraction
   );
+  const [docTypeConfidence, setDocTypeConfidence] = useState(
+    doc.doc_type_confidence
+  );
 
-  function checkAutomatedExtraction(modified: Partial<RetrievedDocument>) {
+  const existsInList = (doc.identified_dates || []).find(
+    (date) => date === doc.effective_date
+  );
+  const [effectiveDateSelection, setEffectiveDateSelection] = useState(
+    existsInList ? 'list' : 'custom'
+  );
+
+  function setFormState(modified: Partial<RetrievedDocument>) {
     if (modified.automated_content_extraction !== undefined) {
       setAutomatedExtraction(modified.automated_content_extraction);
+    } else if (modified.document_type !== undefined) {
+      if (modified.document_type === doc.document_type) {
+        setDocTypeConfidence(doc.doc_type_confidence);
+      } else {
+        setDocTypeConfidence(undefined);
+      }
     }
   }
 
@@ -27,14 +55,14 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     e.preventDefault();
     navigate(-1);
   }
+
+  function onEffectiveDateSelectionChange(e: RadioChangeEvent) {
+    setEffectiveDateSelection(e.target.value);
+  }
+
   async function onFinish(doc: Partial<RetrievedDocument>) {
     await updateDoc({
       ...doc,
-      effective_date: parse(
-        doc.effective_date || '',
-        'yyyy-MM-dd',
-        0
-      ).toISOString(),
       _id: params.docId,
     });
     navigate(-1);
@@ -42,13 +70,14 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
 
   const initialValues = {
     name: doc.name,
-    effective_date: doc.effective_date
-      ? format(parseISO(doc.effective_date), 'yyyy-MM-dd')
-      : null,
+    effective_date: doc.effective_date,
     document_type: doc.document_type,
     automated_content_extraction: doc.automated_content_extraction,
     automated_content_extraction_class: doc.automated_content_extraction_class,
     url: doc.url,
+    base_url: doc.base_url,
+    lang_code: doc.lang_code,
+    link_text: doc.context_metadata?.link_text,
   };
 
   const documentTypes = [
@@ -60,20 +89,29 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     { value: 'Regulatory Document', label: 'Regulatory Document' },
     { value: 'Formulary', label: 'Formulary' },
     { value: 'Internal Reference', label: 'Internal Reference' },
-  ]
+  ];
+
+  const languageCodes = [
+    { value: 'en', label: 'English' },
+    { value: 'es', label: 'Spanish' },
+    { value: 'other', label: 'Other' },
+  ];
+
+  const confidencePercent = docTypeConfidence
+    ? `${Math.floor(docTypeConfidence * 100)}%`
+    : '-';
 
   const extractionOptions = [
     { value: 'BasicTableExtraction', label: 'Basic Table Extraction' },
     { value: 'UHCFormularyExtraction', label: 'UHC Formulary Extraction' },
   ];
 
-  const dateOptions =
-    doc.identified_dates?.map((d) => {
-      const date = format(parseISO(d), 'yyyy-MM-dd');
-      return { value: date, label: date };
-    }) || [];
-  const today = format(new Date(), 'yyyy-MM-dd');
-  dateOptions.push({value: today, label: today });
+  const dateOptions = (doc.identified_dates || [])
+    .map((d) => ({
+      value: d,
+      label: prettyDateFromISO(d),
+    }))
+    .sort((a, b) => +new Date(b.value) - +new Date(a.value));
 
   return (
     <Form
@@ -82,17 +120,61 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
       requiredMark={false}
       initialValues={initialValues}
       onFinish={onFinish}
-      onValuesChange={checkAutomatedExtraction}
+      onValuesChange={setFormState}
     >
       <Form.Item name="name" label="Name">
         <Input />
       </Form.Item>
-      <Form.Item name="document_type" label="Document Type">
-        <Select options={documentTypes} />
+
+      <div className="flex space-x-2">
+        <Form.Item className="grow" name="document_type" label="Document Type">
+          <Select options={documentTypes} />
+        </Form.Item>
+        <Form.Item label="Confidence">
+          <div className="flex justify-center">{confidencePercent}</div>
+        </Form.Item>
+      </div>
+
+      <Form.Item label="Effective Date">
+        <Radio.Group
+          className="mb-1"
+          onChange={onEffectiveDateSelectionChange}
+          defaultValue={effectiveDateSelection}
+        >
+          <Radio value="list">From List</Radio>
+          <Radio value="custom">Custom</Radio>
+        </Radio.Group>
+
+        <Form.Item name="effective_date" noStyle preserve>
+          {effectiveDateSelection === 'list' && (
+            <Select
+              defaultValue={existsInList ? initialValues.effective_date : null}
+              options={dateOptions}
+              onChange={(value) => {
+                form.setFieldsValue({ effective_date: value });
+              }}
+            />
+          )}
+
+          {effectiveDateSelection === 'custom' && (
+            <DatePicker
+              className="flex"
+              defaultValue={moment(initialValues.effective_date)}
+              format={(value) => prettyDate(value.toDate())}
+              onChange={(value: any) => {
+                form.setFieldsValue({
+                  effective_date: value.utc().startOf('day').toISOString(),
+                });
+              }}
+            />
+          )}
+        </Form.Item>
       </Form.Item>
-      <Form.Item name="effective_date" label="Effective Date">
-        <Select options={dateOptions} />
+
+      <Form.Item name="lang_code" label="Language">
+        <Select options={languageCodes} />
       </Form.Item>
+
       <Form.Item
         name="automated_content_extraction"
         label="Automated Content Extraction"
@@ -108,9 +190,18 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
           <Select options={extractionOptions} />
         </Form.Item>
       )}
-      <Form.Item name="url" label="URL">
+      <Form.Item name="base_url" label="Base URL">
         <Input disabled />
       </Form.Item>
+      <div className="flex space-x-2">
+        <Form.Item name="link_text" label="Link Text">
+          <TextArea disabled autoSize={true} />
+        </Form.Item>
+        <Form.Item className="grow" name="url" label="Link URL">
+          <TextArea disabled autoSize={true} />
+        </Form.Item>
+      </div>
+
       <Form.Item>
         <Space>
           <Button type="primary" htmlType="submit">

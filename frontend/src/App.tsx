@@ -8,9 +8,8 @@ import {
   useLocation,
   useParams,
 } from 'react-router-dom';
-import { DocumentsHomePage } from './features/documents/DocumentsHomePage';
 import { DocumentEditPage } from './features/documents/DocumentEditPage';
-import { ScrapesPage } from './features/site_scrape_tasks/ScrapesPage';
+import { CollectionsPage } from './features/collections/CollectionsPage';
 import { SiteCreatePage } from './features/sites/SiteCreatePage';
 import { SiteEditPage } from './features/sites/SiteEditPage';
 import { SitePage } from './features/sites/SitePage';
@@ -88,16 +87,6 @@ function UserRoutes() {
     </Routes>
   );
 }
-function DocumentRoutes() {
-  return (
-    <Routes>
-      <Route index element={<DocumentsHomePage />} />
-      <Route path=":docId">
-        <Route path="edit" element={<DocumentEditPage />} />
-      </Route>
-    </Routes>
-  );
-}
 
 function App() {
   return (
@@ -120,7 +109,7 @@ function App() {
           <Route path=":siteId">
             <Route path="edit" element={<SiteEditPage />} />
             <Route element={<SitePage />}>
-              <Route path="scrapes" element={<ScrapesPage />} />
+              <Route path="scrapes" element={<CollectionsPage />} />
               <Route path="documents">
                 <Route index element={<DocumentsPage />} />
                 <Route path=":docId">
