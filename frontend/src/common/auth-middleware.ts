@@ -18,12 +18,12 @@ const logout = () => {
 export const rtkAuth: Middleware =
   (api: MiddlewareAPI) => (next) => (action) => {
     if (isRejectedWithValue(action)) {
-      const { status, data } = action.payload;
+      const { status } = action.payload;
       // our 'local' Auth0 doesnt do web_message therefore the silent
       // login doesnt work. We just log you out instead here.
       if (
-        status == 401 &&
-        settings.auth0.clientId == '00000000000000000000000000000000'
+        status === 401 &&
+        settings.auth0.clientId === '00000000000000000000000000000000'
       ) {
         logout();
       }
