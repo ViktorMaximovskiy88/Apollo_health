@@ -25,4 +25,4 @@ const settings: Settings = {
   auth0: auth0Settings,
 };
 
-export default settings;
+export default window._settings;

@@ -1,13 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/favicon.svg" />
-    <meta name="description" content="Source Hub" />
-    <title>Source Hub</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-  </body>
+
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/favicon.svg" />
+  <meta name="description" content="Source Hub" />
+  <title>Source Hub</title>
+
+  <!-- no judgements; this avoids so much tomfoolery -->
+  <script type="module">
+    const data = await fetch('/api/v1/settings').then((res) => res.json())
+    globalThis._settings = {
+      baseApiUrl: '/api/v1',
+      auth0: {
+        domain: data.auth0_domain,
+        clientId: data.auth0_client_id,
+        audience: data.auth0_audience,
+        cacheLocation: 'localstorage',
+        redirectUri: window.location.origin,
+      }
+    };
+  </script>
+
+</head>
+
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <div id="root"></div>
+</body>
+
 </html>

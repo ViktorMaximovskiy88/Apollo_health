@@ -80,6 +80,18 @@ resource "aws_ecs_task_definition" "app" {
         {
           name = "S3_DOCUMENT_BUCKET"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/docrepo_bucket_name"
+        },
+        {
+          name = "REACT_APP_AUTH0_DOMAIN"
+          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/react_app_auth0_domain"
+        },
+        {
+          name = "REACT_APP_AUTH0_CLIENT_ID"
+          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/react_app_auth0_client_id"
+        },
+        {
+          name = "REACT_APP_AUTH0_AUDIENCE"
+          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/react_app_auth0_audience"
         }
       ]
 

@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 from backend.app.scripts.add_user import create_admin_user
 from backend.common.db.init import init_db
 from backend.common.db.migrations import run_migrations
-from backend.common.core.config import is_local
+from backend.app.core.settings import settings
 from backend.app.routes import proxies, sites
 from backend.common.models.user import User
 from backend.app.routes import (
@@ -25,7 +25,7 @@ app = FastAPI()
 @app.on_event("startup")
 async def app_init():
     await init_db()
-    if is_local:
+    if settings.is_local:
         await run_migrations()
     if await User.count() == 0:
         user, plain_pass = await create_admin_user()
@@ -41,6 +41,9 @@ frontend_build_dir = Path(__file__).parent.joinpath("../../frontend/build").reso
 async def ping():
     return {"ok" : True}
 
+@app.get("/api/v1/settings", include_in_schema=False)
+async def react_settings():
+    return settings.frontend
 
 @app.get("/api/v1/auth/authorize", response_class=HTMLResponse, tags=["Auth"])
 async def login_page(request: Request):

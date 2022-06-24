@@ -3,10 +3,15 @@ from backend.common.core.config import load_dotenv, env_type
 
 load_dotenv(env_type)
 
+class ReactApp(BaseSettings):
+    auth0_domain: HttpUrl = Field(env='REACT_APP_AUTH0_DOMAIN')
+    auth0_client_id: str = Field(env='REACT_APP_AUTH0_CLIENT_ID')
+    auth0_audience: str = Field(env='REACT_APP_AUTH0_AUDIENCE')
+
 class Auth0Settings(BaseSettings):
-    wellknown_url: HttpUrl = Field(env='auth0_wellknown_url')
-    audience: str = Field(env='auth0_audience')
-    issuer: str = Field(env='auth0_issuer')
+    wellknown_url: HttpUrl = Field(env='AUTH0_WELLKNOWN_URL')
+    audience: str = Field(env='AUTH0_AUDIENCE')
+    issuer: str = Field(env='AUTH0_ISSUER')
     email_key: str = Field(default='https://mmit.com/email')
 
 class Settings(BaseSettings):
@@ -14,6 +19,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int
 
     auth0: Auth0Settings = Auth0Settings()
+    frontend: ReactApp = ReactApp()
 
     is_local: bool = env_type == "local"
     env_type: str = env_type
