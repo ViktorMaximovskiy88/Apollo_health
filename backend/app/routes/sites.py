@@ -22,6 +22,7 @@ from backend.common.models.site import (
     Site,
     UpdateSite,
 )
+from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.app.utils.logger import (
     Logger,
@@ -97,6 +98,7 @@ async def create_site(
         name=site.name,
         base_urls=site.base_urls,
         scrape_method=site.scrape_method,
+        collection_method=site.collection_method,
         scrape_method_configuration=site.scrape_method_configuration,
         tags=site.tags,
         disabled=False,
@@ -141,19 +143,19 @@ async def upload_sites(
         tag_str: str
         doc_ext_str: str
         url_keyw_str: str
+        collection_method: str
         scrape_method = 'SimpleDocumentScrape'
         cron = '0 16 * * *'
-        name, base_url_str, tag_str, doc_ext_str, url_keyw_str = line # type: ignore
+        name, base_url_str, tag_str, doc_ext_str, url_keyw_str, collection_method = line # type: ignore
         tags = tag_str.split(",") if tag_str else []
         base_urls = base_url_str.split(",") if base_url_str else []
-        doc_exts = doc_ext_str.split(",") if doc_ext_str else ['pdf']
+        doc_exts = doc_ext_str.split(",") if doc_ext_str else ["pdf"]
         url_keyws = url_keyw_str.split(",") if url_keyw_str else []
         scrape_method_configuration = ScrapeMethodConfiguration(
             document_extensions=doc_exts,
             url_keywords=url_keyws,
             proxy_exclusions=[],
         )
-
         if await Site.find_one(Site.base_urls == base_urls):
             continue
         base_urls = list(
@@ -163,6 +165,7 @@ async def upload_sites(
             name=name,
             base_urls=base_urls,
             scrape_method=scrape_method,
+            collection_method=collection_method,
             scrape_method_configuration=scrape_method_configuration,
             tags=tags,
             disabled=False,
@@ -185,11 +188,32 @@ async def update_site(
     return updated
 
 
-@router.delete("/{id}")
+async def check_for_scrapetask(site_id: PydanticObjectId) -> list[SiteScrapeTask]:
+    scrape_task = await SiteScrapeTask.find_many({"site_id": site_id}).to_list()
+    return scrape_task
+
+
+@router.delete(
+    "/{id}",
+    responses={
+        405: {
+            "description": "Item can't be deleted because of associated collection records."
+        },
+    },
+)
 async def delete_site(
+    id: PydanticObjectId,
     target: Site = Depends(get_target),
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
+    # check for associated collection records, return error if present
+    scrape_task = await check_for_scrapetask(id)
+    if scrape_task:
+        raise HTTPException(
+            status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+            detail="Sites with run collections cannot be deleted.",
+        )
+
     await update_and_log_diff(logger, current_user, target, UpdateSite(disabled=True))
     return {"success": True}

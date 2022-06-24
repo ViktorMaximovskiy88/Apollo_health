@@ -17,6 +17,7 @@ from backend.app.utils.logger import (
 )
 from backend.app.utils.user import get_current_user
 from backend.common.task_queues.unique_task_insert import try_queue_unique_task
+from backend.common.core.enums import CollectionMethod
 
 router = APIRouter(
     prefix="/site-scrape-tasks",
@@ -95,8 +96,7 @@ async def runBulkByType(
 ):
     bulk_type = type
     total_scrapes = 0
-    query = {"disabled": False, "base_urls": {
-        "$exists": True, "$not": {"$size": 0}}}
+    query = {"disabled": False, "base_urls": {"$exists": True, "$not": {"$size": 0}}, "collection_method":{"$ne":[CollectionMethod.Manual]}}
     if bulk_type == "unrun":
         query["last_status"] = None
     elif bulk_type == "failed":
@@ -122,6 +122,31 @@ async def runBulkByType(
 
     return {"status": True, "scrapes_launched": total_scrapes}
 
+
+@router.post("/cancel-all", response_model=SiteScrapeTask)
+async def cancel_all_site_scrape_task(
+    site_id: PydanticObjectId,
+    current_user: User = Depends(get_current_user),
+):
+    # fetch the site to determine the last_status is either QUEUED or IN_PROGRESS
+    site = await Site.find_one({
+        "_id":site_id,
+        "status":{ "$in": [ "QUEUED" ] }
+    })
+
+    if site:
+        # If the site is found, fetch all tasks and cancel all queued or in progress tasks
+        result = await SiteScrapeTask.get_motor_collection().update_many(
+            {"site_id": site_id, "status":{ "$in": [ "QUEUED" ] }},
+            {"$set": {"status": "CANCELED"}}
+        )
+        await site.update(
+            Set(
+                {
+                    Site.last_status: "CANCELED"
+                }
+            )
+        )
 
 @router.post("/{id}", response_model=SiteScrapeTask)
 async def update_scrape_task(

@@ -11,7 +11,7 @@ from backend.common.db.migrations import run_migrations
 from backend.common.core.config import is_local
 from backend.app.routes import proxies, sites
 from backend.common.models.user import User
-from routes import (
+from backend.app.routes import (
     auth,
     users,
     documents,

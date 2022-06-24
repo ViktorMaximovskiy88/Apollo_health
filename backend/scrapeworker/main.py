@@ -3,6 +3,7 @@ from pathlib import Path
 import sys
 from uuid import uuid4
 import traceback
+from beanie import PydanticObjectId
 import typer
 import signal
 from playwright.async_api import async_playwright
@@ -16,7 +17,7 @@ sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 from backend.common.db.init import init_db
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.scrapeworker.scrape_worker import ScrapeWorker, CanceledTaskException
+from backend.scrapeworker.scrape_worker import ScrapeWorker, CanceledTaskException, NoDocsCollectedException
 
 app = typer.Typer()
 
@@ -49,8 +50,10 @@ async def pull_task_from_queue(worker_id):
         typer.secho(f"Acquired Task {scrape_task.id}", fg=typer.colors.BLUE)
         return scrape_task
 
-
-async def log_success(scrape_task, site):
+async def log_success(
+    scrape_task: SiteScrapeTask,
+    site: Site
+):
     typer.secho(f"Finished Task {scrape_task.id}", fg=typer.colors.BLUE)
     now = datetime.now()
     await site.update(Set({Site.last_status: "FINISHED", Site.last_run_time: now}))
@@ -64,52 +67,42 @@ async def log_success(scrape_task, site):
     )
 
 
+async def log_error_status(scrape_task, site, message, status):
+    now = datetime.now()
+    await site.update(
+        Set(
+            {
+                Site.last_status: status,
+                Site.last_run_time: now,
+            }
+        )
+    )
+    await scrape_task.update(
+        Set(
+            {
+                SiteScrapeTask.status: status,
+                SiteScrapeTask.error_message: message,
+                SiteScrapeTask.end_time: now,
+            }
+        )
+    )
+
 async def log_failure(scrape_task, site, ex):
     message = traceback.format_exc()
     traceback.print_exc()
     typer.secho(f"Task Failed {scrape_task.id}", fg=typer.colors.RED)
-    now = datetime.now()
-    await site.update(
-        Set(
-            {
-                Site.last_status: "FAILED",
-                Site.last_run_time: now,
-            }
-        )
-    )
-    await scrape_task.update(
-        Set(
-            {
-                SiteScrapeTask.status: "FAILED",
-                SiteScrapeTask.error_message: message,
-                SiteScrapeTask.end_time: now,
-            }
-        )
-    )
+    await log_error_status(scrape_task=scrape_task, site=site, message=message, status="FAILED",)
 
 
 async def log_cancellation(scrape_task, site, ex):
-    message = traceback.format_exc()
-    traceback.print_exc()
     typer.secho(f"Task Canceled {scrape_task.id}", fg=typer.colors.RED)
-    now = datetime.now()
-    await site.update(
-        Set(
-            {
-                Site.last_status: "CANCELED",
-                Site.last_run_time: now,
-            }
-        )
-    )
-    await scrape_task.update(
-        Set(
-            {
-                SiteScrapeTask.status: "CANCELED",
-                SiteScrapeTask.error_message: message,
-                SiteScrapeTask.end_time: now,
-            }
-        )
-    )
+    message = str(ex)
+    await log_error_status(scrape_task=scrape_task, site=site, message=message, status="CANCELED",)
+
+
+async def log_not_found(scrape_task, site, ex):
+    message = str(ex)
+    await log_error_status(scrape_task=scrape_task, site=site, message=message, status="FAILED",)
 
 
 async def heartbeat_task(scrape_task: SiteScrapeTask):
@@ -147,6 +140,8 @@ async def worker_fn(worker_id, playwright, browser):
             await log_success(scrape_task, site)
         except CanceledTaskException as ex:
             await log_cancellation(scrape_task, site, ex)
+        except NoDocsCollectedException as ex:
+            await log_not_found(scrape_task, site, ex)
         except Exception as ex:
             await log_failure(scrape_task, site, ex)
         finally:

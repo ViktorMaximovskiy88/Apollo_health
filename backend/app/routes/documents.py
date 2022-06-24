@@ -1,10 +1,13 @@
 from datetime import datetime
+
 from beanie import PydanticObjectId
+from beanie.odm.operators.find.comparison import In
 from fastapi import APIRouter, Depends, HTTPException, status, Security
 from fastapi.responses import StreamingResponse
+
 from backend.common.models.content_extraction_task import ContentExtractionTask
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
-
+from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.app.utils.logger import (
     Logger,
@@ -35,23 +38,22 @@ async def get_target(id: PydanticObjectId):
     response_model=list[RetrievedDocument],
     dependencies=[Security(get_current_user)],
 )
-async def read_documents(
+async def get_documents(
     scrape_task_id: PydanticObjectId | None = None,
     site_id: PydanticObjectId | None = None,
     logical_document_id: PydanticObjectId | None = None,
     automated_content_extraction: bool | None = None,
 ):
     query = {}
-    if site_id:
-        query[RetrievedDocument.site_id] = site_id
     if scrape_task_id:
-        query[RetrievedDocument.scrape_task_id] = scrape_task_id
+        scrape_task = await SiteScrapeTask.get(scrape_task_id)
+        query["_id"] = {"$in": scrape_task.retrieved_document_ids}
+    if site_id:
+        query["site_id"] = site_id
     if logical_document_id:
-        query[RetrievedDocument.logical_document_id] = logical_document_id
+        query["logical_document_id"] = logical_document_id
     if automated_content_extraction:
-        query[
-            RetrievedDocument.automated_content_extraction
-        ] = automated_content_extraction
+        query["automated_content_extraction"] = automated_content_extraction
 
     documents: list[RetrievedDocument] = (
         await RetrievedDocument.find_many(query).sort("-collection_time").to_list()
@@ -59,10 +61,16 @@ async def read_documents(
     return documents
 
 
-@router.get(
-    "/{id}.pdf",
-    dependencies=[Security(get_current_user)],
-)
+@router.get("/",
+    response_model=list[RetrievedDocument],
+    dependencies=[Security(get_current_user)])
+async def read_documents(
+    documents: list[RetrievedDocument] = Depends(get_documents),
+) -> list[RetrievedDocument]:
+    return documents
+
+
+@router.get("/{id}.pdf", dependencies=[Security(get_current_user)])
 async def download_document(
     target: RetrievedDocument = Depends(get_target),
 ):
