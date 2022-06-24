@@ -1,5 +1,5 @@
 
-interface Auth0Config {
+export interface Auth0Config {
   domain: string;
   clientId: string;
   audience: string;
@@ -7,7 +7,7 @@ interface Auth0Config {
   redirectUri: string;
 }
 
-interface Settings {
+export interface Settings {
   baseApiUrl: string;
   auth0: Auth0Config;
 }
