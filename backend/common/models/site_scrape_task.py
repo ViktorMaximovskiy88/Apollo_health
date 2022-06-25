@@ -18,6 +18,7 @@ class SiteScrapeTask(BaseDocument):
     worker_id: UUID | None = None
     error_message: str | None = None
     links_found: int = 0
+    retry_if_lost: bool = False
 
 
 class UpdateSiteScrapeTask(BaseModel):
@@ -29,6 +30,7 @@ class UpdateSiteScrapeTask(BaseModel):
     documents_found: int | None = None
     new_documents_found: int | None = None
     error_message: str | None = None
+    retry_if_lost: bool | None = False
 
 
 # Deprecated

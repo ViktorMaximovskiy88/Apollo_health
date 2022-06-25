@@ -22,12 +22,14 @@ from backend.scrapeworker.scrape_worker import ScrapeWorker, CanceledTaskExcepti
 app = typer.Typer()
 
 accepting_tasks = True
+active_tasks: dict[PydanticObjectId | None, SiteScrapeTask] = {}
 
-
-def signal_handler(signum, frame):
-    global accepting_tasks
+async def signal_handler():
+    global accepting_tasks, active_tasks
     typer.secho(f"Shutdown Requested, no longer accepting tasks", fg=typer.colors.BLUE)
     accepting_tasks = False
+    for task in active_tasks.values():
+        await task.update(Set({ SiteScrapeTask.retry_if_lost: True }))
 
 
 async def pull_task_from_queue(worker_id):
@@ -135,6 +137,7 @@ async def worker_fn(worker_id, playwright, browser):
 
         worker = ScrapeWorker(playwright, browser, scrape_task, site)
         task = asyncio.create_task(heartbeat_task(scrape_task))
+        active_tasks[scrape_task.id] = scrape_task
         try:
             await worker.run_scrape()
             await log_success(scrape_task, site)
@@ -145,11 +148,16 @@ async def worker_fn(worker_id, playwright, browser):
         except Exception as ex:
             await log_failure(scrape_task, site, ex)
         finally:
+            del active_tasks[scrape_task.id]
             task.cancel()
 
 
 async def start_worker_async(worker_id):
     await init_db()
+
+    loop = asyncio.get_event_loop()
+    loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.create_task(signal_handler()))
+
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch()
 
@@ -163,7 +171,6 @@ async def start_worker_async(worker_id):
 @app.command()
 def start_worker():
     worker_id = uuid4()
-    signal.signal(signal.SIGTERM, signal_handler)
     typer.secho(f"Starting Scrape Worder {worker_id}", fg=typer.colors.GREEN)
     asyncio.run(start_worker_async(worker_id))
 
