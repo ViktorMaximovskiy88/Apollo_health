@@ -1,4 +1,4 @@
-import { BaseDocument } from '../types';
+import { BaseDocument } from '../../common/types';
 
 export interface Patch {
   op: string;

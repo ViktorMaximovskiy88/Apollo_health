@@ -9,11 +9,12 @@ import {
   setSiteTableSort,
   siteTableState,
 } from '../../app/uiSlice';
-import { prettyDateTimeFromISO } from "../../common";
+import { prettyDateTimeFromISO } from '../../common';
 import { isErrorWithData } from '../../common/helpers';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { Status } from '../types';
+import { Status } from '../../common/types';
+import { statusStyledDisplay } from '../../common/status';
 import {
   useDeleteSiteMutation,
   useGetChangeLogQuery,
@@ -88,20 +89,7 @@ const createColumns = (deleteSite: any) => {
         ],
       },
       render: ({ value: status }: { value: Status }) => {
-        switch (status) {
-          case Status.Finished:
-            return <span className="text-green-500">Success</span>;
-          case Status.Canceled:
-            return <span className="text-orange-500">Canceled</span>;
-          case Status.Queued:
-            return <span className="text-yellow-500">Queued</span>;
-          case Status.Failed:
-            return <span className="text-red-500">Failed</span>;
-          case Status.InProgress:
-            return <span className="text-blue-500">In Progress</span>;
-          default:
-            return null;
-        }
+        return statusStyledDisplay(status);
       },
     },
     {
@@ -156,14 +144,20 @@ export function SiteDataTable() {
     pollingInterval: 5000,
   });
   const [deleteSite] = useDeleteSiteMutation();
-  const columns = useMemo(() => createColumns(deleteSite), [deleteSite])
-  const tableState = useSelector(siteTableState)
-  const dispatch = useDispatch()
-  const onFilterChange = useCallback((filter: any) => dispatch(setSiteTableFilter(filter)), [dispatch]);
-  const onSortChange = useCallback((sort: any) => dispatch(setSiteTableSort(sort)), [dispatch]);
+  const columns = useMemo(() => createColumns(deleteSite), [deleteSite]);
+  const tableState = useSelector(siteTableState);
+  const dispatch = useDispatch();
+  const onFilterChange = useCallback(
+    (filter: any) => dispatch(setSiteTableFilter(filter)),
+    [dispatch]
+  );
+  const onSortChange = useCallback(
+    (sort: any) => dispatch(setSiteTableSort(sort)),
+    [dispatch]
+  );
 
   const formattedSites = sites?.filter((u) => !u.disabled) || [];
-  return <>
+  return (
     <ReactDataGrid
       dataSource={formattedSites}
       columns={columns}
@@ -173,5 +167,5 @@ export function SiteDataTable() {
       defaultSortInfo={tableState.sort}
       onSortInfoChange={onSortChange}
     />
-  </>
+  );
 }

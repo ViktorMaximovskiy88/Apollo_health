@@ -1,4 +1,4 @@
-import { BaseDocument, Status } from '../types';
+import { BaseDocument, Status } from '../../common/types';
 
 export interface SiteScrapeTask extends BaseDocument {
   site_id: string;

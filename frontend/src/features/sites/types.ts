@@ -1,4 +1,4 @@
-import { BaseDocument, Status } from '../types';
+import { BaseDocument, Status } from '../../common/types';
 
 export interface BaseUrl {
   url: string;
