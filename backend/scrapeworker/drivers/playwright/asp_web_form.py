@@ -25,28 +25,38 @@ class AspWebForm(PlaywrightDriver):
         await self.context.add_cookies([cookie])
         await self.page.goto(self.url, wait_until="domcontentloaded")
 
-    async def collect(self, elements: list[ElementHandle]) -> list[Download]:
-        requests = []
-        metadata = []
- 
-        async def intercept(route: Route, request: RouteRequest):
-            print(request)
-            route.abort()
-            
-        await self.page.route(f'{self.url}*', intercept)
 
-        # TODO if a page route click doesnt nav... 
-        # handle error case somehow...
-        el: ElementHandle
-        for el in elements:
-            text, _ = await asyncio.gather(
-                el.text_content(),
-                el.click()
+    async def action(self, el: ElementHandle, metadata=[]):
+        text = await el.text_content()
+        await el.click()
+        metadata.append(Metadata(text=text))
+
+    async def collect(self, elements: list[ElementHandle]) -> list[Download]:
+        requests: list[Request] = []
+        metadata: list[Metadata] = []
+ 
+        # route handler
+        async def intercept(route: Route, request: RouteRequest):                       
+            print(request.url, "aa")
+            headers = await request.all_headers()
+            requests.append(
+                Request(
+                    url=request.url,
+                    headers=headers,
+                    body=request.post_data,
+                    method=request.method,
+                )
             )
-            metadata.append(Metadata(text=text))
+            await route.abort()
+
+        # intercept webform actions
+        await self.page.route('**/*', intercept)
+        tasks = [self.action(el, metadata=metadata) for el in elements]
+        await asyncio.gather(*tasks)
+        await self.page.unroute('**/*')
 
         # zip them together
-        downloads = []
+        downloads: list[Download] = []
         for index, request in enumerate(requests):
             downloads.append(
                 Download(
@@ -54,5 +64,5 @@ class AspWebForm(PlaywrightDriver):
                     request=request,
                 )
             )
-        
+
         return downloads

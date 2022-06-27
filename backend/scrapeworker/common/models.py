@@ -6,9 +6,9 @@ class Metadata(BaseModel):
 
 class Request(BaseModel):
     method: str = "GET"
-    headers: dict[str, str] | None
-    url: AnyHttpUrl
-    body: dict[str, Any] | None
+    headers: Any | None
+    url: str
+    body: Any | None
 
 class Download(BaseModel):
     metadata: Metadata 

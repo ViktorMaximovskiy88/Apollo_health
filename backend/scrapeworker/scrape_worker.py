@@ -28,7 +28,7 @@ from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.common.detect_lang import detect_lang
 from backend.scrapeworker.downloader import DocDownloader
 from backend.scrapeworker.common.effective_date import extract_dates, select_effective_date
-from backend.scrapeworker.proxy import convert_proxies_to_proxy_settings
+from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.common.xpdf_wrapper import pdfinfo, pdftotext
@@ -83,7 +83,7 @@ class ScrapeWorker:
         (node) => {
             let n = node;
             while (n) {
-                const h = n.querySelector('h1, h2, h3, h4, h5, h6')
+                const h = n.querySelector('h1, h2, h3, h4, h5, h6', label)
                 if (h) return h.textContent;
                 n = n.parentNode;
             }

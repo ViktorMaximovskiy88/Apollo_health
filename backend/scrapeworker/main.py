@@ -1,7 +1,3 @@
-from backend.scrapeworker.scrape_worker import ScrapeWorker, CanceledTaskException, NoDocsCollectedException
-from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.common.models.site import Site
-from backend.common.db.init import init_db
 import asyncio
 from pathlib import Path
 import sys
@@ -18,20 +14,22 @@ from pymongo import ReturnDocument
 from beanie.odm.operators.update.general import Set
 
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
+from backend.common.db.init import init_db
+from backend.common.models.site import Site
+from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.scrapeworker.scrape_worker import ScrapeWorker, CanceledTaskException, NoDocsCollectedException
 
 app = typer.Typer()
 
 accepting_tasks = True
 active_tasks: dict[PydanticObjectId | None, SiteScrapeTask] = {}
 
-
 async def signal_handler():
     global accepting_tasks, active_tasks
-    typer.secho(f"Shutdown Requested, no longer accepting tasks",
-                fg=typer.colors.BLUE)
+    typer.secho(f"Shutdown Requested, no longer accepting tasks", fg=typer.colors.BLUE)
     accepting_tasks = False
     for task in active_tasks.values():
-        await task.update(Set({SiteScrapeTask.retry_if_lost: True}))
+        await task.update(Set({ SiteScrapeTask.retry_if_lost: True }))
 
 
 async def pull_task_from_queue(worker_id):
@@ -53,7 +51,6 @@ async def pull_task_from_queue(worker_id):
         scrape_task = SiteScrapeTask.parse_obj(acquired)
         typer.secho(f"Acquired Task {scrape_task.id}", fg=typer.colors.BLUE)
         return scrape_task
-
 
 async def log_success(
     scrape_task: SiteScrapeTask,
@@ -92,7 +89,6 @@ async def log_error_status(scrape_task, site, message, status):
         )
     )
 
-
 async def log_failure(scrape_task, site, ex):
     message = traceback.format_exc()
     traceback.print_exc()
@@ -114,8 +110,8 @@ async def log_not_found(scrape_task, site, ex):
 async def heartbeat_task(scrape_task: SiteScrapeTask):
     while True:
         await SiteScrapeTask.get_motor_collection().update_one(
-            {'_id': scrape_task.id},
-            {'$set': {'last_active': datetime.now()}}
+            { '_id': scrape_task.id },
+            { '$set': { 'last_active': datetime.now() } }
         )
         await asyncio.sleep(10)
 
@@ -160,8 +156,7 @@ async def start_worker_async(worker_id):
     await init_db()
 
     loop = asyncio.get_event_loop()
-    loop.add_signal_handler(
-        signal.SIGTERM, lambda: asyncio.create_task(signal_handler()))
+    loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.create_task(signal_handler()))
 
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch()
