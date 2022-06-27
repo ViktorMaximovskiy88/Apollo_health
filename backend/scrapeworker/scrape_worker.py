@@ -1,10 +1,7 @@
 import asyncio
-import aiofiles
-import pprint
 from contextlib import asynccontextmanager
 from datetime import datetime
 from random import shuffle
-from turtle import down
 from typing import AsyncGenerator, Coroutine
 from async_lru import alru_cache
 import os
@@ -28,19 +25,19 @@ from playwright.async_api import (
 from playwright_stealth import stealth_async
 from backend.common.models.user import User
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
-from backend.scrapeworker.detect_lang import detect_lang
+from backend.scrapeworker.common.detect_lang import detect_lang
 from backend.scrapeworker.downloader import DocDownloader
-from backend.scrapeworker.effective_date import extract_dates, select_effective_date
+from backend.scrapeworker.common.effective_date import extract_dates, select_effective_date
 from backend.scrapeworker.proxy import convert_proxies_to_proxy_settings
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
-from backend.scrapeworker.xpdf_wrapper import pdfinfo, pdftotext
+from backend.scrapeworker.common.xpdf_wrapper import pdfinfo, pdftotext
 
 # Scrapeworker workflow 'exceptions'
+
+
 class NoDocsCollectedException(Exception):
     pass
-
-pp = pprint.PrettyPrinter(indent=4)
 
 
 class CanceledTaskException(Exception):
@@ -231,13 +228,10 @@ class ScrapeWorker:
         async for attempt, proxy in self.try_each_proxy():
             with attempt:
                 # type: ignore
-                context = await self.browser.new_context(proxy=proxy, ignore_https_errors=True, accept_downloads=True)
+                context = await self.browser.new_context(proxy=proxy, ignore_https_errors=True)
                 page = await context.new_page()
                 await stealth_async(page)
-                
-                cookie = {'name': 'AspxAutoDetectCookieSupport', 'value': '1', 'domain': 'www.aultcas.com', 'path': '/', 'httpOnly': True, 'secure': True, }
-                await context.add_cookies([cookie])
-
+                # await page.goto(base_url, wait_until="networkidle")
                 await page.goto(base_url, wait_until="domcontentloaded")
 
         if not page:
@@ -249,19 +243,13 @@ class ScrapeWorker:
             if context:
                 await context.close()
 
-    def construct_download_selector(self):
+    def construct_selector(self):
         extensions = self.site.scrape_method_configuration.document_extensions
         keywords = self.site.scrape_method_configuration.url_keywords
         ext_selectors = [f'a[href$="{ext}"]' for ext in extensions]
         wrd_selectors = [f'a[href*="{word}"]' for word in keywords]
         selector = ",".join(ext_selectors + wrd_selectors)
         return selector
-    
-    def construct_indirect_selector(self):
-        # return f'a[href^="javascript:"], a[onclick], button[onclick], input[onclick]'
-        # with potential narrowing... attr filters: id, text, class
-        return f'a[href^="javascript:"]'
-
 
     def active_base_urls(self):
         return [url for url in self.site.base_urls if url.status == "ACTIVE"]
@@ -269,15 +257,10 @@ class ScrapeWorker:
     async def run_scrape(self):
         for base_url in self.active_base_urls():
             async with self.playwright_context(base_url.url) as page:
-                
+                link_handles = await page.query_selector_all(self.construct_selector())
+                print(f"Found {len(link_handles)} links")
                 downloads = []
-
-                # process direct download links
-                # has_direct_downloads
-                # with_file_extensions and/or with_search_text
-                download_link_handles = await page.query_selector_all(self.construct_download_selector())
-                print(f"Found {len(download_link_handles)} direct download links")
-                for link_handle in download_link_handles:
+                for link_handle in link_handles:
                     url, context_metadata = await self.extract_url_and_context_metadata(
                         base_url.url, link_handle
                     )
@@ -291,74 +274,4 @@ class ScrapeWorker:
                             self.attempt_download(
                                 base_url.url, url, context_metadata)
                         )
-
-
-                # high level -> indirect download links
-                # narrow focus -> download 
-                
-                # specifc implementation ->
-                #   - ASP.net webform doPostBack
-                #   - watch 
-
-
-                # process indirect download links
-                # onclick, javascript....
-                # has_clickable_links with_download
-                indirect_download_link_handles = await page.query_selector_all(self.construct_indirect_selector())
-                print(
-                    f"Found {len(indirect_download_link_handles)} indirect download links")
-
-                slice = indirect_download_link_handles[0:2]
-                
-                # def intercept(response):
-                #     print(response.all_headers())
-
-                # def handle(route, request):
-                #     print(request.headers)
-                #     print(request.method)
-                #     print(request.url)
-                #     route.continue_()
-                    
-                # page.on('response', intercept)
-                # await page.route("**/*", handle)
-
-                for link_handle in indirect_download_link_handles:
-                    link_text = await link_handle.text_content()
-                    
-                    print(link_text)
-
-
-                    async with page.expect_download() as download_info:
-                        await link_handle.click()
-                        
-                    download = await download_info.value
-                    await download.save_as(f'./{download.suggested_filename}')
-                    print(download.url)
-                    path = await download.path()
-                    print(path)
-
-                    async with page.expect_response(str(base_url.url)) as response_info:
-                        await link_handle.click()
-                        
-                    response = await response_info.value
-                    headers = await response.all_headers() # cheating for demo  otherwise get from headers
-                    print(headers)
-                    # NO playwright._impl._api_types.Error: Protocol error (Network.getResponseBody): No resource with given identifier found
-                    # body = await response.body()
-                    
-                    # async with aiofiles.open(f'./{download.suggested_filename}-response', "wb") as out:
-                    #     await out.write(body)
-                    #     await out.flush()
-
-
-                    # downloads.append(
-                    #     self.attempt_download(
-                    #         base_url.url, url, context_metadata)
-                    # )
-                
-
-                # process interactive new window links
-                # onclick, javascript.... a[target]
-                # has_clickable_links with_window
-                        
                 await self.wait_for_completion_or_cancel(downloads)

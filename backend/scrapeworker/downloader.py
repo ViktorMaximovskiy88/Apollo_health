@@ -8,9 +8,9 @@ import aiofiles
 from random import shuffle
 from backend.common.core.config import config
 from playwright.async_api import APIResponse, APIRequestContext, Playwright, ProxySettings
-from backend.scrapeworker.rate_limiter import RateLimiter
+from backend.scrapeworker.common.rate_limiter import RateLimiter
 from backend.common.models.proxy import Proxy
-from backend.scrapeworker.rate_limiter import RateLimiter
+from backend.scrapeworker.common.rate_limiter import RateLimiter
 from tenacity import AttemptManager
 from tenacity._asyncio import AsyncRetrying
 
