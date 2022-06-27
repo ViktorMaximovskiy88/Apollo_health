@@ -36,11 +36,6 @@ const processScrape = async (scrape: BackendSiteScrapeTask): Promise<void> => {
   await timeOut(1000);
   scrape.status = Status.InProgress;
   await timeOut(1000);
-  scrape.links_found = 284;
-  await timeOut(1000);
-  scrape.documents_found = 123;
-  await timeOut(1000);
-  scrape.documents_found = 284;
   scrape.status = Status.Finished;
 };
 
