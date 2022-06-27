@@ -1,4 +1,4 @@
-from backend.scrapeworker.selectors import filter_by_href, filter_by_hidden_value
+from backend.scrapeworker.common.selectors import filter_by_href, filter_by_hidden_value
 
 # filter_by_href
 def test_selector_href_javascript():

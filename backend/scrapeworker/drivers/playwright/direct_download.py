@@ -1,7 +1,7 @@
 import logging
 import asyncio
 import urllib.parse
-from backend.scrapeworker.models import Download, Metadata, Request
+from backend.scrapeworker.common.models import Download, Metadata, Request
 from backend.scrapeworker.drivers.playwright.base_driver import PlaywrightDriver
 from playwright.async_api import ElementHandle
 from playwright_stealth import stealth_async
