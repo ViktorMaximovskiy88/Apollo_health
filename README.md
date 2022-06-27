@@ -64,8 +64,8 @@ git clone git@ssh.dev.azure.com:v3/mmitdev/Apollo/Apollo
 cd Apollo
 
 # Create Virtual Env
-python -m venv venv
-. venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 
 # Build Frontend
 (
