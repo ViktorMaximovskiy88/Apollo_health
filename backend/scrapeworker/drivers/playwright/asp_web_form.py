@@ -24,15 +24,6 @@ class AspWebForm(PlaywrightDriver):
 
         await self.context.add_cookies([cookie])
         await self.page.goto(self.url, wait_until="domcontentloaded")
-
-
-    async def action(self, el: ElementHandle, metadata=[]):
-        text, _ = await asyncio.gather(el.text_content(), el.click())
-        print('before url', text, self.url)
-        metadata.append(Metadata(text=text))
-        print(len(metadata))
-        await self.page.wait_for_timeout(2000)
-        print('after url', self.url)
         
 
     async def collect(self, elements: list[ElementHandle]) -> list[Download]:
@@ -60,6 +51,5 @@ class AspWebForm(PlaywrightDriver):
                     ),
                 )
             )
-            
 
         return downloads
