@@ -47,3 +47,12 @@ variable "sourcehub-scheduler-version" {
   description = "Version tag of the SourceHub scheduler container"
   default = "latest"
 }
+
+variable "auth0-config" {
+  type = object({
+    domain = string,
+    client_id = string,
+    audience = string
+  })
+  description = "Auth0 configuration for SSO"
+}
