@@ -9,12 +9,15 @@ import {
   setSiteTableSort,
   siteTableState,
 } from '../../app/uiSlice';
-import { prettyDateTimeFromISO } from '../../common';
+import {
+  prettyDateTimeFromISO,
+  statusDisplayName,
+  statusStyledDisplay,
+} from '../../common';
 import { isErrorWithData } from '../../common/helpers';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { Status } from '../../common';
-import { statusStyledDisplay } from '../../common/status';
 import {
   useDeleteSiteMutation,
   useGetChangeLogQuery,
@@ -81,11 +84,14 @@ const createColumns = (deleteSite: any) => {
       filterEditorProps: {
         placeholder: 'All',
         dataSource: [
-          { id: Status.Finished, label: 'Success' },
-          { id: Status.Canceled, label: 'Canceled' },
-          { id: Status.Queued, label: 'Queued' },
-          { id: Status.Failed, label: 'Failed' },
-          { id: Status.InProgress, label: 'In Progress' },
+          { id: Status.Finished, label: statusDisplayName(Status.Finished) },
+          { id: Status.Canceled, label: statusDisplayName(Status.Canceled) },
+          { id: Status.Queued, label: statusDisplayName(Status.Queued) },
+          { id: Status.Failed, label: statusDisplayName(Status.Failed) },
+          {
+            id: Status.InProgress,
+            label: statusDisplayName(Status.InProgress),
+          },
         ],
       },
       render: ({ value: status }: { value: Status }) => {

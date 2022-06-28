@@ -9,7 +9,13 @@ import {
   setExtractionTaskTableFilter,
   setExtractionTaskTableSort,
 } from '../../app/uiSlice';
-import { prettyDateDistance, prettyDateFromISO, Status } from '../../common';
+import {
+  prettyDateDistance,
+  prettyDateFromISO,
+  Status,
+  statusDisplayName,
+  statusStyledDisplay,
+} from '../../common';
 import { ButtonLink } from '../../components/ButtonLink';
 import { useGetExtractionTasksForDocQuery } from './extractionsApi';
 import { ExtractionTask } from './types';
@@ -47,29 +53,18 @@ const columns = [
     filterEditorProps: {
       placeholder: 'All',
       dataSource: [
-        { id: Status.Finished, label: 'Success' },
-        { id: Status.Canceled, label: 'Canceled' },
-        { id: Status.Queued, label: 'Queued' },
-        { id: Status.Failed, label: 'Failed' },
-        { id: Status.InProgress, label: 'In Progress' },
+        { id: Status.Finished, label: statusDisplayName(Status.Finished) },
+        { id: Status.Canceled, label: statusDisplayName(Status.Canceled) },
+        { id: Status.Queued, label: statusDisplayName(Status.Queued) },
+        { id: Status.Failed, label: statusDisplayName(Status.Failed) },
+        {
+          id: Status.InProgress,
+          label: statusDisplayName(Status.InProgress),
+        },
       ],
     },
-    render: ({ value: status }: { value: Status }) => {
-      switch (status) {
-        case Status.Finished:
-          return <span className="text-green-500">Success</span>;
-        case Status.Canceled:
-          return <span className="text-orange-500">Canceled</span>;
-        case Status.Queued:
-          return <span className="text-yellow-500">Queued</span>;
-        case Status.Failed:
-          return <span className="text-red-500">Failed</span>;
-        case Status.InProgress:
-          return <span className="text-blue-500">In Progress</span>;
-        default:
-          return null;
-      }
-    },
+    render: ({ value: status }: { value: Status }) =>
+      statusStyledDisplay(status),
   },
   {
     header: 'Extracted Count',
