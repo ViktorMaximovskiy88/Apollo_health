@@ -1,4 +1,4 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
 import { RetrievedDocument, DocumentQuery } from './types';
 
@@ -11,7 +11,7 @@ function queryString(params: DocumentQuery) {
 
 export const documentsApi = createApi({
   reducerPath: 'documentsApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '/api/v1/' }),
+  baseQuery: fetchBaseQuery(),
   tagTypes: ['RetrievedDocument', 'ChangeLog'],
   endpoints: (builder) => ({
     getDocuments: builder.query<RetrievedDocument[], DocumentQuery>({

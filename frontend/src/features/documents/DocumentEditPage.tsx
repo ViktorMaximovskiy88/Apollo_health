@@ -5,22 +5,30 @@ import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
+
 import Title from 'antd/lib/typography/Title';
 import { Table, Tabs } from 'antd';
 import { DocumentForm } from './DocumentForm';
 import tw from 'twin.macro';
+import useAccessToken from '../../app/use-access-token';
+
 
 export function DocumentEditPage() {
   const params = useParams();
   const docId = params.docId;
+
   const { data: doc } = useGetDocumentQuery(docId);
+  const token = useAccessToken()
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
+  
+  if (!token) return null;
   if (!doc) return null;
 
   const columns = [
     { title: 'Key', dataIndex: 'key', key: 'key' },
     { title: 'Value', dataIndex: 'value', key: 'value' },
   ];
+
   const dataSource = Object.entries(doc.metadata || {}).map(([key, value]) => ({
     key,
     value,
@@ -42,12 +50,20 @@ export function DocumentEditPage() {
                 className="h-full overflow-auto"
               >
                 <Viewer
+                  withCredentials={true}
                   fileUrl={`/api/v1/documents/${docId}.pdf`}
                   plugins={[defaultLayoutPluginInstance]}
+                  httpHeaders={{
+                    Authorization: `Bearer ${token}`,
+                  }}
                 />
               </Tabs.TabPane>
               <Tabs.TabPane tab="PDF Metadata" key="metadata">
-                <Table dataSource={dataSource} columns={columns} pagination={false}  />
+                <Table
+                  dataSource={dataSource}
+                  columns={columns}
+                  pagination={false}
+                />
               </Tabs.TabPane>
             </Tabs>
           </div>

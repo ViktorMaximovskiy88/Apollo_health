@@ -1,7 +1,7 @@
 from datetime import datetime
 from beanie import PydanticObjectId
 from beanie.odm.operators.update.general import Set
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Security
 import pymongo
 from pymongo import ReturnDocument
 import typer
@@ -35,10 +35,13 @@ async def get_target(id: PydanticObjectId):
     return user
 
 
-@router.get("/", response_model=list[SiteScrapeTask])
+@router.get(
+    "/",
+    response_model=list[SiteScrapeTask],
+    dependencies=[Security(get_current_user)],
+)
 async def read_scrape_tasks_for_site(
     site_id: PydanticObjectId,
-    current_user: User = Depends(get_current_user),
 ):
     scrape_tasks: list[SiteScrapeTask] = (
         await SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id)
@@ -48,21 +51,30 @@ async def read_scrape_tasks_for_site(
     return scrape_tasks
 
 
-@router.get("/{id}", response_model=SiteScrapeTask)
+@router.get(
+    "/{id}",
+    response_model=SiteScrapeTask,
+    dependencies=[Security(get_current_user)],
+)
 async def read_scrape_task(
     target: User = Depends(get_target),
-    current_user: User = Depends(get_current_user),
 ):
     return target
 
 
-@router.put("/", response_model=SiteScrapeTask, status_code=status.HTTP_201_CREATED)
+@router.put(
+    "/",
+    response_model=SiteScrapeTask,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Security(get_current_user)],
+)
 async def start_scrape_task(
     site_id: PydanticObjectId,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    site_scrape_task = SiteScrapeTask(site_id=site_id, queued_time=datetime.now())
+    site_scrape_task = SiteScrapeTask(
+        site_id=site_id, queued_time=datetime.now())
 
     # NOTE: Could use a transaction here
     await create_and_log(logger, current_user, site_scrape_task)
@@ -80,7 +92,7 @@ async def start_scrape_task(
 async def runBulkByType(
     type: str,
     logger: Logger = Depends(get_logger),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user),
 ):
     bulk_type = type
     total_scrapes = 0
@@ -93,8 +105,9 @@ async def runBulkByType(
         query["last_status"] = {"$ne": ["QUEUED", "IN_PROGRESS"]}
 
     async for site in Site.find_many(query):
-        site_id: PydanticObjectId = site.id # type: ignore
-        site_scrape_task = SiteScrapeTask(site_id=site_id, queued_time=datetime.now())
+        site_id: PydanticObjectId = site.id  # type: ignore
+        site_scrape_task = SiteScrapeTask(
+            site_id=site_id, queued_time=datetime.now())
         site_scrape_task = await try_queue_unique_task(site_scrape_task)
         if site_scrape_task:
             total_scrapes += 1
@@ -139,7 +152,7 @@ async def cancel_all_site_scrape_task(
 async def update_scrape_task(
     updates: UpdateSiteScrapeTask,
     target: SiteScrapeTask = Depends(get_target),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     # NOTE: Could use a transaction here
@@ -150,10 +163,13 @@ async def update_scrape_task(
     return updated
 
 
-@router.post("/{id}/cancel", response_model=SiteScrapeTask)
+@router.post(
+    "/{id}/cancel",
+    response_model=SiteScrapeTask,
+    dependencies=[Security(get_current_user)],
+)
 async def cancel_scrape_task(
     target: SiteScrapeTask = Depends(get_target),
-    current_user: User = Depends(get_current_user),
 ):
     canceled_queued_task = (
         await SiteScrapeTask.get_motor_collection().find_one_and_update(
@@ -178,5 +194,6 @@ async def cancel_scrape_task(
     )
     if acquired:
         scrape_task = SiteScrapeTask.parse_obj(acquired)
-        typer.secho(f"Set Task {scrape_task.id} 'Canceling'", fg=typer.colors.BLUE)
+        typer.secho(
+            f"Set Task {scrape_task.id} 'Canceling'", fg=typer.colors.BLUE)
         return scrape_task
