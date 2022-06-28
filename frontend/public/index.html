@@ -8,8 +8,16 @@
   <title>Source Hub</title>
 
   <!-- no judgements; this avoids so much tomfoolery -->
-  <script type="module">
-    const data = await fetch('/api/v1/settings').then((res) => res.json())
+  <script>
+    // so this _REALLY_ is blocking and we want that...
+    const url = "/api/v1/settings";
+    const req = new XMLHttpRequest();
+    req.open('GET', url, false);
+    req.send(null);
+
+    const jsonResponse = req.response;
+    const data = JSON.parse(jsonResponse);
+
     window._settings = {
       baseApiUrl: '/api/v1',
       auth0: {
