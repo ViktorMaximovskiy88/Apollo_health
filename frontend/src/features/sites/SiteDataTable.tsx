@@ -13,7 +13,7 @@ import { prettyDateTimeFromISO } from '../../common';
 import { isErrorWithData } from '../../common/helpers';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { Status } from '../../common/types';
+import { Status } from '../../common';
 import { statusStyledDisplay } from '../../common/status';
 import {
   useDeleteSiteMutation,

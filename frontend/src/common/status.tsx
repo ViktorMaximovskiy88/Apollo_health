@@ -1,5 +1,14 @@
 import { Spin } from 'antd';
-import { Status } from './types';
+
+export enum Status {
+  Queued = 'QUEUED',
+  Pending = 'PENDING',
+  InProgress = 'IN_PROGRESS',
+  Finished = 'FINISHED',
+  Canceling = 'CANCELING',
+  Canceled = 'CANCELED',
+  Failed = 'FAILED',
+}
 
 export function statusDisplayName(status: Status): string {
   const { name } = statusDisplayAndStyle(status);

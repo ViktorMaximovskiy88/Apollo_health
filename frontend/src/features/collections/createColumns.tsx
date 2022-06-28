@@ -3,7 +3,7 @@ import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Button, Spin } from 'antd';
 import { prettyDateDistance, prettyDateTimeFromISO } from '../../common';
 import { ButtonLink } from '../../components/ButtonLink';
-import { Status } from '../types';
+import { Status } from '../../common';
 import { SiteScrapeTask } from './types';
 
 interface CreateColumnsType {

@@ -9,9 +9,8 @@ import {
   setExtractionTaskTableFilter,
   setExtractionTaskTableSort,
 } from '../../app/uiSlice';
-import { prettyDateDistance, prettyDateFromISO } from '../../common';
+import { prettyDateDistance, prettyDateFromISO, Status } from '../../common';
 import { ButtonLink } from '../../components/ButtonLink';
-import { Status } from '../../common/types';
 import { useGetExtractionTasksForDocQuery } from './extractionsApi';
 import { ExtractionTask } from './types';
 

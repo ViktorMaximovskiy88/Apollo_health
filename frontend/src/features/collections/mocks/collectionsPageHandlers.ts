@@ -1,7 +1,7 @@
 import { rest } from 'msw';
 import scrapesFixture from './scrapes.fixture.json';
 import { SiteScrapeTask } from '../types';
-import { Status } from '../../types';
+import { Status } from '../../../common';
 
 interface BackendSiteScrapeTask
   extends Omit<
