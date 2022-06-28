@@ -4,7 +4,7 @@ from playwright.async_api import async_playwright
 from backend.scrapeworker.drivers.playwright.base_driver import PlaywrightDriver
 from backend.scrapeworker.drivers.playwright.direct_download import DirectDownload
 from backend.scrapeworker.drivers.playwright.asp_web_form import AspWebForm
-from backend.scrapeworker.common.downloader import post
+from backend.scrapeworker.common.downloader import fetch
 
 MOCK_HTML = "http://localhost:4040"
 
@@ -62,5 +62,4 @@ async def test_playwright_driver_webform():
             assert len(download.request.headers.keys()) == 15
             
             for download in downloads:
-                print('bein')
-                await post(download)
+                await fetch(download)
