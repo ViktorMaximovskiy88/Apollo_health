@@ -25,7 +25,7 @@ class DirectDownload(PlaywrightDriver):
             
             downloads.append(
                 Download(
-                    metadata=Metadata(text=text),
+                    metadata=Metadata(text=text.strip()),
                     request=Request(
                         method="GET",
                         url=urllib.parse.urljoin(self.url, href),

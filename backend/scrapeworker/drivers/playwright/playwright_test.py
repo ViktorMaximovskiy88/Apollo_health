@@ -1,10 +1,9 @@
-import asyncio
 import pytest
 from playwright.async_api import async_playwright
 from backend.scrapeworker.drivers.playwright.base_driver import PlaywrightDriver
 from backend.scrapeworker.drivers.playwright.direct_download import DirectDownload
 from backend.scrapeworker.drivers.playwright.asp_web_form import AspWebForm
-from backend.scrapeworker.common.downloader import fetch
+from backend.scrapeworker.common.downloader.aiohttp_client import fetch
 
 MOCK_HTML = "http://localhost:4040"
 
