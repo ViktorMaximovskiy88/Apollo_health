@@ -8,7 +8,7 @@
   <title>Source Hub</title>
 
   <!-- no judgements; this avoids so much tomfoolery -->
-  <script type="module">
+  <script type="module" async="false">
     const data = await fetch('/api/v1/settings').then((res) => res.json())
     globalThis._settings = {
       baseApiUrl: '/api/v1',
