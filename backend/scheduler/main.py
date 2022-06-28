@@ -15,6 +15,7 @@ from backend.common.task_queues.unique_task_insert import try_queue_unique_task
 from backend.common.core.config import is_local, config
 from backend.common.models.user import User
 from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.core.enums import Status
 from backend.app.utils.logger import Logger
 
 from backend.common.db.init import init_db
@@ -151,7 +152,7 @@ async def fail_lost_task(task: SiteScrapeTask, now: datetime):
     await Site.find(Site.id == task.site_id).update(
         Set(
             {
-                Site.last_status: "FAILED",
+                Site.last_status: Status.FAILED,
                 Site.last_run_time: now,
             }
         )
@@ -159,7 +160,7 @@ async def fail_lost_task(task: SiteScrapeTask, now: datetime):
     await task.update(
         Set(
             {
-                SiteScrapeTask.status: "FAILED",
+                SiteScrapeTask.status: Status.FAILED,
                 SiteScrapeTask.error_message: message,
                 SiteScrapeTask.end_time: now,
             }

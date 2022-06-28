@@ -1,9 +1,14 @@
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Button, Spin } from 'antd';
-import { prettyDateDistance, prettyDateTimeFromISO } from '../../common';
+import {
+  prettyDateDistance,
+  prettyDateTimeFromISO,
+  Status,
+  statusDisplayName,
+  statusStyledDisplay,
+} from '../../common';
 import { ButtonLink } from '../../components/ButtonLink';
-import { Status } from '../types';
 import { SiteScrapeTask } from './types';
 
 interface CreateColumnsType {
@@ -50,37 +55,19 @@ export const createColumns = ({
       filterEditorProps: {
         placeholder: 'All',
         dataSource: [
-          { id: Status.Queued, label: 'Queued' },
-          { id: Status.InProgress, label: 'In Progress' },
-          { id: Status.Finished, label: 'Finished' },
-          { id: Status.Failed, label: 'Failed' },
-          { id: Status.Canceling, label: 'Canceling' },
-          { id: Status.Canceled, label: 'Canceled' },
+          { id: Status.Finished, label: statusDisplayName(Status.Finished) },
+          { id: Status.Canceled, label: statusDisplayName(Status.Canceled) },
+          { id: Status.Canceled, label: statusDisplayName(Status.Canceling) },
+          { id: Status.Queued, label: statusDisplayName(Status.Queued) },
+          { id: Status.Failed, label: statusDisplayName(Status.Failed) },
+          {
+            id: Status.InProgress,
+            label: statusDisplayName(Status.InProgress),
+          },
         ],
       },
-      render: ({ value: status }: { value: Status }) => {
-        switch (status) {
-          case Status.Failed:
-            return <span className="text-red-500">Failed</span>;
-          case Status.Canceled:
-            return <span className="text-orange-500">Canceled</span>;
-          case Status.Canceling:
-            return (
-              <>
-                <span className="text-amber-500 mr-2">Canceling</span>
-                <Spin size="small" />
-              </>
-            );
-          case Status.InProgress:
-            return <span className="text-blue-500">In Progress</span>;
-          case Status.Queued:
-            return <span className="text-yellow-500">Queued</span>;
-          case Status.Finished:
-            return <span className="text-green-500">Finished</span>;
-          default:
-            return null;
-        }
-      },
+      render: ({ value: status }: { value: Status }) =>
+        statusStyledDisplay(status),
     },
     {
       header: 'Document Count',
