@@ -2,7 +2,7 @@ from datetime import datetime
 
 from beanie import PydanticObjectId
 from beanie.odm.operators.find.comparison import In
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Security
 from fastapi.responses import StreamingResponse
 
 from backend.common.models.content_extraction_task import ContentExtractionTask
@@ -33,6 +33,11 @@ async def get_target(id: PydanticObjectId):
     return doc
 
 
+@router.get(
+    "/",
+    response_model=list[RetrievedDocument],
+    dependencies=[Security(get_current_user)],
+)
 async def get_documents(
     scrape_task_id: PydanticObjectId | None = None,
     site_id: PydanticObjectId | None = None,
@@ -56,28 +61,31 @@ async def get_documents(
     return documents
 
 
-@router.get("/", response_model=list[RetrievedDocument])
+@router.get("/",
+    response_model=list[RetrievedDocument],
+    dependencies=[Security(get_current_user)])
 async def read_documents(
     documents: list[RetrievedDocument] = Depends(get_documents),
-    current_user: User = Depends(get_current_user),
 ) -> list[RetrievedDocument]:
     return documents
 
 
-@router.get("/{id}.pdf")
+@router.get("/{id}.pdf", dependencies=[Security(get_current_user)])
 async def download_document(
     target: RetrievedDocument = Depends(get_target),
-    current_user: User = Depends(get_current_user),
 ):
     client = DocumentStorageClient()
     stream = client.read_document_stream(f"{target.checksum}.pdf")
     return StreamingResponse(stream, media_type="application/pdf")
 
 
-@router.get("/{id}", response_model=RetrievedDocument)
+@router.get(
+    "/{id}",
+    response_model=RetrievedDocument,
+    dependencies=[Security(get_current_user)],
+)
 async def read_document(
     target: RetrievedDocument = Depends(get_target),
-    current_user: RetrievedDocument = Depends(get_current_user),
 ):
     return target
 
@@ -86,7 +94,7 @@ async def read_document(
 async def update_document(
     updates: UpdateRetrievedDocument,
     target: RetrievedDocument = Depends(get_target),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     updated = await update_and_log_diff(logger, current_user, target, updates)
@@ -113,7 +121,7 @@ async def update_document(
 @router.delete("/{id}")
 async def delete_document(
     target: RetrievedDocument = Depends(get_target),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     await update_and_log_diff(

@@ -10,7 +10,6 @@ fastapi = {extras = ["all"], version = "^0.75.0"}
 python-decouple = "^3.6"
 passlib = "^1.7.4"
 motor = "^2.5.1"
-python-jose = "^3.3.0"
 beanie = "^1.10.1"
 bcrypt = "^3.2.0"
 jsonpatch = "^1.32"
@@ -32,6 +31,7 @@ scipy = ">=1.8.0"
 openpyxl = "^3.0.9"
 mongomock-motor = "^0.0.10"
 async-lru = "^1.0.3"
+PyJWT = {extras = ["crypto"], version = "^2.4.0"}
 pycld3 = "^0.22"
 
 [tool.poetry.dev-dependencies]
