@@ -133,9 +133,6 @@ python backend/scheduler/main.py
 
 cd frontend
 
-# env setup copy and edit as necessary. .env is loaded by CRA
-cp -R .env.sample .env
-
 # start the app
 yarn start
 ```
