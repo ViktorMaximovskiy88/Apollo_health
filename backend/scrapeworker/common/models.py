@@ -2,13 +2,14 @@ from typing import Any
 from pydantic import BaseModel, AnyHttpUrl
 
 class Metadata(BaseModel):
-    text: str
+    text: str 
+    id: str | None
 
 class Request(BaseModel):
     method: str = "GET"
     headers: Any | None
     url: str
-    body: Any | None
+    data: Any | None
 
 class Download(BaseModel):
     metadata: Metadata 

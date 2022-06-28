@@ -3,7 +3,7 @@ import asyncio
 from backend.scrapeworker.common.models import Download, Metadata, Request
 from backend.scrapeworker.drivers.playwright.base_driver import PlaywrightDriver
 from urllib.parse import urlparse
-from playwright.async_api import ElementHandle, Request as RouteRequest, Route
+from playwright.async_api import ElementHandle
 from playwright_stealth import stealth_async
 
 
@@ -27,42 +27,39 @@ class AspWebForm(PlaywrightDriver):
 
 
     async def action(self, el: ElementHandle, metadata=[]):
-        text = await el.text_content()
-        await el.click()
+        text, _ = await asyncio.gather(el.text_content(), el.click())
+        print('before url', text, self.url)
         metadata.append(Metadata(text=text))
+        print(len(metadata))
+        await self.page.wait_for_timeout(2000)
+        print('after url', self.url)
+        
 
     async def collect(self, elements: list[ElementHandle]) -> list[Download]:
-        requests: list[Request] = []
         metadata: list[Metadata] = []
- 
-        # route handler
-        async def intercept(route: Route, request: RouteRequest):                       
-            print(request.url, "aa")
-            headers = await request.all_headers()
-            requests.append(
-                Request(
-                    url=request.url,
-                    headers=headers,
-                    body=request.post_data,
-                    method=request.method,
-                )
-            )
-            await route.abort()
-
-        # intercept webform actions
-        await self.page.route('**/*', intercept)
-        tasks = [self.action(el, metadata=metadata) for el in elements]
-        await asyncio.gather(*tasks)
-        await self.page.unroute('**/*')
-
-        # zip them together
+        for el in elements:
+            id, text = await asyncio.gather(el.get_attribute("id"), el.text_content()) 
+            metadata.append(Metadata(text=text,id=f'#{id}'))
+        
         downloads: list[Download] = []
-        for index, request in enumerate(requests):
+        for meta in metadata:            
+            async with self.page.expect_request(self.url) as event:
+                await self.page.locator(meta.id).click();
+            
+            request = await event.value
+            headers = await request.all_headers()
+            
             downloads.append(
                 Download(
-                    metadata=metadata[index],
-                    request=request,
+                    metadata=meta,
+                    request=Request(
+                        method=request.method,
+                        headers=headers,
+                        url=request.url,
+                        data=request.post_data,
+                    ),
                 )
             )
+            
 
         return downloads

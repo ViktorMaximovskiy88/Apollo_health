@@ -4,6 +4,7 @@ from playwright.async_api import async_playwright
 from backend.scrapeworker.drivers.playwright.base_driver import PlaywrightDriver
 from backend.scrapeworker.drivers.playwright.direct_download import DirectDownload
 from backend.scrapeworker.drivers.playwright.asp_web_form import AspWebForm
+from backend.scrapeworker.common.downloader import post
 
 MOCK_HTML = "http://localhost:4040"
 
@@ -48,14 +49,18 @@ async def test_playwright_driver_webform():
             # mock selectors
             css_selector = 'a[href^="javascript:"]'
             elements = await driver.find(css_selector)
-            assert len(elements) == 2
+            assert len(elements) == 3
             
             downloads = await driver.collect(elements=elements)
-            assert len(downloads) == 2
+            assert len(downloads) == 3
             
             download = downloads[0]
             assert download.metadata.text == 'Do Post Back'
             assert download.request.method == 'POST'
             assert download.request.url == url
-            assert download.request.body == "test=wtfbbq"
-            assert len(download.request.headers.keys()) == 6
+            assert download.request.data == "test=wtfbbq"
+            assert len(download.request.headers.keys()) == 15
+            
+            for download in downloads:
+                print('bein')
+                await post(download)
