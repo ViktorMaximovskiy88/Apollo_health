@@ -89,7 +89,7 @@ async def runBulkByType(
     if bulk_type == "unrun":
         query["last_status"] = None
     elif bulk_type == "failed":
-        query["last_status"] = Status.Failed
+        query["last_status"] = Status.FAILED
     elif bulk_type == "all":
         query["last_status"] = {"$ne": ["QUEUED", "IN_PROGRESS"]}
 

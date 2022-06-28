@@ -59,7 +59,7 @@ async def log_success(
 ):
     typer.secho(f"Finished Task {scrape_task.id}", fg=typer.colors.BLUE)
     now = datetime.now()
-    await site.update(Set({Site.last_status: Status.Finished, Site.last_run_time: now}))
+    await site.update(Set({Site.last_status: Status.FINISHED, Site.last_run_time: now}))
     await scrape_task.update(
         Set(
             {
