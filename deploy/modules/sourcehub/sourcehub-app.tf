@@ -66,6 +66,14 @@ resource "aws_ecs_task_definition" "app" {
         {
           name = "REACT_APP_AUTH0_AUDIENCE"
           value = var.auth0-config.audience
+        },
+        {
+          name = "AUTH0_WELLKNOWN_URL"
+          value = var.auth0-config.wellknown_url
+        },
+        {
+          name = "AUTH0_ISSUER"
+          value = var.auth0-config.issuer
         }
       ]
       essential = true
