@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime
+from turtle import down
 from async_lru import alru_cache
 from beanie.odm.operators.update.array import Push
 from beanie.odm.operators.update.general import Inc
@@ -23,9 +24,12 @@ from backend.scrapeworker.drivers.playwright.direct_download import (
 )
 from backend.scrapeworker.common.models import Download
 from backend.scrapeworker.strategies.direct_download import DirectDownloadStategy
+from backend.scrapeworker.strategies.asp_web_form import AspWebFormStrategy
+
 from backend.scrapeworker.common.downloader.aiohttp_client import AioDownloader
 from backend.common.core.enums import Status
 from backend.scrapeworker.common.file_metadata import pdf
+from backend.scrapeworker.drivers.playwright.asp_web_form import PlaywrightAspWebForm
 
 
 class ScrapeWorker:
@@ -66,7 +70,7 @@ class ScrapeWorker:
         self.seen_urls.add(url)
         return True
 
-    async def try_download(self, download: Download, base_url):
+    async def attempt_download(self, download: Download, base_url):
         proxies = await self.get_proxies()
 
         async for (temp_path, checksum, file_ext) in self.downloader.download(
@@ -77,6 +81,7 @@ class ScrapeWorker:
             dest_path = f"{checksum}.{file_ext}"
             document = None
 
+            # write to our object store (s3/minio)
             if not self.doc_client.document_exists(dest_path):
                 logging.info(f"new doc {dest_path}")
                 self.doc_client.write_document(dest_path, temp_path)
@@ -89,12 +94,14 @@ class ScrapeWorker:
                     RetrievedDocument.checksum == checksum
                 )
 
+            # parse collected doc
             # if PDF
             parsed = await pdf.parse_metadata(temp_path, download.request.url)
 
             # if docx
             # parsed = await docx.parse_metadata(temp_path, download.request.url)
 
+            # update our doc in mongo
             now = datetime.now()
             datelist = list(parsed["dates"].keys())
             datelist.sort()
@@ -159,39 +166,68 @@ class ScrapeWorker:
     def url_filter(self, url):
         return self.unqiue_url(url) and self.valid_scheme(url)
 
-    # main worker ...
-    async def run_scrape(self):
-
-        # TODO interactive -> playwright
-        # TODO non-interactive -> beautifulsoup
-
-        # driver has 'main context'; abstraction to 'nav, find, collect';
-        # nav, find, collect vary by lib & strategy
+    async def try_direct_download_playwright(self):
         async with PlaywrightDirectDownload(browser=self.browser, proxy=None) as driver:
             strategy = DirectDownloadStategy(
                 config=self.site.scrape_method_configuration, driver=driver
             )
 
+            valid_strategy = False
             for base_url in self.active_base_urls():
+                elements, downloads = await strategy.execute(base_url.url)
+                valid_strategy = len(elements) > 0 and len(downloads) > 0
 
-                downloads = await strategy.execute(base_url.url)
+            # if len(downloads) == 0:
+            #     pass
+            # instead of raising here, indicate in logs that we found nadda for this strat
+            # raise NoDocsCollectedException("No documents collected.")
 
-                if len(downloads) == 0:
-                    raise NoDocsCollectedException("No documents collected.")
+            if valid_strategy:
+                await self.process_downloads(base_url, downloads, elements)
 
-                filtered = filter(
-                    lambda download: self.url_filter(download.request.url), downloads
-                )
+            return valid_strategy
 
-                tasks = []
-                for download in filtered:
-                    await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
+    async def try_asp_web_form_playwright(self):
+        async with PlaywrightAspWebForm(browser=self.browser, proxy=None) as driver:
+            strategy = AspWebFormStrategy(
+                config=self.site.scrape_method_configuration, driver=driver
+            )
 
-                    tasks.append(
-                        asyncio.create_task(self.try_download(download, base_url))
-                    )
+            valid_strategy = False
+            for base_url in self.active_base_urls():
+                elements, downloads = await strategy.execute(base_url.url)
+                valid_strategy = len(elements) > 0 and len(downloads) > 0
 
-                try:
-                    await asyncio.gather(self.watch_for_cancel(tasks), *tasks)
-                except asyncio.exceptions.CancelledError:
-                    pass
+            # if len(downloads) == 0:
+            #     pass
+            # instead of raising here, indicate in logs that we found nadda for this strat
+            # raise NoDocsCollectedException("No documents collected.")
+
+            if valid_strategy:
+                await self.process_downloads(base_url, downloads, elements)
+
+            return valid_strategy
+
+    async def process_downloads(self, base_url, downloads, elements):
+        filtered = filter(
+            lambda download: self.url_filter(download.request.url), downloads
+        )
+
+        tasks = []
+        for download in filtered:
+            await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
+            tasks.append(asyncio.create_task(self.attempt_download(download, base_url)))
+
+        try:
+            await asyncio.gather(self.watch_for_cancel(tasks), *tasks)
+        except asyncio.exceptions.CancelledError:
+            pass
+
+    # main worker ...
+    async def run_scrape(self):
+
+        # can try all and update config
+        # can read from human set config
+        # can do w/e we want to pick strats without waste
+        # found_direct_download = await self.try_direct_download_playwright()
+        found_asp_web_form = await self.try_asp_web_form_playwright()

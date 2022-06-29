@@ -1,8 +1,6 @@
-import logging
-import asyncio
 import urllib.parse
-from backend.scrapeworker.common.models import Download, Metadata, Request
-from backend.scrapeworker.drivers.playwright.base_driver import PlaywrightDriver
+from backend.scrapeworker.common.models import Download, Request
+from backend.scrapeworker.drivers.playwright.playwright_driver import PlaywrightDriver
 from playwright.async_api import ElementHandle
 from playwright_stealth import stealth_async
 
@@ -15,7 +13,7 @@ class PlaywrightDirectDownload(PlaywrightDriver):
 
     async def collect_downloads(self, elements: list[ElementHandle]) -> list[Download]:
         downloads = []
-        
+
         el: ElementHandle
         for el in elements:
             metadata = await self.extract_metadata(el)
@@ -25,7 +23,7 @@ class PlaywrightDirectDownload(PlaywrightDriver):
                     request=Request(
                         method="GET",
                         url=urllib.parse.urljoin(self.url, metadata.href),
-                    )
+                    ),
                 )
             )
 
