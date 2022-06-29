@@ -4,9 +4,14 @@ from tempfile import NamedTemporaryFile
 from xxhash import xxh128
 from aiofiles import open
 from backend.scrapeworker.common.models import Download, Request
-
+from backend.scrapeworker.common.rate_limiter import RateLimiter        
+        
 class BaseDownloader:
-    def fetch(self, download: Download):
+    rate_limiter: RateLimiter
+    def __init__(self):
+        self.rate_limiter = RateLimiter()
+        
+    def download(self, download: Download):
         pass
     
     def get(self, request: Request):
@@ -14,6 +19,18 @@ class BaseDownloader:
 
     def post(self, request: Request):
         pass
+    
+    @property
+    def headers(self):
+        return {
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Pragma": "no-cache",
+            "Upgrade-Insecure-Requests": "1",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36",
+        }        
     
     async def save_as_temp(self, body: bytes) -> tuple[str, str | None]:
         hash = xxh128()

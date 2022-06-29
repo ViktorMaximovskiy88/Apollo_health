@@ -92,74 +92,76 @@ class ScrapeWorker:
     async def try_download(self, download: Download, base_url):
         proxies = await self.get_proxy_settings()
         
-        (temp_path, checksum, file_ext) = await self.downloader.download(download=download)
-        await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
+        async for (temp_path, checksum, file_ext) in self.downloader.download(
+            download, proxies
+        ):
+            await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
 
-        dest_path = f"{checksum}.{file_ext}"
-        document = None
+            dest_path = f"{checksum}.{file_ext}"
+            document = None
 
-        if not self.doc_client.document_exists(dest_path):
-            logging.info(f'new doc {dest_path}')
-            self.doc_client.write_document(dest_path, temp_path)
-            await self.scrape_task.update(
-                Inc({SiteScrapeTask.new_documents_found: 1})
-            )
-        else:
-            logging.info(f'existing doc {dest_path}')
-            document = await RetrievedDocument.find_one(
-                RetrievedDocument.checksum == checksum
-            )
+            if not self.doc_client.document_exists(dest_path):
+                logging.info(f'new doc {dest_path}')
+                self.doc_client.write_document(dest_path, temp_path)
+                await self.scrape_task.update(
+                    Inc({SiteScrapeTask.new_documents_found: 1})
+                )
+            else:
+                logging.info(f'existing doc {dest_path}')
+                document = await RetrievedDocument.find_one(
+                    RetrievedDocument.checksum == checksum
+                )
 
-        url = download.request.url
-        metadata = await pdfinfo(temp_path)
-        text = await pdftotext(temp_path)
-        dates = extract_dates(text)
-        effective_date = select_effective_date(dates)
-        title = self.select_title(metadata, url)
-        document_type, confidence = classify_doc_type(text)
-        lang_code = detect_lang(text)
-        
-        now = datetime.now()
-        datelist = list(dates.keys())
-        datelist.sort()
+            url = download.request.url
+            metadata = await pdfinfo(temp_path)
+            text = await pdftotext(temp_path)
+            dates = extract_dates(text)
+            effective_date = select_effective_date(dates)
+            title = self.select_title(metadata, url)
+            document_type, confidence = classify_doc_type(text)
+            lang_code = detect_lang(text)
+            
+            now = datetime.now()
+            datelist = list(dates.keys())
+            datelist.sort()
 
-        if document:
-            updates = UpdateRetrievedDocument(
-                context_metadata=download.metadata.dict(),
-                effective_date=effective_date,
-                document_type=document_type,
-                doc_type_confidence=confidence,
-                metadata=metadata,
-                identified_dates=datelist,
-                scrape_task_id=self.scrape_task.id,
-                last_seen=now,
-                name=title,
-                lang_code=lang_code,
-            )
-            await update_and_log_diff(
-                self.logger, await self.get_user(), document, updates
-            )
-        else:
-            document = RetrievedDocument(
-                name=title,
-                document_type=document_type,
-                doc_type_confidence=confidence,
-                effective_date=effective_date,
-                identified_dates=list(dates.keys()),
-                scrape_task_id=self.scrape_task.id,
-                site_id=self.site.id,
-                collection_time=now,
-                last_seen=now,
-                checksum=checksum,
-                url=url,
-                context_metadata=download.metadata.dict(),
-                metadata=metadata,
-                base_url=base_url.url,
-                lang_code=lang_code,
-            )
-            await create_and_log(self.logger, await self.get_user(), document)
+            if document:
+                updates = UpdateRetrievedDocument(
+                    context_metadata=download.metadata.dict(),
+                    effective_date=effective_date,
+                    document_type=document_type,
+                    doc_type_confidence=confidence,
+                    metadata=metadata,
+                    identified_dates=datelist,
+                    scrape_task_id=self.scrape_task.id,
+                    last_seen=now,
+                    name=title,
+                    lang_code=lang_code,
+                )
+                await update_and_log_diff(
+                    self.logger, await self.get_user(), document, updates
+                )
+            else:
+                document = RetrievedDocument(
+                    name=title,
+                    document_type=document_type,
+                    doc_type_confidence=confidence,
+                    effective_date=effective_date,
+                    identified_dates=list(dates.keys()),
+                    scrape_task_id=self.scrape_task.id,
+                    site_id=self.site.id,
+                    collection_time=now,
+                    last_seen=now,
+                    checksum=checksum,
+                    url=url,
+                    context_metadata=download.metadata.dict(),
+                    metadata=metadata,
+                    base_url=base_url.url,
+                    lang_code=lang_code,
+                )
+                await create_and_log(self.logger, await self.get_user(), document)
 
-        await self.scrape_task.update(Push({SiteScrapeTask.retrieved_document_ids: document.id}))
+            await self.scrape_task.update(Push({SiteScrapeTask.retrieved_document_ids: document.id}))
 
     async def watch_for_cancel(self, tasks: list[asyncio.Task[None]]):
         while True:

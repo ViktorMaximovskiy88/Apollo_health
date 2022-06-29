@@ -17,9 +17,12 @@ async def test_aiodownloader_get():
     )
 
     downloader = AioDownloader()
-    _saved_filename, file_hash, file_ext = await downloader.download(test_one)
+    proxies = []
+    
+    async for (temp_path, checksum, file_ext) in downloader.download(
+        test_one, proxies
+    ):
+        assert checksum == "905bc67005486d6a7b38b3ef27e8728f"
+        assert file_ext == "pdf"
 
-    assert file_hash == "905bc67005486d6a7b38b3ef27e8728f"
-    assert file_ext == "pdf"
-
-    await downloader.close()
+        await downloader.close()
