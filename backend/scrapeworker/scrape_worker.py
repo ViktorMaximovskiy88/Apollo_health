@@ -2,8 +2,6 @@ import asyncio
 import logging
 from datetime import datetime
 from async_lru import alru_cache
-import os
-import pathlib
 from beanie.odm.operators.update.array import Push
 from beanie.odm.operators.update.general import Inc
 from urllib.parse import urlparse
@@ -11,21 +9,11 @@ from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from playwright.async_api import (
-    Browser,
-    ProxySettings,
-)
+from playwright.async_api import Browser, ProxySettings
 from backend.common.models.user import User
-from backend.scrapeworker.doc_type_classifier import classify_doc_type
-from backend.scrapeworker.common.detect_lang import detect_lang
-from backend.scrapeworker.common.effective_date import (
-    extract_dates,
-    select_effective_date,
-)
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
-from backend.scrapeworker.common.xpdf_wrapper import pdfinfo, pdftotext
 from backend.scrapeworker.common.exceptions import (
     NoDocsCollectedException,
     CanceledTaskException,
@@ -36,6 +24,8 @@ from backend.scrapeworker.drivers.playwright.direct_download import (
 from backend.scrapeworker.common.models import Download
 from backend.scrapeworker.strategies.direct_download import DirectDownloadStategy
 from backend.scrapeworker.common.downloader.aiohttp_client import AioDownloader
+from backend.common.core.enums import Status
+from backend.scrapeworker.common.file_metadata import pdf
 
 
 class ScrapeWorker:
@@ -59,13 +49,11 @@ class ScrapeWorker:
         return user
 
     @alru_cache
-    async def get_proxy_settings(
-        self,
-    ) -> list[tuple[Proxy | None, ProxySettings | None]]:
+    async def get_proxies(self) -> list[Proxy]:
         proxies = await Proxy.find_all().to_list()
         proxy_exclusions = self.site.scrape_method_configuration.proxy_exclusions
         valid_proxies = [proxy for proxy in proxies if proxy.id not in proxy_exclusions]
-        return convert_proxies_to_proxy_settings(valid_proxies)
+        return valid_proxies
 
     def valid_scheme(self, url):
         parsed = urlparse(url)
@@ -78,13 +66,8 @@ class ScrapeWorker:
         self.seen_urls.add(url)
         return True
 
-    def select_title(self, metadata, url):
-        filename_no_ext = pathlib.Path(os.path.basename(url)).with_suffix("")
-        title = metadata.get("Title") or metadata.get("Subject") or str(filename_no_ext)
-        return title
-
     async def try_download(self, download: Download, base_url):
-        proxies = await self.get_proxy_settings()
+        proxies = await self.get_proxies()
 
         async for (temp_path, checksum, file_ext) in self.downloader.download(
             download, proxies
@@ -106,52 +89,49 @@ class ScrapeWorker:
                     RetrievedDocument.checksum == checksum
                 )
 
-            url = download.request.url
-            metadata = await pdfinfo(temp_path)
-            text = await pdftotext(temp_path)
-            dates = extract_dates(text)
-            effective_date = select_effective_date(dates)
-            title = self.select_title(metadata, url)
-            document_type, confidence = classify_doc_type(text)
-            lang_code = detect_lang(text)
+            # if PDF
+            parsed = await pdf.parse_metadata(temp_path, download.request.url)
+
+            # if docx
+            # parsed = await docx.parse_metadata(temp_path, download.request.url)
 
             now = datetime.now()
-            datelist = list(dates.keys())
+            datelist = list(parsed["dates"].keys())
             datelist.sort()
 
             if document:
                 updates = UpdateRetrievedDocument(
                     context_metadata=download.metadata.dict(),
-                    effective_date=effective_date,
-                    document_type=document_type,
-                    doc_type_confidence=confidence,
-                    metadata=metadata,
+                    doc_type_confidence=parsed["confidence"],
+                    document_type=parsed["document_type"],
+                    effective_date=parsed["effective_date"],
                     identified_dates=datelist,
-                    scrape_task_id=self.scrape_task.id,
+                    lang_code=parsed["lang_code"],
                     last_seen=now,
-                    name=title,
-                    lang_code=lang_code,
+                    metadata=parsed["metadata"],
+                    name=parsed["title"],
+                    scrape_task_id=self.scrape_task.id,
                 )
                 await update_and_log_diff(
                     self.logger, await self.get_user(), document, updates
                 )
             else:
                 document = RetrievedDocument(
-                    name=title,
-                    document_type=document_type,
-                    doc_type_confidence=confidence,
-                    effective_date=effective_date,
-                    identified_dates=list(dates.keys()),
+                    base_url=base_url.url,
+                    checksum=checksum,
+                    collection_time=now,
+                    context_metadata=download.metadata.dict(),
+                    doc_type_confidence=parsed["confidence"],
+                    document_type=parsed["document_type"],
+                    effective_date=parsed["effective_date"],
+                    identified_dates=datelist,
+                    lang_code=parsed["lang_code"],
+                    last_seen=now,
+                    metadata=parsed["metadata"],
+                    name=parsed["title"],
                     scrape_task_id=self.scrape_task.id,
                     site_id=self.site.id,
-                    collection_time=now,
-                    last_seen=now,
-                    checksum=checksum,
-                    url=url,
-                    context_metadata=download.metadata.dict(),
-                    metadata=metadata,
-                    base_url=base_url.url,
-                    lang_code=lang_code,
+                    url=download.request.url,
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
 
@@ -165,7 +145,7 @@ class ScrapeWorker:
                 break
             canceling = await SiteScrapeTask.find_one(
                 SiteScrapeTask.id == self.scrape_task.id,
-                SiteScrapeTask.status == "CANCELING",
+                SiteScrapeTask.status == Status.CANCELING,
             )
             if canceling:
                 for t in tasks:
@@ -179,6 +159,7 @@ class ScrapeWorker:
     def url_filter(self, url):
         return self.unqiue_url(url) and self.valid_scheme(url)
 
+    # main worker ...
     async def run_scrape(self):
 
         # TODO interactive -> playwright

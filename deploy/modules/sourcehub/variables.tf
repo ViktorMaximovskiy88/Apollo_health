@@ -52,7 +52,9 @@ variable "auth0-config" {
   type = object({
     domain = string,
     client_id = string,
-    audience = string
+    audience = string,
+    wellknown_url = string,
+    issuer = string,
   })
   description = "Auth0 configuration for SSO"
 }

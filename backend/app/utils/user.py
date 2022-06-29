@@ -38,13 +38,12 @@ async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(scheme))
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
         )
 
-    email = payload.get(email_key)
+    email: str = payload.get(email_key)
     user = await User.by_email(email)
 
-    # local only for now until we decide on user mgmt
-    if settings.is_local and not user:
+    if not user:
         user = User(
-            email=email,
+            email=email.lower(), 
             full_name=email.partition("@")[0],
             is_admin=True,
             hashed_password="",

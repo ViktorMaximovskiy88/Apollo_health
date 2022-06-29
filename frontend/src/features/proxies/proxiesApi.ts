@@ -1,4 +1,4 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { Proxy } from './types';
 
 export const proxiesApi = createApi({
@@ -13,6 +13,4 @@ export const proxiesApi = createApi({
   }),
 });
 
-export const {
-  useGetProxiesQuery,
-} = proxiesApi;
+export const { useGetProxiesQuery } = proxiesApi;

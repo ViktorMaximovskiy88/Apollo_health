@@ -29,9 +29,9 @@ class Settings(BaseSettings):
     mongo_user: str
     mongo_password: str
     
-    aws_region: str
-    aws_access_key_id: str
-    aws_secret_access_key: str
+    aws_region: str | None
+    aws_access_key_id: str | None
+    aws_secret_access_key: str | None
     
     s3_endpoint_url: str
     s3_document_bucket: str
@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     redis_url: RedisDsn
     redis_password: str
     
-    disable_proxies: bool
+    disable_proxies: bool = False
 
 settings = Settings()
 
