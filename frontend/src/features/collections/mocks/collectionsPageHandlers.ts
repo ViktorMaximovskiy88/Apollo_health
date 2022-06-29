@@ -2,6 +2,7 @@ import { rest } from 'msw';
 import scrapesFixture from './scrapes.fixture.json';
 import { SiteScrapeTask } from '../types';
 import { Status } from '../../../common';
+import { CollectionMethod } from '../../sites/types';
 
 interface BackendSiteScrapeTask
   extends Omit<
@@ -41,7 +42,7 @@ const processScrape = async (scrape: BackendSiteScrapeTask): Promise<void> => {
 
 export const handlers = [
   rest.get('http://localhost/api/v1/sites/site-id1', async (req, res, ctx) => {
-    return res(ctx.json({ data: 'test-data' }));
+    return res(ctx.json({ collection_method: CollectionMethod.Automated }));
   }),
   rest.get(
     'http://localhost/api/v1/site-scrape-tasks/',
