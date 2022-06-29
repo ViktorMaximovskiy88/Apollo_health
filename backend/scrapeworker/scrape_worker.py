@@ -216,7 +216,18 @@ class ScrapeWorker:
                 context = await self.browser.new_context(proxy=proxy, ignore_https_errors=True) # type: ignore
                 page = await context.new_page()
                 await stealth_async(page)
-                await page.goto(base_url, wait_until="domcontentloaded") # await page.goto(base_url, wait_until="networkidle")
+                await page.goto(base_url, wait_until="networkidle") # await page.goto(base_url, wait_until="networkidle")
+                
+                element = page.locator("text=Download PDF")
+                count = await element.count();
+                print(count)
+                await element.wait_for(state="attached")
+
+                print('found selector')
+
+
+
+
 
         if not page:
             raise Exception(f"Could not load {base_url}")
@@ -240,6 +251,7 @@ class ScrapeWorker:
 
     async def run_scrape(self):
         for base_url in self.active_base_urls():
+            print(base_url)
             async with self.playwright_context(base_url.url) as page:
                 link_handles = await page.query_selector_all(self.construct_selector())
                 print(f"Found {len(link_handles)} links")

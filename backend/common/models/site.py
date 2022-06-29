@@ -8,12 +8,13 @@ class ScrapeMethodConfiguration(BaseModel):
     document_extensions: list[str]
     url_keywords: list[str]
     proxy_exclusions: list[PydanticObjectId] = []
+    wait_for: list[str] = []
 
 class UpdateScrapeMethodConfiguration(BaseModel):
     document_extensions: list[str] | None = None
     url_keywords: list[str] | None = None
     proxy_exclusions: list[PydanticObjectId] | None = None
-
+    wait_for: list[str] | None = None
 
 class BaseUrl(BaseModel):
     url: HttpUrl

@@ -1,5 +1,5 @@
-import { Button, Form, Input, Select, Space, Radio } from 'antd';
-import { LinkOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { Button, Form, Input, Select, Space, Radio, Tooltip } from 'antd';
+import { LinkOutlined, MinusCircleOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { useForm } from 'antd/lib/form/Form';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -128,6 +128,7 @@ export function SiteForm(props: {
         document_extensions: ['pdf'],
         url_keywords: [],
         proxy_exclusions: [],
+        wait_for:[]
       },
     };
   }
@@ -263,6 +264,14 @@ export function SiteForm(props: {
               </Form.Item>
               <Form.Item name={["scrape_method_configuration", "proxy_exclusions"]} label="Proxy Exclusions">
                 <Select mode="multiple" options={proxyOptions} />
+              </Form.Item>
+              <Form.Item name={["scrape_method_configuration", "wait_for"]} label={
+                  <>
+                    <span style={{"marginRight":"5px"}}>Wait For</span>
+                    <Tooltip placement="right" title="Collection will wait for specific words to appear before continuing."><QuestionCircleOutlined /></Tooltip>
+                  </>
+                }>
+                <Select mode="tags" />
               </Form.Item>
             </Form.Item>
             <Form.Item name="cron" label="Schedule">
