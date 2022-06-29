@@ -134,6 +134,24 @@ stages:
             runOnce:
               deploy:
                 steps:
+                  - task: ECRPullImage@1
+                    displayName: Pull SourceHub App Image
+                    inputs:
+                      awsCredentials: "Apollo-AWS-Dev-Apollo"
+                      regionName: 'us-east-1'
+                      repository: 'sourcehub-app'
+                      imageSource: 'imagetag'
+                      imageTag: '$(Build.SourceVersion)'
+                  - task: ECRPushImage@1
+                    displayName: Push SourceHub App Image to ECR as SourceVersion
+                    inputs:
+                      awsCredentials: "Apollo-AWS-Test-Apollo"
+                      regionName: 'us-east-1'
+                      imageSource: 'imagename'
+                      sourceImageName: 'sourcehub-app'
+                      sourceImageTag: '$(Build.SourceVersion)'
+                      repositoryName: 'sourcehub-app'
+                      pushTag: '$(Build.SourceVersion)'
                   - template: .azure-pipelines/source-hub.deploy.yml
                     parameters:
                       environment: tst
@@ -150,6 +168,24 @@ stages:
             runOnce:
               deploy:
                 steps:
+                  - task: ECRPullImage@1
+                    displayName: Pull SourceHub App Image
+                    inputs:
+                      awsCredentials: "Apollo-AWS-Dev-Apollo"
+                      regionName: 'us-east-1'
+                      repository: 'sourcehub-app'
+                      imageSource: 'imagetag'
+                      imageTag: '$(Build.SourceVersion)'
+                  - task: ECRPushImage@1
+                    displayName: Push SourceHub App Image to ECR as SourceVersion
+                    inputs:
+                      awsCredentials: "Apollo-AWS-Prod-Apollo"
+                      regionName: 'us-east-1'
+                      imageSource: 'imagename'
+                      sourceImageName: 'sourcehub-app'
+                      sourceImageTag: '$(Build.SourceVersion)'
+                      repositoryName: 'sourcehub-app'
+                      pushTag: '$(Build.SourceVersion)'
                   - template: .azure-pipelines/source-hub.deploy.yml
                     parameters:
                       environment: prd
