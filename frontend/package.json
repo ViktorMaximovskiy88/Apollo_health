@@ -27,7 +27,7 @@
     "start": "react-scripts start",
     "analyze": "source-map-explorer 'build/static/js/*.js'",
     "build": "react-scripts build",
-    "test": "is-ci \"test:coverage\" \"test:watch\"",
+    "test": "TZ=UTC is-ci \"test:coverage\" \"test:watch\"",
     "test:coverage": "react-scripts test --coverage",
     "test:watch": "react-scripts test",
     "eject": "react-scripts eject",
