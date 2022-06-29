@@ -1,7 +1,7 @@
+import re
 from typing import Optional
 from beanie import Indexed, PydanticObjectId
 from pydantic import BaseModel, EmailStr, Field
-
 from backend.common.models.base_document import BaseDocument
 
 
@@ -38,4 +38,5 @@ class User(BaseDocument, UserPublic):
 
     @classmethod
     async def by_email(cls, email: str) -> Optional["User"]:
-        return await cls.find_one(cls.email == email)
+        case_insensitive = re.compile(f'^{re.escape(email)}$', re.IGNORECASE)
+        return await cls.find_one(cls.email == case_insensitive)
