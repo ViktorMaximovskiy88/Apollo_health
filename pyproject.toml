@@ -4,6 +4,10 @@ version = "0.1.0"
 description = ""
 authors = ["Matthew Brown <mbrown@bhei.com>"]
 
+
+[pytest]
+asyncio_mode="strict"
+
 [tool.poetry.dependencies]
 python = "3.10.3"
 fastapi = {extras = ["all"], version = "^0.75.0"}

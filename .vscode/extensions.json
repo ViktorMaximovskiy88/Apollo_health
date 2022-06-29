@@ -2,6 +2,7 @@
     "recommendations": [
         "hashicorp.hcl",
         "hashicorp.terraform",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "bungcip.better-toml"
     ]
 }
