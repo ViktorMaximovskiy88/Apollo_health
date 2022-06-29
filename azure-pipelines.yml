@@ -135,7 +135,6 @@ stages:
               deploy:
                 steps:
                   - task: ECRPullImage@1
-                    name: ECRPullImageDev
                     displayName: Pull SourceHub App Image
                     inputs:
                       awsCredentials: "Apollo-AWS-Dev-Apollo"
@@ -143,14 +142,14 @@ stages:
                       repository: 'sourcehub-app'
                       imageSource: 'imagetag'
                       imageTag: '$(Build.SourceVersion)'
-                      outputVariable: 'ImageTag'
+                      outputVariable: 'DevImageId'
                   - task: ECRPushImage@1
                     displayName: Push SourceHub App Image to ECR as SourceVersion
                     inputs:
                       awsCredentials: "Apollo-AWS-Test-Apollo"
                       regionName: 'us-east-1'
                       imageSource: 'imageid'
-                      sourceImageId: '$(ECRPullImageDev.ImageTag)'
+                      sourceImageId: $(DevImageId)
                       repositoryName: 'sourcehub-app'
                       pushTag: '$(Build.SourceVersion)'
                   - template: .azure-pipelines/source-hub.deploy.yml
@@ -170,7 +169,6 @@ stages:
               deploy:
                 steps:
                   - task: ECRPullImage@1
-                    name: ECRPullImageDev
                     displayName: Pull SourceHub App Image
                     inputs:
                       awsCredentials: "Apollo-AWS-Dev-Apollo"
@@ -178,14 +176,14 @@ stages:
                       repository: 'sourcehub-app'
                       imageSource: 'imagetag'
                       imageTag: '$(Build.SourceVersion)'
-                      outputVariable: 'ImageTag'
+                      outputVariable: 'DevImageId'
                   - task: ECRPushImage@1
                     displayName: Push SourceHub App Image to ECR as SourceVersion
                     inputs:
                       awsCredentials: "Apollo-AWS-Prod-Apollo"
                       regionName: 'us-east-1'
                       imageSource: 'imageid'
-                      sourceImageId: '$(ECRPullImageDev.ImageTag)'
+                      sourceImageId: $(DevImageId)
                       repositoryName: 'sourcehub-app'
                       pushTag: '$(Build.SourceVersion)'
                   - template: .azure-pipelines/source-hub.deploy.yml
