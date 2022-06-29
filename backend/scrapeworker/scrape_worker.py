@@ -216,14 +216,14 @@ class ScrapeWorker:
                 context = await self.browser.new_context(proxy=proxy, ignore_https_errors=True) # type: ignore
                 page = await context.new_page()
                 await stealth_async(page)
-                await page.goto(base_url, wait_until="networkidle") # await page.goto(base_url, wait_until="networkidle")
-                
-                element = page.locator("text=Download PDF")
-                count = await element.count();
-                print(count)
-                await element.wait_for(state="attached")
+                await page.goto(base_url, wait_until="domcontentloaded") # await page.goto(base_url, wait_until="networkidle")
+                    
 
-                print('found selector')
+                element = await page.wait_for_selector("text=Download PDF", state="attached", strict=False, timeout=0);
+
+                count = await element.count();
+
+                print('found selector', count)
 
 
 
