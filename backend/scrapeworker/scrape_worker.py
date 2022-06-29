@@ -1,44 +1,40 @@
 import asyncio
 import logging
-from contextlib import asynccontextmanager
 from datetime import datetime
-from random import shuffle
-from turtle import down
-from typing import AsyncGenerator, Coroutine
 from async_lru import alru_cache
 import os
 import pathlib
-from tenacity._asyncio import AsyncRetrying
-from tenacity.stop import stop_after_attempt
 from beanie.odm.operators.update.array import Push
 from beanie.odm.operators.update.general import Inc
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from playwright.async_api import (
-    ElementHandle,
     Browser,
-    BrowserContext,
     ProxySettings,
-    Page,
 )
-from playwright_stealth import stealth_async
 from backend.common.models.user import User
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.common.detect_lang import detect_lang
-from backend.scrapeworker.downloader import DocDownloader
-from backend.scrapeworker.common.effective_date import extract_dates, select_effective_date
+from backend.scrapeworker.common.effective_date import (
+    extract_dates,
+    select_effective_date,
+)
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.common.xpdf_wrapper import pdfinfo, pdftotext
-from backend.scrapeworker.common.exceptions import NoDocsCollectedException, CanceledTaskException
-from backend.scrapeworker.drivers.playwright.direct_download import PlaywrightDirectDownload
+from backend.scrapeworker.common.exceptions import (
+    NoDocsCollectedException,
+    CanceledTaskException,
+)
+from backend.scrapeworker.drivers.playwright.direct_download import (
+    PlaywrightDirectDownload,
+)
 from backend.scrapeworker.common.models import Download
 from backend.scrapeworker.strategies.direct_download import DirectDownloadStategy
-from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.downloader.aiohttp_client import AioDownloader
 
 
@@ -68,13 +64,12 @@ class ScrapeWorker:
     ) -> list[tuple[Proxy | None, ProxySettings | None]]:
         proxies = await Proxy.find_all().to_list()
         proxy_exclusions = self.site.scrape_method_configuration.proxy_exclusions
-        valid_proxies = [
-            proxy for proxy in proxies if proxy.id not in proxy_exclusions]
+        valid_proxies = [proxy for proxy in proxies if proxy.id not in proxy_exclusions]
         return convert_proxies_to_proxy_settings(valid_proxies)
 
     def valid_scheme(self, url):
         parsed = urlparse(url)
-        return parsed.scheme in ["https", "http"] # mailto, tel, etc
+        return parsed.scheme in ["https", "http"]  # mailto, tel, etc
 
     def unqiue_url(self, url):
         # skip if we've already seen this url
@@ -85,13 +80,12 @@ class ScrapeWorker:
 
     def select_title(self, metadata, url):
         filename_no_ext = pathlib.Path(os.path.basename(url)).with_suffix("")
-        title = metadata.get("Title") or metadata.get(
-            "Subject") or str(filename_no_ext)
+        title = metadata.get("Title") or metadata.get("Subject") or str(filename_no_ext)
         return title
 
     async def try_download(self, download: Download, base_url):
         proxies = await self.get_proxy_settings()
-        
+
         async for (temp_path, checksum, file_ext) in self.downloader.download(
             download, proxies
         ):
@@ -101,13 +95,13 @@ class ScrapeWorker:
             document = None
 
             if not self.doc_client.document_exists(dest_path):
-                logging.info(f'new doc {dest_path}')
+                logging.info(f"new doc {dest_path}")
                 self.doc_client.write_document(dest_path, temp_path)
                 await self.scrape_task.update(
                     Inc({SiteScrapeTask.new_documents_found: 1})
                 )
             else:
-                logging.info(f'existing doc {dest_path}')
+                logging.info(f"existing doc {dest_path}")
                 document = await RetrievedDocument.find_one(
                     RetrievedDocument.checksum == checksum
                 )
@@ -120,7 +114,7 @@ class ScrapeWorker:
             title = self.select_title(metadata, url)
             document_type, confidence = classify_doc_type(text)
             lang_code = detect_lang(text)
-            
+
             now = datetime.now()
             datelist = list(dates.keys())
             datelist.sort()
@@ -161,7 +155,9 @@ class ScrapeWorker:
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
 
-            await self.scrape_task.update(Push({SiteScrapeTask.retrieved_document_ids: document.id}))
+            await self.scrape_task.update(
+                Push({SiteScrapeTask.retrieved_document_ids: document.id})
+            )
 
     async def watch_for_cancel(self, tasks: list[asyncio.Task[None]]):
         while True:
@@ -192,29 +188,29 @@ class ScrapeWorker:
         # nav, find, collect vary by lib & strategy
         async with PlaywrightDirectDownload(browser=self.browser, proxy=None) as driver:
             strategy = DirectDownloadStategy(
-                config=self.site.scrape_method_configuration,
-                driver=driver
+                config=self.site.scrape_method_configuration, driver=driver
             )
-            
+
             for base_url in self.active_base_urls():
-                
+
                 downloads = await strategy.execute(base_url.url)
-                
+
                 if len(downloads) == 0:
                     raise NoDocsCollectedException("No documents collected.")
 
-                filtered = filter(lambda download: self.url_filter(download.request.url), downloads)                
-                
+                filtered = filter(
+                    lambda download: self.url_filter(download.request.url), downloads
+                )
+
                 tasks = []
                 for download in filtered:
-                    await self.scrape_task.update(
-                        Inc({SiteScrapeTask.links_found: 1})
-                    )
+                    await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
 
-                    tasks.append(asyncio.create_task(self.try_download(download, base_url)))
+                    tasks.append(
+                        asyncio.create_task(self.try_download(download, base_url))
+                    )
 
                 try:
                     await asyncio.gather(self.watch_for_cancel(tasks), *tasks)
                 except asyncio.exceptions.CancelledError:
                     pass
-                
