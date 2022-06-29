@@ -42,3 +42,11 @@ Noteable articles for testing with `jest`, `@testing-library`, and `msw`:
   - There are also videos that go along with this repo, but they are part of a paid resource known as [Epic React](https://epicreact.dev/). If you are reading this and Paul Getsy is your manager, it's extremely likely he can purchase the entire course for you if you think you'll go through it. It's an extremely good course.
 - [This github repo](https://github.com/kentcdodds/jest-cypress-react-babel-webpack/tree/tjs/jest-23) is another good resource to reference. It is best for understanding both how to scale testing to larger projects and also how to write effective configuration for testing. Also be weary of copying code because of the license this code is under.
   - There are videos associated with this repo, but they are part of a paid resource known as [Testing Javascript](https://testingjavascript.com/). It's not as good as Epic React, however.
+
+---
+
+### Tips
+
+- Use [`screen.dubug()`](https://testing-library.com/docs/react-testing-library/api/#debug) to view the current state of the DOM when confused about why something is not rendering as expected.
+  - If `screen.debug()` is not printing enough lines, you can use it like this: `screen.debug(undefined, 100000)`.
+- When recieving `ECONNREFUSED` error, make sure to change `server.listen()` to `server.listen({ onUnhandledRequest: 'error' });` to view what endpoints the test is trying to query.
