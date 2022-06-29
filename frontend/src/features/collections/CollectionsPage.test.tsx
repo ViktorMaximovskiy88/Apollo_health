@@ -38,14 +38,12 @@ describe(`CollectionsPage`, () => {
       siteId: 'site-id1',
     }));
 
+    // fixes `act` warning
+    // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
     const dataGridDoneRendering = Promise.resolve();
     render(<CollectionsPage />);
     await act(async () => {
       await dataGridDoneRendering;
-    });
-
-    act(() => {
-      jest.advanceTimersByTime(1000);
     });
 
     const runCollection = await screen.findByRole('button', {
