@@ -1,9 +1,8 @@
 import pytest
 from playwright.async_api import async_playwright
 from backend.scrapeworker.drivers.playwright.base_driver import PlaywrightDriver
-from backend.scrapeworker.drivers.playwright.direct_download import DirectDownload
-from backend.scrapeworker.drivers.playwright.asp_web_form import AspWebForm
-from backend.scrapeworker.common.downloader.aiohttp_client import fetch
+from backend.scrapeworker.drivers.playwright.direct_download import PlaywrightDirectDownload
+from backend.scrapeworker.drivers.playwright.asp_web_form import PlaywrightAspWebForm
 
 MOCK_HTML = "http://localhost:4040"
 
@@ -19,20 +18,20 @@ async def test_playwright_driver_context():
 async def test_playwright_driver_direct_download():
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch()
-        async with DirectDownload(browser=browser, proxy=None) as driver:
+        async with PlaywrightDirectDownload(browser=browser, proxy=None) as driver:
             # fetch page
-            await driver.navigate(f"{MOCK_HTML}/direct-download/anchor.html")
+            await driver.nav_to_page(f"{MOCK_HTML}/direct-download/anchor.html")
 
             # mock selectors
             css_selector = "a[href]"
-            elements = await driver.find(css_selector)
+            elements = await driver.find_elements(css_selector)
             assert len(elements) == 1
             
-            downloads = await driver.collect(elements=elements)
+            downloads = await driver.collect_downloads(elements=elements)
             assert len(downloads) == 1
             
             download = downloads[0]
-            assert download.metadata.text == "Test anchor pdf"
+            assert download.metadata.link_text == "Test anchor pdf"
             assert download.request.url == f"{MOCK_HTML}/direct-download/anchor.pdf"
             
 
@@ -40,25 +39,22 @@ async def test_playwright_driver_direct_download():
 async def test_playwright_driver_webform():
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch()
-        async with AspWebForm(browser=browser, proxy=None) as driver:
+        async with PlaywrightAspWebForm(browser=browser, proxy=None) as driver:
             # fetch page
             url = f"{MOCK_HTML}/web-form/post-back.html"
-            await driver.navigate(url)
+            await driver.nav_to_page(url)
 
             # mock selectors
             css_selector = 'a[href^="javascript:"]'
-            elements = await driver.find(css_selector)
+            elements = await driver.find_elements(css_selector)
             assert len(elements) == 3
             
-            downloads = await driver.collect(elements=elements)
+            downloads = await driver.collect_downloads(elements=elements)
             assert len(downloads) == 3
             
             download = downloads[0]
-            assert download.metadata.text == 'Do Post Back'
+            assert download.metadata.link_text == 'Do Post Back'
             assert download.request.method == 'POST'
             assert download.request.url == url
             assert download.request.data == "test=wtfbbq"
             assert len(download.request.headers.keys()) == 15
-            
-            for download in downloads:
-                await fetch(download)

@@ -35,12 +35,12 @@ class DirectDownloadStategy:
 
     async def execute(self, url) -> any:
 
-        await self.driver.navigate(url)
+        await self.driver.nav_to_page(url)
 
-        links = await self.driver.find(self.css_selector)
+        links = await self.driver.find_elements(self.css_selector)
         logging.info(f'linksLength={len(links)}')
 
-        downloads = await self.driver.collect(links)
+        downloads = await self.driver.collect_downloads(links)
         logging.info(f'downloadsLength={len(downloads)}')
 
         return downloads

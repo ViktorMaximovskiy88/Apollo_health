@@ -1,6 +1,4 @@
-from distutils import extension
 import logging
-from multiprocessing.connection import Client
 from aiohttp import ClientSession, ClientResponse
 from backend.scrapeworker.common.models import Download, Request
 from backend.scrapeworker.common.downloader.base import BaseDownloader

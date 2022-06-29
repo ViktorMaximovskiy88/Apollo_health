@@ -1,15 +1,13 @@
-import logging
-import asyncio
 from backend.scrapeworker.common.models import Download, Metadata, Request
 from backend.scrapeworker.drivers.playwright.base_driver import PlaywrightDriver
 from urllib.parse import urlparse
 from playwright.async_api import ElementHandle
 from playwright_stealth import stealth_async
+from urllib.parse import urlparse
 
-
-class AspWebForm(PlaywrightDriver):
+class PlaywrightAspWebForm(PlaywrightDriver):
     
-    async def navigate(self, url):
+    async def nav_to_page(self, url):
         self.url = url
         await stealth_async(self.page)
         parsed_url = urlparse(self.url)
@@ -25,17 +23,16 @@ class AspWebForm(PlaywrightDriver):
         await self.context.add_cookies([cookie])
         await self.page.goto(self.url, wait_until="domcontentloaded")
         
-
-    async def collect(self, elements: list[ElementHandle]) -> list[Download]:
+    async def collect_downloads(self, elements: list[ElementHandle]) -> list[Download]:
         metadata: list[Metadata] = []
         for el in elements:
-            id, text = await asyncio.gather(el.get_attribute("id"), el.text_content()) 
-            metadata.append(Metadata(text=text,id=f'#{id}'))
+            meta = await self.extract_metadata(el)
+            metadata.append(meta)
         
         downloads: list[Download] = []
         for meta in metadata:            
             async with self.page.expect_request(self.url) as event:
-                await self.page.locator(meta.id).click();
+                await self.page.locator(f'#{meta.element_id}').click();
             
             request = await event.value
             headers = await request.all_headers()

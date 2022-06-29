@@ -2,8 +2,10 @@ from typing import Any
 from pydantic import BaseModel, AnyHttpUrl
 
 class Metadata(BaseModel):
-    text: str 
-    id: str | None
+    link_text: str | None 
+    element_id: str | None
+    closest_heading: str | None
+    href: str | None
 
 class Request(BaseModel):
     method: str = "GET"
