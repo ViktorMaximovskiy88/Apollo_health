@@ -105,7 +105,7 @@ async def log_cancellation(scrape_task, site, ex):
 
 async def log_not_found(scrape_task, site, ex):
     message = str(ex)
-    await log_error_status(scrape_task=scrape_task, site=site, message=message, status=Status.CANCELED,)
+    await log_error_status(scrape_task=scrape_task, site=site, message=message, status=Status.FAILED,)
 
 
 async def heartbeat_task(scrape_task: SiteScrapeTask):
