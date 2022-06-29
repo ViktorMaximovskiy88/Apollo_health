@@ -111,3 +111,7 @@ data "aws_ssm_parameter" "redis-url" {
 data "aws_ssm_parameter" "docrepo-bucket-name" {
   name = "/apollo/docrepo_bucket_name"
 }
+
+data "aws_ssm_parameter" "smartproxy-username" {
+  name = "/apollo/smartproxy_username"
+}
