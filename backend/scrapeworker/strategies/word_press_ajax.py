@@ -1,17 +1,21 @@
 import logging
 from functools import cached_property
-from backend.scrapeworker.drivers.playwright.asp_web_form import PlaywrightAspWebForm
+from backend.scrapeworker.drivers.playwright.word_press_ajax import (
+    PlaywrightWordPressAjax,
+)
 from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.selectors import filter_by_hidden_value, filter_by_href
 
 
-class AspWebFormStrategy:
+class PlaywrightWordPressAjaxStrategy:
 
     config: ScrapeMethodConfiguration
-    driver: PlaywrightAspWebForm
+    driver: PlaywrightWordPressAjax
     selectors: list[str]
 
-    def __init__(self, config: ScrapeMethodConfiguration, driver: PlaywrightAspWebForm):
+    def __init__(
+        self, config: ScrapeMethodConfiguration, driver: PlaywrightWordPressAjax
+    ):
         self.config = config
         self.driver = driver
         self.selectors = []

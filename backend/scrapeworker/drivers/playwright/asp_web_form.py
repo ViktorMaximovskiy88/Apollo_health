@@ -35,26 +35,29 @@ class PlaywrightAspWebForm(PlaywrightDriver):
             return self.url in request.url and request.method == "post"
 
         downloads: list[Download] = []
-        for meta in metadata:
+        for el in elements:
             logging.info(meta)
-            async with self.page.expect_request("**/*") as event:
-                logging.info(f"#{meta.element_id} about to be clicked")
-                await self.page.locator(f"#{meta.element_id}").click()
+            async with self.page.expect_navigation() as event:
+                logging.info(f"#{el} about to be clicked")
+                await el.click()
                 logging.info(f"#{meta.element_id} was clicked")
 
-                request = await event.value
-                headers = await request.all_headers()
+                response = await event.value
+                # headers = await request.all_headers()
+
+                print(response)
+
                 logging.info(f"and then whatttt")
-                downloads.append(
-                    Download(
-                        metadata=meta,
-                        request=Request(
-                            method=request.method,
-                            headers=headers,
-                            url=request.url,
-                            data=request.post_data,
-                        ),
-                    )
-                )
+                # downloads.append(
+                #     Download(
+                #         metadata=meta,
+                #         request=Request(
+                #             method=request.method,
+                #             headers=headers,
+                #             url=request.url,
+                #             data=request.post_data,
+                #         ),
+                #     )
+                # )
 
         return downloads

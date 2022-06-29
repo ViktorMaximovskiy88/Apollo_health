@@ -19,17 +19,25 @@ from backend.scrapeworker.common.exceptions import (
     NoDocsCollectedException,
     CanceledTaskException,
 )
+
+from backend.scrapeworker.common.models import Download
 from backend.scrapeworker.drivers.playwright.direct_download import (
     PlaywrightDirectDownload,
 )
-from backend.scrapeworker.common.models import Download
+from backend.scrapeworker.drivers.playwright.asp_web_form import PlaywrightAspWebForm
+from backend.scrapeworker.drivers.playwright.word_press_ajax import (
+    PlaywrightWordPressAjax,
+)
+
 from backend.scrapeworker.strategies.direct_download import DirectDownloadStategy
 from backend.scrapeworker.strategies.asp_web_form import AspWebFormStrategy
+from backend.scrapeworker.strategies.word_press_ajax import (
+    PlaywrightWordPressAjaxStrategy,
+)
 
 from backend.scrapeworker.common.downloader.aiohttp_client import AioDownloader
 from backend.common.core.enums import Status
 from backend.scrapeworker.common.file_metadata import pdf
-from backend.scrapeworker.drivers.playwright.asp_web_form import PlaywrightAspWebForm
 
 
 class ScrapeWorker:
@@ -208,6 +216,27 @@ class ScrapeWorker:
 
             return valid_strategy
 
+    async def try_word_press_ajax_playwright(self):
+        async with PlaywrightWordPressAjax(browser=self.browser, proxy=None) as driver:
+            strategy = PlaywrightWordPressAjaxStrategy(
+                config=self.site.scrape_method_configuration, driver=driver
+            )
+
+            valid_strategy = False
+            for base_url in self.active_base_urls():
+                elements, downloads = await strategy.execute(base_url.url)
+                valid_strategy = len(elements) > 0 and len(downloads) > 0
+
+            # if len(downloads) == 0:
+            #     pass
+            # instead of raising here, indicate in logs that we found nadda for this strat
+            # raise NoDocsCollectedException("No documents collected.")
+
+            if valid_strategy:
+                await self.process_downloads(base_url, downloads, elements)
+
+            return valid_strategy
+
     async def process_downloads(self, base_url, downloads, elements):
         filtered = filter(
             lambda download: self.url_filter(download.request.url), downloads
@@ -229,5 +258,7 @@ class ScrapeWorker:
         # can try all and update config
         # can read from human set config
         # can do w/e we want to pick strats without waste
+
         # found_direct_download = await self.try_direct_download_playwright()
-        found_asp_web_form = await self.try_asp_web_form_playwright()
+        # found_asp_web_form = await self.try_asp_web_form_playwright()
+        found_word_press_ajax = await self.try_word_press_ajax_playwright()
