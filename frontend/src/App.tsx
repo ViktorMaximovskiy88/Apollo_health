@@ -69,7 +69,9 @@ function TopNav() {
               <Menu.Item
                 key={'logout'}
                 onClick={() => {
-                  logout();
+                  logout({
+                    returnTo: window.location.origin,
+                  });
                 }}
               >
                 Logout

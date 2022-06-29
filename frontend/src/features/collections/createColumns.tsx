@@ -1,6 +1,6 @@
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
-import { Button, Spin } from 'antd';
+import { Button } from 'antd';
 import {
   prettyDateDistance,
   prettyDateTimeFromISO,
