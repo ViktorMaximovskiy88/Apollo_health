@@ -32,7 +32,9 @@ function TopNav() {
   const params = useParams();
   const { user, logout } = useAuth0();
   const siteId = params.siteId;
-  const { data: site } = useGetSiteQuery(siteId, { skip: !siteId });
+  const { data: site } = useGetSiteQuery(siteId, { skip: !siteId }{
+    returnTo: returnTo
+  });
   const current = location.pathname.split('/')[1];
   const sections = [
     { key: 'sites', label: 'Sites' },
@@ -69,7 +71,9 @@ function TopNav() {
               <Menu.Item
                 key={'logout'}
                 onClick={() => {
-                  logout();
+                  logout({
+                    returnTo: window.location.origin
+                  });
                 }}
               >
                 Logout
