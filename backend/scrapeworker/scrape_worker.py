@@ -230,7 +230,7 @@ class ScrapeWorker:
         if len(all_downloads) == 0:
             raise NoDocsCollectedException("No documents collected.")
 
-        await self.process_downloads(downloads, elements, base_url)
+        await self.process_downloads(all_downloads, all_elements, base_url)
 
     async def process_downloads(
         self,
