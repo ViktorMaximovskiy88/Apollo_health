@@ -48,7 +48,9 @@ class WordPressAjaxStrategy:
                 await self.driver.page.route("**/*", intercept)
                 await self.driver.nav_to_page(url)
 
-                elements = await self.driver.find_elements("a.nav-link")
+                # need to use jq/jsonpath to look into JSON and get pdfs + metdata
+                elements = await self.driver.find_elements("a.nothing")
+
                 logging.info(f"elementsLength={len(elements)}")
 
                 downloads = self.json_docs

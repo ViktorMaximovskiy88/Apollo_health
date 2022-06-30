@@ -262,8 +262,8 @@ class ScrapeWorker:
         # can do w/e we want to pick strats without waste
         proxies = await self.get_proxies()
 
-        found_direct_download = await self.try_direct_download_playwright(proxies)
-        logging.info(f"found_direct_download={found_direct_download}")
+        # found_direct_download = await self.try_direct_download_playwright(proxies)
+        # logging.info(f"found_direct_download={found_direct_download}")
 
         found_asp_web_form = await self.try_aspnet_webform_playwright(proxies)
         logging.info(f"found_asp_web_form={found_asp_web_form}")
