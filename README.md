@@ -105,6 +105,7 @@ Each service should run in it's own terminal. Use your editors built in terminal
 
 ```bash
 # Start Local Mongo/Minio/Redis
+# Make sure to have Docker Desktop open or else you will get an error: "Cannot connect to the Docker daemon"
 sudo docker compose -f ./Docker/docker-compose-dev.yaml up
 ```
 
