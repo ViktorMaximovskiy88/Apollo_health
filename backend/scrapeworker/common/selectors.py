@@ -1,8 +1,4 @@
-def filter_by_href(
-    extensions=[],
-    keywords=[],
-    javascript=False,
-):
+def filter_by_href(extensions=[], keywords=[], javascript=False, webform=False):
     ###
     # Generate CSS selectors for anchor tags
     ###
@@ -10,6 +6,9 @@ def filter_by_href(
 
     if javascript:
         selectors.append(f'a[href^="javascript:"]')
+
+    if webform:
+        selectors.append(f'a[href^="javascript:__doPostBack"]')
 
     [selectors.append(f'a[href$=".{extension}"]') for extension in extensions]
     [selectors.append(f'a[href*="{keyword}"]') for keyword in keywords]
@@ -27,10 +26,14 @@ def filter_by_hidden_value(
 
     selectors = []
 
-    [selectors.append(
-        f'input[type="hidden"][value$=".{extension}"]') for extension in extensions]
+    [
+        selectors.append(f'input[type="hidden"][value$=".{extension}"]')
+        for extension in extensions
+    ]
 
-    [selectors.append(
-        f'input[type="hidden"][value*="{keyword}"]') for keyword in keywords]
+    [
+        selectors.append(f'input[type="hidden"][value*="{keyword}"]')
+        for keyword in keywords
+    ]
 
     return selectors

@@ -1,43 +1,41 @@
 import asyncio
 import logging
 from datetime import datetime
-from turtle import down
 from async_lru import alru_cache
 from beanie.odm.operators.update.array import Push
 from beanie.odm.operators.update.general import Inc
 from urllib.parse import urlparse
+from backend.common.core.config import is_local
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from playwright.async_api import Browser, ProxySettings
+from playwright.async_api import Browser
 from backend.common.models.user import User
-from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
+
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
+
 from backend.scrapeworker.common.exceptions import (
     NoDocsCollectedException,
     CanceledTaskException,
 )
 
 from backend.scrapeworker.common.models import Download
-from backend.scrapeworker.drivers.playwright.direct_download import (
-    PlaywrightDirectDownload,
-)
-from backend.scrapeworker.drivers.playwright.asp_web_form import PlaywrightAspWebForm
-from backend.scrapeworker.drivers.playwright.word_press_ajax import (
-    PlaywrightWordPressAjax,
-)
-
-from backend.scrapeworker.strategies.direct_download import DirectDownloadStategy
-from backend.scrapeworker.strategies.asp_web_form import AspWebFormStrategy
-from backend.scrapeworker.strategies.word_press_ajax import (
-    PlaywrightWordPressAjaxStrategy,
-)
-
 from backend.scrapeworker.common.downloader.aiohttp_client import AioDownloader
 from backend.common.core.enums import Status
 from backend.scrapeworker.common.file_metadata import pdf
+
+from backend.scrapeworker.strategies.playwright_strategies.direct_download import (
+    DirectDownloadStategy,
+)
+from backend.scrapeworker.strategies.playwright_strategies.aspnet_webform import (
+    AspNetWebFormStrategy,
+)
+
+from backend.scrapeworker.strategies.playwright_strategies.wordpress_ajax import (
+    WordPressAjaxStrategy,
+)
 
 
 class ScrapeWorker:
@@ -62,6 +60,8 @@ class ScrapeWorker:
 
     @alru_cache
     async def get_proxies(self) -> list[Proxy]:
+        if is_local:
+            return []
         proxies = await Proxy.find_all().to_list()
         proxy_exclusions = self.site.scrape_method_configuration.proxy_exclusions
         valid_proxies = [proxy for proxy in proxies if proxy.id not in proxy_exclusions]
@@ -174,77 +174,79 @@ class ScrapeWorker:
     def url_filter(self, url):
         return self.unqiue_url(url) and self.valid_scheme(url)
 
-    async def try_direct_download_playwright(self):
-        async with PlaywrightDirectDownload(browser=self.browser, proxy=None) as driver:
-            strategy = DirectDownloadStategy(
-                config=self.site.scrape_method_configuration, driver=driver
-            )
+    async def try_wordpress_ajax_playwright(self, proxies):
+        strategy = WordPressAjaxStrategy(
+            browser=self.browser,
+            config=self.site.scrape_method_configuration,
+        )
 
-            valid_strategy = False
-            for base_url in self.active_base_urls():
-                elements, downloads = await strategy.execute(base_url.url)
-                valid_strategy = len(elements) > 0 and len(downloads) > 0
+        valid_strategy = False
+        for base_url in self.active_base_urls():
+            elements, downloads = await strategy.execute(base_url.url, proxies)
+            valid_strategy = len(elements) > 0 and len(downloads) > 0
 
-            # if len(downloads) == 0:
-            #     pass
-            # instead of raising here, indicate in logs that we found nadda for this strat
-            # raise NoDocsCollectedException("No documents collected.")
+        # if len(downloads) == 0:
+        #     pass
+        # instead of raising here, indicate in logs that we found nadda for this strat
+        # raise NoDocsCollectedException("No documents collected.")
 
-            if valid_strategy:
-                await self.process_downloads(base_url, downloads, elements)
+        if valid_strategy:
+            await self.process_downloads(base_url, downloads, elements)
 
-            return valid_strategy
+        return valid_strategy
 
-    async def try_asp_web_form_playwright(self):
-        async with PlaywrightAspWebForm(browser=self.browser, proxy=None) as driver:
-            strategy = AspWebFormStrategy(
-                config=self.site.scrape_method_configuration, driver=driver
-            )
+    async def try_aspnet_webform_playwright(self, proxies):
+        strategy = AspNetWebFormStrategy(
+            browser=self.browser,
+            config=self.site.scrape_method_configuration,
+        )
 
-            valid_strategy = False
-            for base_url in self.active_base_urls():
-                elements, downloads = await strategy.execute(base_url.url)
-                valid_strategy = len(elements) > 0 and len(downloads) > 0
+        valid_strategy = False
+        for base_url in self.active_base_urls():
+            elements, downloads = await strategy.execute(base_url.url, proxies)
+            valid_strategy = len(elements) > 0 and len(downloads) > 0
 
-            # if len(downloads) == 0:
-            #     pass
-            # instead of raising here, indicate in logs that we found nadda for this strat
-            # raise NoDocsCollectedException("No documents collected.")
+        # if len(downloads) == 0:
+        #     pass
+        # instead of raising here, indicate in logs that we found nadda for this strat
+        # raise NoDocsCollectedException("No documents collected.")
 
-            if valid_strategy:
-                await self.process_downloads(base_url, downloads, elements)
+        if valid_strategy:
+            await self.process_downloads(base_url, downloads, elements)
 
-            return valid_strategy
+        return valid_strategy
 
-    async def try_word_press_ajax_playwright(self):
-        async with PlaywrightWordPressAjax(browser=self.browser, proxy=None) as driver:
-            strategy = PlaywrightWordPressAjaxStrategy(
-                config=self.site.scrape_method_configuration, driver=driver
-            )
+    async def try_direct_download_playwright(self, proxies):
+        strategy = DirectDownloadStategy(
+            browser=self.browser,
+            config=self.site.scrape_method_configuration,
+        )
 
-            valid_strategy = False
-            for base_url in self.active_base_urls():
-                elements, downloads = await strategy.execute(base_url.url)
-                valid_strategy = len(elements) > 0 and len(downloads) > 0
+        valid_strategy = False
+        for base_url in self.active_base_urls():
+            elements, downloads = await strategy.execute(base_url.url, proxies)
+            valid_strategy = len(elements) > 0 and len(downloads) > 0
 
-            # if len(downloads) == 0:
-            #     pass
-            # instead of raising here, indicate in logs that we found nadda for this strat
-            # raise NoDocsCollectedException("No documents collected.")
+        # if len(downloads) == 0:
+        #     pass
+        # instead of raising here, indicate in logs that we found nadda for this strat
+        # raise NoDocsCollectedException("No documents collected.")
 
-            if valid_strategy:
-                await self.process_downloads(base_url, downloads, elements)
+        if valid_strategy:
+            await self.process_downloads(base_url, downloads, elements)
 
-            return valid_strategy
+        return valid_strategy
 
     async def process_downloads(self, base_url, downloads, elements):
         filtered = filter(
             lambda download: self.url_filter(download.request.url), downloads
         )
 
+        # inc by total count? multiple ContentStrategies can exist
+        await self.scrape_task.update(Inc({SiteScrapeTask.links_found: len(elements)}))
+
         tasks = []
         for download in filtered:
-            await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
             tasks.append(asyncio.create_task(self.attempt_download(download, base_url)))
 
         try:
@@ -258,7 +260,13 @@ class ScrapeWorker:
         # can try all and update config
         # can read from human set config
         # can do w/e we want to pick strats without waste
+        proxies = await self.get_proxies()
 
-        # found_direct_download = await self.try_direct_download_playwright()
-        # found_asp_web_form = await self.try_asp_web_form_playwright()
-        found_word_press_ajax = await self.try_word_press_ajax_playwright()
+        found_direct_download = await self.try_direct_download_playwright(proxies)
+        logging.info(f"found_direct_download={found_direct_download}")
+
+        found_asp_web_form = await self.try_aspnet_webform_playwright(proxies)
+        logging.info(f"found_asp_web_form={found_asp_web_form}")
+
+        found_word_press_ajax = await self.try_wordpress_ajax_playwright(proxies)
+        logging.info(f"found_word_press_ajax={found_word_press_ajax}")
