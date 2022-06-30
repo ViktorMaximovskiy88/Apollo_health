@@ -56,7 +56,7 @@ class ExtractWorker:
                 scrape_task_id=self.extract_task.scrape_task_id,
                 retrieved_document_id=self.extract_task.retrieved_document_id,
                 content_extraction_task_id=self.extract_task.id,
-                collection_time=datetime.now(),
+                first_collected_date=datetime.now(),
                 result=row,
             )
             await result.save()

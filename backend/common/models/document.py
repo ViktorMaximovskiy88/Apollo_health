@@ -9,8 +9,8 @@ class RetrievedDocument(BaseDocument):
     scrape_task_id: PydanticObjectId | None = None
     logical_document_id: PydanticObjectId | None = None
     logical_document_version: int | None = None
-    collection_time: datetime | None = None
-    last_seen: datetime | None = None
+    first_collected_date: datetime | None = None
+    last_collected_date: datetime | None = None
     url: str | None = None
     checksum: str | None = None
     disabled: bool = False
@@ -35,8 +35,8 @@ class UpdateRetrievedDocument(BaseModel):
     scrape_task_id: PydanticObjectId | None = None
     logical_document_id: PydanticObjectId | None = None
     logical_document_version: int | None = None
-    collection_time: datetime | None = None
-    last_seen: datetime | None = None
+    first_collected_date: datetime | None = None
+    last_collected_date: datetime | None = None
     url: str | None = None
     checksum: str | None = None
     disabled: bool | None = None
@@ -49,3 +49,29 @@ class UpdateRetrievedDocument(BaseModel):
 
     automated_content_extraction: bool | None = None
     automated_content_extraction_class: str | None = None
+
+# Deprecated
+class OldRetrievedDocument(BaseDocument):
+    site_id: PydanticObjectId | None = None
+    scrape_task_id: PydanticObjectId | None = None
+    logical_document_id: PydanticObjectId | None = None
+    logical_document_version: int | None = None
+    collection_time: datetime | None = None
+    last_seen: datetime | None = None
+    url: str | None = None
+    checksum: str | None = None
+    disabled: bool = False
+    name: str | None = None
+    metadata: dict = {}
+    context_metadata: dict = {}
+    effective_date: datetime | None = None
+    document_type: str | None = None
+    doc_type_confidence: float | None = None
+    identified_dates: list[datetime] = []
+    base_url: str | None = None
+    lang_code: LangCode | None = None
+
+    automated_content_extraction: bool = False
+    automated_content_extraction_class: str | None = None
+    class Collection:
+        name = "RetrievedDocument"
