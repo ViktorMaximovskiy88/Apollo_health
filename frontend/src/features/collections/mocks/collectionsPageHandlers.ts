@@ -22,6 +22,9 @@ const db = factory({
   },
 });
 
+const errorMessage =
+  'Traceback (most recent call last):\n  File "/Users/andrewhorn/workspace/Apollo/backend/scrapeworker/main.py", line 145, in worker_fn\n    raise Exception()\nException\n';
+
 db.scrapeTask.create({
   _id: faker.database.mongodbObjectId(),
   site_id: faker.database.mongodbObjectId(),
@@ -33,8 +36,7 @@ db.scrapeTask.create({
   documents_found: 0,
   new_documents_found: 0,
   worker_id: faker.database.mongodbObjectId(),
-  error_message:
-    'Traceback (most recent call last):\n  File "/Users/andrewhorn/workspace/Apollo/backend/scrapeworker/main.py", line 145, in worker_fn\n    raise Exception()\nException\n',
+  error_message: errorMessage,
   links_found: 0,
 });
 
@@ -85,8 +87,7 @@ export const handlers = [
         documents_found: 0,
         new_documents_found: 0,
         worker_id: faker.database.mongodbObjectId(),
-        error_message:
-          'Traceback (most recent call last):\n  File "/Users/andrewhorn/workspace/Apollo/backend/scrapeworker/main.py", line 145, in worker_fn\n    raise Exception()\nException\n',
+        error_message: '',
         links_found: 0,
       });
       processScrape(newScrape._id);
