@@ -1,43 +1,64 @@
 import { rest } from 'msw';
-import scrapesFixture from './scrapes.fixture.json';
-import { SiteScrapeTask } from '../types';
 import { Status } from '../../../common';
 import { CollectionMethod } from '../../sites/types';
+import { faker } from '@faker-js/faker';
 
-interface BackendSiteScrapeTask
-  extends Omit<
-    SiteScrapeTask,
-    'start_time' | 'end_time' | 'status' | 'error_message'
-  > {
-  _id: string;
-  worker_id: string | null;
-  start_time: string | null;
-  end_time: string | null;
-  error_message: string | null;
-  status: Status | string;
-}
+import { factory, primaryKey } from '@mswjs/data';
 
-const scrapes: BackendSiteScrapeTask[] = scrapesFixture;
+const db = factory({
+  scrapeTask: {
+    status: String,
+    _id: primaryKey(String),
+    site_id: String,
+    queued_time: String,
+    worker_id: String,
+    start_time: String,
+    end_time: String,
+    last_active: String,
+    documents_found: Number,
+    new_documents_found: Number,
+    error_message: String,
+    links_found: Number,
+  },
+});
 
-const createNewScrape = (
-  oldScrape: BackendSiteScrapeTask
-): BackendSiteScrapeTask => {
-  const newScrape = { ...oldScrape };
-  newScrape._id = 'unique-id';
-  newScrape.status = Status.Queued;
-  newScrape.documents_found = 0;
-  newScrape.new_documents_found = 0;
-  return newScrape;
-};
+db.scrapeTask.create({
+  _id: faker.database.mongodbObjectId(),
+  site_id: faker.database.mongodbObjectId(),
+  queued_time: '2022-06-20T14:17:19.185000',
+  start_time: '2022-06-20T14:17:22.497000',
+  end_time: '2022-06-20T14:17:22.594000',
+  last_active: '2022-06-20T14:17:22.594000',
+  status: Status.Failed,
+  documents_found: 0,
+  new_documents_found: 0,
+  worker_id: faker.database.mongodbObjectId(),
+  error_message:
+    'Traceback (most recent call last):\n  File "/Users/andrewhorn/workspace/Apollo/backend/scrapeworker/main.py", line 145, in worker_fn\n    raise Exception()\nException\n',
+  links_found: 0,
+});
 
 const timeOut = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-const processScrape = async (scrape: BackendSiteScrapeTask): Promise<void> => {
+const processScrape = async (scrapeTaskId: string): Promise<void> => {
   await timeOut(1000);
-  scrape.status = Status.InProgress;
-  await timeOut(1000);
-  scrape.status = Status.Finished;
+  db.scrapeTask.update({
+    where: { _id: { equals: scrapeTaskId }, status: { equals: Status.Queued } },
+    data: {
+      status: Status.InProgress,
+    },
+  });
+  await timeOut(5000);
+  db.scrapeTask.update({
+    where: {
+      _id: { equals: scrapeTaskId },
+      status: { equals: Status.InProgress },
+    },
+    data: {
+      status: Status.Finished,
+    },
+  });
 };
 
 export const handlers = [
@@ -47,16 +68,29 @@ export const handlers = [
   rest.get(
     'http://localhost/api/v1/site-scrape-tasks/',
     async (req, res, ctx) => {
-      return res(ctx.json(scrapes));
+      return res(ctx.json(db.scrapeTask.getAll().reverse()));
     }
   ),
   rest.put(
     'http://localhost/api/v1/site-scrape-tasks/',
     async (req, res, ctx) => {
-      const newScrape = createNewScrape(scrapes[0]);
-      processScrape(newScrape);
-      scrapes.unshift(newScrape);
-      return res(ctx.json(scrapes));
+      const newScrape = db.scrapeTask.create({
+        _id: faker.database.mongodbObjectId(),
+        site_id: faker.database.mongodbObjectId(),
+        queued_time: '2022-06-20T14:17:19.185000',
+        start_time: '2022-06-20T14:17:22.497000',
+        end_time: '2022-06-20T14:17:22.594000',
+        last_active: '2022-06-20T14:17:22.594000',
+        status: Status.Queued,
+        documents_found: 0,
+        new_documents_found: 0,
+        worker_id: faker.database.mongodbObjectId(),
+        error_message:
+          'Traceback (most recent call last):\n  File "/Users/andrewhorn/workspace/Apollo/backend/scrapeworker/main.py", line 145, in worker_fn\n    raise Exception()\nException\n',
+        links_found: 0,
+      });
+      processScrape(newScrape._id);
+      return res(ctx.json({}));
     }
   ),
 ];
