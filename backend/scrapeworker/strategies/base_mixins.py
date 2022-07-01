@@ -24,9 +24,7 @@ def convert_proxies(
     return proxy_list
 
 
-async def proxy_with_backoff(
-    proxies: [],
-):
+async def proxy_with_backoff(proxies: list[Proxy] = []):
     rate_limiter = RateLimiter()
     async for attempt in rate_limiter.attempt_with_backoff(3):
         i = attempt.retry_state.attempt_number - 1

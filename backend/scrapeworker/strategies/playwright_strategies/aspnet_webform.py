@@ -1,21 +1,28 @@
 import logging
 from functools import cached_property
-from playwright.async_api import ElementHandle, Route, Request as RouteRequest
+from playwright.async_api import (
+    ElementHandle,
+    Route,
+    Request as RouteRequest,
+)
 from backend.scrapeworker.common.models import Download, Metadata, Request
 from backend.scrapeworker.common.selectors import filter_by_href
-from backend.scrapeworker.strategies import playwright_mixins
 from backend.scrapeworker.strategies.playwright_strategies.base_strategy import (
     BaseStrategy,
 )
+from backend.scrapeworker.strategies import playwright_mixins
 
 
 class AspNetWebFormStrategy(BaseStrategy):
+
+    type: str = "AspNetWebForm"
+
     @cached_property
     def css_selector(self) -> str:
         href_selectors = filter_by_href(webform=True)
         return ", ".join(href_selectors)
 
-    async def nav_to_page(self):
+    async def setup(self):
         cookie = {
             "name": "AspxAutoDetectCookieSupport",
             "value": "1",
@@ -26,15 +33,15 @@ class AspNetWebFormStrategy(BaseStrategy):
         }
 
         await self.context.add_cookies([cookie])
-        await super().nav_to_page(timeout=60000)
 
-    async def collect_downloads(
-        self,
-        elements: list[ElementHandle],
-    ) -> list[Download]:
+    async def execute(self) -> list[Download]:
         requests: list[Request] = []
         metadatas: list[Metadata] = []
         downloads: list[Download] = []
+
+        await self.setup()
+
+        link_handles = await self.page.query_selector_all(self.css_selector)
 
         async def intercept(route: Route, request: RouteRequest):
             if self.url in request.url and request.method == "POST":
@@ -52,11 +59,11 @@ class AspNetWebFormStrategy(BaseStrategy):
 
         await self.page.route("**/*", intercept)
 
-        el: ElementHandle
-        for el in elements:
-            metadata = await playwright_mixins.extract_metadata(el)
+        link_handle: ElementHandle
+        for link_handle in link_handles:
+            metadata = await playwright_mixins.extract_metadata(link_handle)
             metadatas.append(metadata)
-            await el.click(timeout=3000)
+            await link_handle.click()
 
         await self.page.unroute("**/*", intercept)
 
@@ -71,14 +78,3 @@ class AspNetWebFormStrategy(BaseStrategy):
                 )
 
         return downloads
-
-    async def execute(self):
-        await self.nav_to_page()
-
-        elements = await self.find_elements(self.css_selector)
-        logging.info(f"elementsLength={len(elements)}")
-
-        downloads = await self.collect_downloads(elements)
-        logging.info(f"downloadsLength={len(downloads)}")
-
-        return (elements, downloads)

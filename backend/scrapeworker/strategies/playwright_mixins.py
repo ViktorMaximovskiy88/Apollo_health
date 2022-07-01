@@ -1,29 +1,10 @@
-import logging
 import asyncio
-from playwright_stealth import stealth_async
-from playwright.async_api import (
-    Page,
-    Locator,
-    ElementHandle,
-    ProxySettings,
-)
+from playwright.async_api import ElementHandle, ProxySettings
+
 from backend.scrapeworker.strategies import base_mixins
 from backend.common.core.config import config
 from backend.scrapeworker.common.models import Metadata
 from backend.common.models.proxy import Proxy
-
-
-async def nav_to_page(page, url, wait_until="domcontentloaded", timeout=3000):
-    await stealth_async(page)
-    await page.goto(url, wait_until=wait_until, timeout=timeout)
-
-
-async def find_elements(page: Page, css_selector: str) -> list[ElementHandle]:
-    return await page.query_selector_all(css_selector)
-
-
-async def watch_elements(page: Page, css_selector: str) -> Locator:
-    return await page.locator(css_selector)
 
 
 async def extract_metadata(element: ElementHandle) -> Metadata:
