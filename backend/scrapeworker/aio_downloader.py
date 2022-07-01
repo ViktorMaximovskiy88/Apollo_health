@@ -11,6 +11,7 @@ from backend.scrapeworker.common.models import Request
 from backend.common.core.config import config
 from playwright.async_api import ProxySettings
 from tenacity import AttemptManager
+from backend.scrapeworker.common.rate_limiter import RateLimiter
 from random import shuffle
 
 
@@ -20,10 +21,12 @@ class AioDownloader:
 
     def __init__(self):
         self.session = ClientSession()
+        self.rate_limiter = RateLimiter()
 
     async def close(self):
         await self.session.close()
 
+    @asynccontextmanager
     async def download_url(
         self, request: Request, proxies: list[tuple[Proxy | None, dict | None]] = []
     ):
@@ -61,20 +64,28 @@ class AioDownloader:
 
         return [proxy, proxies]
 
-    @cached_property
-    def proxies(self, proxies: list[Proxy]):
-        _proxies = [self.convert_proxy(proxy) for proxy in proxies]
-        return shuffle(_proxies)
+    def convert_proxies(
+        self,
+        proxies: list[Proxy],
+    ):
+        _proxies = []
+        for [proxy, _proxy_settings] in proxies:
+            if proxy is not None:
+                _proxies.append(self.convert_proxy(proxy))
+
+        shuffle(_proxies)
+        return _proxies
 
     async def proxy_with_backoff(
-        self, proxies: list[Proxy]
+        self,
+        proxies: list[Proxy],
     ) -> AsyncGenerator[tuple[AttemptManager, dict[str, Any]], None]:
-        shuffle(proxies)
+        aio_proxies = self.convert_proxies(proxies)
         async for attempt in self.rate_limiter.attempt_with_backoff():
             i = attempt.retry_state.attempt_number - 1
-            proxy_count = len(self.proxies)
+            proxy_count = len(aio_proxies)
             proxy, proxy_settings = (
-                self.proxies[i % proxy_count] if proxy_count > 0 else [None, {}]
+                aio_proxies[i % proxy_count] if proxy_count > 0 else [None, {}]
             )
             logging.info(
                 f"{i} Using proxy {proxy and proxy.name} ({proxy_settings and proxy_settings['proxy']})"

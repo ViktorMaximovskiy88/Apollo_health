@@ -276,6 +276,7 @@ class ScrapeWorker:
                     downloads = await strategy.execute()
                     all_downloads = all_downloads + downloads
 
+                tasks = []
                 for download in all_downloads:
                     url = download.request.url
                     # check that think link is unique and that we should not skip it
@@ -283,12 +284,12 @@ class ScrapeWorker:
                         await self.scrape_task.update(
                             Inc({SiteScrapeTask.links_found: 1})
                         )
-                        downloads.append(
+                        tasks.append(
                             self.attempt_download(
                                 base_url,
                                 download,
                             )
                         )
-                await self.wait_for_completion_or_cancel(downloads)
+                await self.wait_for_completion_or_cancel(tasks)
 
         self.downloader.close()
