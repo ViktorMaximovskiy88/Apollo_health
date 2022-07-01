@@ -35,8 +35,6 @@ class DirectDownloadStrategy(BaseStrategy):
         link_handle: ElementHandle
         for link_handle in link_handles:
             metadata: Metadata = await playwright_mixins.extract_metadata(link_handle)
-            metadata.strategy_type = self.type
-
             downloads.append(
                 Download(
                     metadata=metadata,

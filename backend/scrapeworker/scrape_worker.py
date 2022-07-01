@@ -283,7 +283,12 @@ class ScrapeWorker:
                         await self.scrape_task.update(
                             Inc({SiteScrapeTask.links_found: 1})
                         )
-                        downloads.append(self.attempt_download(download))
+                        downloads.append(
+                            self.attempt_download(
+                                base_url,
+                                download,
+                            )
+                        )
                 await self.wait_for_completion_or_cancel(downloads)
 
         self.downloader.close()
