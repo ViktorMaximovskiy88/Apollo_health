@@ -8,6 +8,9 @@ import {
   useLocation,
   useParams,
 } from 'react-router-dom';
+
+import { withAuthenticationRequired, User } from '@auth0/auth0-react';
+import { DocumentsHomePage } from './features/documents/DocumentsHomePage';
 import { DocumentEditPage } from './features/documents/DocumentEditPage';
 import { CollectionsPage } from './features/collections/CollectionsPage';
 import { SiteCreatePage } from './features/sites/SiteCreatePage';
@@ -22,10 +25,12 @@ import { DocumentsPage } from './features/sites/DocumentsPage';
 import { ExtractionsPage } from './features/extractions/ExtractionsPage';
 import { DocExtractionPage } from './features/extractions/DocExtractionPage';
 import { ExtractionEditPage } from './features/extractions/ExtractionEditPage';
+import { useAuth0 } from '@auth0/auth0-react';
 
 function TopNav() {
   const location = useLocation();
   const params = useParams();
+  const { user, logout } = useAuth0();
   const siteId = params.siteId;
   const { data: site } = useGetSiteQuery(siteId, { skip: !siteId });
   const current = location.pathname.split('/')[1];
@@ -39,7 +44,7 @@ function TopNav() {
         <Menu
           mode="horizontal"
           selectedKeys={[current]}
-          className="justify-end"
+          className="justify-end items-center"
         >
           <div className="flex mr-auto">
             <Menu.Item key={'sites'}>
@@ -59,6 +64,20 @@ function TopNav() {
               <Link to={`/${key}`}>{label}</Link>
             </Menu.Item>
           ))}
+          <Menu.Item key={'profile'}>
+            <Menu.SubMenu title={`${user?.given_name} ${user?.family_name}`}>
+              <Menu.Item
+                key={'logout'}
+                onClick={() => {
+                  logout({
+                    returnTo: window.location.origin,
+                  });
+                }}
+              >
+                Logout
+              </Menu.Item>
+            </Menu.SubMenu>
+          </Menu.Item>
         </Menu>
       </Layout.Header>
       <Layout className="bg-white overflow-auto">
@@ -122,4 +141,9 @@ function App() {
   );
 }
 
-export default App;
+export default withAuthenticationRequired(App, {
+  loginOptions: { redirectTo: '/sites' },
+  claimCheck: function (user?: User): boolean {
+    return true;
+  },
+});

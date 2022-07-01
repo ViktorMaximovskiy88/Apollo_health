@@ -13,5 +13,7 @@ module "sourcehub" {
   sourcehub-app-version          = var.sourcehub-app-version
   sourcehub-scrapeworker-version = var.sourcehub-scrapeworker-version
   sourcehub-parseworker-version  = var.sourcehub-parseworker-version
-  sourcehub-scheduler-version  = var.sourcehub-scheduler-version
+  sourcehub-scheduler-version    = var.sourcehub-scheduler-version
+
+  auth0-config = var.auth0-config
 }
