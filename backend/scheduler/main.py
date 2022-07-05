@@ -15,6 +15,7 @@ from backend.common.task_queues.unique_task_insert import try_queue_unique_task
 from backend.common.core.config import is_local, config
 from backend.common.models.user import User
 from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.core.enums import Status
 from backend.app.utils.logger import Logger
 
 from backend.common.db.init import init_db
@@ -129,12 +130,42 @@ async def start_scaler():
         return
 
     while True:
-        queue_size = await SiteScrapeTask.find(SiteScrapeTask.status == 'QUEUED').count()
+        queue_size = await SiteScrapeTask.find({ 'status': { '$in': ['IN_PROGRESS', 'QUEUED'] } }).count()
         active_workers = determine_current_instance_count()
         tasks_per_worker = 5 # some setting
         new_cluster_size = get_new_cluster_size(queue_size, active_workers, tasks_per_worker)
         update_cluster_size(new_cluster_size)
         await asyncio.sleep(30)
+
+async def requeue_lost_task(task: SiteScrapeTask, now):
+    message = f"Requeuing task {task.id} from worker {task.worker_id}, likely lost to killed worker"
+    typer.secho(message, fg=typer.colors.RED)
+    new_task = SiteScrapeTask(id=task.id, site_id=task.site_id, queued_time=now)
+    await new_task.save()
+    await Site.find_one(Site.id == task.site_id).update(
+        { '$set': { 'last_status': task.status } }
+    )
+
+async def fail_lost_task(task: SiteScrapeTask, now: datetime):
+    message = f"Failing task {task.id} on worker {task.worker_id} due to lost heartbeat"
+    typer.secho(message, fg=typer.colors.RED)
+    await Site.find(Site.id == task.site_id).update(
+        Set(
+            {
+                Site.last_status: Status.FAILED,
+                Site.last_run_time: now,
+            }
+        )
+    )
+    await task.update(
+        Set(
+            {
+                SiteScrapeTask.status: Status.FAILED,
+                SiteScrapeTask.error_message: message,
+                SiteScrapeTask.end_time: now,
+            }
+        )
+    )
 
 async def start_hung_task_checker():
     """
@@ -149,28 +180,11 @@ async def start_hung_task_checker():
                 { 'last_active': None }
             ],
         })
-        message = "Lost task heartbeat"
         async for task in tasks:
-            message = f"Failing task {task.id} on worker {task.worker_id} due to lost heartbeat"
-            typer.secho(message, fg=typer.colors.RED)
-
-            await Site.find(Site.id == task.site_id).update(
-                Set(
-                    {
-                        Site.last_status: "FAILED",
-                        Site.last_run_time: now,
-                    }
-                )
-            )
-            await task.update(
-                Set(
-                    {
-                        SiteScrapeTask.status: "FAILED",
-                        SiteScrapeTask.error_message: message,
-                        SiteScrapeTask.end_time: now,
-                    }
-                )
-            )
+            if task.retry_if_lost:
+                await requeue_lost_task(task, now)
+            else:
+                await fail_lost_task(task, now)
         await asyncio.sleep(60)
 
 background_tasks: list[asyncio.Task] = []

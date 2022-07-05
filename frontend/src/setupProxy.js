@@ -4,6 +4,5 @@ const proxy = createProxyMiddleware({
   changeOrigin: true,
 });
 module.exports = function (app) {
-  app.use('/login', proxy);
   app.use('/api/v1', proxy);
 };

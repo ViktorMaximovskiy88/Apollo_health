@@ -1,5 +1,5 @@
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Security
 from backend.app.utils.security import get_password_hash
 from backend.common.models.user import NewUser, User, UserPublic, UserUpdate
 from backend.app.utils.logger import (
@@ -8,7 +8,8 @@ from backend.app.utils.logger import (
     get_logger,
     update_and_log_diff,
 )
-from backend.app.utils.user import get_current_admin_user, get_current_user
+
+from backend.app.utils.user import get_current_user, get_current_admin_user
 
 router = APIRouter(
     prefix="/users",
@@ -27,23 +28,28 @@ async def get_target(id: PydanticObjectId):
 
 @router.get("/whoami", response_model=UserPublic)
 async def read_current_user(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user),
 ) -> User:
     return current_user
 
 
-@router.get("/", response_model=list[UserPublic])
-async def read_users(
-    current_user: User = Depends(get_current_user),
-):
+@router.get(
+    "/",
+    response_model=list[UserPublic],
+    dependencies=[Security(get_current_user)],
+)
+async def read_users():
     users: list[User] = await User.find_many({}).to_list()
     return users
 
 
-@router.get("/{id}", response_model=UserPublic)
+@router.get(
+    "/{id}",
+    response_model=UserPublic,
+    dependencies=[Security(get_current_user)],
+)
 async def read_user(
     target: User = Depends(get_target),
-    current_user: User = Depends(get_current_user),
 ):
     return target
 
@@ -51,7 +57,7 @@ async def read_user(
 @router.put("/", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user: NewUser,
-    current_user: User = Depends(get_current_admin_user),
+    current_user: User = Security(get_current_admin_user),
     logger: Logger = Depends(get_logger),
 ):
     new_user = User(
@@ -69,7 +75,7 @@ async def create_user(
 async def update_user(
     updates: UserUpdate,
     target: User = Depends(get_target),
-    current_user: User = Depends(get_current_admin_user),
+    current_user: User = Security(get_current_admin_user),
     logger: Logger = Depends(get_logger),
 ):
     updated = await update_and_log_diff(logger, current_user, target, updates)
@@ -79,7 +85,7 @@ async def update_user(
 @router.delete("/{id}")
 async def delete_user(
     target: User = Depends(get_target),
-    current_user: User = Depends(get_current_admin_user),
+    current_user: User = Security(get_current_admin_user),
     logger: Logger = Depends(get_logger),
 ):
     await update_and_log_diff(logger, current_user, target, UserUpdate(disabled=True))

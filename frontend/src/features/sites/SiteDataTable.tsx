@@ -9,11 +9,15 @@ import {
   setSiteTableSort,
   siteTableState,
 } from '../../app/uiSlice';
-import { prettyDateTimeFromISO } from "../../common";
+import {
+  prettyDateTimeFromISO,
+  statusDisplayName,
+  statusStyledDisplay,
+} from '../../common';
 import { isErrorWithData } from '../../common/helpers';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { Status } from '../types';
+import { Status } from '../../common';
 import {
   useDeleteSiteMutation,
   useGetChangeLogQuery,
@@ -80,28 +84,18 @@ const createColumns = (deleteSite: any) => {
       filterEditorProps: {
         placeholder: 'All',
         dataSource: [
-          { id: Status.Finished, label: 'Success' },
-          { id: Status.Canceled, label: 'Canceled' },
-          { id: Status.Queued, label: 'Queued' },
-          { id: Status.Failed, label: 'Failed' },
-          { id: Status.InProgress, label: 'In Progress' },
+          { id: Status.Finished, label: statusDisplayName(Status.Finished) },
+          { id: Status.Canceled, label: statusDisplayName(Status.Canceled) },
+          { id: Status.Queued, label: statusDisplayName(Status.Queued) },
+          { id: Status.Failed, label: statusDisplayName(Status.Failed) },
+          {
+            id: Status.InProgress,
+            label: statusDisplayName(Status.InProgress),
+          },
         ],
       },
       render: ({ value: status }: { value: Status }) => {
-        switch (status) {
-          case Status.Finished:
-            return <span className="text-green-500">Success</span>;
-          case Status.Canceled:
-            return <span className="text-orange-500">Canceled</span>;
-          case Status.Queued:
-            return <span className="text-yellow-500">Queued</span>;
-          case Status.Failed:
-            return <span className="text-red-500">Failed</span>;
-          case Status.InProgress:
-            return <span className="text-blue-500">In Progress</span>;
-          default:
-            return null;
-        }
+        return statusStyledDisplay(status);
       },
     },
     {
@@ -156,14 +150,20 @@ export function SiteDataTable() {
     pollingInterval: 5000,
   });
   const [deleteSite] = useDeleteSiteMutation();
-  const columns = useMemo(() => createColumns(deleteSite), [deleteSite])
-  const tableState = useSelector(siteTableState)
-  const dispatch = useDispatch()
-  const onFilterChange = useCallback((filter: any) => dispatch(setSiteTableFilter(filter)), [dispatch]);
-  const onSortChange = useCallback((sort: any) => dispatch(setSiteTableSort(sort)), [dispatch]);
+  const columns = useMemo(() => createColumns(deleteSite), [deleteSite]);
+  const tableState = useSelector(siteTableState);
+  const dispatch = useDispatch();
+  const onFilterChange = useCallback(
+    (filter: any) => dispatch(setSiteTableFilter(filter)),
+    [dispatch]
+  );
+  const onSortChange = useCallback(
+    (sort: any) => dispatch(setSiteTableSort(sort)),
+    [dispatch]
+  );
 
   const formattedSites = sites?.filter((u) => !u.disabled) || [];
-  return <>
+  return (
     <ReactDataGrid
       dataSource={formattedSites}
       columns={columns}
@@ -173,5 +173,5 @@ export function SiteDataTable() {
       defaultSortInfo={tableState.sort}
       onSortInfoChange={onSortChange}
     />
-  </>
+  );
 }

@@ -12,7 +12,9 @@ export function prettyFromISO(
   dateFormat = DateTime.DATETIME_FULL_WITH_SECONDS
 ): string {
   return value
-    ? DateTime.fromISO(value, { zone: 'utc' }).toLocaleString(dateFormat)
+    ? DateTime.fromISO(value, { zone: 'utc' })
+        .toLocal()
+        .toLocaleString(dateFormat)
     : '';
 }
 
@@ -49,7 +51,9 @@ export function prettyDate(
   value: Date,
   dateFormat = DateTime.DATE_MED
 ): string {
-  return DateTime.fromJSDate(value, { zone: 'utc' }).toLocaleString(dateFormat);
+  return DateTime.fromJSDate(value, { zone: 'utc' })
+    .toLocal()
+    .toLocaleString(dateFormat);
 }
 
 /**

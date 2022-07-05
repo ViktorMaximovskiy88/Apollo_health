@@ -3,6 +3,7 @@ from uuid import UUID
 from beanie import PydanticObjectId
 from pydantic import BaseModel
 from backend.common.models.base_document import BaseDocument
+from backend.common.core.enums import Status
 
 
 class SiteScrapeTask(BaseDocument):
@@ -11,13 +12,14 @@ class SiteScrapeTask(BaseDocument):
     start_time: datetime | None = None
     end_time: datetime | None = None
     last_active: datetime | None = None
-    status: str = "QUEUED"
+    status: str = Status.QUEUED
     documents_found: int = 0
     new_documents_found: int = 0
     retrieved_document_ids: list[PydanticObjectId] = []
     worker_id: UUID | None = None
     error_message: str | None = None
     links_found: int = 0
+    retry_if_lost: bool = False
 
 
 class UpdateSiteScrapeTask(BaseModel):
@@ -29,6 +31,7 @@ class UpdateSiteScrapeTask(BaseModel):
     documents_found: int | None = None
     new_documents_found: int | None = None
     error_message: str | None = None
+    retry_if_lost: bool | None = False
 
 
 # Deprecated

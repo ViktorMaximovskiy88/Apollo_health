@@ -1,0 +1,7 @@
+{
+    "recommendations": [
+        "hashicorp.hcl",
+        "hashicorp.terraform",
+        "esbenp.prettier-vscode"
+    ]
+}

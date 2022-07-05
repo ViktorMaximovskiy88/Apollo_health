@@ -10,8 +10,13 @@ async def pdfinfo(dest_path):
     pdfinfo_out, _ = await process.communicate()
     info = pdfinfo_out.decode("utf-8", "ignore").strip()
     metadata = {}
+    key = ""
     for line in info.split("\n"):
         if not line.strip():
+            continue
+        if not ":" in line: # assume single value is broken into multiple lines
+            value = line.strip()
+            metadata[key] = f'{metadata[key]}; {value}'
             continue
         key, value = line.split(":", 1)
         value = value.strip()

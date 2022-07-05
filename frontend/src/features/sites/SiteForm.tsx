@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ActiveUrlResponse, BaseUrl, Site } from './types';
 import { useGetProxiesQuery } from '../proxies/proxiesApi';
+import { fetchWithAuth } from '../../app/base-api';
 import { CollectionMethod } from "./types"
 
 export function SiteForm(props: {
@@ -26,7 +27,7 @@ export function SiteForm(props: {
     const checkUrl = encodeURIComponent(value);
     let url = encodeURI(`/api/v1/sites/active-url?url=${checkUrl}`);
     if (currentSite) url += `&currentSite=${currentSite}`;
-    const check = await fetch(url);
+    const check = await fetchWithAuth(url);
     const activeUrlResponse = await check.json();
 
     setUrlValidation((prevState) => {
