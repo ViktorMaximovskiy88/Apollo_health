@@ -50,7 +50,6 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
 
     async def __interact(self, skip_to_index: int = 0) -> None:
         async def intercept(route: Route, request: RouteRequest):
-            print(request.url)
             if self.url in request.url and request.method == "POST":
                 response: Response = await self.page.request.fetch(
                     request.url,
@@ -79,13 +78,11 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
         await self.page.route("**/*", intercept)
 
         metadata: Metadata
-        print(f"{len(self.metadatas)} count of metadata")
         for index, metadata in enumerate(self.metadatas):
-            print(f"{index} Metadata #{metadata.element_id}")
+            logging.debug(f"{index} of {len(self.metadatas)} count of metadata")
             self.last_metadata_index = index
             locator: Locator = self.page.locator(f"#{metadata.element_id}")
             await locator.click()
-            print(f"{index} Metadata #{metadata.element_id} complete")
 
         await self.page.unroute("**/*", intercept)
 
@@ -93,7 +90,7 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
         request: RouteRequest
         for index, request in enumerate(self.requests):
             if request:
-                print(f"{index} Download")
+                logging.debug(f"{index} Download")
                 self.downloads.append(
                     Download(
                         metadata=self.metadatas[index],

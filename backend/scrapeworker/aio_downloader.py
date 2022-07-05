@@ -37,6 +37,7 @@ class AioDownloader:
                 response = await self.session.request(
                     url=request.url,
                     method=request.method,
+                    headers=request.headers,
                 )
                 if not response:
                     raise Exception(f"Failed to download url {request.url}")
