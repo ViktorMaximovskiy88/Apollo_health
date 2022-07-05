@@ -1,12 +1,11 @@
 import asyncio
-import logging
+import os
+import pathlib
 from contextlib import asynccontextmanager
 from datetime import datetime
 from random import shuffle
-from typing import AsyncGenerator, Coroutine
+from typing import AsyncGenerator, Coroutine, Type
 from async_lru import alru_cache
-import os
-import pathlib
 from tenacity._asyncio import AsyncRetrying
 from tenacity.stop import stop_after_attempt
 from beanie.odm.operators.update.array import Push
@@ -23,6 +22,7 @@ from playwright.async_api import (
     ProxySettings,
     Page,
 )
+
 from playwright_stealth import stealth_async
 from backend.common.models.user import User
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
@@ -32,6 +32,7 @@ from backend.scrapeworker.common.effective_date import (
     extract_dates,
     select_effective_date,
 )
+
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
@@ -42,7 +43,8 @@ from backend.scrapeworker.common.exceptions import (
     CanceledTaskException,
 )
 from backend.scrapeworker.common.models import Download
-from backend.scrapeworker.strategies.playwright_strategies import strategies
+from backend.scrapeworker.scrapers import scrapers
+from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 
 
 class ScrapeWorker:
@@ -235,8 +237,10 @@ class ScrapeWorker:
                 page = await context.new_page()
                 await stealth_async(page)
                 await page.goto(
-                    base_url, wait_until="domcontentloaded"
-                )  # await page.goto(base_url, wait_until="networkidle")
+                    base_url,
+                    wait_until="domcontentloaded",
+                    timeout=60000,
+                )
 
         if not page:
             raise Exception(f"Could not load {base_url}")
@@ -265,31 +269,34 @@ class ScrapeWorker:
             async with self.playwright_context(base_url.url) as (page, context):
 
                 all_downloads: list[Download] = []
-
-                for Strategy in strategies:
-                    strategy = Strategy(
+                for Scraper in scrapers:
+                    scraper: Type[PlaywrightBaseScraper] = Scraper(
                         page=page,
                         context=context,
                         config=self.site.scrape_method_configuration,
                         url=base_url.url,
                     )
-                    downloads = await strategy.execute()
-                    all_downloads = all_downloads + downloads
+
+                    if await scraper.is_applicable():
+                        downloads = await scraper.execute()
+                        all_downloads = all_downloads + downloads
 
                 tasks = []
                 for download in all_downloads:
                     url = download.request.url
-                    # check that think link is unique and that we should not skip it
+
+                    # check that the link is unique and that we should not skip it
                     if not self.skip_url(url) and self.url_not_seen(url):
                         await self.scrape_task.update(
                             Inc({SiteScrapeTask.links_found: 1})
                         )
                         tasks.append(
                             self.attempt_download(
-                                base_url,
+                                str(base_url),
                                 download,
                             )
                         )
+
                 await self.wait_for_completion_or_cancel(tasks)
 
-        self.downloader.close()
+        await self.downloader.close()

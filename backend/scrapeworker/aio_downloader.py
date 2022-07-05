@@ -3,7 +3,6 @@ import xxhash
 import tempfile
 import aiofiles
 from contextlib import asynccontextmanager
-from functools import cached_property
 from typing import AsyncGenerator, Any
 from aiohttp import ClientSession, ClientResponse, BasicAuth
 from backend.common.models.proxy import Proxy
@@ -28,22 +27,23 @@ class AioDownloader:
 
     @asynccontextmanager
     async def download_url(
-        self, request: Request, proxies: list[tuple[Proxy | None, dict | None]] = []
+        self,
+        request: Request,
+        proxies: list[tuple[Proxy | None, dict | None]] = [],
     ):
+        response: ClientResponse
         async for attempt, proxy in self.proxy_with_backoff(proxies):
             with attempt:
-                response = None
-
-                if request.method == "GET":
-                    response = await self.get(request=request, proxy=proxy)
-                else:
-                    response = await self.post(equest=request, proxy=proxy)
-
+                response = await self.session.request(
+                    url=request.url,
+                    method=request.method,
+                )
                 if not response:
                     raise Exception(f"Failed to download url {request.url}")
 
                 print(f"Downloaded {request.url}, got {response.status}")
-                yield response
+
+        yield response
 
     def convert_proxy(self, proxy: Proxy):
         proxy_auth = None
@@ -72,6 +72,8 @@ class AioDownloader:
         for [proxy, _proxy_settings] in proxies:
             if proxy is not None:
                 _proxies.append(self.convert_proxy(proxy))
+            else:
+                [None, None]
 
         shuffle(_proxies)
         return _proxies
@@ -91,28 +93,6 @@ class AioDownloader:
                 f"{i} Using proxy {proxy and proxy.name} ({proxy_settings and proxy_settings['proxy']})"
             )
             yield attempt, proxy_settings
-
-    async def get(self, request: Request, proxy: dict) -> bytes:
-        response: ClientResponse
-        async with self.session.get(
-            request.url,
-            data=request.data,
-            headers=request.headers,
-            proxy=proxy["proxy"],
-            proxy_auth=proxy["proxy_auth"],
-        ) as response:
-            yield response
-
-    async def post(self, request: Request, proxy: dict) -> bytes:
-        response: ClientResponse
-        async with self.session.post(
-            request.url,
-            data=request.data,
-            headers=request.headers,
-            proxy=proxy["proxy"],
-            proxy_auth=proxy["proxy_auth"],
-        ) as response:
-            yield response
 
     @asynccontextmanager
     async def tempfile_path(self, body: bytes):
@@ -135,11 +115,12 @@ class AioDownloader:
         else:
             print(f"Attempting download {url}")
             async with self.download_url(url, proxies) as response:
+
                 if not response.ok:
                     # self.redis.set(url, "DISCARD", ex=60 * 60 * 1)  # 1 hour
                     return
-                body = await response.body()
+                body = await response.read()
                 # self.redis.set(url, body, ex=60 * 60 * 1)  # 1 hour
 
-        async with self.tempfile_path(url, body) as (temp_path, hash):
+        async with self.tempfile_path(body) as (temp_path, hash):
             yield temp_path, hash

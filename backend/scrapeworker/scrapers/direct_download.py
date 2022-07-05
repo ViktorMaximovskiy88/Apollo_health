@@ -3,13 +3,11 @@ from functools import cached_property
 from playwright.async_api import ElementHandle
 from backend.scrapeworker.common.models import Download, Metadata, Request
 from backend.scrapeworker.common.selectors import filter_by_href, filter_by_hidden_value
-from backend.scrapeworker.strategies import base_mixins, playwright_mixins
-from backend.scrapeworker.strategies.playwright_strategies.base_strategy import (
-    BaseStrategy,
-)
+from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
+from urllib.parse import urljoin
 
 
-class DirectDownloadStrategy(BaseStrategy):
+class DirectDownloadScraper(PlaywrightBaseScraper):
     type: str = "DirectDownload"
 
     @cached_property
@@ -25,6 +23,7 @@ class DirectDownloadStrategy(BaseStrategy):
         )
 
         self.selectors = self.selectors + href_selectors + hidden_value_selectors
+        logging.debug(self.selectors)
         return ", ".join(self.selectors)
 
     async def execute(self) -> list[Download]:
@@ -34,17 +33,16 @@ class DirectDownloadStrategy(BaseStrategy):
 
         link_handle: ElementHandle
         for link_handle in link_handles:
-            metadata: Metadata = await playwright_mixins.extract_metadata(link_handle)
+            metadata: Metadata = await self.extract_metadata(link_handle)
             downloads.append(
                 Download(
                     metadata=metadata,
                     request=Request(
-                        url=base_mixins.join_url(
+                        url=urljoin(
                             self.url,
                             metadata.href,
                         ),
                     ),
                 )
             )
-
         return downloads
