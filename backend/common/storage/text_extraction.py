@@ -49,7 +49,7 @@ class TextExtractor:
                 raise UnknownFileTypeError("Extracting text from {0} requires temp_path!"
                                        .format(self.mimetype))
             self.full_text, self.metadata = \
-                await extract_pdf_text_and_page_count(self.temp_path)
+                await extract_pdf_text(self.temp_path)
 
         elif self.mimetype == 'text/html':
             self.full_text = extract_html_text(self.document_bytes)
@@ -61,7 +61,7 @@ class TextExtractor:
         return self.full_text
 
 
-async def extract_pdf_text_and_page_count(temp_path) -> str:    
+async def extract_pdf_text(temp_path) -> str:    
     pdf = await pdftotext(temp_path)
     metadata = await pdfinfo(temp_path)
     return pdf, metadata
