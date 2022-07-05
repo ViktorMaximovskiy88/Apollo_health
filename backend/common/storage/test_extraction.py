@@ -11,8 +11,7 @@ import aiofiles.os
 async def test_html_hash():
     URL = "https://parprdusemmitst01.blob.core.windows.net/autohunteddocs/1e7a028b-c1ef-4472-9b5a-01213ea47ebd/1e7a028b-c1ef-4472-9b5a-01213ea47ebd.htm"
     response = requests.get(URL)
-    extractor = TextExtractor(document_bytes=response.content,
-                            mimetype=None)
+    extractor = TextExtractor(document_bytes=response.content)
     await extractor.extract()
     full_text = extractor.full_text     
     hash=get_document_hash(extractor)
@@ -29,8 +28,8 @@ async def test_pdf_hash():
                 
                 res = await fd.write(response.content)
                 await aiofiles.os.stat(str(temp.name))
-                extractor = TextExtractor(document_bytes=response.content,
-                                        mimetype=None, temp_path=temp.name)
+                extractor = TextExtractor(document_bytes=response.content, mimetype="application/pdf",
+                                       temp_path= temp.name)
                 await extractor.extract()
                 full_text = extractor.full_text
                 hash=get_document_hash(extractor)

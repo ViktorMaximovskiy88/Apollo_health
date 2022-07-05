@@ -78,13 +78,13 @@ class DocDownloader:
 
 
     @asynccontextmanager
-    async def tempfile_path(self, url: str, body: bytes):
+    async def tempfile_path(self, url: str, body: bytes, content_type: str):
         with tempfile.NamedTemporaryFile() as temp:
             async with aiofiles.open(temp.name, "wb") as fd:
                 
                 await fd.write(body)
             extractor = TextExtractor(document_bytes=body,
-                              mimetype=None, temp_path=temp.name)
+                              mimetype=content_type, temp_path=temp.name)
             await extractor.extract()
             yield temp.name, get_document_hash(extractor), extractor
 
@@ -106,6 +106,6 @@ class DocDownloader:
                     return
                 body = await response.body()
                 # self.redis.set(url, body, ex=60 * 60 * 1)  # 1 hour
-
-        async with self.tempfile_path(url, body) as (temp_path, hash, extractor):
+                content_type = response.headers.get('content-type')
+        async with self.tempfile_path(url, body, content_type) as (temp_path, hash, extractor):
             yield temp_path, hash, extractor

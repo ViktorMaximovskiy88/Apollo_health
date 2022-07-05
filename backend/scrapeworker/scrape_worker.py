@@ -1,7 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime
-#from importlib.metadata import metadata
 from random import shuffle
 from typing import AsyncGenerator, Coroutine
 from async_lru import alru_cache
@@ -126,12 +125,9 @@ class ScrapeWorker:
                     RetrievedDocument.checksum == checksum
                 )
 
-            #metadata = await pdfinfo(temp_path)
-            #text = await pdftotext(temp_path)
             text = extractor.full_text
             dates = extract_dates(text)
             effective_date = select_effective_date(dates)
-            # title = self.select_title(metadata, url)
             title = extractor.select_title(url)
             metadata = extractor.metadata
             content_type = extractor.mimetype
