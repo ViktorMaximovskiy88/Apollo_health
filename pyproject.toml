@@ -33,6 +33,7 @@ mongomock-motor = "^0.0.10"
 async-lru = "^1.0.3"
 PyJWT = {extras = ["crypto"], version = "^2.4.0"}
 pycld3 = "^0.22"
+pymongo = {extras = ["aws"], version = "^3.12.3"}
 python-magic = "^0.4.27"
 beautifulsoup4 = "^4.11.1"
 
