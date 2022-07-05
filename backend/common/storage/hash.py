@@ -7,7 +7,7 @@ def get_document_hash(extractor: TextExtractor) -> str:
     """
     mimetype = extractor.mimetype
     if mimetype == 'text/html':
-        doc_hash = hash = hash_full_text(extractor.full_text)
+        doc_hash = hash_full_text(extractor.full_text)
     else:
         doc_hash = hash_bytes(document_bytes=extractor.document_bytes)
     return doc_hash
