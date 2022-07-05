@@ -5,7 +5,9 @@ from playwright.async_api import (
     Route,
     Request as RouteRequest,
     Error,
+    Locator,
 )
+from requests import Response
 from backend.scrapeworker.common.models import Download, Metadata, Request
 from backend.scrapeworker.common.selectors import filter_by_href
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
@@ -14,7 +16,11 @@ from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBase
 class AspNetWebFormScraper(PlaywrightBaseScraper):
 
     type: str = "AspNetWebForm"
-    previous_element_id: str
+    requests: list[Request] = []
+    metadatas: list[Metadata] = []
+    downloads: list[Download] = []
+    links_found: int = 0
+    last_metadata_index: int = 0
 
     @cached_property
     def css_selector(self) -> str:
@@ -33,59 +39,73 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
 
         await self.context.add_cookies([cookie])
 
-    async def execute(self) -> list[Download]:
-        errors: list[str] = []
+    async def __gather(self):
+        self.link_handles = await self.page.query_selector_all(self.css_selector)
+        self.links_found = len(self.link_handles)
 
-        try:
-            await self.__execute()
-        except Exception as ex:
-            logging.error(ex)
-            errors.append(self.previous_element_id)
-            await self.__execute()
+        link_handle: ElementHandle
+        for index, link_handle in enumerate(self.link_handles):
+            metadata = await self.extract_metadata(link_handle)
+            self.metadatas.append(metadata)
 
-    async def __execute(self) -> list[Download]:
-        requests: list[Request] = []
-        metadatas: list[Metadata] = []
-        downloads: list[Download] = []
-
-        await self.__setup()
-        link_handles = await self.page.query_selector_all(self.css_selector)
-
+    async def __interact(self, skip_to_index: int = 0) -> None:
         async def intercept(route: Route, request: RouteRequest):
+            print(request.url)
             if self.url in request.url and request.method == "POST":
-                requests.append(
-                    Request(
-                        url=request.url,
-                        method=request.method,
-                        headers=request.headers,
-                        data=request.post_data,
-                    )
+                response: Response = await self.page.request.fetch(
+                    request.url,
+                    headers=request.headers,
+                    data=request.post_data,
+                    method=request.method,
                 )
+
+                if filename := response.headers.get("content-disposition"):
+                    self.requests.append(
+                        Request(
+                            url=request.url,
+                            method=request.method,
+                            headers=request.headers,
+                            data=request.post_data,
+                            filename=filename,
+                        )
+                    )
+                else:
+                    self.requests.append(None)
+
                 await route.continue_()
             else:
                 await route.abort()
 
         await self.page.route("**/*", intercept)
 
-        link_handle: ElementHandle
-        for link_handle in link_handles:
-            metadata = await self.extract_metadata(link_handle)
-            metadatas.append(metadata)
-            self.previous_element_id = metadata.element_id
-            print(self.previous_element_id)
-            await link_handle.click()
+        metadata: Metadata
+        print(f"{len(self.metadatas)} count of metadata")
+        for index, metadata in enumerate(self.metadatas):
+            print(f"{index} Metadata #{metadata.element_id}")
+            self.last_metadata_index = index
+            locator: Locator = self.page.locator(f"#{metadata.element_id}")
+            await locator.click()
+            print(f"{index} Metadata #{metadata.element_id} complete")
 
         await self.page.unroute("**/*", intercept)
 
+    async def __process(self):
         request: RouteRequest
-        for index, request in enumerate(requests):
+        for index, request in enumerate(self.requests):
             if request:
-                print(index)
-                downloads.append(
+                print(f"{index} Download")
+                self.downloads.append(
                     Download(
-                        metadata=metadata[index],
+                        metadata=self.metadatas[index],
                         request=request,
                     )
                 )
 
-        return downloads
+    async def execute(self) -> list[Download]:
+
+        await self.__setup()
+        await self.__gather()
+        await self.__interact()
+        await self.__process()
+
+        return self.downloads

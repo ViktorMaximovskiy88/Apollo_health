@@ -14,6 +14,7 @@ class Request(BaseModel):
     headers: Any | None
     url: str
     data: Any | None
+    filename: str
 
 
 class Download(BaseModel):
