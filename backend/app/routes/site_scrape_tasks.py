@@ -169,9 +169,6 @@ async def cancel_all_site_scrape_task(
             )
         )
 
-
-
-
 @router.post("/{id}", response_model=SiteScrapeTask)
 async def update_scrape_task(
     updates: UpdateSiteScrapeTask,
@@ -221,4 +218,3 @@ async def cancel_scrape_task(
         typer.secho(
             f"Set Task {scrape_task.id} 'Canceling'", fg=typer.colors.BLUE)
         return scrape_task
-
