@@ -104,6 +104,10 @@ python -m venv venv
 Each service should run in it's own terminal. Use your editors built in terminal management for pane splitting or a tool like tmux.
 
 ```bash
+# Before starting, make sure:
+# - You are in the Apollo folder
+# - Docker Desktop is open
+
 # Start Local Mongo/Minio/Redis
 sudo docker compose -f ./Docker/docker-compose-dev.yaml up
 ```
@@ -132,9 +136,6 @@ python backend/scheduler/main.py
 # Frontend
 
 cd frontend
-
-# env setup copy and edit as necessary. .env is loaded by CRA
-cp -R .env.sample .env
 
 # start the app
 yarn start
@@ -195,13 +196,16 @@ poetry install && playwright install chromium && playwright install-deps
 Each service should run in it's own terminal. Use your editors built in terminal management for pane splitting or a tool like tmux.
 
 ```bash
+# Before starting, make sure:
+# - You are in the Apollo folder
+# - Docker Desktop is open
+
 # Start Local Mongo/Minio/Redis
 docker compose -f ./Docker/docker-compose-dev.yaml up
 ```
 
 ```bash
 # Webserver
-## Make sure you are in apollo folder
 python backend/app/main.py
 ```
 

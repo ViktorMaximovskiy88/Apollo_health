@@ -32,6 +32,7 @@ from backend.scrapeworker.proxy import convert_proxies_to_proxy_settings
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.xpdf_wrapper import pdfinfo, pdftotext
+from backend.common.core.enums import Status
 
 # Scrapeworker workflow 'exceptions'
 class NoDocsCollectedException(Exception):
@@ -182,7 +183,7 @@ class ScrapeWorker:
                 break
             canceling = await SiteScrapeTask.find_one(
                 SiteScrapeTask.id == self.scrape_task.id,
-                SiteScrapeTask.status == "CANCELING",
+                SiteScrapeTask.status == Status.CANCELING,
             )
             if canceling:
                 for t in tasks:

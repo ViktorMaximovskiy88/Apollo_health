@@ -34,6 +34,50 @@ resource "aws_ecs_task_definition" "app" {
         {
           name = "S3_ENDPOINT_URL"
           value = data.aws_service.s3.dns_name
+        },
+        {
+          name = "MONGO_URL"
+          value = data.aws_ssm_parameter.mongodb-url.value
+        },
+        {
+          name = "MONGO_DB"
+          value = data.aws_ssm_parameter.mongodb-db.value
+        },
+        {
+          name = "MONGO_USER"
+          value = data.aws_ssm_parameter.mongodb-user.value
+        },
+         {
+          name = "REDIS_URL"
+          value = data.aws_ssm_parameter.redis-url.value
+        },
+        {
+          name = "S3_DOCUMENT_BUCKET"
+          value = data.aws_ssm_parameter.docrepo-bucket-name.value
+        },
+        {
+          name = "REACT_APP_AUTH0_DOMAIN"
+          value = var.auth0-config.domain
+        },
+        {
+          name = "REACT_APP_AUTH0_CLIENT_ID"
+          value = var.auth0-config.client_id
+        },
+        {
+          name = "REACT_APP_AUTH0_AUDIENCE"
+          value = var.auth0-config.audience
+        },
+        {
+          name = "AUTH0_WELLKNOWN_URL"
+          value = var.auth0-config.wellknown_url
+        },
+        {
+          name = "AUTH0_AUDIENCE"
+          value = var.auth0-config.audience
+        },
+        {
+          name = "AUTH0_ISSUER"
+          value = var.auth0-config.issuer
         }
       ]
       essential = true
@@ -54,44 +98,12 @@ resource "aws_ecs_task_definition" "app" {
       
       secrets = [
         {
-          name = "MONGO_URL"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/mongodb_url"
-        },
-        {
-          name = "MONGO_DB"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/mongodb_db"
-        },
-        {
-          name = "MONGO_USER"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/mongodb_user"
-        },
-        {
           name = "MONGO_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/mongodb_password"
         },
         {
-          name = "REDIS_URL"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_url"
-        },
-        {
           name = "REDIS_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_auth_password"
-        },
-        {
-          name = "S3_DOCUMENT_BUCKET"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/docrepo_bucket_name"
-        },
-        {
-          name = "REACT_APP_AUTH0_DOMAIN"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/react_app_auth0_domain"
-        },
-        {
-          name = "REACT_APP_AUTH0_CLIENT_ID"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/react_app_auth0_client_id"
-        },
-        {
-          name = "REACT_APP_AUTH0_AUDIENCE"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/react_app_auth0_audience"
         }
       ]
 

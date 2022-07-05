@@ -1,4 +1,4 @@
-import { Layout, Menu, Avatar } from 'antd';
+import { Layout, Menu } from 'antd';
 import {
   Link,
   Navigate,
@@ -67,8 +67,11 @@ function TopNav() {
           <Menu.Item key={'profile'}>
             <Menu.SubMenu title={`${user?.given_name} ${user?.family_name}`}>
               <Menu.Item
+                key={'logout'}
                 onClick={() => {
-                  logout();
+                  logout({
+                    returnTo: window.location.origin,
+                  });
                 }}
               >
                 Logout

@@ -27,7 +27,7 @@
     "start": "react-scripts start",
     "analyze": "source-map-explorer 'build/static/js/*.js'",
     "build": "react-scripts build",
-    "test": "is-ci \"test:coverage\" \"test:watch\"",
+    "test": "TZ=UTC is-ci \"test:coverage\" \"test:watch\"",
     "test:coverage": "react-scripts test --coverage",
     "test:watch": "react-scripts test",
     "eject": "react-scripts eject",
@@ -42,6 +42,8 @@
     }
   },
   "devDependencies": {
+    "@faker-js/faker": "^7.3.0",
+    "@mswjs/data": "^0.10.1",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^13.3.0",
     "@testing-library/user-event": "^14.2.0",

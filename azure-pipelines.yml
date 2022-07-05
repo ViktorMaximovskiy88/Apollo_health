@@ -92,25 +92,20 @@ stages:
               sourceImageTag: '$(Build.SourceVersion)'
               repositoryName: 'sourcehub-app'
               pushTag: latest
-      - job: validateDeploy
-        displayName: Validate Deployment Code 
+      - job: validateDevDeploy
+        displayName: Validate and Plan Dev Deployment 
         steps:
-          - task: TerraformInstaller@0
-            displayName: Install Terraform on Agent
-            inputs:
-              terraformVersion: '1.1.7'
-          - task: AWSShellScript@1
-            displayName: Terraform Init, Validate, and Plan (Dev)
-            inputs:
+          - template: .azure-pipelines/source-hub.validate.yml
+            parameters:
+              environment: dev
               awsCredentials: "Apollo-AWS-Dev-Apollo"
-              regionName: 'us-east-1'
-              scriptType: 'inline'
-              inlineScript: |
-                  terraform init -backend-config=$(System.DefaultWorkingDirectory)/deploy/live/tfvars/dev.s3.tfbackend
-                  terraform validate
-                  terraform plan -var-file=$(System.DefaultWorkingDirectory)/deploy/live/tfvars/dev.tfvars -var='sourcehub-app-version=$(Build.SourceVersion)' -var='sourcehub-scrapeworker-version=$(Build.SourceVersion)'  -var='sourcehub-scheduler-version=$(Build.SourceVersion)' -var='sourcehub-parseworker-version=$(Build.SourceVersion)'
-              disableAutoCwd: true
-              workingDirectory: '$(System.DefaultWorkingDirectory)/deploy/live'
+      - job: validateTstDeploy
+        displayName: Validate and Plan Test Deployment 
+        steps:
+          - template: .azure-pipelines/source-hub.validate.yml
+            parameters:
+              environment: tst
+              awsCredentials: "Apollo-AWS-Test-Apollo"
   - stage: development
     displayName: Development Stage
     dependsOn: build
@@ -139,6 +134,24 @@ stages:
             runOnce:
               deploy:
                 steps:
+                  - task: ECRPullImage@1
+                    displayName: Pull SourceHub App Image
+                    inputs:
+                      awsCredentials: "Apollo-AWS-Dev-Apollo"
+                      regionName: 'us-east-1'
+                      repository: 'sourcehub-app'
+                      imageSource: 'imagetag'
+                      imageTag: '$(Build.SourceVersion)'
+                      outputVariable: 'DevImageId'
+                  - task: ECRPushImage@1
+                    displayName: Push SourceHub App Image to ECR as SourceVersion
+                    inputs:
+                      awsCredentials: "Apollo-AWS-Test-Apollo"
+                      regionName: 'us-east-1'
+                      imageSource: 'imageid'
+                      sourceImageId: $(DevImageId)
+                      repositoryName: 'sourcehub-app'
+                      pushTag: '$(Build.SourceVersion)'
                   - template: .azure-pipelines/source-hub.deploy.yml
                     parameters:
                       environment: tst
@@ -155,13 +168,25 @@ stages:
             runOnce:
               deploy:
                 steps:
+                  - task: ECRPullImage@1
+                    displayName: Pull SourceHub App Image
+                    inputs:
+                      awsCredentials: "Apollo-AWS-Dev-Apollo"
+                      regionName: 'us-east-1'
+                      repository: 'sourcehub-app'
+                      imageSource: 'imagetag'
+                      imageTag: '$(Build.SourceVersion)'
+                      outputVariable: 'DevImageId'
+                  - task: ECRPushImage@1
+                    displayName: Push SourceHub App Image to ECR as SourceVersion
+                    inputs:
+                      awsCredentials: "Apollo-AWS-Prod-Apollo"
+                      regionName: 'us-east-1'
+                      imageSource: 'imageid'
+                      sourceImageId: $(DevImageId)
+                      repositoryName: 'sourcehub-app'
+                      pushTag: '$(Build.SourceVersion)'
                   - template: .azure-pipelines/source-hub.deploy.yml
                     parameters:
                       environment: prd
                       awsCredentials: "Apollo-AWS-Prod-Apollo"
-
-              
-          
-
-
-          

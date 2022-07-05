@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import {
   TypeFilterValue,
@@ -32,7 +32,10 @@ export function CollectionsDataTable({
   const [cancelScrape, { isLoading: isCanceling }] =
     useCancelSiteScrapeTaskMutation();
 
-  const columns = createColumns({ cancelScrape, isCanceling, openErrorModal });
+  const columns = useMemo(
+    () => createColumns({ cancelScrape, isCanceling, openErrorModal }),
+    [cancelScrape, isCanceling, openErrorModal]
+  );
 
   const tableState = useSelector(collectionTableState);
   const dispatch = useDispatch();
