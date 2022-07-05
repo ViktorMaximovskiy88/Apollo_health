@@ -48,7 +48,7 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
             metadata = await self.extract_metadata(link_handle)
             self.metadatas.append(metadata)
 
-    async def __interact(self, skip_to_index: int = 0) -> None:
+    async def __interact(self) -> None:
         async def intercept(route: Route, request: RouteRequest):
             if self.url in request.url and request.method == "POST":
                 response: Response = await self.page.request.fetch(
@@ -59,6 +59,7 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
                 )
 
                 if filename := response.headers.get("content-disposition"):
+                    logging.info(f"filename={filename}")
                     self.requests.append(
                         Request(
                             url=request.url,
@@ -80,17 +81,16 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
         metadata: Metadata
         for index, metadata in enumerate(self.metadatas):
             logging.debug(f"{index} of {len(self.metadatas)} count of metadata")
-            self.last_metadata_index = index
             locator: Locator = self.page.locator(f"#{metadata.element_id}")
             await locator.click()
 
         await self.page.unroute("**/*", intercept)
 
     async def __process(self):
-        request: RouteRequest
+        request: Request
         for index, request in enumerate(self.requests):
             if request:
-                logging.debug(f"{index} Download")
+                logging.info(f"#{index} downloading filename={request.filename}")
                 self.downloads.append(
                     Download(
                         metadata=self.metadatas[index],

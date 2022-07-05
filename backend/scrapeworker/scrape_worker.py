@@ -286,7 +286,7 @@ class ScrapeWorker:
                     url = download.request.url
 
                     # check that the link is unique and that we should not skip it
-                    if not self.skip_url(url) and self.url_not_seen(url):
+                    if not self.skip_url(url):  # and self.url_not_seen(url):
                         await self.scrape_task.update(
                             Inc({SiteScrapeTask.links_found: 1})
                         )
