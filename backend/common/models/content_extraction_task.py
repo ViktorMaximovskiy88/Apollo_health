@@ -38,5 +38,5 @@ class ContentExtractionResult(BaseDocument):
 
     page: int
     row: int
-    collection_time: datetime
+    first_collected_date: datetime
     result: dict = {}
