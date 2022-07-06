@@ -114,8 +114,11 @@ class ScrapeWorker:
             url, proxies
         ):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
-            dest_path = f"{checksum}.pdf"
+            
+            file_ext = "pdf"
+            dest_path = f"{checksum}.{file_ext}"
             document = None
+            
             if not self.doc_client.document_exists(dest_path):
                 self.doc_client.write_document(dest_path, temp_path)
                 await self.scrape_task.update(
@@ -126,6 +129,8 @@ class ScrapeWorker:
                     RetrievedDocument.checksum == checksum
                 )
 
+            
+            
             metadata = await pdfinfo(temp_path)
             text = await pdftotext(temp_path)
             dates = extract_dates(text)
