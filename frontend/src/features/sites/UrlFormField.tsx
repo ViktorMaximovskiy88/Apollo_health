@@ -4,97 +4,10 @@ import {
   MinusCircleOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
-import { useState } from 'react';
-import { ActiveUrlResponse, BaseUrl, Site } from './types';
-import { fetchWithAuth } from '../../app/base-api';
+import { Site } from './types';
 import { FormInstance } from 'antd/lib/form/Form';
 import { FormListFieldData } from 'antd/lib/form/FormList';
-
-function UrlInput(props: {
-  initialValues?: Site;
-  key: number;
-  name: number;
-  field: { fieldKey?: number };
-  form: FormInstance;
-}) {
-  const currentSite = props.initialValues ? props.initialValues._id : '';
-
-  const [urlValidation, setUrlValidation] = useState<{
-    [id: string]: ActiveUrlResponse;
-  }>({});
-
-  async function validateUrl(key: number, value: string) {
-    const checkUrl = encodeURIComponent(value);
-    let url = encodeURI(`/api/v1/sites/active-url?url=${checkUrl}`);
-    if (currentSite) url += `&currentSite=${currentSite}`;
-    const check = await fetchWithAuth(url);
-    const activeUrlResponse = await check.json();
-
-    setUrlValidation((prevState) => {
-      const update = { ...prevState };
-      update[key] = activeUrlResponse;
-      return update;
-    });
-
-    if (activeUrlResponse.in_use) {
-      return Promise.reject(new Error('URL is already in use'));
-    }
-
-    const baseUrls = props.form.getFieldsValue().base_urls;
-    const duplicateUrls = baseUrls.filter((baseUrl: BaseUrl) => {
-      if (baseUrl.url === value) return true;
-      return false;
-    });
-
-    if (duplicateUrls.length > 1) {
-      return Promise.reject(new Error('URL is already in use with this site'));
-    }
-
-    return Promise.resolve();
-  }
-
-  function createErrorMessage(key: number) {
-    const urlCheck = urlValidation[key];
-    if (urlCheck?.in_use) {
-      return (
-        <p>
-          URL is in use by{' '}
-          <a
-            href={`../${urlCheck.site?._id}/scrapes`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {`${urlCheck.site?.name}`}
-          </a>
-        </p>
-      );
-    }
-    return null;
-  }
-
-  return (
-    <Form.Item
-      className="grow mb-0"
-      hasFeedback
-      help={createErrorMessage(props.key)}
-      {...props.field}
-      label="URL"
-      name={[props.name, 'url']}
-      rules={[
-        {
-          required: true,
-          type: 'url',
-        },
-        {
-          validator: (_, value) => validateUrl(props.key, value),
-        },
-      ]}
-      validateTrigger="onBlur"
-    >
-      <Input.TextArea autoSize={{ minRows: 1, maxRows: 3 }} />
-    </Form.Item>
-  );
-}
+import { UrlInput } from './UrlInput';
 
 interface LabelInputPropTypes {
   name: number;
