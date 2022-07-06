@@ -24,5 +24,6 @@ async def test_docx_docx_info():
     file_path = os.path.join(fixture_path, "test.docx")
 
     metadata = docx_info(file_path)
+    assert metadata["title"] == "Test Title docx"
     assert metadata["subject"] == "Test Subject docx"
     assert metadata["category"] == "Test Category docx"

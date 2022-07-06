@@ -24,5 +24,6 @@ async def test_xlsx_info():
     file_path = os.path.join(fixture_path, "test.xlsx")
 
     metadata = xlsx_info(file_path)
+    assert metadata["title"] == "Test Title xlsx"
     assert metadata["subject"] == "Test Subject xlsx"
     assert metadata["category"] == "Test Category xlsx"
