@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useGetDocumentQuery } from './documentsApi';
 import { Viewer, Worker } from '@react-pdf-viewer/core';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
+import { OfficeFileViewer } from '../../components/OfficeFileViewer';
 
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
@@ -12,15 +13,14 @@ import { DocumentForm } from './DocumentForm';
 import tw from 'twin.macro';
 import useAccessToken from '../../app/use-access-token';
 
-
 export function DocumentEditPage() {
   const params = useParams();
   const docId = params.docId;
 
   const { data: doc } = useGetDocumentQuery(docId);
-  const token = useAccessToken()
+  const token = useAccessToken();
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
-  
+
   if (!token) return null;
   if (!doc) return null;
 
@@ -49,16 +49,21 @@ export function DocumentEditPage() {
                 key="document"
                 className="h-full overflow-auto"
               >
-                <Viewer
-                  withCredentials={true}
-                  fileUrl={`/api/v1/documents/${docId}.pdf`}
-                  plugins={[defaultLayoutPluginInstance]}
-                  httpHeaders={{
-                    Authorization: `Bearer ${token}`,
-                  }}
-                />
+                {doc.file_extension == 'pdf' ? (
+                  <Viewer
+                    withCredentials={true}
+                    fileUrl={`/api/v1/documents/${docId}.${doc.file_extension}`}
+                    plugins={[defaultLayoutPluginInstance]}
+                    httpHeaders={{
+                      Authorization: `Bearer ${token}`,
+                    }}
+                  />
+                ) : (
+                  <OfficeFileViewer url={doc.url} />
+                )}
+                <OfficeFileViewer url={doc.url} />
               </Tabs.TabPane>
-              <Tabs.TabPane tab="PDF Metadata" key="metadata">
+              <Tabs.TabPane tab="Metadata" key="metadata">
                 <Table
                   dataSource={dataSource}
                   columns={columns}

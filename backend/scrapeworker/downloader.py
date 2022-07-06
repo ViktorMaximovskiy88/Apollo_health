@@ -1,7 +1,9 @@
 import asyncio
 from contextlib import asynccontextmanager
+from fileinput import filename
 from typing import AsyncGenerator
 import redis
+import re
 import xxhash
 import tempfile
 import aiofiles
@@ -89,9 +91,10 @@ class DocDownloader:
                 await context.dispose()
 
     @asynccontextmanager
-    async def tempfile_path(self, url: str, body: bytes):
+    async def tempfile_path(self, url: str, body: bytes, filename: str | None):
         hash = xxhash.xxh128()
-        guess_suffix = pathlib.Path(os.path.basename(url)).suffix
+        guess_target = filename if filename else url
+        guess_suffix = pathlib.Path(os.path.basename(guess_target)).suffix
         with tempfile.NamedTemporaryFile(suffix=guess_suffix) as temp:
             async with aiofiles.open(temp.name, "wb") as fd:
                 hash.update(body)
@@ -102,6 +105,7 @@ class DocDownloader:
         self, url: str, proxies: list[tuple[Proxy | None, ProxySettings | None]] = []
     ):
         body = None  # self.redis.get(url)
+        filename: str | None = None
         if body == "DISCARD":
             return
 
@@ -113,8 +117,30 @@ class DocDownloader:
                 if self.skip_based_on_response(response):
                     # self.redis.set(url, "DISCARD", ex=60 * 60 * 1)  # 1 hour
                     return
+
+                print(response.headers)
+                filename, content_type = parse_headers(response.headers)
+                print(filename, content_type)
+
                 body = await response.body()
                 # self.redis.set(url, body, ex=60 * 60 * 1)  # 1 hour
 
-        async with self.tempfile_path(url, body) as (temp_path, hash):
+        async with self.tempfile_path(url, body, filename) as (temp_path, hash):
             yield temp_path, hash
+
+
+def parse_headers(headers) -> tuple[str, str]:
+    content_type = headers.get("content-type") or None
+    filename = get_filename(headers)
+    return (filename, content_type)
+
+
+def get_filename(headers) -> str | None:
+    matched = None
+    if content_disposition := headers.get("content-disposition"):
+        matched = re.match('filename="(.*)"', content_disposition)
+
+    if matched:
+        return matched.group(1)
+    else:
+        return None

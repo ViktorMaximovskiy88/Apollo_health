@@ -25,14 +25,10 @@ from playwright.async_api import (
 )
 from playwright_stealth import stealth_async
 from backend.common.models.user import User
-from backend.scrapeworker.doc_type_classifier import classify_doc_type
-from backend.scrapeworker.detect_lang import detect_lang
 from backend.scrapeworker.downloader import DocDownloader
-from backend.scrapeworker.effective_date import extract_dates, select_effective_date
 from backend.scrapeworker.proxy import convert_proxies_to_proxy_settings
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
-from backend.scrapeworker.xpdf_wrapper import pdfinfo, pdftotext
 from backend.common.core.enums import Status
 from backend.scrapeworker.file_types import parse_by_type
 
@@ -46,7 +42,7 @@ class CanceledTaskException(Exception):
 
 
 def get_extension(url_or_path: str):
-    return pathlib.Path(os.path.basename(url_or_path)).suffix
+    return pathlib.Path(os.path.basename(url_or_path)).suffix[1:]
 
 
 def is_google(url):
@@ -132,9 +128,11 @@ class ScrapeWorker:
         ):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
 
-            file_ext = get_extension(temp_path)
-            dest_path = f"{checksum}.{file_ext}"
+            file_extension = get_extension(temp_path)
+            dest_path = f"{checksum}.{file_extension}"
             document = None
+
+            print(dest_path, temp_path, "*****")
 
             if not self.doc_client.document_exists(dest_path):
                 self.doc_client.write_document(dest_path, temp_path)
@@ -182,6 +180,7 @@ class ScrapeWorker:
                     scrape_task_id=self.scrape_task.id,
                     site_id=self.site.id,
                     url=url,
+                    file_extension=file_extension,
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
             await self.scrape_task.update(
