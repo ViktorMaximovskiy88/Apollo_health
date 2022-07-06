@@ -1,6 +1,7 @@
 import asyncio
 import os
 import pathlib
+from pydantic import HttpUrl
 from contextlib import asynccontextmanager
 from datetime import datetime
 from random import shuffle
@@ -113,7 +114,7 @@ class ScrapeWorker:
         title = metadata.get("Title") or metadata.get("Subject") or str(filename_no_ext)
         return title
 
-    async def attempt_download(self, base_url, download: Download):
+    async def attempt_download(self, base_url: HttpUrl, download: Download):
         url = download.request.url
         proxies = await self.get_proxy_settings()
         async for (temp_path, checksum) in self.downloader.download_to_tempfile(
@@ -175,7 +176,7 @@ class ScrapeWorker:
                     url=url,
                     context_metadata=download.metadata.dict(),
                     metadata=metadata,
-                    base_url=base_url,
+                    base_url=str(base_url),
                     lang_code=lang_code,
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
@@ -292,7 +293,7 @@ class ScrapeWorker:
                         )
                         tasks.append(
                             self.attempt_download(
-                                str(base_url),
+                                base_url,
                                 download,
                             )
                         )

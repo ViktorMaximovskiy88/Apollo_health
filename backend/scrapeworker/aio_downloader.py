@@ -38,6 +38,7 @@ class AioDownloader:
                     url=request.url,
                     method=request.method,
                     headers=request.headers,
+                    data=request.data,
                 )
                 if not response:
                     raise Exception(f"Failed to download url {request.url}")
