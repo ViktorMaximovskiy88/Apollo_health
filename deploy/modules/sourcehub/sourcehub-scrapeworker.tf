@@ -58,6 +58,10 @@ resource "aws_ecs_task_definition" "scrapeworker" {
         {
           name = "S3_DOCUMENT_BUCKET"
           value = data.aws_ssm_parameter.docrepo-bucket-name.value
+        },
+        {
+          name = "SMARTPROXY_USERNAME"
+          value = data.aws_ssm_parameter.smartproxy-username.value
         }
       ]
       essential = true
@@ -84,10 +88,6 @@ resource "aws_ecs_task_definition" "scrapeworker" {
         {
           name = "REDIS_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_auth_password"
-        },
-        {
-          name = "SMARTPROXY_USERNAME"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/smartproxy_username"
         },
         {
           name = "SMARTPROXY_PASSWORD"

@@ -4,10 +4,12 @@ from pydantic import BaseModel, HttpUrl
 from backend.common.models.base_document import BaseDocument
 from backend.common.core.enums import CollectionMethod
 
+
 class ScrapeMethodConfiguration(BaseModel):
     document_extensions: list[str]
     url_keywords: list[str]
     proxy_exclusions: list[PydanticObjectId] = []
+
 
 class UpdateScrapeMethodConfiguration(BaseModel):
     document_extensions: list[str] | None = None
@@ -53,11 +55,13 @@ class Site(BaseDocument, NewSite):
 # Deprecated
 class NoScrapeConfigSite(Site):
     scrape_method_configuration: ScrapeMethodConfiguration | None = None
+
     class Collection:
         name = "Site"
 
 
 class SingleUrlSite(NoScrapeConfigSite):
-    base_url: HttpUrl
+    base_url: HttpUrl | None = None
+
     class Collection:
         name = "Site"

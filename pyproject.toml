@@ -37,6 +37,7 @@ mongomock-motor = "^0.0.10"
 async-lru = "^1.0.3"
 PyJWT = {extras = ["crypto"], version = "^2.4.0"}
 pycld3 = "^0.22"
+pymongo = {extras = ["aws"], version = "^3.12.3"}
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"

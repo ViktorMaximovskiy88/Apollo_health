@@ -6,10 +6,12 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from backend.app.scripts.add_user import create_admin_user
+from backend.app.scripts.create_proxy_records import create_proxies
 from backend.common.db.init import init_db
 from backend.common.db.migrations import run_migrations
 from backend.app.core.settings import settings
 from backend.app.routes import proxies, sites
+from backend.common.models.proxy import Proxy
 from backend.common.models.user import User
 from backend.app.routes import (
     auth,
@@ -30,6 +32,8 @@ async def app_init():
     if await User.count() == 0:
         user, plain_pass = await create_admin_user()
         print(f"Created admin user with email: {user}, password: {plain_pass}")
+    if not settings.disable_proxies and await Proxy.count() == 0:
+        await create_proxies()
 
 
 template_dir = Path(__file__).parent.joinpath("templates")

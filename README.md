@@ -104,6 +104,10 @@ source .venv/bin/activate
 Each service should run in it's own terminal. Use your editors built in terminal management for pane splitting or a tool like tmux.
 
 ```bash
+# Before starting, make sure:
+# - You are in the Apollo folder
+# - Docker Desktop is open
+
 # Start Local Mongo/Minio/Redis
 sudo docker compose -f ./Docker/docker-compose-dev.yaml up
 ```
@@ -192,13 +196,16 @@ poetry install && playwright install chromium && playwright install-deps
 Each service should run in it's own terminal. Use your editors built in terminal management for pane splitting or a tool like tmux.
 
 ```bash
+# Before starting, make sure:
+# - You are in the Apollo folder
+# - Docker Desktop is open
+
 # Start Local Mongo/Minio/Redis
 docker compose -f ./Docker/docker-compose-dev.yaml up
 ```
 
 ```bash
 # Webserver
-## Make sure you are in apollo folder
 python backend/app/main.py
 ```
 

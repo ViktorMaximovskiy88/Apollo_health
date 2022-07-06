@@ -17,7 +17,7 @@ export interface ContentExtractionResult {
   scrape_task_id: string;
   retrieved_document_id: string;
   content_extraction_task_id: string;
-  collection_time: string;
+  first_collected_date: string;
   result: {};
   page: number;
   row: number;

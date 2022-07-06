@@ -56,7 +56,7 @@ async def get_documents(
         query["automated_content_extraction"] = automated_content_extraction
 
     documents: list[RetrievedDocument] = (
-        await RetrievedDocument.find_many(query).sort("-collection_time").to_list()
+        await RetrievedDocument.find_many(query).sort("-first_collected_date").to_list()
     )
     return documents
 
