@@ -33,6 +33,7 @@ function ScrapeMethod() {
     { value: 'BrowserDocumentScrape', label: 'Browser Document Scrape' },
     { value: 'MyPrimeSearchableScrape', label: 'MyPrime Searchable Scrape' },
   ];
+
   return (
     <Form.Item name="scrape_method" label="Scrape Method">
       <Select options={scrapes} />
@@ -46,6 +47,7 @@ function DocumentExtensions() {
     { value: 'xlsx', label: 'Excel (.xlsx)' },
     { value: 'docx', label: 'Word (.docx)' },
   ];
+
   return (
     <Form.Item
       name={['scrape_method_configuration', 'document_extensions']}
@@ -58,10 +60,7 @@ function DocumentExtensions() {
 
 function UrlKeywords() {
   return (
-    <Form.Item
-      name={['scrape_method_configuration', 'url_keywords']}
-      label="URL Keywords"
-    >
+    <Form.Item name={['scrape_method_configuration', 'url_keywords']} label="URL Keywords">
       <Select mode="tags" />
     </Form.Item>
   );
@@ -76,17 +75,13 @@ function ProxyExclusions() {
   }));
 
   return (
-    <Form.Item
-      name={['scrape_method_configuration', 'proxy_exclusions']}
-      label="Proxy Exclusions"
-    >
+    <Form.Item name={['scrape_method_configuration', 'proxy_exclusions']} label="Proxy Exclusions">
       <Select mode="multiple" options={proxyOptions} />
     </Form.Item>
   );
 }
 
-function FollowLinks(props: { followLinks: boolean, form: FormInstance }) {
-
+function FollowLinks(props: { followLinks: boolean; form: FormInstance }) {
   function validateFollowLinks(fieldInfo: any, value: string) {
     if (value.length === 0) {
       const namePaths = [
@@ -103,9 +98,7 @@ function FollowLinks(props: { followLinks: boolean, form: FormInstance }) {
 
       if (otherValue.length === 0) {
         return Promise.reject(
-          new Error(
-            'You must provide a Link or URL Keyword with Follow Links enabled'
-          )
+          new Error('You must provide a Link or URL Keyword with Follow Links enabled')
         );
       }
     }
@@ -126,15 +119,11 @@ function FollowLinks(props: { followLinks: boolean, form: FormInstance }) {
         <div className="flex grow space-x-5">
           <Form.Item
             className="grow"
-            name={[
-              'scrape_method_configuration',
-              'follow_link_keywords',
-            ]}
+            name={['scrape_method_configuration', 'follow_link_keywords']}
             label="Follow Link Keywords"
             rules={[
               {
-                validator: (field, value) =>
-                  validateFollowLinks(field, value),
+                validator: (field, value) => validateFollowLinks(field, value),
               },
             ]}
           >
@@ -142,15 +131,11 @@ function FollowLinks(props: { followLinks: boolean, form: FormInstance }) {
           </Form.Item>
           <Form.Item
             className="grow"
-            name={[
-              'scrape_method_configuration',
-              'follow_link_url_keywords',
-            ]}
+            name={['scrape_method_configuration', 'follow_link_url_keywords']}
             label="Follow Link URL Keywords"
             rules={[
               {
-                validator: (field, value) =>
-                  validateFollowLinks(field, value),
+                validator: (field, value) => validateFollowLinks(field, value),
               },
             ]}
           >
@@ -176,12 +161,22 @@ function Schedule() {
   );
 }
 
-export function SiteForm(props: {
-  onFinish: (user: Partial<Site>) => void;
-  initialValues?: Site;
-}) {
-  const initialFollowLinks =
-    props.initialValues?.scrape_method_configuration.follow_links || false;
+function SiteStatusSelect() {
+  const siteStatuses = [
+    { value: SiteStatus.New, label: 'New' },
+    { value: SiteStatus.QualityHold, label: 'Quality Hold' },
+    { value: SiteStatus.Inactive, label: 'Inactive' },
+    { value: SiteStatus.Online, label: 'Online' },
+  ];
+  return (
+    <Form.Item name="site_status" label="Status">
+      <Select options={siteStatuses} />
+    </Form.Item>
+  );
+}
+
+export function SiteForm(props: { onFinish: (user: Partial<Site>) => void; initialValues?: Site }) {
+  const initialFollowLinks = props.initialValues?.scrape_method_configuration.follow_links || false;
   const [followLinks, setFollowLinks] = useState<boolean>(initialFollowLinks);
   const [form] = useForm();
 
@@ -207,6 +202,7 @@ export function SiteForm(props: {
       collection_method: CollectionMethod.Automated,
       cron: '0 16 * * *',
       tags: [],
+      site_status: SiteStatus.New,
       base_urls: [{ url: '', name: '', status: 'ACTIVE' }],
       scrape_method_configuration: {
         document_extensions: ['pdf'],
@@ -218,17 +214,20 @@ export function SiteForm(props: {
       },
     };
   }
+
+  const wrapperCol = {
+    xs: { span: 24 },
+    sm: { span: 24 },
+    md: { span: 24 },
+    lg: { span: 16 },
+    xl: { span: 12 },
+  };
+
   return (
     <Form
       layout="vertical"
       form={form}
-      wrapperCol={{
-        xs: { span: 24 },
-        sm: { span: 24 },
-        md: { span: 24 },
-        lg: { span: 16 },
-        xl: { span: 12 },
-      }}
+      wrapperCol={wrapperCol}
       requiredMark={false}
       onFinish={props.onFinish}
       onValuesChange={setFormState}
@@ -264,6 +263,7 @@ export function SiteForm(props: {
       <Form.Item name="tags" label="Tags">
         <Select mode="tags" />
       </Form.Item>
+      <SiteStatusSelect />
       <Form.Item>
         <Space>
           <Button type="primary" htmlType="submit">

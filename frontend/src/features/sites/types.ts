@@ -24,6 +24,7 @@ export interface Site extends BaseDocument {
   last_run_time?: string;
   last_run_status: Status;
   cron: string;
+  site_status: string;
 }
 
 export interface Proxy extends BaseDocument {
@@ -38,4 +39,11 @@ export interface ActiveUrlResponse {
 export enum CollectionMethod {
   Automated = 'AUTOMATED',
   Manual = 'MANUAL',
+}
+
+export enum SiteStatus {
+  New = 'NEW',
+  QualityHold = 'QUALITY_HOLD',
+  Inactive = 'INACTIVE',
+  Online = 'ONLINE',
 }
