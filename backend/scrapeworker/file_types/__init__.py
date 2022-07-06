@@ -1,5 +1,3 @@
-from http.client import NOT_MODIFIED
-import os
 import pathlib
 from backend.scrapeworker.file_types import docx, xlsx, pdf
 
