@@ -2,7 +2,7 @@ import pandas as pd
 from openpyxl import load_workbook
 
 
-def xlsx_to_text(temp_path: str):
+def xlsx_text(temp_path: str):
     dataframes = pd.read_excel(
         temp_path,
         engine="openpyxl",
@@ -14,7 +14,11 @@ def xlsx_to_text(temp_path: str):
     return text
 
 
-def parse_metadata(temp_path: str, url: str | None = None) -> dict[str, str]:
+def xlsx_info(temp_path: str) -> dict[str, str]:
     workbook = load_workbook(temp_path)
     props = vars(workbook.properties)
     return props
+
+
+def parse_metadata(temp_path: str, url: str | None = None) -> dict[str, str]:
+    pass
