@@ -11,10 +11,10 @@ class Metadata(BaseModel):
 
 class Request(BaseModel):
     method: str = "GET"
-    headers: Any | None
+    headers: dict[str, str] = {}
     url: str
     data: Any | None
-    filename: str
+    filename: str | None
 
 
 class Download(BaseModel):
