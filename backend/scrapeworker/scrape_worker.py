@@ -225,7 +225,7 @@ class ScrapeWorker:
                 context = await self.browser.new_context(proxy=proxy, ignore_https_errors=True) # type: ignore
                 page = await context.new_page()
                 await stealth_async(page)
-                await page.goto(base_url, wait_until="networkidle") # await page.goto(base_url, wait_until="networkidle")
+                await page.goto(base_url, wait_until="domcontentloaded") # await page.goto(base_url, wait_until="networkidle")
                 
                 try:
                     if len(self.site.scrape_method_configuration.wait_for) > 0:
