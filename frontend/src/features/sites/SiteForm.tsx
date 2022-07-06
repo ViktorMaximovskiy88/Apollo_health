@@ -5,39 +5,104 @@ import { Site, CollectionMethod } from './types';
 import { useGetProxiesQuery } from '../proxies/proxiesApi';
 import { UrlFormFields } from './UrlFormField';
 
-export function SiteForm(props: {
-  onFinish: (user: Partial<Site>) => void;
-  initialValues?: Site;
-}) {
-  const [form] = useForm();
-  const { data: proxies } = useGetProxiesQuery();
-  const proxyOptions = proxies?.map((proxy) => ({
-    label: proxy.name,
-    value: proxy._id,
-  }));
-
+function CollectionMethodRadio() {
   const collections = [
     { value: CollectionMethod.Automated, label: 'Automated' },
     { value: CollectionMethod.Manual, label: 'Manual' },
   ];
 
+  return (
+    <Form.Item name="collection_method" label="Collection Method">
+      <Radio.Group>
+        {collections.map((col) => {
+          return (
+            <Radio key={col.value} value={col.value}>
+              {col.label}
+            </Radio>
+          );
+        })}
+      </Radio.Group>
+    </Form.Item>
+  );
+}
+
+function ScrapeMethod() {
   const scrapes = [
     { value: 'SimpleDocumentScrape', label: 'Simple Document Scrape' },
     { value: 'BrowserDocumentScrape', label: 'Browser Document Scrape' },
     { value: 'MyPrimeSearchableScrape', label: 'MyPrime Searchable Scrape' },
   ];
+  return (
+    <Form.Item name="scrape_method" label="Scrape Method">
+      <Select options={scrapes} />
+    </Form.Item>
+  );
+}
 
+function DocumentExtensions() {
+  const extensions = [
+    { value: 'pdf', label: 'PDF (.pdf)' },
+    { value: 'xlsx', label: 'Excel (.xlsx)' },
+    { value: 'docx', label: 'Word (.docx)' },
+  ];
+  return (
+    <Form.Item
+      name={['scrape_method_configuration', 'document_extensions']}
+      label="Document Extensions"
+    >
+      <Select mode="multiple" options={extensions} />
+    </Form.Item>
+  );
+}
+
+function UrlKeywords() {
+  return (
+    <Form.Item
+      name={['scrape_method_configuration', 'url_keywords']}
+      label="URL Keywords"
+    >
+      <Select mode="tags" />
+    </Form.Item>
+  );
+}
+
+function ProxyExclusions() {
+  const { data: proxies } = useGetProxiesQuery();
+
+  const proxyOptions = proxies?.map((proxy) => ({
+    label: proxy.name,
+    value: proxy._id,
+  }));
+
+  return (
+    <Form.Item
+      name={['scrape_method_configuration', 'proxy_exclusions']}
+      label="Proxy Exclusions"
+    >
+      <Select mode="multiple" options={proxyOptions} />
+    </Form.Item>
+  );
+}
+
+function Schedule() {
   const schedules = [
     { value: '0 16 * * *', label: 'Daily' },
     { value: '0 16 * * 0', label: 'Weekly' },
     { value: '0 16 1 * *', label: 'Monthly' },
   ];
 
-  const extensions = [
-    { value: 'pdf', label: 'PDF (.pdf)' },
-    { value: 'xlsx', label: 'Excel (.xlsx)' },
-    { value: 'docx', label: 'Word (.docx)' },
-  ];
+  return (
+    <Form.Item name="cron" label="Schedule">
+      <Select options={schedules} />
+    </Form.Item>
+  );
+}
+
+export function SiteForm(props: {
+  onFinish: (user: Partial<Site>) => void;
+  initialValues?: Site;
+}) {
+  const [form] = useForm();
 
   /* eslint-disable no-template-curly-in-string */
   const validateMessages = {
@@ -83,17 +148,7 @@ export function SiteForm(props: {
         <Input />
       </Form.Item>
       <UrlFormFields initialValues={props.initialValues} form={form} />
-      <Form.Item name="collection_method" label="Collection Method">
-        <Radio.Group>
-          {collections.map((col) => {
-            return (
-              <Radio key={col.value} value={col.value}>
-                {col.label}
-              </Radio>
-            );
-          })}
-        </Radio.Group>
-      </Form.Item>
+      <CollectionMethodRadio />
       <Form.Item
         noStyle
         shouldUpdate={(prevValues, currentValues) =>
@@ -103,32 +158,13 @@ export function SiteForm(props: {
         {({ getFieldValue }) =>
           getFieldValue('collection_method') === CollectionMethod.Automated ? (
             <>
-              <Form.Item name="scrape_method" label="Scrape Method">
-                <Select options={scrapes} />
-              </Form.Item>
+              <ScrapeMethod />
               <Form.Item name="scrape_method_configuration">
-                <Form.Item
-                  name={['scrape_method_configuration', 'document_extensions']}
-                  label="Document Extensions"
-                >
-                  <Select mode="multiple" options={extensions} />
-                </Form.Item>
-                <Form.Item
-                  name={['scrape_method_configuration', 'url_keywords']}
-                  label="URL Keywords"
-                >
-                  <Select mode="tags" />
-                </Form.Item>
-                <Form.Item
-                  name={['scrape_method_configuration', 'proxy_exclusions']}
-                  label="Proxy Exclusions"
-                >
-                  <Select mode="multiple" options={proxyOptions} />
-                </Form.Item>
+                <DocumentExtensions />
+                <UrlKeywords />
+                <ProxyExclusions />
               </Form.Item>
-              <Form.Item name="cron" label="Schedule">
-                <Select options={schedules} />
-              </Form.Item>
+              <Schedule />
             </>
           ) : null
         }
