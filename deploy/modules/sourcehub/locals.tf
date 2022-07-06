@@ -31,4 +31,6 @@ locals {
     ]
 
   }
+
+  event_source = "com.mmitnetwork.sourcehub"
 }
