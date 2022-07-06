@@ -140,7 +140,7 @@ class ScrapeWorker:
             title = self.select_title(metadata, url)
             document_type, confidence = classify_doc_type(text)
             lang_code = detect_lang(text)
-
+            
             now = datetime.now()
             datelist = list(dates.keys())
             datelist.sort()
@@ -176,7 +176,7 @@ class ScrapeWorker:
                     url=url,
                     context_metadata=download.metadata.dict(),
                     metadata=metadata,
-                    base_url=str(base_url),
+                    base_url=base_url.url,
                     lang_code=lang_code,
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
