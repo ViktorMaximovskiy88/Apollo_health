@@ -111,7 +111,7 @@ export function UrlFormFields({ initialValues, form }: UrlFormFieldPropTypes) {
               <Input.Group className="space-x-2 flex">
                 <UrlInput
                   initialValues={initialValues}
-                  key={key}
+                  fieldKey={key}
                   name={name}
                   field={field}
                   form={form}

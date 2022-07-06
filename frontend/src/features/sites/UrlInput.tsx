@@ -12,7 +12,7 @@ function useValidateUrlAndErrorMessage(
     [id: string]: ActiveUrlResponse;
   }>({});
 
-  async function validateUrl(key: number, value: string) {
+  async function validateUrl(fieldKey: number, value: string) {
     const currentSite = initialValues ? initialValues._id : '';
     const checkUrl = encodeURIComponent(value);
     let url = encodeURI(`/api/v1/sites/active-url?url=${checkUrl}`);
@@ -22,7 +22,7 @@ function useValidateUrlAndErrorMessage(
 
     setUrlValidation((prevState) => {
       const update = { ...prevState };
-      update[key] = activeUrlResponse;
+      update[fieldKey] = activeUrlResponse;
       return update;
     });
 
@@ -43,8 +43,8 @@ function useValidateUrlAndErrorMessage(
     return Promise.resolve();
   }
 
-  function createErrorMessage(key: number) {
-    const urlCheck = urlValidation[key];
+  function createErrorMessage(fieldKey: number) {
+    const urlCheck = urlValidation[fieldKey];
     if (urlCheck?.in_use) {
       return (
         <p>
@@ -66,14 +66,14 @@ function useValidateUrlAndErrorMessage(
 
 interface UrlInputPropTypes {
   initialValues?: Site;
-  key: number;
+  fieldKey: number;
   name: number;
   field: { fieldKey?: number };
   form: FormInstance;
 }
 export function UrlInput({
   initialValues,
-  key,
+  fieldKey,
   name,
   field,
   form,
@@ -87,7 +87,7 @@ export function UrlInput({
     <Form.Item
       className="grow mb-0"
       hasFeedback
-      help={createErrorMessage(key)}
+      help={createErrorMessage(fieldKey)}
       {...field}
       label="URL"
       name={[name, 'url']}
@@ -97,7 +97,7 @@ export function UrlInput({
           type: 'url',
         },
         {
-          validator: (_, value) => validateUrl(key, value),
+          validator: (_, value) => validateUrl(fieldKey, value),
         },
       ]}
       validateTrigger="onBlur"
