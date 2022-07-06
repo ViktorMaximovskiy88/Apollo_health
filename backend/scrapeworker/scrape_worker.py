@@ -1,4 +1,5 @@
 import asyncio
+import re
 from contextlib import asynccontextmanager
 from datetime import datetime
 from random import shuffle
@@ -42,6 +43,20 @@ class NoDocsCollectedException(Exception):
 
 class CanceledTaskException(Exception):
     pass
+
+
+def get_extension(url_or_path: str):
+    return pathlib.Path(os.path.basename(url_or_path)).suffix
+
+
+def is_google(url):
+    parsed = urlparse(url)
+    return parsed.hostname in ["drive.google.com", "docs.google.com"]
+
+
+def get_google_id(url):
+    matched = re.search("\/d\/(.*)\/", url)
+    return matched.group(1)
 
 
 class ScrapeWorker:
@@ -117,7 +132,7 @@ class ScrapeWorker:
         ):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
 
-            file_ext = "pdf"
+            file_ext = get_extension(temp_path)
             dest_path = f"{checksum}.{file_ext}"
             document = None
 
@@ -260,6 +275,10 @@ class ScrapeWorker:
                     url, context_metadata = await self.extract_url_and_context_metadata(
                         base_url.url, link_handle
                     )
+
+                    if is_google(url):
+                        google_id = get_google_id(url)
+                        url = f"https://drive.google.com/u/0/uc?id={google_id}&export=download"
 
                     # check that think link is unique and that we should not skip it
                     if not self.skip_url(url) and self.url_not_seen(url):

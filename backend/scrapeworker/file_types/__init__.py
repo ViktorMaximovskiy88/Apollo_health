@@ -1,5 +1,5 @@
+import os
 import magic
-import mimetypes
 from backend.scrapeworker.file_types import docx, xlsx, pdf
 
 __all__ = ["docx", "xlsx", "pdf"]

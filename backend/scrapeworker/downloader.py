@@ -5,9 +5,16 @@ import redis
 import xxhash
 import tempfile
 import aiofiles
+import pathlib
+import os
 from random import shuffle
 from backend.common.core.config import config
-from playwright.async_api import APIResponse, APIRequestContext, Playwright, ProxySettings
+from playwright.async_api import (
+    APIResponse,
+    APIRequestContext,
+    Playwright,
+    ProxySettings,
+)
 from backend.scrapeworker.rate_limiter import RateLimiter
 from backend.common.models.proxy import Proxy
 from backend.scrapeworker.rate_limiter import RateLimiter
@@ -20,9 +27,9 @@ class DocDownloader:
         self.rate_limiter = RateLimiter()
         self.playwright = playwright
         # self.redis = redis.from_url(
-            # config["REDIS_URL"],
-            # username='default',
-            # password=config["REDIS_PASSWORD"],
+        # config["REDIS_URL"],
+        # username='default',
+        # password=config["REDIS_PASSWORD"],
         # )
 
     def skip_based_on_response(self, response: APIResponse) -> bool:
@@ -30,7 +37,9 @@ class DocDownloader:
             return True
         return False
 
-    async def playwright_request_context(self, proxy: ProxySettings | None = None) -> APIRequestContext:
+    async def playwright_request_context(
+        self, proxy: ProxySettings | None = None
+    ) -> APIRequestContext:
         headers = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
             "Accept-Language": "en-US,en;q=0.9",
@@ -51,11 +60,15 @@ class DocDownloader:
             i = attempt.retry_state.attempt_number - 1
             n_proxies = len(proxies)
             proxy, proxy_settings = proxies[i % n_proxies]
-            print(f"{i} Using proxy {proxy and proxy.name} ({proxy_settings and proxy_settings.get('server')})")
+            print(
+                f"{i} Using proxy {proxy and proxy.name} ({proxy_settings and proxy_settings.get('server')})"
+            )
             yield attempt, proxy_settings
 
     @asynccontextmanager
-    async def download_url(self, url, proxies: list[tuple[Proxy | None, ProxySettings | None]] = []):
+    async def download_url(
+        self, url, proxies: list[tuple[Proxy | None, ProxySettings | None]] = []
+    ):
         context: APIRequestContext | None = None
         response: APIResponse | None = None
         async for attempt, proxy in self.proxy_with_backoff(proxies):
@@ -78,7 +91,8 @@ class DocDownloader:
     @asynccontextmanager
     async def tempfile_path(self, url: str, body: bytes):
         hash = xxhash.xxh128()
-        with tempfile.NamedTemporaryFile() as temp:
+        guess_suffix = pathlib.Path(os.path.basename(url)).suffix
+        with tempfile.NamedTemporaryFile(suffix=guess_suffix) as temp:
             async with aiofiles.open(temp.name, "wb") as fd:
                 hash.update(body)
                 await fd.write(body)
@@ -87,7 +101,7 @@ class DocDownloader:
     async def download_to_tempfile(
         self, url: str, proxies: list[tuple[Proxy | None, ProxySettings | None]] = []
     ):
-        body = None # self.redis.get(url)
+        body = None  # self.redis.get(url)
         if body == "DISCARD":
             return
 
