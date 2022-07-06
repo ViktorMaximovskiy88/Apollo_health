@@ -44,9 +44,12 @@ async def parse_metadata(temp_path, url) -> dict[str, str]:
     document_type, confidence = classify_doc_type(text)
     lang_code = detect_lang(text)
 
+    identified_dates = list(dates.keys())
+    identified_dates.sort()
+
     return {
         "metadata": metadata,
-        "dates": dates,
+        "identified_dates": identified_dates,
         "effective_date": effective_date,
         "title": title,
         "document_type": document_type,

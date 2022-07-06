@@ -33,10 +33,12 @@ from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.xpdf_wrapper import pdfinfo, pdftotext
 from backend.common.core.enums import Status
+from backend.scrapeworker.file_types import parse_by_type
 
 # Scrapeworker workflow 'exceptions'
 class NoDocsCollectedException(Exception):
     pass
+
 
 class CanceledTaskException(Exception):
     pass
@@ -114,11 +116,11 @@ class ScrapeWorker:
             url, proxies
         ):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
-            
+
             file_ext = "pdf"
             dest_path = f"{checksum}.{file_ext}"
             document = None
-            
+
             if not self.doc_client.document_exists(dest_path):
                 self.doc_client.write_document(dest_path, temp_path)
                 await self.scrape_task.update(
@@ -129,57 +131,47 @@ class ScrapeWorker:
                     RetrievedDocument.checksum == checksum
                 )
 
-            
-            
-            metadata = await pdfinfo(temp_path)
-            text = await pdftotext(temp_path)
-            dates = extract_dates(text)
-            effective_date = select_effective_date(dates)
-            title = self.select_title(metadata, url)
-            document_type, confidence = classify_doc_type(text)
-            lang_code = detect_lang(text)
-            print(f"{url} as {lang_code}")
-
+            parsed_content = await parse_by_type(temp_path, url)
             now = datetime.now()
-            datelist = list(dates.keys())
-            datelist.sort()
 
             if document:
                 updates = UpdateRetrievedDocument(
                     context_metadata=context_metadata,
-                    effective_date=effective_date,
-                    document_type=document_type,
-                    doc_type_confidence=confidence,
-                    metadata=metadata,
-                    identified_dates=datelist,
-                    scrape_task_id=self.scrape_task.id,
+                    doc_type_confidence=parsed_content["confidence"],
+                    document_type=parsed_content["document_type"],
+                    effective_date=parsed_content["effective_date"],
+                    identified_dates=parsed_content["identified_dates"],
+                    lang_code=parsed_content["lang_code"],
                     last_collected_date=now,
-                    name=title,
-                    lang_code=lang_code,
+                    metadata=parsed_content["metadata"],
+                    name=parsed_content["title"],
+                    scrape_task_id=self.scrape_task.id,
                 )
                 await update_and_log_diff(
                     self.logger, await self.get_user(), document, updates
                 )
             else:
                 document = RetrievedDocument(
-                    name=title,
-                    document_type=document_type,
-                    doc_type_confidence=confidence,
-                    effective_date=effective_date,
-                    identified_dates=list(dates.keys()),
+                    base_url=base_url,
+                    checksum=checksum,
+                    context_metadata=context_metadata,
+                    doc_type_confidence=parsed_content["confidence"],
+                    document_type=parsed_content["document_type"],
+                    effective_date=parsed_content["effective_date"],
+                    first_collected_date=now,
+                    identified_dates=parsed_content["identified_dates"],
+                    lang_code=parsed_content["lang_code"],
+                    last_collected_date=now,
+                    metadata=parsed_content["metadata"],
+                    name=parsed_content["title"],
                     scrape_task_id=self.scrape_task.id,
                     site_id=self.site.id,
-                    first_collected_date=now,
-                    last_collected_date=now,
-                    checksum=checksum,
                     url=url,
-                    context_metadata=context_metadata,
-                    metadata=metadata,
-                    base_url=base_url,
-                    lang_code=lang_code,
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
-            await self.scrape_task.update(Push({SiteScrapeTask.retrieved_document_ids: document.id}))
+            await self.scrape_task.update(
+                Push({SiteScrapeTask.retrieved_document_ids: document.id})
+            )
 
     async def watch_for_cancel(self, tasks: list[asyncio.Task[None]]):
         while True:
@@ -195,7 +187,9 @@ class ScrapeWorker:
                 raise CanceledTaskException("Task was canceled.")
             await asyncio.sleep(1)
 
-    async def wait_for_completion_or_cancel(self, downloads: list[Coroutine[None, None, None]]):
+    async def wait_for_completion_or_cancel(
+        self, downloads: list[Coroutine[None, None, None]]
+    ):
 
         if len(downloads) == 0:
             raise NoDocsCollectedException("No documents collected.")
@@ -214,10 +208,12 @@ class ScrapeWorker:
         proxy_settings = await self.get_proxy_settings()
         shuffle(proxy_settings)
         n_proxies = len(proxy_settings)
-        async for attempt in AsyncRetrying(stop=stop_after_attempt(3*n_proxies)):
+        async for attempt in AsyncRetrying(stop=stop_after_attempt(3 * n_proxies)):
             i = attempt.retry_state.attempt_number - 1
             proxy, proxy_setting = proxy_settings[i % n_proxies]
-            print(f"{i} Trying proxy {proxy and proxy.name} - {proxy_setting and proxy_setting.get('server')}")
+            print(
+                f"{i} Trying proxy {proxy and proxy.name} - {proxy_setting and proxy_setting.get('server')}"
+            )
             yield attempt, proxy_setting
 
     @asynccontextmanager
@@ -227,10 +223,12 @@ class ScrapeWorker:
         page: Page | None = None
         async for attempt, proxy in self.try_each_proxy():
             with attempt:
-                context = await self.browser.new_context(proxy=proxy, ignore_https_errors=True) # type: ignore
+                context = await self.browser.new_context(proxy=proxy, ignore_https_errors=True)  # type: ignore
                 page = await context.new_page()
                 await stealth_async(page)
-                await page.goto(base_url, wait_until="domcontentloaded") # await page.goto(base_url, wait_until="networkidle")
+                await page.goto(
+                    base_url, wait_until="domcontentloaded"
+                )  # await page.goto(base_url, wait_until="networkidle")
 
         if not page:
             raise Exception(f"Could not load {base_url}")
