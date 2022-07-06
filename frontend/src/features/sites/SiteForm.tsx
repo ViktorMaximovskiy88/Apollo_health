@@ -1,59 +1,10 @@
-import { Button, Form, Input, Select, Space, Radio } from 'antd';
+import { Button, Form, Input, Select, Space } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { Site, CollectionMethod, SiteStatus } from './types';
 import { UrlFormFields } from './UrlFormField';
-import { ScrapeMethodConfiguration } from './ScrapeMethodConfiguration';
-
-function CollectionMethodRadio() {
-  const collections = [
-    { value: CollectionMethod.Automated, label: 'Automated' },
-    { value: CollectionMethod.Manual, label: 'Manual' },
-  ];
-
-  return (
-    <Form.Item name="collection_method" label="Collection Method">
-      <Radio.Group>
-        {collections.map((col) => {
-          return (
-            <Radio key={col.value} value={col.value}>
-              {col.label}
-            </Radio>
-          );
-        })}
-      </Radio.Group>
-    </Form.Item>
-  );
-}
-
-function ScrapeMethod() {
-  const scrapes = [
-    { value: 'SimpleDocumentScrape', label: 'Simple Document Scrape' },
-    { value: 'BrowserDocumentScrape', label: 'Browser Document Scrape' },
-    { value: 'MyPrimeSearchableScrape', label: 'MyPrime Searchable Scrape' },
-  ];
-
-  return (
-    <Form.Item name="scrape_method" label="Scrape Method">
-      <Select options={scrapes} />
-    </Form.Item>
-  );
-}
-
-function Schedule() {
-  const schedules = [
-    { value: '0 16 * * *', label: 'Daily' },
-    { value: '0 16 * * 0', label: 'Weekly' },
-    { value: '0 16 1 * *', label: 'Monthly' },
-  ];
-
-  return (
-    <Form.Item name="cron" label="Schedule">
-      <Select options={schedules} />
-    </Form.Item>
-  );
-}
+import { CollectionMethodComponent } from './CollectionMethod';
 
 function SiteStatusSelect() {
   const siteStatuses = [
@@ -132,23 +83,7 @@ export function SiteForm(props: { onFinish: (user: Partial<Site>) => void; initi
         <Input />
       </Form.Item>
       <UrlFormFields initialValues={props.initialValues} form={form} />
-      <CollectionMethodRadio />
-      <Form.Item
-        noStyle
-        shouldUpdate={(prevValues, currentValues) =>
-          prevValues.collection_method !== currentValues.collection_method
-        }
-      >
-        {({ getFieldValue }) =>
-          getFieldValue('collection_method') === CollectionMethod.Automated ? (
-            <>
-              <ScrapeMethod />
-              <ScrapeMethodConfiguration followLinks={followLinks} form={form} />
-              <Schedule />
-            </>
-          ) : null
-        }
-      </Form.Item>
+      <CollectionMethodComponent followLinks={followLinks} form={form} />
       <Form.Item name="tags" label="Tags">
         <Select mode="tags" />
       </Form.Item>
