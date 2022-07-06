@@ -1,13 +1,5 @@
 version:  "3.9"
 services:
-  mock_html:
-    image: nginx:latest
-    ports:
-      - 4040:80
-    volumes:
-      - ../mock_html/default.conf:/etc/nginx/conf.d/default.conf
-      - ../mock_html/public:/usr/share/nginx/html
-
   mongo:
     image: mongo:5.0
     environment:
