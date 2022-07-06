@@ -1,4 +1,5 @@
 import pandas as pd
+from openpyxl import load_workbook
 
 
 def xlsx_to_text(temp_path: str):
@@ -13,5 +14,7 @@ def xlsx_to_text(temp_path: str):
     return text
 
 
-async def parse_metadata(temp_path, url) -> dict[str, str]:
-    pass
+def parse_metadata(temp_path: str, url: str | None = None) -> dict[str, str]:
+    workbook = load_workbook(temp_path)
+    props = vars(workbook.properties)
+    return props

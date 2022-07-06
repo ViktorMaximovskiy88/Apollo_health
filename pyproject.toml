@@ -36,6 +36,7 @@ pycld3 = "^0.22"
 pymongo = {extras = ["aws"], version = "^3.12.3"}
 pandas = "^1.4.3"
 docx2txt = "^0.8"
+python-docx = "^0.8.11"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"

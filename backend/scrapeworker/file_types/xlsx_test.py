@@ -1,7 +1,7 @@
 import os
 import pytest
 import aiofiles
-from backend.scrapeworker.file_types.xlsx import xlsx_to_text
+from backend.scrapeworker.file_types.xlsx import xlsx_to_text, parse_metadata
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 fixture_path = os.path.join(current_path, "__fixtures__")
@@ -17,3 +17,12 @@ async def test_xlsx_to_text():
 
     text = xlsx_to_text(file_path)
     assert text == expected_text
+
+
+@pytest.mark.asyncio
+async def test_xlsx_parse_metadata():
+    file_path = os.path.join(fixture_path, "test.xlsx")
+
+    metadata = parse_metadata(file_path)
+    assert metadata["subject"] == "Test Subject xlsx"
+    assert metadata["category"] == "Test Category xlsx"
