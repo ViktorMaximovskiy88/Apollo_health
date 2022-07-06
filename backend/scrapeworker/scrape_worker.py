@@ -17,7 +17,6 @@ from backend.common.models.site import Site
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from playwright.async_api import (
-    ElementHandle,
     Browser,
     BrowserContext,
     ProxySettings,
@@ -77,25 +76,6 @@ class ScrapeWorker:
         valid_proxies = [proxy for proxy in proxies if proxy.id not in proxy_exclusions]
         return convert_proxies_to_proxy_settings(valid_proxies)
 
-    async def extract_url_and_context_metadata(
-        self, base_url: str, link_handle: ElementHandle
-    ):
-        href = await link_handle.get_attribute("href")
-        link_text = await link_handle.text_content()
-        closest_heading_expression = """
-        (node) => {
-            let n = node;
-            while (n) {
-                const h = n.querySelector('h1, h2, h3, h4, h5, h6')
-                if (h) return h.textContent;
-                n = n.parentNode;
-            }
-        }
-        """
-        closest_heading = await link_handle.evaluate(closest_heading_expression)
-        url = urljoin(base_url, href)
-        return url, {"link_text": link_text, "closest_heading": closest_heading}
-
     def skip_url(self, url):
         parsed = urlparse(url)
         if parsed.scheme not in ["https", "http"]:  # mailto, tel, etc
@@ -140,7 +120,7 @@ class ScrapeWorker:
             title = self.select_title(metadata, url)
             document_type, confidence = classify_doc_type(text)
             lang_code = detect_lang(text)
-            
+
             now = datetime.now()
             datelist = list(dates.keys())
             datelist.sort()
