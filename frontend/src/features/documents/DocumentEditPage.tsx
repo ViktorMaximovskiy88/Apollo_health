@@ -49,7 +49,7 @@ export function DocumentEditPage() {
                 key="document"
                 className="h-full overflow-auto"
               >
-                {doc.file_extension == 'pdf' ? (
+                {doc.file_extension === 'pdf' ? (
                   <Viewer
                     withCredentials={true}
                     fileUrl={`/api/v1/documents/${docId}.${doc.file_extension}`}
