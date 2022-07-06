@@ -118,10 +118,7 @@ class DocDownloader:
                     # self.redis.set(url, "DISCARD", ex=60 * 60 * 1)  # 1 hour
                     return
 
-                print(response.headers)
                 filename, content_type = parse_headers(response.headers)
-                print(filename, content_type)
-
                 body = await response.body()
                 # self.redis.set(url, body, ex=60 * 60 * 1)  # 1 hour
 
@@ -138,7 +135,7 @@ def parse_headers(headers) -> tuple[str, str]:
 def get_filename(headers) -> str | None:
     matched = None
     if content_disposition := headers.get("content-disposition"):
-        matched = re.match('filename="(.*)"', content_disposition)
+        matched = re.search('filename="(.*)";', content_disposition)
 
     if matched:
         return matched.group(1)
