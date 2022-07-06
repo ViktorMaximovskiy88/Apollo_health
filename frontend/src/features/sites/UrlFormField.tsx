@@ -21,16 +21,16 @@ function LabelInput({ name, field }: LabelInputPropTypes) {
   );
 }
 
-interface StatusSelectPropTypes {
+interface UrlStatusPropTypes {
   name: number;
   field: { fieldKey?: number };
 }
-function StatusSelect({ name, field }: StatusSelectPropTypes) {
+function UrlStatus({ name, field }: UrlStatusPropTypes) {
   return (
     <Form.Item
       {...field}
       name={[name, 'status']}
-      label="Status"
+      label="URL Status"
       className="mb-0"
     >
       <Select
@@ -117,7 +117,7 @@ export function UrlFormFields({ initialValues, form }: UrlFormFieldPropTypes) {
                   form={form}
                 />
                 <LabelInput name={name} field={field} />
-                <StatusSelect name={name} field={field} />
+                <UrlStatus name={name} field={field} />
                 <LinkButton form={form} index={index} />
                 <RemoveButton fields={fields} remove={remove} name={name} />
               </Input.Group>
