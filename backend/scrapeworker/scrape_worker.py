@@ -231,7 +231,7 @@ class ScrapeWorker:
                     if len(self.site.scrape_method_configuration.wait_for) > 0:
                         await page.locator(', '.join(f":text('{wf}')" for wf in self.site.scrape_method_configuration.wait_for)).wait_for()
                 except:
-                    print('Something is wrong')
+                    raise Exception(f"Wait for dom elements {self.site.scrape_method_configuration.wait_for} have timed out")
                     
         if not page:
             raise Exception(f"Could not load {base_url}")
