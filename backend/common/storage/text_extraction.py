@@ -27,12 +27,10 @@ class TextExtractor:
         self.get_mimetype()
         self.full_text = await self._extract_text()
 
-    def select_title(self, url):
-        filename_no_ext = pathlib.Path(os.path.basename(url)).with_suffix("")
-        if (self.metadata is None):
-            return str(filename_no_ext)
-        title = self.metadata.get("Title") or self.metadata.get("Subject") or str(filename_no_ext)
-        return title
+    def title_from_metadata(self):
+        if not self.metadata:
+            return None
+        return self.metadata.get("Title") or self.metadata.get("Subject")
 
     def get_mimetype(self):
         if not self.mimetype:
