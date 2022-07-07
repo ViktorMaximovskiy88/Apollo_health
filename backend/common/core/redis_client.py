@@ -10,7 +10,7 @@ def redis_connect():
 
     client = Redis(
         host=parsed.hostname,
-        port=parsed.port,
+        port=parsed.port or 6379,
         username="default",
         password=config['REDIS_PASSWORD'],
         ssl=bool(not is_local),
