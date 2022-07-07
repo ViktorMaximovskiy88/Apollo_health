@@ -45,12 +45,24 @@ class AioDownloader:
         headers = default_headers | request.headers
         async for attempt, proxy in self.proxy_with_backoff(proxies):
             with attempt:
-                response = await self.session.request(
-                    url=request.url,
-                    method=request.method,
-                    headers=headers,
-                    data=request.data,
-                )
+                # TODO de-duplicate this...
+                if proxy:
+                    response = await self.session.request(
+                        url=request.url,
+                        method=request.method,
+                        headers=headers,
+                        data=request.data,
+                        proxy=proxy["proxy"],
+                        proxy_auth=proxy["proxy_auth"],
+                    )
+                else:
+                    response = await self.session.request(
+                        url=request.url,
+                        method=request.method,
+                        headers=headers,
+                        data=request.data,
+                    )
+
                 if not response:
                     raise Exception(f"Failed to download url {request.url}")
 
@@ -71,7 +83,7 @@ class AioDownloader:
         for endpoint in proxy.endpoints:
             proxies.append(
                 {
-                    "proxy": endpoint,
+                    "proxy": f"http://{endpoint}",
                     "proxy_auth": proxy_auth,
                 }
             )
