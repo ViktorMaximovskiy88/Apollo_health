@@ -38,6 +38,7 @@ class NewSite(BaseModel):
     scrape_method_configuration: ScrapeMethodConfiguration
     tags: list[str] = []
     cron: str
+    status: str | None = SiteStatus.NEW
 
 
 class UpdateSite(BaseModel):
@@ -50,6 +51,7 @@ class UpdateSite(BaseModel):
     disabled: bool | None = None
     last_run_time: datetime | None = None
     scrape_method_configuration: UpdateScrapeMethodConfiguration | None = None
+    status: str | None = SiteStatus.NEW
 
 
 class Site(BaseDocument, NewSite):
