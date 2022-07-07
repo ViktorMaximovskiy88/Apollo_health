@@ -12,9 +12,9 @@ import {
 import {
   prettyDateDistance,
   prettyDateFromISO,
-  Status,
-  statusDisplayName,
-  statusStyledDisplay,
+  ScrapeTaskStatus,
+  scrapeTaskStatusDisplayName as displayName,
+  scrapeTaskStatusStyledDisplay as styledDisplay,
 } from '../../common';
 import { ButtonLink } from '../../components/ButtonLink';
 import { useGetExtractionTasksForDocQuery } from './extractionsApi';
@@ -53,18 +53,30 @@ const columns = [
     filterEditorProps: {
       placeholder: 'All',
       dataSource: [
-        { id: Status.Finished, label: statusDisplayName(Status.Finished) },
-        { id: Status.Canceled, label: statusDisplayName(Status.Canceled) },
-        { id: Status.Queued, label: statusDisplayName(Status.Queued) },
-        { id: Status.Failed, label: statusDisplayName(Status.Failed) },
         {
-          id: Status.InProgress,
-          label: statusDisplayName(Status.InProgress),
+          id: ScrapeTaskStatus.Finished,
+          label: displayName(ScrapeTaskStatus.Finished),
+        },
+        {
+          id: ScrapeTaskStatus.Canceled,
+          label: displayName(ScrapeTaskStatus.Canceled),
+        },
+        {
+          id: ScrapeTaskStatus.Queued,
+          label: displayName(ScrapeTaskStatus.Queued),
+        },
+        {
+          id: ScrapeTaskStatus.Failed,
+          label: displayName(ScrapeTaskStatus.Failed),
+        },
+        {
+          id: ScrapeTaskStatus.InProgress,
+          label: displayName(ScrapeTaskStatus.InProgress),
         },
       ],
     },
-    render: ({ value: status }: { value: Status }) =>
-      statusStyledDisplay(status),
+    render: ({ value: status }: { value: ScrapeTaskStatus }) =>
+      styledDisplay(status),
   },
   {
     header: 'Extracted Count',

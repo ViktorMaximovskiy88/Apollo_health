@@ -1,5 +1,5 @@
 import { rest } from 'msw';
-import { Status } from '../../../common';
+import { ScrapeTaskStatus } from '../../../common';
 import { CollectionMethod } from '../../sites/types';
 import { faker } from '@faker-js/faker';
 
@@ -32,7 +32,7 @@ db.scrapeTask.create({
   start_time: '2022-06-20T14:17:22.497000',
   end_time: '2022-06-20T14:17:22.594000',
   last_active: '2022-06-20T14:17:22.594000',
-  status: Status.Failed,
+  status: ScrapeTaskStatus.Failed,
   documents_found: 0,
   new_documents_found: 0,
   worker_id: faker.database.mongodbObjectId(),
@@ -46,19 +46,22 @@ const timeOut = (ms: number): Promise<void> =>
 const processScrape = async (scrapeTaskId: string): Promise<void> => {
   await timeOut(1000);
   db.scrapeTask.update({
-    where: { _id: { equals: scrapeTaskId }, status: { equals: Status.Queued } },
+    where: {
+      _id: { equals: scrapeTaskId },
+      status: { equals: ScrapeTaskStatus.Queued },
+    },
     data: {
-      status: Status.InProgress,
+      status: ScrapeTaskStatus.InProgress,
     },
   });
   await timeOut(5000);
   db.scrapeTask.update({
     where: {
       _id: { equals: scrapeTaskId },
-      status: { equals: Status.InProgress },
+      status: { equals: ScrapeTaskStatus.InProgress },
     },
     data: {
-      status: Status.Finished,
+      status: ScrapeTaskStatus.Finished,
     },
   });
 };
@@ -83,7 +86,7 @@ export const handlers = [
         start_time: '2022-06-20T14:17:22.497000',
         end_time: '2022-06-20T14:17:22.594000',
         last_active: '2022-06-20T14:17:22.594000',
-        status: Status.Queued,
+        status: ScrapeTaskStatus.Queued,
         documents_found: 0,
         new_documents_found: 0,
         worker_id: faker.database.mongodbObjectId(),

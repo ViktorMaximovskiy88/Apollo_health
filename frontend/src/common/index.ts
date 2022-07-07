@@ -5,6 +5,10 @@ export {
   prettyDateDistance,
 } from './date';
 
-export { Status, statusDisplayName, statusStyledDisplay } from './status';
+export {
+  ScrapeTaskStatus,
+  scrapeTaskStatusDisplayName,
+  scrapeTaskStatusStyledDisplay,
+} from './scrapeTaskStatus';
 
 export type { BaseDocument } from './types';

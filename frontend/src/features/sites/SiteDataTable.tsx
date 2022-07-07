@@ -11,13 +11,13 @@ import {
 } from '../../app/uiSlice';
 import {
   prettyDateTimeFromISO,
-  statusDisplayName,
-  statusStyledDisplay,
+  ScrapeTaskStatus,
+  scrapeTaskStatusDisplayName as displayName,
+  scrapeTaskStatusStyledDisplay as styledDisplay,
 } from '../../common';
 import { isErrorWithData } from '../../common/helpers';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { Status } from '../../common';
 import {
   useDeleteSiteMutation,
   useGetChangeLogQuery,
@@ -84,18 +84,30 @@ const createColumns = (deleteSite: any) => {
       filterEditorProps: {
         placeholder: 'All',
         dataSource: [
-          { id: Status.Finished, label: statusDisplayName(Status.Finished) },
-          { id: Status.Canceled, label: statusDisplayName(Status.Canceled) },
-          { id: Status.Queued, label: statusDisplayName(Status.Queued) },
-          { id: Status.Failed, label: statusDisplayName(Status.Failed) },
           {
-            id: Status.InProgress,
-            label: statusDisplayName(Status.InProgress),
+            id: ScrapeTaskStatus.Finished,
+            label: displayName(ScrapeTaskStatus.Finished),
+          },
+          {
+            id: ScrapeTaskStatus.Canceled,
+            label: displayName(ScrapeTaskStatus.Canceled),
+          },
+          {
+            id: ScrapeTaskStatus.Queued,
+            label: displayName(ScrapeTaskStatus.Queued),
+          },
+          {
+            id: ScrapeTaskStatus.Failed,
+            label: displayName(ScrapeTaskStatus.Failed),
+          },
+          {
+            id: ScrapeTaskStatus.InProgress,
+            label: displayName(ScrapeTaskStatus.InProgress),
           },
         ],
       },
-      render: ({ value: status }: { value: Status }) => {
-        return statusStyledDisplay(status);
+      render: ({ value: status }: { value: ScrapeTaskStatus }) => {
+        return styledDisplay(status);
       },
     },
     {

@@ -1,6 +1,6 @@
 import { Spin } from 'antd';
 
-export enum Status {
+export enum ScrapeTaskStatus {
   Queued = 'QUEUED',
   Pending = 'PENDING',
   InProgress = 'IN_PROGRESS',
@@ -10,7 +10,7 @@ export enum Status {
   Failed = 'FAILED',
 }
 
-export function statusDisplayName(status: Status): string {
+export function scrapeTaskStatusDisplayName(status: ScrapeTaskStatus): string {
   const { name } = statusDisplayAndStyle(status);
   if (!name) {
     return '';
@@ -18,12 +18,14 @@ export function statusDisplayName(status: Status): string {
   return name;
 }
 
-export function statusStyledDisplay(status: Status): React.ReactElement {
+export function scrapeTaskStatusStyledDisplay(
+  status: ScrapeTaskStatus
+): React.ReactElement {
   const { name, style } = statusDisplayAndStyle(status);
   if (!name && !style) {
     return <span />;
   }
-  if (status === Status.Canceling) {
+  if (status === ScrapeTaskStatus.Canceling) {
     return (
       <>
         <span className={`${style} mr-2`}>Canceling</span>
@@ -39,19 +41,19 @@ interface StatusDisplay {
   style?: string;
 }
 
-function statusDisplayAndStyle(status: Status): StatusDisplay {
+function statusDisplayAndStyle(status: ScrapeTaskStatus): StatusDisplay {
   switch (status) {
-    case Status.Failed:
+    case ScrapeTaskStatus.Failed:
       return { name: 'Failed', style: 'text-red-500' };
-    case Status.Canceled:
+    case ScrapeTaskStatus.Canceled:
       return { name: 'Canceled', style: 'text-orange-500' };
-    case Status.Canceling:
+    case ScrapeTaskStatus.Canceling:
       return { name: 'Canceling', style: 'text-amber-500' };
-    case Status.InProgress:
+    case ScrapeTaskStatus.InProgress:
       return { name: 'In Progress', style: 'text-blue-500' };
-    case Status.Queued:
+    case ScrapeTaskStatus.Queued:
       return { name: 'Queued', style: 'text-yellow-500' };
-    case Status.Finished:
+    case ScrapeTaskStatus.Finished:
       return { name: 'Finished', style: 'text-green-500' };
     default:
       return {};
