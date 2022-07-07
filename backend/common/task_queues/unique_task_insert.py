@@ -1,6 +1,6 @@
 from typing import TypeVar
 from backend.common.models.base_document import BaseDocument
-from backend.common.core.enums import ScrapeTaskStatus
+from backend.common.core.enums import TaskStatus
 
 T = TypeVar("T", bound=BaseDocument)
 
@@ -15,9 +15,9 @@ async def try_queue_unique_task(task: T, uniqueness_key: str = "site_id") -> T |
             "site_id": to_insert[uniqueness_key],
             "status": {
                 "$in": [
-                    ScrapeTaskStatus.QUEUED,
-                    ScrapeTaskStatus.IN_PROGRESS,
-                    ScrapeTaskStatus.CANCELING,
+                    TaskStatus.QUEUED,
+                    TaskStatus.IN_PROGRESS,
+                    TaskStatus.CANCELING,
                 ]
             },
         },

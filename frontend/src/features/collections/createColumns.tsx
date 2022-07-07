@@ -4,7 +4,7 @@ import { Button } from 'antd';
 import {
   prettyDateDistance,
   prettyDateTimeFromISO,
-  ScrapeTaskStatus,
+  TaskStatus,
   scrapeTaskStatusDisplayName as displayName,
   scrapeTaskStatusStyledDisplay as styledDisplay,
 } from '../../common';
@@ -56,32 +56,32 @@ export const createColumns = ({
         placeholder: 'All',
         dataSource: [
           {
-            id: ScrapeTaskStatus.Finished,
-            label: displayName(ScrapeTaskStatus.Finished),
+            id: TaskStatus.Finished,
+            label: displayName(TaskStatus.Finished),
           },
           {
-            id: ScrapeTaskStatus.Canceled,
-            label: displayName(ScrapeTaskStatus.Canceled),
+            id: TaskStatus.Canceled,
+            label: displayName(TaskStatus.Canceled),
           },
           {
-            id: ScrapeTaskStatus.Canceled,
-            label: displayName(ScrapeTaskStatus.Canceling),
+            id: TaskStatus.Canceled,
+            label: displayName(TaskStatus.Canceling),
           },
           {
-            id: ScrapeTaskStatus.Queued,
-            label: displayName(ScrapeTaskStatus.Queued),
+            id: TaskStatus.Queued,
+            label: displayName(TaskStatus.Queued),
           },
           {
-            id: ScrapeTaskStatus.Failed,
-            label: displayName(ScrapeTaskStatus.Failed),
+            id: TaskStatus.Failed,
+            label: displayName(TaskStatus.Failed),
           },
           {
-            id: ScrapeTaskStatus.InProgress,
-            label: displayName(ScrapeTaskStatus.InProgress),
+            id: TaskStatus.InProgress,
+            label: displayName(TaskStatus.InProgress),
           },
         ],
       },
-      render: ({ value: status }: { value: ScrapeTaskStatus }) =>
+      render: ({ value: status }: { value: TaskStatus }) =>
         styledDisplay(status),
     },
     {
@@ -110,8 +110,8 @@ export const createColumns = ({
       header: 'Actions',
       render: ({ data: task }: { data: SiteScrapeTask }) => {
         switch (task.status) {
-          case ScrapeTaskStatus.InProgress:
-          case ScrapeTaskStatus.Queued:
+          case TaskStatus.InProgress:
+          case TaskStatus.Queued:
             return (
               <Button
                 danger
@@ -122,7 +122,7 @@ export const createColumns = ({
                 Cancel
               </Button>
             );
-          case ScrapeTaskStatus.Failed:
+          case TaskStatus.Failed:
             return (
               <Button
                 danger

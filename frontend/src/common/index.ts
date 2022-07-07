@@ -6,7 +6,7 @@ export {
 } from './date';
 
 export {
-  ScrapeTaskStatus,
+  TaskStatus,
   scrapeTaskStatusDisplayName,
   scrapeTaskStatusStyledDisplay,
 } from './scrapeTaskStatus';

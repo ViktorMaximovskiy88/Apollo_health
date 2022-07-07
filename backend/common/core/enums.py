@@ -13,7 +13,7 @@ class CollectionMethod(str, Enum):
     Manual = "MANUAL"
 
 
-class ScrapeTaskStatus(str, Enum):
+class TaskStatus(str, Enum):
     QUEUED = "QUEUED"
     PENDING = "PENDING"
     IN_PROGRESS = "IN_PROGRESS"

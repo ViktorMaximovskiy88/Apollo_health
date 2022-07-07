@@ -1,6 +1,6 @@
 import { Spin } from 'antd';
 
-export enum ScrapeTaskStatus {
+export enum TaskStatus {
   Queued = 'QUEUED',
   Pending = 'PENDING',
   InProgress = 'IN_PROGRESS',
@@ -10,7 +10,7 @@ export enum ScrapeTaskStatus {
   Failed = 'FAILED',
 }
 
-export function scrapeTaskStatusDisplayName(status: ScrapeTaskStatus): string {
+export function scrapeTaskStatusDisplayName(status: TaskStatus): string {
   const { name } = statusDisplayAndStyle(status);
   if (!name) {
     return '';
@@ -19,13 +19,13 @@ export function scrapeTaskStatusDisplayName(status: ScrapeTaskStatus): string {
 }
 
 export function scrapeTaskStatusStyledDisplay(
-  status: ScrapeTaskStatus
+  status: TaskStatus
 ): React.ReactElement {
   const { name, style } = statusDisplayAndStyle(status);
   if (!name && !style) {
     return <span />;
   }
-  if (status === ScrapeTaskStatus.Canceling) {
+  if (status === TaskStatus.Canceling) {
     return (
       <>
         <span className={`${style} mr-2`}>Canceling</span>
@@ -41,19 +41,19 @@ interface StatusDisplay {
   style?: string;
 }
 
-function statusDisplayAndStyle(status: ScrapeTaskStatus): StatusDisplay {
+function statusDisplayAndStyle(status: TaskStatus): StatusDisplay {
   switch (status) {
-    case ScrapeTaskStatus.Failed:
+    case TaskStatus.Failed:
       return { name: 'Failed', style: 'text-red-500' };
-    case ScrapeTaskStatus.Canceled:
+    case TaskStatus.Canceled:
       return { name: 'Canceled', style: 'text-orange-500' };
-    case ScrapeTaskStatus.Canceling:
+    case TaskStatus.Canceling:
       return { name: 'Canceling', style: 'text-amber-500' };
-    case ScrapeTaskStatus.InProgress:
+    case TaskStatus.InProgress:
       return { name: 'In Progress', style: 'text-blue-500' };
-    case ScrapeTaskStatus.Queued:
+    case TaskStatus.Queued:
       return { name: 'Queued', style: 'text-yellow-500' };
-    case ScrapeTaskStatus.Finished:
+    case TaskStatus.Finished:
       return { name: 'Finished', style: 'text-green-500' };
     default:
       return {};

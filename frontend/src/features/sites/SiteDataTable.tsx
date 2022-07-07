@@ -11,7 +11,7 @@ import {
 } from '../../app/uiSlice';
 import {
   prettyDateTimeFromISO,
-  ScrapeTaskStatus,
+  TaskStatus,
   scrapeTaskStatusDisplayName as displayName,
   scrapeTaskStatusStyledDisplay as styledDisplay,
 } from '../../common';
@@ -120,28 +120,28 @@ const createColumns = (deleteSite: any) => {
         placeholder: 'All',
         dataSource: [
           {
-            id: ScrapeTaskStatus.Finished,
-            label: displayName(ScrapeTaskStatus.Finished),
+            id: TaskStatus.Finished,
+            label: displayName(TaskStatus.Finished),
           },
           {
-            id: ScrapeTaskStatus.Canceled,
-            label: displayName(ScrapeTaskStatus.Canceled),
+            id: TaskStatus.Canceled,
+            label: displayName(TaskStatus.Canceled),
           },
           {
-            id: ScrapeTaskStatus.Queued,
-            label: displayName(ScrapeTaskStatus.Queued),
+            id: TaskStatus.Queued,
+            label: displayName(TaskStatus.Queued),
           },
           {
-            id: ScrapeTaskStatus.Failed,
-            label: displayName(ScrapeTaskStatus.Failed),
+            id: TaskStatus.Failed,
+            label: displayName(TaskStatus.Failed),
           },
           {
-            id: ScrapeTaskStatus.InProgress,
-            label: displayName(ScrapeTaskStatus.InProgress),
+            id: TaskStatus.InProgress,
+            label: displayName(TaskStatus.InProgress),
           },
         ],
       },
-      render: ({ value: status }: { value: ScrapeTaskStatus }) => {
+      render: ({ value: status }: { value: TaskStatus }) => {
         return styledDisplay(status);
       },
     },
