@@ -24,6 +24,11 @@ import {
   useGetSitesQuery,
 } from './sitesApi';
 import { Site } from './types';
+import {
+  SiteStatus,
+  siteStatusDisplayName,
+  siteStatusStyledDisplay,
+} from './siteStatus';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
@@ -58,6 +63,36 @@ const createColumns = (deleteSite: any) => {
         return <ButtonLink to={`${site._id}/scrapes`}>{site.name}</ButtonLink>;
       },
       defaultFlex: 1,
+    },
+    {
+      header: 'Site Status',
+      name: 'status',
+      minWidth: 200,
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        placeholder: 'All',
+        dataSource: [
+          {
+            id: SiteStatus.New,
+            label: siteStatusDisplayName(SiteStatus.New),
+          },
+          {
+            id: SiteStatus.QualityHold,
+            label: siteStatusDisplayName(SiteStatus.QualityHold),
+          },
+          {
+            id: SiteStatus.Online,
+            label: siteStatusDisplayName(SiteStatus.Online),
+          },
+          {
+            id: SiteStatus.Inactive,
+            label: siteStatusDisplayName(SiteStatus.Inactive),
+          },
+        ],
+      },
+      render: ({ value: status }: { value: SiteStatus }) => {
+        return siteStatusStyledDisplay(status);
+      },
     },
     {
       header: 'Last Run Time',

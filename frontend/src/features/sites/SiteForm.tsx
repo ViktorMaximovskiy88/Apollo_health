@@ -2,9 +2,10 @@ import { Button, Form, Input, Select, Space } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
-import { Site, CollectionMethod, SiteStatus } from './types';
+import { Site, CollectionMethod } from './types';
 import { UrlFormFields } from './UrlFormField';
 import { CollectionMethodComponent } from './CollectionMethod';
+import { SiteStatus } from './siteStatus';
 
 function SiteStatusSelect() {
   const siteStatuses = [
@@ -14,7 +15,7 @@ function SiteStatusSelect() {
     { value: SiteStatus.Online, label: 'Online' },
   ];
   return (
-    <Form.Item name="site_status" label="Status">
+    <Form.Item name="status" label="Site Status">
       <Select options={siteStatuses} />
     </Form.Item>
   );
@@ -47,7 +48,7 @@ export function SiteForm(props: { onFinish: (user: Partial<Site>) => void; initi
       collection_method: CollectionMethod.Automated,
       cron: '0 16 * * *',
       tags: [],
-      site_status: SiteStatus.New,
+      status: SiteStatus.New,
       base_urls: [{ url: '', name: '', status: 'ACTIVE' }],
       scrape_method_configuration: {
         document_extensions: ['pdf'],

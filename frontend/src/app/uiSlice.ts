@@ -77,6 +77,7 @@ const initialState = {
       sort: [{ name: 'last_run_time', dir: -1 as 1 | -1 | 0 }],
       filter: [
         { name: 'name', operator: 'contains', type: 'string', value: '' },
+        { name: 'status', operator: 'eq', type: 'select', value: null },
         { name: 'last_run_time', operator: 'before', type: 'date', value: '' },
         {
           name: 'last_run_status',
