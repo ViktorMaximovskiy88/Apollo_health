@@ -59,7 +59,6 @@ class Site(BaseDocument, NewSite):
     last_run_status: str | None = None
     collection_method: str | None = CollectionMethod.Automated
     last_run_time: datetime | None = None
-    status: str | None = SiteStatus.NEW
 
 
 # Deprecated

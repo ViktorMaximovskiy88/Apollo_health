@@ -16,6 +16,7 @@ from backend.common.core.config import is_local, config
 from backend.common.models.user import User
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.core.enums import TaskStatus
+from backend.common.core.enums import SiteStatus
 from backend.app.utils.logger import Logger
 
 from backend.common.db.init import init_db
@@ -54,7 +55,10 @@ def find_sites_eligible_for_scraping(crons, now=datetime.now()):
         {
             "cron": {"$in": crons},  # Should be run now
             "disabled": False,  # Is active
-            "collection_method": {"$ne": CollectionMethod.Manual},
+            "status": SiteStatus.ONLINE,  # Is online
+            "collection_method": {
+                "$ne": CollectionMethod.Manual  # Isn't set to manual
+            },
             "base_urls.status": "ACTIVE",  # has at least one active url
             "$or": [
                 {"last_run_time": None},  # has never been run
@@ -63,8 +67,12 @@ def find_sites_eligible_for_scraping(crons, now=datetime.now()):
                 },  # hasn't been run in the last minute
             ],
             "last_run_status": {
-                "$nin": ["QUEUED", "IN_PROGRESS", "CANCELING"]
-            },  # not already in progress
+                "$nin": [
+                    TaskStatus.QUEUED,
+                    TaskStatus.IN_PROGRESS,
+                    TaskStatus.CANCELING,
+                ]  # not already in progress
+            },
         }
     )
     return sites
@@ -149,7 +157,7 @@ async def start_scaler():
 
     while True:
         queue_size = await SiteScrapeTask.find(
-            {"status": {"$in": ["IN_PROGRESS", "QUEUED"]}}
+            {"status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.QUEUED]}}
         ).count()
         active_workers = determine_current_instance_count()
         tasks_per_worker = 5  # some setting
@@ -200,7 +208,7 @@ async def start_hung_task_checker():
         now = datetime.now()
         tasks = SiteScrapeTask.find(
             {
-                "status": {"$in": ["IN_PROGRESS", "CANCELING"]},
+                "status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.CANCELING]},
                 "$or": [
                     {"last_active": {"$lt": now - timedelta(minutes=1)}},
                     {"last_active": None},
