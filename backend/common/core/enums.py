@@ -21,3 +21,10 @@ class ScrapeTaskStatus(str, Enum):
     CANCELING = "CANCELING"
     CANCELED = "CANCELED"
     FAILED = "FAILED"
+
+
+class SiteStatus(str, Enum):
+    NEW = "NEW"
+    QUALITY_HOLD = "QUALITY_HOLD"
+    ONLINE = "ONLINE"
+    INACTIVE = "INACTIVE"

@@ -1,6 +1,7 @@
 from datetime import datetime
 from beanie import PydanticObjectId
 from pydantic import BaseModel, HttpUrl
+from backend.common.core.enums import SiteStatus
 from backend.common.models.base_document import BaseDocument
 from backend.common.core.enums import CollectionMethod
 
@@ -56,6 +57,7 @@ class Site(BaseDocument, NewSite):
     last_run_status: str | None = None
     collection_method: str | None = CollectionMethod.Automated
     last_run_time: datetime | None = None
+    status: str | None = SiteStatus.NEW
 
 
 # Deprecated
