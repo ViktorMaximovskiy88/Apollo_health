@@ -3,7 +3,7 @@ from uuid import UUID
 from beanie import PydanticObjectId
 from pydantic import BaseModel
 from backend.common.models.base_document import BaseDocument
-from backend.common.core.enums import Status
+from backend.common.core.enums import ScrapeTaskStatus
 
 
 class ContentExtractionTask(BaseDocument):
@@ -15,7 +15,7 @@ class ContentExtractionTask(BaseDocument):
     queued_time: datetime
     start_time: datetime | None = None
     end_time: datetime | None = None
-    status: str = Status.QUEUED
+    status: str = ScrapeTaskStatus.QUEUED
 
     extraction_count: int = 0
 
