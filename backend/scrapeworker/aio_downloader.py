@@ -23,6 +23,7 @@ default_headers: dict[str, str] = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36",
 }
 
+
 class AioDownloader:
 
     session: ClientSession
@@ -57,7 +58,8 @@ class AioDownloader:
 
         yield response
 
-    def convert_proxy(self, proxy: Proxy):
+    # just return the aio useable proxy list
+    def convert_proxy(self, proxy: Proxy) -> list[dict[str, str]]:
         proxy_auth = None
         proxies = []
         if proxy.credentials:
@@ -74,25 +76,26 @@ class AioDownloader:
                 }
             )
 
-        return [proxy, proxies]
+        return proxies
 
     def convert_proxies(
         self,
-        proxies: list[Proxy],
+        proxies: list[tuple[Proxy | None, ProxySettings | dict[str, str] | None]] = [],
     ):
         _proxies = []
-        for [proxy, _proxy_settings] in proxies:
+        for (proxy, _proxy_settings) in proxies:
             if proxy is not None:
-                _proxies.append(self.convert_proxy(proxy))
+                aio_proxies = self.convert_proxy(proxy)
+                [_proxies.append((proxy, aio_proxy)) for aio_proxy in aio_proxies]
             else:
-                [None, None]
+                [(None, None)]
 
         shuffle(_proxies)
         return _proxies
 
     async def proxy_with_backoff(
         self,
-        proxies: list[Proxy],
+        proxies: list[tuple[Proxy | None, ProxySettings | dict[str, str] | None]] = [],
     ) -> AsyncGenerator[tuple[AttemptManager, dict[str, Any]], None]:
         aio_proxies = self.convert_proxies(proxies)
         async for attempt in self.rate_limiter.attempt_with_backoff():
@@ -116,7 +119,9 @@ class AioDownloader:
             yield temp.name, hash.hexdigest()
 
     async def download_to_tempfile(
-        self, url: str, proxies: list[tuple[Proxy | None, ProxySettings | None]] = []
+        self,
+        url: str,
+        proxies: list[tuple[Proxy | None, ProxySettings | dict[str, str] | None]] = [],
     ):
         body = None  # self.redis.get(url)
         if body == "DISCARD":
