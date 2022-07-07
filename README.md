@@ -150,6 +150,18 @@ If you're in and no errors, create a new user with your own email and password o
 
 If that succeeds, try creating a site. I recommend Molina HealthCare OH Drug at https://www.molinahealthcare.com/providers/oh/duals/drug/formulary.aspx. Once created, go into it and click the 'Run Collection' button and hope for the best, watching the logs for activity/errors.
 
+### Testing
+Frontend Tests
+```bash
+cd frontend
+npm run test
+```
+Backend Tests
+```bash
+# In virtual env
+python -m pytest
+```
+
 ### Windows Install
 
 # Installers

@@ -25,14 +25,11 @@ from playwright.async_api import (
 
 from playwright_stealth import stealth_async
 from backend.common.models.user import User
+from backend.scrapeworker.common.utils import compile_date_rgx
+from backend.scrapeworker.date_parser import DateParser
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.common.detect_lang import detect_lang
 from backend.scrapeworker.aio_downloader import AioDownloader
-from backend.scrapeworker.common.effective_date import (
-    extract_dates,
-    select_effective_date,
-)
-
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
@@ -56,6 +53,7 @@ class ScrapeWorker:
         self.scrape_task = scrape_task
         self.site = site
         self.seen_urls = set()
+        self.date_rgxs = compile_date_rgx()
         self.doc_client = DocumentStorageClient()
         self.downloader = AioDownloader()
         self.logger = Logger()
@@ -115,20 +113,25 @@ class ScrapeWorker:
 
             metadata = await pdfinfo(temp_path)
             text = await pdftotext(temp_path)
-            dates = extract_dates(text)
-            effective_date = select_effective_date(dates)
+            date_parser = DateParser(text, self.date_rgxs)
+            date_parser.extract_dates()
             title = self.select_title(metadata, url)
             document_type, confidence = classify_doc_type(text)
             lang_code = detect_lang(text)
 
             now = datetime.now()
-            datelist = list(dates.keys())
+            datelist = list(date_parser.unclassified_dates)
             datelist.sort()
 
             if document:
                 updates = UpdateRetrievedDocument(
                     context_metadata=download.metadata.dict(),
-                    effective_date=effective_date,
+                    effective_date=date_parser.effective_date["date"],
+                    end_date=date_parser.end_date["date"],
+                    last_updated_date=date_parser.last_updated_date["date"],
+                    next_review_date=date_parser.next_review_date["date"],
+                    next_update_date=date_parser.next_update_date["date"],
+                    published_date=date_parser.published_date["date"],
                     document_type=document_type,
                     doc_type_confidence=confidence,
                     metadata=metadata,
@@ -146,8 +149,13 @@ class ScrapeWorker:
                     name=title,
                     document_type=document_type,
                     doc_type_confidence=confidence,
-                    effective_date=effective_date,
-                    identified_dates=list(dates.keys()),
+                    effective_date=date_parser.effective_date["date"],
+                    end_date=date_parser.end_date["date"],
+                    last_updated_date=date_parser.last_updated_date["date"],
+                    next_review_date=date_parser.next_review_date["date"],
+                    next_update_date=date_parser.next_update_date["date"],
+                    published_date=date_parser.published_date["date"],
+                    identified_dates=datelist,
                     scrape_task_id=self.scrape_task.id,
                     site_id=self.site.id,
                     first_collected_date=now,
