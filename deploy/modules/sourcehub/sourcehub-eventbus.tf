@@ -70,7 +70,7 @@ data "aws_iam_policy_document" "sourcehub-events-log-policy" {
 }
 resource "aws_cloudwatch_log_resource_policy" "sourcehub-events-log-policy" {
   policy_name = "sourcehub-events-log-policy"
-  policy_policy_document = data.aws_iam_policy_document.sourcehub-events-log-policy.json
+  policy_document = data.aws_iam_policy_document.sourcehub-events-log-policy.json
 }
 
 resource "aws_cloudwatch_event_rule" "sourcehub-events" {
