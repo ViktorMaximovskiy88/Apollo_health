@@ -1,11 +1,11 @@
 import asyncio
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-import redis
+from backend.common.core.redis_client import redis_connect
 import tempfile
 import aiofiles
 from random import shuffle
-from backend.common.core.config import config
+
 from playwright.async_api import APIResponse, APIRequestContext, Playwright, ProxySettings
 from backend.scrapeworker.rate_limiter import RateLimiter
 from backend.common.models.proxy import Proxy
@@ -20,11 +20,7 @@ class DocDownloader:
     def __init__(self, playwright: Playwright):
         self.rate_limiter = RateLimiter()
         self.playwright = playwright
-        # self.redis = redis.from_url(
-            # config["REDIS_URL"],
-            # username='default',
-            # password=config["REDIS_PASSWORD"],
-        # )
+        self.redis = redis_connect()
 
     def skip_based_on_response(self, response: APIResponse) -> bool:
         if not response.ok:
