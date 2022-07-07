@@ -2,7 +2,6 @@ import asyncio
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 import redis
-import xxhash
 import tempfile
 import aiofiles
 from random import shuffle
@@ -13,6 +12,8 @@ from backend.common.models.proxy import Proxy
 from backend.scrapeworker.rate_limiter import RateLimiter
 from tenacity import AttemptManager
 from tenacity._asyncio import AsyncRetrying
+from backend.common.storage.hash import get_document_hash
+from backend.common.storage.text_extraction import TextExtractor
 
 
 class DocDownloader:
@@ -75,14 +76,18 @@ class DocDownloader:
             if context:
                 await context.dispose()
 
+
     @asynccontextmanager
-    async def tempfile_path(self, url: str, body: bytes):
-        hash = xxhash.xxh128()
+    async def tempfile_path(self, url: str, body: bytes, content_type: str):
         with tempfile.NamedTemporaryFile() as temp:
             async with aiofiles.open(temp.name, "wb") as fd:
-                hash.update(body)
+                
                 await fd.write(body)
-            yield temp.name, hash.hexdigest()
+            extractor = TextExtractor(document_bytes=body,
+                              mimetype=content_type, temp_path=temp.name)
+            await extractor.extract()
+            yield temp.name, get_document_hash(extractor), extractor
+
 
     async def download_to_tempfile(
         self, url: str, proxies: list[tuple[Proxy | None, ProxySettings | None]] = []
@@ -101,6 +106,6 @@ class DocDownloader:
                     return
                 body = await response.body()
                 # self.redis.set(url, body, ex=60 * 60 * 1)  # 1 hour
-
-        async with self.tempfile_path(url, body) as (temp_path, hash):
-            yield temp_path, hash
+                content_type = response.headers.get('content-type')
+        async with self.tempfile_path(url, body, content_type) as (temp_path, hash, extractor):
+            yield temp_path, hash, extractor

@@ -26,6 +26,7 @@ from playwright_stealth import stealth_async
 from backend.common.models.user import User
 from backend.scrapeworker.common.utils import compile_date_rgx
 from backend.scrapeworker.date_parser import DateParser
+from backend.common.storage.text_extraction import TextExtractor
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.detect_lang import detect_lang
 from backend.scrapeworker.downloader import DocDownloader
@@ -106,14 +107,17 @@ class ScrapeWorker:
         self.seen_urls.add(url)
         return True
 
-    def select_title(self, metadata, url):
-        filename_no_ext = pathlib.Path(os.path.basename(url)).with_suffix("")
-        title = metadata.get("Title") or metadata.get("Subject") or str(filename_no_ext)
-        return title
+    def select_title(self, extractor: TextExtractor, url: str):
+        title = extractor.title_from_metadata()
+        if (title):
+            return title
+        else:
+            return str(pathlib.Path(os.path.basename(url)).with_suffix(""))
+
 
     async def attempt_download(self, base_url, url, context_metadata):
         proxies = await self.get_proxy_settings()
-        async for (temp_path, checksum) in self.downloader.download_to_tempfile(
+        async for (temp_path, checksum, extractor) in self.downloader.download_to_tempfile(
             url, proxies
         ):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
@@ -129,11 +133,12 @@ class ScrapeWorker:
                     RetrievedDocument.checksum == checksum
                 )
 
-            metadata = await pdfinfo(temp_path)
-            text = await pdftotext(temp_path)
+            text = extractor.full_text
             date_parser = DateParser(text, self.date_rgxs)
             date_parser.extract_dates()
-            title = self.select_title(metadata, url)
+            title = self.select_title(extractor, url)
+            metadata = extractor.metadata
+            content_type = extractor.mimetype
             document_type, confidence = classify_doc_type(text)
             lang_code = detect_lang(text)
             print(f"{url} as {lang_code}")
