@@ -24,10 +24,11 @@ from playwright.async_api import (
 )
 from playwright_stealth import stealth_async
 from backend.common.models.user import User
+from backend.scrapeworker.common.utils import compile_date_rgx
+from backend.scrapeworker.date_parser import DateParser
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.detect_lang import detect_lang
 from backend.scrapeworker.downloader import DocDownloader
-from backend.scrapeworker.effective_date import extract_dates, select_effective_date
 from backend.scrapeworker.proxy import convert_proxies_to_proxy_settings
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
@@ -37,6 +38,7 @@ from backend.common.core.enums import Status
 # Scrapeworker workflow 'exceptions'
 class NoDocsCollectedException(Exception):
     pass
+
 
 class CanceledTaskException(Exception):
     pass
@@ -51,6 +53,7 @@ class ScrapeWorker:
         self.scrape_task = scrape_task
         self.site = site
         self.seen_urls = set()
+        self.date_rgxs = compile_date_rgx()
         self.doc_client = DocumentStorageClient()
         self.downloader = DocDownloader(playwright)
         self.logger = Logger()
@@ -128,21 +131,26 @@ class ScrapeWorker:
 
             metadata = await pdfinfo(temp_path)
             text = await pdftotext(temp_path)
-            dates = extract_dates(text)
-            effective_date = select_effective_date(dates)
+            date_parser = DateParser(text, self.date_rgxs)
+            date_parser.extract_dates()
             title = self.select_title(metadata, url)
             document_type, confidence = classify_doc_type(text)
             lang_code = detect_lang(text)
             print(f"{url} as {lang_code}")
 
             now = datetime.now()
-            datelist = list(dates.keys())
+            datelist = list(date_parser.unclassified_dates)
             datelist.sort()
 
             if document:
                 updates = UpdateRetrievedDocument(
                     context_metadata=context_metadata,
-                    effective_date=effective_date,
+                    effective_date=date_parser.effective_date["date"],
+                    end_date=date_parser.end_date["date"],
+                    last_updated_date=date_parser.last_updated_date["date"],
+                    next_review_date=date_parser.next_review_date["date"],
+                    next_update_date=date_parser.next_update_date["date"],
+                    published_date=date_parser.published_date["date"],
                     document_type=document_type,
                     doc_type_confidence=confidence,
                     metadata=metadata,
@@ -160,8 +168,13 @@ class ScrapeWorker:
                     name=title,
                     document_type=document_type,
                     doc_type_confidence=confidence,
-                    effective_date=effective_date,
-                    identified_dates=list(dates.keys()),
+                    effective_date=date_parser.effective_date["date"],
+                    end_date=date_parser.end_date["date"],
+                    last_updated_date=date_parser.last_updated_date["date"],
+                    next_review_date=date_parser.next_review_date["date"],
+                    next_update_date=date_parser.next_update_date["date"],
+                    published_date=date_parser.published_date["date"],
+                    identified_dates=datelist,
                     scrape_task_id=self.scrape_task.id,
                     site_id=self.site.id,
                     first_collected_date=now,
@@ -174,7 +187,9 @@ class ScrapeWorker:
                     lang_code=lang_code,
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
-            await self.scrape_task.update(Push({SiteScrapeTask.retrieved_document_ids: document.id}))
+            await self.scrape_task.update(
+                Push({SiteScrapeTask.retrieved_document_ids: document.id})
+            )
 
     async def watch_for_cancel(self, tasks: list[asyncio.Task[None]]):
         while True:
@@ -190,7 +205,9 @@ class ScrapeWorker:
                 raise CanceledTaskException("Task was canceled.")
             await asyncio.sleep(1)
 
-    async def wait_for_completion_or_cancel(self, downloads: list[Coroutine[None, None, None]]):
+    async def wait_for_completion_or_cancel(
+        self, downloads: list[Coroutine[None, None, None]]
+    ):
 
         if len(downloads) == 0:
             raise NoDocsCollectedException("No documents collected.")
@@ -209,10 +226,12 @@ class ScrapeWorker:
         proxy_settings = await self.get_proxy_settings()
         shuffle(proxy_settings)
         n_proxies = len(proxy_settings)
-        async for attempt in AsyncRetrying(stop=stop_after_attempt(3*n_proxies)):
+        async for attempt in AsyncRetrying(stop=stop_after_attempt(3 * n_proxies)):
             i = attempt.retry_state.attempt_number - 1
             proxy, proxy_setting = proxy_settings[i % n_proxies]
-            print(f"{i} Trying proxy {proxy and proxy.name} - {proxy_setting and proxy_setting.get('server')}")
+            print(
+                f"{i} Trying proxy {proxy and proxy.name} - {proxy_setting and proxy_setting.get('server')}"
+            )
             yield attempt, proxy_setting
 
     @asynccontextmanager
@@ -222,10 +241,12 @@ class ScrapeWorker:
         page: Page | None = None
         async for attempt, proxy in self.try_each_proxy():
             with attempt:
-                context = await self.browser.new_context(proxy=proxy, ignore_https_errors=True) # type: ignore
+                context = await self.browser.new_context(proxy=proxy, ignore_https_errors=True)  # type: ignore
                 page = await context.new_page()
                 await stealth_async(page)
-                await page.goto(base_url, wait_until="domcontentloaded") # await page.goto(base_url, wait_until="networkidle")
+                await page.goto(
+                    base_url, wait_until="domcontentloaded"
+                )  # await page.goto(base_url, wait_until="networkidle")
 
         if not page:
             raise Exception(f"Could not load {base_url}")
