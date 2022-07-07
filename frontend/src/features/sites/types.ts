@@ -19,7 +19,7 @@ export interface Site extends BaseDocument {
   tags: string[];
   disabled: boolean;
   last_run_time?: string;
-  last_status: Status;
+  last_run_status: Status;
   cron: string;
 }
 
