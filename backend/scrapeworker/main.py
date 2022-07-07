@@ -62,7 +62,9 @@ async def pull_task_from_queue(worker_id):
 async def log_success(scrape_task: SiteScrapeTask, site: Site):
     typer.secho(f"Finished Task {scrape_task.id}", fg=typer.colors.BLUE)
     now = datetime.now()
-    await site.update(Set({Site.last_status: Status.FINISHED, Site.last_run_time: now}))
+    await site.update(
+        Set({Site.last_run_status: Status.FINISHED, Site.last_run_time: now})
+    )
     await scrape_task.update(
         Set(
             {
@@ -78,7 +80,7 @@ async def log_error_status(scrape_task, site, message, status):
     await site.update(
         Set(
             {
-                Site.last_status: status,
+                Site.last_run_status: status,
                 Site.last_run_time: now,
             }
         )
@@ -151,7 +153,7 @@ async def worker_fn(worker_id, playwright, browser):
 
         now = datetime.now()
         await site.update(
-            Set({Site.last_status: Status.IN_PROGRESS, Site.last_run_time: now})
+            Set({Site.last_run_status: Status.IN_PROGRESS, Site.last_run_time: now})
         )
 
         worker = ScrapeWorker(playwright, browser, scrape_task, site)

@@ -77,8 +77,8 @@ const createColumns = (deleteSite: any) => {
       },
     },
     {
-      header: 'Last Status',
-      name: 'last_status',
+      header: 'Last Run Status',
+      name: 'last_run_status',
       minWidth: 200,
       filterEditor: SelectFilter,
       filterEditorProps: {

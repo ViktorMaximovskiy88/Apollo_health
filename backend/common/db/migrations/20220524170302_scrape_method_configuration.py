@@ -1,7 +1,7 @@
 from beanie import iterative_migration
 from backend.common.models.site import (
     ScrapeMethodConfiguration,
-    Site,
+    LastStatusSite,
     NoScrapeConfigSite,
 )
 
@@ -9,7 +9,7 @@ from backend.common.models.site import (
 class Forward:
     @iterative_migration()
     async def create_scrape_config(
-        self, input_document: NoScrapeConfigSite, output_document: Site
+        self, input_document: NoScrapeConfigSite, output_document: LastStatusSite
     ):
         output_document.scrape_method_configuration = ScrapeMethodConfiguration(
             document_extensions=["pdf"],
@@ -20,6 +20,6 @@ class Forward:
 class Backward:
     @iterative_migration()
     async def remove_scrape_config(
-        self, input_document: Site, output_document: NoScrapeConfigSite
+        self, input_document: LastStatusSite, output_document: NoScrapeConfigSite
     ):
         output_document.scrape_method_configuration = None
