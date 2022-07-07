@@ -80,6 +80,14 @@ resource "aws_cloudwatch_event_rule" "sourcehub-events" {
   event_bus_name = aws_cloudwatch_event_bus.sourcehub.name
   is_enabled = true
 
+  event_pattern = jsonencode(
+    {
+      "source": [
+        local.event_source
+      ]
+    }
+  )
+  
   tags = merge(local.effective_tags, {
     Name = "sourcehub-events-log"
   })
