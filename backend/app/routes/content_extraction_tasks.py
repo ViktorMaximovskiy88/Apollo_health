@@ -119,6 +119,6 @@ async def update_extraction_task(
     # NOTE: Could use a transaction here
     updated = await update_and_log_diff(logger, current_user, target, updates)
     await Site.find_one(Site.id == target.site_id).update(
-        Set({Site.last_status: updates.status}),
+        Set({Site.last_run_status: updates.status}),
     )
     return updated
