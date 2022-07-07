@@ -52,7 +52,8 @@ apt-get install -y locales make build-essential libssl-dev zlib1g-dev \
     libbz2-dev libreadline-dev libsqlite3-dev wget curl zip llvm libncurses5-dev \
     libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev git \
     neovim htop lsof sudo software-properties-common poppler-utils gcc \
-    gfortran libblas-dev liblapack-dev
+    gfortran libblas-dev liblapack-dev \
+    g++ protobuf-compiler libprotobuf-dev libmagic1
 
 # Install Docker
 curl -fsSL https://get.docker.com | sudo sh
@@ -242,6 +243,10 @@ Confirm that python version is 3.10.4 before you generate virtual environment
 At some point I had a problem with PATH. It was fixed by manually updating .bashrc file. PATH definition at the end of the file had single instead of double quotes. We believe it was caused by some incorrect Export PATH command that is no longer part of this file
 
 # macOS (intel?)
+
+```bash
+brew install libmagic
+```
 
 # PYCLD3 Deps
 
