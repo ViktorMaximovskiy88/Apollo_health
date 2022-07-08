@@ -30,7 +30,7 @@ from backend.scrapeworker.proxy import convert_proxies_to_proxy_settings
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.core.enums import Status
-from backend.scrapeworker.file_types import parse_by_type
+from backend.scrapeworker.file_parsers import parse_by_type
 
 # Scrapeworker workflow 'exceptions'
 class NoDocsCollectedException(Exception):
@@ -116,23 +116,17 @@ class ScrapeWorker:
         self.seen_urls.add(url)
         return True
 
-    def select_title(self, metadata, url):
-        filename_no_ext = pathlib.Path(os.path.basename(url)).with_suffix("")
-        title = metadata.get("Title") or metadata.get("Subject") or str(filename_no_ext)
-        return title
-
     async def attempt_download(self, base_url, url, context_metadata):
         proxies = await self.get_proxy_settings()
-        async for (temp_path, checksum) in self.downloader.download_to_tempfile(
-            url, proxies
-        ):
+        async for (
+            temp_path,
+            checksum,
+        ) in self.downloader.download_to_tempfile(url, proxies):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
 
             file_extension = get_extension(temp_path)
             dest_path = f"{checksum}.{file_extension}"
             document = None
-
-            print(dest_path, temp_path, "*****")
 
             if not self.doc_client.document_exists(dest_path):
                 self.doc_client.write_document(dest_path, temp_path)

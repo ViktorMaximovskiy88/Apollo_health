@@ -1,0 +1,52 @@
+{
+  "_id": "62ab8b922791592e1abd7bc0",
+  "site_id": "62ab76093fa69f4ba8e58c92",
+  "scrape_task_id": "62b9eeb471976a996a4f3c45",
+  "logical_document_id": null,
+  "logical_document_version": null,
+  "collection_time": "2022-06-16T15:59:14.930000",
+  "last_seen": "2022-06-27T13:58:12.744000",
+  "url": "https://www.test-url.com",
+  "checksum": "6423936f7731350abd4e4bbd35952b3f",
+  "disabled": false,
+  "name": "PA_CV_NuclearMedicine_618",
+  "metadata": {
+    "Author": "Johnson, Janell",
+    "Creator": "Microsoft Word 2013",
+    "Producer": "Microsoft Word 2013",
+    "CreationDate": "Tue Apr 10 14:24:36 2018",
+    "ModDate": "Tue Apr 10 14:24:36 2018",
+    "Tagged": "yes",
+    "Form": "none",
+    "Pages": "16",
+    "Encrypted": "no",
+    "Page size": "612 x 792 pts (letter) (rotated 0 degrees)",
+    "File size": "503104 bytes",
+    "Optimized": "no",
+    "PDF version": "1.5"
+  },
+  "context_metadata": {
+    "link_text": "CV Nuclear Medicine",
+    "closest_heading": "Medicare Medical Policy Archive Search"
+  },
+  "effective_date": "2000-08-01T00:00:00",
+  "end_date": null,
+  "last_updated_date": "2000-10-02T00:00:00",
+  "next_review_date": "2000-11-03T00:00:00",
+  "next_update_date": "2000-12-19T00:00:00",
+  "published_date": null,
+  "document_type": "Covered Treatment List",
+  "doc_type_confidence": 0.6509750485420227,
+  "identified_dates": [
+    "2000-09-19T00:00:00",
+    "2018-02-23T00:00:00",
+    "2018-03-21T00:00:00",
+    "2018-05-01T00:00:00",
+    "2018-06-01T00:00:00",
+    "2019-03-21T00:00:00"
+  ],
+  "base_url": "https://www.test-base-url.com",
+  "lang_code": "en",
+  "automated_content_extraction": false,
+  "automated_content_extraction_class": null
+}

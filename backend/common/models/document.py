@@ -19,6 +19,11 @@ class RetrievedDocument(BaseDocument):
     metadata: dict = {}
     context_metadata: dict = {}
     effective_date: datetime | None = None
+    end_date: datetime | None = None
+    last_updated_date: datetime | None = None
+    next_review_date: datetime | None = None
+    next_update_date: datetime | None = None
+    published_date: datetime | None = None
     document_type: str | None = None
     doc_type_confidence: float | None = None
     identified_dates: list[datetime] = []
@@ -33,6 +38,11 @@ class RetrievedDocument(BaseDocument):
 class UpdateRetrievedDocument(BaseModel):
     site_id: PydanticObjectId | None = None
     effective_date: datetime | None = None
+    end_date: datetime | None = None
+    last_updated_date: datetime | None = None
+    next_review_date: datetime | None = None
+    next_update_date: datetime | None = None
+    published_date: datetime | None = None
     identified_dates: list[datetime] | None = None
     scrape_task_id: PydanticObjectId | None = None
     logical_document_id: PydanticObjectId | None = None

@@ -47,13 +47,20 @@ class UpdateSite(BaseModel):
 
 class Site(BaseDocument, NewSite):
     disabled: bool
-    last_status: str | None = None
+    last_run_status: str | None = None
     collection_method: str | None = CollectionMethod.Automated
     last_run_time: datetime | None = None
 
 
 # Deprecated
-class NoScrapeConfigSite(Site):
+class LastStatusSite(Site):
+    last_status: str | None = None
+
+    class Collection:
+        name = "Site"
+
+
+class NoScrapeConfigSite(LastStatusSite):
     scrape_method_configuration: ScrapeMethodConfiguration | None = None
 
     class Collection:

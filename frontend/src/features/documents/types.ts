@@ -22,6 +22,11 @@ export interface RetrievedDocument extends BaseDocument {
   metadata?: { [key: string]: string };
   context_metadata?: { [key: string]: string };
   effective_date?: string;
+  end_date?: string;
+  last_updated_date?: string;
+  next_review_date?: string;
+  next_update_date?: string;
+  published_date?: string;
   identified_dates?: string[];
   base_url: string;
   lang_code: string;

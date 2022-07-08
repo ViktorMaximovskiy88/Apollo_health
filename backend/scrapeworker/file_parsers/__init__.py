@@ -1,6 +1,5 @@
-import os
 import magic
-from backend.scrapeworker.file_types import docx, xlsx, pdf
+from backend.scrapeworker.file_parsers import docx, xlsx, pdf
 
 __all__ = ["docx", "xlsx", "pdf"]
 
@@ -23,10 +22,10 @@ async def parse_by_type(file_path: str, url):
     file_extension = guess_extension(file_path)
 
     if file_extension == "pdf":
-        return await pdf.parse_metadata(file_path, url)
+        return await pdf.PdfParse(file_path, url).parse()
     elif file_extension == "docx":
-        return await docx.parse_metadata(file_path, url)
+        return await docx.DocxParser(file_path, url).parse()
     elif file_extension == "xlsx":
-        return await xlsx.parse_metadata(file_path, url)
+        return await xlsx.XlsxParser(file_path, url).parse()
     else:
         raise NotImplementedError(f"no parse for file ext {file_extension}")
