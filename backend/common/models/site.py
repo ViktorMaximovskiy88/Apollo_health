@@ -65,6 +65,10 @@ class Site(BaseDocument, NewSite):
 class LastStatusSite(Site):
     last_status: str | None = None
 
+    class Collection:
+        name = "Site"
+
+
 class NoFollowLinkScrapeConfig(ScrapeMethodConfiguration):
     follow_links: bool | None = None
     follow_link_keywords: list[str] | None = None
@@ -79,7 +83,7 @@ class NoFollowLinkSite(Site):
 
 
 class NoScrapeConfigSite(LastStatusSite):
-    scrape_method_configuration: ScrapeMethodConfiguration | None = None
+    scrape_method_configuration: NoFollowLinkScrapeConfig | None = None
 
     class Collection:
         name = "Site"
