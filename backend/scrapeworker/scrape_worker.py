@@ -239,7 +239,7 @@ class ScrapeWorker:
                 
                 try:
                     if len(self.site.scrape_method_configuration.wait_for) > 0:
-                        await page.locator(', '.join(f":text('{wf}')" for wf in self.site.scrape_method_configuration.wait_for)).wait_for()
+                        await page.locator("body", has=page.locator(', '.join(f":text('{wf}')" for wf in self.site.scrape_method_configuration.wait_for))).wait_for(state="attached")
                 except:
                     raise Exception(f"Wait for dom elements {self.site.scrape_method_configuration.wait_for} have timed out")
                     
