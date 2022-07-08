@@ -299,7 +299,8 @@ class ScrapeWorker:
                 all_downloads += await self.queue_downloads(
                     nested_url, base_url=result["base_url"]
                 )
-            all_downloads += await self.queue_downloads(url)
+            if result["base_url"] != url:
+                all_downloads += await self.queue_downloads(url)
 
         tasks = []
         for download in all_downloads:
