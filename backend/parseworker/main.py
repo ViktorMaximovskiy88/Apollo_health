@@ -73,7 +73,6 @@ async def start_worker_async():
                         }
                     )
                 )
-                await site.update(Set({}))
                 raise ex
         await asyncio.sleep(5)
 
