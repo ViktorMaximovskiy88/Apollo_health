@@ -17,8 +17,13 @@ class TestGetDocuments:
             name="Test",
             scrape_method="",
             scrape_method_configuration=ScrapeMethodConfiguration(
-                document_extensions=[], url_keywords=[]
-            ),
+                document_extensions=[],
+                url_keywords=[],
+                proxy_exclusions=[],
+                follow_links=False,
+                follow_link_keywords=[],
+                follow_link_url_keywords=[],
+        ),
             disabled=False,
             cron="5 * * * *",
             base_urls=[
@@ -34,12 +39,12 @@ class TestGetDocuments:
         self,
         site: Site,
         scrape_task: SiteScrapeTask,
-        collection_time: datetime,
+        first_collected_date: datetime,
     ) -> RetrievedDocument:
         doc = RetrievedDocument(
             site_id=site.id,
             scrape_task_id=scrape_task.id,
-            collection_time=collection_time,
+            first_collected_date=first_collected_date,
         )
         return doc
 
@@ -66,8 +71,8 @@ class TestGetDocuments:
 
         docs: list[RetrievedDocument] = []
         for i in range(3):
-            collection_time = datetime.now() + timedelta(hours=i)
-            doc = self.simple_doc(site, scrapes[i % 2], collection_time)
+            first_collected_date = datetime.now() + timedelta(hours=i)
+            doc = self.simple_doc(site, scrapes[i % 2], first_collected_date)
             await doc.save()
             docs.append(doc)
 
@@ -106,7 +111,7 @@ class TestGetDocuments:
         found_site_two = second_ret_docs[1]
         assert found_site_one.id == docs[2].id
         assert found_site_two.id == docs[1].id
-        assert found_site_one.collection_time > found_site_two.collection_time
+        assert found_site_one.first_collected_date > found_site_two.first_collected_date
 
     @pytest.mark.asyncio
     async def test_get_no_documents_by_scrape(self):

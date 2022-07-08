@@ -52,7 +52,8 @@ apt-get install -y locales make build-essential libssl-dev zlib1g-dev \
     libbz2-dev libreadline-dev libsqlite3-dev wget curl zip llvm libncurses5-dev \
     libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev git \
     neovim htop lsof sudo software-properties-common poppler-utils gcc \
-    gfortran libblas-dev liblapack-dev
+    gfortran libblas-dev liblapack-dev \
+    g++ protobuf-compiler libprotobuf-dev libmagic1
 
 # Install Docker
 curl -fsSL https://get.docker.com | sudo sh
@@ -150,6 +151,18 @@ If you're in and no errors, create a new user with your own email and password o
 
 If that succeeds, try creating a site. I recommend Molina HealthCare OH Drug at https://www.molinahealthcare.com/providers/oh/duals/drug/formulary.aspx. Once created, go into it and click the 'Run Collection' button and hope for the best, watching the logs for activity/errors.
 
+### Testing
+Frontend Tests
+```bash
+cd frontend
+npm run test
+```
+Backend Tests
+```bash
+# In virtual env
+python -m pytest
+```
+
 ### Windows Install
 
 # Installers
@@ -242,6 +255,10 @@ Confirm that python version is 3.10.4 before you generate virtual environment
 At some point I had a problem with PATH. It was fixed by manually updating .bashrc file. PATH definition at the end of the file had single instead of double quotes. We believe it was caused by some incorrect Export PATH command that is no longer part of this file
 
 # macOS (intel?)
+
+```bash
+brew install libmagic
+```
 
 # PYCLD3 Deps
 

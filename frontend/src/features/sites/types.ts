@@ -1,4 +1,4 @@
-import { BaseDocument, Status } from '../../common';
+import { BaseDocument, TaskStatus } from '../../common';
 
 export interface BaseUrl {
   url: string;
@@ -16,12 +16,16 @@ export interface Site extends BaseDocument {
     url_keywords: string[];
     proxy_exclusions: string[];
     wait_for: string[];
+    follow_links: boolean;
+    follow_link_keywords: string[];
+    follow_link_url_keywords: string[];
   };
   tags: string[];
   disabled: boolean;
   last_run_time?: string;
-  last_status: Status;
+  last_run_status: TaskStatus;
   cron: string;
+  status: string;
 }
 
 export interface Proxy extends BaseDocument {

@@ -22,9 +22,9 @@ export function DocumentsHomePage() {
   const columns = [
     {
       title: 'Collection Time',
-      key: 'collection_time',
+      key: 'first_collected_date',
       render: (doc: RetrievedDocument) => {
-        return prettyDateTimeFromISO(doc.collection_time);
+        return prettyDateTimeFromISO(doc.first_collected_date);
       },
     },
     {

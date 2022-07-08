@@ -7,6 +7,8 @@ class Forward:
     async def url_to_urls(
         self, input_document: SingleUrlSite, output_document: NoScrapeConfigSite
     ):
+        if input_document.base_url == None:
+            return
         output_document.base_urls = [BaseUrl(url=input_document.base_url)]
 
 
