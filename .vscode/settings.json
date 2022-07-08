@@ -1,8 +1,7 @@
 {
+  "python.analysis.extraPaths": ["backend"],
   "python.formatting.provider": "black",
-  "python.formatting.blackPath": "~/.local/bin/black",
-  "editor.formatOnSave": false,
-  "[python]": {
-    "editor.formatOnSave": true,
-  },
+  "python.formatting.blackPath": "${workspaceFolder}/.venv/bin/black",
+  "python.linting.lintOnSave": true,
+  "editor.formatOnSave": true
 }

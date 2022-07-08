@@ -1,4 +1,5 @@
 import asyncio
+import re
 from contextlib import asynccontextmanager
 from datetime import datetime
 from random import shuffle
@@ -24,17 +25,12 @@ from playwright.async_api import (
 )
 from playwright_stealth import stealth_async
 from backend.common.models.user import User
-from backend.scrapeworker.common.utils import compile_date_rgx
-from backend.scrapeworker.date_parser import DateParser
-from backend.common.storage.text_extraction import TextExtractor
-from backend.scrapeworker.doc_type_classifier import classify_doc_type
-from backend.scrapeworker.detect_lang import detect_lang
 from backend.scrapeworker.downloader import DocDownloader
 from backend.scrapeworker.proxy import convert_proxies_to_proxy_settings
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
-from backend.scrapeworker.xpdf_wrapper import pdfinfo, pdftotext
 from backend.common.core.enums import Status
+from backend.scrapeworker.file_parsers import parse_by_type
 
 # Scrapeworker workflow 'exceptions'
 class NoDocsCollectedException(Exception):
@@ -43,6 +39,20 @@ class NoDocsCollectedException(Exception):
 
 class CanceledTaskException(Exception):
     pass
+
+
+def get_extension(url_or_path: str):
+    return pathlib.Path(os.path.basename(url_or_path)).suffix[1:]
+
+
+def is_google(url):
+    parsed = urlparse(url)
+    return parsed.hostname in ["drive.google.com", "docs.google.com"]
+
+
+def get_google_id(url):
+    matched = re.search("\/d\/(.*)\/", url)
+    return matched.group(1)
 
 
 class ScrapeWorker:
@@ -54,7 +64,6 @@ class ScrapeWorker:
         self.scrape_task = scrape_task
         self.site = site
         self.seen_urls = set()
-        self.date_rgxs = compile_date_rgx()
         self.doc_client = DocumentStorageClient()
         self.downloader = DocDownloader(playwright)
         self.logger = Logger()
@@ -107,22 +116,18 @@ class ScrapeWorker:
         self.seen_urls.add(url)
         return True
 
-    def select_title(self, extractor: TextExtractor, url: str):
-        title = extractor.title_from_metadata()
-        if (title):
-            return title
-        else:
-            return str(pathlib.Path(os.path.basename(url)).with_suffix(""))
-
-
     async def attempt_download(self, base_url, url, context_metadata):
         proxies = await self.get_proxy_settings()
-        async for (temp_path, checksum, extractor) in self.downloader.download_to_tempfile(
-            url, proxies
-        ):
+        async for (
+            temp_path,
+            checksum,
+        ) in self.downloader.download_to_tempfile(url, proxies):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
-            dest_path = f"{checksum}.pdf"
+
+            file_extension = get_extension(temp_path)
+            dest_path = f"{checksum}.{file_extension}"
             document = None
+
             if not self.doc_client.document_exists(dest_path):
                 self.doc_client.write_document(dest_path, temp_path)
                 await self.scrape_task.update(
@@ -133,63 +138,43 @@ class ScrapeWorker:
                     RetrievedDocument.checksum == checksum
                 )
 
-            text = extractor.full_text
-            date_parser = DateParser(text, self.date_rgxs)
-            date_parser.extract_dates()
-            title = self.select_title(extractor, url)
-            metadata = extractor.metadata
-            content_type = extractor.mimetype
-            document_type, confidence = classify_doc_type(text)
-            lang_code = detect_lang(text)
-            print(f"{url} as {lang_code}")
-
+            parsed_content = await parse_by_type(temp_path, url)
             now = datetime.now()
-            datelist = list(date_parser.unclassified_dates)
-            datelist.sort()
 
             if document:
                 updates = UpdateRetrievedDocument(
                     context_metadata=context_metadata,
-                    effective_date=date_parser.effective_date["date"],
-                    end_date=date_parser.end_date["date"],
-                    last_updated_date=date_parser.last_updated_date["date"],
-                    next_review_date=date_parser.next_review_date["date"],
-                    next_update_date=date_parser.next_update_date["date"],
-                    published_date=date_parser.published_date["date"],
-                    document_type=document_type,
-                    doc_type_confidence=confidence,
-                    metadata=metadata,
-                    identified_dates=datelist,
-                    scrape_task_id=self.scrape_task.id,
+                    doc_type_confidence=parsed_content["confidence"],
+                    document_type=parsed_content["document_type"],
+                    effective_date=parsed_content["effective_date"],
+                    identified_dates=parsed_content["identified_dates"],
+                    lang_code=parsed_content["lang_code"],
                     last_collected_date=now,
-                    name=title,
-                    lang_code=lang_code,
+                    metadata=parsed_content["metadata"],
+                    name=parsed_content["title"],
+                    scrape_task_id=self.scrape_task.id,
                 )
                 await update_and_log_diff(
                     self.logger, await self.get_user(), document, updates
                 )
             else:
                 document = RetrievedDocument(
-                    name=title,
-                    document_type=document_type,
-                    doc_type_confidence=confidence,
-                    effective_date=date_parser.effective_date["date"],
-                    end_date=date_parser.end_date["date"],
-                    last_updated_date=date_parser.last_updated_date["date"],
-                    next_review_date=date_parser.next_review_date["date"],
-                    next_update_date=date_parser.next_update_date["date"],
-                    published_date=date_parser.published_date["date"],
-                    identified_dates=datelist,
+                    base_url=base_url,
+                    checksum=checksum,
+                    context_metadata=context_metadata,
+                    doc_type_confidence=parsed_content["confidence"],
+                    document_type=parsed_content["document_type"],
+                    effective_date=parsed_content["effective_date"],
+                    first_collected_date=now,
+                    identified_dates=parsed_content["identified_dates"],
+                    lang_code=parsed_content["lang_code"],
+                    last_collected_date=now,
+                    metadata=parsed_content["metadata"],
+                    name=parsed_content["title"],
                     scrape_task_id=self.scrape_task.id,
                     site_id=self.site.id,
-                    first_collected_date=now,
-                    last_collected_date=now,
-                    checksum=checksum,
                     url=url,
-                    context_metadata=context_metadata,
-                    metadata=metadata,
-                    base_url=base_url,
-                    lang_code=lang_code,
+                    file_extension=file_extension,
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
             await self.scrape_task.update(
@@ -283,6 +268,10 @@ class ScrapeWorker:
                     url, context_metadata = await self.extract_url_and_context_metadata(
                         base_url.url, link_handle
                     )
+
+                    if is_google(url):
+                        google_id = get_google_id(url)
+                        url = f"https://drive.google.com/u/0/uc?id={google_id}&export=download"
 
                     # check that think link is unique and that we should not skip it
                     if not self.skip_url(url) and self.url_not_seen(url):

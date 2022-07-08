@@ -1,18 +1,27 @@
 import asyncio
 from contextlib import asynccontextmanager
+from fileinput import filename
 from typing import AsyncGenerator
 from backend.common.core.redis_client import redis_connect
 import tempfile
 import aiofiles
+import pathlib
+import os
+import re
 from random import shuffle
-
-from playwright.async_api import APIResponse, APIRequestContext, Playwright, ProxySettings
+from backend.common.core.config import config
+from playwright.async_api import (
+    APIResponse,
+    APIRequestContext,
+    Playwright,
+    ProxySettings,
+)
 from backend.scrapeworker.rate_limiter import RateLimiter
 from backend.common.models.proxy import Proxy
 from backend.scrapeworker.rate_limiter import RateLimiter
 from tenacity import AttemptManager
 from tenacity._asyncio import AsyncRetrying
-from backend.common.storage.hash import get_document_hash
+from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_extraction import TextExtractor
 
 
@@ -27,7 +36,9 @@ class DocDownloader:
             return True
         return False
 
-    async def playwright_request_context(self, proxy: ProxySettings | None = None) -> APIRequestContext:
+    async def playwright_request_context(
+        self, proxy: ProxySettings | None = None
+    ) -> APIRequestContext:
         headers = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
             "Accept-Language": "en-US,en;q=0.9",
@@ -48,11 +59,15 @@ class DocDownloader:
             i = attempt.retry_state.attempt_number - 1
             n_proxies = len(proxies)
             proxy, proxy_settings = proxies[i % n_proxies]
-            print(f"{i} Using proxy {proxy and proxy.name} ({proxy_settings and proxy_settings.get('server')})")
+            print(
+                f"{i} Using proxy {proxy and proxy.name} ({proxy_settings and proxy_settings.get('server')})"
+            )
             yield attempt, proxy_settings
 
     @asynccontextmanager
-    async def download_url(self, url, proxies: list[tuple[Proxy | None, ProxySettings | None]] = []):
+    async def download_url(
+        self, url, proxies: list[tuple[Proxy | None, ProxySettings | None]] = []
+    ):
         context: APIRequestContext | None = None
         response: APIResponse | None = None
         async for attempt, proxy in self.proxy_with_backoff(proxies):
@@ -74,21 +89,23 @@ class DocDownloader:
 
 
     @asynccontextmanager
-    async def tempfile_path(self, url: str, body: bytes, content_type: str):
-        with tempfile.NamedTemporaryFile() as temp:
+    async def tempfile_path(self, url: str, body: bytes, filename: str | None):
+        guess_target = filename if filename else url
+        guess_suffix = pathlib.Path(os.path.basename(guess_target)).suffix
+        with tempfile.NamedTemporaryFile(suffix=guess_suffix) as temp:
             async with aiofiles.open(temp.name, "wb") as fd:
-                
                 await fd.write(body)
-            extractor = TextExtractor(document_bytes=body,
-                              mimetype=content_type, temp_path=temp.name)
-            await extractor.extract()
-            yield temp.name, get_document_hash(extractor), extractor
+                await fd.flush()
+            
+            hash = hash_bytes(body)
+            yield temp.name, hash
 
 
     async def download_to_tempfile(
         self, url: str, proxies: list[tuple[Proxy | None, ProxySettings | None]] = []
     ):
-        body = None # self.redis.get(url)
+        body = None  # self.redis.get(url)
+        filename: str | None = None
         if body == "DISCARD":
             return
 
@@ -100,8 +117,27 @@ class DocDownloader:
                 if self.skip_based_on_response(response):
                     # self.redis.set(url, "DISCARD", ex=60 * 60 * 1)  # 1 hour
                     return
+
+                filename, content_type = parse_headers(response.headers)
                 body = await response.body()
                 # self.redis.set(url, body, ex=60 * 60 * 1)  # 1 hour
-                content_type = response.headers.get('content-type')
-        async with self.tempfile_path(url, body, content_type) as (temp_path, hash, extractor):
-            yield temp_path, hash, extractor
+
+        async with self.tempfile_path(url, body, filename) as (temp_path, hash):
+            yield temp_path, hash
+
+
+def parse_headers(headers) -> tuple[str, str]:
+    content_type = headers.get("content-type") or None
+    filename = get_filename(headers)
+    return (filename, content_type)
+
+
+def get_filename(headers) -> str | None:
+    matched = None
+    if content_disposition := headers.get("content-disposition"):
+        matched = re.search('filename="(.*)";', content_disposition)
+
+    if matched:
+        return matched.group(1)
+    else:
+        return None
