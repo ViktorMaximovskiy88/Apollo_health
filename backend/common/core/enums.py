@@ -7,11 +7,13 @@ class LangCode(str, Enum):
     Other = "other"
     Unknown = "unknown"
 
+
 class CollectionMethod(str, Enum):
     Automated = "AUTOMATED"
     Manual = "MANUAL"
 
-class Status(str, Enum):
+
+class TaskStatus(str, Enum):
     QUEUED = "QUEUED"
     PENDING = "PENDING"
     IN_PROGRESS = "IN_PROGRESS"
@@ -19,3 +21,10 @@ class Status(str, Enum):
     CANCELING = "CANCELING"
     CANCELED = "CANCELED"
     FAILED = "FAILED"
+
+
+class SiteStatus(str, Enum):
+    NEW = "NEW"
+    QUALITY_HOLD = "QUALITY_HOLD"
+    ONLINE = "ONLINE"
+    INACTIVE = "INACTIVE"

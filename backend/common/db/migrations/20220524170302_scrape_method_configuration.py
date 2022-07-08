@@ -1,6 +1,6 @@
 from beanie import iterative_migration
 from backend.common.models.site import (
-    ScrapeMethodConfiguration,
+    NoFollowLinkScrapeConfig,
     LastStatusSite,
     NoScrapeConfigSite,
 )
@@ -11,7 +11,7 @@ class Forward:
     async def create_scrape_config(
         self, input_document: NoScrapeConfigSite, output_document: LastStatusSite
     ):
-        output_document.scrape_method_configuration = ScrapeMethodConfiguration(
+        output_document.scrape_method_configuration = NoFollowLinkScrapeConfig(
             document_extensions=["pdf"],
             url_keywords=[],
         )

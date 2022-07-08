@@ -12,9 +12,9 @@ import {
 import {
   prettyDateDistance,
   prettyDateFromISO,
-  Status,
-  statusDisplayName,
-  statusStyledDisplay,
+  TaskStatus,
+  scrapeTaskStatusDisplayName as displayName,
+  scrapeTaskStatusStyledDisplay as styledDisplay,
 } from '../../common';
 import { ButtonLink } from '../../components/ButtonLink';
 import { useGetExtractionTasksForDocQuery } from './extractionsApi';
@@ -53,18 +53,29 @@ const columns = [
     filterEditorProps: {
       placeholder: 'All',
       dataSource: [
-        { id: Status.Finished, label: statusDisplayName(Status.Finished) },
-        { id: Status.Canceled, label: statusDisplayName(Status.Canceled) },
-        { id: Status.Queued, label: statusDisplayName(Status.Queued) },
-        { id: Status.Failed, label: statusDisplayName(Status.Failed) },
         {
-          id: Status.InProgress,
-          label: statusDisplayName(Status.InProgress),
+          id: TaskStatus.Finished,
+          label: displayName(TaskStatus.Finished),
+        },
+        {
+          id: TaskStatus.Canceled,
+          label: displayName(TaskStatus.Canceled),
+        },
+        {
+          id: TaskStatus.Queued,
+          label: displayName(TaskStatus.Queued),
+        },
+        {
+          id: TaskStatus.Failed,
+          label: displayName(TaskStatus.Failed),
+        },
+        {
+          id: TaskStatus.InProgress,
+          label: displayName(TaskStatus.InProgress),
         },
       ],
     },
-    render: ({ value: status }: { value: Status }) =>
-      statusStyledDisplay(status),
+    render: ({ value: status }: { value: TaskStatus }) => styledDisplay(status),
   },
   {
     header: 'Extracted Count',
