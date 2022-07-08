@@ -15,13 +15,108 @@ variables:
   DOCKER_BUILDKIT: 1
 
 stages:
+  ##############################################################################################
+  # Build Stage
+  # - Build and Test SourceHub Front End
+  # - Build and Test SourceHub Back End
+  # - Validate Dev Deploy
+  # - Validate Test Deploy
+  # - Package SourceHub
+  #
+  # NOTES:
+  # - Build and Validate jobs run in parallel
+  # - Once Build and Validate jobs are successful, then the Package SourceHub job commences.
+  ###############################################################################################
   - stage: build 
     displayName: Build Stage
     jobs:
-      - job: buildSourceHub
-        displayName: Build SourceHub
+      - job: buildSourceHubFrontend
+        displayName: Build SourceHub Front End
         steps:
-          ## Pull Latest SourceHub Base Image from ECR if it exists. This will help improve build times of the Base and App images
+          - task: CmdLine@2
+            displayName: Install NVM and Node/Yarn
+            inputs:
+              script: |
+                curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+                source ~/.nvm/nvm.sh
+                nvm install node 18
+                npm install yarn -g
+
+          - task: CmdLine@2
+            displayName: Build Frontend
+            inputs:
+              script: |
+                yarn install && yarn build
+              workingDirectory: '$(System.DefaultWorkingDirectory)/frontend'
+          
+          ##
+          # Launch Front Tests using this command. Script can also reference a script file path.
+          ##
+          - task: CmdLine@2
+            displayName: Test Frontend
+            inputs:
+              script: |
+                echo "Launch Frontend tests from here"
+              workingDirectory: '$(System.DefaultWorkingDirectory)/frontend'
+          
+      - job: buildSourceHubBackend
+        displayName: Build SourceHub Back End
+        steps:
+
+          ##
+          # Install and Update Linux dependencies required for build (some of these may already exist on agent host)
+          ##
+          - task: CmdLine@2
+            displayName: Install and Update Linux deps
+            inputs:
+              script: |
+                sudo apt-get update
+                sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev git neovim htop lsof sudo software-properties-common poppler-utils gfortran libblas-dev liblapack-dev g++ protobuf-compiler libprotobuf-dev
+
+          - task: UsePythonVersion@0
+            displayName: Use Python 3.10.x
+            inputs:
+             versionSpec: 3.10.x
+             addToPath: true
+
+          - task: CmdLine@2
+            displayName: Install Poetry
+            inputs:
+              script: |
+                curl -sSL https://install.python-poetry.org | python3
+          
+          - task: CmdLine@2
+            displayName: Initialize Python Environment
+            inputs:
+              script: |
+                python -m venv venv
+                . venv/bin/activate
+                poetry install
+                playwright install-deps
+                playwright install chromium
+              workingDirectory: '$(System.DefaultWorkingDirectory)/backend'
+          
+          ##
+          # Launch Backend Tests using this command. Script can also reference a script file path.
+          ##
+          - task: CmdLine@2
+            displayName: Test Backend
+            inputs:
+              script: |
+                echo "Launch Backend tests from here"
+              workingDirectory: '$(System.DefaultWorkingDirectory)/backend'
+
+          
+      - job: packageSourceHub
+        displayName: Package SourceHub
+        dependsOn: 
+          - buildSourceHubFrontend
+          - buildSourceHubBackend
+        condition: succeeded()
+        steps:
+          ## 
+          # Pull Latest SourceHub Base Image from ECR if it exists. This will help improve build times of the Base and App images
+          ##
           - task: ECRPullImage@1
             displayName: Pull SourceHub Base Image
             inputs:
@@ -31,6 +126,7 @@ stages:
               imageSource: 'imagetag'
               imageTag: 'latest'
             continueOnError: true
+
           - task: Docker@2
             displayName: Build Source Hub Base Image
             inputs:
@@ -40,6 +136,7 @@ stages:
               arguments: '--cache-from 307744843177.dkr.ecr.us-east-1.amazonaws.com/sourcehub-base:latest --build-arg BUILDKIT_INLINE_CACHE=1'
               tags: |
                 latest
+
           - task: ECRPushImage@1
             displayName: Push SourceHub Base Image to ECR
             inputs:
@@ -50,6 +147,7 @@ stages:
               sourceImageTag: 'latest'
               repositoryName: 'sourcehub-base'
               pushTag: 'latest'
+
           ## Pull Latest SourceHub Base Image from ECR if it exists. This will help improve build time of the App image
           - task: ECRPullImage@1
             displayName: Pull SourceHub App Image
@@ -60,6 +158,7 @@ stages:
               imageSource: 'imagetag'
               imageTag: 'latest'
             continueOnError: true
+
           - task: Docker@2
             displayName: Build SourceHub App Image
             inputs:
@@ -72,6 +171,7 @@ stages:
                 $(Build.BuildNumber)
                 $(Build.SourceVersion)
                 latest
+
           - task: ECRPushImage@1
             displayName: Push SourceHub App Image to ECR as SourceVersion
             inputs:
@@ -82,6 +182,7 @@ stages:
               sourceImageTag: '$(Build.SourceVersion)'
               repositoryName: 'sourcehub-app'
               pushTag: '$(Build.SourceVersion)'
+
           - task: ECRPushImage@1
             displayName: Push SourceHub App Image to ECR as latest
             inputs:
@@ -92,6 +193,7 @@ stages:
               sourceImageTag: '$(Build.SourceVersion)'
               repositoryName: 'sourcehub-app'
               pushTag: latest
+
       - job: validateDevDeploy
         displayName: Validate and Plan Dev Deployment 
         steps:
@@ -99,6 +201,7 @@ stages:
             parameters:
               environment: dev
               awsCredentials: "Apollo-AWS-Dev-Apollo"
+
       - job: validateTstDeploy
         displayName: Validate and Plan Test Deployment 
         steps:
@@ -106,6 +209,16 @@ stages:
             parameters:
               environment: tst
               awsCredentials: "Apollo-AWS-Test-Apollo"
+
+
+  ##############################################################################################
+  # Stage: Deploy to the Development Environment
+  #
+  # - It is assumed that the container images have been pushed to Dev ECR in the Build Stage
+  # - This stage will use a template for the deployment job
+  # - This stage can be executed using either the main branch or a feature/* branch. Executing
+  #   from a feature/ branch requires a manual trigger.
+  ##############################################################################################
   - stage: development
     displayName: Development Stage
     dependsOn: build
@@ -118,10 +231,26 @@ stages:
             runOnce:
               deploy:
                 steps:
+
+                  ##
+                  # Deploy SourceHub to Dev environment
+                  ##
                   - template: .azure-pipelines/source-hub.deploy.yml
                     parameters:
                       environment: dev
                       awsCredentials: "Apollo-AWS-Dev-Apollo"
+
+
+  ##############################################################################################
+  # Stage: Deploy to the Test Environment
+  #
+  # - It is assumed that the container images have been pushed to Dev ECR in the Build Stage
+  # - This stage will pull the container images from Dev ECR and then push to Test ECR
+  # - This stage will use a template for the deployment job
+  # - This stage can only be executed from the main branch
+  # - This stage will reference the SourceHub-Test environment which may require approvals and
+  #   other policies configured outside of this Pipeline.
+  ##############################################################################################
   - stage: test
     displayName: Test Stage
     dependsOn: development
@@ -134,8 +263,10 @@ stages:
             runOnce:
               deploy:
                 steps:
+                  ##                
+                  # Pull SourceHub App Image from Dev ECR
+                  ##
                   - task: ECRPullImage@1
-                    name: ECRPullImageDev
                     displayName: Pull SourceHub App Image
                     inputs:
                       awsCredentials: "Apollo-AWS-Dev-Apollo"
@@ -143,20 +274,40 @@ stages:
                       repository: 'sourcehub-app'
                       imageSource: 'imagetag'
                       imageTag: '$(Build.SourceVersion)'
-                      outputVariable: 'ImageTag'
+                      outputVariable: 'DevImageId'
+                  
+                  ##                
+                  # Push SourceHub App Image to Test ECR
+                  ##
                   - task: ECRPushImage@1
                     displayName: Push SourceHub App Image to ECR as SourceVersion
                     inputs:
                       awsCredentials: "Apollo-AWS-Test-Apollo"
                       regionName: 'us-east-1'
                       imageSource: 'imageid'
-                      sourceImageId: '$(ECRPullImageDev.ImageTag)'
+                      sourceImageId: $(DevImageId)
                       repositoryName: 'sourcehub-app'
                       pushTag: '$(Build.SourceVersion)'
+
+                  ##
+                  # Deploy SourceHub to Test environment
+                  ##
                   - template: .azure-pipelines/source-hub.deploy.yml
                     parameters:
                       environment: tst
                       awsCredentials: "Apollo-AWS-Test-Apollo"
+
+
+  ##############################################################################################
+  # Stage: Deploy to the Prod Environment
+  #
+  # - It is assumed that the container images have been pushed to Dev ECR in the Build Stage
+  # - This stage will pull the container images from Dev ECR and then push to Prod ECR
+  # - This stage will use a template for the deployment job
+  # - This stage can only be executed from a tag matching pattern 'v*'
+  # - This stage will reference the SourceHub-Prod environment which may require approvals and
+  #   other policies configured outside of this Pipeline.
+  ##############################################################################################
   - stage: production
     displayName: Production Stage
     dependsOn: test
@@ -169,8 +320,10 @@ stages:
             runOnce:
               deploy:
                 steps:
+                  ##                
+                  # Pull SourceHub App Image from Dev ECR
+                  ##
                   - task: ECRPullImage@1
-                    name: ECRPullImageDev
                     displayName: Pull SourceHub App Image
                     inputs:
                       awsCredentials: "Apollo-AWS-Dev-Apollo"
@@ -178,16 +331,24 @@ stages:
                       repository: 'sourcehub-app'
                       imageSource: 'imagetag'
                       imageTag: '$(Build.SourceVersion)'
-                      outputVariable: 'ImageTag'
+                      outputVariable: 'DevImageId'
+
+                  ##
+                  # Push SourceHub App Image to Prod ECR
+                  ##
                   - task: ECRPushImage@1
                     displayName: Push SourceHub App Image to ECR as SourceVersion
                     inputs:
                       awsCredentials: "Apollo-AWS-Prod-Apollo"
                       regionName: 'us-east-1'
                       imageSource: 'imageid'
-                      sourceImageId: '$(ECRPullImageDev.ImageTag)'
+                      sourceImageId: $(DevImageId)
                       repositoryName: 'sourcehub-app'
                       pushTag: '$(Build.SourceVersion)'
+
+                  ##
+                  # Deploy SourceHub to Prod environment
+                  ##
                   - template: .azure-pipelines/source-hub.deploy.yml
                     parameters:
                       environment: prd

@@ -14,7 +14,7 @@ export interface RetrievedDocument extends BaseDocument {
   logical_document_version?: number;
   document_type?: string;
   doc_type_confidence?: number;
-  collection_time: string;
+  first_collected_date: string;
   disabled: boolean;
   url: string;
   checksum: string;
@@ -22,9 +22,15 @@ export interface RetrievedDocument extends BaseDocument {
   metadata?: { [key: string]: string };
   context_metadata?: { [key: string]: string };
   effective_date?: string;
+  end_date?: string;
+  last_updated_date?: string;
+  next_review_date?: string;
+  next_update_date?: string;
+  published_date?: string;
   identified_dates?: string[];
   base_url: string;
   lang_code: string;
+  file_extension: string;
 
   automated_content_extraction: boolean;
   automated_content_extraction_class: string;

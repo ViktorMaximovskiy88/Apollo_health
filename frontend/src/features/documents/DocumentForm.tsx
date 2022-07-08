@@ -1,21 +1,11 @@
-import {
-  Button,
-  Form,
-  Select,
-  Space,
-  Switch,
-  Radio,
-  Input,
-  DatePicker,
-} from 'antd';
-import type { RadioChangeEvent } from 'antd';
+import { Button, Form, Select, Space, Switch, Input, DatePicker } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
-import { prettyDate, prettyDateFromISO } from '../../common';
+import moment from 'moment';
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { prettyDate } from '../../common';
 import { useUpdateDocumentMutation } from './documentsApi';
 import { RetrievedDocument } from './types';
-import moment from 'moment';
 const { TextArea } = Input;
 
 export function DocumentForm(props: { doc: RetrievedDocument }) {
@@ -30,13 +20,6 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
   );
   const [docTypeConfidence, setDocTypeConfidence] = useState(
     doc.doc_type_confidence
-  );
-
-  const existsInList = (doc.identified_dates || []).find(
-    (date) => date === doc.effective_date
-  );
-  const [effectiveDateSelection, setEffectiveDateSelection] = useState(
-    existsInList ? 'list' : 'custom'
   );
 
   function setFormState(modified: Partial<RetrievedDocument>) {
@@ -56,10 +39,6 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     navigate(-1);
   }
 
-  function onEffectiveDateSelectionChange(e: RadioChangeEvent) {
-    setEffectiveDateSelection(e.target.value);
-  }
-
   async function onFinish(doc: Partial<RetrievedDocument>) {
     await updateDoc({
       ...doc,
@@ -68,9 +47,13 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     navigate(-1);
   }
 
+  function convertDate(date?: string) {
+    if (date) return moment(date);
+    return undefined;
+  }
+
   const initialValues = {
     name: doc.name,
-    effective_date: doc.effective_date,
     document_type: doc.document_type,
     automated_content_extraction: doc.automated_content_extraction,
     automated_content_extraction_class: doc.automated_content_extraction_class,
@@ -78,6 +61,12 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     base_url: doc.base_url,
     lang_code: doc.lang_code,
     link_text: doc.context_metadata?.link_text,
+    effective_date: convertDate(doc.effective_date),
+    end_date: convertDate(doc.end_date),
+    last_updated_date: convertDate(doc.last_updated_date),
+    next_review_date: convertDate(doc.next_review_date),
+    next_update_date: convertDate(doc.next_update_date),
+    published_date: convertDate(doc.published_date),
   };
 
   const documentTypes = [
@@ -106,12 +95,34 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     { value: 'UHCFormularyExtraction', label: 'UHC Formulary Extraction' },
   ];
 
-  const dateOptions = (doc.identified_dates || [])
-    .map((d) => ({
-      value: d,
-      label: prettyDateFromISO(d),
-    }))
-    .sort((a, b) => +new Date(b.value) - +new Date(a.value));
+  const dateFields = [
+    {
+      name: 'effective_date',
+      label: 'Effective Date',
+      value: doc.effective_date,
+    },
+    { name: 'end_date', label: 'End Date', value: doc.end_date },
+    {
+      name: 'last_updated_date',
+      label: 'Last Updated Date',
+      value: doc.last_updated_date,
+    },
+    {
+      name: 'next_review_date',
+      label: 'Next Review Date',
+      value: doc.next_review_date,
+    },
+    {
+      name: 'next_update_date',
+      label: 'Next Update Date',
+      value: doc.next_update_date,
+    },
+    {
+      name: 'published_date',
+      label: 'Published Date',
+      value: doc.published_date,
+    },
+  ];
 
   return (
     <Form
@@ -135,41 +146,24 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
         </Form.Item>
       </div>
 
-      <Form.Item label="Effective Date">
-        <Radio.Group
-          className="mb-1"
-          onChange={onEffectiveDateSelectionChange}
-          defaultValue={effectiveDateSelection}
-        >
-          <Radio value="list">From List</Radio>
-          <Radio value="custom">Custom</Radio>
-        </Radio.Group>
-
-        <Form.Item name="effective_date" noStyle preserve>
-          {effectiveDateSelection === 'list' && (
-            <Select
-              defaultValue={existsInList ? initialValues.effective_date : null}
-              options={dateOptions}
-              onChange={(value) => {
-                form.setFieldsValue({ effective_date: value });
-              }}
-            />
-          )}
-
-          {effectiveDateSelection === 'custom' && (
-            <DatePicker
-              className="flex"
-              defaultValue={moment(initialValues.effective_date)}
-              format={(value) => prettyDate(value.toDate())}
-              onChange={(value: any) => {
-                form.setFieldsValue({
-                  effective_date: value.utc().startOf('day').toISOString(),
-                });
-              }}
-            />
-          )}
-        </Form.Item>
-      </Form.Item>
+      <div className="flex flex-wrap gap-x-3">
+        {dateFields.map((field, i) => {
+          return (
+            <Form.Item
+              key={i}
+              name={field.name}
+              label={field.label}
+              style={{ flex: '1 0 32%' }}
+            >
+              <DatePicker
+                disabled
+                placeholder=""
+                format={(value) => prettyDate(value.toDate())}
+              />
+            </Form.Item>
+          );
+        })}
+      </div>
 
       <Form.Item name="lang_code" label="Language">
         <Select options={languageCodes} />

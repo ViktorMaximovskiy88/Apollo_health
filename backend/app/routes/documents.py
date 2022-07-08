@@ -5,6 +5,9 @@ from beanie.odm.operators.find.comparison import In
 from fastapi import APIRouter, Depends, HTTPException, status, Security
 from fastapi.responses import StreamingResponse
 
+
+
+
 from backend.common.models.content_extraction_task import ContentExtractionTask
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
@@ -16,6 +19,8 @@ from backend.app.utils.logger import (
 )
 from backend.app.utils.user import get_current_user
 from backend.common.storage.client import DocumentStorageClient
+from backend.common.events.send_event_client import SendEventClient
+from backend.common.events.event_convert import EventConvert
 
 router = APIRouter(
     prefix="/documents",
@@ -56,7 +61,7 @@ async def get_documents(
         query["automated_content_extraction"] = automated_content_extraction
 
     documents: list[RetrievedDocument] = (
-        await RetrievedDocument.find_many(query).sort("-collection_time").to_list()
+        await RetrievedDocument.find_many(query).sort("-first_collected_date").to_list()
     )
     return documents
 
@@ -114,6 +119,10 @@ async def update_document(
             queued_time=datetime.now(),
         )
         await task.save()
+    # Sending Event Bridge Event.  Need to add condition when to send.
+    document_json = EventConvert(document=updated).convert()
+    send_evnt_client = SendEventClient()
+    response = send_evnt_client.send_event("document-details", document_json)
 
     return updated
 

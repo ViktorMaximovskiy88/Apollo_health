@@ -23,7 +23,7 @@ beforeAll(() => {
 
   jest.useFakeTimers();
 
-  server.listen();
+  server.listen({ onUnhandledRequest: 'error' });
 });
 afterAll(() => {
   jest.useRealTimers();
@@ -32,41 +32,62 @@ afterAll(() => {
 afterEach(() => server.resetHandlers());
 
 describe(`CollectionsPage`, () => {
-  it(`should respond correctly to running a collection`, async () => {
+  it(`should open error log modal when button clicked`, async () => {
     const mockedUseParams = useParams as jest.Mock<Params>;
     mockedUseParams.mockImplementation(() => ({
       siteId: 'site-id1',
     }));
 
+    // fixes `act` warning
+    // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
     const dataGridDoneRendering = Promise.resolve();
     render(<CollectionsPage />);
     await act(async () => {
       await dataGridDoneRendering;
     });
 
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-
-    const runCollection = await screen.findByRole('button', {
-      name: /run collection/i,
-    });
-    jest.advanceTimersByTime(1000);
-    expect(runCollection).toBeInTheDocument();
-    jest.advanceTimersByTime(1000);
-
     expect(await screen.findByText(/failed/i)).toBeInTheDocument();
 
-    userEvent.click(runCollection);
+    const errorLogButton = await screen.findByRole('button', {
+      name: /error log/i,
+    });
+    userEvent.click(errorLogButton);
 
+    expect(await screen.findByText(/error traceback/i)).toBeInTheDocument();
+
+    expect(screen.getByRole('button', { name: /ok/i })).toBeInTheDocument();
+  });
+
+  it(`should create scrape task and update status over time`, async () => {
+    const mockedUseParams = useParams as jest.Mock<Params>;
+    mockedUseParams.mockImplementation(() => ({
+      siteId: 'site-id1',
+    }));
+
+    // fixes `act` warning
+    // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
+    const dataGridDoneRendering = Promise.resolve();
+    render(<CollectionsPage />);
+    await act(async () => {
+      await dataGridDoneRendering;
+    });
+
+    const runCollectionButton = await screen.findByRole('button', {
+      name: /run collection/i,
+    });
+    expect(runCollectionButton).toBeInTheDocument();
+
+    expect(screen.getByText(/Jun 20, 2022, 2:17 PM/i)).toBeInTheDocument();
+    expect(screen.getByText(/3 seconds/i)).toBeInTheDocument();
+    expect(screen.getByText(/failed/i)).toBeInTheDocument();
+
+    userEvent.click(runCollectionButton);
+
+    jest.advanceTimersByTime(2000);
     expect(await screen.findByText(/queued/i)).toBeInTheDocument();
     jest.advanceTimersByTime(3000);
     expect(await screen.findByText(/in progress/i)).toBeInTheDocument();
-    jest.advanceTimersByTime(3000);
+    jest.advanceTimersByTime(10000);
     expect(await screen.findByText(/finished/i)).toBeInTheDocument();
   });
-
-  // TODO: add these tests when above test is fixed
-  it.skip(`should cancel task when 'cancel' button clicked`, () => {});
-  it.skip(`should open ErrorLogModal when 'log' button clicked`, () => {});
 });

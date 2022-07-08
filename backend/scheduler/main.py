@@ -15,28 +15,33 @@ from backend.common.task_queues.unique_task_insert import try_queue_unique_task
 from backend.common.core.config import is_local, config
 from backend.common.models.user import User
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.common.core.enums import Status
+from backend.common.core.enums import TaskStatus
+from backend.common.core.enums import SiteStatus
 from backend.app.utils.logger import Logger
 
 from backend.common.db.init import init_db
 from backend.common.models.site import Site
 from backend.common.core.enums import CollectionMethod
+
 app = typer.Typer()
 
 
 def compute_matching_crons(now: datetime):
     crons = []
-    for minute in ['*', now.minute]:
-        for hour in ['*', now.hour]:
-            for day_of_month in ['*', now.day]:
-                for month in ['*', now.month]:
-                    for day_of_week in ['*', now.weekday()]:
+    for minute in ["*", now.minute]:
+        for hour in ["*", now.hour]:
+            for day_of_month in ["*", now.day]:
+                for month in ["*", now.month]:
+                    for day_of_week in ["*", now.weekday()]:
                         # python has 0 as monday, cron has 0 as sunday
                         # prefer cron as that's the format we're using
-                        if day_of_week != '*':
+                        if day_of_week != "*":
                             day_of_week = (day_of_week + 1) % 7
-                        crons.append(f"{minute} {hour} {day_of_month} {month} {day_of_week}")
+                        crons.append(
+                            f"{minute} {hour} {day_of_month} {month} {day_of_week}"
+                        )
     return crons
+
 
 async def get_schedule_user():
     user = await User.by_email("admin@mmitnetwork.com")
@@ -44,29 +49,46 @@ async def get_schedule_user():
         raise Exception("No schedular found")
     return user
 
+
 def find_sites_eligible_for_scraping(crons, now=datetime.now()):
-    sites = Site.find({
-        'cron': { '$in': crons }, # Should be run now
-        'disabled': False, # Is active
-        'collection_method':{"$ne":CollectionMethod.Manual},
-        'base_urls.status': 'ACTIVE', # has at least one active url
-        '$or': [
-            { 'last_run_time': None }, # has never been run
-            { 'last_run_time': { '$lt': now - timedelta(minutes=1) } }, # hasn't been run in the last minute
-        ],
-        'last_status': { '$nin': ['QUEUED', 'IN_PROGRESS', 'CANCELING'] } # not already in progress
-    })
+    sites = Site.find(
+        {
+            "cron": {"$in": crons},  # Should be run now
+            "disabled": False,  # Is active
+            "status": SiteStatus.ONLINE,  # Is online
+            "collection_method": {
+                "$ne": CollectionMethod.Manual  # Isn't set to manual
+            },
+            "base_urls.status": "ACTIVE",  # has at least one active url
+            "$or": [
+                {"last_run_time": None},  # has never been run
+                {
+                    "last_run_time": {"$lt": now - timedelta(minutes=1)}
+                },  # hasn't been run in the last minute
+            ],
+            "last_run_status": {
+                "$nin": [
+                    TaskStatus.QUEUED,
+                    TaskStatus.IN_PROGRESS,
+                    TaskStatus.CANCELING,
+                ]  # not already in progress
+            },
+        }
+    )
     return sites
+
 
 async def enqueue_scrape_task(site_id: PydanticObjectId):
     site_scrape_task = SiteScrapeTask(site_id=site_id, queued_time=datetime.now())
     return await try_queue_unique_task(site_scrape_task)
 
+
 async def log_task_creation(logger, user, site_scrape_task: SiteScrapeTask):
     await logger.background_log_change(user, site_scrape_task, "CREATE")
     await Site.find_one(Site.id == site_scrape_task.site_id).update(
-        { '$set': { 'last_status': site_scrape_task.status } }
+        {"$set": {"last_run_status": site_scrape_task.status}}
     )
+
 
 async def start_scheduler():
     await init_db()
@@ -78,7 +100,7 @@ async def start_scheduler():
         sites = find_sites_eligible_for_scraping(crons, now)
 
         async for site in sites:
-            site_id: PydanticObjectId = site.id # type: ignore
+            site_id: PydanticObjectId = site.id  # type: ignore
             site_scrape_task = await enqueue_scrape_task(site_id)
             if site_scrape_task:
                 await log_task_creation(logger, user, site_scrape_task)
@@ -87,19 +109,22 @@ async def start_scheduler():
 
         await asyncio.sleep(15)
 
+
 def cluster_arn() -> str | None:
-    return config.get('CLUSTER_ARN')
+    return config.get("CLUSTER_ARN")
+
 
 def scrapeworker_service_arn() -> str | None:
-    return config.get('SCRAPEWORKER_SERVICE_ARN')
+    return config.get("SCRAPEWORKER_SERVICE_ARN")
+
 
 def determine_current_instance_count():
     ecs = boto3.client("ecs")
     services = ecs.describe_services(
-        cluster=cluster_arn(),
-        services=[scrapeworker_service_arn()]
+        cluster=cluster_arn(), services=[scrapeworker_service_arn()]
     )
-    return services['services'][0]['desiredCount']
+    return services["services"][0]["desiredCount"]
+
 
 def update_cluster_size(size: int | None):
     if size is None:
@@ -119,10 +144,11 @@ def update_cluster_size(size: int | None):
 def get_new_cluster_size(queue_size, active_workers, tasks_per_worker):
     workers_needed = queue_size // tasks_per_worker
 
-    if abs(workers_needed - active_workers) < 5:
-        return None
+    if workers_needed > 5:
+        workers_needed = 5
 
-    return max(workers_needed, 1) # never scale to zero
+    return max(workers_needed, 1)  # never scale to zero
+
 
 async def start_scaler():
     if is_local:
@@ -130,12 +156,17 @@ async def start_scaler():
         return
 
     while True:
-        queue_size = await SiteScrapeTask.find({ 'status': { '$in': ['IN_PROGRESS', 'QUEUED'] } }).count()
+        queue_size = await SiteScrapeTask.find(
+            {"status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.QUEUED]}}
+        ).count()
         active_workers = determine_current_instance_count()
-        tasks_per_worker = 5 # some setting
-        new_cluster_size = get_new_cluster_size(queue_size, active_workers, tasks_per_worker)
+        tasks_per_worker = 5  # some setting
+        new_cluster_size = get_new_cluster_size(
+            queue_size, active_workers, tasks_per_worker
+        )
         update_cluster_size(new_cluster_size)
         await asyncio.sleep(30)
+
 
 async def requeue_lost_task(task: SiteScrapeTask, now):
     message = f"Requeuing task {task.id} from worker {task.worker_id}, likely lost to killed worker"
@@ -143,8 +174,9 @@ async def requeue_lost_task(task: SiteScrapeTask, now):
     new_task = SiteScrapeTask(id=task.id, site_id=task.site_id, queued_time=now)
     await new_task.save()
     await Site.find_one(Site.id == task.site_id).update(
-        { '$set': { 'last_status': task.status } }
+        {"$set": {"last_run_status": task.status}}
     )
+
 
 async def fail_lost_task(task: SiteScrapeTask, now: datetime):
     message = f"Failing task {task.id} on worker {task.worker_id} due to lost heartbeat"
@@ -152,7 +184,7 @@ async def fail_lost_task(task: SiteScrapeTask, now: datetime):
     await Site.find(Site.id == task.site_id).update(
         Set(
             {
-                Site.last_status: Status.FAILED,
+                Site.last_run_status: TaskStatus.FAILED,
                 Site.last_run_time: now,
             }
         )
@@ -160,12 +192,13 @@ async def fail_lost_task(task: SiteScrapeTask, now: datetime):
     await task.update(
         Set(
             {
-                SiteScrapeTask.status: Status.FAILED,
+                SiteScrapeTask.status: TaskStatus.FAILED,
                 SiteScrapeTask.error_message: message,
                 SiteScrapeTask.end_time: now,
             }
         )
     )
+
 
 async def start_hung_task_checker():
     """
@@ -173,13 +206,15 @@ async def start_hung_task_checker():
     """
     while True:
         now = datetime.now()
-        tasks = SiteScrapeTask.find({
-            'status': { '$in': ['IN_PROGRESS', 'CANCELING'] },
-            '$or': [
-                { 'last_active': { '$lt': now - timedelta(minutes=1) } },
-                { 'last_active': None }
-            ],
-        })
+        tasks = SiteScrapeTask.find(
+            {
+                "status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.CANCELING]},
+                "$or": [
+                    {"last_active": {"$lt": now - timedelta(minutes=1)}},
+                    {"last_active": None},
+                ],
+            }
+        )
         async for task in tasks:
             if task.retry_if_lost:
                 await requeue_lost_task(task, now)
@@ -187,7 +222,10 @@ async def start_hung_task_checker():
                 await fail_lost_task(task, now)
         await asyncio.sleep(60)
 
+
 background_tasks: list[asyncio.Task] = []
+
+
 async def start_scheduler_and_scaler():
     await init_db()
     background_tasks.append(asyncio.create_task(start_scaler()))
@@ -195,10 +233,12 @@ async def start_scheduler_and_scaler():
     background_tasks.append(asyncio.create_task(start_hung_task_checker()))
     await asyncio.gather(*background_tasks)
 
+
 def signal_handler(signum, frame):
     typer.secho(f"Shutdown Requested, shutting down", fg=typer.colors.BLUE)
     for task in background_tasks:
         task.cancel()
+
 
 @app.command()
 def start_worker():

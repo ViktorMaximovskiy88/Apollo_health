@@ -32,10 +32,10 @@ async def create_proxies():
             "us-ny.proxymesh.com:31280",
             "us-fl.proxymesh.com:31280",
         ]),
-        Proxy(name="Trusted Proxy", endpoints=[
-            "cld-us-wxda.tp-ns.com:80",
-            "cld-us-ektv.tp-ns.com:80"
-        ]),
+        # Proxy(name="Trusted Proxy", endpoints=[
+            # "cld-us-wxda.tp-ns.com:80",
+            # "cld-us-ektv.tp-ns.com:80"
+        # ]),
     ]
 
     for proxy in proxies:
