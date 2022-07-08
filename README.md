@@ -54,6 +54,9 @@ apt-get install -y locales make build-essential libssl-dev zlib1g-dev \
     neovim htop lsof sudo software-properties-common poppler-utils gcc \
     gfortran libblas-dev liblapack-dev \
     g++ protobuf-compiler libprotobuf-dev libmagic1
+# macOS only
+brew install libmagic
+
 
 # Install Docker
 curl -fsSL https://get.docker.com | sudo sh
@@ -111,34 +114,21 @@ Each service should run in it's own terminal. Use your editors built in terminal
 
 # Start Local Mongo/Minio/Redis
 sudo docker compose -f ./Docker/docker-compose-dev.yaml up
-```
 
-```bash
 # Webserver
 python backend/app/main.py
-```
 
-```bash
 # Scrape Worker
 python backend/scrapeworker/main.py
-```
 
-```bash
 # Parse Worker
 python backend/parseworker/main.py
-```
 
-```bash
 # Parse Worker
 python backend/scheduler/main.py
-```
 
-```bash
 # Frontend
-
 cd frontend
-
-# start the app
 yarn start
 ```
 
@@ -152,12 +142,16 @@ If you're in and no errors, create a new user with your own email and password o
 If that succeeds, try creating a site. I recommend Molina HealthCare OH Drug at https://www.molinahealthcare.com/providers/oh/duals/drug/formulary.aspx. Once created, go into it and click the 'Run Collection' button and hope for the best, watching the logs for activity/errors.
 
 ### Testing
+
 Frontend Tests
+
 ```bash
 cd frontend
-npm run test
+yarn test
 ```
+
 Backend Tests
+
 ```bash
 # In virtual env
 python -m pytest
@@ -215,29 +209,19 @@ Each service should run in it's own terminal. Use your editors built in terminal
 
 # Start Local Mongo/Minio/Redis
 docker compose -f ./Docker/docker-compose-dev.yaml up
-```
 
-```bash
 # Webserver
 python backend/app/main.py
-```
 
-```bash
 # Scrape Worker
 python backend/scrapeworker/main.py
-```
 
-```bash
 # Parse Worker
 python backend/parseworker/main.py
-```
 
-```bash
 # Parse Worker
 python backend/scheduler/main.py
-```
 
-```bash
 # Frontend
 cd frontend
 yarn start
@@ -253,12 +237,6 @@ Note: I was able to clone git repository only using HTTPS command from Windows i
 Instead I started VS Code on Windows, used 'Remote WSL' extension to switch to Ubuntu and then selected Ubuntu directory where project was installed
 Confirm that python version is 3.10.4 before you generate virtual environment
 At some point I had a problem with PATH. It was fixed by manually updating .bashrc file. PATH definition at the end of the file had single instead of double quotes. We believe it was caused by some incorrect Export PATH command that is no longer part of this file
-
-# macOS (intel?)
-
-```bash
-brew install libmagic
-```
 
 # PYCLD3 Deps
 
