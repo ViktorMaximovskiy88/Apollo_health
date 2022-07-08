@@ -65,7 +65,7 @@ class Download(BaseModel):
     file_hash: str | None
     content_hash: str | None
 
-    def guess_extension(self):
+    def guess_extension(self) -> str | None:
         guess_ext = get_extension_from_path_like(self.request.url)
 
         if not guess_ext:
@@ -90,16 +90,25 @@ mapper = {
 }
 
 
-def get_extension_from_path_like(path_like: str) -> str | None:
-    maybe_extension = pathlib.Path(os.path.basename(path_like)).suffix
-    return maybe_extension if maybe_extension else None
+def get_extension_from_path_like(path_like: str | None) -> str | None:
+    if path_like is None:
+        return None
+
+    maybe_extension = pathlib.Path(os.path.basename(path_like))
+    return maybe_extension.suffix if maybe_extension else None
 
 
-def get_extension_from_content_type(content_type: str) -> str | None:
+def get_extension_from_content_type(content_type: str | None) -> str | None:
+    if content_type is None:
+        return None
+
     return mapper.get(content_type) or None
 
 
-def get_extension_from_file(file_path: str):
+def get_extension_from_file(file_path: str | None):
+    if file_path is None:
+        return None
+
     mime = magic.Magic(mime=True)
     mime_type = mime.from_file(file_path)
     return mapper.get(mime_type) or None
