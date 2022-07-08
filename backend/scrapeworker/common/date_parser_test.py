@@ -1,5 +1,5 @@
 from datetime import datetime
-from backend.scrapeworker.date_parser import DateParser
+from backend.scrapeworker.common.date_parser import DateParser
 from backend.scrapeworker.common.utils import compile_date_rgx
 
 

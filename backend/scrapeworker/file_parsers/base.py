@@ -5,7 +5,7 @@ from abc import ABC
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.common.detect_lang import detect_lang
 from backend.scrapeworker.common.utils import date_rgxs
-from backend.scrapeworker.date_parser import DateParser
+from backend.scrapeworker.common.date_parser import DateParser
 
 
 class FileParser(ABC):
