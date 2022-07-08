@@ -160,8 +160,5 @@ class AioDownloader:
                 body = await response.read()
                 # self.redis.set(url, body, ex=60 * 60 * 1)  # 1 hour
 
-        async with self.tempfile_path(download, body) as (
-            temp_path,
-            hash,
-        ):
+        async with self.tempfile_path(download, body) as (temp_path, hash):
             yield temp_path, hash
