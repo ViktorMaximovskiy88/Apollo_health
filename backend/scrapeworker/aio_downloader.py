@@ -2,14 +2,11 @@ import logging
 import tempfile
 from turtle import down
 import aiofiles
-import pathlib
-import os
-import re
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Any
 from aiohttp import ClientSession, ClientResponse, BasicAuth
 from backend.common.models.proxy import Proxy
-from backend.scrapeworker.common.models import Download, Request
+from backend.scrapeworker.common.models import Download
 from backend.common.core.config import config
 from playwright.async_api import ProxySettings
 from tenacity import AttemptManager
