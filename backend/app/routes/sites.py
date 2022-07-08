@@ -153,6 +153,7 @@ async def upload_sites(
             document_extensions=doc_exts,
             url_keywords=url_keyws,
             proxy_exclusions=[],
+            wait_for=[]
         )
         if await Site.find_one(Site.base_urls == base_urls):
             continue

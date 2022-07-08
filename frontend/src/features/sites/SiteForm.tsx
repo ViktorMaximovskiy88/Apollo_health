@@ -1,4 +1,5 @@
 import { Button, Form, Input, Select, Space } from 'antd';
+
 import { useForm } from 'antd/lib/form/Form';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
@@ -54,6 +55,7 @@ export function SiteForm(props: { onFinish: (user: Partial<Site>) => void; initi
         document_extensions: ['pdf'],
         url_keywords: [],
         proxy_exclusions: [],
+        wait_for:[],
         follow_links: false,
         follow_link_keywords: [],
         follow_link_url_keywords: [],

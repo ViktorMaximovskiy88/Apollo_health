@@ -1,4 +1,5 @@
-import { Checkbox, Form, FormInstance, Select, Radio } from 'antd';
+import { Checkbox, Form, FormInstance, Select, Radio, Tooltip } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 import { CollectionMethod } from './types';
 import { useGetProxiesQuery } from '../proxies/proxiesApi';
 
@@ -77,12 +78,26 @@ function ProxyExclusions() {
   );
 }
 
+function WaitFor(){
+  return (
+      <Form.Item name={["scrape_method_configuration", "wait_for"]} label={
+          <>
+            <span style={{"marginRight":"5px"}}>Wait For</span>
+            <Tooltip placement="right" title="Collection will wait for specific words to appear before continuing."><QuestionCircleOutlined /></Tooltip>
+          </>
+        }>
+        <Select mode="tags" />
+      </Form.Item>
+  )
+}
+
 function ScrapeMethodConfiguration() {
   return (
     <Form.Item name="scrape_method_configuration">
       <DocumentExtensions />
       <UrlKeywords />
       <ProxyExclusions />
+      <WaitFor />
     </Form.Item>
   );
 }
