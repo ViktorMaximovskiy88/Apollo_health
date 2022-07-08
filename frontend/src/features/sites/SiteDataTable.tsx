@@ -11,19 +11,24 @@ import {
 } from '../../app/uiSlice';
 import {
   prettyDateTimeFromISO,
-  statusDisplayName,
-  statusStyledDisplay,
+  TaskStatus,
+  scrapeTaskStatusDisplayName as displayName,
+  scrapeTaskStatusStyledDisplay as styledDisplay,
 } from '../../common';
 import { isErrorWithData } from '../../common/helpers';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { Status } from '../../common';
 import {
   useDeleteSiteMutation,
   useGetChangeLogQuery,
   useGetSitesQuery,
 } from './sitesApi';
 import { Site } from './types';
+import {
+  SiteStatus,
+  siteStatusDisplayName,
+  siteStatusStyledDisplay,
+} from './siteStatus';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
@@ -60,6 +65,36 @@ const createColumns = (deleteSite: any) => {
       defaultFlex: 1,
     },
     {
+      header: 'Site Status',
+      name: 'status',
+      minWidth: 200,
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        placeholder: 'All',
+        dataSource: [
+          {
+            id: SiteStatus.New,
+            label: siteStatusDisplayName(SiteStatus.New),
+          },
+          {
+            id: SiteStatus.QualityHold,
+            label: siteStatusDisplayName(SiteStatus.QualityHold),
+          },
+          {
+            id: SiteStatus.Online,
+            label: siteStatusDisplayName(SiteStatus.Online),
+          },
+          {
+            id: SiteStatus.Inactive,
+            label: siteStatusDisplayName(SiteStatus.Inactive),
+          },
+        ],
+      },
+      render: ({ value: status }: { value: SiteStatus }) => {
+        return siteStatusStyledDisplay(status);
+      },
+    },
+    {
       header: 'Last Run Time',
       name: 'last_run_time',
       minWidth: 200,
@@ -84,18 +119,30 @@ const createColumns = (deleteSite: any) => {
       filterEditorProps: {
         placeholder: 'All',
         dataSource: [
-          { id: Status.Finished, label: statusDisplayName(Status.Finished) },
-          { id: Status.Canceled, label: statusDisplayName(Status.Canceled) },
-          { id: Status.Queued, label: statusDisplayName(Status.Queued) },
-          { id: Status.Failed, label: statusDisplayName(Status.Failed) },
           {
-            id: Status.InProgress,
-            label: statusDisplayName(Status.InProgress),
+            id: TaskStatus.Finished,
+            label: displayName(TaskStatus.Finished),
+          },
+          {
+            id: TaskStatus.Canceled,
+            label: displayName(TaskStatus.Canceled),
+          },
+          {
+            id: TaskStatus.Queued,
+            label: displayName(TaskStatus.Queued),
+          },
+          {
+            id: TaskStatus.Failed,
+            label: displayName(TaskStatus.Failed),
+          },
+          {
+            id: TaskStatus.InProgress,
+            label: displayName(TaskStatus.InProgress),
           },
         ],
       },
-      render: ({ value: status }: { value: Status }) => {
-        return statusStyledDisplay(status);
+      render: ({ value: status }: { value: TaskStatus }) => {
+        return styledDisplay(status);
       },
     },
     {

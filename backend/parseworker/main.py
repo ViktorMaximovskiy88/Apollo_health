@@ -16,7 +16,7 @@ from backend.parseworker.extract_worker import ExtractWorker
 
 from backend.common.db.init import init_db
 from backend.common.models.site import Site
-from backend.common.core.enums import Status
+from backend.common.core.enums import TaskStatus
 
 app = typer.Typer()
 
@@ -27,12 +27,12 @@ async def start_worker_async():
     while True:
         acquired = (
             await ContentExtractionTask.get_motor_collection().find_one_and_update(
-                {"status": Status.QUEUED},
+                {"status": TaskStatus.QUEUED},
                 {
                     "$set": {
                         "start_time": datetime.now(),
                         "worker_id": worker_id,
-                        "status": Status.IN_PROGRESS,
+                        "status": TaskStatus.IN_PROGRESS,
                     }
                 },
                 sort=[("queued_time", pymongo.ASCENDING)],
@@ -57,7 +57,7 @@ async def start_worker_async():
                 await extract_task.update(
                     Set(
                         {
-                            ContentExtractionTask.status: Status.FINISHED,
+                            ContentExtractionTask.status: TaskStatus.FINISHED,
                             ContentExtractionTask.end_time: now,
                         }
                     )
@@ -68,7 +68,7 @@ async def start_worker_async():
                 await extract_task.update(
                     Set(
                         {
-                            ContentExtractionTask.status: Status.FAILED,
+                            ContentExtractionTask.status: TaskStatus.FAILED,
                             ContentExtractionTask.end_time: now,
                         }
                     )

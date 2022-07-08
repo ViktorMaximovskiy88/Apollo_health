@@ -1,10 +1,5 @@
 import userEvent from '@testing-library/user-event';
-import {
-  render,
-  screen,
-  act,
-  waitForElementToBeRemoved,
-} from '../../test/test-utils';
+import { render, screen, act } from '../../test/test-utils';
 import { setupServer } from 'msw/node';
 import { CollectionsPage } from './CollectionsPage';
 import { handlers } from './mocks/collectionsPageHandlers';
@@ -60,7 +55,7 @@ describe(`CollectionsPage`, () => {
 
     expect(await screen.findByText(/error traceback/i)).toBeInTheDocument();
 
-    screen.getByRole('button', { name: /ok/i });
+    expect(screen.getByRole('button', { name: /ok/i })).toBeInTheDocument();
   });
 
   it(`should create scrape task and update status over time`, async () => {
@@ -81,6 +76,10 @@ describe(`CollectionsPage`, () => {
       name: /run collection/i,
     });
     expect(runCollectionButton).toBeInTheDocument();
+
+    expect(screen.getByText(/Jun 20, 2022, 2:17 PM/i)).toBeInTheDocument();
+    expect(screen.getByText(/3 seconds/i)).toBeInTheDocument();
+    expect(screen.getByText(/failed/i)).toBeInTheDocument();
 
     userEvent.click(runCollectionButton);
 

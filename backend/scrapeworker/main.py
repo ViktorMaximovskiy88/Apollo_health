@@ -2,7 +2,6 @@ import asyncio
 from pathlib import Path
 import sys
 from uuid import uuid4
-import traceback
 from beanie import PydanticObjectId
 import typer
 import signal
@@ -22,7 +21,13 @@ from backend.scrapeworker.scrape_worker import (
     CanceledTaskException,
     NoDocsCollectedException,
 )
-from backend.common.core.enums import Status
+from backend.common.core.enums import TaskStatus
+from backend.scrapeworker.log import (
+    log_cancellation,
+    log_failure,
+    log_not_found,
+    log_success,
+)
 
 app = typer.Typer()
 
@@ -41,13 +46,13 @@ async def signal_handler():
 async def pull_task_from_queue(worker_id):
     now = datetime.now()
     acquired = await SiteScrapeTask.get_motor_collection().find_one_and_update(
-        {"status": Status.QUEUED},
+        {"status": TaskStatus.QUEUED},
         {
             "$set": {
                 "start_time": now,
                 "last_active": now,
                 "worker_id": worker_id,
-                "status": Status.IN_PROGRESS,
+                "status": TaskStatus.IN_PROGRESS,
             }
         },
         sort=[("queued_time", pymongo.ASCENDING)],
@@ -57,76 +62,6 @@ async def pull_task_from_queue(worker_id):
         scrape_task = SiteScrapeTask.parse_obj(acquired)
         typer.secho(f"Acquired Task {scrape_task.id}", fg=typer.colors.BLUE)
         return scrape_task
-
-
-async def log_success(scrape_task: SiteScrapeTask, site: Site):
-    typer.secho(f"Finished Task {scrape_task.id}", fg=typer.colors.BLUE)
-    now = datetime.now()
-    await site.update(
-        Set({Site.last_run_status: Status.FINISHED, Site.last_run_time: now})
-    )
-    await scrape_task.update(
-        Set(
-            {
-                SiteScrapeTask.status: Status.FINISHED,
-                SiteScrapeTask.end_time: now,
-            }
-        )
-    )
-
-
-async def log_error_status(scrape_task, site, message, status):
-    now = datetime.now()
-    await site.update(
-        Set(
-            {
-                Site.last_run_status: status,
-                Site.last_run_time: now,
-            }
-        )
-    )
-    await scrape_task.update(
-        Set(
-            {
-                SiteScrapeTask.status: status,
-                SiteScrapeTask.error_message: message,
-                SiteScrapeTask.end_time: now,
-            }
-        )
-    )
-
-
-async def log_failure(scrape_task, site, ex):
-    message = traceback.format_exc()
-    traceback.print_exc()
-    typer.secho(f"Task Failed {scrape_task.id}", fg=typer.colors.RED)
-    await log_error_status(
-        scrape_task=scrape_task,
-        site=site,
-        message=message,
-        status=Status.FAILED,
-    )
-
-
-async def log_cancellation(scrape_task, site, ex):
-    typer.secho(f"Task Canceled {scrape_task.id}", fg=typer.colors.RED)
-    message = str(ex)
-    await log_error_status(
-        scrape_task=scrape_task,
-        site=site,
-        message=message,
-        status=Status.CANCELED,
-    )
-
-
-async def log_not_found(scrape_task, site, ex):
-    message = str(ex)
-    await log_error_status(
-        scrape_task=scrape_task,
-        site=site,
-        message=message,
-        status=Status.FAILED,
-    )
 
 
 async def heartbeat_task(scrape_task: SiteScrapeTask):
@@ -153,7 +88,12 @@ async def worker_fn(worker_id, playwright, browser):
 
         now = datetime.now()
         await site.update(
-            Set({Site.last_run_status: Status.IN_PROGRESS, Site.last_run_time: now})
+            Set(
+                {
+                    Site.last_run_status: TaskStatus.IN_PROGRESS,
+                    Site.last_run_time: now,
+                }
+            )
         )
 
         worker = ScrapeWorker(playwright, browser, scrape_task, site)

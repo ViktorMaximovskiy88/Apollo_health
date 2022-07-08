@@ -40,8 +40,8 @@ from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBase
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
-from backend.common.core.enums import Status
 from backend.scrapeworker.file_parsers import parse_by_type
+from backend.common.core.enums import TaskStatus
 
 
 def is_google(url):
@@ -176,7 +176,7 @@ class ScrapeWorker:
                 break
             canceling = await SiteScrapeTask.find_one(
                 SiteScrapeTask.id == self.scrape_task.id,
-                SiteScrapeTask.status == Status.CANCELING,
+                SiteScrapeTask.status == TaskStatus.CANCELING,
             )
             if canceling:
                 for t in tasks:
@@ -227,11 +227,20 @@ class ScrapeWorker:
 
                 page = await context.new_page()
                 await stealth_async(page)
-                await page.goto(
-                    url,
-                    wait_until="domcontentloaded",
-                    timeout=60000,
-                )
+                await page.goto(url, wait_until="domcontentloaded", timeout=60000)
+
+                try:
+                    if len(self.site.scrape_method_configuration.wait_for) > 0:
+                        await page.locator(
+                            ", ".join(
+                                f":text('{wf}')"
+                                for wf in self.site.scrape_method_configuration.wait_for
+                            )
+                        ).wait_for()
+                except:
+                    raise Exception(
+                        f"Wait for dom elements {self.site.scrape_method_configuration.wait_for} have timed out"
+                    )
 
         if not page:
             raise Exception(f"Could not load {url}")
