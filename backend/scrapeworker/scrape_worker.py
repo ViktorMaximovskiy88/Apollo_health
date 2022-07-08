@@ -28,7 +28,6 @@ from backend.scrapeworker.common.aio_downloader import AioDownloader
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
-from backend.common.core.enums import Status
 from backend.scrapeworker.common.exceptions import (
     NoDocsCollectedException,
     CanceledTaskException,
