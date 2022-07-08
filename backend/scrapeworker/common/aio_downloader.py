@@ -67,7 +67,9 @@ class AioDownloader:
                 if not response:
                     raise Exception(f"Failed to download url {download.request.url}")
                 download.response.status = response.status
-                print(f"Downloaded {download.request.url}, got {response.status}")
+                logging.info(
+                    f"Downloaded {download.request.url}, got {response.status}"
+                )
 
         yield response
 
@@ -125,7 +127,7 @@ class AioDownloader:
     @asynccontextmanager
     async def tempfile_path(self, download: Download, body: bytes):
         download.guess_extension()
-        with tempfile.NamedTemporaryFile(suffix=download.file_extension) as temp:
+        with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
             download.file_path = temp.name
             async with aiofiles.open(download.file_path, "wb") as fd:
                 await fd.write(body)
@@ -145,9 +147,9 @@ class AioDownloader:
             return
 
         if body:
-            print(f"Using cached {url}")
+            logging.info(f"Using cached {url}")
         else:
-            print(f"Attempting download {url}")
+            logging.info(f"Attempting download {url}")
             async with self.download_url(download, proxies) as response:
 
                 if not response.ok:

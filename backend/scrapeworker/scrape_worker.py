@@ -93,12 +93,13 @@ class ScrapeWorker:
             return True
         return False
 
-    def url_not_seen(self, url, filename: str = ""):
+    def url_not_seen(self, url, filename: str | None):
         # skip if we've already seen this url
         if url in self.seen_urls:
             return False
-        logging.info(f"unseen url -> {url}{filename}")
-        self.seen_urls.add(f"{url}{filename}")
+        key = f"{url}{filename}" if filename else url
+        logging.info(f"unseen target -> {key}")
+        self.seen_urls.add(key)
         return True
 
     async def attempt_download(self, download: Download):
