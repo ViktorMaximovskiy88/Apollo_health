@@ -12,6 +12,7 @@ class Metadata(BaseModel):
     element_id: str | None
     closest_heading: str | None
     href: str | None
+    base_url: str | None
 
 
 class Request(BaseModel):

@@ -24,6 +24,7 @@ export function DocumentEditPage() {
   if (!token) return null;
   if (!doc) return null;
 
+  console.log(token)
   const columns = [
     { title: 'Key', dataIndex: 'key', key: 'key' },
     { title: 'Value', dataIndex: 'value', key: 'value' },

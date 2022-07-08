@@ -15,6 +15,9 @@ export interface Site extends BaseDocument {
     document_extensions: string[];
     url_keywords: string[];
     proxy_exclusions: string[];
+    follow_links: boolean;
+    follow_link_keywords: string[];
+    follow_link_url_keywords: string[];
   };
   tags: string[];
   disabled: boolean;

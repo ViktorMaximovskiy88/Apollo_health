@@ -14,12 +14,12 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
     def css_selector(self) -> str:
         href_selectors = filter_by_href(
             extensions=self.config.document_extensions,
-            keywords=self.config.url_keywords,
+            url_keywords=self.config.url_keywords,
         )
 
         hidden_value_selectors = filter_by_hidden_value(
             extensions=self.config.document_extensions,
-            keywords=self.config.url_keywords,
+            url_keywords=self.config.url_keywords,
         )
 
         self.selectors = self.selectors + href_selectors + hidden_value_selectors

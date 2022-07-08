@@ -9,12 +9,18 @@ class ScrapeMethodConfiguration(BaseModel):
     document_extensions: list[str]
     url_keywords: list[str]
     proxy_exclusions: list[PydanticObjectId] = []
+    follow_links: bool = False
+    follow_link_keywords: list[str]
+    follow_link_url_keywords: list[str]
 
 
 class UpdateScrapeMethodConfiguration(BaseModel):
     document_extensions: list[str] | None = None
     url_keywords: list[str] | None = None
     proxy_exclusions: list[PydanticObjectId] | None = None
+    follow_links: bool | None = None
+    follow_link_keywords: list[str] | None = None
+    follow_link_url_keywords: list[str] | None = None
 
 
 class BaseUrl(BaseModel):
@@ -55,6 +61,15 @@ class Site(BaseDocument, NewSite):
 # Deprecated
 class LastStatusSite(Site):
     last_status: str | None = None
+
+class NoFollowLinkScrapeConfig(ScrapeMethodConfiguration):
+    follow_links: bool | None = None
+    follow_link_keywords: list[str] | None = None
+    follow_link_url_keywords: list[str] | None = None
+
+
+class NoFollowLinkSite(Site):
+    scrape_method_configuration: NoFollowLinkScrapeConfig
 
     class Collection:
         name = "Site"
