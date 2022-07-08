@@ -97,6 +97,7 @@ class ScrapeWorker:
         # skip if we've already seen this url
         if url in self.seen_urls:
             return False
+        logging.info(f"unseen url -> {url}{filename}")
         self.seen_urls.add(f"{url}{filename}")
         return True
 
@@ -115,6 +116,8 @@ class ScrapeWorker:
             now = datetime.now()
             dest_path = f"{checksum}.{download.file_extension}"
             document = None
+
+            logging.info(f"dest_path={dest_path} temp_path={temp_path}")
 
             if not self.doc_client.document_exists(dest_path):
                 self.doc_client.write_document(dest_path, temp_path)
@@ -276,7 +279,6 @@ class ScrapeWorker:
         page: Page
         context: BrowserContext
         async with self.playwright_context(url) as (page, context):
-
             crawler: FollowLinkScraper = FollowLinkScraper(
                 page=page,
                 context=context,
@@ -299,23 +301,20 @@ class ScrapeWorker:
                 all_downloads += await self.queue_downloads(
                     nested_url, base_url=result["base_url"]
                 )
+
             if result["base_url"] != url:
                 all_downloads += await self.queue_downloads(url)
 
         tasks = []
         for download in all_downloads:
             url = download.request.url
+
             # check that the link is unique and that we should not skip it
             if not self.skip_url(url) and self.url_not_seen(
                 url, download.response.content_disposition_filename
             ):
                 await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
-                tasks.append(
-                    self.attempt_download(
-                        download,
-                    )
-                )
+                tasks.append(self.attempt_download(download))
 
         await self.wait_for_completion_or_cancel(tasks)
-
         await self.downloader.close()

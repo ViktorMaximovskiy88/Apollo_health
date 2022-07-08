@@ -1,7 +1,7 @@
 import logging
 from functools import cached_property
 from playwright.async_api import ElementHandle
-from backend.scrapeworker.common.models import Download, Metadata, Request
+from backend.scrapeworker.common.models import Metadata
 from backend.scrapeworker.common.selectors import filter_by_href
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 from urllib.parse import urljoin
@@ -9,6 +9,9 @@ from urllib.parse import urljoin
 
 class FollowLinkScraper(PlaywrightBaseScraper):
     type: str = "FollowLink"
+
+    async def is_applicable(self) -> bool:
+        return self.config.follow_links
 
     @cached_property
     def css_selector(self) -> str:
