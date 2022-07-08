@@ -1,11 +1,11 @@
 from beanie import iterative_migration
-from backend.common.models.site import Site
+from backend.common.models.site import NoStatusSite, Site
 from backend.common.core.enums import TaskStatus, SiteStatus
 
 
 class Forward:
     @iterative_migration()
-    async def add_status_to_site(self, input_document: Site, output_document: Site):
+    async def add_status_to_site(self, input_document: NoStatusSite, output_document: Site):
         if output_document.status:
             return
         if input_document.last_run_status == TaskStatus.FAILED:
@@ -17,6 +17,6 @@ class Forward:
 class Backward:
     @iterative_migration()
     async def remove_status_from_site(
-        self, input_document: Site, output_document: Site
+        self, input_document: Site, output_document: NoStatusSite
     ):
         output_document.status = None

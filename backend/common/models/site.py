@@ -64,9 +64,9 @@ class Site(BaseDocument, NewSite):
 
 
 # Deprecated
-class LastStatusSite(Site):
-    last_status: str | None = None
-    
+class NoStatusSite(Site):
+    status: str | None = None
+
     class Collection:
         name = "Site"
 
@@ -77,12 +77,17 @@ class NoFollowLinkScrapeConfig(ScrapeMethodConfiguration):
     follow_link_url_keywords: list[str] | None = None
 
 
-class NoFollowLinkSite(Site):
+class NoFollowLinkSite(NoStatusSite):
     scrape_method_configuration: NoFollowLinkScrapeConfig
 
     class Collection:
         name = "Site"
 
+class LastStatusSite(NoFollowLinkSite):
+    last_status: str | None = None
+
+    class Collection:
+        name = "Site"
 
 class NoScrapeConfigSite(LastStatusSite):
     scrape_method_configuration: NoFollowLinkScrapeConfig | None = None
