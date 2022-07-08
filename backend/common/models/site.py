@@ -51,7 +51,7 @@ class UpdateSite(BaseModel):
     disabled: bool | None = None
     last_run_time: datetime | None = None
     scrape_method_configuration: UpdateScrapeMethodConfiguration | None = None
-    status: str | None = SiteStatus.NEW
+    status: str | None = None
 
 
 class Site(BaseDocument, NewSite):
