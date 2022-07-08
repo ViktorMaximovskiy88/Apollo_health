@@ -1,7 +1,5 @@
 import asyncio
-import os
-import pathlib
-from pydantic import HttpUrl
+import logging
 import re
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -102,7 +100,7 @@ class ScrapeWorker:
         self.seen_urls.add(f"{url}{filename}")
         return True
 
-    async def attempt_download(self, base_url: HttpUrl, download: Download):
+    async def attempt_download(self, download: Download):
         url = download.request.url
         proxies = await self.get_proxy_settings()
         async for (temp_path, checksum) in self.downloader.download_to_tempfile(
@@ -146,7 +144,7 @@ class ScrapeWorker:
                 )
             else:
                 document = RetrievedDocument(
-                    base_url=base_url.url,
+                    base_url=download.metadata.base_url,
                     checksum=checksum,
                     context_metadata=download.metadata.dict(),
                     doc_type_confidence=parsed_content["confidence"],
@@ -206,14 +204,14 @@ class ScrapeWorker:
         async for attempt in AsyncRetrying(stop=stop_after_attempt(3 * n_proxies)):
             i = attempt.retry_state.attempt_number - 1
             proxy, proxy_setting = proxy_settings[i % n_proxies]
-            print(
+            logging.info(
                 f"{i} Trying proxy {proxy and proxy.name} - {proxy_setting and proxy_setting.get('server')}"
             )
             yield attempt, proxy_setting
 
     @asynccontextmanager
     async def playwright_context(self, url: str) -> AsyncGenerator[Page, None]:
-        print(f"Creating context for {url}")
+        logging.info(f"Creating context for {url}")
         context: BrowserContext | None = None
         page: Page | None = None
         async for attempt, proxy in self.try_each_proxy():
@@ -243,7 +241,7 @@ class ScrapeWorker:
     def active_base_urls(self):
         return [url for url in self.site.base_urls if url.status == "ACTIVE"]
 
-    async def queue_downloads(self, url):
+    async def queue_downloads(self, url, base_url: str | None = None):
         all_downloads: list[Download] = []
         page: Page
         context: BrowserContext
@@ -263,6 +261,7 @@ class ScrapeWorker:
 
                 download: Download
                 for download in downloads:
+                    download.metadata.base_url = base_url or url
                     # TODO where this lives ... also office live?
                     if is_google(download.request.url):
                         google_id = get_google_id(download.request.url)
@@ -288,25 +287,23 @@ class ScrapeWorker:
             if await crawler.is_applicable():
                 urls = await crawler.execute()
 
-            return urls
+            return {"base_url": url, "crawled_urls": urls}
 
     async def run_scrape(self):
         all_downloads: list[Download] = []
-        source_urls: list[str] = []
         base_urls: list[str] = [base_url.url for base_url in self.active_base_urls()]
 
-        # find more urls to scrape but dont record or try to download
         for url in base_urls:
-            source_urls += await self.crawl_page(url)
-
-        # crawl our our urls with the intent to download; do not rerun the crawler (wack)
-        for url in source_urls + base_urls:
+            result = await self.crawl_page(url)
+            for nested_url in result["crawled_urls"]:
+                all_downloads += await self.queue_downloads(
+                    nested_url, base_url=result["base_url"]
+                )
             all_downloads += await self.queue_downloads(url)
 
         tasks = []
         for download in all_downloads:
             url = download.request.url
-
             # check that the link is unique and that we should not skip it
             if not self.skip_url(url) and self.url_not_seen(
                 url, download.response.content_disposition_filename
@@ -314,7 +311,6 @@ class ScrapeWorker:
                 await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
                 tasks.append(
                     self.attempt_download(
-                        url,  # needs to be base_url.url ... smart
                         download,
                     )
                 )
