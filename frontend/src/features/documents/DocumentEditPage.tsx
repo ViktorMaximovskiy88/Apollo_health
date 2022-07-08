@@ -24,7 +24,6 @@ export function DocumentEditPage() {
   if (!token) return null;
   if (!doc) return null;
 
-  console.log(token)
   const columns = [
     { title: 'Key', dataIndex: 'key', key: 'key' },
     { title: 'Value', dataIndex: 'value', key: 'value' },
@@ -45,11 +44,7 @@ export function DocumentEditPage() {
         <Worker workerUrl="/pdf.worker.min.js">
           <div className="w-1/2 h-full overflow-auto ant-tabs-pdf-viewer">
             <Tabs className="h-full" tabBarStyle={tw`h-10`}>
-              <Tabs.TabPane
-                tab="Document"
-                key="document"
-                className="h-full overflow-auto"
-              >
+              <Tabs.TabPane tab="Document" key="document" className="h-full overflow-auto">
                 {doc.file_extension === 'pdf' ? (
                   <Viewer
                     withCredentials={true}
@@ -62,14 +57,9 @@ export function DocumentEditPage() {
                 ) : (
                   <OfficeFileViewer url={doc.url} />
                 )}
-                <OfficeFileViewer url={doc.url} />
               </Tabs.TabPane>
               <Tabs.TabPane tab="Metadata" key="metadata">
-                <Table
-                  dataSource={dataSource}
-                  columns={columns}
-                  pagination={false}
-                />
+                <Table dataSource={dataSource} columns={columns} pagination={false} />
               </Tabs.TabPane>
             </Tabs>
           </div>
