@@ -9,7 +9,7 @@ class Forward:
         if input_document.last_run_status == TaskStatus.FAILED:
             output_document.status = SiteStatus.QUALITY_HOLD
         else:
-            output_document.status = SiteStatus.ONLINE
+            output_document.status = SiteStatus.NEW
 
 
 class Backward:
