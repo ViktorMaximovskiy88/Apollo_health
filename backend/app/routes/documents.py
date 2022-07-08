@@ -1,11 +1,8 @@
 from datetime import datetime
 
 from beanie import PydanticObjectId
-from beanie.odm.operators.find.comparison import In
 from fastapi import APIRouter, Depends, HTTPException, status, Security
 from fastapi.responses import StreamingResponse
-
-
 
 
 from backend.common.models.content_extraction_task import ContentExtractionTask
@@ -66,9 +63,11 @@ async def get_documents(
     return documents
 
 
-@router.get("/",
+@router.get(
+    "/",
     response_model=list[RetrievedDocument],
-    dependencies=[Security(get_current_user)])
+    dependencies=[Security(get_current_user)],
+)
 async def read_documents(
     documents: list[RetrievedDocument] = Depends(get_documents),
 ) -> list[RetrievedDocument]:
@@ -92,6 +91,10 @@ async def download_document(
 async def read_document(
     target: RetrievedDocument = Depends(get_target),
 ):
+    # TODO migration to fix this for reals...
+    if target.file_extension is None:
+        target.file_extension = "pdf"
+
     return target
 
 

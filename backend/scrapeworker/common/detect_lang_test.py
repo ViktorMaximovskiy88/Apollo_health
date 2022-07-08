@@ -1,4 +1,4 @@
-from backend.scrapeworker.detect_lang import detect_lang
+from backend.scrapeworker.common.detect_lang import detect_lang
 from backend.common.core.enums import LangCode
 
 def test_english_text():

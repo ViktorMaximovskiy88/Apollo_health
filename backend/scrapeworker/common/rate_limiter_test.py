@@ -1,6 +1,6 @@
 import math
 import pytest
-from backend.scrapeworker.rate_limiter import RateLimiter
+from backend.scrapeworker.common.rate_limiter import RateLimiter
 
 
 @pytest.mark.asyncio
