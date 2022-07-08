@@ -110,7 +110,6 @@ async def runBulkByType(
     elif bulk_type == "all" or bulk_type == "cancel-active":
         query["last_run_status"] = {"$ne": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}
 
-
     async for site in Site.find_many(query):
         site_id: PydanticObjectId = site.id
 
