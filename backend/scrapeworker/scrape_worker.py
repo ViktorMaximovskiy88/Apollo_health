@@ -3,7 +3,7 @@ import re
 from contextlib import asynccontextmanager
 from datetime import datetime
 from random import shuffle
-from typing import AsyncGenerator, Coroutine
+from typing import AsyncGenerator, Callable, Coroutine
 from async_lru import alru_cache
 import os
 import pathlib
@@ -13,7 +13,7 @@ from beanie.odm.operators.update.array import Push
 from beanie.odm.operators.update.general import Inc
 from urllib.parse import urlparse, urljoin
 from backend.common.models.proxy import Proxy
-from backend.common.models.site import Site
+from backend.common.models.site import BaseUrl, Site
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from playwright.async_api import (
@@ -22,6 +22,7 @@ from playwright.async_api import (
     BrowserContext,
     ProxySettings,
     Page,
+    Request,
 )
 from playwright_stealth import stealth_async
 from backend.common.models.user import User
@@ -225,8 +226,8 @@ class ScrapeWorker:
             yield attempt, proxy_setting
 
     @asynccontextmanager
-    async def playwright_context(self, base_url: str) -> AsyncGenerator[Page, None]:
-        print(f"Creating context for {base_url}")
+    async def playwright_context(self, url: str) -> AsyncGenerator[Page, None]:
+        print(f"Creating context for {url}")
         context: BrowserContext | None = None
         page: Page | None = None
         async for attempt, proxy in self.try_each_proxy():
@@ -235,11 +236,11 @@ class ScrapeWorker:
                 page = await context.new_page()
                 await stealth_async(page)
                 await page.goto(
-                    base_url, wait_until="domcontentloaded"
+                    url
                 )  # await page.goto(base_url, wait_until="networkidle")
 
         if not page:
-            raise Exception(f"Could not load {base_url}")
+            raise Exception(f"Could not load {url}")
 
         try:
             yield page
@@ -247,7 +248,15 @@ class ScrapeWorker:
             if context:
                 await context.close()
 
-    def construct_selector(self):
+    def construct_follow_links_selector(self) -> str:
+        keywords = self.site.scrape_method_configuration.follow_link_keywords
+        url_keywords = self.site.scrape_method_configuration.follow_link_url_keywords
+        wrd_selectors = [f'a:has-text("{word}")' for word in keywords]
+        url_selectors = [f'a[href*="{word}"]' for word in url_keywords]
+        selector = ",".join(wrd_selectors + url_selectors)
+        return selector
+
+    def construct_selector(self) -> str:
         extensions = self.site.scrape_method_configuration.document_extensions
         keywords = self.site.scrape_method_configuration.url_keywords
         ext_selectors = [f'a[href$="{ext}"]' for ext in extensions]
@@ -258,27 +267,53 @@ class ScrapeWorker:
     def active_base_urls(self):
         return [url for url in self.site.base_urls if url.status == "ACTIVE"]
 
+    async def queue_downloads(
+        self,
+        base_url: BaseUrl,
+        page: Page = None,
+        url: str = None,
+        context_metadata: dict[str] = None,
+    ):
+        """
+        Scrape provided page for urls to download. Create new page if no page provided.
+        Queue downloads of scraped urls or pdfs from network requests.
+        """
+        downloads = []
+        link_handles = await page.query_selector_all(self.construct_selector())
+        print(f"Found {len(link_handles)} links")
+        for link_handle in link_handles:
+            url, context_metadata = await self.extract_url_and_context_metadata(
+                base_url.url, link_handle
+            )
+
+            if is_google(url):
+                google_id = get_google_id(url)
+                url = f"https://drive.google.com/u/0/uc?id={google_id}&export=download"
+
+            # check that link is unique and that we should not skip it
+            if not self.skip_url(url) and self.url_not_seen(url):
+                await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
+                downloads.append(
+                    self.attempt_download(base_url.url, url, context_metadata)
+                )
+        return downloads
+
     async def run_scrape(self):
         for base_url in self.active_base_urls():
             async with self.playwright_context(base_url.url) as page:
-                link_handles = await page.query_selector_all(self.construct_selector())
-                print(f"Found {len(link_handles)} links")
                 downloads = []
-                for link_handle in link_handles:
-                    url, context_metadata = await self.extract_url_and_context_metadata(
-                        base_url.url, link_handle
-                    )
-
-                    if is_google(url):
-                        google_id = get_google_id(url)
-                        url = f"https://drive.google.com/u/0/uc?id={google_id}&export=download"
-
-                    # check that think link is unique and that we should not skip it
-                    if not self.skip_url(url) and self.url_not_seen(url):
-                        await self.scrape_task.update(
-                            Inc({SiteScrapeTask.links_found: 1})
-                        )
-                        downloads.append(
-                            self.attempt_download(base_url.url, url, context_metadata)
-                        )
+                if self.site.scrape_method_configuration.follow_links:
+                    selector = self.construct_follow_links_selector()
+                    follow_handles = await page.query_selector_all(selector)
+                    for handle in follow_handles:
+                        href = await handle.get_attribute("href")
+                        url = urljoin(base_url.url, href)
+                        try:
+                            async with self.playwright_context(url) as sub_page:
+                                downloads += await self.queue_downloads(
+                                    base_url, page=sub_page
+                                )
+                        except:
+                            continue
+                downloads += await self.queue_downloads(base_url, page=page)
                 await self.wait_for_completion_or_cancel(downloads)

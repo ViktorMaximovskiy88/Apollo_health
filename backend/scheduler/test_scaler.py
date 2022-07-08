@@ -5,7 +5,7 @@ def test_scaler_increase():
     active_workers = 10
     tasks_per_worker = 5
     updated_size = get_new_cluster_size(queue_size, active_workers, tasks_per_worker)
-    assert updated_size == 2000
+    assert updated_size == 5
 
 def test_scaler_decrease():
     queue_size = 10
@@ -20,10 +20,3 @@ def test_scaler_close_enough():
     tasks_per_worker = 5
     updated_size = get_new_cluster_size(queue_size, active_workers, tasks_per_worker)
     assert updated_size == 1
-
-def test_scaler_no_update():
-    queue_size = 51
-    active_workers = 10
-    tasks_per_worker = 5
-    updated_size = get_new_cluster_size(queue_size, active_workers, tasks_per_worker)
-    assert updated_size == None

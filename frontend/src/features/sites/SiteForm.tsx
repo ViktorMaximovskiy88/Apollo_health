@@ -1,6 +1,7 @@
-import { Button, Form, Input, Select, Space, Radio } from 'antd';
+import { Button, Checkbox, Form, FormInstance, Input, Select, Space, Radio } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import { Site, CollectionMethod } from './types';
 import { useGetProxiesQuery } from '../proxies/proxiesApi';
 import { UrlFormFields } from './UrlFormField';
@@ -84,6 +85,83 @@ function ProxyExclusions() {
   );
 }
 
+function FollowLinks(props: { followLinks: boolean, form: FormInstance }) {
+
+  function validateFollowLinks(fieldInfo: any, value: string) {
+    if (value.length === 0) {
+      const namePaths = [
+        ['scrape_method_configuration', 'follow_link_keywords'],
+        ['scrape_method_configuration', 'follow_link_url_keywords'],
+      ];
+      const currentNamePath = fieldInfo.field.split('.');
+      const otherNamePath = namePaths
+        .filter((path) => {
+          return !path.every((ele) => currentNamePath.includes(ele));
+        })
+        .flat();
+      const otherValue = props.form.getFieldValue(otherNamePath);
+
+      if (otherValue.length === 0) {
+        return Promise.reject(
+          new Error(
+            'You must provide a Link or URL Keyword with Follow Links enabled'
+          )
+        );
+      }
+    }
+
+    return Promise.resolve();
+  }
+
+  return (
+    <div className="flex space-x-5">
+      <Form.Item
+        name={['scrape_method_configuration', 'follow_links']}
+        label="Follow Links"
+        valuePropName="checked"
+      >
+        <Checkbox className="flex justify-center" />
+      </Form.Item>
+      {props.followLinks && (
+        <div className="flex grow space-x-5">
+          <Form.Item
+            className="grow"
+            name={[
+              'scrape_method_configuration',
+              'follow_link_keywords',
+            ]}
+            label="Follow Link Keywords"
+            rules={[
+              {
+                validator: (field, value) =>
+                  validateFollowLinks(field, value),
+              },
+            ]}
+          >
+            <Select mode="tags" />
+          </Form.Item>
+          <Form.Item
+            className="grow"
+            name={[
+              'scrape_method_configuration',
+              'follow_link_url_keywords',
+            ]}
+            label="Follow Link URL Keywords"
+            rules={[
+              {
+                validator: (field, value) =>
+                  validateFollowLinks(field, value),
+              },
+            ]}
+          >
+            <Select mode="tags" />
+          </Form.Item>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Schedule() {
   const schedules = [
     { value: '0 16 * * *', label: 'Daily' },
@@ -102,6 +180,9 @@ export function SiteForm(props: {
   onFinish: (user: Partial<Site>) => void;
   initialValues?: Site;
 }) {
+  const initialFollowLinks =
+    props.initialValues?.scrape_method_configuration.follow_links || false;
+  const [followLinks, setFollowLinks] = useState<boolean>(initialFollowLinks);
   const [form] = useForm();
 
   /* eslint-disable no-template-curly-in-string */
@@ -112,6 +193,12 @@ export function SiteForm(props: {
     },
   };
   /* eslint-enable no-template-curly-in-string */
+
+  function setFormState(modified: Partial<Site>) {
+    if (modified.scrape_method_configuration?.follow_links !== undefined) {
+      setFollowLinks(modified.scrape_method_configuration?.follow_links);
+    }
+  }
 
   let initialValues: Partial<Site> | undefined = props.initialValues;
   if (!initialValues) {
@@ -125,6 +212,9 @@ export function SiteForm(props: {
         document_extensions: ['pdf'],
         url_keywords: [],
         proxy_exclusions: [],
+        follow_links: false,
+        follow_link_keywords: [],
+        follow_link_url_keywords: [],
       },
     };
   }
@@ -141,6 +231,7 @@ export function SiteForm(props: {
       }}
       requiredMark={false}
       onFinish={props.onFinish}
+      onValuesChange={setFormState}
       initialValues={initialValues}
       validateMessages={validateMessages}
     >
@@ -163,6 +254,7 @@ export function SiteForm(props: {
                 <DocumentExtensions />
                 <UrlKeywords />
                 <ProxyExclusions />
+                <FollowLinks followLinks={followLinks} form={form} />
               </Form.Item>
               <Schedule />
             </>

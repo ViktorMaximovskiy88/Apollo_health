@@ -48,5 +48,6 @@
   "base_url": "https://www.test-base-url.com",
   "lang_code": "en",
   "automated_content_extraction": false,
-  "automated_content_extraction_class": null
+  "automated_content_extraction_class": null,
+  "file_extension": "pdf"
 }

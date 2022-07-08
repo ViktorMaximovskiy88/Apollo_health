@@ -16,7 +16,12 @@ class TestDeleteSite:
             name="Test",
             scrape_method="",
             scrape_method_configuration=ScrapeMethodConfiguration(
-                document_extensions=[], url_keywords=[]
+                document_extensions=[],
+                url_keywords=[],
+                proxy_exclusions=[],
+                follow_links=False,
+                follow_link_keywords=[],
+                follow_link_url_keywords=[],
             ),
             disabled=False,
             cron="5 * * * *",
