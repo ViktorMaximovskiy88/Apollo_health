@@ -1,17 +1,21 @@
 import logging
-import xxhash
 import tempfile
+from turtle import down
 import aiofiles
+import pathlib
+import os
+import re
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Any
 from aiohttp import ClientSession, ClientResponse, BasicAuth
 from backend.common.models.proxy import Proxy
-from backend.scrapeworker.common.models import Request
+from backend.scrapeworker.common.models import Download, Request
 from backend.common.core.config import config
 from playwright.async_api import ProxySettings
 from tenacity import AttemptManager
 from backend.scrapeworker.common.rate_limiter import RateLimiter
 from random import shuffle
+from backend.common.storage.hash import hash_bytes
 
 default_headers: dict[str, str] = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -38,35 +42,35 @@ class AioDownloader:
     @asynccontextmanager
     async def download_url(
         self,
-        request: Request,
+        download: Download,
         proxies: list[tuple[Proxy | None, dict | None]] = [],
     ):
         response: ClientResponse
-        headers = default_headers | request.headers
+        headers = default_headers | download.request.headers
         async for attempt, proxy in self.proxy_with_backoff(proxies):
             with attempt:
                 # TODO de-duplicate this...
                 if proxy:
                     response = await self.session.request(
-                        url=request.url,
-                        method=request.method,
+                        url=download.request.url,
+                        method=download.request.method,
                         headers=headers,
-                        data=request.data,
+                        data=download.request.data,
                         proxy=proxy["proxy"],
                         proxy_auth=proxy["proxy_auth"],
                     )
                 else:
                     response = await self.session.request(
-                        url=request.url,
-                        method=request.method,
+                        url=download.request.url,
+                        method=download.request.method,
                         headers=headers,
-                        data=request.data,
+                        data=download.request.data,
                     )
 
                 if not response:
-                    raise Exception(f"Failed to download url {request.url}")
-
-                print(f"Downloaded {request.url}, got {response.status}")
+                    raise Exception(f"Failed to download url {download.request.url}")
+                download.response.status = response.status
+                print(f"Downloaded {download.request.url}, got {response.status}")
 
         yield response
 
@@ -122,19 +126,23 @@ class AioDownloader:
             yield attempt, proxy_settings
 
     @asynccontextmanager
-    async def tempfile_path(self, body: bytes):
-        hash = xxhash.xxh128()
-        with tempfile.NamedTemporaryFile() as temp:
-            async with aiofiles.open(temp.name, "wb") as fd:
-                hash.update(body)
+    async def tempfile_path(self, download: Download, body: bytes):
+        download.guess_extension()
+        with tempfile.NamedTemporaryFile(suffix=download.file_extension) as temp:
+            download.file_path = temp.name
+            async with aiofiles.open(download.file_path, "wb") as fd:
                 await fd.write(body)
-            yield temp.name, hash.hexdigest()
+                await fd.flush()
+
+            download.file_hash = hash_bytes(body)
+            yield download.file_path, download.file_hash
 
     async def download_to_tempfile(
         self,
-        url: str,
+        download: Download,
         proxies: list[tuple[Proxy | None, ProxySettings | dict[str, str] | None]] = [],
     ):
+        url = download.request.url
         body = None  # self.redis.get(url)
         if body == "DISCARD":
             return
@@ -143,13 +151,18 @@ class AioDownloader:
             print(f"Using cached {url}")
         else:
             print(f"Attempting download {url}")
-            async with self.download_url(url, proxies) as response:
+            async with self.download_url(download, proxies) as response:
 
                 if not response.ok:
                     # self.redis.set(url, "DISCARD", ex=60 * 60 * 1)  # 1 hour
                     return
+
+                download.response.from_headers(response.headers)
                 body = await response.read()
                 # self.redis.set(url, body, ex=60 * 60 * 1)  # 1 hour
 
-        async with self.tempfile_path(body) as (temp_path, hash):
+        async with self.tempfile_path(download, body) as (
+            temp_path,
+            hash,
+        ):
             yield temp_path, hash

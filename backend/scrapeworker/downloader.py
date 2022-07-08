@@ -1,10 +1,13 @@
 import asyncio
 from contextlib import asynccontextmanager
+from fileinput import filename
 from typing import AsyncGenerator
-import redis
-import xxhash
+from backend.common.core.redis_client import redis_connect
 import tempfile
 import aiofiles
+import pathlib
+import os
+import re
 from random import shuffle
 from backend.common.core.config import config
 from playwright.async_api import (
@@ -17,17 +20,15 @@ from backend.scrapeworker.common.rate_limiter import RateLimiter
 from backend.common.models.proxy import Proxy
 from tenacity import AttemptManager
 from tenacity._asyncio import AsyncRetrying
+from backend.common.storage.hash import hash_bytes
+from backend.common.storage.text_extraction import TextExtractor
 
 
 class DocDownloader:
     def __init__(self, playwright: Playwright):
         self.rate_limiter = RateLimiter()
         self.playwright = playwright
-        # self.redis = redis.from_url(
-        # config["REDIS_URL"],
-        # username='default',
-        # password=config["REDIS_PASSWORD"],
-        # )
+        self.redis = redis_connect()
 
     def skip_based_on_response(self, response: APIResponse) -> bool:
         if not response.ok:
@@ -86,18 +87,22 @@ class DocDownloader:
                 await context.dispose()
 
     @asynccontextmanager
-    async def tempfile_path(self, url: str, body: bytes):
-        hash = xxhash.xxh128()
-        with tempfile.NamedTemporaryFile() as temp:
+    async def tempfile_path(self, url: str, body: bytes, filename: str | None):
+        guess_target = filename if filename else url
+        guess_suffix = pathlib.Path(os.path.basename(guess_target)).suffix
+        with tempfile.NamedTemporaryFile(suffix=guess_suffix) as temp:
             async with aiofiles.open(temp.name, "wb") as fd:
-                hash.update(body)
                 await fd.write(body)
-            yield temp.name, hash.hexdigest()
+                await fd.flush()
+
+            hash = hash_bytes(body)
+            yield temp.name, hash
 
     async def download_to_tempfile(
         self, url: str, proxies: list[tuple[Proxy | None, ProxySettings | None]] = []
     ):
         body = None  # self.redis.get(url)
+        filename: str | None = None
         if body == "DISCARD":
             return
 
@@ -109,8 +114,27 @@ class DocDownloader:
                 if self.skip_based_on_response(response):
                     # self.redis.set(url, "DISCARD", ex=60 * 60 * 1)  # 1 hour
                     return
+
+                filename, content_type = parse_headers(response.headers)
                 body = await response.body()
                 # self.redis.set(url, body, ex=60 * 60 * 1)  # 1 hour
 
-        async with self.tempfile_path(url, body) as (temp_path, hash):
+        async with self.tempfile_path(url, body, filename) as (temp_path, hash):
             yield temp_path, hash
+
+
+def parse_headers(headers) -> tuple[str, str]:
+    content_type = headers.get("content-type") or None
+    filename = get_filename(headers)
+    return (filename, content_type)
+
+
+def get_filename(headers) -> str | None:
+    matched = None
+    if content_disposition := headers.get("content-disposition"):
+        matched = re.search('filename="(.*)";', content_disposition)
+
+    if matched:
+        return matched.group(1)
+    else:
+        return None

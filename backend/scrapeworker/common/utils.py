@@ -14,3 +14,5 @@ def compile_date_rgx():
         r"(?<!\d|\/|-)[0-9][0-9]?(\/|-)(?:\d{4}|\d{2})(?!\d|\/|-)",  # MM/yy or MM/yyyy with / or -
     ]
     return [re.compile(fmt, flags=re.IGNORECASE) for fmt in date_formats]
+
+date_rgxs = compile_date_rgx()

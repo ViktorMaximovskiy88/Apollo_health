@@ -48,7 +48,7 @@ data "aws_iam_policy_document" "sourcehub-events-log-policy" {
     ]
 
     resources = [
-      "${aws_cloudwatch_log_group.sourcehub-events.arn}:*"
+      "${aws_cloudwatch_log_group.sourcehub-events.arn}"
     ]
 
     principals {
@@ -94,6 +94,8 @@ resource "aws_cloudwatch_event_rule" "sourcehub-events" {
 }
 
 resource "aws_cloudwatch_event_target" "sourcehub-events-log" {
-  rule = aws_cloudwatch_event_rule.sourcehub-events.name
-  arn = aws_cloudwatch_log_group.sourcehub-events.arn
+  rule           = aws_cloudwatch_event_rule.sourcehub-events.name
+  arn            = aws_cloudwatch_log_group.sourcehub-events.arn
+  event_bus_name = aws_cloudwatch_event_bus.sourcehub.name
+  
 }

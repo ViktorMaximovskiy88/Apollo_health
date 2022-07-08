@@ -29,6 +29,7 @@ class RetrievedDocument(BaseDocument):
     identified_dates: list[datetime] = []
     base_url: str | None = None
     lang_code: LangCode | None = None
+    file_extension: str | None = None
 
     automated_content_extraction: bool = False
     automated_content_extraction_class: str | None = None
