@@ -11,7 +11,7 @@ class FollowLinkScraper(PlaywrightBaseScraper):
     type: str = "FollowLink"
 
     async def is_applicable(self) -> bool:
-        return self.config.follow_links
+        return bool(self.config.follow_links)
 
     @cached_property
     def css_selector(self) -> str:
@@ -19,10 +19,8 @@ class FollowLinkScraper(PlaywrightBaseScraper):
             keywords=self.config.follow_link_keywords,
             url_keywords=self.config.follow_link_url_keywords,
         )
-
         self.selectors = self.selectors + href_selectors
         logging.debug(self.selectors)
-
         return ", ".join(self.selectors)
 
     async def execute(self) -> list[str]:

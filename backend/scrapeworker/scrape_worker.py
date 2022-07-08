@@ -294,16 +294,14 @@ class ScrapeWorker:
     async def run_scrape(self):
         all_downloads: list[Download] = []
         base_urls: list[str] = [base_url.url for base_url in self.active_base_urls()]
-
+        logging.info(f"base_urls={base_urls}")
         for url in base_urls:
             result = await self.crawl_page(url)
             for nested_url in result["crawled_urls"]:
                 all_downloads += await self.queue_downloads(
                     nested_url, base_url=result["base_url"]
                 )
-
-            if result["base_url"] != url:
-                all_downloads += await self.queue_downloads(url)
+            all_downloads += await self.queue_downloads(url)
 
         tasks = []
         for download in all_downloads:
