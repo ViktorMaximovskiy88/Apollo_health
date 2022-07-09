@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import {
   useRunExtractionTaskMutation,
 } from './extractionsApi';
-import { useGetDocumentQuery } from '../documents/documentsApi';
+import { useGetDocumentQuery } from '../retrieved_documents/documentsApi';
 import { ExtractionTasksTable } from './ExtractionTasksTable';
 
 export function DocExtractionPage() {
@@ -15,17 +15,15 @@ export function DocExtractionPage() {
 
   if (!docId || !doc) return null;
 
-  return (
-    <div>
-      <div className="flex">
-        <Title className="inline-block" level={4}>
-          Extractions - {doc.name}
-        </Title>
-        <Button className="ml-auto" onClick={() => runExtractionForDoc(docId)}>
-          Run Extraction
-        </Button>
-      </div>
-      <ExtractionTasksTable />
+  return <>
+    <div className="flex">
+      <Title className="inline-block" level={4}>
+        Extractions - {doc.name}
+      </Title>
+      <Button className="ml-auto" onClick={() => runExtractionForDoc(docId)}>
+        Run Extraction
+      </Button>
     </div>
-  );
+    <ExtractionTasksTable />
+  </>;
 }

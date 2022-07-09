@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 import os
+from pathlib import Path
 import tempfile
 from backend.common.storage.settings import settings
 import boto3
@@ -7,10 +8,11 @@ from botocore.client import Config
 from botocore.errorfactory import ClientError
 from backend.common.core.config import config, is_local
 
+class BaseS3Client:
+    root_path = ''
+    extra_args = {}
 
-class DocumentStorageClient:
     def __init__(self):
-        
         if is_local:
             self.s3 = boto3.resource(
                 "s3",
@@ -29,32 +31,53 @@ class DocumentStorageClient:
         if not self.bucket.creation_date:
             self.bucket.create()
 
-    def get_full_path(self, document_name):
-        return f"{settings.document_path}/{document_name}"
+    def get_full_path(self, relative_key):
+        return str(Path(self.root_path).joinpath(relative_key))
 
-    def write_document(self, document_name, temp_document_path):
+    def write_object(self, relative_key, temp_object_path):
         self.bucket.upload_file(
-            Filename=temp_document_path,
-            Key=self.get_full_path(document_name),
-            ExtraArgs={"ContentType": "application/pdf"},
+            Filename=temp_object_path,
+            Key=self.get_full_path(relative_key),
+            ExtraArgs=self.extra_args,
         )
 
-    def read_document(self, document_name):
-        return self.read_document_stream(document_name).read()
+    def download_directory(self, relative_prefix, local_path):
+        prefix = self.get_full_path(relative_prefix)
+        for obj in self.bucket.objects.filter(Prefix = prefix):
+            rel_prefix = obj.key.removeprefix(prefix.removeprefix('/')).removeprefix('/')
+            rel_path = os.path.join(local_path, rel_prefix)
+            if not os.path.exists(os.path.dirname(rel_path)):
+                os.makedirs(os.path.dirname(rel_path))
+            self.bucket.download_file(obj.key, str(rel_path))
+
+    def read_object(self, relative_key):
+        return self.read_object_stream(relative_key).read()
 
     @contextmanager
-    def read_document_to_tempfile(self, document_name):
+    def read_object_to_tempfile(self, relative_key):
         with tempfile.NamedTemporaryFile() as temp:
-            doc = self.read_document(document_name)
+            doc = self.read_object(relative_key)
             temp.write(doc)
             yield temp.name
 
-    def read_document_stream(self, document_name):
-        return self.bucket.Object(self.get_full_path(document_name)).get()["Body"]
+    def read_object_stream(self, relative_key):
+        return self.bucket.Object(self.get_full_path(relative_key)).get()["Body"]
 
-    def document_exists(self, document_name):
+    def read_lines(self, relative_key):
+        for line in self.read_object_stream(relative_key).iter_lines():
+            yield line.decode('utf-8')
+
+    def object_exists(self, relative_key):
         try:
-            self.bucket.Object(self.get_full_path(document_name)).load()
+            self.bucket.Object(self.get_full_path(relative_key)).load()
             return True
         except ClientError as ex:
             return False
+
+
+class ModelStorageClient(BaseS3Client):
+    root_path = settings.model_path
+
+class DocumentStorageClient(BaseS3Client):
+    root_path = settings.document_path
+    extra_args = { 'ContentType': 'application/pdf' }

@@ -4,7 +4,6 @@ from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, status, Security
 from fastapi.responses import StreamingResponse
 
-
 from backend.common.models.content_extraction_task import ContentExtractionTask
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
@@ -49,6 +48,9 @@ async def get_documents(
     query = {}
     if scrape_task_id:
         scrape_task = await SiteScrapeTask.get(scrape_task_id)
+        if not scrape_task:
+            raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, f"Scrape Task {scrape_task_id} does not exist")
+
         query["_id"] = {"$in": scrape_task.retrieved_document_ids}
     if site_id:
         query["site_id"] = site_id
@@ -79,7 +81,7 @@ async def download_document(
     target: RetrievedDocument = Depends(get_target),
 ):
     client = DocumentStorageClient()
-    stream = client.read_document_stream(f"{target.checksum}.pdf")
+    stream = client.read_object_stream(f"{target.checksum}.pdf")
     return StreamingResponse(stream, media_type="application/pdf")
 
 

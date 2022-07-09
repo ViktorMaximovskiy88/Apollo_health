@@ -42,6 +42,8 @@ class TestGetDocuments:
         first_collected_date: datetime,
     ) -> RetrievedDocument:
         doc = RetrievedDocument(
+            name='test',
+            checksum='test',
             site_id=site.id,
             scrape_task_id=scrape_task.id,
             first_collected_date=first_collected_date,

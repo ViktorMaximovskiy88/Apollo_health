@@ -3,11 +3,14 @@ import logging
 from functools import cached_property
 from playwright.async_api import ElementHandle, ProxySettings, BrowserContext, Page
 from backend.common.core.config import config
-from backend.scrapeworker.common.models import Metadata
+from backend.scrapeworker.common.models import Download, Metadata
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import ScrapeMethodConfiguration
 from urllib.parse import urlparse
-from abc import ABC
+from abc import ABC, abstractmethod
+
+from backend.scrapeworker.playbook import PlaybookContext
+
 
 closest_heading_expression: str = """
     (node) => {
@@ -28,11 +31,13 @@ class PlaywrightBaseScraper(ABC):
         page: Page,
         url: str,
         config: ScrapeMethodConfiguration,
+        playbook_context: PlaybookContext = [],
     ):
         self.context = context
         self.page = page
         self.config = config
         self.url = url
+        self.playbook_context = playbook_context
         self.parsed_url = urlparse(self.url)
         self.selectors = []
 
@@ -41,7 +46,7 @@ class PlaywrightBaseScraper(ABC):
         raise NotImplementedError("css_selector is required ")
 
     async def is_applicable(self) -> bool:
-        element_handle: ElementHandle = await self.page.query_selector(
+        element_handle = await self.page.query_selector(
             self.css_selector
         )
         result = element_handle is not None
@@ -70,11 +75,12 @@ class PlaywrightBaseScraper(ABC):
             element_id=element_id,
             href=href,
             closest_heading=closest_heading,
+            playbook_context=self.playbook_context,
         )
 
     def convert_proxy(self, proxy: Proxy):
-        username: str | None
-        password: str | None
+        username: str | None = None
+        password: str | None = None
         proxies = []
 
         if proxy.credentials:
@@ -92,5 +98,6 @@ class PlaywrightBaseScraper(ABC):
 
         return [proxy, proxies]
 
-    async def execute(self):
+    @abstractmethod
+    async def execute(self) -> list[Download]:
         pass

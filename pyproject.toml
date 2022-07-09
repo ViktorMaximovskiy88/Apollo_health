@@ -35,9 +35,17 @@ scipy = ">=1.8.0"
 openpyxl = "^3.0.9"
 mongomock-motor = "^0.0.10"
 async-lru = "^1.0.3"
-PyJWT = {extras = ["crypto"], version = "^2.4.0"}
 pycld3 = "^0.22"
-pymongo = {extras = ["aws"], version = "^3.12.3"}
+numpy = "<1.23.0"
+
+# SpaCy <3.4 requires pydantic < 1.9, beanie requires pydantic 1.10
+# use bleeding edge SpaCy until next release
+spacy = {git = "https://github.com/explosion/spaCy.git"}
+# SciSpacy has requires older SpaCy, which we aren't using due to pydantic issue
+# However per an open ticket, there is not compatability issue with later SpaCy
+# This fork is identical except for bumped SpaCy version requirement
+scispacy = {git = "https://github.com/mbrown-bhe/scispacy.git", rev = "main"}
+pymongo = {version = "<4", extras = ["aws"]}
 pandas = "^1.4.3"
 docx2txt = "^0.8"
 python-docx = "^0.8.11"

@@ -1,6 +1,5 @@
 import pytest
-from backend.scrapeworker.downloader import DocDownloader
-from backend.common.storage.hash import hash_bytes, hash_full_text, get_document_hash
+from backend.common.storage.hash import get_document_hash
 from backend.common.storage.text_extraction import TextExtractor
 import requests
 import tempfile

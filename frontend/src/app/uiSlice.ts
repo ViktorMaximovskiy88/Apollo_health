@@ -5,7 +5,7 @@ import { RootState } from './store';
 const initialState = {
   extractions: {
     table: {
-      sort: [{ name: 'first_collected_date', dir: -1 as 1 | -1 | 0 }],
+      sort: { name: 'first_collected_date', dir: -1 as 1 | -1 | 0 },
       filter: [
         {
           name: 'first_collected_date',
@@ -20,7 +20,7 @@ const initialState = {
   },
   extraction_tasks: {
     table: {
-      sort: [{ name: 'queued_time', dir: -1 as 1 | -1 | 0 }],
+      sort: { name: 'queued_time', dir: -1 as 1 | -1 | 0 },
       filter: [
         { name: 'queued_time', operator: 'before', type: 'date', value: '' },
         { name: 'status', operator: 'eq', type: 'select', value: null },
@@ -29,7 +29,7 @@ const initialState = {
   },
   extracted_documents: {
     table: {
-      sort: [{ name: 'first_collected_date', dir: -1 as 1 | -1 | 0 }],
+      sort: { name: 'first_collected_date', dir: -1 as 1 | -1 | 0 },
       filter: [
         {
           name: 'first_collected_date',
@@ -44,7 +44,7 @@ const initialState = {
   },
   documents: {
     table: {
-      sort: [{ name: 'first_collected_date', dir: -1 as 1 | -1 | 0 }],
+      sort: { name: 'first_collected_date', dir: -1 as 1 | -1 | 0 },
       filter: [
         {
           name: 'first_collected_date',
@@ -65,7 +65,7 @@ const initialState = {
   },
   collections: {
     table: {
-      sort: [{ name: 'queued_time', dir: -1 as 1 | -1 | 0 }],
+      sort: { name: 'queued_time', dir: -1 as 1 | -1 | 0 },
       filter: [
         { name: 'queued_time', operator: 'before', type: 'date', value: '' },
         { name: 'status', operator: 'eq', type: 'select', value: null },
@@ -74,7 +74,7 @@ const initialState = {
   },
   sites: {
     table: {
-      sort: [{ name: 'last_run_time', dir: -1 as 1 | -1 | 0 }],
+      sort: { name: 'last_run_time', dir: -1 as 1 | -1 | 0 },
       filter: [
         { name: 'name', operator: 'contains', type: 'string', value: '' },
         { name: 'status', operator: 'eq', type: 'select', value: null },
@@ -85,6 +85,15 @@ const initialState = {
           type: 'select',
           value: null,
         },
+      ],
+    },
+  },
+  doc_documents: {
+    table: {
+      sort: { name: 'last_collected_date', dir: -1 as 1 | -1 | 0 },
+      filter: [
+        { name: 'name', operator: 'contains', type: 'string', value: '' },
+        { name: 'last_collected_date', operator: 'before', type: 'date', value: '' },
       ],
     },
   },
@@ -99,6 +108,12 @@ export const uiSlice = createSlice({
     },
     setSiteTableSort: (state, action: PayloadAction<any>) => {
       state.sites.table.sort = action.payload;
+    },
+    setDocDocumentTableFilter: (state, action: PayloadAction<any>) => {
+      state.doc_documents.table.filter = action.payload;
+    },
+    setDocDocumentTableSort: (state, action: PayloadAction<any>) => {
+      state.doc_documents.table.sort = action.payload;
     },
     setCollectionTableFilter: (state, action: PayloadAction<any>) => {
       state.collections.table.filter = action.payload;
@@ -151,6 +166,11 @@ export const siteTableState = createSelector(
   (tableState) => tableState
 );
 
+export const docDocumentTableState = createSelector(
+  (state: RootState) => state.ui.doc_documents.table,
+  (tableState) => tableState
+);
+
 export const collectionTableState = createSelector(
   (state: RootState) => state.ui.collections.table,
   (tableState) => tableState
@@ -179,6 +199,8 @@ export const extractionTableState = createSelector(
 export const {
   setSiteTableFilter,
   setSiteTableSort,
+  setDocDocumentTableFilter,
+  setDocDocumentTableSort,
   setCollectionTableFilter,
   setCollectionTableSort,
   setDocumentTableFilter,

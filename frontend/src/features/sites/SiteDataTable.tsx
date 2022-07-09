@@ -2,7 +2,7 @@ import ReactDataGrid from '@inovua/reactdatagrid-community';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Popconfirm, Tag, notification } from 'antd';
-import { useCallback, useMemo } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   setSiteTableFilter,
@@ -21,7 +21,7 @@ import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import {
   useDeleteSiteMutation,
   useGetChangeLogQuery,
-  useGetSitesQuery,
+  useLazyGetSitesQuery,
 } from './sitesApi';
 import { Site } from './types';
 import {
@@ -192,33 +192,49 @@ const createColumns = (deleteSite: any) => {
   ];
 };
 
-export function SiteDataTable() {
-  const { data: sites } = useGetSitesQuery(undefined, {
-    pollingInterval: 5000,
-  });
-  const [deleteSite] = useDeleteSiteMutation();
-  const columns = useMemo(() => createColumns(deleteSite), [deleteSite]);
-  const tableState = useSelector(siteTableState);
-  const dispatch = useDispatch();
-  const onFilterChange = useCallback(
-    (filter: any) => dispatch(setSiteTableFilter(filter)),
-    [dispatch]
-  );
-  const onSortChange = useCallback(
-    (sort: any) => dispatch(setSiteTableSort(sort)),
-    [dispatch]
-  );
+function disableLoadingMask(data: {
+  visible: boolean,
+  livePagination: boolean,
+  loadingText: ReactNode | (() => ReactNode),
+  zIndex: number,
+}) {
+  return <></>
+}
 
-  const formattedSites = sites?.filter((u) => !u.disabled) || [];
+export function SiteDataTable() {
+  const tableState = useSelector(siteTableState)
+  const [getSitesFn] = useLazyGetSitesQuery()
+  const [deleteSite] = useDeleteSiteMutation();
+  const columns = useMemo(() => createColumns(deleteSite), [deleteSite])
+  const dispatch = useDispatch()
+  const onFilterChange = useCallback((filter: any) => dispatch(setSiteTableFilter(filter)), [dispatch]);
+  const onSortChange = useCallback((sort: any) => dispatch(setSiteTableSort(sort)), [dispatch]);
+  const [refresh, setRefresh] = useState<Date>();
+
+  // Trigger update every 10 seconds by invalidating memoized callback
+  useEffect(() => {
+    const timer = setInterval(() => setRefresh(new Date()), 10000)
+    return () => clearInterval(timer);
+  }, [setRefresh]);
+
+  const loadData = useCallback(async (tableInfo: any) => {
+    const { data } = await getSitesFn(tableInfo);
+    const sites = data?.data || [];
+    const count = data?.total || 0;
+    return { data: sites, count };
+  }, [getSitesFn, refresh])
+
   return (
     <ReactDataGrid
-      dataSource={formattedSites}
+      dataSource={loadData}
       columns={columns}
       rowHeight={50}
+      pagination
       defaultFilterValue={tableState.filter}
       onFilterValueChange={onFilterChange}
       defaultSortInfo={tableState.sort}
       onSortInfoChange={onSortChange}
+      renderLoadMask={disableLoadingMask}
     />
   );
 }

@@ -1,3 +1,4 @@
+import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
 import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
 import { Site } from './types';
@@ -7,11 +8,20 @@ export const sitesApi = createApi({
   baseQuery: fetchBaseQuery(),
   tagTypes: ['Site', 'ChangeLog'],
   endpoints: (builder) => ({
-    getSites: builder.query<Site[], void>({
-      query: () => '/sites/',
+    getSites: builder.query<{ data: Site[], total: number },
+    { limit: number, skip: number, sortInfo: TypeSortInfo, filterValue: TypeFilterValue}>({
+      query: ({limit, skip, sortInfo, filterValue }) => {
+        const args = [
+          `limit=${encodeURIComponent(limit)}`,
+          `skip=${encodeURIComponent(skip)}`,
+          `sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`,
+          `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
+        ].join('&')
+        return `/sites/?${args}`
+      },
       providesTags: (results) => {
         const tags = [{ type: 'Site' as const, id: 'LIST' }];
-        results?.forEach(({ _id: id }) => tags.push({ type: 'Site', id }));
+        results?.data.forEach(({ _id: id }) => tags.push({ type: 'Site', id }));
         return tags;
       },
     }),
@@ -49,6 +59,7 @@ export const sitesApi = createApi({
 export const {
   useGetSiteQuery,
   useGetSitesQuery,
+  useLazyGetSitesQuery,
   useAddSiteMutation,
   useUpdateSiteMutation,
   useDeleteSiteMutation,

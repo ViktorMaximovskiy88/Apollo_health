@@ -1,4 +1,5 @@
 import io
+import json
 import urllib.parse
 import zipfile
 from beanie import PydanticObjectId
@@ -8,12 +9,14 @@ from fastapi import (
     Depends,
     HTTPException,
     Query,
+    Request,
     UploadFile,
     status,
     Security,
 )
 from openpyxl import load_workbook
 from pydantic import BaseModel, HttpUrl
+from backend.app.routes.table_query import TableFilterInfo, TableQueryResponse, TableSortInfo, query_table
 
 from backend.common.models.site import (
     BaseUrl,
@@ -46,11 +49,27 @@ async def get_target(id: PydanticObjectId):
         )
     return user
 
+def get_query_json_list(arg: str, type):
+    def func(request: Request):
+        value_str = request.query_params.get(arg, None)
+        if value_str:
+            values: list[type] = json.loads(value_str)
+            return [type.parse_obj(v) for v in values]
+        else:
+            return []
 
-@router.get("/", response_model=list[Site], dependencies=[Security(get_current_user)])
-async def read_sites():
-    sites: list[Site] = await Site.find_many({}).sort("-last_run_time", "id").to_list()
-    return sites
+    return func
+
+@router.get("/", response_model=TableQueryResponse)
+async def read_sites(
+    current_user: User = Depends(get_current_user),
+    limit: int | None = None,
+    skip: int | None = None,
+    sorts: list[TableSortInfo] = Depends(get_query_json_list('sorts', TableSortInfo)),
+    filters: list[TableFilterInfo] = Depends(get_query_json_list('filters', TableFilterInfo))
+):
+    query = Site.find({})
+    return await query_table(query, limit, skip, sorts, filters)
 
 
 class ActiveUrlResponse(BaseModel):
@@ -153,7 +172,10 @@ async def upload_sites(
             document_extensions=doc_exts,
             url_keywords=url_keyws,
             proxy_exclusions=[],
-            wait_for=[]
+            wait_for=[],
+            follow_links=False,
+            follow_link_keywords=[],
+            follow_link_url_keywords=[],
         )
         if await Site.find_one(Site.base_urls == base_urls):
             continue

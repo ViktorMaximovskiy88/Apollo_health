@@ -96,7 +96,7 @@ export function ExtractionTasksTable() {
   const docId = params.docId;
   const { data: documents } = useGetExtractionTasksForDocQuery(docId, {
     skip: !docId,
-    pollingInterval: 1000,
+    pollingInterval: 5000,
   });
 
   const tableState = useSelector(extractionTaskTableState);

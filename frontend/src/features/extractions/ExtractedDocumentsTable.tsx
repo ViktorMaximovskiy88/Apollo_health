@@ -11,8 +11,8 @@ import {
 } from '../../app/uiSlice';
 import { prettyDateFromISO, prettyDateTimeFromISO } from '../../common';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { useGetDocumentsQuery } from '../documents/documentsApi';
-import { RetrievedDocument } from '../documents/types';
+import { useGetDocumentsQuery } from '../retrieved_documents/documentsApi';
+import { RetrievedDocument } from '../retrieved_documents/types';
 import { useGetChangeLogQuery } from './extractionsApi';
 
 const columns = [

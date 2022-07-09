@@ -1,18 +1,18 @@
 from datetime import datetime
 from uuid import UUID
-from beanie import PydanticObjectId
+from beanie import Indexed, PydanticObjectId
 from pydantic import BaseModel
 from backend.common.models.base_document import BaseDocument
 from backend.common.core.enums import TaskStatus
 
 
 class SiteScrapeTask(BaseDocument):
-    site_id: PydanticObjectId
+    site_id: Indexed(PydanticObjectId)  # type: ignore
     queued_time: datetime
     start_time: datetime | None = None
     end_time: datetime | None = None
     last_active: datetime | None = None
-    status: str = TaskStatus.QUEUED
+    status: Indexed(str) = TaskStatus.QUEUED  # type: ignore
     documents_found: int = 0
     new_documents_found: int = 0
     retrieved_document_ids: list[PydanticObjectId] = []

@@ -4,13 +4,14 @@ import re
 from contextlib import asynccontextmanager
 from datetime import datetime
 from random import shuffle
-from typing import AsyncGenerator, Coroutine, Type
+from typing import AsyncGenerator, Coroutine
 from async_lru import alru_cache
 from tenacity._asyncio import AsyncRetrying
 from tenacity.stop import stop_after_attempt
 from beanie.odm.operators.update.array import Push
 from beanie.odm.operators.update.general import Inc
-from urllib.parse import urlparse
+from urllib.parse import urlparse 
+from backend.common.models.doc_document import DocDocument
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
@@ -29,18 +30,21 @@ from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.common.exceptions import (
-    NoDocsCollectedException,
     CanceledTaskException,
 )
 from backend.scrapeworker.common.models import Download
 from backend.scrapeworker.scrapers import scrapers
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
-from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
+from backend.scrapeworker.common.aio_downloader import default_headers
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.file_parsers import parse_by_type
 from backend.common.core.enums import TaskStatus
+from scrapeworker.document_tagging.indication_tagging import IndicationTagger
+from scrapeworker.document_tagging.taggers import Taggers
+from scrapeworker.document_tagging.therapy_tagging import TherapyTagger
+from scrapeworker.playbook import ScrapePlaybook
 
 
 def is_google(url):
@@ -48,10 +52,11 @@ def is_google(url):
     return parsed.hostname in ["drive.google.com", "docs.google.com"]
 
 
-def get_google_id(url):
-    matched = re.search("\/d\/(.*)\/", url)
+def get_google_id(url: str) -> str:
+    matched = re.search(r"/d/(.*)/", url)
+    if not matched:
+        raise Exception(f"{url} is not a valid google doc/drive url")
     return matched.group(1)
-
 
 class ScrapeWorker:
     def __init__(
@@ -68,7 +73,12 @@ class ScrapeWorker:
         self.seen_urls = set()
         self.doc_client = DocumentStorageClient()
         self.downloader = AioDownloader()
+        self.playbook = ScrapePlaybook(self.site.playbook)
         self.logger = Logger()
+        self.taggers = Taggers(
+            indication=IndicationTagger(),
+            therapy=TherapyTagger()
+        )
 
     @alru_cache
     async def get_user(self) -> User:
@@ -101,6 +111,46 @@ class ScrapeWorker:
         self.seen_urls.add(key)
         return True
 
+    async def update_doc_document(self, retrieved_document: RetrievedDocument):
+        doc_document = await DocDocument.find_one(DocDocument.retrieved_document_id == retrieved_document.id)
+        if doc_document:
+            await doc_document.update({
+                DocDocument.last_collected_date: retrieved_document.last_collected_date
+            })
+        else:
+            await self.create_doc_document(retrieved_document)
+
+    async def create_doc_document(self, retrieved_document: RetrievedDocument):
+        doc_document = DocDocument(
+            site_id=retrieved_document.site_id,
+            retrieved_document_id=retrieved_document.id,  # type: ignore
+            name=retrieved_document.name,
+            checksum=retrieved_document.checksum,
+
+            document_type=retrieved_document.document_type,
+            doc_type_confidence=retrieved_document.doc_type_confidence,
+
+            end_date=retrieved_document.end_date,
+            effective_date=retrieved_document.effective_date,
+            last_updated_date=retrieved_document.last_updated_date,
+            next_review_date=retrieved_document.next_review_date,
+            next_update_date=retrieved_document.next_update_date,
+            published_date=retrieved_document.published_date,
+
+            lang_code=retrieved_document.lang_code,
+
+            first_collected_date=retrieved_document.first_collected_date,
+            last_collected_date=retrieved_document.last_collected_date,
+
+            link_text=retrieved_document.context_metadata['link_text'],
+            url=retrieved_document.url,
+            base_url=retrieved_document.base_url,
+
+            therapy_tags=retrieved_document.therapy_tags,
+            indication_tags=retrieved_document.indication_tags,
+        )
+        await create_and_log(self.logger, await self.get_user(), doc_document)
+
     async def attempt_download(self, download: Download):
         url = download.request.url
         proxies = await self.get_proxy_settings()
@@ -109,7 +159,7 @@ class ScrapeWorker:
         ):
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
 
-            parsed_content = await parse_by_type(temp_path, download)
+            parsed_content = await parse_by_type(temp_path, download, self.taggers)
             if parsed_content is None:
                 continue
 
@@ -119,15 +169,14 @@ class ScrapeWorker:
 
             logging.info(f"dest_path={dest_path} temp_path={temp_path}")
 
-            if not self.doc_client.document_exists(dest_path):
-                self.doc_client.write_document(dest_path, temp_path)
+            if not self.doc_client.object_exists(dest_path):
+                self.doc_client.write_object(dest_path, temp_path)
                 await self.scrape_task.update(
                     Inc({SiteScrapeTask.new_documents_found: 1})
                 )
-            else:
-                document = await RetrievedDocument.find_one(
-                    RetrievedDocument.checksum == checksum
-                )
+            document = await RetrievedDocument.find_one(
+                RetrievedDocument.checksum == checksum
+            )
 
             if document:
                 updates = UpdateRetrievedDocument(
@@ -138,6 +187,8 @@ class ScrapeWorker:
                     identified_dates=parsed_content["identified_dates"],
                     lang_code=parsed_content["lang_code"],
                     last_collected_date=now,
+                    therapy_tags=parsed_content["therapy_tags"],
+                    indication_tags=parsed_content["indication_tags"],
                     metadata=parsed_content["metadata"],
                     name=parsed_content["title"],
                     scrape_task_id=self.scrape_task.id,
@@ -145,6 +196,7 @@ class ScrapeWorker:
                 await update_and_log_diff(
                     self.logger, await self.get_user(), document, updates
                 )
+                await self.update_doc_document(document)
             else:
                 document = RetrievedDocument(
                     base_url=download.metadata.base_url,
@@ -163,8 +215,11 @@ class ScrapeWorker:
                     scrape_task_id=self.scrape_task.id,
                     site_id=self.site.id,
                     url=url,
+                    therapy_tags=parsed_content["therapy_tags"],
+                    indication_tags=parsed_content["indication_tags"],
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
+                await self.create_doc_document(document)
             await self.scrape_task.update(
                 Push({SiteScrapeTask.retrieved_document_ids: document.id})
             )
@@ -186,10 +241,6 @@ class ScrapeWorker:
     async def wait_for_completion_or_cancel(
         self, downloads: list[Coroutine[None, None, None]]
     ):
-
-        if len(downloads) == 0:
-            raise NoDocsCollectedException("No documents collected.")
-
         tasks = [asyncio.create_task(download) for download in downloads]
 
         try:
@@ -213,20 +264,21 @@ class ScrapeWorker:
             yield attempt, proxy_setting
 
     @asynccontextmanager
-    async def playwright_context(self, url: str) -> AsyncGenerator[Page, None]:
+    async def playwright_context(self, url: str) -> AsyncGenerator[tuple[Page, BrowserContext], None]:
         logging.info(f"Creating context for {url}")
         context: BrowserContext | None = None
         page: Page | None = None
         async for attempt, proxy in self.try_each_proxy():
             with attempt:
                 context = await self.browser.new_context(
-                    proxy=proxy,
+                    extra_http_headers=default_headers,
+                    proxy=proxy,  # type: ignore
                     ignore_https_errors=True,
-                )  # type: ignore
+                )
 
                 page = await context.new_page()
                 await stealth_async(page)
-                await page.goto(url, wait_until="domcontentloaded", timeout=60000)
+                await page.goto(url, timeout=60000)
 
                 try:
                     if len(self.site.scrape_method_configuration.wait_for) > 0:
@@ -241,7 +293,7 @@ class ScrapeWorker:
                         f"Wait for dom elements {self.site.scrape_method_configuration.wait_for} have timed out"
                     )
 
-        if not page:
+        if not page or not context:
             raise Exception(f"Could not load {url}")
 
         try:
@@ -253,42 +305,41 @@ class ScrapeWorker:
     def active_base_urls(self):
         return [url for url in self.site.base_urls if url.status == "ACTIVE"]
 
-    async def queue_downloads(self, url, base_url: str | None = None):
+    def preprocess_download(self, download: Download, base_url: str):
+        download.metadata.base_url = base_url
+        # TODO where this lives ... also office live?
+        if is_google(download.request.url):
+            google_id = get_google_id(download.request.url)
+            download.request.url = f"https://drive.google.com/u/0/uc?id={google_id}&export=download"
+
+    async def queue_downloads(self, url: str, base_url: str):
         all_downloads: list[Download] = []
-        page: Page
-        context: BrowserContext
-        async with self.playwright_context(url) as (page, context):
-            for Scraper in scrapers:
-                scraper: Type[PlaywrightBaseScraper] = Scraper(
-                    page=page,
-                    context=context,
-                    config=self.site.scrape_method_configuration,
-                    url=url,
-                )
+        async with self.playwright_context(url) as (base_page, context):
+            async for (page, playbook_context) in self.playbook.run_playbook(base_page):
+                for Scraper in scrapers:
+                    scraper = Scraper(
+                        page=page,
+                        context=context,
+                        config=self.site.scrape_method_configuration,
+                        playbook_context=playbook_context,
+                        url=url,
+                    )
 
-                if not await scraper.is_applicable():
-                    continue
+                    if not await scraper.is_applicable():
+                        continue
 
-                downloads = await scraper.execute()
-
-                download: Download
-                for download in downloads:
-                    download.metadata.base_url = base_url or url
-                    # TODO where this lives ... also office live?
-                    if is_google(download.request.url):
-                        google_id = get_google_id(download.request.url)
-                        download.request.url = f"https://drive.google.com/u/0/uc?id={google_id}&export=download"
-
-                all_downloads += downloads
+                    for download in await scraper.execute():
+                        self.preprocess_download(download, base_url)
+                        all_downloads.append(download)
 
             return all_downloads
 
-    async def crawl_page(self, url):
+    async def follow_links(self, url) -> list[str]:
         urls: list[str] = []
         page: Page
         context: BrowserContext
         async with self.playwright_context(url) as (page, context):
-            crawler: FollowLinkScraper = FollowLinkScraper(
+            crawler = FollowLinkScraper(
                 page=page,
                 context=context,
                 config=self.site.scrape_method_configuration,
@@ -296,30 +347,32 @@ class ScrapeWorker:
             )
 
             if await crawler.is_applicable():
-                urls = await crawler.execute()
+                for dl in await crawler.execute():
+                    urls.append(dl.request.url)
 
-            return {"base_url": url, "crawled_urls": urls}
+            return urls
+
+    def should_process_download(self, download: Download):
+        url = download.request.url
+        cd_filename = download.response.content_disposition_filename
+        
+        return not self.skip_url(url) and \
+            self.url_not_seen(url, cd_filename)
 
     async def run_scrape(self):
         all_downloads: list[Download] = []
         base_urls: list[str] = [base_url.url for base_url in self.active_base_urls()]
         logging.info(f"base_urls={base_urls}")
         for url in base_urls:
-            result = await self.crawl_page(url)
-            for nested_url in result["crawled_urls"]:
+            all_downloads += await self.queue_downloads(url, url)
+            for nested_url in await self.follow_links(url):
                 all_downloads += await self.queue_downloads(
-                    nested_url, base_url=result["base_url"]
+                    nested_url, base_url=url
                 )
-            all_downloads += await self.queue_downloads(url)
 
         tasks = []
         for download in all_downloads:
-            url = download.request.url
-
-            # check that the link is unique and that we should not skip it
-            if not self.skip_url(url) and self.url_not_seen(
-                url, download.response.content_disposition_filename
-            ):
+            if self.should_process_download(download):
                 await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
                 tasks.append(self.attempt_download(download))
 

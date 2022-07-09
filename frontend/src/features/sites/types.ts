@@ -25,6 +25,7 @@ export interface Site extends BaseDocument {
   last_run_time?: string;
   last_run_status: TaskStatus;
   cron: string;
+  playbook?: string;
   status: string;
 }
 

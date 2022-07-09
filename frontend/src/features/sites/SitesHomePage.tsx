@@ -21,7 +21,6 @@ import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
 
 import { SiteDataTable } from './SiteDataTable';
-import { useGetSitesQuery } from './sitesApi';
 
 function BulkUpload() {
   const [uploading, setUploading] = useState(false);
@@ -51,7 +50,6 @@ function BulkUpload() {
 
 function BulkActions() {
   const [runBulk] = useRunBulkMutation();
-  const { refetch } = useGetSitesQuery(undefined)
   const onMenuSelect = async (key: string) => {
     const response: any = await runBulk(key);
     if (response.data.scrapes_launched === 0) {
@@ -67,7 +65,6 @@ function BulkActions() {
           ' sites are added to the collection queue!',
       });
     }
-    refetch();
   };
   const menu = (
     <Menu

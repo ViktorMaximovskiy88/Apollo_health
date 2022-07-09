@@ -1,0 +1,3 @@
+from backend.parseworker.extractors.basic_table_extractor import BasicTableExtraction
+from backend.parseworker.extractors.medigold_extractor import MedigoldFormularyExtraction
+from backend.parseworker.extractors.uhc_extractor import UHCFormularyExtraction

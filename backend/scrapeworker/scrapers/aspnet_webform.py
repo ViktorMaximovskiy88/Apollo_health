@@ -4,10 +4,11 @@ from playwright.async_api import (
     ElementHandle,
     Route,
     Request as RouteRequest,
+    APIResponse,
     Error,
     Locator,
 )
-from requests import Response
+from playwright._impl._api_structures import SetCookieParam
 from backend.scrapeworker.common.models import Download, Metadata, Request
 from backend.scrapeworker.common.selectors import filter_by_href
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
@@ -16,7 +17,7 @@ from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBase
 class AspNetWebFormScraper(PlaywrightBaseScraper):
 
     type: str = "AspNetWebForm"
-    requests: list[Request] = []
+    requests: list[Request | None] = []
     metadatas: list[Metadata] = []
     downloads: list[Download] = []
     links_found: int = 0
@@ -28,7 +29,7 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
         return ", ".join(href_selectors)
 
     async def __setup(self):
-        cookie = {
+        cookie: SetCookieParam = {
             "name": "AspxAutoDetectCookieSupport",
             "value": "1",
             "domain": self.parsed_url.hostname,
@@ -52,7 +53,7 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
     async def __interact(self) -> None:
         async def intercept(route: Route, request: RouteRequest):
             if self.url in request.url and request.method == "POST":
-                response: Response = await self.page.request.fetch(
+                response: APIResponse = await self.page.request.fetch(
                     request.url,
                     headers=request.headers,
                     data=request.post_data,
@@ -88,7 +89,6 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
         await self.page.unroute("**/*", intercept)
 
     async def __process(self):
-        request: Request
         for index, request in enumerate(self.requests):
             if request:
                 logging.info(f"#{index} downloading filename={request.filename}")

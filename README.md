@@ -97,6 +97,8 @@ source .venv/bin/activate
 # Build Backend
 (
     cd backend && \
+    PIP_CONSTRAINT=build-constraints.txt \
+    CFLAGS="-mavx -DWARN(a)=(a)" \
     poetry install && \
     playwright install chromium && \
     playwright install-deps

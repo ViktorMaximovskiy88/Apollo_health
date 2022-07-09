@@ -1,7 +1,9 @@
 from datetime import datetime
+import json
 from beanie import PydanticObjectId
 from beanie.odm.operators.update.general import Set
-from fastapi import APIRouter, Depends, HTTPException, status, Security
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Security
+from backend.app.routes.table_query import TableFilterInfo, TableQueryResponse, TableSortInfo, query_table
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import Site
 
@@ -35,24 +37,31 @@ async def get_target(id: PydanticObjectId):
         )
     return task
 
+def get_query_json_list(arg: str, type):
+    def func(request: Request):
+        value_str = request.query_params.get(arg, None)
+        if value_str:
+            values: list[type] = json.loads(value_str)
+            return [type.parse_obj(v) for v in values]
+        else:
+            return []
+
+    return func
 
 @router.get(
     "/results/",
-    response_model=list[ContentExtractionResult],
+    response_model=TableQueryResponse,
     dependencies=[Security(get_current_user)],
 )
 async def read_extraction_results(
     extraction_id: PydanticObjectId,
+    limit: int | None = None,
+    skip: int | None = None,
+    sorts: list[TableSortInfo] = Depends(get_query_json_list('sorts', TableSortInfo)),
+    filters: list[TableFilterInfo] = Depends(get_query_json_list('filters', TableFilterInfo))
 ):
-    extraction_results: list[ContentExtractionResult] = (
-        await ContentExtractionResult.find_many(
-            ContentExtractionResult.content_extraction_task_id == extraction_id
-        )
-        .sort("page", "row")
-        .limit(100)
-        .to_list()
-    )
-    return extraction_results
+    query = ContentExtractionResult.find({'content_extraction_task_id': extraction_id})
+    return await query_table(query, limit, skip, sorts, filters)
 
 
 @router.get(
