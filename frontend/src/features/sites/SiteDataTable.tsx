@@ -1,14 +1,11 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
-import { Popconfirm, Tag, notification } from 'antd';
+import PaginationToolbar from '@inovua/reactdatagrid-community/packages/PaginationToolbar';
+import { Popconfirm, Tag, notification, Switch } from 'antd';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  setSiteTableFilter,
-  setSiteTableSort,
-  siteTableState,
-} from '../../app/uiSlice';
+import { setSiteTableFilter, setSiteTableSort, siteTableState } from '../../app/uiSlice';
 import {
   prettyDateTimeFromISO,
   TaskStatus,
@@ -18,17 +15,10 @@ import {
 import { isErrorWithData } from '../../common/helpers';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import {
-  useDeleteSiteMutation,
-  useGetChangeLogQuery,
-  useLazyGetSitesQuery,
-} from './sitesApi';
+import { useDeleteSiteMutation, useGetChangeLogQuery, useLazyGetSitesQuery } from './sitesApi';
 import { Site } from './types';
-import {
-  SiteStatus,
-  siteStatusDisplayName,
-  siteStatusStyledDisplay,
-} from './siteStatus';
+import { SiteStatus, siteStatusDisplayName, siteStatusStyledDisplay } from './siteStatus';
+import useInterval from '../../app/use-interval';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
@@ -173,10 +163,7 @@ const createColumns = (deleteSite: any) => {
         return (
           <>
             <ButtonLink to={`${site._id}/edit`}>Edit</ButtonLink>
-            <ChangeLogModal
-              target={site}
-              useChangeLogQuery={useGetChangeLogQuery}
-            />
+            <ChangeLogModal target={site} useChangeLogQuery={useGetChangeLogQuery} />
             <Popconfirm
               title={`Are you sure you want to delete '${site.name}'?`}
               okText="Yes"
@@ -193,36 +180,66 @@ const createColumns = (deleteSite: any) => {
 };
 
 function disableLoadingMask(data: {
-  visible: boolean,
-  livePagination: boolean,
-  loadingText: ReactNode | (() => ReactNode),
-  zIndex: number,
+  visible: boolean;
+  livePagination: boolean;
+  loadingText: ReactNode | (() => ReactNode);
+  zIndex: number;
 }) {
-  return <></>
+  return <></>;
 }
 
 export function SiteDataTable() {
-  const tableState = useSelector(siteTableState)
-  const [getSitesFn] = useLazyGetSitesQuery()
+  const tableState = useSelector(siteTableState);
+  const [getSitesFn] = useLazyGetSitesQuery();
   const [deleteSite] = useDeleteSiteMutation();
-  const columns = useMemo(() => createColumns(deleteSite), [deleteSite])
-  const dispatch = useDispatch()
-  const onFilterChange = useCallback((filter: any) => dispatch(setSiteTableFilter(filter)), [dispatch]);
+  const columns = useMemo(() => createColumns(deleteSite), [deleteSite]);
+  const dispatch = useDispatch();
+  const onFilterChange = useCallback(
+    (filter: any) => dispatch(setSiteTableFilter(filter)),
+    [dispatch]
+  );
   const onSortChange = useCallback((sort: any) => dispatch(setSiteTableSort(sort)), [dispatch]);
-  const [refresh, setRefresh] = useState<Date>();
 
   // Trigger update every 10 seconds by invalidating memoized callback
-  useEffect(() => {
-    const timer = setInterval(() => setRefresh(new Date()), 10000)
-    return () => clearInterval(timer);
-  }, [setRefresh]);
+  const { setActive, isActive, watermark } = useInterval(10000);
 
-  const loadData = useCallback(async (tableInfo: any) => {
-    const { data } = await getSitesFn(tableInfo);
-    const sites = data?.data || [];
-    const count = data?.total || 0;
-    return { data: sites, count };
-  }, [getSitesFn, refresh])
+  const loadData = useCallback(
+    async (tableInfo: any) => {
+      const { data } = await getSitesFn(tableInfo);
+      const sites = data?.data || [];
+      const count = data?.total || 0;
+      return { data: sites, count };
+    },
+    [getSitesFn, watermark]
+  );
+
+  const renderPaginationToolbar = useCallback(
+    (paginationProps: any) => {
+      return (
+        <div className="flex flex-col">
+          <PaginationToolbar
+            {...paginationProps}
+            bordered={false}
+            style={{ width: 'fit-content' }}
+          />
+          <div
+            className="flex justify-end items-end box-border leading-[2.5rem] h-[42px]"
+            style={{
+              borderTop: '2px solid #e4e3e2',
+            }}
+          >
+            <div className="mx-4">
+              <label className="cursor-pointer select-none">
+                <Switch defaultChecked={isActive} checked={isActive} onChange={setActive} />
+                &nbsp;&nbsp;Auto-refresh
+              </label>
+            </div>
+          </div>
+        </div>
+      );
+    },
+    [isActive]
+  );
 
   return (
     <ReactDataGrid
@@ -235,6 +252,10 @@ export function SiteDataTable() {
       defaultSortInfo={tableState.sort}
       onSortInfoChange={onSortChange}
       renderLoadMask={disableLoadingMask}
+      renderPaginationToolbar={renderPaginationToolbar}
+      onLimitChange={() => setActive(false)}
+      onSkipChange={() => setActive(false)}
+      activateRowOnFocus={false}
     />
   );
 }
