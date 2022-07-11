@@ -223,14 +223,7 @@ export function SiteDataTable() {
             bordered={false}
             style={{ width: 'fit-content' }}
             onClick={(e: React.SyntheticEvent) => {
-              // we dont get individual click handlers
-              // so if _anything_ in the pager is clicked except refresh; cancel
-              if (e.target instanceof Element) {
-                const isRefresh = e.target.classList.contains(
-                  'inovua-react-pagination-toolbar__icon--named--REFRESH'
-                );
-                if (!isRefresh) setActive(false);
-              }
+              setActive(false);
             }}
           />
           <div
