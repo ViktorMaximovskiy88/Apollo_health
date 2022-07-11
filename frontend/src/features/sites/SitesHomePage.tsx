@@ -1,26 +1,128 @@
-import {
-  Button,
-  Layout,
-  Upload,
-  Dropdown,
-  Space,
-  Menu,
-  notification,
-} from 'antd';
+import { Button, Layout, Upload, Dropdown, Space, Menu, notification } from 'antd';
+import { SyncOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRunBulkMutation } from '../collections/siteScrapeTasksApi';
 
 import { SiteBreadcrumbs } from './SiteBreadcrumbs';
-import {
-  LoadingOutlined,
-  UploadOutlined,
-  DownOutlined,
-} from '@ant-design/icons';
+import { LoadingOutlined, UploadOutlined, DownOutlined } from '@ant-design/icons';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
 
 import { SiteDataTable } from './SiteDataTable';
+
+function QuickFilters() {
+  const reset = () => {
+    console.log('does stuff');
+  };
+  const menu = (
+    <Menu
+      // onClick={({ key }) => onMenuSelect(key)}
+      items={[
+        {
+          key: 'assigned-to-me',
+          label: 'Assigned to me',
+          disabled: true,
+        },
+        {
+          key: 'failed-last-7-days-unassigned',
+          label: 'Failed last 7 days & Unassigned',
+          disabled: true,
+        },
+        {
+          key: 'failed-last-7-days',
+          label: 'Failed last 7 days',
+        },
+      ]}
+    />
+  );
+  return (
+    <>
+      <Button onClick={reset}>
+        <SyncOutlined />
+      </Button>
+      <Dropdown overlay={menu}>
+        <Space>
+          <Button>
+            Quick Filters <DownOutlined className="text-sm" />
+          </Button>
+        </Space>
+      </Dropdown>
+    </>
+  );
+}
+
+function CreateSite() {
+  return (
+    <Link to="new">
+      <Button>Create Site</Button>
+    </Link>
+  );
+}
+
+function BulkActions() {
+  const [runBulk] = useRunBulkMutation();
+  const onMenuSelect = async (key: string) => {
+    const response: any = await runBulk(key);
+    if (response.data.scrapes_launched === 0) {
+      notification.error({
+        message: 'Whoops!',
+        description: 'No sites were found!',
+      });
+    } else if (response.data.canceled_srapes) {
+      notification.success({
+        message: 'Success!',
+        description: `${response.data.canceled_srapes} site${
+          response.data.canceled_srapes > 1 ? 's was' : ' were'
+        } canceled from the collection queue!`,
+      });
+    } else {
+      notification.success({
+        message: 'Success!',
+        description: `${response.data.scrapes_launched} site${
+          response.data.scrapes_launched > 1 ? 's have' : ' has'
+        } been added to the collection queue!`,
+      });
+    }
+  };
+  const menu = (
+    <Menu
+      onClick={({ key }) => onMenuSelect(key)}
+      items={[
+        {
+          key: 'unrun',
+          label: 'Run Unrun',
+        },
+        {
+          key: 'failed',
+          label: 'Run Failed',
+        },
+        {
+          key: 'canceled',
+          label: 'Run Canceled',
+        },
+        {
+          key: 'cancel-active',
+          label: 'Cancel Active',
+        },
+        {
+          key: 'all',
+          label: 'Run All',
+          danger: true,
+        },
+      ]}
+    />
+  );
+  return (
+    <Dropdown overlay={menu}>
+      <Space>
+        <Button>
+          Collection <DownOutlined className="text-sm" />
+        </Button>
+      </Space>
+    </Dropdown>
+  );
+}
 
 function BulkUpload() {
   const [uploading, setUploading] = useState(false);
@@ -41,71 +143,9 @@ function BulkUpload() {
       showUploadList={false}
       onChange={onChange}
     >
-      <Button
-        icon={uploading ? <LoadingOutlined /> : <UploadOutlined />}
-      />
+      <Button icon={uploading ? <LoadingOutlined /> : <UploadOutlined />} />
     </Upload>
-  )
-}
-
-function BulkActions() {
-  const [runBulk] = useRunBulkMutation();
-  const onMenuSelect = async (key: string) => {
-    const response: any = await runBulk(key);
-    if (response.data.scrapes_launched === 0) {
-      notification.error({
-        message: 'Whoops!',
-        description: 'No sites were found!',
-      });
-    } else if (response.data.canceled_srapes) {
-      notification.success({
-        message: 'Success!',
-        description:`${response.data.canceled_srapes} site${response.data.canceled_srapes > 1 ? "s was" : " were"} canceled from the collection queue!`
-      });
-    } else {
-      notification.success({
-        message: 'Success!',
-        description:`${response.data.scrapes_launched} site${response.data.scrapes_launched > 1 ? "s have" : " has"} been added to the collection queue!`
-      });
-    }
-  };
-  const menu = (
-    <Menu
-      onClick={({ key }) => onMenuSelect(key)}
-      items={[
-        {
-          key: 'unrun',
-          label: 'Run Unrun',
-        },
-        {
-          key: 'failed',
-          label: 'Run Failed',
-        },
-        {
-          key: 'canceled',
-          label: 'Run Canceled'
-        },
-        {
-          key: 'cancel-active',
-          label: 'Cancel Active'
-        },
-        {
-          key: 'all',
-          label: 'Run All',
-          danger: true
-        },
-      ]}
-    />
   );
-  return (
-    <Dropdown overlay={menu}>
-      <Space>
-        <Button>
-          Collection <DownOutlined className="text-sm" />
-        </Button>
-      </Space>
-    </Dropdown>
-  )
 }
 
 export function SitesHomePage() {
@@ -114,9 +154,8 @@ export function SitesHomePage() {
       <div className="flex">
         <SiteBreadcrumbs />
         <div className="ml-auto space-x-2">
-          <Link to="new">
-            <Button>Create Site</Button>
-          </Link>
+          <QuickFilters />
+          <CreateSite />
           <BulkActions />
           <BulkUpload />
         </div>
