@@ -27,6 +27,7 @@ async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(scheme))
     try:
         token = auth.credentials
         email_key = settings.auth0.email_key
+        grant_key = settings.auth0.grant_key
         audience = settings.auth0.audience
 
         [signing_key, algorithm] = get_provider_detail(token)
@@ -39,6 +40,9 @@ async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(scheme))
         )
 
     email: str = payload.get(email_key)
+    if not email and payload.get(grant_key) == 'client-credentials':
+        email = "api@mmitnetwork.com"
+    
     user = await User.by_email(email)
 
     if not user:
