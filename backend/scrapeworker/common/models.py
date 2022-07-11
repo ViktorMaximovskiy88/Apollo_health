@@ -6,7 +6,7 @@ import magic
 from typing import Any
 from pydantic import BaseModel
 
-from scrapeworker.playbook import PlaybookContext
+from backend.scrapeworker.playbook import PlaybookContext
 
 
 class Metadata(BaseModel):

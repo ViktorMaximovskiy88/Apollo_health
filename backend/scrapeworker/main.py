@@ -18,7 +18,7 @@ from backend.common.db.init import init_db
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.scrapeworker.scrape_worker import ScrapeWorker
-from scrapeworker.common.exceptions import CanceledTaskException, NoDocsCollectedException
+from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocsCollectedException
 from backend.common.core.enums import TaskStatus
 from backend.scrapeworker.log import (
     log_cancellation,

@@ -33,7 +33,7 @@ class RateLimiter:
         Attempts to run the function, if it fails, increase the wait time and try again, max 1 minute.
         If it succeeds, reduce the wait time, min 1 second.
         """
-        async for attempt in AsyncRetrying(stop=stop_after_attempt(stop_attempts)):
+        async for attempt in AsyncRetrying(reraise=True, stop=stop_after_attempt(stop_attempts)):
             await self.wait()
 
             self.last_request_time = datetime.now()
