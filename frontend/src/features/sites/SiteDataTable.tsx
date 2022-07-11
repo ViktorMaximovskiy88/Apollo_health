@@ -3,7 +3,7 @@ import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import PaginationToolbar from '@inovua/reactdatagrid-community/packages/PaginationToolbar';
 import { Popconfirm, Tag, notification, Switch } from 'antd';
-import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSiteTableFilter, setSiteTableSort, siteTableState } from '../../app/uiSlice';
 import {
@@ -202,6 +202,7 @@ export function SiteDataTable() {
 
   // Trigger update every 10 seconds by invalidating memoized callback
   const { setActive, isActive, watermark } = useInterval(10000);
+  const [userInteraction, setUserInteraction] = useState<boolean>(false);
 
   const loadData = useCallback(
     async (tableInfo: any) => {
@@ -221,6 +222,16 @@ export function SiteDataTable() {
             {...paginationProps}
             bordered={false}
             style={{ width: 'fit-content' }}
+            onClick={(e: React.SyntheticEvent) => {
+              // we dont get individual click handlers
+              // so if _anything_ in the pager is clicked except refresh; cancel
+              if (e.target instanceof Element) {
+                const isRefresh = e.target.classList.contains(
+                  'inovua-react-pagination-toolbar__icon--named--REFRESH'
+                );
+                if (!isRefresh) setActive(false);
+              }
+            }}
           />
           <div
             className="flex justify-end items-end box-border leading-[2.5rem] h-[42px]"
@@ -253,8 +264,6 @@ export function SiteDataTable() {
       onSortInfoChange={onSortChange}
       renderLoadMask={disableLoadingMask}
       renderPaginationToolbar={renderPaginationToolbar}
-      onLimitChange={() => setActive(false)}
-      onSkipChange={() => setActive(false)}
       activateRowOnFocus={false}
     />
   );
