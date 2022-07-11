@@ -11,7 +11,7 @@ from tenacity._asyncio import AsyncRetrying
 from tenacity.stop import stop_after_attempt
 from beanie.odm.operators.update.array import Push
 from beanie.odm.operators.update.general import Inc
-from urllib.parse import urlparse 
+from urllib.parse import urlparse
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
@@ -59,6 +59,7 @@ def get_google_id(url: str) -> str:
         raise Exception(f"{url} is not a valid google doc/drive url")
     return matched.group(1)
 
+
 class ScrapeWorker:
     def __init__(
         self,
@@ -76,10 +77,7 @@ class ScrapeWorker:
         self.downloader = AioDownloader()
         self.playbook = ScrapePlaybook(self.site.playbook)
         self.logger = Logger()
-        self.taggers = Taggers(
-            indication=IndicationTagger(),
-            therapy=TherapyTagger()
-        )
+        self.taggers = Taggers(indication=IndicationTagger(), therapy=TherapyTagger())
 
     @alru_cache
     async def get_user(self) -> User:
@@ -113,13 +111,17 @@ class ScrapeWorker:
         return True
 
     async def update_doc_document(self, retrieved_document: RetrievedDocument):
-        doc_document = await DocDocument.find_one(DocDocument.retrieved_document_id == retrieved_document.id)
+        doc_document = await DocDocument.find_one(
+            DocDocument.retrieved_document_id == retrieved_document.id
+        )
         if doc_document:
-            await doc_document.update({
-                '$set': {
-                    'last_collected_date': retrieved_document.last_collected_date
+            await doc_document.update(
+                {
+                    "$set": {
+                        "last_collected_date": retrieved_document.last_collected_date
+                    }
                 }
-            })
+            )
         else:
             await self.create_doc_document(retrieved_document)
 
@@ -129,26 +131,20 @@ class ScrapeWorker:
             retrieved_document_id=retrieved_document.id,  # type: ignore
             name=retrieved_document.name,
             checksum=retrieved_document.checksum,
-
             document_type=retrieved_document.document_type,
             doc_type_confidence=retrieved_document.doc_type_confidence,
-
             end_date=retrieved_document.end_date,
             effective_date=retrieved_document.effective_date,
             last_updated_date=retrieved_document.last_updated_date,
             next_review_date=retrieved_document.next_review_date,
             next_update_date=retrieved_document.next_update_date,
             published_date=retrieved_document.published_date,
-
             lang_code=retrieved_document.lang_code,
-
             first_collected_date=retrieved_document.first_collected_date,
             last_collected_date=retrieved_document.last_collected_date,
-
-            link_text=retrieved_document.context_metadata['link_text'],
+            link_text=retrieved_document.context_metadata["link_text"],
             url=retrieved_document.url,
             base_url=retrieved_document.base_url,
-
             therapy_tags=retrieved_document.therapy_tags,
             indication_tags=retrieved_document.indication_tags,
         )
@@ -187,6 +183,11 @@ class ScrapeWorker:
                     doc_type_confidence=parsed_content["confidence"],
                     document_type=parsed_content["document_type"],
                     effective_date=parsed_content["effective_date"],
+                    end_date=parsed_content["end_date"],
+                    last_updated_date=parsed_content["last_updated_date"],
+                    next_review_date=parsed_content["next_review_date"],
+                    next_update_date=parsed_content["next_update_date"],
+                    published_date=parsed_content["published_date"],
                     identified_dates=parsed_content["identified_dates"],
                     lang_code=parsed_content["lang_code"],
                     last_collected_date=now,
@@ -208,6 +209,11 @@ class ScrapeWorker:
                     doc_type_confidence=parsed_content["confidence"],
                     document_type=parsed_content["document_type"],
                     effective_date=parsed_content["effective_date"],
+                    end_date=parsed_content["end_date"],
+                    last_updated_date=parsed_content["last_updated_date"],
+                    next_review_date=parsed_content["next_review_date"],
+                    next_update_date=parsed_content["next_update_date"],
+                    published_date=parsed_content["published_date"],
                     file_extension=download.file_extension,
                     first_collected_date=now,
                     identified_dates=parsed_content["identified_dates"],
@@ -258,7 +264,11 @@ class ScrapeWorker:
         proxy_settings = await self.get_proxy_settings()
         shuffle(proxy_settings)
         n_proxies = len(proxy_settings)
-        async for attempt in AsyncRetrying(reraise=True, stop=stop_after_attempt(3 * n_proxies), wait=wait_random_exponential(multiplier=1, max=60)):
+        async for attempt in AsyncRetrying(
+            reraise=True,
+            stop=stop_after_attempt(3 * n_proxies),
+            wait=wait_random_exponential(multiplier=1, max=60),
+        ):
             i = attempt.retry_state.attempt_number - 1
             proxy, proxy_setting = proxy_settings[i % n_proxies]
             logging.info(
@@ -281,7 +291,9 @@ class ScrapeWorker:
             )
 
     @asynccontextmanager
-    async def playwright_context(self, url: str) -> AsyncGenerator[tuple[Page, BrowserContext], None]:
+    async def playwright_context(
+        self, url: str
+    ) -> AsyncGenerator[tuple[Page, BrowserContext], None]:
         logging.info(f"Creating context for {url}")
         context: BrowserContext | None = None
         page: Page | None = None
@@ -316,7 +328,9 @@ class ScrapeWorker:
         # TODO where this lives ... also office live?
         if is_google(download.request.url):
             google_id = get_google_id(download.request.url)
-            download.request.url = f"https://drive.google.com/u/0/uc?id={google_id}&export=download"
+            download.request.url = (
+                f"https://drive.google.com/u/0/uc?id={google_id}&export=download"
+            )
 
     async def queue_downloads(self, url: str, base_url: str):
         all_downloads: list[Download] = []
@@ -361,9 +375,8 @@ class ScrapeWorker:
     def should_process_download(self, download: Download):
         url = download.request.url
         cd_filename = download.response.content_disposition_filename
-        
-        return not self.skip_url(url) and \
-            self.url_not_seen(url, cd_filename)
+
+        return not self.skip_url(url) and self.url_not_seen(url, cd_filename)
 
     async def run_scrape(self):
         all_downloads: list[Download] = []
@@ -372,9 +385,7 @@ class ScrapeWorker:
         for url in base_urls:
             all_downloads += await self.queue_downloads(url, url)
             for nested_url in await self.follow_links(url):
-                all_downloads += await self.queue_downloads(
-                    nested_url, base_url=url
-                )
+                all_downloads += await self.queue_downloads(nested_url, base_url=url)
 
         tasks = []
         for download in all_downloads:
