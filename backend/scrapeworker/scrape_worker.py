@@ -42,10 +42,10 @@ from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.file_parsers import parse_by_type
 from backend.common.core.enums import TaskStatus
-from scrapeworker.document_tagging.indication_tagging import IndicationTagger
-from scrapeworker.document_tagging.taggers import Taggers
-from scrapeworker.document_tagging.therapy_tagging import TherapyTagger
-from scrapeworker.playbook import ScrapePlaybook
+from backend.scrapeworker.document_tagging.indication_tagging import IndicationTagger
+from backend.scrapeworker.document_tagging.taggers import Taggers
+from backend.scrapeworker.document_tagging.therapy_tagging import TherapyTagger
+from backend.scrapeworker.playbook import ScrapePlaybook
 
 
 def is_google(url):
