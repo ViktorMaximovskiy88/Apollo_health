@@ -6,6 +6,7 @@ from datetime import datetime
 from random import shuffle
 from typing import AsyncGenerator, Coroutine
 from async_lru import alru_cache
+from tenacity.wait import wait_random_exponential
 from tenacity._asyncio import AsyncRetrying
 from tenacity.stop import stop_after_attempt
 from beanie.odm.operators.update.array import Push
@@ -115,7 +116,9 @@ class ScrapeWorker:
         doc_document = await DocDocument.find_one(DocDocument.retrieved_document_id == retrieved_document.id)
         if doc_document:
             await doc_document.update({
-                DocDocument.last_collected_date: retrieved_document.last_collected_date
+                '$set': {
+                    'last_collected_date': retrieved_document.last_collected_date
+                }
             })
         else:
             await self.create_doc_document(retrieved_document)
@@ -255,13 +258,27 @@ class ScrapeWorker:
         proxy_settings = await self.get_proxy_settings()
         shuffle(proxy_settings)
         n_proxies = len(proxy_settings)
-        async for attempt in AsyncRetrying(stop=stop_after_attempt(3 * n_proxies)):
+        async for attempt in AsyncRetrying(reraise=True, stop=stop_after_attempt(3 * n_proxies), wait=wait_random_exponential(multiplier=1, max=60)):
             i = attempt.retry_state.attempt_number - 1
             proxy, proxy_setting = proxy_settings[i % n_proxies]
             logging.info(
                 f"{i} Trying proxy {proxy and proxy.name} - {proxy_setting and proxy_setting.get('server')}"
             )
             yield attempt, proxy_setting
+
+    async def wait_for_desired_content(self, page: Page):
+        try:
+            if len(self.site.scrape_method_configuration.wait_for) > 0:
+                await page.locator(
+                    ", ".join(
+                        f":text('{wf}')"
+                        for wf in self.site.scrape_method_configuration.wait_for
+                    )
+                ).first.wait_for()
+        except:
+            raise Exception(
+                f"Wait for dom elements {self.site.scrape_method_configuration.wait_for} have timed out"
+            )
 
     @asynccontextmanager
     async def playwright_context(self, url: str) -> AsyncGenerator[tuple[Page, BrowserContext], None]:
@@ -280,21 +297,10 @@ class ScrapeWorker:
                 await stealth_async(page)
                 await page.goto(url, timeout=60000)
 
-                try:
-                    if len(self.site.scrape_method_configuration.wait_for) > 0:
-                        await page.locator(
-                            ", ".join(
-                                f":text('{wf}')"
-                                for wf in self.site.scrape_method_configuration.wait_for
-                            )
-                        ).wait_for()
-                except:
-                    raise Exception(
-                        f"Wait for dom elements {self.site.scrape_method_configuration.wait_for} have timed out"
-                    )
-
         if not page or not context:
             raise Exception(f"Could not load {url}")
+
+        await self.wait_for_desired_content(page)
 
         try:
             yield page, context
