@@ -8,16 +8,19 @@ export const sitesApi = createApi({
   baseQuery: fetchBaseQuery(),
   tagTypes: ['Site', 'ChangeLog'],
   endpoints: (builder) => ({
-    getSites: builder.query<{ data: Site[], total: number },
-    { limit: number, skip: number, sortInfo: TypeSortInfo, filterValue: TypeFilterValue}>({
-      query: ({limit, skip, sortInfo, filterValue }) => {
+    getSites: builder.query<
+      { data: Site[]; total: number },
+      { limit: number; skip: number; sortInfo: TypeSortInfo; filterValue: TypeFilterValue }
+    >({
+      query: ({ limit, skip, sortInfo, filterValue }) => {
+        const sorts = sortInfo ? [sortInfo] : [];
         const args = [
           `limit=${encodeURIComponent(limit)}`,
           `skip=${encodeURIComponent(skip)}`,
-          `sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`,
+          `sorts=${encodeURIComponent(JSON.stringify(sorts))}`,
           `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
-        ].join('&')
-        return `/sites/?${args}`
+        ].join('&');
+        return `/sites/?${args}`;
       },
       providesTags: (results) => {
         const tags = [{ type: 'Site' as const, id: 'LIST' }];
