@@ -48,6 +48,7 @@ from backend.scrapeworker.document_tagging.therapy_tagging import TherapyTagger
 from backend.scrapeworker.playbook import ScrapePlaybook
 from backend.scrapeworker.common.utils import get_extension_from_path_like
 
+
 def is_google(url):
     parsed = urlparse(url)
     return parsed.hostname in ["drive.google.com", "docs.google.com"]
@@ -386,7 +387,7 @@ class ScrapeWorker:
 
     def is_artifact_file(self, url: str):
         extension = get_extension_from_path_like(url)
-        return extension in ["docx", "pdf", "xlsx"]:
+        return extension in ["docx", "pdf", "xlsx"]
 
     async def run_scrape(self):
         all_downloads: list[Download] = []
