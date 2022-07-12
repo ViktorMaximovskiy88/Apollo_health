@@ -20,8 +20,11 @@ async def run_migrations():
     mode = RunningMode(direction=RunningDirections.FORWARD, distance=0)
     await root.run(mode, False)
 
+
 if __name__ == "__main__":
+
     async def migrate():
         await init_db()
         await run_migrations()
+
     asyncio.run(migrate())

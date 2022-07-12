@@ -68,7 +68,9 @@ class Download(BaseModel):
     file_extension: str | None = None
     file_path: str | None = None
     file_hash: str | None = None
+
     content_hash: str | None = None
+    content_type: str | None = None
 
     def guess_extension(self) -> str | None:
         guess_ext = get_extension_from_path_like(self.request.url)
@@ -84,15 +86,18 @@ class Download(BaseModel):
             guess_ext = get_extension_from_file(self.file_path)
 
         self.file_extension = guess_ext
+        self.content_type = extension_to_mimetype_map[guess_ext] or None
 
 
 #  TODO move all of this....
-mapper = {
+mimetype_to_extension_map = {
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
     "application/pdf": "pdf",
     "text/html": "html",
 }
+
+extension_to_mimetype_map = {v: k for k, v in mimetype_to_extension_map.items()}
 
 
 def get_extension_from_path_like(path_like: str | None) -> str | None:
@@ -107,7 +112,7 @@ def get_extension_from_content_type(content_type: str | None) -> str | None:
     if content_type is None:
         return None
 
-    return mapper.get(content_type) or None
+    mimetype_to_extension_map.get(content_type) or None
 
 
 def get_extension_from_file(file_path: str | None):
@@ -116,4 +121,4 @@ def get_extension_from_file(file_path: str | None):
 
     mime = magic.Magic(mime=True)
     mime_type = mime.from_file(file_path)
-    return mapper.get(mime_type) or None
+    mimetype_to_extension_map.get(mime_type) or None

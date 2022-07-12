@@ -56,7 +56,9 @@ async def start_worker_async():
 
             typer.secho(f"Acquired Task {extract_task.id}", fg=typer.colors.BLUE)
 
-            extraction_class = doc.automated_content_extraction_class or 'BasicTableExtraction'
+            extraction_class = (
+                doc.automated_content_extraction_class or "BasicTableExtraction"
+            )
             ExtractWorker = getattr(extractor_classes, extraction_class)
 
             worker = ExtractWorker(extract_task, doc, site, rxnorm_model)
