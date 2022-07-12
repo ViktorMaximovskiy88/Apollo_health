@@ -163,12 +163,12 @@ async def cancel_all_site_scrape_task(
         # If the site is found, fetch all tasks and cancel all queued or in progress tasks
         result = await SiteScrapeTask.get_motor_collection().update_many(
             {"site_id": site_id, "status":{ "$in": [ TaskStatus.QUEUED, TaskStatus.IN_PROGRESS ] }},
-            {"$set": {"status": TaskStatus.CANCELED}}
+            {"$set": {"status": TaskStatus.CANCELING}}
         )
         await site.update(
             Set(
                 {
-                    Site.last_run_status: TaskStatus.CANCELED
+                    Site.last_run_status: TaskStatus.CANCELING
                 }
             )
         )
