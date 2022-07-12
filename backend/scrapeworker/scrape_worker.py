@@ -4,7 +4,7 @@ import re
 from contextlib import asynccontextmanager
 from datetime import datetime
 from random import shuffle
-from typing import AsyncGenerator, Coroutine
+from typing import Any, AsyncGenerator, Callable, Coroutine
 from async_lru import alru_cache
 from tenacity.wait import wait_random_exponential
 from tenacity._asyncio import AsyncRetrying
@@ -64,12 +64,12 @@ class ScrapeWorker:
     def __init__(
         self,
         playwright,
-        browser: Browser,
+        get_browser_context: Callable[[ProxySettings | None], Coroutine[Any, Any, BrowserContext]],
         scrape_task: SiteScrapeTask,
         site: Site,
     ) -> None:
         self.playwright = playwright
-        self.browser = browser
+        self.get_browser_context = get_browser_context
         self.scrape_task = scrape_task
         self.site = site
         self.seen_urls = set()
@@ -299,11 +299,7 @@ class ScrapeWorker:
         page: Page | None = None
         async for attempt, proxy in self.try_each_proxy():
             with attempt:
-                context = await self.browser.new_context(
-                    extra_http_headers=default_headers,
-                    proxy=proxy,  # type: ignore
-                    ignore_https_errors=True,
-                )
+                context = await self.get_browser_context(proxy)
 
                 page = await context.new_page()
                 await stealth_async(page)
