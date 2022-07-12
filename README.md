@@ -45,9 +45,9 @@ Hi developer. See the [development](/docs/DEVELOPMENT.md) readme.
 
 ## FAQs
 
-**Q:** Upon starting the frontend project my browser URL for the front end just says `https://undefined/authorize?redirect_uri=xxxx`. What gives?
+**Q:** Upon starting the frontend project my browser URL just says `https://undefined/authorize?redirect_uri=xxxx`. What gives?
 
-**A:** Currently the frontend app queries the backend for its env config. If the backend isnt running you will get redirected the above.
+**A:** Currently the frontend app queries the backend for its env config. If the backend isnt running you will get redirected to the above.
 
 > **FIX** Ensure your backend is running on the expected host:port (usually `localhost:8000`) and navigate to the frontend at `localhost:3000`
 
