@@ -33,7 +33,7 @@ from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.common.exceptions import (
     CanceledTaskException,
 )
-from backend.scrapeworker.common.models import Download
+from backend.scrapeworker.common.models import Download, Request, Response
 from backend.scrapeworker.scrapers import scrapers
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
@@ -46,7 +46,7 @@ from backend.scrapeworker.document_tagging.indication_tagging import IndicationT
 from backend.scrapeworker.document_tagging.taggers import Taggers
 from backend.scrapeworker.document_tagging.therapy_tagging import TherapyTagger
 from backend.scrapeworker.playbook import ScrapePlaybook
-
+from backend.scrapeworker.common.utils import get_extension_from_path_like
 
 def is_google(url):
     parsed = urlparse(url)
@@ -64,7 +64,9 @@ class ScrapeWorker:
     def __init__(
         self,
         playwright,
-        get_browser_context: Callable[[ProxySettings | None], Coroutine[Any, Any, BrowserContext]],
+        get_browser_context: Callable[
+            [ProxySettings | None], Coroutine[Any, Any, BrowserContext]
+        ],
         scrape_task: SiteScrapeTask,
         site: Site,
     ) -> None:
@@ -297,13 +299,21 @@ class ScrapeWorker:
         logging.info(f"Creating context for {url}")
         context: BrowserContext | None = None
         page: Page | None = None
+        response: Response
         async for attempt, proxy in self.try_each_proxy():
             with attempt:
                 context = await self.get_browser_context(proxy)
 
                 page = await context.new_page()
                 await stealth_async(page)
-                await page.goto(url, timeout=60000)
+
+                try:
+                    logging.info(f"Awating response for {url}")
+                    response = await page.goto(url, timeout=60000)
+                    logging.info(f"Received response for {url}")
+                except Exception as ex:
+                    print(response)
+                    logging.error(ex)
 
         if not page or not context:
             raise Exception(f"Could not load {url}")
@@ -374,11 +384,22 @@ class ScrapeWorker:
 
         return not self.skip_url(url) and self.url_not_seen(url, cd_filename)
 
+    def is_artifact_file(self, url: str):
+        extension = get_extension_from_path_like(url)
+        return extension in ["docx", "pdf", "xlsx"]:
+
     async def run_scrape(self):
         all_downloads: list[Download] = []
         base_urls: list[str] = [base_url.url for base_url in self.active_base_urls()]
         logging.info(f"base_urls={base_urls}")
+
         for url in base_urls:
+            # skip the parse step and download
+            if self.is_artifact_file(url):
+                download = Download(request=Request(url=url))
+                all_downloads.append(download)
+                continue
+
             all_downloads += await self.queue_downloads(url, url)
             for nested_url in await self.follow_links(url):
                 all_downloads += await self.queue_downloads(nested_url, base_url=url)

@@ -1,4 +1,8 @@
+import mimetypes
+import os
 import re
+import pathlib
+import magic
 
 
 def compile_date_rgx():
@@ -15,4 +19,37 @@ def compile_date_rgx():
     ]
     return [re.compile(fmt, flags=re.IGNORECASE) for fmt in date_formats]
 
+
 date_rgxs = compile_date_rgx()
+
+# the builtin mimetype map is lacking some
+mimetype_map = {
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    "application/pdf": "pdf",
+    "text/html": "html",
+}
+
+
+def get_extension_from_path_like(path_like: str | None) -> str | None:
+    if path_like is None:
+        return None
+
+    maybe_extension = pathlib.Path(os.path.basename(path_like))
+    return maybe_extension.suffix[1:] if maybe_extension else None
+
+
+def get_extension_from_content_type(content_type: str | None) -> str | None:
+    if content_type is None:
+        return None
+
+    return mimetype_map.get(content_type) or None
+
+
+def get_extension_from_file(file_path: str | None):
+    if file_path is None:
+        return None
+
+    mime = magic.Magic(mime=True)
+    mime_type = mime.from_file(file_path)
+    return mimetype_map.get(mime_type) or None
