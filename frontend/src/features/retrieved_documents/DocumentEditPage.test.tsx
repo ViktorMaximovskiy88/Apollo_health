@@ -5,7 +5,7 @@ import { useParams, Params } from 'react-router-dom';
 import { DocumentEditPage } from './DocumentEditPage';
 import { handlers } from './mocks/documentEditPageHandlers';
 import { render, screen, act } from '../../test/test-utils';
-import useAccessToken from '../../app/use-access-token';
+import { useAccessToken } from '../../common/hooks';
 
 jest.mock('react-router-dom');
 
