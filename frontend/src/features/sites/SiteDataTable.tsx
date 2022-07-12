@@ -18,6 +18,7 @@ import { useDeleteSiteMutation, useGetChangeLogQuery, useLazyGetSitesQuery } fro
 import { Site } from './types';
 import { SiteStatus, siteStatusDisplayName, siteStatusStyledDisplay } from './siteStatus';
 import { useInterval } from '../../common/hooks';
+import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
@@ -194,10 +195,13 @@ export function SiteDataTable() {
   const columns = useMemo(() => createColumns(deleteSite), [deleteSite]);
   const dispatch = useDispatch();
   const onFilterChange = useCallback(
-    (filter: any) => dispatch(setSiteTableFilter(filter)),
+    (filter: TypeFilterValue) => dispatch(setSiteTableFilter(filter)),
     [dispatch]
   );
-  const onSortChange = useCallback((sort: any) => dispatch(setSiteTableSort(sort)), [dispatch]);
+  const onSortChange = useCallback(
+    (sort: TypeSortInfo) => dispatch(setSiteTableSort(sort)),
+    [dispatch]
+  );
 
   // Trigger update every 10 seconds by invalidating memoized callback
   const { setActive, isActive, watermark } = useInterval(10000);
