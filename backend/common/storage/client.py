@@ -43,8 +43,10 @@ class BaseS3Client:
 
     def download_directory(self, relative_prefix, local_path):
         prefix = self.get_full_path(relative_prefix)
+        nopref_prefix = prefix.removeprefix('/')
         for obj in self.bucket.objects.filter(Prefix = prefix):
-            rel_prefix = obj.key.removeprefix(prefix.removeprefix('/')).removeprefix('/')
+            nopref_key = obj.key.removeprefix('/')
+            rel_prefix = nopref_key.removeprefix(nopref_prefix).removeprefix('/')
             rel_path = os.path.join(local_path, rel_prefix)
             if not os.path.exists(os.path.dirname(rel_path)):
                 os.makedirs(os.path.dirname(rel_path))

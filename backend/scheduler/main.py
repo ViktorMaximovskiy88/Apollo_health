@@ -144,8 +144,8 @@ def update_cluster_size(size: int | None):
 def get_new_cluster_size(queue_size, active_workers, tasks_per_worker):
     workers_needed = queue_size // tasks_per_worker
 
-    if workers_needed > 5:
-        workers_needed = 5
+    if workers_needed > 50:
+        workers_needed = 50
 
     return max(workers_needed, 1)  # never scale to zero
 
