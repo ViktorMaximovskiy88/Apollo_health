@@ -7,7 +7,7 @@ from backend.scrapeworker.common.utils import (
     get_extension_from_path_like,
     get_extension_from_path_like,
     get_extension_from_content_type,
-    get_extension_from_file,
+    get_extension_from_file_mime_type,
 )
 
 
@@ -83,6 +83,6 @@ class Download(BaseModel):
             guess_ext = get_extension_from_content_type(self.response.content_type)
 
         if not guess_ext:
-            guess_ext = get_extension_from_file(self.file_path)
+            guess_ext = get_extension_from_file_mime_type(self.file_path)
 
         self.file_extension = guess_ext

@@ -36,7 +36,11 @@ def get_extension_from_path_like(path_like: str | None) -> str | None:
         return None
 
     maybe_extension = pathlib.Path(os.path.basename(path_like))
-    return maybe_extension.suffix[1:] if maybe_extension else None
+    return (
+        maybe_extension.suffix[1:]
+        if maybe_extension and maybe_extension.suffix
+        else None
+    )
 
 
 def get_extension_from_content_type(content_type: str | None) -> str | None:
@@ -46,7 +50,7 @@ def get_extension_from_content_type(content_type: str | None) -> str | None:
     return mimetype_map.get(content_type) or None
 
 
-def get_extension_from_file(file_path: str | None):
+def get_extension_from_file_mime_type(file_path: str | None):
     if file_path is None:
         return None
 
