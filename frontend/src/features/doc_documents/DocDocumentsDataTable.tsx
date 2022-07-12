@@ -14,12 +14,13 @@ import {
   scrapeTaskStatusDisplayName,
   scrapeTaskStatusStyledDisplay,
 } from '../../common';
-import { ButtonLink } from '../../components/ButtonLink';
+import { ButtonLink, GridPaginationToolbar } from '../../components';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { TaskStatus } from '../../common';
 import { Site } from '../sites/types';
 import { useGetChangeLogQuery, useLazyGetDocDocumentsQuery } from './docDocumentApi';
 import { DocDocument } from './types';
+import { useInterval } from '../../common/hooks';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
@@ -135,6 +136,9 @@ export function DocDocumentsDataTable() {
     [dispatch]
   );
 
+  // Trigger update every 10 seconds by invalidating memoized callback
+  const { setActive, isActive, watermark } = useInterval(10000);
+
   const loadData = useCallback(
     async (tableInfo: any) => {
       const { data } = await getDocDocumentsFn(tableInfo);
@@ -142,7 +146,20 @@ export function DocDocumentsDataTable() {
       const count = data?.total || 0;
       return { data: sites, count };
     },
-    [getDocDocumentsFn]
+    [getDocDocumentsFn, watermark]
+  );
+
+  const renderPaginationToolbar = useCallback(
+    (paginationProps: any) => {
+      return (
+        <GridPaginationToolbar
+          paginationProps={{ ...paginationProps }}
+          autoRefreshValue={isActive}
+          autoRefreshClick={setActive}
+        />
+      );
+    },
+    [isActive]
   );
 
   return (
@@ -155,6 +172,9 @@ export function DocDocumentsDataTable() {
       onFilterValueChange={onFilterChange}
       defaultSortInfo={tableState.sort}
       onSortInfoChange={onSortChange}
+      renderLoadMask={() => <></>}
+      renderPaginationToolbar={renderPaginationToolbar}
+      activateRowOnFocus={false}
     />
   );
 }
