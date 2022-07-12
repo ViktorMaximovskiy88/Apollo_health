@@ -10,8 +10,8 @@ import {
 } from 'react-router-dom';
 
 import { withAuthenticationRequired, User } from '@auth0/auth0-react';
-import { DocumentsHomePage } from './features/documents/DocumentsHomePage';
-import { DocumentEditPage } from './features/documents/DocumentEditPage';
+import { DocDocumentsHomePage } from './features/doc_documents/DocDocumentsHomePage';
+import { DocumentEditPage } from './features/retrieved_documents/DocumentEditPage';
 import { CollectionsPage } from './features/collections/CollectionsPage';
 import { SiteCreatePage } from './features/sites/SiteCreatePage';
 import { SiteEditPage } from './features/sites/SiteEditPage';
@@ -26,6 +26,9 @@ import { ExtractionsPage } from './features/extractions/ExtractionsPage';
 import { DocExtractionPage } from './features/extractions/DocExtractionPage';
 import { ExtractionEditPage } from './features/extractions/ExtractionEditPage';
 import { useAuth0 } from '@auth0/auth0-react';
+import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import tw from 'twin.macro';
+import { DocDocumentEditPage } from './features/doc_documents/DocDocumentEditPage';
 
 function TopNav() {
   const location = useLocation();
@@ -36,8 +39,33 @@ function TopNav() {
   const current = location.pathname.split('/')[1];
   const sections = [
     { key: 'sites', label: 'Sites' },
+    { key: 'documents', label: 'Documents' },
     { key: 'users', label: 'Users' },
   ];
+  const siteLabel = <>
+      {site?._id === params.siteId && (
+        <Link
+          style={{ marginTop: -1, ...tw`text-blue-500` }}
+          to={`/sites/${params.siteId}/scrapes`}
+        >
+          {site?.name}
+        </Link>
+      )}
+  </>
+  const items: ItemType[] = [
+    { key: 'site', label: <Link to="/sites">Source Hub</Link>, },
+    { key: 'header', label: siteLabel, className: "flex mr-auto" },
+  ]
+  sections.forEach(({ key, label }) => (
+    items.push({ key, label: <Link to={`/${key}`}>{label}</Link> })
+  ))
+  items.push({
+    key: 'profile',
+    label: `${user?.given_name} ${user?.family_name}`,
+    children: [
+      { key: 'logout', label: 'Logout', onClick: () => logout({ returnTo: window.location.origin }) }
+    ]
+  });
   return (
     <Layout className="h-screen">
       <Layout.Header className="p-0 h-10 bg-white leading-10">
@@ -45,40 +73,8 @@ function TopNav() {
           mode="horizontal"
           selectedKeys={[current]}
           className="justify-end items-center"
-        >
-          <div className="flex mr-auto">
-            <Menu.Item key={'sites'}>
-              <Link to={`/sites`}>Source Hub</Link>
-            </Menu.Item>
-            {site?._id === params.siteId && (
-              <Link
-                style={{ marginTop: -1 }}
-                to={`/sites/${params.siteId}/scrapes`}
-              >
-                {site?.name}
-              </Link>
-            )}
-          </div>
-          {sections.map(({ key, label }) => (
-            <Menu.Item key={key}>
-              <Link to={`/${key}`}>{label}</Link>
-            </Menu.Item>
-          ))}
-          <Menu.Item key={'profile'}>
-            <Menu.SubMenu title={`${user?.given_name} ${user?.family_name}`}>
-              <Menu.Item
-                key={'logout'}
-                onClick={() => {
-                  logout({
-                    returnTo: window.location.origin,
-                  });
-                }}
-              >
-                Logout
-              </Menu.Item>
-            </Menu.SubMenu>
-          </Menu.Item>
-        </Menu>
+          items={items}
+        />
       </Layout.Header>
       <Layout className="bg-white overflow-auto">
         <Outlet />
@@ -99,6 +95,15 @@ function UserRoutes() {
       <Route path=":userId">
         <Route path="edit" element={<UserEditPage />} />
       </Route>
+    </Routes>
+  );
+}
+
+function DocumentRoutes() {
+  return (
+    <Routes>
+      <Route index element={<DocDocumentsHomePage />} />
+      <Route path=":docDocumentId" element={<DocDocumentEditPage />} />
     </Routes>
   );
 }
@@ -135,6 +140,7 @@ function App() {
           </Route>
         </Route>
         <Route path="/users/*" element={<UserRoutes />} />
+        <Route path="/documents/*" element={<DocumentRoutes />} />
         <Route path="/" element={<Navigate replace to="/sites" />} />
       </Route>
     </Routes>

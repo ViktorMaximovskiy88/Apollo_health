@@ -71,7 +71,6 @@ def test_get_label_to_the_right():
     assert parser.effective_date == {
         "date": datetime(2022, 2, 15),
     }
-
     text = "2/15/22: this label is too far published"
     parser = DateParser(text, date_rgxs)
     parser.extract_dates()

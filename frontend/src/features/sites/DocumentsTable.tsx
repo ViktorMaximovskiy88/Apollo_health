@@ -1,8 +1,8 @@
 import { prettyDateFromISO } from '../../common';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { useGetDocumentsQuery } from '../documents/documentsApi';
-import { RetrievedDocument } from '../documents/types';
+import { useGetDocumentsQuery } from '../retrieved_documents/documentsApi';
+import { RetrievedDocument } from '../retrieved_documents/types';
 import { useGetChangeLogQuery } from './sitesApi';
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';

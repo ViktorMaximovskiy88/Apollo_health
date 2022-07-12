@@ -29,7 +29,7 @@ class DateParser:
 
     def get_date_label(
         self, line: str, start: int, end: int, target="END"
-    ) -> tuple[str | None, int]:
+    ) -> str | None:
         """
         Find date label between start and end indexes of given string.
         If multiple labels found, returns the label found closest to the `target` index.
@@ -96,7 +96,7 @@ class DateParser:
 
         future_dates = ["end_date", "next_review_date", "next_update_date"]
         now = datetime.now()
-        existing_label = getattr(self, label, None)
+        existing_label = getattr(self, label)
         if label in future_dates:
             if now > date:
                 return
@@ -158,6 +158,6 @@ class DateParser:
                 prev_line = line
                 prev_line_index = latest_match
         if not self.effective_date["date"]:
-            self.effective_date["date"] = self.select_effective_date(
+            self.effective_date["date"] = self.select_effective_date(  # type: ignore
                 self.unclassified_dates
             )

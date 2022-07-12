@@ -4,10 +4,11 @@ import { createBrowserHistory } from 'history';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { usersApi } from '../features/users/usersApi';
 import { sitesApi } from '../features/sites/sitesApi';
-import { documentsApi } from '../features/documents/documentsApi';
+import { documentsApi } from '../features/retrieved_documents/documentsApi';
 import { siteScrapeTasksApi } from '../features/collections/siteScrapeTasksApi';
 import { extractionTasksApi } from '../features/extractions/extractionsApi';
 import { proxiesApi } from '../features/proxies/proxiesApi';
+import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { rtkAuth } from '../common/auth-middleware';
 import uiReducer from './uiSlice';
 
@@ -22,6 +23,7 @@ export const store = configureStore({
     [documentsApi.reducerPath]: documentsApi.reducer,
     [extractionTasksApi.reducerPath]: extractionTasksApi.reducer,
     [proxiesApi.reducerPath]: proxiesApi.reducer,
+    [docDocumentsApi.reducerPath]: docDocumentsApi.reducer,
     ui: uiReducer,
     router: routerReducer,
   },
@@ -33,6 +35,7 @@ export const store = configureStore({
       documentsApi.middleware,
       extractionTasksApi.middleware,
       proxiesApi.middleware,
+      docDocumentsApi.middleware,
       routerMiddleware,
       rtkAuth,
     ),

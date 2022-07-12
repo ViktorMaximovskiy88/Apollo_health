@@ -1,10 +1,11 @@
+from dataclasses import dataclass
 import logging
 import tempfile
 from turtle import down
 import aiofiles
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Any
-from aiohttp import ClientSession, ClientResponse, BasicAuth
+from aiohttp import ClientSession, ClientResponse, BasicAuth, TCPConnector
 from backend.common.models.proxy import Proxy
 from backend.scrapeworker.common.models import Download
 from backend.common.core.config import config
@@ -24,13 +25,18 @@ default_headers: dict[str, str] = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36",
 }
 
+@dataclass
+class AioProxy:
+    proxy: str
+    proxy_auth: BasicAuth | None
+
 
 class AioDownloader:
 
     session: ClientSession
 
     def __init__(self):
-        self.session = ClientSession()
+        self.session = ClientSession(connector=TCPConnector(ssl=False))
         self.rate_limiter = RateLimiter()
 
     async def close(self):
@@ -40,9 +46,9 @@ class AioDownloader:
     async def download_url(
         self,
         download: Download,
-        proxies: list[tuple[Proxy | None, dict | None]] = [],
+        proxies: list[tuple[Proxy | None, ProxySettings | None]] = [],
     ):
-        response: ClientResponse
+        response: ClientResponse | None = None
         headers = default_headers | download.request.headers
         async for attempt, proxy in self.proxy_with_backoff(proxies):
             with attempt:
@@ -53,8 +59,8 @@ class AioDownloader:
                         method=download.request.method,
                         headers=headers,
                         data=download.request.data,
-                        proxy=proxy["proxy"],
-                        proxy_auth=proxy["proxy_auth"],
+                        proxy=proxy.proxy,
+                        proxy_auth=proxy.proxy_auth,
                     )
                 else:
                     response = await self.session.request(
@@ -64,19 +70,19 @@ class AioDownloader:
                         data=download.request.data,
                     )
 
-                if not response:
-                    raise Exception(f"Failed to download url {download.request.url}")
                 download.response.status = response.status
                 logging.info(
                     f"Downloaded {download.request.url}, got {response.status}"
                 )
 
+        if not response:
+            raise Exception(f"Failed to download url {download.request.url}")
         yield response
-
+        
     # just return the aio useable proxy list
-    def convert_proxy(self, proxy: Proxy) -> list[dict[str, str]]:
+    def convert_proxy(self, proxy: Proxy) -> list[AioProxy]:
         proxy_auth = None
-        proxies = []
+        proxies: list[AioProxy] = []
         if proxy.credentials:
             username = config.get(proxy.credentials.username_env_var, None)
             password = config.get(proxy.credentials.password_env_var, None)
@@ -85,18 +91,18 @@ class AioDownloader:
 
         for endpoint in proxy.endpoints:
             proxies.append(
-                {
-                    "proxy": f"http://{endpoint}",
-                    "proxy_auth": proxy_auth,
-                }
+                AioProxy(
+                    proxy=f"http://{endpoint}",
+                    proxy_auth=proxy_auth,
+                )
             )
 
         return proxies
 
     def convert_proxies(
         self,
-        proxies: list[tuple[Proxy | None, ProxySettings | dict[str, str] | None]] = [],
-    ):
+        proxies: list[tuple[Proxy | None, ProxySettings | None]] = [],
+    ) -> list[tuple[Proxy | None, AioProxy | None]]:
         _proxies = []
         for (proxy, _proxy_settings) in proxies:
             if proxy is not None:
@@ -110,17 +116,17 @@ class AioDownloader:
 
     async def proxy_with_backoff(
         self,
-        proxies: list[tuple[Proxy | None, ProxySettings | dict[str, str] | None]] = [],
-    ) -> AsyncGenerator[tuple[AttemptManager, dict[str, Any]], None]:
+        proxies: list[tuple[Proxy | None, ProxySettings | None]] = [],
+    ) -> AsyncGenerator[tuple[AttemptManager, AioProxy | None], None]:
         aio_proxies = self.convert_proxies(proxies)
         async for attempt in self.rate_limiter.attempt_with_backoff():
             i = attempt.retry_state.attempt_number - 1
             proxy_count = len(aio_proxies)
             proxy, proxy_settings = (
-                aio_proxies[i % proxy_count] if proxy_count > 0 else [None, {}]
+                aio_proxies[i % proxy_count] if proxy_count > 0 else (None, None)
             )
             logging.info(
-                f"{i} Using proxy {proxy and proxy.name} ({proxy_settings and proxy_settings['proxy']})"
+                f"{i} Using proxy {proxy and proxy.name} ({proxy_settings and proxy_settings.proxy})"
             )
             yield attempt, proxy_settings
 
@@ -139,7 +145,7 @@ class AioDownloader:
     async def download_to_tempfile(
         self,
         download: Download,
-        proxies: list[tuple[Proxy | None, ProxySettings | dict[str, str] | None]] = [],
+        proxies: list[tuple[Proxy | None, ProxySettings | None]] = [],
     ):
         url = download.request.url
         body = None  # self.redis.get(url)

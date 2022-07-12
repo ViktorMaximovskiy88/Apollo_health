@@ -6,28 +6,31 @@ import magic
 from typing import Any
 from pydantic import BaseModel
 
+from backend.scrapeworker.playbook import PlaybookContext
+
 
 class Metadata(BaseModel):
-    link_text: str | None
-    element_id: str | None
-    closest_heading: str | None
-    href: str | None
-    base_url: str | None
+    link_text: str | None = None
+    element_id: str | None = None
+    closest_heading: str | None = None
+    href: str | None = None
+    base_url: str | None = None
+    playbook_context: PlaybookContext | None = None
 
 
 class Request(BaseModel):
     method: str = "GET"
     headers: dict[str, str] = {}
     url: str
-    data: Any | None
+    data: Any | None = None
     # TODO move to response ..
-    filename: str | None
+    filename: str | None = None
 
 
 class Response(BaseModel):
-    content_type: str | None
-    content_disposition_filename: str | None
-    status: int | None
+    content_type: str | None = None
+    content_disposition_filename: str | None = None
+    status: int | None = None
 
     def from_headers(self, headers):
         self.content_type = self.get_content_type(headers)
@@ -61,11 +64,11 @@ class Download(BaseModel):
     request: Request
     response: Response = Response()
     # TODO 'artifact' 'output' or is it indeed just the 'download' ...
-    file_name: str | None
-    file_extension: str | None
-    file_path: str | None
-    file_hash: str | None
-    content_hash: str | None
+    file_name: str | None = None
+    file_extension: str | None = None
+    file_path: str | None = None
+    file_hash: str | None = None
+    content_hash: str | None = None
 
     def guess_extension(self) -> str | None:
         guess_ext = get_extension_from_path_like(self.request.url)

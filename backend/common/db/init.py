@@ -6,6 +6,8 @@ from backend.common.models.content_extraction_task import (
     ContentExtractionResult,
     ContentExtractionTask,
 )
+from backend.common.models.doc_document import DocDocument
+from backend.common.models.indication import Indication
 from backend.common.models.proxy import Proxy
 
 from backend.common.models.site import Site
@@ -45,7 +47,9 @@ async def init_db(mock=False, database_name=None):
             Proxy,
             ChangeLog,
             Site,
+            Indication,
             SiteScrapeTask,
+            DocDocument,
             RetrievedDocument,
             ContentExtractionTask,
             ContentExtractionResult,

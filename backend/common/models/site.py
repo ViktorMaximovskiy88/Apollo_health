@@ -39,6 +39,7 @@ class NewSite(BaseModel):
     scrape_method: str
     scrape_method_configuration: ScrapeMethodConfiguration
     tags: list[str] = []
+    playbook: str | None = None
     cron: str
     status: str | None = SiteStatus.NEW
 
@@ -53,6 +54,7 @@ class UpdateSite(BaseModel):
     disabled: bool | None = None
     last_run_time: datetime | None = None
     scrape_method_configuration: UpdateScrapeMethodConfiguration | None = None
+    playbook: str | None = None
     status: str | None = None
 
 

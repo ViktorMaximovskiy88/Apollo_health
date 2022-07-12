@@ -10,14 +10,16 @@ FROM sourcehub-base:latest as backend
 
 WORKDIR ${HOME_DIR}/backend
 
-ADD pyproject.toml poetry.lock ./
+ADD pyproject.toml poetry.lock build-constraints.txt ./
 
 RUN python3 -m venv venv && \
     . venv/bin/activate && \
+    PIP_CONSTRAINT=build-constraints.txt \
+    CFLAGS="-mavx -DWARN(a)=(a)" \
     poetry install && \
     playwright install-deps && \
     playwright install chromium
-    
+
 RUN echo ". ${HOME_DIR}/backend/venv/bin/activate" >> ~/.bashrc
 
 ADD backend ./

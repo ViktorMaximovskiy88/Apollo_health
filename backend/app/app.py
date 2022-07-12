@@ -10,14 +10,16 @@ from backend.app.scripts.create_proxy_records import create_proxies
 from backend.common.db.init import init_db
 from backend.common.db.migrations import run_migrations
 from backend.app.core.settings import settings
-from backend.app.routes import proxies, sites
 from backend.common.models.proxy import Proxy
 from backend.common.models.user import User
 from backend.app.routes import (
     auth,
+    sites,
     users,
+    proxies,
     documents,
     change_log,
+    doc_documents,
     site_scrape_tasks,
     content_extraction_tasks,
 )
@@ -66,6 +68,7 @@ app.include_router(site_scrape_tasks.router, prefix=prefix)
 app.include_router(documents.router, prefix=prefix)
 app.include_router(content_extraction_tasks.router, prefix=prefix)
 app.include_router(proxies.router, prefix=prefix)
+app.include_router(doc_documents.router, prefix=prefix)
 
 @app.middleware("http")
 async def frontend_routing(request: Request, call_next: Any):

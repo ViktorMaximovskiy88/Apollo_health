@@ -8,7 +8,7 @@ class XlsxParser(FileParser):
         dataframes = pd.read_excel(
             self.file_path,
             engine="openpyxl",
-            sheet_name=None,
+            sheet_name=None,  # type: ignore
         )
         text = ""
         for _key, df in dataframes.items():
@@ -17,7 +17,7 @@ class XlsxParser(FileParser):
 
     async def get_info(self) -> dict[str, str]:
         workbook = load_workbook(self.file_path)
-        props = vars(workbook.properties)
+        props = vars(workbook.properties)  # type: ignore
         return props
 
     def get_title(self, metadata) -> str | None:

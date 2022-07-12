@@ -93,6 +93,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
   const extractionOptions = [
     { value: 'BasicTableExtraction', label: 'Basic Table Extraction' },
     { value: 'UHCFormularyExtraction', label: 'UHC Formulary Extraction' },
+    { value: 'MedigoldFormularyExtraction', label: 'Medigold Formulary Extraction' },
   ];
 
   const dateFields = [

@@ -1,6 +1,8 @@
 import asyncio
+import importlib
 from pathlib import Path
 import sys
+import traceback
 from uuid import uuid4
 import typer
 
@@ -9,10 +11,11 @@ import pymongo
 from pymongo import ReturnDocument
 from beanie.odm.operators.update.general import Set
 
+
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 from backend.common.models.content_extraction_task import ContentExtractionTask
 from backend.common.models.document import RetrievedDocument
-from backend.parseworker.extract_worker import ExtractWorker
+from backend.parseworker.rxnorm_entity_linker_model import RxNormEntityLinkerModel
 
 from backend.common.db.init import init_db
 from backend.common.models.site import Site
@@ -24,6 +27,9 @@ app = typer.Typer()
 async def start_worker_async():
     await init_db()
     worker_id = uuid4()
+    rxnorm_model = RxNormEntityLinkerModel()
+    extractor_classes = importlib.import_module("backend.parseworker.extractors")
+
     while True:
         acquired = (
             await ContentExtractionTask.get_motor_collection().find_one_and_update(
@@ -49,7 +55,11 @@ async def start_worker_async():
                 raise Exception("Site not found")
 
             typer.secho(f"Acquired Task {extract_task.id}", fg=typer.colors.BLUE)
-            worker = ExtractWorker(extract_task, doc, site)
+
+            extraction_class = doc.automated_content_extraction_class or 'BasicTableExtraction'
+            ExtractWorker = getattr(extractor_classes, extraction_class)
+
+            worker = ExtractWorker(extract_task, doc, site, rxnorm_model)
             try:
                 await worker.run_extraction()
                 typer.secho(f"Finished Task {extract_task.id}", fg=typer.colors.BLUE)
@@ -63,6 +73,8 @@ async def start_worker_async():
                     )
                 )
             except Exception as ex:
+                message = traceback.format_exc()
+                traceback.print_exc()
                 now = datetime.now()
                 typer.secho(f"Task Failed {extract_task.id}", fg=typer.colors.RED)
                 await extract_task.update(
@@ -70,10 +82,10 @@ async def start_worker_async():
                         {
                             ContentExtractionTask.status: TaskStatus.FAILED,
                             ContentExtractionTask.end_time: now,
+                            ContentExtractionTask.error_message: message,
                         }
                     )
                 )
-                raise ex
         await asyncio.sleep(5)
 
 

@@ -55,7 +55,7 @@ export function SiteForm(props: { onFinish: (user: Partial<Site>) => void; initi
         document_extensions: ['pdf'],
         url_keywords: [],
         proxy_exclusions: [],
-        wait_for:[],
+        wait_for: [],
         follow_links: false,
         follow_link_keywords: [],
         follow_link_url_keywords: [],
@@ -86,6 +86,9 @@ export function SiteForm(props: { onFinish: (user: Partial<Site>) => void; initi
         <Input />
       </Form.Item>
       <UrlFormFields initialValues={props.initialValues} form={form} />
+      <Form.Item name="playbook" label="Playbook">
+        <Input.TextArea />
+      </Form.Item>
       <CollectionMethodComponent followLinks={followLinks} form={form} />
       <Form.Item name="tags" label="Tags">
         <Select mode="tags" />

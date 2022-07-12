@@ -1,27 +1,27 @@
 import asyncio
 from pathlib import Path
 import sys
+from typing import Any, Callable, Coroutine
 from uuid import uuid4
 from beanie import PydanticObjectId
 import typer
 import signal
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, BrowserContext, ProxySettings
 
 from datetime import datetime
 import pymongo
 from pymongo import ReturnDocument
 from beanie.odm.operators.update.general import Set
 
+
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 from backend.common.db.init import init_db
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.scrapeworker.scrape_worker import (
-    ScrapeWorker,
-    CanceledTaskException,
-    NoDocsCollectedException,
-)
+from backend.scrapeworker.scrape_worker import ScrapeWorker
+from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocsCollectedException
 from backend.common.core.enums import TaskStatus
+from backend.scrapeworker.common.aio_downloader import default_headers
 from backend.scrapeworker.log import (
     log_cancellation,
     log_failure,
@@ -72,7 +72,7 @@ async def heartbeat_task(scrape_task: SiteScrapeTask):
         await asyncio.sleep(10)
 
 
-async def worker_fn(worker_id, playwright, browser):
+async def worker_fn(worker_id, playwright, get_browser_context: Callable[[ProxySettings | None], Coroutine[Any, Any, BrowserContext]]):
     while True:
         if not accepting_tasks:
             return
@@ -96,7 +96,7 @@ async def worker_fn(worker_id, playwright, browser):
             )
         )
 
-        worker = ScrapeWorker(playwright, browser, scrape_task, site)
+        worker = ScrapeWorker(playwright, get_browser_context, scrape_task, site)
         task = asyncio.create_task(heartbeat_task(scrape_task))
         active_tasks[scrape_task.id] = scrape_task
         try:
@@ -111,10 +111,12 @@ async def worker_fn(worker_id, playwright, browser):
         finally:
             del active_tasks[scrape_task.id]
             task.cancel()
-
+    
+browser = None
 
 async def start_worker_async(worker_id):
     await init_db()
+    global browser
 
     loop = asyncio.get_event_loop()
     loop.add_signal_handler(
@@ -123,10 +125,25 @@ async def start_worker_async(worker_id):
 
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch()
+        async def get_browser_context(proxy) -> BrowserContext:
+            global browser
+            try:
+                return await browser.new_context(  # type: ignore
+                    extra_http_headers=default_headers,
+                    proxy=proxy,
+                    ignore_https_errors=True
+                )
+            except:
+                browser = await playwright.chromium.launch()
+                return await browser.new_context(
+                    extra_http_headers=default_headers,
+                    proxy=proxy,
+                    ignore_https_errors=True
+                )
 
         workers = []
         for _ in range(5):
-            workers.append(worker_fn(worker_id, playwright, browser))
+            workers.append(worker_fn(worker_id, playwright, get_browser_context))
         await asyncio.gather(*workers)
     typer.secho(f"Shutdown Complete", fg=typer.colors.BLUE)
 
