@@ -32,6 +32,7 @@ from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.common.exceptions import (
     CanceledTaskException,
+    NoDocsCollectedException,
 )
 from backend.scrapeworker.common.models import Download, Request, Response
 from backend.scrapeworker.scrapers import scrapers
@@ -159,7 +160,6 @@ class ScrapeWorker:
         async for (temp_path, checksum) in self.downloader.download_to_tempfile(
             download, proxies
         ):
-            await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
 
             parsed_content = await parse_by_type(temp_path, download, self.taggers)
             if parsed_content is None:
@@ -232,6 +232,8 @@ class ScrapeWorker:
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
                 await self.create_doc_document(document)
+
+            await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
             await self.scrape_task.update(
                 Push({SiteScrapeTask.retrieved_document_ids: document.id})
             )
@@ -408,3 +410,6 @@ class ScrapeWorker:
 
         await self.wait_for_completion_or_cancel(tasks)
         await self.downloader.close()
+
+        if not self.scrape_task.documents_found:
+            raise NoDocsCollectedException("No documents collected.")

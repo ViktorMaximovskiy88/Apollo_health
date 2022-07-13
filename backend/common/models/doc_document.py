@@ -7,15 +7,23 @@ from backend.common.models.base_document import BaseDocument
 
 class TherapyTag(BaseModel):
     text: str
-    page: int
+    page: int = 0
     code: str
-    score: float
-    relevancy: float
+    name: str
+    score: float = 0
+    relevancy: float = 0
+
+    def __hash__(self):
+        return hash(tuple(self.__dict__.values()))
 
 
 class IndicationTag(BaseModel):
     text: str
     code: int
+    page: int = 0
+
+    def __hash__(self):
+        return hash(tuple(self.__dict__.values()))
 
 
 class TaskLock(BaseModel):
@@ -26,7 +34,7 @@ class TaskLock(BaseModel):
 
 class DocDocument(BaseDocument):
     site_id: Indexed(PydanticObjectId)  # type: ignore
-    retrieved_document_id: PydanticObjectId
+    retrieved_document_id: Indexed(PydanticObjectId)  # type: ignore
     classification_status: TaskStatus = TaskStatus.QUEUED
     classification_lock: TaskLock | None = None
 
@@ -71,6 +79,11 @@ class DocDocument(BaseDocument):
     automated_content_extraction_class: str | None = None
 
     tags: list[str] = []
+
+
+class DocDocumentLimitTags(DocDocument):
+    class Settings:
+        projection = {"therapy_tags": {"$slice": 10}, "indication_tags": {"$slice": 10}}
 
 
 class UpdateTherapyTag(BaseModel):

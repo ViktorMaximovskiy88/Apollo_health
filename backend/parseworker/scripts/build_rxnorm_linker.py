@@ -4,7 +4,6 @@ import os
 import tempfile
 from scispacy.candidate_generation import create_tfidf_ann_index
 
-from smart_open import smart_open
 from backend.common.storage.client import ModelStorageClient
 
 client = ModelStorageClient()
@@ -45,7 +44,7 @@ for line in client.read_lines(input_path):
         record['aliases'].add(name)
         record['types'].add(term_type)
 
-with tempfile.NamedTemporaryFile('w') as file:
+with tempfile.NamedTemporaryFile('w', suffix='jsonl') as file:
     for record in data_by_rxcui.values():
         if 'canonical_name' not in record:
             continue
