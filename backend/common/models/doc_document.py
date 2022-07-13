@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from backend.common.core.enums import LangCode, TaskStatus
 from backend.common.models.base_document import BaseDocument
 
+
 class TherapyTag(BaseModel):
     text: str
     page: int = 0
@@ -15,6 +16,7 @@ class TherapyTag(BaseModel):
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))
 
+
 class IndicationTag(BaseModel):
     text: str
     code: int
@@ -23,6 +25,7 @@ class IndicationTag(BaseModel):
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))
 
+
 class TaskLock(BaseModel):
     work_queue_id: PydanticObjectId
     user_id: PydanticObjectId
@@ -30,11 +33,11 @@ class TaskLock(BaseModel):
 
 
 class DocDocument(BaseDocument):
-    site_id: Indexed(PydanticObjectId) # type: ignore
+    site_id: Indexed(PydanticObjectId)  # type: ignore
     retrieved_document_id: Indexed(PydanticObjectId)  # type: ignore
     classification_status: TaskStatus = TaskStatus.QUEUED
     classification_lock: TaskLock | None = None
-    
+
     name: str
     checksum: str
 
@@ -61,25 +64,27 @@ class DocDocument(BaseDocument):
     # Lineage
     lineage_id: PydanticObjectId | None = None
     version: str | None = None
-    
+
     # URLs
     url: str | None
     base_url: str | None
-    link_text: str
+    link_text: str | None
 
     lang_code: LangCode | None
-    
+
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
-    
+
     automated_content_extraction: bool = False
     automated_content_extraction_class: str | None = None
 
     tags: list[str] = []
 
+
 class DocDocumentLimitTags(DocDocument):
     class Settings:
-        projection = { 'therapy_tags': { '$slice': 10 }, 'indication_tags': { '$slice': 10 } }
+        projection = {"therapy_tags": {"$slice": 10}, "indication_tags": {"$slice": 10}}
+
 
 class UpdateTherapyTag(BaseModel):
     text: str | None = None
@@ -88,12 +93,14 @@ class UpdateTherapyTag(BaseModel):
     score: float | None = None
     relevancy: float | None = None
 
+
 class UpdateIndicationTag(BaseModel):
     text: str | None = None
     page: int | None = None
     code: str | None = None
     score: float | None = None
     relevancy: float | None = None
+
 
 class UpdateDocDocument(BaseDocument):
     classification_status: TaskStatus = TaskStatus.QUEUED
@@ -116,12 +123,12 @@ class UpdateDocDocument(BaseDocument):
 
     lineage_id: PydanticObjectId | None = None
     version: str | None = None
-    
+
     lang_code: LangCode | None
-    
+
     therapy_tags: list[UpdateTherapyTag] | None = None
     indication_tags: list[UpdateIndicationTag] | None = None
-    
+
     automated_content_extraction: bool = False
     automated_content_extraction_class: str | None = None
     tags: list[str] | None = None
