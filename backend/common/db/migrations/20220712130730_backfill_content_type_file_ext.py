@@ -1,32 +1,44 @@
-from beanie import iterative_migration
+import logging
+from beanie import free_fall_migration
 from backend.common.models.document import RetrievedDocument
 from backend.scrapeworker.common.models import extension_to_mimetype_map
 
 
 class Forward:
-    @iterative_migration()
-    async def backfill_content_type_file_ext(
-        self,
-        input_document: RetrievedDocument,
-        output_document: RetrievedDocument,
-    ):
-        output_document.file_extension: str = (
-            "pdf"
-            if input_document.file_extension is None
-            else input_document.file_extension
+    @free_fall_migration(document_models=[RetrievedDocument])
+    async def backfill_content_type_file_ext(self, session):
+
+        # updating docx, xlsx (very few since rollout)
+        for ext in ["xlsx", "docx"]:
+            result = await RetrievedDocument.get_motor_collection().update_many(
+                {"file_extension": ext, "content_type": None},
+                {"$set": {"content_type": extension_to_mimetype_map[ext]}},
+            )
+            logging.info(
+                f"updating {ext} -> acknowledged={result.acknowledged} matched_count={result.matched_count} modified_count={result.modified_count}"
+            )
+
+        # updating the rest... to be what code default was -> pdf
+        result = await RetrievedDocument.get_motor_collection().update_many(
+            {
+                "file_extension": {"$in": [None, "pdf"]},
+                "content_type": None,
+            },
+            {
+                "$set": {
+                    "file_extension": "pdf",
+                    "content_type": extension_to_mimetype_map["pdf"],
+                }
+            },
         )
 
-        if not input_document.content_type:
-            output_document.content_type = extension_to_mimetype_map[
-                output_document.file_extension
-            ]
+        logging.info(
+            f"updating pdf -> acknowledged={result.acknowledged} matched_count={result.matched_count} modified_count={result.modified_count}"
+        )
 
 
 class Backward:
-    @iterative_migration()
-    async def backfill_content_type_file_ext(
-        self,
-        input_document: RetrievedDocument,
-        output_document: RetrievedDocument,
-    ):
+    @free_fall_migration(document_models=[RetrievedDocument])
+    async def backfill_content_type_file_ext(self, session):
+        logging.info("there is no undo here")
         pass
