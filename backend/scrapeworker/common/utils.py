@@ -36,11 +36,10 @@ def get_extension_from_path_like(path_like: str | None) -> str | None:
         return None
 
     maybe_extension = pathlib.Path(os.path.basename(path_like))
-    return (
-        maybe_extension.suffix[1:]
-        if maybe_extension and maybe_extension.suffix
-        else None
-    )
+    if maybe_extension:
+        extension = maybe_extension.suffix[1:]
+        if extension in ["docx", "xlsx", "pdf", "html"]:
+            return extension
 
 
 def get_extension_from_content_type(content_type: str | None) -> str | None:
