@@ -12,9 +12,16 @@ class TherapyTag(BaseModel):
     score: float = 0
     relevancy: float = 0
 
+    def __hash__(self):
+        return hash(tuple(self.__dict__.values()))
+
 class IndicationTag(BaseModel):
     text: str
     code: int
+    page: int = 0
+
+    def __hash__(self):
+        return hash(tuple(self.__dict__.values()))
 
 class TaskLock(BaseModel):
     work_queue_id: PydanticObjectId
@@ -24,7 +31,7 @@ class TaskLock(BaseModel):
 
 class DocDocument(BaseDocument):
     site_id: Indexed(PydanticObjectId) # type: ignore
-    retrieved_document_id: PydanticObjectId
+    retrieved_document_id: Indexed(PydanticObjectId)  # type: ignore
     classification_status: TaskStatus = TaskStatus.QUEUED
     classification_lock: TaskLock | None = None
     

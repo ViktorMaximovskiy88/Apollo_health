@@ -1,46 +1,47 @@
-import re
-from typing import Pattern
+import asyncio
 from backend.common.models.doc_document import IndicationTag
 from backend.common.models.indication import Indication
+import spacy
+from spacy.tokens import Span
 
 
 class IndicationTagger():
     def __init__(self) -> None:
         self.terms: dict[str, list[Indication]] = {}
-        self.terms_regex: Pattern[str] | None = None
+        self.nlp = None
+        self.lock = asyncio.Lock()
 
-    async def terms_by_ind(self) -> dict[str, list[Indication]]:
-        if not self.terms:
-            async for indication in Indication.find():
-                for term in indication.terms:
-                    self.terms.setdefault(term, []).append(indication)
-                pass
-        return self.terms
-    
-    async def get_terms_regex(self) -> Pattern[str]:
-        if not self.terms_regex:
-            rgx_list = []
-            for term in await self.terms_by_ind():
-                rgx_list.append(f"(\\b{term}\\b)")
-            rgx = re.compile('|'.join(rgx_list), re.IGNORECASE)
-            self.terms_regex = rgx
-
-        return self.terms_regex
+    async def model(self):
+        if not self.nlp:
+            async with self.lock:
+                self.nlp = spacy.blank('en')
+                self.nlp.max_length = 10000000
+                ruler = self.nlp.add_pipe("span_ruler", config={ 'spans_key': 'sc', "phrase_matcher_attr": "LOWER" })
+                async for indication in Indication.find():
+                    for term in indication.terms:
+                        ruler.add_patterns([{  # type: ignore
+                            "label": f"{term}|{indication.indication_number}",
+                            "pattern": term
+                        }])
+        return self.nlp
 
     async def tag_document(self, text: str) -> list[IndicationTag]:
-        tags = []
-        if match := (await self.get_terms_regex()).search(text):
-            groups = match.groups()
-            for i, indications in enumerate((await self.terms_by_ind()).values()):
-                found = groups[i]
-                if not found:
-                    continue 
-
-                for indication in indications:
-                    tags.append(
-                        IndicationTag(
-                            text=found,
-                            code=indication.indication_number
-                        )
+        tags = set()
+        nlp = await self.model()
+        pages = text.split("\f")
+        loop = asyncio.get_running_loop()
+        for i, page in enumerate(pages):
+            doc = await loop.run_in_executor(None, nlp, page)
+            spans: list[Span] = doc.spans['sc']
+            for span in spans:
+                text = span.text
+                lexeme = span.vocab[span.label]
+                term, indication_number = lexeme.text.split('|')
+                tags.add(
+                    IndicationTag(
+                        text=term,
+                        page=i,
+                        code=int(indication_number),
                     )
-        return tags
+                )
+        return list(tags)

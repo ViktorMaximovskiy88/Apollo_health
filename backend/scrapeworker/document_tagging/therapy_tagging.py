@@ -1,3 +1,4 @@
+import asyncio
 import tempfile
 
 import spacy
@@ -18,20 +19,22 @@ class TherapyTagger():
             self.nlp.max_length = 10000000
         except:
             print(f"RxNorm Span Ruler Model not found and therefore not loaded")
-        
     
-    async def tag_document(self, text: str) -> list[TherapyTag]:
+    async def tag_document(self, full_text: str) -> list[TherapyTag]:
         if not self.nlp:
             return []
 
-        doc = self.nlp(text)
-        tags: dict[str, TherapyTag] = {}
-        for span in doc.spans['sc']:
-            text = span.text
-            lexeme = span.vocab[span.label]
-            rxnorm, display_name = lexeme.text.split('|')
-            tag = TherapyTag(text=text, code=rxnorm, name=display_name)
-            if rxnorm not in tags:
-                tags[rxnorm] = tag
+        tags: set[TherapyTag] = set()
 
-        return list(tags.values())
+        pages = full_text.split("\f")
+        loop = asyncio.get_running_loop()
+        for i, page in enumerate(pages):
+            doc = await loop.run_in_executor(None, self.nlp, page)
+            for span in doc.spans['sc']:
+                text = span.text
+                lexeme = span.vocab[span.label]
+                rxnorm, display_name = lexeme.text.split('|')
+                tag = TherapyTag(text=text, code=rxnorm, name=display_name, page=i)
+                tags.add(tag)
+
+        return list(tags)

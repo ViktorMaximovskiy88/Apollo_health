@@ -157,7 +157,6 @@ class ScrapeWorker:
         async for (temp_path, checksum) in self.downloader.download_to_tempfile(
             download, proxies
         ):
-            await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
 
             parsed_content = await parse_by_type(temp_path, download, self.taggers)
             if parsed_content is None:
@@ -230,6 +229,8 @@ class ScrapeWorker:
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
                 await self.create_doc_document(document)
+
+            await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
             await self.scrape_task.update(
                 Push({SiteScrapeTask.retrieved_document_ids: document.id})
             )
