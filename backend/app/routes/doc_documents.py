@@ -4,7 +4,7 @@ from beanie import PydanticObjectId
 from beanie.odm.operators.update.general import Set
 from fastapi import APIRouter, Depends, HTTPException, Request, status, Security
 from backend.app.routes.table_query import TableFilterInfo, TableQueryResponse, TableSortInfo, query_table
-from backend.common.models.doc_document import DocDocument, UpdateDocDocument
+from backend.common.models.doc_document import DocDocument, DocDocumentLimitTags, UpdateDocDocument
 from backend.common.models.site import Site
 from backend.common.models.user import User
 from backend.app.utils.logger import (
@@ -51,7 +51,7 @@ async def read_doc_documents(
     sorts: list[TableSortInfo] = Depends(get_query_json_list('sorts', TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list('filters', TableFilterInfo))
 ):
-    query = DocDocument.find({})
+    query = DocDocument.find({}).project(DocDocumentLimitTags)
     return await query_table(query, limit, skip, sorts, filters)
 
 @router.get(

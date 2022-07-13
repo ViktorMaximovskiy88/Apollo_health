@@ -11,7 +11,6 @@ from backend.common.storage.client import ModelStorageClient
 
 class RxNormEntityLinkerModel():
     def __init__(self, version = 'latest'):
-        self.version = version
         self.client = ModelStorageClient()
         self.tempdir = tempfile.TemporaryDirectory()
         dirname = self.tempdir.name

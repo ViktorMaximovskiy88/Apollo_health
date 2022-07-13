@@ -6,10 +6,11 @@ from backend.common.models.base_document import BaseDocument
 
 class TherapyTag(BaseModel):
     text: str
-    page: int
+    page: int = 0
     code: str
-    score: float
-    relevancy: float
+    name: str
+    score: float = 0
+    relevancy: float = 0
 
 class IndicationTag(BaseModel):
     text: str
@@ -19,6 +20,7 @@ class TaskLock(BaseModel):
     work_queue_id: PydanticObjectId
     user_id: PydanticObjectId
     expires: datetime
+
 
 class DocDocument(BaseDocument):
     site_id: Indexed(PydanticObjectId) # type: ignore
@@ -67,6 +69,10 @@ class DocDocument(BaseDocument):
     automated_content_extraction_class: str | None = None
 
     tags: list[str] = []
+
+class DocDocumentLimitTags(DocDocument):
+    class Settings:
+        projection = { 'therapy_tags': { '$slice': 10 }, 'indication_tags': { '$slice': 10 } }
 
 class UpdateTherapyTag(BaseModel):
     text: str | None = None
