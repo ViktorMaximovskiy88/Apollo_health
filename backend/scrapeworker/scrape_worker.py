@@ -161,7 +161,6 @@ class ScrapeWorker:
         async for (temp_path, checksum) in self.downloader.download_to_tempfile(
             download, proxies
         ):
-
             parsed_content = await parse_by_type(temp_path, download, self.taggers)
             if parsed_content is None:
                 continue
@@ -173,7 +172,9 @@ class ScrapeWorker:
             logging.info(f"dest_path={dest_path} temp_path={temp_path}")
 
             if not self.doc_client.object_exists(dest_path):
-                self.doc_client.write_object(dest_path, temp_path)
+                self.doc_client.write_object(
+                    dest_path, temp_path, download.content_type
+                )
                 await self.scrape_task.update(
                     Inc({SiteScrapeTask.new_documents_found: 1})
                 )
@@ -221,6 +222,7 @@ class ScrapeWorker:
                     next_update_date=parsed_content["next_update_date"],
                     published_date=parsed_content["published_date"],
                     file_extension=download.file_extension,
+                    content_type=download.response.content_type,
                     first_collected_date=now,
                     identified_dates=parsed_content["identified_dates"],
                     lang_code=parsed_content["lang_code"],

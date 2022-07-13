@@ -54,12 +54,14 @@ date_rgxs = compile_date_rgx()
 label_rgxs = compile_label_rgx()
 
 # the builtin mimetype map is lacking some
-mimetype_map = {
+mimetype_to_extension_map = {
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
     "application/pdf": "pdf",
     "text/html": "html",
 }
+
+extension_to_mimetype_map = {v: k for k, v in mimetype_to_extension_map.items()}
 
 
 def get_extension_from_path_like(path_like: str | None) -> str | None:
@@ -77,7 +79,7 @@ def get_extension_from_content_type(content_type: str | None) -> str | None:
     if content_type is None:
         return None
 
-    return mimetype_map.get(content_type) or None
+    return mimetype_to_extension_map.get(content_type) or None
 
 
 def get_extension_from_file_mime_type(file_path: str | None):
@@ -86,4 +88,4 @@ def get_extension_from_file_mime_type(file_path: str | None):
 
     mime = magic.Magic(mime=True)
     mime_type = mime.from_file(file_path)
-    return mimetype_map.get(mime_type) or None
+    return mimetype_to_extension_map.get(mime_type) or None

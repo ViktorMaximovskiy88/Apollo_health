@@ -32,6 +32,7 @@ class RetrievedDocument(BaseDocument):
     base_url: str | None = None
     lang_code: LangCode | None = None
     file_extension: str | None = None
+    content_type: str | None = None
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
@@ -64,7 +65,6 @@ class UpdateRetrievedDocument(BaseModel):
     metadata: dict | None = None
     context_metadata: dict | None = None
     lang_code: LangCode | None = None
-    file_extension: str | None = None
 
     therapy_tags: list[TherapyTag] | None = None
     indication_tags: list[IndicationTag] | None = None

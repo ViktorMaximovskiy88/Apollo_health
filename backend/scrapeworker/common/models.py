@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from backend.scrapeworker.playbook import PlaybookContext
 from backend.scrapeworker.common.utils import (
+    extension_to_mimetype_map,
     get_extension_from_path_like,
     get_extension_from_path_like,
     get_extension_from_content_type,
@@ -70,7 +71,9 @@ class Download(BaseModel):
     file_extension: str | None = None
     file_path: str | None = None
     file_hash: str | None = None
+
     content_hash: str | None = None
+    content_type: str | None = None
 
     def guess_extension(self) -> str | None:
         guess_ext = get_extension_from_path_like(self.request.url)
@@ -86,3 +89,4 @@ class Download(BaseModel):
             guess_ext = get_extension_from_file_mime_type(self.file_path)
 
         self.file_extension = guess_ext
+        self.content_type = extension_to_mimetype_map[guess_ext] or None
