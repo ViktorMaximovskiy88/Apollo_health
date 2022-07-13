@@ -22,6 +22,7 @@ class RetrievedDocument(BaseDocument):
     effective_date: datetime | None = None
     end_date: datetime | None = None
     last_updated_date: datetime | None = None
+    last_reviewed_date: datetime | None = None
     next_review_date: datetime | None = None
     next_update_date: datetime | None = None
     published_date: datetime | None = None
@@ -44,6 +45,7 @@ class UpdateRetrievedDocument(BaseModel):
     effective_date: datetime | None = None
     end_date: datetime | None = None
     last_updated_date: datetime | None = None
+    last_reviewed_date: datetime | None = None
     next_review_date: datetime | None = None
     next_update_date: datetime | None = None
     published_date: datetime | None = None

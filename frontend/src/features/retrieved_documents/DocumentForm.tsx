@@ -15,12 +15,8 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
   const [form] = useForm();
   const doc = props.doc;
 
-  const [automatedExtraction, setAutomatedExtraction] = useState(
-    doc.automated_content_extraction
-  );
-  const [docTypeConfidence, setDocTypeConfidence] = useState(
-    doc.doc_type_confidence
-  );
+  const [automatedExtraction, setAutomatedExtraction] = useState(doc.automated_content_extraction);
+  const [docTypeConfidence, setDocTypeConfidence] = useState(doc.doc_type_confidence);
 
   function setFormState(modified: Partial<RetrievedDocument>) {
     if (modified.automated_content_extraction !== undefined) {
@@ -64,6 +60,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     effective_date: convertDate(doc.effective_date),
     end_date: convertDate(doc.end_date),
     last_updated_date: convertDate(doc.last_updated_date),
+    last_reviewed_date: convertDate(doc.last_reviewed_date),
     next_review_date: convertDate(doc.next_review_date),
     next_update_date: convertDate(doc.next_update_date),
     published_date: convertDate(doc.published_date),
@@ -86,9 +83,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     { value: 'other', label: 'Other' },
   ];
 
-  const confidencePercent = docTypeConfidence
-    ? `${Math.floor(docTypeConfidence * 100)}%`
-    : '-';
+  const confidencePercent = docTypeConfidence ? `${Math.floor(docTypeConfidence * 100)}%` : '-';
 
   const extractionOptions = [
     { value: 'BasicTableExtraction', label: 'Basic Table Extraction' },
@@ -100,28 +95,27 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     {
       name: 'effective_date',
       label: 'Effective Date',
-      value: doc.effective_date,
     },
-    { name: 'end_date', label: 'End Date', value: doc.end_date },
+    { name: 'end_date', label: 'End Date' },
     {
       name: 'last_updated_date',
       label: 'Last Updated Date',
-      value: doc.last_updated_date,
+    },
+    {
+      name: 'last_reviewed_date',
+      label: 'Last Reviewed Date',
     },
     {
       name: 'next_review_date',
       label: 'Next Review Date',
-      value: doc.next_review_date,
     },
     {
       name: 'next_update_date',
       label: 'Next Update Date',
-      value: doc.next_update_date,
     },
     {
       name: 'published_date',
       label: 'Published Date',
-      value: doc.published_date,
     },
   ];
 
@@ -150,17 +144,8 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
       <div className="flex flex-wrap gap-x-3">
         {dateFields.map((field, i) => {
           return (
-            <Form.Item
-              key={i}
-              name={field.name}
-              label={field.label}
-              style={{ flex: '1 0 32%' }}
-            >
-              <DatePicker
-                disabled
-                placeholder=""
-                format={(value) => prettyDate(value.toDate())}
-              />
+            <Form.Item key={i} name={field.name} label={field.label} style={{ flex: '1 0 32%' }}>
+              <DatePicker disabled placeholder="" format={(value) => prettyDate(value.toDate())} />
             </Form.Item>
           );
         })}
@@ -178,10 +163,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
         <Switch />
       </Form.Item>
       {automatedExtraction && (
-        <Form.Item
-          name="automated_content_extraction_class"
-          label="Extraction Strategy"
-        >
+        <Form.Item name="automated_content_extraction_class" label="Extraction Strategy">
           <Select options={extractionOptions} />
         </Form.Item>
       )}

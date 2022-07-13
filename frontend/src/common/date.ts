@@ -5,17 +5,34 @@ import { DateTime, Duration } from 'luxon';
  * If not render a default missing placeholder value.
  * @param value
  * @param dateFormat
+ * @param toLocal
  * @returns
  */
 export function prettyFromISO(
   value?: string,
-  dateFormat = DateTime.DATETIME_FULL_WITH_SECONDS
+  dateFormat = DateTime.DATETIME_FULL_WITH_SECONDS,
+  toLocal = true,
 ): string {
-  return value
-    ? DateTime.fromISO(value, { zone: 'utc' })
-        .toLocal()
-        .toLocaleString(dateFormat)
-    : '';
+  if (value) {
+    let dateTime = DateTime.fromISO(value, { zone: 'utc' })
+    if (toLocal) dateTime = dateTime.toLocal();
+    return dateTime.toLocaleString(dateFormat); 
+  } else {
+    return '';
+  }
+}
+
+/**
+ * Short date format in UTC
+ * @param value
+ * @param dateFormat
+ * @returns
+ */
+ export function prettyDateUTCFromISO(
+  value?: string,
+  dateFormat = DateTime.DATE_MED
+): string {
+  return prettyFromISO(value, dateFormat, false);
 }
 
 /**
