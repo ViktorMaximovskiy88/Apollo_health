@@ -40,7 +40,7 @@ class BaseS3Client:
         self,
         relative_key,
         temp_object_path,
-        content_type="application/pdf",  # TODO rxnormlinker users this but not for pd
+        content_type: str | None ="application/pdf",  # TODO rxnormlinker users this but not for pd
     ):
         self.bucket.upload_file(
             Filename=temp_object_path,

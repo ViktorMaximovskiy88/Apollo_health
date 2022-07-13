@@ -17,6 +17,7 @@ from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
+from playwright.async_api import Response as PlaywrightResponse
 from playwright.async_api import (
     Browser,
     BrowserContext,
@@ -307,7 +308,7 @@ class ScrapeWorker:
         logging.info(f"Creating context for {url}")
         context: BrowserContext | None = None
         page: Page | None = None
-        response: Response | None = None
+        response: PlaywrightResponse | None = None
         async for attempt, proxy in self.try_each_proxy():
             with attempt:
                 context = await self.get_browser_context(proxy)
