@@ -11,6 +11,7 @@ class TherapyTagger():
         self.client = ModelStorageClient()
         self.tempdir = tempfile.TemporaryDirectory()
         dirname = self.tempdir.name
+        self.nlp = None
         try:
             self.client.download_directory(f'rxnorm-span/latest', dirname)
             self.nlp = spacy.load(dirname)

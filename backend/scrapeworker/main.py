@@ -1,6 +1,7 @@
 import asyncio
 from pathlib import Path
 import sys
+import traceback
 from typing import Any, Callable, Coroutine
 from uuid import uuid4
 from beanie import PydanticObjectId
@@ -134,6 +135,8 @@ async def start_worker_async(worker_id):
                     ignore_https_errors=True
                 )
             except:
+                print("Lost Browser")
+                traceback.print_exc()
                 browser = await playwright.chromium.launch()
                 return await browser.new_context(
                     extra_http_headers=default_headers,
@@ -142,7 +145,7 @@ async def start_worker_async(worker_id):
                 )
 
         workers = []
-        for _ in range(5):
+        for _ in range(2):
             workers.append(worker_fn(worker_id, playwright, get_browser_context))
         await asyncio.gather(*workers)
     typer.secho(f"Shutdown Complete", fg=typer.colors.BLUE)

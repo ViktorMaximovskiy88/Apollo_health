@@ -253,7 +253,7 @@ class ScrapeWorker:
                 for t in tasks:
                     t.cancel()
                 raise CanceledTaskException("Task was canceled.")
-            await asyncio.sleep(1)
+            await asyncio.sleep(5)
 
     async def wait_for_completion_or_cancel(
         self, downloads: list[Coroutine[None, None, None]]
