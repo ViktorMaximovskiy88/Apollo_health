@@ -80,7 +80,7 @@ class BaseS3Client:
         except ClientError as ex:
             return False
 
-    def get_signed_url(self, relative_key, expires_in_seconds=5):
+    def get_signed_url(self, relative_key, expires_in_seconds=10):
         key = self.get_full_path(relative_key)[1:]
         return self.s3.meta.client.generate_presigned_url(
             ClientMethod="get_object",
