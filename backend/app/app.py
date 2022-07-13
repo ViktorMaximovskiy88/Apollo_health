@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from backend.app.scripts.add_user import create_admin_user
+from backend.app.scripts.add_user import create_system_users
 from backend.app.scripts.create_proxy_records import create_proxies
 from backend.common.db.init import init_db
 from backend.common.db.migrations import run_migrations
@@ -31,9 +31,7 @@ async def app_init():
     await init_db()
     if settings.is_local:
         await run_migrations()
-    if await User.count() == 0:
-        user, plain_pass = await create_admin_user()
-        print(f"Created admin user with email: {user}, password: {plain_pass}")
+    await create_system_users()        
     if not settings.disable_proxies and await Proxy.count() == 0:
         await create_proxies()
 

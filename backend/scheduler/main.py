@@ -44,7 +44,7 @@ def compute_matching_crons(now: datetime):
 
 
 async def get_schedule_user():
-    user = await User.by_email("admin@mmitnetwork.com")
+    user = await User.by_email("scheduler@mmitnetwork.com")
     if not user:
         raise Exception("No schedular found")
     return user
