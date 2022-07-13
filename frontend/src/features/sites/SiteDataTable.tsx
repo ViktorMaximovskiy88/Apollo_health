@@ -1,183 +1,45 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
-import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
-import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
-import { Popconfirm, Tag, notification } from 'antd';
 import { ReactNode, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSiteTableFilter, setSiteTableSort, siteTableState } from '../../app/uiSlice';
-import {
-  prettyDateTimeFromISO,
-  TaskStatus,
-  scrapeTaskStatusDisplayName as displayName,
-  scrapeTaskStatusStyledDisplay as styledDisplay,
-} from '../../common';
-import { isErrorWithData } from '../../common/helpers';
-import { ButtonLink, GridPaginationToolbar } from '../../components';
-import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { useDeleteSiteMutation, useGetChangeLogQuery, useLazyGetSitesQuery } from './sitesApi';
+import { TaskStatus } from '../../common';
+import { GridPaginationToolbar } from '../../components';
+import { useDeleteSiteMutation, useLazyGetSitesQuery } from './sitesApi';
 import { Site } from './types';
-import { SiteStatus, siteStatusDisplayName, siteStatusStyledDisplay } from './siteStatus';
 import { useInterval } from '../../common/hooks';
 import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
+import { createColumns } from './createColumns';
+import { DateTime } from 'luxon';
 
-const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
-
-const createColumns = (deleteSite: any) => {
-  async function handleDeleteSite(site: Site) {
-    try {
-      await deleteSite(site).unwrap();
-      notification.success({
-        message: 'Site Deleted',
-        description: `Successfully deleted ${site.name}`,
-      });
-    } catch (err) {
-      if (isErrorWithData(err)) {
-        notification.error({
-          message: `Can't Delete ${site.name}`,
-          description: `${err.data.detail}`,
-        });
-      } else {
-        notification.error({
-          message: "Can't Delete Site",
-          description: JSON.stringify(err),
-        });
-      }
-    }
+function isFailedLastSevenDays(site: Site) {
+  if (site.last_run_status !== TaskStatus.Failed) {
+    return false;
   }
+  if (!site.last_run_time) {
+    return false;
+  }
+  const lastRunTime = DateTime.fromISO(site.last_run_time);
+  const sevenDaysAgo = DateTime.now().minus({ days: 7 });
+  if (lastRunTime < sevenDaysAgo) {
+    return false;
+  }
+  return true;
+}
 
-  return [
-    {
-      header: 'Name',
-      name: 'name',
-      render: ({ data: site }: { data: Site }) => {
-        return <ButtonLink to={`${site._id}/scrapes`}>{site.name}</ButtonLink>;
-      },
-      defaultFlex: 1,
-    },
-    {
-      header: 'Site Status',
-      name: 'status',
-      minWidth: 200,
-      filterEditor: SelectFilter,
-      filterEditorProps: {
-        placeholder: 'All',
-        dataSource: [
-          {
-            id: SiteStatus.New,
-            label: siteStatusDisplayName(SiteStatus.New),
-          },
-          {
-            id: SiteStatus.QualityHold,
-            label: siteStatusDisplayName(SiteStatus.QualityHold),
-          },
-          {
-            id: SiteStatus.Online,
-            label: siteStatusDisplayName(SiteStatus.Online),
-          },
-          {
-            id: SiteStatus.Inactive,
-            label: siteStatusDisplayName(SiteStatus.Inactive),
-          },
-        ],
-      },
-      render: ({ value: status }: { value: SiteStatus }) => {
-        return siteStatusStyledDisplay(status);
-      },
-    },
-    {
-      header: 'Last Run Time',
-      name: 'last_run_time',
-      minWidth: 200,
-      filterEditor: DateFilter,
-      filterEditorProps: () => {
-        return {
-          dateFormat: 'YYYY-MM-DD',
-          highlightWeekends: false,
-          placeholder: 'Select Date',
-        };
-      },
-      render: ({ value: last_run_time }: { value: string | undefined }) => {
-        if (!last_run_time) return null;
-        return prettyDateTimeFromISO(last_run_time);
-      },
-    },
-    {
-      header: 'Last Run Status',
-      name: 'last_run_status',
-      minWidth: 200,
-      filterEditor: SelectFilter,
-      filterEditorProps: {
-        placeholder: 'All',
-        dataSource: [
-          {
-            id: TaskStatus.Finished,
-            label: displayName(TaskStatus.Finished),
-          },
-          {
-            id: TaskStatus.Canceled,
-            label: displayName(TaskStatus.Canceled),
-          },
-          {
-            id: TaskStatus.Queued,
-            label: displayName(TaskStatus.Queued),
-          },
-          {
-            id: TaskStatus.Failed,
-            label: displayName(TaskStatus.Failed),
-          },
-          {
-            id: TaskStatus.InProgress,
-            label: displayName(TaskStatus.InProgress),
-          },
-        ],
-      },
-      render: ({ value: status }: { value: TaskStatus }) => {
-        return styledDisplay(status);
-      },
-    },
-    {
-      header: 'Tags',
-      name: 'tags',
-      render: ({ value }: { value: string[] }) => {
-        return value
-          .filter((tag) => tag)
-          .map((tag) => {
-            const simpleHash = tag
-              .split('')
-              .map((c) => c.charCodeAt(0))
-              .reduce((a, b) => a + b);
-            const color = colors[simpleHash % colors.length];
-            return (
-              <Tag color={color} key={tag}>
-                {tag}
-              </Tag>
-            );
-          });
-      },
-    },
-    {
-      header: 'Actions',
-      name: 'action',
-      minWidth: 180,
-      render: ({ data: site }: { data: Site }) => {
-        return (
-          <>
-            <ButtonLink to={`${site._id}/edit`}>Edit</ButtonLink>
-            <ChangeLogModal target={site} useChangeLogQuery={useGetChangeLogQuery} />
-            <Popconfirm
-              title={`Are you sure you want to delete '${site.name}'?`}
-              okText="Yes"
-              cancelText="No"
-              onConfirm={() => handleDeleteSite(site)}
-            >
-              <ButtonLink danger>Delete</ButtonLink>
-            </Popconfirm>
-          </>
-        );
-      },
-    },
-  ];
-};
+interface QuickFilterType {
+  assignedToMe: boolean;
+  unassigned: boolean;
+  failedLastSevenDays: boolean;
+}
+export function executeQuickFilter(quickFilter: QuickFilterType) {
+  return function (site: Site) {
+    if (quickFilter.failedLastSevenDays && !isFailedLastSevenDays(site)) {
+      return false;
+    }
+    // TODO: add assignedToMe and unassigned logic after roles are added
+    return true;
+  };
+}
 
 function disableLoadingMask(data: {
   visible: boolean;
@@ -209,11 +71,13 @@ export function SiteDataTable() {
   const loadData = useCallback(
     async (tableInfo: any) => {
       const { data } = await getSitesFn(tableInfo);
-      const sites = data?.data || [];
-      const count = data?.total || 0;
+      const { quickFilter } = tableState;
+      let sites = data?.data ?? [];
+      sites = sites.filter(executeQuickFilter(quickFilter));
+      const count = sites.length;
       return { data: sites, count };
     },
-    [getSitesFn, watermark]
+    [getSitesFn, watermark, tableState]
   );
 
   const renderPaginationToolbar = useCallback(
@@ -226,7 +90,7 @@ export function SiteDataTable() {
         />
       );
     },
-    [isActive]
+    [isActive, setActive]
   );
 
   return (

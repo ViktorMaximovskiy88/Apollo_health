@@ -1,5 +1,4 @@
 import { Button, Layout, Upload, Dropdown, Space, Menu, notification } from 'antd';
-import { SyncOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRunBulkMutation } from '../collections/siteScrapeTasksApi';
@@ -10,47 +9,7 @@ import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
 
 import { SiteDataTable } from './SiteDataTable';
-
-function QuickFilters() {
-  const reset = () => {
-    console.log('does stuff');
-  };
-  const menu = (
-    <Menu
-      // onClick={({ key }) => onMenuSelect(key)}
-      items={[
-        {
-          key: 'assigned-to-me',
-          label: 'Assigned to me',
-          disabled: true,
-        },
-        {
-          key: 'failed-last-7-days-unassigned',
-          label: 'Failed last 7 days & Unassigned',
-          disabled: true,
-        },
-        {
-          key: 'failed-last-7-days',
-          label: 'Failed last 7 days',
-        },
-      ]}
-    />
-  );
-  return (
-    <>
-      <Button onClick={reset}>
-        <SyncOutlined />
-      </Button>
-      <Dropdown overlay={menu}>
-        <Space>
-          <Button>
-            Quick Filters <DownOutlined className="text-sm" />
-          </Button>
-        </Space>
-      </Dropdown>
-    </>
-  );
-}
+import { QuickFilter } from './QuickFilter';
 
 function CreateSite() {
   return (
@@ -154,7 +113,7 @@ export function SitesHomePage() {
       <div className="flex">
         <SiteBreadcrumbs />
         <div className="ml-auto space-x-2">
-          <QuickFilters />
+          <QuickFilter />
           <CreateSite />
           <BulkActions />
           <BulkUpload />

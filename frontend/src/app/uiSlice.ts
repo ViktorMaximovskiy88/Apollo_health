@@ -86,6 +86,11 @@ const initialState = {
           value: null,
         },
       ],
+      quickFilter: {
+        assignedToMe: false,
+        unassigned: false,
+        failedLastSevenDays: false,
+      },
     },
   },
   doc_documents: {
@@ -108,6 +113,9 @@ export const uiSlice = createSlice({
     },
     setSiteTableSort: (state, action: PayloadAction<any>) => {
       state.sites.table.sort = action.payload;
+    },
+    setSiteTableQuickFilter: (state, action: PayloadAction<any>) => {
+      state.sites.table.quickFilter = action.payload;
     },
     setDocDocumentTableFilter: (state, action: PayloadAction<any>) => {
       state.doc_documents.table.filter = action.payload;
@@ -152,8 +160,7 @@ export const uiSlice = createSlice({
       if (!path.startsWith('/sites/')) {
         state.documents.table = initialState.documents.table;
         state.collections.table = initialState.collections.table;
-        state.extracted_documents.table =
-          initialState.extracted_documents.table;
+        state.extracted_documents.table = initialState.extracted_documents.table;
         state.extraction_tasks.table = initialState.extraction_tasks.table;
         state.extractions.table = initialState.extractions.table;
       }
@@ -199,6 +206,7 @@ export const extractionTableState = createSelector(
 export const {
   setSiteTableFilter,
   setSiteTableSort,
+  setSiteTableQuickFilter,
   setDocDocumentTableFilter,
   setDocDocumentTableSort,
   setCollectionTableFilter,
