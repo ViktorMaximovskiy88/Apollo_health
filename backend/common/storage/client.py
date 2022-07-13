@@ -23,10 +23,7 @@ class BaseS3Client:
                 config=Config(signature_version="s3v4"),
             )
         else:
-            self.s3 = boto3.resource(
-                "s3",
-                config=Config(signature_version="s3v4"),
-            )
+            self.s3 = boto3.resource("s3")
 
         self.bucket = self.s3.Bucket(settings.document_bucket)
 
@@ -40,7 +37,7 @@ class BaseS3Client:
         self,
         relative_key,
         temp_object_path,
-        content_type="application/pdf",  # TODO rxnorm_linker uses this; retrofit
+        content_type="application/pdf",  # TODO rxnormlinker users this but not for pd
     ):
         self.bucket.upload_file(
             Filename=temp_object_path,

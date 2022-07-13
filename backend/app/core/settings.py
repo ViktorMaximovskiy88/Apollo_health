@@ -13,6 +13,7 @@ class Auth0Settings(BaseSettings):
     audience: str = Field(env='AUTH0_AUDIENCE')
     issuer: str = Field(env='AUTH0_ISSUER')
     email_key: str = Field(default='https://mmit.com/email')
+    grant_key: str = Field(default='gty')
 
 class Settings(BaseSettings):
     secret_key: str

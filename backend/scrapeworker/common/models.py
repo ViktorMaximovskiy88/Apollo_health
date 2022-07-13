@@ -1,12 +1,15 @@
-import os
 import re
-import pathlib
-import magic
-
 from typing import Any
 from pydantic import BaseModel
 
 from backend.scrapeworker.playbook import PlaybookContext
+from backend.scrapeworker.common.utils import (
+    extension_to_mimetype_map,
+    get_extension_from_path_like,
+    get_extension_from_path_like,
+    get_extension_from_content_type,
+    get_extension_from_file_mime_type,
+)
 
 
 class Metadata(BaseModel):
@@ -83,45 +86,7 @@ class Download(BaseModel):
             guess_ext = get_extension_from_content_type(self.response.content_type)
 
         if not guess_ext:
-            guess_ext = get_extension_from_file(self.file_path)
+            guess_ext = get_extension_from_file_mime_type(self.file_path)
 
         self.file_extension = guess_ext
         self.content_type = extension_to_mimetype_map[guess_ext] or None
-
-
-#  TODO move all of this....
-mimetype_to_extension_map = {
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
-    "application/pdf": "pdf",
-    "text/html": "html",
-}
-
-extension_to_mimetype_map = {v: k for k, v in mimetype_to_extension_map.items()}
-
-
-def get_extension_from_path_like(path_like: str | None) -> str | None:
-    if path_like is None:
-        return None
-
-    maybe_extension = pathlib.Path(os.path.basename(path_like))
-    if maybe_extension:
-        extension = maybe_extension.suffix[1:]
-        if extension in ['docx', 'xlsx', 'pdf', 'html']:
-            return extension
-
-
-def get_extension_from_content_type(content_type: str | None) -> str | None:
-    if content_type is None:
-        return None
-
-    mimetype_to_extension_map.get(content_type) or None
-
-
-def get_extension_from_file(file_path: str | None):
-    if file_path is None:
-        return None
-
-    mime = magic.Magic(mime=True)
-    mime_type = mime.from_file(file_path)
-    mimetype_to_extension_map.get(mime_type) or None
