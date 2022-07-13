@@ -13,8 +13,8 @@ resource "aws_ecs_task_definition" "scrapeworker" {
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   # TODO: Make cpu, memory a variable and determine appropriate thresholds
-  cpu                      = 1024
-  memory                   = 2048
+  cpu                      = 2048
+  memory                   = 4096
   
 
   container_definitions = jsonencode([
