@@ -23,7 +23,10 @@ class BaseS3Client:
                 config=Config(signature_version="s3v4"),
             )
         else:
-            self.s3 = boto3.resource("s3")
+            self.s3 = boto3.resource(
+                "s3",
+                config=Config(signature_version="s3v4"),
+            )
 
         self.bucket = self.s3.Bucket(settings.document_bucket)
 
