@@ -4,28 +4,28 @@ import moment from 'moment';
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { prettyDate } from '../../common';
-import { useUpdateDocumentMutation } from './documentsApi';
-import { RetrievedDocument } from './types';
+import { DocDocument } from './types';
+import { useUpdateDocDocumentMutation } from './docDocumentApi';
 const { TextArea } = Input;
 
-export function DocumentForm(props: { doc: RetrievedDocument }) {
+export function DocDocumentForm(props: { doc: DocDocument }) {
   const navigate = useNavigate();
   const params = useParams();
-  const [updateDoc] = useUpdateDocumentMutation();
+  const [updateDocDocument] = useUpdateDocDocumentMutation();
   const [form] = useForm();
   const doc = props.doc;
 
   const [automatedExtraction, setAutomatedExtraction] = useState(doc.automated_content_extraction);
   const [docTypeConfidence, setDocTypeConfidence] = useState(doc.doc_type_confidence);
 
-  function setFormState(modified: Partial<RetrievedDocument>) {
+  function setFormState(modified: Partial<DocDocument>) {
     if (modified.automated_content_extraction !== undefined) {
       setAutomatedExtraction(modified.automated_content_extraction);
     } else if (modified.document_type !== undefined) {
       if (modified.document_type === doc.document_type) {
         setDocTypeConfidence(doc.doc_type_confidence);
       } else {
-        setDocTypeConfidence(undefined);
+        setDocTypeConfidence(-1);
       }
     }
   }
@@ -35,8 +35,8 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     navigate(-1);
   }
 
-  async function onFinish(doc: Partial<RetrievedDocument>) {
-    await updateDoc({
+  async function onFinish(doc: Partial<DocDocument>) {
+    await updateDocDocument({
       ...doc,
       _id: params.docId,
     });
@@ -162,14 +162,17 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
       >
         <Switch />
       </Form.Item>
+
       {automatedExtraction && (
         <Form.Item name="automated_content_extraction_class" label="Extraction Strategy">
           <Select options={extractionOptions} />
         </Form.Item>
       )}
+
       <Form.Item name="base_url" label="Base URL">
         <Input disabled />
       </Form.Item>
+
       <div className="flex space-x-2">
         <Form.Item name="link_text" label="Link Text">
           <TextArea disabled autoSize={true} />
