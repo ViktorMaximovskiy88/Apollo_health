@@ -305,6 +305,14 @@ class ScrapeWorker:
                 page = await context.new_page()
                 await stealth_async(page)
                 await page.goto(url, timeout=60000)
+                
+                try:
+                    if len(self.site.scrape_method_configuration.wait_for) > 0:
+                        await page.locator(', '.join(f":text('{wf}')" for wf in self.site.scrape_method_configuration.wait_for)).first.wait_for()
+                except:
+                    raise Exception(
+                        f"Wait for dom elements {self.site.scrape_method_configuration.wait_for} have timed out"
+                    )
 
         if not page or not context:
             raise Exception(f"Could not load {url}")
