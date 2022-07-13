@@ -1,13 +1,5 @@
 import { Layout, Menu } from 'antd';
-import {
-  Link,
-  Navigate,
-  Outlet,
-  Route,
-  Routes,
-  useLocation,
-  useParams,
-} from 'react-router-dom';
+import { Link, Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router-dom';
 
 import { withAuthenticationRequired, User } from '@auth0/auth0-react';
 import { DocDocumentsHomePage } from './features/doc_documents/DocDocumentsHomePage';
@@ -42,29 +34,32 @@ function TopNav() {
     { key: 'documents', label: 'Documents' },
     { key: 'users', label: 'Users' },
   ];
-  const siteLabel = <>
+  const siteLabel = (
+    <>
       {site?._id === params.siteId && (
-        <Link
-          style={{ marginTop: -1, ...tw`text-blue-500` }}
-          to={`/sites/${params.siteId}/scrapes`}
-        >
+        <Link style={{ marginTop: -1, ...tw`text-blue-500` }} to={`/sites/${params.siteId}/edit`}>
           {site?.name}
         </Link>
       )}
-  </>
+    </>
+  );
   const items: ItemType[] = [
-    { key: 'site', label: <Link to="/sites">Source Hub</Link>, },
-    { key: 'header', label: siteLabel, className: "flex mr-auto" },
-  ]
-  sections.forEach(({ key, label }) => (
+    { key: 'site', label: <Link to="/sites">Source Hub</Link> },
+    { key: 'header', label: siteLabel, className: 'flex mr-auto' },
+  ];
+  sections.forEach(({ key, label }) =>
     items.push({ key, label: <Link to={`/${key}`}>{label}</Link> })
-  ))
+  );
   items.push({
     key: 'profile',
     label: `${user?.given_name} ${user?.family_name}`,
     children: [
-      { key: 'logout', label: 'Logout', onClick: () => logout({ returnTo: window.location.origin }) }
-    ]
+      {
+        key: 'logout',
+        label: 'Logout',
+        onClick: () => logout({ returnTo: window.location.origin }),
+      },
+    ],
   });
   return (
     <Layout className="h-screen">
@@ -130,10 +125,7 @@ function App() {
                 <Route index element={<ExtractionsPage />} />
                 <Route path="document/:docId">
                   <Route index element={<DocExtractionPage />} />
-                  <Route
-                    path=":extractionId"
-                    element={<ExtractionEditPage />}
-                  />
+                  <Route path=":extractionId" element={<ExtractionEditPage />} />
                 </Route>
               </Route>
             </Route>

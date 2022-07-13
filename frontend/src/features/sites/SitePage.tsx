@@ -6,7 +6,6 @@ export function SitePage() {
     { key: 'scrapes', label: <Link to="scrapes">Collections</Link> },
     { key: 'documents', label: <Link to="documents">Documents</Link> },
     { key: 'extraction', label: <Link to="extraction">Content Extraction</Link> },
-    { key: 'settings', label: <Link to="edit">Site Settings</Link> },
   ];
   const location = useLocation();
   const current = location.pathname.split('/')[3];

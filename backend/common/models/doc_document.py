@@ -78,6 +78,7 @@ class DocDocument(BaseDocument):
 
     automated_content_extraction: bool = False
     automated_content_extraction_class: str | None = None
+    content_extraction_task_id: PydanticObjectId | None = None
 
     tags: list[str] = []
 
@@ -103,7 +104,7 @@ class UpdateIndicationTag(BaseModel):
     relevancy: float | None = None
 
 
-class UpdateDocDocument(BaseDocument):
+class UpdateDocDocument(BaseModel):
     classification_status: TaskStatus = TaskStatus.QUEUED
     classification_lock: TaskLock | None = None
     name: str | None = None
@@ -126,11 +127,15 @@ class UpdateDocDocument(BaseDocument):
     lineage_id: PydanticObjectId | None = None
     version: str | None = None
 
-    lang_code: LangCode | None
+    lang_code: LangCode | None = None
 
     therapy_tags: list[UpdateTherapyTag] | None = None
     indication_tags: list[UpdateIndicationTag] | None = None
 
+    tags: list[str] | None = None
+
     automated_content_extraction: bool = False
     automated_content_extraction_class: str | None = None
-    tags: list[str] | None = None
+    content_extraction_task_id: PydanticObjectId | None = None
+    content_extraction_status: TaskStatus = TaskStatus.QUEUED
+    content_extraction_lock: TaskLock | None = None
