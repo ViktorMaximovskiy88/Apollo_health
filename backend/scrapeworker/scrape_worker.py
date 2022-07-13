@@ -300,7 +300,7 @@ class ScrapeWorker:
         logging.info(f"Creating context for {url}")
         context: BrowserContext | None = None
         page: Page | None = None
-        response: Response
+        response: Response | None = None
         async for attempt, proxy in self.try_each_proxy():
             with attempt:
                 context = await self.get_browser_context(proxy)
@@ -308,15 +308,11 @@ class ScrapeWorker:
                 page = await context.new_page()
                 await stealth_async(page)
 
-                try:
-                    logging.info(f"Awating response for {url}")
-                    response = await page.goto(url, timeout=60000)
-                    logging.info(f"Received response for {url}")
-                except Exception as ex:
-                    print(response)
-                    logging.error(ex)
+                logging.debug(f"Awating response for {url}")
+                response = await page.goto(url, timeout=60000)
+                logging.debug(f"Received response for {url}")
 
-        if not page or not context:
+        if not page or not context or not response:
             raise Exception(f"Could not load {url}")
 
         await self.wait_for_desired_content(page)
@@ -332,7 +328,6 @@ class ScrapeWorker:
 
     def preprocess_download(self, download: Download, base_url: str):
         download.metadata.base_url = base_url
-        # TODO where this lives ... also office live?
         if is_google(download.request.url):
             google_id = get_google_id(download.request.url)
             download.request.url = (
