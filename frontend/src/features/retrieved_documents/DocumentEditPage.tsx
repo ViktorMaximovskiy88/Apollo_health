@@ -11,7 +11,7 @@ import Title from 'antd/lib/typography/Title';
 import { Table, Tabs } from 'antd';
 import { DocumentForm } from './DocumentForm';
 import tw from 'twin.macro';
-import useAccessToken from '../../app/use-access-token';
+import { useAccessToken } from '../../common/hooks';
 
 export function DocumentEditPage() {
   const params = useParams();

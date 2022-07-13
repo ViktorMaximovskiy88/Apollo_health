@@ -32,6 +32,7 @@ from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.common.exceptions import (
     CanceledTaskException,
+    NoDocsCollectedException,
 )
 from backend.scrapeworker.common.models import Download
 from backend.scrapeworker.scrapers import scrapers
@@ -395,3 +396,6 @@ class ScrapeWorker:
 
         await self.wait_for_completion_or_cancel(tasks)
         await self.downloader.close()
+
+        if not self.scrape_task.documents_found:
+            raise NoDocsCollectedException("No documents collected.")

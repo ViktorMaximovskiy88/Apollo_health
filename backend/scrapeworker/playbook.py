@@ -80,7 +80,7 @@ class ScrapePlaybook():
             option_label = await page.locator(f"{step.target} option[value='{step.choice}']").text_content()
             if not option_label:
                 raise Exception("Couldn't find option {step.choice} in select {step.target}")
-            await page.select_option(step.target, label=option_label)
+            await page.select_option(step.target, value=step.choice)
             new_context = context + [PlaybookStep(action=step.action, target=step.target, choice=option_label)]
             yield page, new_context
             async for page, result_context in self.playbook_step(page, remaining_steps, new_context):

@@ -1,9 +1,8 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
-import PaginationToolbar from '@inovua/reactdatagrid-community/packages/PaginationToolbar';
-import { Popconfirm, Tag, notification, Switch } from 'antd';
-import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { Popconfirm, Tag, notification } from 'antd';
+import { ReactNode, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSiteTableFilter, setSiteTableSort, siteTableState } from '../../app/uiSlice';
 import {
@@ -13,12 +12,12 @@ import {
   scrapeTaskStatusStyledDisplay as styledDisplay,
 } from '../../common';
 import { isErrorWithData } from '../../common/helpers';
-import { ButtonLink } from '../../components/ButtonLink';
+import { ButtonLink, GridPaginationToolbar } from '../../components';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useDeleteSiteMutation, useGetChangeLogQuery, useLazyGetSitesQuery } from './sitesApi';
 import { Site } from './types';
 import { SiteStatus, siteStatusDisplayName, siteStatusStyledDisplay } from './siteStatus';
-import useInterval from '../../app/use-interval';
+import { useInterval } from '../../common/hooks';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
@@ -202,7 +201,6 @@ export function SiteDataTable() {
 
   // Trigger update every 10 seconds by invalidating memoized callback
   const { setActive, isActive, watermark } = useInterval(10000);
-  const [userInteraction, setUserInteraction] = useState<boolean>(false);
 
   const loadData = useCallback(
     async (tableInfo: any) => {
@@ -217,29 +215,11 @@ export function SiteDataTable() {
   const renderPaginationToolbar = useCallback(
     (paginationProps: any) => {
       return (
-        <div className="flex flex-col">
-          <PaginationToolbar
-            {...paginationProps}
-            bordered={false}
-            style={{ width: 'fit-content' }}
-            onClick={(e: React.SyntheticEvent) => {
-              setActive(false);
-            }}
-          />
-          <div
-            className="flex justify-end items-end box-border leading-[2.5rem] h-[42px]"
-            style={{
-              borderTop: '2px solid #e4e3e2',
-            }}
-          >
-            <div className="mx-4">
-              <label className="cursor-pointer select-none">
-                <Switch defaultChecked={isActive} checked={isActive} onChange={setActive} />
-                &nbsp;&nbsp;Auto-refresh
-              </label>
-            </div>
-          </div>
-        </div>
+        <GridPaginationToolbar
+          paginationProps={{ ...paginationProps }}
+          autoRefreshValue={isActive}
+          autoRefreshClick={setActive}
+        />
       );
     },
     [isActive]
