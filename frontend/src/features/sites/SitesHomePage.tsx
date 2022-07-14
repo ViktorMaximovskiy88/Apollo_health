@@ -52,7 +52,7 @@ function BulkActions() {
   const [runBulk] = useRunBulkMutation();
   const onMenuSelect = async (key: string) => {
     const response: any = await runBulk(key);
-    if (response.data.scrapes_launched === 0) {
+    if (response.data.scrapes_launched === 0 || response.data.canceled_srapes === 0) {
       notification.error({
         message: 'Whoops!',
         description: 'No sites were found!',

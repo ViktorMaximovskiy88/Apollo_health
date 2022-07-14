@@ -107,7 +107,9 @@ async def runBulkByType(
         query["last_run_status"] = {"$ne": [TaskStatus.FAILED, TaskStatus.CANCELED]}
     elif bulk_type == "canceled":
         query["last_run_status"] = TaskStatus.CANCELED
-    elif bulk_type == "all" or bulk_type == "cancel-active":
+    elif bulk_type == "cancel-active":
+       query["last_run_status"] = {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}
+    elif bulk_type == "all":
         query["last_run_status"] = {"$ne": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}
 
     async for site in Site.find_many(query):
