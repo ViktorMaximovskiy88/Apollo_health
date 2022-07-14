@@ -163,12 +163,29 @@ async def cancel_all_site_scrape_task(
     # fetch the site to determine the last_run_status is either QUEUED or IN_PROGRESS
     site = await Site.find_one({"_id": site_id, "last_run_status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}})
     if site:
-        # If the site is found, fetch all tasks and cancel all queued or in progress tasks
-        result = await SiteScrapeTask.get_motor_collection().update_many(
-            {"site_id": site_id, "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}},
-            {"$set": {"status": TaskStatus.CANCELING}},
-        )
-        await site.update(Set({Site.last_run_status: TaskStatus.CANCELING}))
+        if site.collection_method == CollectionMethod.Manual:
+
+            last_site_task = await SiteScrapeTask.find_one({"site_id": site_id, "status":{ "$in": [ TaskStatus.QUEUED, TaskStatus.IN_PROGRESS ] }})
+
+            if last_site_task.documents_found == 0:
+                result = await SiteScrapeTask.get_motor_collection().update_many(
+                    {"site_id": site_id, "status": {"$in": [TaskStatus.IN_PROGRESS]}},
+                    {"$set": {"status": TaskStatus.CANCELED}},
+                )
+                await site.update(Set({Site.last_run_status: TaskStatus.CANCELED}))
+            else:
+                result = await SiteScrapeTask.get_motor_collection().update_many(
+                    {"site_id": site_id, "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}},
+                    {"$set": {"status": TaskStatus.FINISHED}},
+                )
+                await site.update(Set({Site.last_run_status: TaskStatus.FINISHED}))
+        else:
+            # If the site is found, fetch all tasks and cancel all queued or in progress tasks
+            result = await SiteScrapeTask.get_motor_collection().update_many(
+                {"site_id": site_id, "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}},
+                {"$set": {"status": TaskStatus.CANCELING}},
+            )
+            await site.update(Set({Site.last_run_status: TaskStatus.CANCELING}))
 
 
 @router.post("/{id}", response_model=SiteScrapeTask)
