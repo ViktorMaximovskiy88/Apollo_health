@@ -36,7 +36,7 @@ class AioDownloader:
     session: ClientSession
 
     def __init__(self):
-        self.session = ClientSession(connector=TCPConnector(ssl=False))
+        self.session = ClientSession(connector=TCPConnector(verify_ssl=False))
         self.rate_limiter = RateLimiter()
 
     async def close(self):

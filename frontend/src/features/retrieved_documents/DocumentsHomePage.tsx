@@ -55,7 +55,7 @@ export function DocumentsHomePage() {
       key: 'effective_date',
       render: (doc: RetrievedDocument) => {
         if (!doc.effective_date) return null;
-        return prettyDateFromISO(doc.effective_date);
+        return prettyDateFromISO(doc.effective_date); // this function may be broken. or just use pretty date? tbd
       },
     },
     {
@@ -81,10 +81,7 @@ export function DocumentsHomePage() {
                 Extraction
               </ButtonLink>
             )}
-            <ChangeLogModal
-              target={doc}
-              useChangeLogQuery={useGetChangeLogQuery}
-            />
+            <ChangeLogModal target={doc} useChangeLogQuery={useGetChangeLogQuery} />
             <Popconfirm
               title={`Are you sure you want to delete '${doc.name}'?`}
               okText="Yes"
@@ -106,11 +103,7 @@ export function DocumentsHomePage() {
         </Title>
         <Button className="ml-auto">Create Document</Button>
       </div>
-      <Table
-        dataSource={documents}
-        columns={columns}
-        rowKey={(doc) => doc._id}
-      />
+      <Table dataSource={documents} columns={columns} rowKey={(doc) => doc._id} />
     </div>
   );
 }

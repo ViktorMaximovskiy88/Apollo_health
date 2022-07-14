@@ -1,4 +1,5 @@
 import asyncio
+import math
 from pathlib import Path
 import signal
 import sys
@@ -44,7 +45,7 @@ def compute_matching_crons(now: datetime):
 
 
 async def get_schedule_user():
-    user = await User.by_email("admin@mmitnetwork.com")
+    user = await User.by_email("scheduler@mmitnetwork.com")
     if not user:
         raise Exception("No schedular found")
     return user
@@ -142,12 +143,12 @@ def update_cluster_size(size: int | None):
 
 
 def get_new_cluster_size(queue_size, active_workers, tasks_per_worker):
-    workers_needed = queue_size // tasks_per_worker
+    workers_needed = math.ceil(queue_size / tasks_per_worker)
 
-    if workers_needed > 50:
-        workers_needed = 50
+    if workers_needed > 100:
+        workers_needed = 100
 
-    return max(workers_needed, 1)  # never scale to zero
+    return max(workers_needed, 2)  # never scale to zero
 
 
 async def start_scaler():
@@ -160,7 +161,7 @@ async def start_scaler():
             {"status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.QUEUED]}}
         ).count()
         active_workers = determine_current_instance_count()
-        tasks_per_worker = 5  # some setting
+        tasks_per_worker = 2  # some setting
         new_cluster_size = get_new_cluster_size(
             queue_size, active_workers, tasks_per_worker
         )

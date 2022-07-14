@@ -1,30 +1,47 @@
+import asyncio
 from backend.common.models.doc_document import IndicationTag
 from backend.common.models.indication import Indication
+import spacy
+from spacy.tokens import Span
 
 
 class IndicationTagger():
     def __init__(self) -> None:
         self.terms: dict[str, list[Indication]] = {}
+        self.nlp = None
+        self.lock = asyncio.Lock()
 
-    async def terms_by_ind(self) -> dict[str, list[Indication]]:
-        if self.terms:
-            return self.terms
-        async for indication in Indication.find():
-            for term in indication.terms:
-                self.terms.setdefault(term, []).append(indication)
-            pass
-        return self.terms
+    async def model(self):
+        if not self.nlp:
+            async with self.lock:
+                self.nlp = spacy.blank('en')
+                self.nlp.max_length = 10000000
+                ruler = self.nlp.add_pipe("span_ruler", config={ 'spans_key': 'sc', "phrase_matcher_attr": "LOWER" })
+                async for indication in Indication.find():
+                    for term in indication.terms:
+                        ruler.add_patterns([{  # type: ignore
+                            "label": f"{term}|{indication.indication_number}",
+                            "pattern": term
+                        }])
+        return self.nlp
 
     async def tag_document(self, text: str) -> list[IndicationTag]:
-        lower_text = text.lower()
-        tags = []
-        for term, indications in (await self.terms_by_ind()).items():
-            if term.lower() in lower_text:
-                for indication in indications:
-                    tags.append(
-                        IndicationTag(
-                            text=term,
-                            code=indication.indication_number
-                        )
+        tags = set()
+        nlp = await self.model()
+        pages = text.split("\f")
+        loop = asyncio.get_running_loop()
+        for i, page in enumerate(pages):
+            doc = await loop.run_in_executor(None, nlp, page)
+            spans: list[Span] = doc.spans['sc']
+            for span in spans:
+                text = span.text
+                lexeme = span.vocab[span.label]
+                term, indication_number = lexeme.text.split('|')
+                tags.add(
+                    IndicationTag(
+                        text=term,
+                        page=i,
+                        code=int(indication_number),
                     )
-        return tags
+                )
+        return list(tags)

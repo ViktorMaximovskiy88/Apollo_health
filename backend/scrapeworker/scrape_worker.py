@@ -17,6 +17,7 @@ from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
+from playwright.async_api import Response as PlaywrightResponse
 from playwright.async_api import (
     Browser,
     BrowserContext,
@@ -32,8 +33,9 @@ from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.common.exceptions import (
     CanceledTaskException,
+    NoDocsCollectedException,
 )
-from backend.scrapeworker.common.models import Download
+from backend.scrapeworker.common.models import Download, Request, Response
 from backend.scrapeworker.scrapers import scrapers
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
@@ -46,6 +48,7 @@ from backend.scrapeworker.document_tagging.indication_tagging import IndicationT
 from backend.scrapeworker.document_tagging.taggers import Taggers
 from backend.scrapeworker.document_tagging.therapy_tagging import TherapyTagger
 from backend.scrapeworker.playbook import ScrapePlaybook
+from backend.scrapeworker.common.utils import get_extension_from_path_like
 
 
 def is_google(url):
@@ -64,7 +67,9 @@ class ScrapeWorker:
     def __init__(
         self,
         playwright,
-        get_browser_context: Callable[[ProxySettings | None], Coroutine[Any, Any, BrowserContext]],
+        get_browser_context: Callable[
+            [ProxySettings | None], Coroutine[Any, Any, BrowserContext]
+        ],
         scrape_task: SiteScrapeTask,
         site: Site,
     ) -> None:
@@ -136,6 +141,7 @@ class ScrapeWorker:
             end_date=retrieved_document.end_date,
             effective_date=retrieved_document.effective_date,
             last_updated_date=retrieved_document.last_updated_date,
+            last_reviewed_date=retrieved_document.last_reviewed_date,
             next_review_date=retrieved_document.next_review_date,
             next_update_date=retrieved_document.next_update_date,
             published_date=retrieved_document.published_date,
@@ -156,8 +162,6 @@ class ScrapeWorker:
         async for (temp_path, checksum) in self.downloader.download_to_tempfile(
             download, proxies
         ):
-            await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
-
             parsed_content = await parse_by_type(temp_path, download, self.taggers)
             if parsed_content is None:
                 continue
@@ -169,7 +173,9 @@ class ScrapeWorker:
             logging.info(f"dest_path={dest_path} temp_path={temp_path}")
 
             if not self.doc_client.object_exists(dest_path):
-                self.doc_client.write_object(dest_path, temp_path)
+                self.doc_client.write_object(
+                    dest_path, temp_path, download.content_type
+                )
                 await self.scrape_task.update(
                     Inc({SiteScrapeTask.new_documents_found: 1})
                 )
@@ -185,6 +191,7 @@ class ScrapeWorker:
                     effective_date=parsed_content["effective_date"],
                     end_date=parsed_content["end_date"],
                     last_updated_date=parsed_content["last_updated_date"],
+                    last_reviewed_date=parsed_content["last_reviewed_date"],
                     next_review_date=parsed_content["next_review_date"],
                     next_update_date=parsed_content["next_update_date"],
                     published_date=parsed_content["published_date"],
@@ -211,10 +218,12 @@ class ScrapeWorker:
                     effective_date=parsed_content["effective_date"],
                     end_date=parsed_content["end_date"],
                     last_updated_date=parsed_content["last_updated_date"],
+                    last_reviewed_date=parsed_content["last_reviewed_date"],
                     next_review_date=parsed_content["next_review_date"],
                     next_update_date=parsed_content["next_update_date"],
                     published_date=parsed_content["published_date"],
                     file_extension=download.file_extension,
+                    content_type=download.response.content_type,
                     first_collected_date=now,
                     identified_dates=parsed_content["identified_dates"],
                     lang_code=parsed_content["lang_code"],
@@ -229,6 +238,8 @@ class ScrapeWorker:
                 )
                 await create_and_log(self.logger, await self.get_user(), document)
                 await self.create_doc_document(document)
+
+            await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
             await self.scrape_task.update(
                 Push({SiteScrapeTask.retrieved_document_ids: document.id})
             )
@@ -245,7 +256,7 @@ class ScrapeWorker:
                 for t in tasks:
                     t.cancel()
                 raise CanceledTaskException("Task was canceled.")
-            await asyncio.sleep(1)
+            await asyncio.sleep(5)
 
     async def wait_for_completion_or_cancel(
         self, downloads: list[Coroutine[None, None, None]]
@@ -297,15 +308,19 @@ class ScrapeWorker:
         logging.info(f"Creating context for {url}")
         context: BrowserContext | None = None
         page: Page | None = None
+        response: PlaywrightResponse | None = None
         async for attempt, proxy in self.try_each_proxy():
             with attempt:
                 context = await self.get_browser_context(proxy)
 
                 page = await context.new_page()
                 await stealth_async(page)
-                await page.goto(url, timeout=60000)
 
-        if not page or not context:
+                logging.debug(f"Awating response for {url}")
+                response = await page.goto(url, timeout=60000)
+                logging.debug(f"Received response for {url}")
+
+        if not page or not context or not response:
             raise Exception(f"Could not load {url}")
 
         await self.wait_for_desired_content(page)
@@ -321,7 +336,6 @@ class ScrapeWorker:
 
     def preprocess_download(self, download: Download, base_url: str):
         download.metadata.base_url = base_url
-        # TODO where this lives ... also office live?
         if is_google(download.request.url):
             google_id = get_google_id(download.request.url)
             download.request.url = (
@@ -374,11 +388,22 @@ class ScrapeWorker:
 
         return not self.skip_url(url) and self.url_not_seen(url, cd_filename)
 
+    def is_artifact_file(self, url: str):
+        extension = get_extension_from_path_like(url)
+        return extension in ["docx", "pdf", "xlsx"]
+
     async def run_scrape(self):
         all_downloads: list[Download] = []
         base_urls: list[str] = [base_url.url for base_url in self.active_base_urls()]
         logging.info(f"base_urls={base_urls}")
+
         for url in base_urls:
+            # skip the parse step and download
+            if self.is_artifact_file(url):
+                download = Download(request=Request(url=url))
+                all_downloads.append(download)
+                continue
+
             all_downloads += await self.queue_downloads(url, url)
             for nested_url in await self.follow_links(url):
                 all_downloads += await self.queue_downloads(nested_url, base_url=url)
@@ -391,3 +416,6 @@ class ScrapeWorker:
 
         await self.wait_for_completion_or_cancel(tasks)
         await self.downloader.close()
+
+        if not self.scrape_task.documents_found:
+            raise NoDocsCollectedException("No documents collected.")

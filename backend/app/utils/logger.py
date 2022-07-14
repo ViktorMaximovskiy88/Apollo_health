@@ -63,6 +63,9 @@ async def update_and_log_diff(
     for op in patch:
         if op["op"] == "remove" or op["op"] == "replace":
             pointer = JsonPointer(op["path"])
-            op["prev"] = pointer.resolve(original)
+            try:
+                op["prev"] = pointer.resolve(original)
+            except:
+                pass
     await logger.background_log_change(current_user, target, "UPDATE", patch)
     return updated

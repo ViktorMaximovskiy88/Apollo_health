@@ -18,29 +18,19 @@ export const documentsApi = createApi({
       query: (query) => `/documents/?${queryString(query)}`,
       providesTags: (results) => {
         const tags = [{ type: 'RetrievedDocument' as const, id: 'LIST' }];
-        results?.forEach(({ _id: id }) =>
-          tags.push({ type: 'RetrievedDocument', id })
-        );
+        results?.forEach(({ _id: id }) => tags.push({ type: 'RetrievedDocument', id }));
         return tags;
       },
     }),
     getDocument: builder.query<RetrievedDocument, string | undefined>({
       query: (id) => `/documents/${id}`,
-      providesTags: (_r, _e, id) => [
-        { type: 'RetrievedDocument' as const, id },
-      ],
+      providesTags: (_r, _e, id) => [{ type: 'RetrievedDocument' as const, id }],
     }),
-    addDocument: builder.mutation<
-      RetrievedDocument,
-      Partial<RetrievedDocument>
-    >({
+    addDocument: builder.mutation<RetrievedDocument, Partial<RetrievedDocument>>({
       query: (body) => ({ url: '/documents/', method: 'PUT', body }),
       invalidatesTags: [{ type: 'RetrievedDocument', id: 'LIST' }],
     }),
-    updateDocument: builder.mutation<
-      RetrievedDocument,
-      Partial<RetrievedDocument>
-    >({
+    updateDocument: builder.mutation<RetrievedDocument, Partial<RetrievedDocument>>({
       query: (body) => ({
         url: `/documents/${body._id}`,
         method: 'POST',
@@ -65,6 +55,10 @@ export const documentsApi = createApi({
       query: (id) => `/change-log/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
     }),
+    getDocumentViewerUrl: builder.query<RetrievedDocument, string | undefined>({
+      query: (id) => `/documents/viewer/${id}`,
+      providesTags: (_r, _e, id) => [{ type: 'RetrievedDocument' as const, id }],
+    }),
   }),
 });
 
@@ -75,4 +69,5 @@ export const {
   useUpdateDocumentMutation,
   useDeleteDocumentMutation,
   useGetChangeLogQuery,
+  useGetDocumentViewerUrlQuery,
 } = documentsApi;

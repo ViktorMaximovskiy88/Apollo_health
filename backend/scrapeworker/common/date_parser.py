@@ -4,9 +4,15 @@ from re import Pattern
 
 
 class DateParser:
-    def __init__(self, text: str, date_rgxs: list[Pattern[str]]) -> None:
+    def __init__(
+        self,
+        text: str,
+        date_rgxs: list[Pattern[str]],
+        label_rgxs: tuple[list[Pattern[str]], dict[str, str]],
+    ) -> None:
         self.text = text
         self.date_rgxs = date_rgxs
+        self.label_rgxs = label_rgxs
         self.effective_date = {
             "date": None,
         }
@@ -14,6 +20,9 @@ class DateParser:
             "date": None,
         }
         self.last_updated_date = {
+            "date": None,
+        }
+        self.last_reviewed_date = {
             "date": None,
         }
         self.next_review_date = {
@@ -35,40 +44,19 @@ class DateParser:
         If multiple labels found, returns the label found closest to the `target` index.
         """
 
-        date_labels = {
-            "effective": "effective_date",
-            "eff": "effective_date",
-            "expire": "end_date",
-            "end date": "end_date",
-            "ends": "end_date",
-            "through": "end_date",
-            "updated": "last_updated_date",
-            "last updated": "last_updated_date",
-            "revision": "last_updated_date",
-            "revised": "last_updated_date",
-            "revis": "last_updated_date",
-            "reviewed": "last_updated_date",
-            "current": "last_updated_date",
-            "page updated": "last_updated_date",
-            "next review": "next_review_date",
-            "next update": "next_update_date",
-            "publish": "published_date",
-            "posted": "published_date",
-            "print date": "published_date",
-        }
+        label_rgxs, label_hash = self.label_rgxs
 
         closest_match = 0 if target == "END" else end
         matched_label = None
-        for key in date_labels.keys():
-            match = line.lower().find(key, start, end)
-            if match == -1:
-                continue
-            elif target == "END" and match >= closest_match:
-                closest_match = match
-                matched_label = date_labels[key]
-            elif target == "START" and match <= closest_match:
-                closest_match = match
-                matched_label = date_labels[key]
+        for rgx in label_rgxs:
+            match = rgx.finditer(line, start, end)
+            for m in match:
+                if target == "END" and m.end() >= closest_match:
+                    closest_match = m.end()
+                    matched_label = label_hash[rgx.pattern]
+                elif target == "START" and m.start() <= closest_match:
+                    closest_match = m.start()
+                    matched_label = label_hash[rgx.pattern]
 
         return matched_label
 

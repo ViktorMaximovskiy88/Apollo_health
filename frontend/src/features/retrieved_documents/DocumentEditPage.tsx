@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useGetDocumentQuery } from './documentsApi';
 import { Viewer, Worker } from '@react-pdf-viewer/core';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
-import { OfficeFileViewer } from '../../components/OfficeFileViewer';
+import { OfficeFileLoader } from '../../components/OfficeFileViewer';
 
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
@@ -11,13 +11,14 @@ import Title from 'antd/lib/typography/Title';
 import { Table, Tabs } from 'antd';
 import { DocumentForm } from './DocumentForm';
 import tw from 'twin.macro';
-import useAccessToken from '../../app/use-access-token';
+import { useAccessToken } from '../../common/hooks';
 
 export function DocumentEditPage() {
   const params = useParams();
   const docId = params.docId;
 
   const { data: doc } = useGetDocumentQuery(docId);
+
   const token = useAccessToken();
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
 
@@ -44,7 +45,7 @@ export function DocumentEditPage() {
         <Worker workerUrl="/pdf.worker.min.js">
           <div className="w-1/2 h-full overflow-auto ant-tabs-pdf-viewer">
             <Tabs className="h-full" tabBarStyle={tw`h-10`}>
-              <Tabs.TabPane tab="Document" key="document" className="h-full overflow-auto">
+              <Tabs.TabPane tab="Document" key="document" className="h-full overflow-hidden">
                 {doc.file_extension === 'pdf' ? (
                   <Viewer
                     withCredentials={true}
@@ -55,7 +56,7 @@ export function DocumentEditPage() {
                     }}
                   />
                 ) : (
-                  <OfficeFileViewer url={doc.url} />
+                  <OfficeFileLoader docId={docId} />
                 )}
               </Tabs.TabPane>
               <Tabs.TabPane tab="Metadata" key="metadata">
