@@ -91,3 +91,27 @@ data "aws_service" "s3" {
 data "aws_ecs_cluster" "cluster" {
   cluster_name = format("%s-%s-%s-mmit-ecs-%02d", local.app_name, var.environment, local.short_region, var.revision)
 }
+
+data "aws_ssm_parameter" "mongodb-url" {
+  name = "/apollo/mongodb_url"
+}
+
+data "aws_ssm_parameter" "mongodb-db" {
+  name = "/apollo/mongodb_db"
+}
+
+data "aws_ssm_parameter" "mongodb-user" {
+  name = "/apollo/mongodb_user"
+}
+
+data "aws_ssm_parameter" "redis-url" {
+  name = "/apollo/redis_url"
+}
+
+data "aws_ssm_parameter" "docrepo-bucket-name" {
+  name = "/apollo/docrepo_bucket_name"
+}
+
+data "aws_ssm_parameter" "smartproxy-username" {
+  name = "/apollo/smartproxy_username"
+}

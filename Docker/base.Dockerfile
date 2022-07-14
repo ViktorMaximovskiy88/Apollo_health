@@ -10,7 +10,7 @@ RUN apt-get update && \
     libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev git \
     neovim htop lsof sudo software-properties-common poppler-utils \
     gfortran libblas-dev liblapack-dev \
-    g++ protobuf-compiler libprotobuf-dev        
+    g++ protobuf-compiler libprotobuf-dev libmagic1
 
 ARG UNAME=user
 ARG HOME_DIR=/home/${UNAME}/

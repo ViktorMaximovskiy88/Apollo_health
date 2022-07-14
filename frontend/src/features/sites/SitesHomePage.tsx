@@ -21,7 +21,6 @@ import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
 
 import { SiteDataTable } from './SiteDataTable';
-import { useGetSitesQuery } from './sitesApi';
 
 function BulkUpload() {
   const [uploading, setUploading] = useState(false);
@@ -51,7 +50,6 @@ function BulkUpload() {
 
 function BulkActions() {
   const [runBulk] = useRunBulkMutation();
-  const { refetch } = useGetSitesQuery(undefined)
   const onMenuSelect = async (key: string) => {
     const response: any = await runBulk(key);
     if (response.data.scrapes_launched === 0) {
@@ -59,15 +57,17 @@ function BulkActions() {
         message: 'Whoops!',
         description: 'No sites were found!',
       });
+    } else if (response.data.canceled_srapes) {
+      notification.success({
+        message: 'Success!',
+        description:`${response.data.canceled_srapes} site${response.data.canceled_srapes > 1 ? "s was" : " were"} canceled from the collection queue!`
+      });
     } else {
       notification.success({
         message: 'Success!',
-        description:
-          response.data.scrapes_launched +
-          ' sites are added to the collection queue!',
+        description:`${response.data.scrapes_launched} site${response.data.scrapes_launched > 1 ? "s have" : " has"} been added to the collection queue!`
       });
     }
-    refetch();
   };
   const menu = (
     <Menu
@@ -82,9 +82,17 @@ function BulkActions() {
           label: 'Run Failed',
         },
         {
+          key: 'canceled',
+          label: 'Run Canceled'
+        },
+        {
+          key: 'cancel-active',
+          label: 'Cancel Active'
+        },
+        {
           key: 'all',
           label: 'Run All',
-          danger: true,
+          danger: true
         },
       ]}
     />
@@ -93,7 +101,7 @@ function BulkActions() {
     <Dropdown overlay={menu}>
       <Space>
         <Button>
-          Run <DownOutlined className="text-sm" />
+          Collection <DownOutlined className="text-sm" />
         </Button>
       </Space>
     </Dropdown>

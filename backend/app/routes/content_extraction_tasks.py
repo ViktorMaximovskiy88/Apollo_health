@@ -1,7 +1,9 @@
 from datetime import datetime
+import json
 from beanie import PydanticObjectId
 from beanie.odm.operators.update.general import Set
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Security
+from backend.app.routes.table_query import TableFilterInfo, TableQueryResponse, TableSortInfo, query_table
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import Site
 
@@ -17,6 +19,7 @@ from backend.app.utils.logger import (
     get_logger,
     update_and_log_diff,
 )
+
 from backend.app.utils.user import get_current_user
 
 router = APIRouter(
@@ -34,27 +37,40 @@ async def get_target(id: PydanticObjectId):
         )
     return task
 
+def get_query_json_list(arg: str, type):
+    def func(request: Request):
+        value_str = request.query_params.get(arg, None)
+        if value_str:
+            values: list[type] = json.loads(value_str)
+            return [type.parse_obj(v) for v in values]
+        else:
+            return []
 
-@router.get("/results/", response_model=list[ContentExtractionResult])
+    return func
+
+@router.get(
+    "/results/",
+    response_model=TableQueryResponse,
+    dependencies=[Security(get_current_user)],
+)
 async def read_extraction_results(
     extraction_id: PydanticObjectId,
-    current_user: User = Depends(get_current_user),
+    limit: int | None = None,
+    skip: int | None = None,
+    sorts: list[TableSortInfo] = Depends(get_query_json_list('sorts', TableSortInfo)),
+    filters: list[TableFilterInfo] = Depends(get_query_json_list('filters', TableFilterInfo))
 ):
-    extraction_results: list[ContentExtractionResult] = (
-        await ContentExtractionResult.find_many(
-            ContentExtractionResult.content_extraction_task_id == extraction_id
-        )
-        .sort("page", "row")
-        .limit(100)
-        .to_list()
-    )
-    return extraction_results
+    query = ContentExtractionResult.find({'content_extraction_task_id': extraction_id})
+    return await query_table(query, limit, skip, sorts, filters)
 
 
-@router.get("/", response_model=list[ContentExtractionTask])
+@router.get(
+    "/",
+    response_model=list[ContentExtractionTask],
+    dependencies=[Security(get_current_user)],
+)
 async def read_extraction_tasks_for_doc(
     retrieved_document_id: PydanticObjectId,
-    current_user: User = Depends(get_current_user),
 ):
     extraction_tasks: list[ContentExtractionTask] = (
         await ContentExtractionTask.find_many(
@@ -66,10 +82,13 @@ async def read_extraction_tasks_for_doc(
     return extraction_tasks
 
 
-@router.get("/{id}", response_model=ContentExtractionTask)
+@router.get(
+    "/{id}",
+    response_model=ContentExtractionTask,
+    dependencies=[Security(get_current_user)],
+)
 async def read_extraction_task(
     target: User = Depends(get_target),
-    current_user: User = Depends(get_current_user),
 ):
     return target
 
@@ -79,11 +98,13 @@ async def get_doc(retrieved_document_id: PydanticObjectId):
 
 
 @router.put(
-    "/", response_model=ContentExtractionTask, status_code=status.HTTP_201_CREATED
+    "/",
+    response_model=ContentExtractionTask,
+    status_code=status.HTTP_201_CREATED,
 )
 async def start_extraction_task(
     doc: RetrievedDocument = Depends(get_doc),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     extraction_task = ContentExtractionTask(
@@ -101,12 +122,12 @@ async def start_extraction_task(
 async def update_extraction_task(
     updates: UpdateContentExtractionTask,
     target: ContentExtractionTask = Depends(get_target),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     # NOTE: Could use a transaction here
     updated = await update_and_log_diff(logger, current_user, target, updates)
     await Site.find_one(Site.id == target.site_id).update(
-        Set({Site.last_status: updates.status}),
+        Set({Site.last_run_status: updates.status}),
     )
     return updated

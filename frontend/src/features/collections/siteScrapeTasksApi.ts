@@ -1,10 +1,10 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
 import { SiteScrapeTask } from './types';
 
 export const siteScrapeTasksApi = createApi({
   reducerPath: 'siteScrapeTasksApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '/api/v1/' }),
+  baseQuery: fetchBaseQuery(),
   tagTypes: ['SiteScrapeTask', 'ChangeLog'],
   endpoints: (builder) => ({
     getScrapeTasksForSite: builder.query<SiteScrapeTask[], string | undefined>({

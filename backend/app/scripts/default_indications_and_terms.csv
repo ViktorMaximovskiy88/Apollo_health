@@ -1,0 +1,490 @@
+IndicationId,Name,Term
+113,Meningitis B Vaccine,Meningococcal Group B Vaccine
+113,Meningitis B Vaccine,Meningitis B Vaccine
+155,TDAP,TDAP
+201,Vaccines-Shingles,Shingles Vaccine
+201,Vaccines-Shingles,Zoster Vaccine
+202,Vaccines-Pneumococcal ,Pneumococcal vaccine
+235,Psychiatry: Schizophrenia,Schizophrenia
+236,Multiple Sclerosis (MS),MS
+236,Multiple Sclerosis (MS),Multiple Sclerosis
+237,Rheumatoid Arthritis (RA),RA
+237,Rheumatoid Arthritis (RA),Rheumatoid Arthritis
+238,Substance Abuse: Alcohol Dependence,Alcohol Dependence
+239,Osteoarthritis: OA of the Knee,OA of the Knee
+239,Osteoarthritis: OA of the Knee,Osteoarthritis of the Knee
+245,Pain Narcotic: Opioid,Pain Narcotic
+246,Major Depressive Disorder,Major Depressive Disorder
+246,Major Depressive Disorder,MDD
+248,Hemophilia B (Factor IX),Christmas disease
+248,Hemophilia B (Factor IX),Factor IX Deficiency
+248,Hemophilia B (Factor IX),Hemophilia B
+249,Hemophilia A (Factor VIII),Hemophilia
+249,Hemophilia A (Factor VIII),Factor VIII
+250,Hemophilia (Factor XIII Deficiency),Hemophilia
+250,Hemophilia (Factor XIII Deficiency),Factor XIII Deficiency
+251,Psoriasis (PsO),PSO
+251,Psoriasis (PsO),Psoriasis
+256,COPD (oral),COPD
+256,COPD (oral),Chronic Obstructive Pulmonary Disease
+257,PID: Immune Globulin,PID
+257,PID: Immune Globulin,Immune Globulin
+257,PID: Immune Globulin,Primary Immunodeficiency
+258,Chemo-induced Nausea and Vomiting (CINV),Chemo-Induced Nausea and Vomiting
+258,Chemo-induced Nausea and Vomiting (CINV),CINV
+259,CIDP: Immune Globulin,CIDP
+259,CIDP: Immune Globulin,chronic inflammatory demyelinating polyneuropathy
+260,Systemic Lupus Erythematosus (SLE),SLE
+260,Systemic Lupus Erythematosus (SLE),Systemic Lupus Erythematosus
+260,Systemic Lupus Erythematosus (SLE),Systemic Lupus Erythematosus (SLE)
+261,Crohn's Disease (CD),Crohns's Disease
+262,Neutropenia,Neutropenia
+263,Hemophilia A or B with Inhibitor,Hemophilia
+263,Hemophilia A or B with Inhibitor,Hemophilia B with Inhibitors
+263,Hemophilia A or B with Inhibitor,Hemophilia A with Inhibitors
+265,Bipolar,Bipolar
+266,Alpha-1 Antitrypsin Deficiency,AAT
+266,Alpha-1 Antitrypsin Deficiency,Alpha 1 Antitrypsin Deficiency
+266,Alpha-1 Antitrypsin Deficiency,Alpha1 Antitrypsin Deficiency
+266,Alpha-1 Antitrypsin Deficiency,Alpha-1 Antitrypsin Deficiency
+267,Hereditary Angioedema (HAE),HAE
+267,Hereditary Angioedema (HAE),Hereditary Angioedema
+268,Substance Abuse: Opioid Dependence,Substance Abuse
+268,Substance Abuse: Opioid Dependence,Opioid Dependence
+269,Derm: Acne Vulgaris,Acne Vulgaris
+274,HeFH,Heterozygous familial hypercholesterolemia
+274,HeFH,HeFH
+275,Psoriatic Arthritis (PsA),Psoriatic Arthritis
+276,Antiviral: Hepatitis C (HCV),HCV
+276,Antiviral: Hepatitis C (HCV),Hepatitis C
+278,Hepatic Encephalopathy (HE),Hepatic Encephalopathy
+279,Von Willebrand Disease,Von Willebrand Disease
+281,ASCVD,ASCVD
+281,ASCVD,atherosclerotic cardiovascular disease
+282,HoFH,homozygous familial hypercholesterolemia
+282,HoFH,HoFH
+284,Topical Psoriasis,Topical Psoriasis
+284,Topical Psoriasis,Psoriasis
+285,Gastro: IBS-C,CIC
+285,Gastro: IBS-C,Chronic Idiopathic Constipation
+285,Gastro: IBS-C,Irritable bowel syndrome
+286,Gastro: IBS-D,Irritable bowel syndrome
+286,Gastro: IBS-D,IBS with diarrhea
+286,Gastro: IBS-D,IBS-D
+286,Gastro: IBS-D,Irritable bowel syndrome with diarrhea
+287,Atopic Dermatitis (Eczema),Atopic Dermatitis
+287,Atopic Dermatitis (Eczema),Eczema
+288,Gastro: Ulcerative Colitis,Ulcerative Colitis
+288,Gastro: Ulcerative Colitis,UC
+288,Gastro: Ulcerative Colitis,IBD
+289,Ophthalmic: Dry Eye,Dry Eye
+289,Ophthalmic: Dry Eye,Keratoconjunctivitis sicca
+290,Derm: Rosacea,Rosacea
+291,Neurology: Epilepsy,Epilepsy
+292,Osteoporosis: Post Menopausal Women,Osteoporosis
+294,Ankylosing Spondylitis (AS),Ankylosing Spondylitis
+295,Ulcerative Colitis (UC),Ulcerative Colitis
+295,Ulcerative Colitis (UC),UC
+296,Diabetes Type 2: Long Acting Insulin + Combo,Long Acting Insulin
+297,Idiopathic Pulmonary Fibrosis (IPF),Idiopathic Pulmonary Fibrosis
+299,Alzheimer's Disease,Alzheimer's Disease
+300,Parkinson's Disease,Parkinson
+300,Parkinson's Disease,Parkinson's disease
+300,Parkinson's Disease,Parkinsons disease
+303,Bowel Prep,Bowel Prep
+303,Bowel Prep,colonoscopy prep
+304,Neurology: Narcolepsy,Narcolepsy
+306,Juvenile Idiopathic Arthritis,Juvenile Idiopathic Arthritis
+307,Hypertension (High Blood Pressure),Hypertension
+307,Hypertension (High Blood Pressure),High Blood Pressure
+308,Opioid Induced Constipation,Opioid Induced Constipation
+309,Diabetes Type 2: Short Acting Insulin (Meal-time),Diabetes
+309,Diabetes Type 2: Short Acting Insulin (Meal-time),Meal-time insulin
+309,Diabetes Type 2: Short Acting Insulin (Meal-time),Short Acting Insulin
+310,Chronic Idiopathic Constipation,Chronic Idiopathic Constipation
+311,Derm: Onychomycosis,Onychomycosis
+312,Diabetes Type 2: Test Strips,Diabetes Type 2
+312,Diabetes Type 2: Test Strips,Type 2
+313,Diabetes Type 1: Insulin Pumps,Insulin Pumps
+314,Ophthalmic: Allergic Conjunctivitis,Allergic Conjunctivitis
+315,Ophthalmic: Anti-Inflammatory,Opthalmic Anti-Inflammatory
+315,Ophthalmic: Anti-Inflammatory,Opthalmic AntiInflammatory
+316,Pancreatic Insufficiency: Pancreatic Enzymes,Pancreatic Enzymes
+317,Oncology: Carcinoid Syndrome,Carcinoid Syndrome
+318,Migraine,Migraine
+319,Primary Biliary Cirrhosis and Hepatic Fibrosis,Hepatic Fibrosis
+319,Primary Biliary Cirrhosis and Hepatic Fibrosis,Primary Biliary Cirrhosis
+320,Low Testosterone,Testosterone Deficiency
+320,Low Testosterone,Low Testosterone
+321,Tardive Dyskinesia (TD),Tardive Dyskinesia
+322,Asthma (injectable),Asthma
+323,Cystic Fibrosis (CF),Cystic Fibrosis
+324,Multiple Sclerosis Exacerbation,Multiple Sclerosis Exacerbation
+326,Adjunctive Rheumatoid Arthritis,Adjunctive Rheumatoid Arthritis
+329,Nephrotic Syndrome,Nephrotic Syndrome
+330,Breast Cancer: Hormone Refractory (HER2+),HER2+
+330,Breast Cancer: Hormone Refractory (HER2+),Breast Cancer
+330,Breast Cancer: Hormone Refractory (HER2+),HER
+331,Breast Cancer: Hormone Refractory (HER2-),HER2-
+331,Breast Cancer: Hormone Refractory (HER2-),Breast Cancer
+331,Breast Cancer: Hormone Refractory (HER2-),HER2
+332,Kidney Cancer,Kidney Cancer
+332,Kidney Cancer,Renal Cell Carcinoma
+336,Diabetes Type 2: DPP4 + Combo,Diabetes Type 2
+336,Diabetes Type 2: DPP4 + Combo,Type 2
+336,Diabetes Type 2: DPP4 + Combo,Dipeptidyl-peptidase 4
+337,Diabetes Type 2: GLP1 + Combo,Diabetes
+337,Diabetes Type 2: GLP1 + Combo,Glucagon-Like Peptide 1
+338,Diabetes Type 2: SGLT2 + Combo,Diabetes Type 2
+338,Diabetes Type 2: SGLT2 + Combo,Type 2
+338,Diabetes Type 2: SGLT2 + Combo,Sodium-glucose transport protein 2 inhibitors
+339,Prostate Cancer,Prostate Cancer
+340,Growth Hormone Deficiency,Growth Hormone Deficiency
+340,Growth Hormone Deficiency,Growth failure
+341,Primary Axillary Hyperhidrosis,Primary Axillary Hyperhidrosis
+341,Primary Axillary Hyperhidrosis,Hyperhidrosis
+342,Multiple Myeloma,Multiple Myeloma
+343,Endometriosis,Endometriosis
+344,Uterine Fibroids,Uterine Fibroids
+345,Central Precocious Puberty,Central Precocious Puberty
+345,Central Precocious Puberty,CPP
+346,Acute Myeloid Leukemia,AML
+346,Acute Myeloid Leukemia,Acute Myeloid Leukemia
+347,Chronic Lymphocytic Leukemia,CLL
+347,Chronic Lymphocytic Leukemia,Chronic Lymphocytic Leukemia
+348,Glaucoma,Glaucoma
+349,Antiviral: HIV,human immunodeficiency virus
+349,Antiviral: HIV,HIV
+350,EGPA,Churg Strauss Syndrome
+350,EGPA,Churg-Strauss Syndrome
+350,EGPA,EGPA
+350,EGPA,Eosinophilic granulomatosis with polyangiitis
+354,Small Cell Lung Cancer,Small Cell Lung Cancer
+355,Merkel Cell Carcinoma,Merkel Cell Carcinoma
+356,Urothelial/Bladder Cancer,Urothelial Cancer
+356,Urothelial/Bladder Cancer,Bladder Cancer
+357,Soft Tissue Sarcoma,Soft Tissue Sarcoma
+358,Ovarian Cancer,Ovarian Cancer
+359,Neurogenic Orthostatic Hypotension,Neurogenic Orthostatic Hypotension
+361,Hepatocellular Carcinoma,Hepatocellular Carcinoma
+362,Anemia due to Chronic Kidney Disease,Anemia due to Chronic Kidney Disease
+363,Anemia due to Chemotherapy,Anemia
+364,Asthma (oral),Asthma
+365,Infantile Spasm,Infantile Spasm
+366,Autosomal Dominant Polycystic Kidney Disease,ADKPD
+366,Autosomal Dominant Polycystic Kidney Disease,Autosomal Dominant Polycystic Kidney Disease
+367,Thyroid Carcinoma,Thyroid Carcinoma
+368,Nocturia,Nocturia
+369,Pulmonary Arterial Hypertension,Pulmonary Arterial Hypertension
+370,Colorectal Cancer,Colorectal Cancer
+371,Overactive Bladder,Overactive Bladder
+372,Post-herpetic Neuralgia,Post-herpetic Neuralgia
+372,Post-herpetic Neuralgia,Postherpetic neuralgia
+373,Bone Loss Treatments,Bone Loss
+374,Limb Spasticity,Limb Spasticity
+375,Neurogenic Detrusor Overactivity (NDO),Neurogenic Detrusor Overactivity
+376,Cervical Dystonia,Cervical Dystonia
+377,ABSSSI,ABSSSI
+378,Uveitis,Uveitis
+379,Macular Edema,Macular Edema
+379,Macular Edema,DME
+379,Macular Edema,Diabetic Macular Edema
+380,Familial Amyloid Polyneuropathy (FAP),Familial Amyloid Polyneuropathy 
+380,Familial Amyloid Polyneuropathy (FAP),FAP
+381,Acute Lymphoblastic Leukemia,Acute Lymphoblastic Leukemia
+381,Acute Lymphoblastic Leukemia,Acute Lymphocytic Leukemia
+382,EDS due to OSA,excessive daytime sleepiness
+382,EDS due to OSA,EDS due to OSA
+383,Vaccine: Influenza,Influenza Vaccine
+384,Vaccine: HPV,Human papillomavirus vaccine
+384,Vaccine: HPV,HPV Vaccine
+385,Hyperkalemia,Hyperkalemia
+386,Sickle Cell Disease,sickle cell disease
+387,Immune Thrombocytopenic Purpura (ITP),ITP
+387,Immune Thrombocytopenic Purpura (ITP),Immune Thrombocytopenic Purpura
+388,MAC Lung Disease,Mycobacterium avium complex
+388,MAC Lung Disease,Lung Disease
+388,MAC Lung Disease,MAC Lung Disease
+389,Asthma OCS Dependent,Asthma
+390,Thrombocytopenia In Chronic Liver Disease,Thrombocytopenia
+390,Thrombocytopenia In Chronic Liver Disease,Chronic Liver Disease
+391,ADHD,ADHD
+391,ADHD,Attention deficit hyperactivity disorder
+391,ADHD,Attention-deficit hyperactivity disorder
+392,Insomnia,Insomnia
+393,DTaP Vaccines,DTaP Vaccines
+394,Gastric Cancer,Gastric Cancer
+394,Gastric Cancer,gastroesophageal junction adenocarcinoma
+395,MS Walking Support,MS
+395,MS Walking Support,Multiple Sclerosis
+395,MS Walking Support,MS Walking Support
+396,Lambert-Eaton Myasthenic Syndrome (LEMS),Lambert-Eaton Myasthenic Syndrome
+396,Lambert-Eaton Myasthenic Syndrome (LEMS),LEMS
+406,Nasal Polyposis,Nasal Polyposis
+406,Nasal Polyposis,Nasal Polyps
+407,Recurrent Glioblastoma,Glioblastoma
+407,Recurrent Glioblastoma,Recurrent Glioblastoma
+408,Assisted Reproductive Technology (ART),(ART)
+408,Assisted Reproductive Technology (ART),Assisted Reproductive Technology
+408,Assisted Reproductive Technology (ART),Pregnyl
+409,Non-Metastatic Prostate Cancer,Prostate Cancer
+409,Non-Metastatic Prostate Cancer,Non-Metastatic Prostate Cancer 
+410,Duchenne Muscular Dystrophy (DMD),Duchenne Muscular Dystrophy
+410,Duchenne Muscular Dystrophy (DMD),DMD
+411,Phenylketonuria (PKU),PKU
+411,Phenylketonuria (PKU),Phenylketonuria
+412,Spinal Muscular Atrophy (SMA),SMA
+412,Spinal Muscular Atrophy (SMA),Spinal Muscular Atrophy
+413,Neovascular (Wet) Age-Related Macular Degeneration (AMD),AMD
+413,Neovascular (Wet) Age-Related Macular Degeneration (AMD),Age-Related Macular Degeneration
+413,Neovascular (Wet) Age-Related Macular Degeneration (AMD),Macular Degeneration
+414,Acromegaly,Acromegaly
+415,Diabetic Retinopathy,Diabetic Retinopathy
+424,Severe Aplastic Anemia,Severe Aplastic Anemia
+424,Severe Aplastic Anemia,SAA
+425,Macular Edema Following Retinal Vein Occlusion (RVO),Macular Edema
+425,Macular Edema Following Retinal Vein Occlusion (RVO),Retinal Vein Occlusion
+426,Polycythemia Vera (PV),Polycythemia Vera
+427,Chronic Heart Failure (CHF),Chronic Heart Failure
+427,Chronic Heart Failure (CHF),CHF
+428,Graft Versus Host Disease (GVHD),Graft Versus Host Disease
+428,Graft Versus Host Disease (GVHD),GVHD
+428,Graft Versus Host Disease (GVHD),Graft vs Host
+429,Metastatic Prostate Cancer,Prostate Cancer
+429,Metastatic Prostate Cancer,Metastatic Prostate Cancer
+430,Severe Primary Insulin-like Growth Factor Deficiency (IGFD),IGFD
+430,Severe Primary Insulin-like Growth Factor Deficiency (IGFD),Severe Primary Insulin-like Growth Factor Deficiency
+430,Severe Primary Insulin-like Growth Factor Deficiency (IGFD),IGF-1
+431,Narcolepsy Type 1,cataplexy
+431,Narcolepsy Type 1,Narcolepsy
+431,Narcolepsy Type 1,T1N
+432,Narcolepsy Type 2,Narcolepsy
+432,Narcolepsy Type 2,EDS
+432,Narcolepsy Type 2,excessive daytime sleepiness
+432,Narcolepsy Type 2,T2N
+433,Spasticity: Upper Limb,Upper Limb Spasticity
+433,Spasticity: Upper Limb,Spasticity
+434,NSCLC Systemic Therapy,NSCLC
+434,NSCLC Systemic Therapy,Non-Small Cell Lung Cancer
+435,Spasticity: Lower Limb,Spasticity
+435,Spasticity: Lower Limb,Lower Limb Spasticity
+436,Breast Cancer: HR+ (HER2-),HER2-
+436,Breast Cancer: HR+ (HER2-),Breast Cancer
+436,Breast Cancer: HR+ (HER2-),HER2
+437,Spasticity: Adult,Spasticity
+438,Solid Tumor with NTRK Gene Fusion,NTRK Fusion
+438,Solid Tumor with NTRK Gene Fusion,Solid Tumor with NTRK Gene Fusion
+439,Reduction of CV events in CAD/PAD,Reduction of CV events in CAD and PAD
+439,Reduction of CV events in CAD/PAD,Reduction of CV events in CAD/PAD
+440,Stroke Prevention in Non-valvular Atrial Fibrillation,Stroke Prevention
+440,Stroke Prevention in Non-valvular Atrial Fibrillation,Stroke Prevention in Non-valvular Atrial Fibrillation
+441,Inherited Retinal Dystrophy (IRD),Inherited Retinal Dystrophy
+441,Inherited Retinal Dystrophy (IRD),IRD
+442,Breast Cancer: HR+ (HER2+),Breast Cancer: HR+ (HER2+)
+443,Neuroendocrine Tumor (NET),NET
+443,Neuroendocrine Tumor (NET),Neuroendocrine Tumor
+444,Secondary Progressive Multiple Sclerosis,Multiple Sclerosis
+444,Secondary Progressive Multiple Sclerosis,Secondary Progressive Multiple Sclerosis
+445,Community Acquired Bacterial Pneumonia,Community Acquired Bacterial Pneumonia
+446,Pancreatic Cancer,Pancreatic Cancer
+447,Myelofibrosis,Myelofibrosis
+448,Clostridium Difficile-Associated Diarrhea/Infection (CDAD/CDI),CDI
+448,Clostridium Difficile-Associated Diarrhea/Infection (CDAD/CDI),CDAD
+448,Clostridium Difficile-Associated Diarrhea/Infection (CDAD/CDI),Clostridium Difficile
+448,Clostridium Difficile-Associated Diarrhea/Infection (CDAD/CDI),C. diff
+449,Cutaneous Squamous Cell Carcinoma (cSCC),Cutaneous Squamous Cell Carcinoma
+450,Myopic Choroidal Neovascularization (mCNV),Myopic Choroidal Neovascularization
+451,Chronic Idiopathic Urticaria (CIU),Chronic Idiopathic Urticaria
+452,Melanoma (MEL),Melanoma
+453,Nonradiographic Axial Spondyloarthritis,Nonradiographic Axial Spondyloarthritis
+457,Basal Cell Carcinoma,Basal Cell Carcinoma
+458,Breast Cancer: Triple Negative,Breast Cancer
+458,Breast Cancer: Triple Negative,Triple Negative
+459,Cervical Cancer,Cervical Cancer
+460,Chronic Myelogenous Leukemia,Chronic Myelogenous Leukemia
+460,Chronic Myelogenous Leukemia,CML
+461,Diabetic Medical Supplies,Diabetic Medical Supplies
+462,Diffuse Large B-Cell Lymphoma,Diffuse Large B-Cell Lymphoma
+463,Dravet Syndrome,Dravet Syndrome
+464,Follicular Lymphoma (FL),Follicular Lymphoma
+465,Gastrointestinal Stromal Tumor,Gastrointestional Stromal Tumor
+465,Gastrointestinal Stromal Tumor,GIST
+465,Gastrointestinal Stromal Tumor,Gastrointestinal Stromal Tumor
+466,Genetic Testing,Genetic Testing
+467,Giant Cell Arteritis,Giant Cell Arteritis
+468,Granulomatosis with Polyangiitis,Granulomatosis with Polyangitis
+468,Granulomatosis with Polyangiitis,Wegener's granulomatosis
+469,Head and Neck Cancer,Head and Neck Cancer
+471,High Triglycerides,High Triglycerides
+471,High Triglycerides,Hypertriglyceridemia
+472,Hodgkin Lymphoma (HL),Hodgkin Lymphoma
+473,Lennox Gastaut Syndrome (LGS),Lennox Gastaut Syndrome
+473,Lennox Gastaut Syndrome (LGS),LGS
+474,CD-30 Mediated Peripheral T-Cell Lymphoma,CD-30 Mediated Peripheral T-Cell Lymphoma
+476,Systemic Anaplastic Large Cell Lymphoma,Systemic Anaplastic Large Cell Lymphoma
+478,Mantle Cell Lymphoma,Mantle Cell Lymphoma
+479,Marginal Zone Lymphoma,Marginal Zone Lymphoma
+480,Myelodysplastic Syndrome,Myelodysplastic Syndrome
+481,Neuromyelitis Optica Spectrum Disorder,NMOSD
+481,Neuromyelitis Optica Spectrum Disorder,Neuromyelitis Optica Spectrum Disorder
+482,Non Hodgkin Lymphoma (NHL),NHL
+482,Non Hodgkin Lymphoma (NHL),Non Hodgkin Lymphoma
+482,Non Hodgkin Lymphoma (NHL),Non Hodgkin Lymphoma (NHL)
+483,NSCLC ALK+ OR ROS1+ Disease,NSCLC
+483,NSCLC ALK+ OR ROS1+ Disease,Non-Small Cell Lung Cancer
+483,NSCLC ALK+ OR ROS1+ Disease,ALK-positive
+483,NSCLC ALK+ OR ROS1+ Disease,anaplastic lymphoma kinase-positive
+483,NSCLC ALK+ OR ROS1+ Disease,anaplastic lymphoma kinase (ALK)-positive
+484,NSCLC with BRAF Mutation,NSCLC
+484,NSCLC with BRAF Mutation,BRAF V600E Mutation
+484,NSCLC with BRAF Mutation,BRAF Mutation
+484,NSCLC with BRAF Mutation,NSCLC with BRAF Mutation
+485,NSCLC EGFR Mutated,NSCLC EGFR Mutated
+486,Obesity,Obesity
+487,Parkinsons Psychosis,Parkinsons Psychosis
+488,Peanut Allergy,Peanut Allergy
+489,Pemphigus Vulgaris,Pemphigus Vulgaris
+490,Postpartum Depression (PPD),PPD
+490,Postpartum Depression (PPD),Postpartum Depression
+491,Pseudo-Bulbar Affect,PseudoBulbar Affect
+492,Recurrent Pericarditis ,Recurrent Pericarditis 
+494,Respiratory Syncytial Virus (RSV),Respiratory Syncytial Virus
+494,Respiratory Syncytial Virus (RSV),RSV
+494,Respiratory Syncytial Virus (RSV),Respiratory Syncytial Virus (RSV)
+495,Cluster Seizure/Seizure Emergency,Seizure Emergency
+495,Cluster Seizure/Seizure Emergency,Cluster Seizure
+496,Tuberous Sclerosis Complex,Tuberous Sclerosis Complex
+498,Waldenstrom Macroglobulinemia,Waldenstrom
+498,Waldenstrom Macroglobulinemia,Waldenstrom Macroglobulinemia
+499,Amyotrophic Lateral Sclerosis (ALS),ALS
+499,Amyotrophic Lateral Sclerosis (ALS),Amyotrophic Lateral Sclerosis
+500,Breast Cancer: gBRCA,gBRCA Breast Cancer
+500,Breast Cancer: gBRCA,gBRCA
+501,Breast Cancer: PIK3CA,Breast Cancer
+501,Breast Cancer: PIK3CA,PIK3CA
+502,HIV Lipodystrophy,HIV Hyperlipodystrophy
+502,HIV Lipodystrophy,Hyperlipodystrophy
+503,Epithelioid Sarcoma,Epithelioid Sarcoma
+505,Primary Progressive Multiple Sclerosis,PPMS
+505,Primary Progressive Multiple Sclerosis,Primary Progressive Multiple Sclerosis
+506,Hidradenitis Suppurativa (HS),Hidradenitis Suppurativa
+507,Erectile Dysfunction (ED),Erectile Dysfunction
+508,H. Pylori Infection,H. Pylori
+509,Cluster Headache,Cluster Headache
+511,Migraine Prevention,Preventive Migraine
+513,Fabry's Disease,Fabry Disease
+514,Gaucher Disease,Gaucher Disease
+515,Acute Migraine,Acute Migraine
+516,Intestinal worm (helminthes) Infection,Intestinal worm
+516,Intestinal worm (helminthes) Infection,helminthes
+517,Beta Thalassemia Anemia,Beta Thalassemia
+517,Beta Thalassemia Anemia,Beta Thalassemia Anemia
+518,Pompe Disease,Pompe Disease
+518,Pompe Disease,lysosomal acid alpha-glucosidase deficiency
+518,Pompe Disease,lysosomal GAA deficiency
+519,Metastatic Castrate-Sensitive Prostate Cancer (mCSPC),Metastatic Castrate-Sensitive Prostate Cancer
+520,Chorea in Huntington's Disease,Chorea in Huntington's Disease
+521,Pediatric Upper Limb Spasticity,Pediatric Upper Limb Spasticity
+522,Urea Cycle Disorder,UCD
+522,Urea Cycle Disorder,Urea Cycle Disorder
+525,Hepatitis A,Hepatitis A
+525,Hepatitis A,Hepatitis A Vaccine
+526,Antifungal,Antifungal
+527,Transplant Rejection Prophylaxis,Transplant Rejection Prophylaxis
+528,Ultra Low Dose Oral Contraceptives,Oral Contraceptives
+528,Ultra Low Dose Oral Contraceptives,Ultra Low Dose Oral Contraceptives
+538,Thyroid Eye Disease,Thyroid Eye Disease
+538,Thyroid Eye Disease,TED
+540,Uveal Melanoma,Uveal Melanoma
+541,NSCLC cMET Mutation,NSCLC cMET Mutation
+542,Lupus Nephritis,Lupus Nephritis
+543,Endometrial Cancer,Endometrial Cancer
+544,NSAIDs for Arthritis,Arthritis
+544,NSAIDs for Arthritis,NSAIDs
+545,RET-Fusion Thyroid Cancer,RET Fusion Thyroid Cancer
+545,RET-Fusion Thyroid Cancer,RET-Fusion Thyroid Cancer
+546,RET-Fusion Non-Small Cell Lung Cancer,RET Fusion Non Small Cell Lung Cancer
+546,RET-Fusion Non-Small Cell Lung Cancer,RET Fusion NSCLC
+546,RET-Fusion Non-Small Cell Lung Cancer,RET-Fusion NSCLC
+546,RET-Fusion Non-Small Cell Lung Cancer,RET-Fusion Non-Small Cell Lung Cancer
+547,Hepatitis B Treatment,HBV
+547,Hepatitis B Treatment,Hepatitis B Treatment
+548,Antivirals HIV PrEP, Pre-Exposure Prophylaxis
+548,Antivirals HIV PrEP,HIV PrEP
+551,HIV Wasting,HIV wasting
+551,HIV Wasting,HIV associated cachexia
+551,HIV Wasting,HIV cachexia
+551,HIV Wasting,HIV associated wasting
+552,RET-Mutant MTC,RET-mutant Medullary Thyroid Cancer 
+552,RET-Mutant MTC,RET mutant Medullary Thyroid Cancer 
+552,RET-Mutant MTC,RET Mutant MTC
+552,RET-Mutant MTC,RET-Mutant MTC
+554,Blepharospasm,Blepharospasm
+555,Chronic Sialorrhea,Sialorrhea
+555,Chronic Sialorrhea,Chronic Sialorrhea
+557,Diabetic Peripheral Neuropathy,DPN
+557,Diabetic Peripheral Neuropathy,Diabetic Peripheral Neuropathy
+558,Actinic Keratosis,Actinic Keratosis
+559,Behcet’s Disease,Behcet
+559,Behcet’s Disease,Behcet’s Disease
+560,Major Depressive Disorder with Suicidal Ideation ,MDD with Suicidal Ideation 
+560,Major Depressive Disorder with Suicidal Ideation ,Major Depressive Disorder with Suicidal Ideation 
+561,Cholestatic Liver Disease,Pediatric Cholestatic liver disease
+562,Neuroblastoma,Neuroblastoma
+563,Short Bowel Syndrome,Short Bowel Syndrome
+564,Erosive Esophagitis,Erosive Esophagitis
+565,Gastroesophageal Reflux Disease,GastroEsophageal Reflux Disease
+565,Gastroesophageal Reflux Disease,GERD
+565,Gastroesophageal Reflux Disease,Gastro Esophageal Reflux Disease
+566,Cushings Syndrome,Cushing's
+566,Cushings Syndrome,Cushing's Syndrome
+566,Cushings Syndrome,Cushing
+566,Cushings Syndrome,Cushings
+567,Niemann Pick Disease,Niemann-Pick
+567,Niemann Pick Disease,Niemann Pick
+567,Niemann Pick Disease,Niemann Pick Disease
+567,Niemann Pick Disease,NPD
+567,Niemann Pick Disease,Neuronal lipidosis
+567,Niemann Pick Disease,Sphingomyelinase deficiency
+567,Niemann Pick Disease,Sphingomyelin lipidosis
+568,Malignant Pleural Mesothelioma,Mesothelioma
+568,Malignant Pleural Mesothelioma,Malignant Plural Mesothelioma
+569,Eosinophilic Esophagitis (EoE),Eosinophilic Esophagitis (EoE)
+569,Eosinophilic Esophagitis (EoE),EoE
+569,Eosinophilic Esophagitis (EoE),Eosinophilic Esophagitis
+570,Vulvovaginal Candidiasis,Vulvovaginal Candidiasis
+571,Prevention of Chemotherapy-Induced Myelosuppression,Chemotherapy-Induced Myelosuppression Prevention
+571,Prevention of Chemotherapy-Induced Myelosuppression,Prevention of Chemotherapy-Induced Myelosuppression
+572,NSCLC-KRAS,NSCLC KRAS Mutated
+572,NSCLC-KRAS,NSCLC KRAS-Mutated
+573,Solid Tumor with deficient mismatch repair (dMMR),Solid Tumor with deficient mismatch repair (dMMR)
+574,Cytomegalovirus (CMV),CMV
+574,Cytomegalovirus (CMV),Cytomegalovirus
+575,Aggressive Systemic Mastocytosis (ASM),ASM
+575,Aggressive Systemic Mastocytosis (ASM),Aggressive Systemic Mastocytosis
+576,Gouty Arthritis,Gouty Arthritis
+578,Cholangiocarcinoma,Cholangiocarcinoma
+579,Autoinflammatory Syndromes,Autoinflammatory Syndromes
+581,Anxiety,Anxiety
+581,Anxiety,GAD
+581,Anxiety,Generalized Anxiety Disorder
+582,Diabetic Gastroparesis,Diabetic Gastroparesis
+583,Obesity due to Pathogenic Variants,Obesity due to Pathogenic Variants
+584,Adult Onset Stills Disease (AOSD),Adult Onset Still's Disease
+584,Adult Onset Stills Disease (AOSD),AOSD
+584,Adult Onset Stills Disease (AOSD),Adult Onset Stills Disease
+584,Adult Onset Stills Disease (AOSD),Adult Onset Stills Disease (AOSD)
+585,Fever Syndromes,Fever Syndromes
+587,Long-chain fatty acid oxidation disorders (LC-FAOD),LC-FAOD
+587,Long-chain fatty acid oxidation disorders (LC-FAOD),Long-chain fatty acid oxidation disorders
+588,X-linked hypophosphatemia (XLH),X-Linked Hypophosphatemia (XLH)
+588,X-linked hypophosphatemia (XLH),X-Linked Hypophosphatemia
+589,Tumor-induced osteomalacia (TIO),Tumor-induced osteomalacia
+589,Tumor-induced osteomalacia (TIO),Tumor-induced osteomalacia (TIO)
+592,Idiopathic Hypersomnia,Idiopathic Hypersomnia
+593,Microscopic Polyangiitis (MPA),Microscopic Polyangiitis
+593,Microscopic Polyangiitis (MPA),MPA
+594,Esophageal Cancer,Esophageal Cancer
+597,Molybdenum cofactor deficiency (MoCD),MoCD
+597,Molybdenum cofactor deficiency (MoCD),Molybdenum cofactor deficiency
+599,Myasthenia Gravis,Myasthenia Gravis

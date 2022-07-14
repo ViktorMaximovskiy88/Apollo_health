@@ -9,6 +9,8 @@ export interface ExtractionTask {
   end_time?: string;
   status: string;
   extraction_count?: number;
+  code_column?: string;
+  header?: string[];
 }
 
 export interface ContentExtractionResult {
@@ -17,8 +19,16 @@ export interface ContentExtractionResult {
   scrape_task_id: string;
   retrieved_document_id: string;
   content_extraction_task_id: string;
-  collection_time: string;
+  first_collected_date: string;
   result: {};
+  translation?: {
+    code?: string;
+    name?: string;
+    pa?: string;
+    st?: string;
+    ql?: string;
+    sp?: string;
+  };
   page: number;
   row: number;
 }

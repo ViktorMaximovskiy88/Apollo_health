@@ -1,4 +1,4 @@
-import { BaseDocument, Status } from '../types';
+import { BaseDocument, TaskStatus } from '../../common';
 
 export interface BaseUrl {
   url: string;
@@ -10,17 +10,23 @@ export interface Site extends BaseDocument {
   name: string;
   base_urls: BaseUrl[];
   scrape_method: string;
-  collection_method:string;
+  collection_method: string;
   scrape_method_configuration: {
     document_extensions: string[];
     url_keywords: string[];
     proxy_exclusions: string[];
+    wait_for: string[];
+    follow_links: boolean;
+    follow_link_keywords: string[];
+    follow_link_url_keywords: string[];
   };
   tags: string[];
   disabled: boolean;
   last_run_time?: string;
-  last_status: Status;
+  last_run_status: TaskStatus;
   cron: string;
+  playbook?: string;
+  status: string;
 }
 
 export interface Proxy extends BaseDocument {
@@ -33,6 +39,6 @@ export interface ActiveUrlResponse {
 }
 
 export enum CollectionMethod {
-  Automated = "AUTOMATED",
-  Manual = "MANUAL"
+  Automated = 'AUTOMATED',
+  Manual = 'MANUAL',
 }

@@ -4,12 +4,14 @@ import { createBrowserHistory } from 'history';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { usersApi } from '../features/users/usersApi';
 import { sitesApi } from '../features/sites/sitesApi';
-import { documentsApi } from '../features/documents/documentsApi';
+import { documentsApi } from '../features/retrieved_documents/documentsApi';
 import { siteScrapeTasksApi } from '../features/collections/siteScrapeTasksApi';
 import { extractionTasksApi } from '../features/extractions/extractionsApi';
 import { workQueuesApi } from '../features/work_queue/workQueuesApi';
 import { assessmentsApi } from '../features/assessments/assessmentsApi';
 import { proxiesApi } from '../features/proxies/proxiesApi';
+import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
+import { rtkAuth } from '../common/auth-middleware';
 import uiReducer from './uiSlice';
 
 const { createReduxHistory, routerMiddleware, routerReducer } =
@@ -25,6 +27,7 @@ export const store = configureStore({
     [workQueuesApi.reducerPath]: workQueuesApi.reducer,
     [assessmentsApi.reducerPath]: assessmentsApi.reducer,
     [proxiesApi.reducerPath]: proxiesApi.reducer,
+    [docDocumentsApi.reducerPath]: docDocumentsApi.reducer,
     ui: uiReducer,
     router: routerReducer,
   },
@@ -38,7 +41,9 @@ export const store = configureStore({
       workQueuesApi.middleware,
       assessmentsApi.middleware,
       proxiesApi.middleware,
-      routerMiddleware
+      docDocumentsApi.middleware,
+      routerMiddleware,
+      rtkAuth,
     ),
 });
 

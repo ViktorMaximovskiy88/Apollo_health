@@ -1,10 +1,11 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery } from '../../app/base-api';
+import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
 import { ChangeLog } from '../change-log/types';
 import { ContentExtractionResult, ExtractionTask } from './types';
 
 export const extractionTasksApi = createApi({
   reducerPath: 'extractionTasksApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '/api/v1/' }),
+  baseQuery: fetchBaseQuery(),
   tagTypes: ['ExtractionTask', 'ExtractionTaskResult', 'ChangeLog'],
   endpoints: (builder) => ({
     getExtractionTasksForDoc: builder.query<
@@ -15,11 +16,20 @@ export const extractionTasksApi = createApi({
       providesTags: (_r, _e, id) => [{ type: 'ExtractionTask' as const, id }],
     }),
     getExtractionTaskResults: builder.query<
-      ContentExtractionResult[],
-      string | undefined
+      { data: ContentExtractionResult[], total: number },
+      { id: string, limit: number, skip: number, sortInfo: TypeSortInfo, filterValue: TypeFilterValue}
     >({
-      query: (id) => `/extraction-tasks/results/?extraction_id=${id}`,
-      providesTags: (_r, _e, id) => [
+      query: ({limit, skip, sortInfo, filterValue, id }) => {
+        const args = [
+          `extraction_id=${encodeURIComponent(id)}`,
+          `limit=${encodeURIComponent(limit)}`,
+          `skip=${encodeURIComponent(skip)}`,
+          `sorts=${encodeURIComponent(JSON.stringify(sortInfo))}`,
+          `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
+        ].join('&')
+        return `/extraction-tasks/results/?${args}`
+      },
+      providesTags: (_r, _e, { id }) => [
         { type: 'ExtractionTaskResult' as const, id },
       ],
     }),
@@ -71,6 +81,7 @@ export const extractionTasksApi = createApi({
 export const {
   useGetExtractionTasksForDocQuery,
   useGetExtractionTaskResultsQuery,
+  useLazyGetExtractionTaskResultsQuery,
   useGetExtractionTaskQuery,
   useRunExtractionTaskMutation,
   useUpdateExtractionTaskMutation,

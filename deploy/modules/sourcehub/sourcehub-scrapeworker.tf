@@ -13,8 +13,8 @@ resource "aws_ecs_task_definition" "scrapeworker" {
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   # TODO: Make cpu, memory a variable and determine appropriate thresholds
-  cpu                      = 1024
-  memory                   = 2048
+  cpu                      = 2048
+  memory                   = 4096
   
 
   container_definitions = jsonencode([
@@ -38,6 +38,30 @@ resource "aws_ecs_task_definition" "scrapeworker" {
         {
           name = "S3_ENDPOINT_URL"
           value = data.aws_service.s3.dns_name
+        },
+        {
+          name = "MONGO_URL"
+          value = data.aws_ssm_parameter.mongodb-url.value
+        },
+        {
+          name = "MONGO_DB"
+          value = data.aws_ssm_parameter.mongodb-db.value
+        },
+        {
+          name = "MONGO_USER"
+          value = data.aws_ssm_parameter.mongodb-user.value
+        },
+         {
+          name = "REDIS_URL"
+          value = data.aws_ssm_parameter.redis-url.value
+        },
+        {
+          name = "S3_DOCUMENT_BUCKET"
+          value = data.aws_ssm_parameter.docrepo-bucket-name.value
+        },
+        {
+          name = "SMARTPROXY_USERNAME"
+          value = data.aws_ssm_parameter.smartproxy-username.value
         }
       ]
       essential = true
@@ -58,36 +82,12 @@ resource "aws_ecs_task_definition" "scrapeworker" {
 
       secrets = [
         {
-          name = "MONGO_URL"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/mongodb_url"
-        },
-        {
-          name = "MONGO_DB"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/mongodb_db"
-        },
-        {
-          name = "MONGO_USER"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/mongodb_user"
-        },
-        {
           name = "MONGO_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/mongodb_password"
         },
         {
-          name = "REDIS_URL"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_url"
-        },
-        {
           name = "REDIS_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_auth_password"
-        },
-        {
-          name = "S3_DOCUMENT_BUCKET"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/docrepo_bucket_name"
-        },
-        {
-          name = "SMARTPROXY_USERNAME"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/smartproxy_username"
         },
         {
           name = "SMARTPROXY_PASSWORD"

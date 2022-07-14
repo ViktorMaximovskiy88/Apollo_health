@@ -1,12 +1,11 @@
 from datetime import datetime
 
 from beanie import PydanticObjectId
-from beanie.odm.operators.find.comparison import In
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Security
 from fastapi.responses import StreamingResponse
 
 from backend.common.models.content_extraction_task import ContentExtractionTask
-from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
+from backend.common.models.document import RetrievedDocument, RetrievedDocumentLimitTags, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.app.utils.logger import (
@@ -16,6 +15,8 @@ from backend.app.utils.logger import (
 )
 from backend.app.utils.user import get_current_user
 from backend.common.storage.client import DocumentStorageClient
+from backend.common.events.send_event_client import SendEventClient
+from backend.common.events.event_convert import EventConvert
 
 router = APIRouter(
     prefix="/documents",
@@ -33,6 +34,11 @@ async def get_target(id: PydanticObjectId) -> RetrievedDocument:
     return doc
 
 
+@router.get(
+    "/",
+    response_model=list[RetrievedDocument],
+    dependencies=[Security(get_current_user)],
+)
 async def get_documents(
     scrape_task_id: PydanticObjectId | None = None,
     site_id: PydanticObjectId | None = None,
@@ -42,6 +48,12 @@ async def get_documents(
     query = {}
     if scrape_task_id:
         scrape_task = await SiteScrapeTask.get(scrape_task_id)
+        if not scrape_task:
+            raise HTTPException(
+                status.HTTP_406_NOT_ACCEPTABLE,
+                f"Scrape Task {scrape_task_id} does not exist",
+            )
+
         query["_id"] = {"$in": scrape_task.retrieved_document_ids}
     if site_id:
         query["site_id"] = site_id
@@ -50,34 +62,48 @@ async def get_documents(
     if automated_content_extraction:
         query["automated_content_extraction"] = automated_content_extraction
 
-    documents: list[RetrievedDocument] = (
-        await RetrievedDocument.find_many(query).sort("-collection_time").to_list()
+    documents: list[RetrievedDocumentLimitTags] = (
+        await RetrievedDocument.find_many(query).project(RetrievedDocumentLimitTags).sort("-first_collected_date").to_list()
     )
     return documents
 
 
-@router.get("/", response_model=list[RetrievedDocument])
+@router.get(
+    "/",
+    response_model=list[RetrievedDocument],
+    dependencies=[Security(get_current_user)],
+)
 async def read_documents(
     documents: list[RetrievedDocument] = Depends(get_documents),
-    current_user: User = Depends(get_current_user),
 ) -> list[RetrievedDocument]:
     return documents
 
 
-@router.get("/{id}.pdf")
+@router.get("/{id}.pdf", dependencies=[Security(get_current_user)])
 async def download_document(
     target: RetrievedDocument = Depends(get_target),
-    current_user: User = Depends(get_current_user),
 ):
     client = DocumentStorageClient()
-    stream = client.read_document_stream(f"{target.checksum}.pdf")
+    stream = client.read_object_stream(f"{target.checksum}.pdf")
     return StreamingResponse(stream, media_type="application/pdf")
 
 
-@router.get("/{id}", response_model=RetrievedDocument)
+@router.get("/viewer/{id}", dependencies=[Security(get_current_user)])
+async def viewer_document_link(
+    target: RetrievedDocument = Depends(get_target),
+):
+    client = DocumentStorageClient()
+    url = client.get_signed_url(f"{target.checksum}.{target.file_extension}")
+    return {"url": url}
+
+
+@router.get(
+    "/{id}",
+    response_model=RetrievedDocument,
+    dependencies=[Security(get_current_user)],
+)
 async def read_document(
     target: RetrievedDocument = Depends(get_target),
-    current_user: RetrievedDocument = Depends(get_current_user),
 ):
     return target
 
@@ -86,7 +112,7 @@ async def read_document(
 async def update_document(
     updates: UpdateRetrievedDocument,
     target: RetrievedDocument = Depends(get_target),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     updated = await update_and_log_diff(logger, current_user, target, updates)
@@ -106,6 +132,10 @@ async def update_document(
             queued_time=datetime.now(),
         )
         await task.save()
+    # Sending Event Bridge Event.  Need to add condition when to send.
+    document_json = EventConvert(document=updated).convert()
+    send_evnt_client = SendEventClient()
+    response = send_evnt_client.send_event("document-details", document_json)
 
     return updated
 
@@ -113,7 +143,7 @@ async def update_document(
 @router.delete("/{id}")
 async def delete_document(
     target: RetrievedDocument = Depends(get_target),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     await update_and_log_diff(

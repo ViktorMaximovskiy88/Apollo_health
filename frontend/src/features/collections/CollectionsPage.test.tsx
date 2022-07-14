@@ -1,5 +1,5 @@
 import userEvent from '@testing-library/user-event';
-import { render, screen } from '../../test/test-utils';
+import { render, screen, act } from '../../test/test-utils';
 import { setupServer } from 'msw/node';
 import { CollectionsPage } from './CollectionsPage';
 import { handlers } from './mocks/collectionsPageHandlers';
@@ -23,7 +23,7 @@ beforeAll(() => {
 
   jest.useFakeTimers();
 
-  server.listen();
+  server.listen({ onUnhandledRequest: 'error' });
 });
 afterAll(() => {
   jest.useRealTimers();
@@ -32,47 +32,62 @@ afterAll(() => {
 afterEach(() => server.resetHandlers());
 
 describe(`CollectionsPage`, () => {
-  it(`should respond correctly to running a collection`, async () => {
+  it(`should open error log modal when button clicked`, async () => {
     const mockedUseParams = useParams as jest.Mock<Params>;
     mockedUseParams.mockImplementation(() => ({
       siteId: 'site-id1',
     }));
 
+    // fixes `act` warning
+    // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
+    const dataGridDoneRendering = Promise.resolve();
     render(<CollectionsPage />);
-    const runCollection = await screen.findByRole('button', {
-      name: /run collection/i,
+    await act(async () => {
+      await dataGridDoneRendering;
     });
-    expect(runCollection).toBeInTheDocument();
 
-    expect(await screen.findByText(/finished/i)).toBeInTheDocument();
-
-    // TODO: fix this test
-    //
-    // Explanation of problem:
-    //   test fails from here. `screen.debug(undefined, 100000)` shows that only the first task loads
-    //     and, bafflingly, the data table renders "Loading" instead of the following tasks
-    //
-    // Clues toward a solution:
-    //  - this test passed correctly before this component switched over to using a new data table that
-    //      is not native to antd
-    //  - `console.log(`screen height: ${window.screen.height}, screen width: ${window.screen.width}`);`
-    //      shows that the window is 0 height and 0 width, so the new datatable may be truncating the
-    //      rows
-    //
-
-    expect(await screen.findByText(/canceled/i)).toBeInTheDocument();
     expect(await screen.findByText(/failed/i)).toBeInTheDocument();
 
-    userEvent.click(runCollection);
+    const errorLogButton = await screen.findByRole('button', {
+      name: /error log/i,
+    });
+    userEvent.click(errorLogButton);
 
-    expect(await screen.findByText(/queued/i)).toBeInTheDocument();
-    jest.advanceTimersByTime(1000);
-    expect(await screen.findByText(/in progress/i)).toBeInTheDocument();
-    jest.advanceTimersByTime(3000);
-    expect(await screen.findByText(/finished/i)).toBeInTheDocument();
+    expect(await screen.findByText(/error traceback/i)).toBeInTheDocument();
+
+    expect(screen.getByRole('button', { name: /ok/i })).toBeInTheDocument();
   });
 
-  // TODO: add these tests when above test is fixed
-  it.skip(`should cancel task when 'cancel' button clicked`, () => {});
-  it.skip(`should open ErrorLogModal when 'log' button clicked`, () => {});
+  it(`should create scrape task and update status over time`, async () => {
+    const mockedUseParams = useParams as jest.Mock<Params>;
+    mockedUseParams.mockImplementation(() => ({
+      siteId: 'site-id1',
+    }));
+
+    // fixes `act` warning
+    // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
+    const dataGridDoneRendering = Promise.resolve();
+    render(<CollectionsPage />);
+    await act(async () => {
+      await dataGridDoneRendering;
+    });
+
+    const runCollectionButton = await screen.findByRole('button', {
+      name: /run collection/i,
+    });
+    expect(runCollectionButton).toBeInTheDocument();
+
+    expect(screen.getByText(/Jun 20, 2022, 2:17 PM/i)).toBeInTheDocument();
+    expect(screen.getByText(/3 seconds/i)).toBeInTheDocument();
+    expect(screen.getByText(/failed/i)).toBeInTheDocument();
+
+    userEvent.click(runCollectionButton);
+
+    jest.advanceTimersByTime(2000);
+    expect(await screen.findByText(/queued/i)).toBeInTheDocument();
+    jest.advanceTimersByTime(3000);
+    expect(await screen.findByText(/in progress/i)).toBeInTheDocument();
+    jest.advanceTimersByTime(10000);
+    expect(await screen.findByText(/finished/i)).toBeInTheDocument();
+  });
 });

@@ -1,51 +1,69 @@
-from fastapi import Cookie, Depends, Request, status
-from fastapi.security import OAuth2PasswordBearer
+import jwt
+import logging
+
+from fastapi import Depends, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.exceptions import HTTPException
-from jose import jwt, JWTError
 from backend.app.core.settings import settings
 from backend.common.models.user import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
+scheme = HTTPBearer(auto_error=False)
 
-ALGORITHM = "HS256"
+jwks_client = jwt.PyJWKClient(
+    settings.auth0.wellknown_url,
+    cache_keys=True,
+)
 
+# key, alg
+def get_provider_detail(token: str):
+    header = jwt.get_unverified_header(token)
+    if 'kid' in header and header['kid'] == 'local':
+        return (str(settings.secret_key), header['alg'])
+    else:
+        return (jwks_client.get_signing_key_from_jwt(token).key, header['alg'])
 
-def get_token_from_request(request: Request) -> str | None:
-    cookie_token = request.cookies.get("access_token")
-    bearer_token = request.headers.get("Authorization", "").split(" ")[-1]
-    return cookie_token or bearer_token
-
-
-def get_cookie_token(request: Request):
-    cookie_token = request.cookies.get("access_token")
-    return cookie_token
-
-
-def get_token(
-    bearer_token: str | None = Depends(oauth2_scheme),
-    cookie_token: str | None = Depends(get_cookie_token),
-):
-    return bearer_token or cookie_token
-
-
-async def get_current_user(token: str | None = Depends(get_token)):
+async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(scheme)) -> User:
+    
     try:
-        payload = jwt.decode(token, str(settings.secret_key), algorithms=[ALGORITHM])
-    except JWTError:
+        token = auth.credentials
+        email_key = settings.auth0.email_key
+        grant_key = settings.auth0.grant_key
+        audience = settings.auth0.audience
+
+        [signing_key, algorithm] = get_provider_detail(token)
+        payload = jwt.decode(token, signing_key, algorithms=[algorithm], audience=audience)
+
+    except Exception as ex:
+        logging.error(ex)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
         )
-    email = payload.get("sub")
+
+    email: str = payload.get(email_key)
+    if not email and payload.get(grant_key) == 'client-credentials':
+        email = "api@mmitnetwork.com"
+    
     user = await User.by_email(email)
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Authorized user could not be found",
+
+    if not user:
+        user = User(
+            email=email.lower(), 
+            full_name=email.partition("@")[0],
+            is_admin=True,
+            hashed_password="",
         )
+        await user.save()
+
+    if not user:
+        logging.error(f"User not found: email={email}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
     if user.disabled:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="User is disabled"
-        )
+        logging.error(f"User account disabled: email={email}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
+    # check perms
+
     return user
 
 
@@ -53,5 +71,5 @@ async def get_current_admin_user(
     current_user: User = Depends(get_current_user),
 ) -> User:
     if not current_user.is_admin:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "User is not admin")
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "User is not admin")
     return current_user

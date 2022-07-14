@@ -6,23 +6,25 @@ from backend.common.models.content_extraction_task import (
     ContentExtractionResult,
     ContentExtractionTask,
 )
-from backend.common.models.document_assessment import DocumentAssessment
+from backend.common.models.doc_document import DocDocument
+from backend.common.models.indication import Indication
 from backend.common.models.proxy import Proxy
 
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.models.document import RetrievedDocument
+from backend.common.models.work_queue import WorkQueue
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
-from backend.common.models.work_queue import WorkQueue
 
 
 @cache
 def get_motor_client(mock=False) -> AsyncIOMotorClient:
     if mock:
         from mongomock_motor import AsyncMongoMockClient
+
         client = AsyncMongoMockClient()
     else:
         client = AsyncIOMotorClient(
@@ -33,21 +35,25 @@ def get_motor_client(mock=False) -> AsyncIOMotorClient:
     return client
 
 
-def get_motor_db(mock=False) -> AsyncIOMotorDatabase:
-    return get_motor_client(mock)[settings.mongo_db]
+def get_motor_db(mock=False, database_name=None) -> AsyncIOMotorDatabase:
+    if not database_name:
+        database_name = settings.mongo_db
+    return get_motor_client(mock)[database_name]
 
-async def init_db(mock=False):
+
+async def init_db(mock=False, database_name=None):
     await init_beanie(
-        database=get_motor_db(mock),
+        database=get_motor_db(mock, database_name),
         document_models=[
             User,
             WorkQueue,
             Proxy,
             ChangeLog,
             Site,
+            Indication,
             SiteScrapeTask,
+            DocDocument,
             RetrievedDocument,
-            DocumentAssessment,
             ContentExtractionTask,
             ContentExtractionResult,
         ],

@@ -34,6 +34,58 @@ resource "aws_ecs_task_definition" "app" {
         {
           name = "S3_ENDPOINT_URL"
           value = data.aws_service.s3.dns_name
+        },
+        {
+          name = "MONGO_URL"
+          value = data.aws_ssm_parameter.mongodb-url.value
+        },
+        {
+          name = "MONGO_DB"
+          value = data.aws_ssm_parameter.mongodb-db.value
+        },
+        {
+          name = "MONGO_USER"
+          value = data.aws_ssm_parameter.mongodb-user.value
+        },
+         {
+          name = "REDIS_URL"
+          value = data.aws_ssm_parameter.redis-url.value
+        },
+        {
+          name = "S3_DOCUMENT_BUCKET"
+          value = data.aws_ssm_parameter.docrepo-bucket-name.value
+        },
+        {
+          name = "REACT_APP_AUTH0_DOMAIN"
+          value = var.auth0-config.domain
+        },
+        {
+          name = "REACT_APP_AUTH0_CLIENT_ID"
+          value = var.auth0-config.client_id
+        },
+        {
+          name = "REACT_APP_AUTH0_AUDIENCE"
+          value = var.auth0-config.audience
+        },
+        {
+          name = "AUTH0_WELLKNOWN_URL"
+          value = var.auth0-config.wellknown_url
+        },
+        {
+          name = "AUTH0_AUDIENCE"
+          value = var.auth0-config.audience
+        },
+        {
+          name = "AUTH0_ISSUER"
+          value = var.auth0-config.issuer
+        },
+        {
+          name = "EVENT_BUS_ARN"
+          value = aws_cloudwatch_event_bus.sourcehub.arn
+        },
+        {
+          name = "EVENT_SOURCE"
+          value = local.event_source
         }
       ]
       essential = true
@@ -54,39 +106,19 @@ resource "aws_ecs_task_definition" "app" {
       
       secrets = [
         {
-          name = "MONGO_URL"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/mongodb_url"
-        },
-        {
-          name = "MONGO_DB"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/mongodb_db"
-        },
-        {
-          name = "MONGO_USER"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/mongodb_user"
-        },
-        {
           name = "MONGO_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/mongodb_password"
         },
         {
-          name = "REDIS_URL"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_url"
-        },
-        {
           name = "REDIS_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_auth_password"
-        },
-        {
-          name = "S3_DOCUMENT_BUCKET"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/docrepo_bucket_name"
         }
       ]
 
       # healthCheck = {
       #   command = [
       #     "CMD-SHELL",
-      #     "curl -f http://localhost:8000/login || exit 1"
+      #     "curl -f http://localhost:8000/ping || exit 1"
       #   ]
       #   interval = 60
       #   retries = 3
@@ -161,7 +193,8 @@ resource "aws_iam_role" "app-task" {
   }
 
   managed_policy_arns = [
-    data.aws_iam_policy.docrepo-contributor.arn
+    data.aws_iam_policy.docrepo-contributor.arn,
+    aws_iam_policy.sourcehub-eventbus-contributor.arn
   ]
 
   tags = merge(local.effective_tags, {
@@ -271,7 +304,7 @@ resource "aws_ecs_service" "app" {
 resource "aws_alb_target_group" "app-http" {
   name = format("%s-%s-%s-http", local.app_name, var.environment, local.service_name)
   health_check {
-    path = "/login"
+    path = "/ping"
     matcher = "200-299,303"
   }
   port                 = 80

@@ -5,8 +5,9 @@ import { useRunSiteScrapeTaskMutation } from './siteScrapeTasksApi';
 import { useGetSiteQuery } from '../sites/sitesApi';
 import Title from 'antd/lib/typography/Title';
 import { CollectionsDataTable } from './CollectionsDataTable';
-import { CollectionMethod } from "../sites/types"
+import { CollectionMethod } from '../sites/types';
 import { ErrorLogModal } from './ErrorLogModal';
+import { SiteStatus } from '../sites/siteStatus';
 
 export function CollectionsPage() {
   const [modalVisible, setModalVisible] = useState(false);
@@ -33,14 +34,13 @@ export function CollectionsPage() {
       <Layout className="bg-white">
         <div className="flex">
           <Title level={4}>Collections</Title>
-          {
-            site && site.collection_method === CollectionMethod.Automated ?
+          {site &&
+          site.collection_method === CollectionMethod.Automated &&
+          site.status !== SiteStatus.Inactive ? (
             <Button onClick={() => runScrape(site._id)} className="ml-auto">
               Run Collection
             </Button>
-            :
-            null
-          }
+          ) : null}
         </div>
         <CollectionsDataTable siteId={siteId} openErrorModal={openErrorModal} />
       </Layout>

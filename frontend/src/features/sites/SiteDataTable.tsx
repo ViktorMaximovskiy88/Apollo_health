@@ -2,24 +2,22 @@ import ReactDataGrid from '@inovua/reactdatagrid-community';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Popconfirm, Tag, notification } from 'antd';
-import { useCallback, useMemo } from 'react';
+import { ReactNode, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { setSiteTableFilter, setSiteTableSort, siteTableState } from '../../app/uiSlice';
 import {
-  setSiteTableFilter,
-  setSiteTableSort,
-  siteTableState,
-} from '../../app/uiSlice';
-import { prettyDateTimeFromISO } from "../../common";
+  prettyDateTimeFromISO,
+  TaskStatus,
+  scrapeTaskStatusDisplayName as displayName,
+  scrapeTaskStatusStyledDisplay as styledDisplay,
+} from '../../common';
 import { isErrorWithData } from '../../common/helpers';
-import { ButtonLink } from '../../components/ButtonLink';
+import { ButtonLink, GridPaginationToolbar } from '../../components';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { Status } from '../types';
-import {
-  useDeleteSiteMutation,
-  useGetChangeLogQuery,
-  useGetSitesQuery,
-} from './sitesApi';
+import { useDeleteSiteMutation, useGetChangeLogQuery, useLazyGetSitesQuery } from './sitesApi';
 import { Site } from './types';
+import { SiteStatus, siteStatusDisplayName, siteStatusStyledDisplay } from './siteStatus';
+import { useInterval } from '../../common/hooks';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
@@ -56,6 +54,36 @@ const createColumns = (deleteSite: any) => {
       defaultFlex: 1,
     },
     {
+      header: 'Site Status',
+      name: 'status',
+      minWidth: 200,
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        placeholder: 'All',
+        dataSource: [
+          {
+            id: SiteStatus.New,
+            label: siteStatusDisplayName(SiteStatus.New),
+          },
+          {
+            id: SiteStatus.QualityHold,
+            label: siteStatusDisplayName(SiteStatus.QualityHold),
+          },
+          {
+            id: SiteStatus.Online,
+            label: siteStatusDisplayName(SiteStatus.Online),
+          },
+          {
+            id: SiteStatus.Inactive,
+            label: siteStatusDisplayName(SiteStatus.Inactive),
+          },
+        ],
+      },
+      render: ({ value: status }: { value: SiteStatus }) => {
+        return siteStatusStyledDisplay(status);
+      },
+    },
+    {
       header: 'Last Run Time',
       name: 'last_run_time',
       minWidth: 200,
@@ -73,35 +101,37 @@ const createColumns = (deleteSite: any) => {
       },
     },
     {
-      header: 'Last Status',
-      name: 'last_status',
+      header: 'Last Run Status',
+      name: 'last_run_status',
       minWidth: 200,
       filterEditor: SelectFilter,
       filterEditorProps: {
         placeholder: 'All',
         dataSource: [
-          { id: Status.Finished, label: 'Success' },
-          { id: Status.Canceled, label: 'Canceled' },
-          { id: Status.Queued, label: 'Queued' },
-          { id: Status.Failed, label: 'Failed' },
-          { id: Status.InProgress, label: 'In Progress' },
+          {
+            id: TaskStatus.Finished,
+            label: displayName(TaskStatus.Finished),
+          },
+          {
+            id: TaskStatus.Canceled,
+            label: displayName(TaskStatus.Canceled),
+          },
+          {
+            id: TaskStatus.Queued,
+            label: displayName(TaskStatus.Queued),
+          },
+          {
+            id: TaskStatus.Failed,
+            label: displayName(TaskStatus.Failed),
+          },
+          {
+            id: TaskStatus.InProgress,
+            label: displayName(TaskStatus.InProgress),
+          },
         ],
       },
-      render: ({ value: status }: { value: Status }) => {
-        switch (status) {
-          case Status.Finished:
-            return <span className="text-green-500">Success</span>;
-          case Status.Canceled:
-            return <span className="text-orange-500">Canceled</span>;
-          case Status.Queued:
-            return <span className="text-yellow-500">Queued</span>;
-          case Status.Failed:
-            return <span className="text-red-500">Failed</span>;
-          case Status.InProgress:
-            return <span className="text-blue-500">In Progress</span>;
-          default:
-            return null;
-        }
+      render: ({ value: status }: { value: TaskStatus }) => {
+        return styledDisplay(status);
       },
     },
     {
@@ -132,10 +162,7 @@ const createColumns = (deleteSite: any) => {
         return (
           <>
             <ButtonLink to={`${site._id}/edit`}>Edit</ButtonLink>
-            <ChangeLogModal
-              target={site}
-              useChangeLogQuery={useGetChangeLogQuery}
-            />
+            <ChangeLogModal target={site} useChangeLogQuery={useGetChangeLogQuery} />
             <Popconfirm
               title={`Are you sure you want to delete '${site.name}'?`}
               okText="Yes"
@@ -151,27 +178,66 @@ const createColumns = (deleteSite: any) => {
   ];
 };
 
+function disableLoadingMask(data: {
+  visible: boolean;
+  livePagination: boolean;
+  loadingText: ReactNode | (() => ReactNode);
+  zIndex: number;
+}) {
+  return <></>;
+}
+
 export function SiteDataTable() {
-  const { data: sites } = useGetSitesQuery(undefined, {
-    pollingInterval: 5000,
-  });
+  const tableState = useSelector(siteTableState);
+  const [getSitesFn] = useLazyGetSitesQuery();
   const [deleteSite] = useDeleteSiteMutation();
-  const columns = useMemo(() => createColumns(deleteSite), [deleteSite])
-  const tableState = useSelector(siteTableState)
-  const dispatch = useDispatch()
-  const onFilterChange = useCallback((filter: any) => dispatch(setSiteTableFilter(filter)), [dispatch]);
+  const columns = useMemo(() => createColumns(deleteSite), [deleteSite]);
+  const dispatch = useDispatch();
+  const onFilterChange = useCallback(
+    (filter: any) => dispatch(setSiteTableFilter(filter)),
+    [dispatch]
+  );
   const onSortChange = useCallback((sort: any) => dispatch(setSiteTableSort(sort)), [dispatch]);
 
-  const formattedSites = sites?.filter((u) => !u.disabled) || [];
-  return <>
+  // Trigger update every 10 seconds by invalidating memoized callback
+  const { setActive, isActive, watermark } = useInterval(10000);
+
+  const loadData = useCallback(
+    async (tableInfo: any) => {
+      const { data } = await getSitesFn(tableInfo);
+      const sites = data?.data || [];
+      const count = data?.total || 0;
+      return { data: sites, count };
+    },
+    [getSitesFn, watermark]
+  );
+
+  const renderPaginationToolbar = useCallback(
+    (paginationProps: any) => {
+      return (
+        <GridPaginationToolbar
+          paginationProps={{ ...paginationProps }}
+          autoRefreshValue={isActive}
+          autoRefreshClick={setActive}
+        />
+      );
+    },
+    [isActive]
+  );
+
+  return (
     <ReactDataGrid
-      dataSource={formattedSites}
+      dataSource={loadData}
       columns={columns}
       rowHeight={50}
+      pagination
       defaultFilterValue={tableState.filter}
       onFilterValueChange={onFilterChange}
       defaultSortInfo={tableState.sort}
       onSortInfoChange={onSortChange}
+      renderLoadMask={disableLoadingMask}
+      renderPaginationToolbar={renderPaginationToolbar}
+      activateRowOnFocus={false}
     />
-  </>
+  );
 }

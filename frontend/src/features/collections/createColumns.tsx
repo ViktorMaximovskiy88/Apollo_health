@@ -1,9 +1,14 @@
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
-import { Button, Spin } from 'antd';
-import { prettyDateDistance, prettyDateTimeFromISO } from '../../common';
+import { Button } from 'antd';
+import {
+  prettyDateDistance,
+  prettyDateTimeFromISO,
+  TaskStatus,
+  scrapeTaskStatusDisplayName as displayName,
+  scrapeTaskStatusStyledDisplay as styledDisplay,
+} from '../../common';
 import { ButtonLink } from '../../components/ButtonLink';
-import { Status } from '../types';
 import { SiteScrapeTask } from './types';
 
 interface CreateColumnsType {
@@ -50,37 +55,34 @@ export const createColumns = ({
       filterEditorProps: {
         placeholder: 'All',
         dataSource: [
-          { id: Status.Queued, label: 'Queued' },
-          { id: Status.InProgress, label: 'In Progress' },
-          { id: Status.Finished, label: 'Finished' },
-          { id: Status.Failed, label: 'Failed' },
-          { id: Status.Canceling, label: 'Canceling' },
-          { id: Status.Canceled, label: 'Canceled' },
+          {
+            id: TaskStatus.Finished,
+            label: displayName(TaskStatus.Finished),
+          },
+          {
+            id: TaskStatus.Canceled,
+            label: displayName(TaskStatus.Canceled),
+          },
+          {
+            id: TaskStatus.Canceled,
+            label: displayName(TaskStatus.Canceling),
+          },
+          {
+            id: TaskStatus.Queued,
+            label: displayName(TaskStatus.Queued),
+          },
+          {
+            id: TaskStatus.Failed,
+            label: displayName(TaskStatus.Failed),
+          },
+          {
+            id: TaskStatus.InProgress,
+            label: displayName(TaskStatus.InProgress),
+          },
         ],
       },
-      render: ({ value: status }: { value: Status }) => {
-        switch (status) {
-          case Status.Failed:
-            return <span className="text-red-500">Failed</span>;
-          case Status.Canceled:
-            return <span className="text-orange-500">Canceled</span>;
-          case Status.Canceling:
-            return (
-              <>
-                <span className="text-amber-500 mr-2">Canceling</span>
-                <Spin size="small" />
-              </>
-            );
-          case Status.InProgress:
-            return <span className="text-blue-500">In Progress</span>;
-          case Status.Queued:
-            return <span className="text-yellow-500">Queued</span>;
-          case Status.Finished:
-            return <span className="text-green-500">Finished</span>;
-          default:
-            return null;
-        }
-      },
+      render: ({ value: status }: { value: TaskStatus }) =>
+        styledDisplay(status),
     },
     {
       header: 'Document Count',
@@ -108,8 +110,8 @@ export const createColumns = ({
       header: 'Actions',
       render: ({ data: task }: { data: SiteScrapeTask }) => {
         switch (task.status) {
-          case Status.InProgress:
-          case Status.Queued:
+          case TaskStatus.InProgress:
+          case TaskStatus.Queued:
             return (
               <Button
                 danger
@@ -120,7 +122,7 @@ export const createColumns = ({
                 Cancel
               </Button>
             );
-          case Status.Failed:
+          case TaskStatus.Failed:
             return (
               <Button
                 danger
