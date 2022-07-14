@@ -87,7 +87,6 @@ async def start_scrape_task(
     )
     return site_scrape_task
 
-
 @router.post("/bulk-run")
 async def runBulkByType(
     type: str,
@@ -191,3 +190,10 @@ async def cancel_scrape_task(
         scrape_task = SiteScrapeTask.parse_obj(acquired)
         typer.secho(f"Set Task {scrape_task.id} 'Canceling'", fg=typer.colors.BLUE)
         return scrape_task
+
+
+
+
+
+
+

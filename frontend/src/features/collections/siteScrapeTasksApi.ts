@@ -74,7 +74,7 @@ export const siteScrapeTasksApi = createApi({
         method: 'POST',
       }),
       invalidatesTags: (_r, _e, id) => [{ type: 'SiteScrapeTask', id }],
-    }),
+    })
   }),
 });
 
