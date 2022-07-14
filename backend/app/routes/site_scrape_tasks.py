@@ -83,7 +83,7 @@ async def start_scrape_task(
 
     # NOTE: Could use a transaction here
     await create_and_log(logger, current_user, site_scrape_task)
-    await Site.find_one(Site.id == site.id).update(
+    await site.update(
         Set(
             {
                 Site.last_run_status: site_scrape_task.status,
@@ -91,6 +91,7 @@ async def start_scrape_task(
         )
     )
     return site_scrape_task
+
 
 @router.post("/bulk-run")
 async def runBulkByType(
@@ -194,10 +195,3 @@ async def cancel_scrape_task(
         scrape_task = SiteScrapeTask.parse_obj(acquired)
         typer.secho(f"Set Task {scrape_task.id} 'Canceling'", fg=typer.colors.BLUE)
         return scrape_task
-
-
-
-
-
-
-
