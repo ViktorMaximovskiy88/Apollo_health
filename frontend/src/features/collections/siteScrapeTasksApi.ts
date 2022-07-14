@@ -14,7 +14,7 @@ export const siteScrapeTasksApi = createApi({
     runSiteScrapeTask: builder.mutation<SiteScrapeTask, string>({
       query: (siteId) => ({
         url: `/site-scrape-tasks/?site_id=${siteId}`,
-        method: 'PUT',
+        method: 'PUT'
       }),
       invalidatesTags: (_r, _e, id) => [{ type: 'SiteScrapeTask', id }],
     }),
