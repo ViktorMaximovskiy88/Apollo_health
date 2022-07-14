@@ -89,7 +89,7 @@ export const initialState = {
       quickFilter: {
         assignedToMe: false,
         unassigned: false,
-        failedLastSevenDays: false,
+        onHoldLastSevenDays: false,
       },
     },
   },

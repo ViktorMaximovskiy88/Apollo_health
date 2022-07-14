@@ -1,10 +1,10 @@
-import { TaskStatus } from '../../common';
 import { Site } from './types';
 import { DateTime } from 'luxon';
 import reduce from 'lodash/reduce';
+import { SiteStatus } from './siteStatus';
 
-function isFailedLastSevenDays(site: Site) {
-  if (site.last_run_status !== TaskStatus.Failed) {
+function isQualityHoldLastSevenDays(site: Site) {
+  if (site.status !== SiteStatus.QualityHold) {
     return false;
   }
   if (!site.last_run_time) {
@@ -21,12 +21,12 @@ function isFailedLastSevenDays(site: Site) {
 interface QuickFilterType {
   assignedToMe: boolean;
   unassigned: boolean;
-  failedLastSevenDays: boolean;
+  onHoldLastSevenDays: boolean;
 }
 
 function filterQuickFilter(quickFilter: QuickFilterType, sites: Site[]): Site[] {
   sites = sites.filter((site) => {
-    if (quickFilter.failedLastSevenDays && !isFailedLastSevenDays(site)) {
+    if (quickFilter.onHoldLastSevenDays && !isQualityHoldLastSevenDays(site)) {
       return false;
     }
     // TODO: add assignedToMe and unassigned logic after roles are added
