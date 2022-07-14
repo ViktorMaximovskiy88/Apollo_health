@@ -2,44 +2,12 @@ import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { ReactNode, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSiteTableFilter, setSiteTableSort, siteTableState } from '../../app/uiSlice';
-import { TaskStatus } from '../../common';
 import { GridPaginationToolbar } from '../../components';
 import { useDeleteSiteMutation, useLazyGetSitesQuery } from './sitesApi';
-import { Site } from './types';
 import { useInterval } from '../../common/hooks';
 import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
 import { createColumns } from './createColumns';
-import { DateTime } from 'luxon';
-
-function isFailedLastSevenDays(site: Site) {
-  if (site.last_run_status !== TaskStatus.Failed) {
-    return false;
-  }
-  if (!site.last_run_time) {
-    return false;
-  }
-  const lastRunTime = DateTime.fromISO(site.last_run_time);
-  const sevenDaysAgo = DateTime.now().minus({ days: 7 });
-  if (lastRunTime < sevenDaysAgo) {
-    return false;
-  }
-  return true;
-}
-
-interface QuickFilterType {
-  assignedToMe: boolean;
-  unassigned: boolean;
-  failedLastSevenDays: boolean;
-}
-export function executeQuickFilter(quickFilter: QuickFilterType) {
-  return function (site: Site) {
-    if (quickFilter.failedLastSevenDays && !isFailedLastSevenDays(site)) {
-      return false;
-    }
-    // TODO: add assignedToMe and unassigned logic after roles are added
-    return true;
-  };
-}
+import { applyQuickFilter } from './applyQuickFilter';
 
 function disableLoadingMask(data: {
   visible: boolean;
@@ -71,9 +39,8 @@ export function SiteDataTable() {
   const loadData = useCallback(
     async (tableInfo: any) => {
       const { data } = await getSitesFn(tableInfo);
-      const { quickFilter } = tableState;
       let sites = data?.data ?? [];
-      sites = sites.filter(executeQuickFilter(quickFilter));
+      sites = applyQuickFilter(tableState, sites);
       const count = sites.length;
       return { data: sites, count };
     },
@@ -103,6 +70,7 @@ export function SiteDataTable() {
       onFilterValueChange={onFilterChange}
       defaultSortInfo={tableState.sort}
       onSortInfoChange={onSortChange}
+      sortInfo={tableState.sort}
       renderLoadMask={disableLoadingMask}
       renderPaginationToolbar={renderPaginationToolbar}
       activateRowOnFocus={false}

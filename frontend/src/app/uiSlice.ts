@@ -2,7 +2,7 @@ import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { LOCATION_CHANGE } from 'redux-first-history';
 import { RootState } from './store';
 
-const initialState = {
+export const initialState = {
   extractions: {
     table: {
       sort: { name: 'first_collected_date', dir: -1 as 1 | -1 | 0 },

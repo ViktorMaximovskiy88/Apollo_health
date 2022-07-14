@@ -1,6 +1,11 @@
 import { Button, Dropdown, Space, Menu, Tag } from 'antd';
 import { SyncOutlined, DownOutlined } from '@ant-design/icons';
-import { setSiteTableQuickFilter, siteTableState } from '../../app/uiSlice';
+import {
+  initialState,
+  setSiteTableQuickFilter,
+  setSiteTableSort,
+  siteTableState,
+} from '../../app/uiSlice';
 import { useDispatch, useSelector } from 'react-redux';
 
 enum QuickFilter {
@@ -9,9 +14,12 @@ enum QuickFilter {
   FailedLastSevenDays = 'FAILED_LAST_SEVEN_DAYS',
 }
 function QuickFilterComponent() {
-  const { quickFilter } = useSelector(siteTableState);
+  const siteTable = useSelector(siteTableState);
+  console.log(siteTable);
+  const { quickFilter } = siteTable;
   const dispatch = useDispatch();
   const reset = () => {
+    dispatch(setSiteTableSort(initialState.sites.table.sort));
     dispatch(
       setSiteTableQuickFilter({
         assignedToMe: false,
@@ -21,6 +29,7 @@ function QuickFilterComponent() {
     );
   };
   const onMenuSelect = (key: QuickFilter) => {
+    dispatch(setSiteTableSort({ name: 'last_run_time', dir: 1 }));
     switch (key) {
       case QuickFilter.FailedLastSevenDays:
         return dispatch(
