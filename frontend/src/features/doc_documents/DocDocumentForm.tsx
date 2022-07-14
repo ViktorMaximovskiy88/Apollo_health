@@ -165,11 +165,6 @@ export function DocDocumentForm(props: { doc: DocDocument }) {
         valuePropName="checked"
       >
         <Switch />
-        {automatedExtraction && (
-          <Form.Item name="automated_content_extraction_class" label="Extraction Strategy">
-            <Select options={extractionOptions} />
-          </Form.Item>
-        )}
       </Form.Item>
 
       {automatedExtraction && (
