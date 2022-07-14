@@ -13,10 +13,17 @@ class TherapyTag(BaseModel):
     score: float = 0
     relevancy: float = 0
 
+    def __hash__(self):
+        return hash(tuple(self.__dict__.values()))
+
 
 class IndicationTag(BaseModel):
     text: str
     code: int
+    page: int = 0
+
+    def __hash__(self):
+        return hash(tuple(self.__dict__.values()))
 
 
 class TaskLock(BaseModel):
@@ -27,7 +34,7 @@ class TaskLock(BaseModel):
 
 class DocDocument(BaseDocument):
     site_id: Indexed(PydanticObjectId)  # type: ignore
-    retrieved_document_id: PydanticObjectId
+    retrieved_document_id: Indexed(PydanticObjectId)  # type: ignore
     classification_status: TaskStatus = TaskStatus.QUEUED
     classification_lock: TaskLock | None = None
 
@@ -42,6 +49,7 @@ class DocDocument(BaseDocument):
     effective_date: datetime | None = None
     last_reviewed_date: datetime | None = None
     last_updated_date: datetime | None = None
+    last_reviewed_date: datetime | None = None
     next_review_date: datetime | None = None
     next_update_date: datetime | None = None
     first_created_date: datetime | None = None
@@ -70,16 +78,14 @@ class DocDocument(BaseDocument):
 
     automated_content_extraction: bool = False
     automated_content_extraction_class: str | None = None
+    content_extraction_task_id: PydanticObjectId | None = None
 
     tags: list[str] = []
 
 
 class DocDocumentLimitTags(DocDocument):
     class Settings:
-        projection = {
-            "therapy_tags": {"$slice": 10},
-            "indication_tags": {"$slice": 10},
-        }
+        projection = {"therapy_tags": {"$slice": 10}, "indication_tags": {"$slice": 10}}
 
 
 class UpdateTherapyTag(BaseModel):
@@ -98,7 +104,7 @@ class UpdateIndicationTag(BaseModel):
     relevancy: float | None = None
 
 
-class UpdateDocDocument(BaseDocument):
+class UpdateDocDocument(BaseModel):
     classification_status: TaskStatus = TaskStatus.QUEUED
     classification_lock: TaskLock | None = None
     name: str | None = None
@@ -107,6 +113,7 @@ class UpdateDocDocument(BaseDocument):
     effective_date: datetime | None = None
     last_reviewed_date: datetime | None = None
     last_updated_date: datetime | None = None
+    last_reviewed_date: datetime | None = None
     next_review_date: datetime | None = None
     next_update_date: datetime | None = None
     first_created_date: datetime | None = None
@@ -120,11 +127,15 @@ class UpdateDocDocument(BaseDocument):
     lineage_id: PydanticObjectId | None = None
     version: str | None = None
 
-    lang_code: LangCode | None
+    lang_code: LangCode | None = None
 
     therapy_tags: list[UpdateTherapyTag] | None = None
     indication_tags: list[UpdateIndicationTag] | None = None
 
+    tags: list[str] | None = None
+
     automated_content_extraction: bool = False
     automated_content_extraction_class: str | None = None
-    tags: list[str] | None = None
+    content_extraction_task_id: PydanticObjectId | None = None
+    content_extraction_status: TaskStatus = TaskStatus.QUEUED
+    content_extraction_lock: TaskLock | None = None

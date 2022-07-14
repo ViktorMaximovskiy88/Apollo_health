@@ -24,6 +24,7 @@ export interface RetrievedDocument extends BaseDocument {
   effective_date?: string;
   end_date?: string;
   last_updated_date?: string;
+  last_reviewed_date?: string;
   next_review_date?: string;
   next_update_date?: string;
   published_date?: string;

@@ -5,7 +5,7 @@ from abc import ABC
 from typing import Any
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.common.detect_lang import detect_lang
-from backend.scrapeworker.common.utils import date_rgxs
+from backend.scrapeworker.common.utils import date_rgxs, label_rgxs
 from backend.scrapeworker.common.date_parser import DateParser
 from backend.scrapeworker.document_tagging.taggers import Taggers
 
@@ -43,7 +43,7 @@ class FileParser(ABC):
         document_type, confidence = classify_doc_type(self.text)
         lang_code = detect_lang(self.text)
 
-        date_parser = DateParser(self.text, date_rgxs)
+        date_parser = DateParser(self.text, date_rgxs, label_rgxs)
         date_parser.extract_dates()
         identified_dates = list(date_parser.unclassified_dates)
         identified_dates.sort()
@@ -59,6 +59,7 @@ class FileParser(ABC):
             "effective_date": date_parser.effective_date["date"],
             "end_date": date_parser.end_date["date"],
             "last_updated_date": date_parser.last_updated_date["date"],
+            "last_reviewed_date": date_parser.last_reviewed_date["date"],
             "next_review_date": date_parser.next_review_date["date"],
             "next_update_date": date_parser.next_update_date["date"],
             "published_date": date_parser.published_date["date"],

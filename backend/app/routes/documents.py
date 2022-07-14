@@ -49,7 +49,10 @@ async def get_documents(
     if scrape_task_id:
         scrape_task = await SiteScrapeTask.get(scrape_task_id)
         if not scrape_task:
-            raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, f"Scrape Task {scrape_task_id} does not exist")
+            raise HTTPException(
+                status.HTTP_406_NOT_ACCEPTABLE,
+                f"Scrape Task {scrape_task_id} does not exist",
+            )
 
         query["_id"] = {"$in": scrape_task.retrieved_document_ids}
     if site_id:
@@ -85,6 +88,15 @@ async def download_document(
     return StreamingResponse(stream, media_type="application/pdf")
 
 
+@router.get("/viewer/{id}", dependencies=[Security(get_current_user)])
+async def viewer_document_link(
+    target: RetrievedDocument = Depends(get_target),
+):
+    client = DocumentStorageClient()
+    url = client.get_signed_url(f"{target.checksum}.{target.file_extension}")
+    return {"url": url}
+
+
 @router.get(
     "/{id}",
     response_model=RetrievedDocument,
@@ -93,10 +105,6 @@ async def download_document(
 async def read_document(
     target: RetrievedDocument = Depends(get_target),
 ):
-    # TODO migration to fix this for reals...
-    if target.file_extension is None:
-        target.file_extension = "pdf"
-
     return target
 
 

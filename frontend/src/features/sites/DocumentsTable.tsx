@@ -1,4 +1,4 @@
-import { prettyDateFromISO } from '../../common';
+import { prettyDateFromISO, prettyDateUTCFromISO } from '../../common';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useGetDocumentsQuery } from '../retrieved_documents/documentsApi';
@@ -83,11 +83,7 @@ const columns = [
     name: 'doc_type_confidence',
     minWidth: 200,
     render: ({ value: doc_type_confidence }: { value?: number }) => {
-      return (
-        <>
-          {doc_type_confidence && `${Math.round(100 * doc_type_confidence)}%`}
-        </>
-      );
+      return <>{doc_type_confidence && `${Math.round(100 * doc_type_confidence)}%`}</>;
     },
   },
   {
@@ -95,7 +91,7 @@ const columns = [
     name: 'effective_date',
     render: ({ value: effective_date }: { value: string }) => {
       if (!effective_date) return null;
-      return prettyDateFromISO(effective_date);
+      return prettyDateUTCFromISO(effective_date);
     },
   },
   {
@@ -117,10 +113,7 @@ const columns = [
     render: ({ data: doc }: { data: RetrievedDocument }) => {
       return (
         <>
-          <ChangeLogModal
-            target={doc}
-            useChangeLogQuery={useGetChangeLogQuery}
-          />
+          <ChangeLogModal target={doc} useChangeLogQuery={useGetChangeLogQuery} />
         </>
       );
     },
@@ -146,10 +139,7 @@ export function DocumentsTable() {
     (filter: any) => dispatch(setDocumentTableFilter(filter)),
     [dispatch]
   );
-  const onSortChange = useCallback(
-    (sort: any) => dispatch(setDocumentTableSort(sort)),
-    [dispatch]
-  );
+  const onSortChange = useCallback((sort: any) => dispatch(setDocumentTableSort(sort)), [dispatch]);
 
   return (
     <ReactDataGrid

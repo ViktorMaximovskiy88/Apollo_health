@@ -119,7 +119,7 @@ source .venv/bin/activate
 cd backend
 
 # poetry install python deps
-PIP_CONSTRAINT=build-constraints.txt CFLAGS="-mavx -DWARN(a)=(a)" \
+PIP_CONSTRAINT=build-constraints.txt CFLAGS="-mavx -DWARN(a)=(a) -I /opt/homebrew/opt/protobuf/include" \
     LDFLAGS="-L/opt/homebrew/opt/protobuf/lib" \
     poetry install
 

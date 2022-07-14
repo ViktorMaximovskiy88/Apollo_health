@@ -22,6 +22,7 @@ class RetrievedDocument(BaseDocument):
     effective_date: datetime | None = None
     end_date: datetime | None = None
     last_updated_date: datetime | None = None
+    last_reviewed_date: datetime | None = None
     next_review_date: datetime | None = None
     next_update_date: datetime | None = None
     published_date: datetime | None = None
@@ -31,6 +32,7 @@ class RetrievedDocument(BaseDocument):
     base_url: str | None = None
     lang_code: LangCode | None = None
     file_extension: str | None = None
+    content_type: str | None = None
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
@@ -44,6 +46,7 @@ class UpdateRetrievedDocument(BaseModel):
     effective_date: datetime | None = None
     end_date: datetime | None = None
     last_updated_date: datetime | None = None
+    last_reviewed_date: datetime | None = None
     next_review_date: datetime | None = None
     next_update_date: datetime | None = None
     published_date: datetime | None = None
@@ -62,7 +65,6 @@ class UpdateRetrievedDocument(BaseModel):
     metadata: dict | None = None
     context_metadata: dict | None = None
     lang_code: LangCode | None = None
-    file_extension: str | None = None
 
     therapy_tags: list[TherapyTag] | None = None
     indication_tags: list[IndicationTag] | None = None

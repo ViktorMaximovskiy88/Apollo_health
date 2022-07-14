@@ -1,5 +1,6 @@
 export {
   prettyDateFromISO,
+  prettyDateUTCFromISO,
   prettyDateTimeFromISO,
   prettyDate,
   prettyDateDistance,

@@ -13,6 +13,9 @@ from beanie.odm.operators.update.general import Set
 
 
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
+from backend.app.utils.logger import Logger, update_and_log_diff
+from backend.common.models.doc_document import DocDocument, UpdateDocDocument
+from backend.common.models.user import User
 from backend.common.models.content_extraction_task import ContentExtractionTask
 from backend.common.models.document import RetrievedDocument
 from backend.parseworker.rxnorm_entity_linker_model import RxNormEntityLinkerModel
@@ -29,6 +32,10 @@ async def start_worker_async():
     worker_id = uuid4()
     rxnorm_model = RxNormEntityLinkerModel()
     extractor_classes = importlib.import_module("backend.parseworker.extractors")
+    user = await User.by_email("admin@mmitnetwork.com")
+    logger = Logger()
+    if not user:
+        raise Exception("No admin user found")
 
     while True:
         acquired = (
@@ -53,10 +60,17 @@ async def start_worker_async():
             )
             if not site or not doc:
                 raise Exception("Site not found")
+            doc_document = await DocDocument.find_one(
+                DocDocument.retrieved_document_id == doc.id
+            )
+            if not doc_document:
+                raise Exception("DocDocument not found")
 
             typer.secho(f"Acquired Task {extract_task.id}", fg=typer.colors.BLUE)
 
-            extraction_class = doc.automated_content_extraction_class or 'BasicTableExtraction'
+            extraction_class = (
+                doc.automated_content_extraction_class or "BasicTableExtraction"
+            )
             ExtractWorker = getattr(extractor_classes, extraction_class)
 
             worker = ExtractWorker(extract_task, doc, site, rxnorm_model)
@@ -64,6 +78,8 @@ async def start_worker_async():
                 await worker.run_extraction()
                 typer.secho(f"Finished Task {extract_task.id}", fg=typer.colors.BLUE)
                 now = datetime.now()
+                update = UpdateDocDocument(content_extraction_task_id=extract_task.id)
+                await update_and_log_diff(logger, user, doc_document, update)
                 await extract_task.update(
                     Set(
                         {
