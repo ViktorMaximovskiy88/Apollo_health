@@ -5,3 +5,17 @@
 .ant-tabs-pdf-viewer .ant-tabs-content {
   height: 100%;
 }
+
+
+.ant-input, .ant-picker, .ant-btn {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #d9d9d9;
+  height: auto;
+}
+
+.ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  height: auto;
+  padding: 0.25rem 0.75rem; 
+  border-radius: 0.5rem;
+}
