@@ -16,8 +16,7 @@ import { TaskStatus } from "../../common/scrapeTaskStatus";
 export function CollectionsPage() {
   const [modalVisible, setModalVisible] = useState(false);
   const [errorTraceback, setErrorTraceback] = useState('');
-  const navigate = useNavigate();
-
+  
   const openErrorModal = (errorTraceback: string): void => {
     setErrorTraceback(errorTraceback);
     setModalVisible(true);
@@ -27,21 +26,7 @@ export function CollectionsPage() {
   const siteId = params.siteId;
   const { data: site, refetch } = useGetSiteQuery(siteId);
   const [ runScrape ] = useRunSiteScrapeTaskMutation();
-  const [ cancelAllScrapes ] = useCancelAllSiteScrapeTasksMutation();
   if (!siteId) return null;
-
-  async function handleRunScrape(){
-    let response: any = await runScrape(site!._id);
-    if (response) {
-        refetch();
-        navigate(`/sites/${site!._id}/documents?scrape_task_id=${response.data._id}`)
-    }
-  }
-  async function handleCancelScrape(){
-    await cancelAllScrapes(site!._id);
-    refetch();
-  }
-
   return (
     <>
       <ErrorLogModal
@@ -59,18 +44,7 @@ export function CollectionsPage() {
               Run Collection
             </Button>
           ) : site && site.collection_method === CollectionMethod.Manual && site.status !== SiteStatus.Inactive ? (
-            <>
-                {
-                    site.last_run_status == TaskStatus.Queued || site.last_run_status == TaskStatus.Pending || site.last_run_status == TaskStatus.InProgress ?
-                    <Button className="ml-auto" onClick={handleCancelScrape}>
-                      End Manual Collection
-                    </Button>
-                    :
-                    <Button className="ml-auto" onClick={handleRunScrape}>
-                      Run Manual Collection
-                    </Button>
-                }
-            </>
+            <ManualCollectionButton site={site} refetch={refetch} runScrape={runScrape} />
           )
           :
           null}
@@ -79,6 +53,40 @@ export function CollectionsPage() {
       </Layout>
     </>
   );
+}
+
+function ManualCollectionButton(props: any){
+  const { site, refetch, runScrape } = props;
+  const navigate = useNavigate();
+  const [ cancelAllScrapes ] = useCancelAllSiteScrapeTasksMutation();
+  
+  async function handleRunScrape(){
+    let response: any = await runScrape(site!._id);
+    if (response) {
+        refetch();
+        navigate(`/sites/${site!._id}/documents?scrape_task_id=${response.data._id}`)
+    }
+  }
+
+  async function handleCancelScrape(){
+    await cancelAllScrapes(site!._id);
+    refetch();
+  }
+
+  return (
+      <>
+          {
+              site.last_run_status == TaskStatus.Queued || site.last_run_status == TaskStatus.Pending || site.last_run_status == TaskStatus.InProgress ?
+              <Button className="ml-auto" onClick={handleCancelScrape}>
+                End Manual Collection
+              </Button>
+              :
+              <Button className="ml-auto" onClick={handleRunScrape}>
+                Run Manual Collection
+              </Button>
+          }
+      </>
+  )
 }
 
 
