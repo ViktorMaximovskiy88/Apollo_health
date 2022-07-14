@@ -1,9 +1,10 @@
-from contextlib import contextmanager
+import logging
 import os
-from pathlib import Path
 import tempfile
-from backend.common.storage.settings import settings
 import boto3
+from contextlib import contextmanager
+from pathlib import Path
+from backend.common.storage.settings import settings
 from botocore.client import Config
 from botocore.errorfactory import ClientError
 from backend.common.core.config import config, is_local
@@ -34,6 +35,7 @@ class BaseS3Client:
             self.bucket.create()
 
     def get_full_path(self, relative_key):
+        logging.info(f"client root_path={self.root_path}")
         return str(Path(self.root_path).joinpath(relative_key))
 
     def write_object(
@@ -84,7 +86,9 @@ class BaseS3Client:
             return False
 
     def get_signed_url(self, relative_key, expires_in_seconds=10):
+        logging.info(f"relative_key={relative_key}")
         key = self.get_full_path(relative_key)[1:]
+        logging.info(f"Key={key} Bucket={settings.document_bucket}")
         return self.s3.meta.client.generate_presigned_url(
             ClientMethod="get_object",
             Params={
