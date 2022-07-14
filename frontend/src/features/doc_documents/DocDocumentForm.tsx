@@ -128,12 +128,16 @@ export function DocDocumentForm(props: { doc: DocDocument }) {
       onFinish={onFinish}
       onValuesChange={setFormState}
     >
-      <Form.Item name="name" label="Name">
+      <Form.Item name="name" label="Document ID">
+        {doc._id}
+      </Form.Item>
+
+      <Form.Item name="name" label="Name" required={true}>
         <Input />
       </Form.Item>
 
       <div className="flex space-x-2">
-        <Form.Item className="grow" name="document_type" label="Document Type">
+        <Form.Item className="grow" name="document_type" label="Document Type" required={true}>
           <Select options={documentTypes} />
         </Form.Item>
         <Form.Item label="Confidence">
@@ -161,6 +165,11 @@ export function DocDocumentForm(props: { doc: DocDocument }) {
         valuePropName="checked"
       >
         <Switch />
+        {automatedExtraction && (
+          <Form.Item name="automated_content_extraction_class" label="Extraction Strategy">
+            <Select options={extractionOptions} />
+          </Form.Item>
+        )}
       </Form.Item>
 
       {automatedExtraction && (
@@ -173,14 +182,13 @@ export function DocDocumentForm(props: { doc: DocDocument }) {
         <Input disabled />
       </Form.Item>
 
-      <div className="flex space-x-2">
-        <Form.Item name="link_text" label="Link Text">
-          <TextArea disabled autoSize={true} />
-        </Form.Item>
-        <Form.Item className="grow" name="url" label="Link URL">
-          <TextArea disabled autoSize={true} />
-        </Form.Item>
-      </div>
+      <Form.Item name="link_text" label="Link Text">
+        <TextArea disabled autoSize={true} />
+      </Form.Item>
+
+      <Form.Item className="grow" name="url" label="Link URL">
+        <TextArea disabled autoSize={true} />
+      </Form.Item>
 
       <Form.Item>
         <Space>

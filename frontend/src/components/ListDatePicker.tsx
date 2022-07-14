@@ -21,9 +21,7 @@ export function ListDatePicker(props: {
 
   const existsInList = (dateList || []).find((date) => date === initialDate);
 
-  const [selectionMethod, setSelectionMethod] = useState(
-    existsInList ? 'list' : 'custom'
-  );
+  const [selectionMethod, setSelectionMethod] = useState(existsInList ? 'list' : 'custom');
 
   function onSelectionMethodChange(e: RadioChangeEvent) {
     setSelectionMethod(e.target.value);
