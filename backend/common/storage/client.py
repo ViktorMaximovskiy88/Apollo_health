@@ -42,7 +42,7 @@ class BaseS3Client:
         self,
         relative_key,
         temp_object_path,
-        content_type: str | None ="application/pdf",  # TODO rxnormlinker users this but not for pd
+        content_type: str | None = "application/pdf",  # TODO rxnormlinker
     ):
         self.bucket.upload_file(
             Filename=temp_object_path,
@@ -87,7 +87,7 @@ class BaseS3Client:
 
     def get_signed_url(self, relative_key, expires_in_seconds=10):
         logging.info(f"relative_key={relative_key}")
-        key = self.get_full_path(relative_key)[1:]
+        key = self.get_full_path(relative_key)
         logging.info(f"Key={key} Bucket={settings.document_bucket}")
         return self.s3.meta.client.generate_presigned_url(
             ClientMethod="get_object",
