@@ -58,7 +58,8 @@ Hi developer. See the [development](/docs/DEVELOPMENT.md) readme.
 > **FIX** Add these flags to your current shell or current command. Shown here we will set them in the shell then run poetry install in the same shell.
 
 ```bash
-# AFAIK this is m1 only
+# AFAIK this is m1 only (we really shouldnt need the exports)
+export PIP_CONSTRAINT="build-constraints.txt"
 export CFLAGS="-mavx -DWARN(a)=(a) -I /opt/homebrew/opt/protobuf/include"
 export LDFLAGS="-L/opt/homebrew/opt/protobuf/lib"
 poetry install

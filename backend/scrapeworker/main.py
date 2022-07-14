@@ -20,7 +20,10 @@ from backend.common.db.init import init_db
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.scrapeworker.scrape_worker import ScrapeWorker
-from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocsCollectedException
+from backend.scrapeworker.common.exceptions import (
+    CanceledTaskException,
+    NoDocsCollectedException,
+)
 from backend.common.core.enums import TaskStatus
 from backend.scrapeworker.common.aio_downloader import default_headers
 from backend.scrapeworker.log import (
@@ -73,7 +76,13 @@ async def heartbeat_task(scrape_task: SiteScrapeTask):
         await asyncio.sleep(10)
 
 
-async def worker_fn(worker_id, playwright, get_browser_context: Callable[[ProxySettings | None], Coroutine[Any, Any, BrowserContext]]):
+async def worker_fn(
+    worker_id,
+    playwright,
+    get_browser_context: Callable[
+        [ProxySettings | None], Coroutine[Any, Any, BrowserContext]
+    ],
+):
     while True:
         if not accepting_tasks:
             return
@@ -112,8 +121,10 @@ async def worker_fn(worker_id, playwright, get_browser_context: Callable[[ProxyS
         finally:
             del active_tasks[scrape_task.id]
             task.cancel()
-    
+
+
 browser = None
+
 
 async def start_worker_async(worker_id):
     await init_db()
@@ -126,13 +137,14 @@ async def start_worker_async(worker_id):
 
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch()
+
         async def get_browser_context(proxy) -> BrowserContext:
             global browser
             try:
                 return await browser.new_context(  # type: ignore
                     extra_http_headers=default_headers,
                     proxy=proxy,
-                    ignore_https_errors=True
+                    ignore_https_errors=True,
                 )
             except:
                 print("Lost Browser")
@@ -141,7 +153,7 @@ async def start_worker_async(worker_id):
                 return await browser.new_context(
                     extra_http_headers=default_headers,
                     proxy=proxy,
-                    ignore_https_errors=True
+                    ignore_https_errors=True,
                 )
 
         workers = []
@@ -154,7 +166,7 @@ async def start_worker_async(worker_id):
 @app.command()
 def start_worker():
     worker_id = uuid4()
-    typer.secho(f"Starting Scrape Worder {worker_id}", fg=typer.colors.GREEN)
+    typer.secho(f"Starting Scrape Worker {worker_id}", fg=typer.colors.GREEN)
     asyncio.run(start_worker_async(worker_id))
 
 
