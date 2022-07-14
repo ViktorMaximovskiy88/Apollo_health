@@ -85,7 +85,7 @@ class BaseS3Client:
         except ClientError as ex:
             return False
 
-    def get_signed_url(self, relative_key, expires_in_seconds=10):
+    def get_signed_url(self, relative_key, expires_in_seconds=60):
         logging.info(f"relative_key={relative_key}")
         key = self.get_full_path(relative_key)
         logging.info(f"Key={key} Bucket={settings.document_bucket}")
