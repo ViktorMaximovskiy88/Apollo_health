@@ -5,7 +5,11 @@ import { setSiteTableFilter, setSiteTableSort, siteTableState } from '../../app/
 import { GridPaginationToolbar } from '../../components';
 import { useDeleteSiteMutation, useLazyGetSitesQuery } from './sitesApi';
 import { useInterval } from '../../common/hooks';
-import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
+import {
+  TypeFilterValue,
+  TypePaginationProps,
+  TypeSortInfo,
+} from '@inovua/reactdatagrid-community/types';
 import { createColumns } from './createColumns';
 
 function disableLoadingMask(data: {
@@ -56,7 +60,7 @@ export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
   );
 
   const renderPaginationToolbar = useCallback(
-    (paginationProps: any) => {
+    (paginationProps: TypePaginationProps) => {
       return (
         <GridPaginationToolbar
           paginationProps={{ ...paginationProps }}
