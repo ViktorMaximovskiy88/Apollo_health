@@ -46,8 +46,14 @@ export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
   // Trigger update every 10 seconds by invalidating memoized callback
   const { setActive, isActive, watermark } = useInterval(10000);
 
+  interface TableInfoType {
+    limit: number;
+    skip: number;
+    sortInfo: TypeSortInfo;
+    filterValue: TypeFilterValue;
+  }
   const loadData = useCallback(
-    async (tableInfo: any) => {
+    async (tableInfo: TableInfoType) => {
       setLoading(true);
       const { data } = await getSitesFn(tableInfo);
       setLoading(false);
