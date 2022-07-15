@@ -108,18 +108,19 @@ function BulkUpload() {
 }
 
 export function SitesHomePage() {
+  const [isLoading, setLoading] = useState(false);
   return (
     <Layout className="p-4 bg-transparent">
       <div className="flex">
         <SiteBreadcrumbs />
         <div className="ml-auto space-x-2">
-          <QuickFilter />
+          <QuickFilter isLoading={isLoading} />
           <CreateSite />
           <BulkActions />
           <BulkUpload />
         </div>
       </div>
-      <SiteDataTable />
+      <SiteDataTable setLoading={setLoading} />
     </Layout>
   );
 }

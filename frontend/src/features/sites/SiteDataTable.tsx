@@ -7,7 +7,6 @@ import { useDeleteSiteMutation, useLazyGetSitesQuery } from './sitesApi';
 import { useInterval } from '../../common/hooks';
 import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
 import { createColumns } from './createColumns';
-import { applyQuickFilter } from './applyQuickFilter';
 
 function disableLoadingMask(data: {
   visible: boolean;
@@ -18,7 +17,10 @@ function disableLoadingMask(data: {
   return <></>;
 }
 
-export function SiteDataTable() {
+interface SiteDataTablePropTypes {
+  setLoading: (loading: boolean) => void;
+}
+export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
   const tableState = useSelector(siteTableState);
   const [getSitesFn] = useLazyGetSitesQuery();
   const [deleteSite] = useDeleteSiteMutation();
@@ -38,13 +40,15 @@ export function SiteDataTable() {
 
   const loadData = useCallback(
     async (tableInfo: any) => {
+      setLoading(true);
       const { data } = await getSitesFn(tableInfo);
-      let sites = data?.data ?? [];
-      sites = applyQuickFilter(tableState, sites);
-      const count = sites.length;
+      setLoading(false);
+      const sites = data?.data ?? [];
+      const count = data?.total ?? 0;
       return { data: sites, count };
     },
-    [getSitesFn, watermark, tableState]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [getSitesFn, watermark, setLoading] // watermark is not inside useCallback
   );
 
   const renderPaginationToolbar = useCallback(
@@ -67,6 +71,7 @@ export function SiteDataTable() {
       rowHeight={50}
       pagination
       defaultFilterValue={tableState.filter}
+      filterValue={tableState.filter}
       onFilterValueChange={onFilterChange}
       defaultSortInfo={tableState.sort}
       onSortInfoChange={onSortChange}

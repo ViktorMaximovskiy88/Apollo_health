@@ -1,60 +1,72 @@
-import { Button, Dropdown, Space, Menu, Tag } from 'antd';
+import { Button, Dropdown, Space, Menu, Spin, Tag } from 'antd';
 import { SyncOutlined, DownOutlined } from '@ant-design/icons';
+import { DateTime } from 'luxon';
+import isEqual from 'lodash/isEqual';
+import some from 'lodash/some';
 import {
   initialState,
-  setSiteTableQuickFilter,
+  setSiteTableFilter,
   setSiteTableSort,
   siteTableState,
 } from '../../app/uiSlice';
 import { useDispatch, useSelector } from 'react-redux';
+import { SiteStatus } from './siteStatus';
 
 enum QuickFilter {
   AssignedToMe = 'ASSIGNED_TO_ME',
   OnHoldLastSevenDaysAndUnassigned = 'ON_HOLD_LAST_SEVEN_DAYS_AND_UNASSIGNED',
   OnHoldLastSevenDays = 'ON_HOLD_LAST_SEVEN_DAYS',
 }
-function QuickFilterComponent() {
+
+const sevenDaysAgo = DateTime.now().minus({ days: 7 }).toFormat('yyyy-MM-dd');
+
+const sevenDaysFilter = {
+  name: 'last_run_time',
+  operator: 'after',
+  type: 'date',
+  value: sevenDaysAgo,
+};
+
+const onHoldFilter = {
+  name: 'status',
+  operator: 'eq',
+  type: 'string',
+  value: SiteStatus.QualityHold,
+};
+
+interface FilterType {
+  name: string;
+  operator: string;
+  type: string;
+  value: string | null;
+}
+function removeQuickFilters(filters: FilterType[]): FilterType[] {
+  return filters.filter((f) => !isEqual(f, sevenDaysFilter) && !isEqual(f, onHoldFilter));
+}
+
+interface QuickFilterPropTypes {
+  isLoading: boolean;
+}
+function QuickFilterComponent({ isLoading = false }: QuickFilterPropTypes) {
   const siteTable = useSelector(siteTableState);
-  console.log(siteTable);
-  const { quickFilter } = siteTable;
   const dispatch = useDispatch();
+
   const reset = () => {
     dispatch(setSiteTableSort(initialState.sites.table.sort));
-    dispatch(
-      setSiteTableQuickFilter({
-        assignedToMe: false,
-        setOnHoldLastSevenDays: false,
-        unassigned: false,
-      })
-    );
+    let filters = siteTable.filter.slice();
+    filters = removeQuickFilters(filters);
+    return dispatch(setSiteTableFilter(filters));
   };
+
   const onMenuSelect = (key: QuickFilter) => {
     dispatch(setSiteTableSort({ name: 'last_run_time', dir: 1 }));
     switch (key) {
       case QuickFilter.OnHoldLastSevenDays:
-        return dispatch(
-          setSiteTableQuickFilter({
-            assignedToMe: false,
-            unassigned: false,
-            onHoldLastSevenDays: true,
-          })
-        );
+        return dispatch(setSiteTableFilter([...siteTable.filter, sevenDaysFilter, onHoldFilter]));
       case QuickFilter.OnHoldLastSevenDaysAndUnassigned:
-        return dispatch(
-          setSiteTableQuickFilter({
-            assignedToMe: false,
-            unassigned: true,
-            onHoldLastSevenDays: true,
-          })
-        );
+        return; // TODO: update when assign functionality added
       case QuickFilter.AssignedToMe:
-        return dispatch(
-          setSiteTableQuickFilter({
-            assignedToMe: true,
-            unassigned: false,
-            onHoldLastSevenDays: false,
-          })
-        );
+        return; // TODO: update when assign functionality added
     }
   };
 
@@ -79,11 +91,23 @@ function QuickFilterComponent() {
       ]}
     />
   );
+
+  const assignedToMe = false; // TODO: update when assign functionality added
+  const unassigned = false; // TODO: update when assign functionality added
+  const onHold = some(siteTable.filter, onHoldFilter);
+  const lastSevenDays = some(siteTable.filter, sevenDaysFilter);
+
   return (
     <>
-      {quickFilter.assignedToMe ? <Tag color="cyan">Assigned To Me</Tag> : null}
-      {quickFilter.unassigned ? <Tag color="blue">Unassigned</Tag> : null}
-      {quickFilter.onHoldLastSevenDays ? <Tag color="geekblue">On Hold Last 7 Days</Tag> : null}
+      {isLoading ? (
+        <Spin size="small" />
+      ) : (
+        <div /> /* to keep Tags from moving left and right on load */
+      )}
+      {assignedToMe ? <Tag color="geekblue">Assigned To Me</Tag> : null}
+      {unassigned ? <Tag color="cyan">Unassigned</Tag> : null}
+      {onHold ? <Tag color="blue">Quality Hold</Tag> : null}
+      {lastSevenDays ? <Tag color="magenta">Last 7 Days</Tag> : null}
       <Button onClick={reset}>
         <SyncOutlined />
       </Button>
