@@ -74,11 +74,22 @@ async def start_scrape_task(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    site_scrape_task = SiteScrapeTask(site_id=site_id, queued_time=datetime.now())
+    site = await Site.get(site_id)
+    site_scrape_task = None;
+    if site.collection_method == CollectionMethod.Manual:
+        site_scrape_task = SiteScrapeTask(
+            site_id=site_id, 
+            start_time=datetime.now(), 
+            queued_time=datetime.now(), 
+            status=TaskStatus.IN_PROGRESS, 
+            collection_type=CollectionMethod.Manual
+        )
+    else:
+        site_scrape_task = SiteScrapeTask(site_id=site_id, queued_time=datetime.now())
 
     # NOTE: Could use a transaction here
     await create_and_log(logger, current_user, site_scrape_task)
-    await Site.find_one(Site.id == site_id).update(
+    await site.update(
         Set(
             {
                 Site.last_run_status: site_scrape_task.status,
@@ -155,25 +166,32 @@ async def cancel_all_site_scrape_task(
     site_id: PydanticObjectId,
     current_user: User = Depends(get_current_user),
 ):
-    # fetch the site to determine the last_status is either QUEUED or IN_PROGRESS
-    site = await Site.find_one({
-        "_id":site_id,
-        "status":{ "$in": [ TaskStatus.QUEUED, TaskStatus.IN_PROGRESS ] }
-    })
-
+    # fetch the site to determine the last_run_status is either QUEUED or IN_PROGRESS
+    site = await Site.find_one({"_id": site_id, "last_run_status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}})
     if site:
-        # If the site is found, fetch all tasks and cancel all queued or in progress tasks
-        result = await SiteScrapeTask.get_motor_collection().update_many(
-            {"site_id": site_id, "status":{ "$in": [ TaskStatus.QUEUED, TaskStatus.IN_PROGRESS ] }},
-            {"$set": {"status": TaskStatus.CANCELING}}
-        )
-        await site.update(
-            Set(
-                {
-                    Site.last_run_status: TaskStatus.CANCELING
-                }
+        if site.collection_method == CollectionMethod.Manual:
+
+            last_site_task = await SiteScrapeTask.find_one({"site_id": site_id, "status":{ "$in": [ TaskStatus.QUEUED, TaskStatus.IN_PROGRESS ] }})
+
+            if last_site_task.documents_found == 0:
+                result = await SiteScrapeTask.get_motor_collection().update_many(
+                    {"site_id": site_id, "status": {"$in": [TaskStatus.IN_PROGRESS]}},
+                    {"$set": {"status": TaskStatus.CANCELED}},
+                )
+                await site.update(Set({Site.last_run_status: TaskStatus.CANCELED}))
+            else:
+                result = await SiteScrapeTask.get_motor_collection().update_many(
+                    {"site_id": site_id, "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}},
+                    {"$set": {"status": TaskStatus.FINISHED}},
+                )
+                await site.update(Set({Site.last_run_status: TaskStatus.FINISHED}))
+        else:
+            # If the site is found, fetch all tasks and cancel all queued or in progress tasks
+            result = await SiteScrapeTask.get_motor_collection().update_many(
+                {"site_id": site_id, "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}},
+                {"$set": {"status": TaskStatus.CANCELING}},
             )
-        )
+            await site.update(Set({Site.last_run_status: TaskStatus.CANCELING}))
 
 
 @router.post("/{id}", response_model=SiteScrapeTask)
