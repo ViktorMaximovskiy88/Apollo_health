@@ -112,9 +112,12 @@ export const createColumns = ({
       name: 'collection_type',
       maxWidth: 200,
       render: ({ value: collection_type }: { value: string }) => {
-        return (
-          <span className="lowercase">{collection_type}</span>
-        )
+        switch (collection_type) {
+          case CollectionMethod.Manual:
+            return <span>Manual</span>;
+          case CollectionMethod.Automated:
+            return <span>Automated</span>;
+        }
       }
     },
     {

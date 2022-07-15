@@ -74,10 +74,16 @@ async def start_scrape_task(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    site = await Site.find_one({"_id": site_id})
+    site = await Site.get(site_id)
     site_scrape_task = None;
     if site.collection_method == CollectionMethod.Manual:
-        site_scrape_task = SiteScrapeTask(site_id=site_id, start_time=datetime.now(), queued_time=datetime.now(), status=TaskStatus.IN_PROGRESS, collection_type=CollectionMethod.Manual)
+        site_scrape_task = SiteScrapeTask(
+            site_id=site_id, 
+            start_time=datetime.now(), 
+            queued_time=datetime.now(), 
+            status=TaskStatus.IN_PROGRESS, 
+            collection_type=CollectionMethod.Manual
+        )
     else:
         site_scrape_task = SiteScrapeTask(site_id=site_id, queued_time=datetime.now())
 
