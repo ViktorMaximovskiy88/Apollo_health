@@ -11,6 +11,7 @@ import {
 } from '../../app/uiSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { SiteStatus } from './siteStatus';
+import { TypeSingleFilterValue } from '@inovua/reactdatagrid-community/types';
 
 enum QuickFilter {
   AssignedToMe = 'ASSIGNED_TO_ME',
@@ -34,13 +35,7 @@ const onHoldFilter = {
   value: SiteStatus.QualityHold,
 };
 
-interface FilterType {
-  name: string;
-  operator: string;
-  type: string;
-  value: string | null;
-}
-function removeQuickFilters(filters: FilterType[]): FilterType[] {
+function removeQuickFilters(filters: TypeSingleFilterValue[]): TypeSingleFilterValue[] {
   return filters.filter((f) => !isEqual(f, sevenDaysFilter) && !isEqual(f, onHoldFilter));
 }
 
