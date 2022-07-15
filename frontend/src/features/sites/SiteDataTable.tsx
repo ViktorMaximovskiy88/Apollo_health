@@ -1,7 +1,13 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setSiteTableFilter, setSiteTableSort, siteTableState } from '../../app/uiSlice';
+import {
+  setSiteTableFilter,
+  setSiteTableSort,
+  setSiteTableLimit,
+  setSiteTableSkip,
+  siteTableState,
+} from '../../app/uiSlice';
 import { GridPaginationToolbar } from '../../components';
 import { useDeleteSiteMutation, useLazyGetSitesQuery } from './sitesApi';
 import { useInterval } from '../../common/hooks';
@@ -42,6 +48,11 @@ export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
     (sort: TypeSortInfo) => dispatch(setSiteTableSort(sort)),
     [dispatch]
   );
+  const onLimitChange = useCallback(
+    (limit: number) => dispatch(setSiteTableLimit(limit)),
+    [dispatch]
+  );
+  const onSkipChange = useCallback((skip: number) => dispatch(setSiteTableSkip(skip)), [dispatch]);
 
   // Trigger update every 10 seconds by invalidating memoized callback
   const { setActive, isActive, watermark } = useInterval(10000);
@@ -91,6 +102,10 @@ export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
       onSortInfoChange={onSortChange}
       sortInfo={tableState.sort}
       renderLoadMask={disableLoadingMask}
+      limit={tableState.pagination.limit}
+      skip={tableState.pagination.skip}
+      onLimitChange={onLimitChange}
+      onSkipChange={onSkipChange}
       renderPaginationToolbar={renderPaginationToolbar}
       activateRowOnFocus={false}
     />

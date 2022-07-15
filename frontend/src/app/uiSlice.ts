@@ -86,6 +86,7 @@ export const initialState = {
           value: null,
         },
       ],
+      pagination: { limit: 50, skip: 0 },
     },
   },
   doc_documents: {
@@ -108,6 +109,12 @@ export const uiSlice = createSlice({
     },
     setSiteTableSort: (state, action: PayloadAction<any>) => {
       state.sites.table.sort = action.payload;
+    },
+    setSiteTableLimit: (state, action: PayloadAction<any>) => {
+      state.sites.table.pagination.limit = action.payload;
+    },
+    setSiteTableSkip: (state, action: PayloadAction<any>) => {
+      state.sites.table.pagination.skip = action.payload;
     },
     setDocDocumentTableFilter: (state, action: PayloadAction<any>) => {
       state.doc_documents.table.filter = action.payload;
@@ -198,6 +205,8 @@ export const extractionTableState = createSelector(
 export const {
   setSiteTableFilter,
   setSiteTableSort,
+  setSiteTableLimit,
+  setSiteTableSkip,
   setDocDocumentTableFilter,
   setDocDocumentTableSort,
   setCollectionTableFilter,
