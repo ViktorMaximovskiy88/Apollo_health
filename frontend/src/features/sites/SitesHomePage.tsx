@@ -10,7 +10,7 @@ import { UploadFile } from 'antd/lib/upload/interface';
 
 import { SiteDataTable } from './SiteDataTable';
 import { QuickFilter } from './QuickFilter';
-import { client } from '../../app/base-api';
+import { client, baseApiUrl } from '../../app/base-api';
 
 function CreateSite() {
   return (
@@ -103,7 +103,7 @@ function BulkUpload() {
     <Upload
       name="file"
       accept=".csv,.txt,.xlsx"
-      action="/api/v1/sites/upload"
+      action={`${baseApiUrl}/sites/upload`}
       headers={{
         Authorization: `Bearer ${token}`,
       }}

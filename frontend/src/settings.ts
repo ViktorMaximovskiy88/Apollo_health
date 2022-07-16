@@ -1,4 +1,3 @@
-
 export interface Auth0Config {
   domain: string;
   clientId: string;
@@ -21,8 +20,8 @@ const auth0Settings: Auth0Config = {
 };
 
 const settings: Settings = {
-  baseApiUrl: '/api/v1',
+  baseApiUrl: process.env.REACT_APP_BASE_API_URL as string,
   auth0: auth0Settings,
 };
 
-export default window._settings || settings;
+export default settings;

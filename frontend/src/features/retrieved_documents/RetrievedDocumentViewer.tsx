@@ -8,6 +8,7 @@ import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 import { Table, Tabs } from 'antd';
 import tw from 'twin.macro';
 import { useAccessToken } from '../../common/hooks';
+import { baseApiUrl } from '../../app/base-api';
 
 const columns = [
   { title: 'Key', dataIndex: 'key', key: 'key' },
@@ -37,7 +38,7 @@ export function RetrievedDocumentViewer({ docId, doc }: PropTypes) {
           {doc.file_extension === 'pdf' ? (
             <Viewer
               withCredentials={true}
-              fileUrl={`/api/v1/documents/${docId}.${doc.file_extension}`}
+              fileUrl={`${baseApiUrl}/documents/${docId}.${doc.file_extension}`}
               plugins={[defaultLayoutPluginInstance]}
               httpHeaders={{
                 Authorization: `Bearer ${token}`,

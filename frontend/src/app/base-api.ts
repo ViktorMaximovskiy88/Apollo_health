@@ -1,7 +1,4 @@
-import {
-  createApi,
-  fetchBaseQuery as defaultRetchBaseQuery,
-} from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery as defaultRetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 import { Auth0Client } from '@auth0/auth0-spa-js';
 import settings from '../settings';
@@ -45,4 +42,5 @@ const fetchWithAuth = async (resource: any, init: any = {}) => {
   }
 };
 
-export { createApi, fetchBaseQuery, fetchWithAuth, client };
+const { baseApiUrl } = settings;
+export { createApi, fetchBaseQuery, fetchWithAuth, client, baseApiUrl };

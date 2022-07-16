@@ -7,7 +7,7 @@
 }
 
 
-.ant-input, .ant-picker, .ant-btn {
+.ant-input, .ant-picker, .ant-btn:not(.ant-btn-link) {
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
   border: 1px solid #d9d9d9;
