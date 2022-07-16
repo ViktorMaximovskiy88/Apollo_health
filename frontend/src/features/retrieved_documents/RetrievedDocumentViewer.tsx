@@ -1,6 +1,6 @@
 import { Viewer, Worker } from '@react-pdf-viewer/core';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
-import { OfficeFileViewer } from '../../components/OfficeFileViewer';
+import { OfficeFileLoader } from '../../components/OfficeFileViewer';
 
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
@@ -30,7 +30,7 @@ export function RetrievedDocumentViewer({ docId, doc }: PropTypes) {
     key,
     value,
   }));
-
+  console.log(docId);
   return (
     <Worker workerUrl="/pdf.worker.min.js">
       <Tabs className="h-full" tabBarStyle={tw`h-10`}>
@@ -45,7 +45,7 @@ export function RetrievedDocumentViewer({ docId, doc }: PropTypes) {
               }}
             />
           ) : (
-            <OfficeFileViewer url={doc.url} />
+            <OfficeFileLoader docId={docId} />
           )}
         </Tabs.TabPane>
         <Tabs.TabPane tab="Metadata" key="metadata">

@@ -25,6 +25,7 @@ default_headers: dict[str, str] = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36",
 }
 
+
 @dataclass
 class AioProxy:
     proxy: str
@@ -78,7 +79,7 @@ class AioDownloader:
         if not response:
             raise Exception(f"Failed to download url {download.request.url}")
         yield response
-        
+
     # just return the aio useable proxy list
     def convert_proxy(self, proxy: Proxy) -> list[AioProxy]:
         proxy_auth = None

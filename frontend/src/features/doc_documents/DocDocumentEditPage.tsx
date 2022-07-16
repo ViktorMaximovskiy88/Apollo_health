@@ -22,7 +22,7 @@ export function DocDocumentEditPage() {
           <DocDocumentForm doc={doc} />
         </div>
         <div className="flex-1 h-full overflow-hidden ant-tabs-pdf-viewer">
-          <RetrievedDocumentViewer doc={doc} docId={docId} />
+          <RetrievedDocumentViewer doc={doc} docId={doc.retrieved_document_id} />
         </div>
       </div>
     </Layout>

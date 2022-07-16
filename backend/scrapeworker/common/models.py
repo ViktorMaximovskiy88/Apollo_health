@@ -75,7 +75,7 @@ class Download(BaseModel):
     content_hash: str | None = None
     content_type: str | None = None
 
-    def guess_extension(self) -> str | None:
+    def guess_extension(self) -> None:
         guess_ext = get_extension_from_path_like(self.request.url)
 
         if not guess_ext:

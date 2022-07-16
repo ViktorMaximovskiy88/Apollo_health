@@ -40,6 +40,7 @@ class DocDocument(BaseDocument):
 
     name: str
     checksum: str
+    file_extension: str
 
     # Document Type
     document_type: str | None = None

@@ -153,6 +153,7 @@ class ScrapeWorker:
             base_url=retrieved_document.base_url,
             therapy_tags=retrieved_document.therapy_tags,
             indication_tags=retrieved_document.indication_tags,
+            file_extension=retrieved_document.file_extension,
         )
         await create_and_log(self.logger, await self.get_user(), doc_document)
 
@@ -223,7 +224,7 @@ class ScrapeWorker:
                     next_update_date=parsed_content["next_update_date"],
                     published_date=parsed_content["published_date"],
                     file_extension=download.file_extension,
-                    content_type=download.response.content_type,
+                    content_type=download.content_type,
                     first_collected_date=now,
                     identified_dates=parsed_content["identified_dates"],
                     lang_code=parsed_content["lang_code"],
