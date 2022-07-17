@@ -2,6 +2,22 @@ import hashlib
 import re
 from backend.common.storage.text_extraction import TextExtractor
 
+
+class DocStreamHasher():
+    """ Builds an md5 hash from bytes than can be passed to 'update' in chunks
+    """
+    def __init__(self, initial: bytes | None = None):
+         self.hasher = hashlib.md5()
+         if initial:
+            self.update(initial)
+
+    def update(self, bytes):
+        self.hasher.update(bytes)
+        return self
+    
+    def hexdigest(self):
+        return self.hasher.hexdigest()
+
 def get_document_hash(extractor: TextExtractor) -> str:
     """ Determine how to hash document based on mimetype.
     """
@@ -15,10 +31,8 @@ def get_document_hash(extractor: TextExtractor) -> str:
 def hash_bytes(document_bytes: bytes) -> str:
         """ Generate an md5 hash from bytes.
         """
-        hasher = hashlib.md5()
-        hasher.update(document_bytes)
-        return hasher.hexdigest()
-
+        return DocStreamHasher(document_bytes).hexdigest()
+    
 def hash_full_text(html_text: str) -> str:
     """ Generate a hash from a fulltext string.
     """
