@@ -175,35 +175,13 @@ async def requeue_lost_task(task: SiteScrapeTask, now):
     new_task = SiteScrapeTask(id=task.id, site_id=task.site_id, queued_time=now)
     await new_task.save()
     await Site.find_one(Site.id == task.site_id).update(
-        {"$set": {"last_run_status": task.status}}
-    )
-
-
-async def fail_lost_task(task: SiteScrapeTask, now: datetime):
-    message = f"Failing task {task.id} on worker {task.worker_id} due to lost heartbeat"
-    typer.secho(message, fg=typer.colors.RED)
-    await Site.find(Site.id == task.site_id).update(
-        Set(
-            {
-                Site.last_run_status: TaskStatus.FAILED,
-                Site.last_run_time: now,
-            }
-        )
-    )
-    await task.update(
-        Set(
-            {
-                SiteScrapeTask.status: TaskStatus.FAILED,
-                SiteScrapeTask.error_message: message,
-                SiteScrapeTask.end_time: now,
-            }
-        )
+        { "$set": { "last_run_status": task.status } }
     )
 
 
 async def start_hung_task_checker():
     """
-    Fail tasks that are in progress but are not longer sending a heartbeat
+    Retry tasks that are in progress but are not longer sending a heartbeat
     """
     while True:
         now = datetime.now()
@@ -217,10 +195,7 @@ async def start_hung_task_checker():
             }
         )
         async for task in tasks:
-            if task.retry_if_lost:
-                await requeue_lost_task(task, now)
-            else:
-                await fail_lost_task(task, now)
+            await requeue_lost_task(task, now)
         await asyncio.sleep(60)
 
 

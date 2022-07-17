@@ -8,6 +8,7 @@ import {
   scrapeTaskStatusDisplayName as displayName,
   scrapeTaskStatusStyledDisplay as styledDisplay,
 } from '../../common';
+import { CollectionMethod } from '../sites/types';
 import { ButtonLink } from '../../components/ButtonLink';
 import { SiteScrapeTask } from './types';
 
@@ -107,11 +108,25 @@ export const createColumns = ({
       },
     },
     {
+      header: 'Collection Type',
+      name: 'collection_type',
+      maxWidth: 200,
+      render: ({ value: collection_type }: { value: string }) => {
+        switch (collection_type) {
+          case CollectionMethod.Manual:
+            return <span>Manual</span>;
+          case CollectionMethod.Automated:
+            return <span>Automated</span>;
+        }
+      }
+    },
+    {
       header: 'Actions',
       render: ({ data: task }: { data: SiteScrapeTask }) => {
         switch (task.status) {
           case TaskStatus.InProgress:
           case TaskStatus.Queued:
+          if (task.collection_type === CollectionMethod.Automated) {
             return (
               <Button
                 danger
@@ -122,6 +137,9 @@ export const createColumns = ({
                 Cancel
               </Button>
             );
+          } else {
+            return null
+          }
           case TaskStatus.Failed:
             return (
               <Button

@@ -2,7 +2,7 @@ import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { LOCATION_CHANGE } from 'redux-first-history';
 import { RootState } from './store';
 
-const initialState = {
+export const initialState = {
   extractions: {
     table: {
       sort: { name: 'first_collected_date', dir: -1 as 1 | -1 | 0 },
@@ -152,8 +152,7 @@ export const uiSlice = createSlice({
       if (!path.startsWith('/sites/')) {
         state.documents.table = initialState.documents.table;
         state.collections.table = initialState.collections.table;
-        state.extracted_documents.table =
-          initialState.extracted_documents.table;
+        state.extracted_documents.table = initialState.extracted_documents.table;
         state.extraction_tasks.table = initialState.extraction_tasks.table;
         state.extractions.table = initialState.extractions.table;
       }

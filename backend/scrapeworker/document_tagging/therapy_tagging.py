@@ -31,7 +31,7 @@ class TherapyTagger:
         loop = asyncio.get_running_loop()
         for i, page in enumerate(pages):
             doc = await loop.run_in_executor(None, self.nlp, page)
-            for span in doc.spans["sc"]:
+            for span in doc.spans.get('sc', []):
                 text = span.text
                 lexeme = span.vocab[span.label]
                 rxnorm, display_name = lexeme.text.split("|")

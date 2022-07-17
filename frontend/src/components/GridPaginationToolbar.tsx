@@ -1,4 +1,3 @@
-import React, { useCallback } from 'react';
 import PaginationToolbar from '@inovua/reactdatagrid-community/packages/PaginationToolbar';
 import { Switch } from 'antd';
 
