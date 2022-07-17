@@ -26,13 +26,16 @@ class IndicationTagger():
         return self.nlp
 
     async def tag_document(self, text: str) -> list[IndicationTag]:
-        tags = set()
         nlp = await self.model()
+        if not nlp:
+            return []
+
+        tags = set()
         pages = text.split("\f")
         loop = asyncio.get_running_loop()
         for i, page in enumerate(pages):
             doc = await loop.run_in_executor(None, nlp, page)
-            spans: list[Span] = doc.spans['sc']
+            spans: list[Span] = doc.spans.get('sc', [])
             for span in spans:
                 text = span.text
                 lexeme = span.vocab[span.label]
