@@ -4,12 +4,13 @@ from pydantic import HttpUrl
 import pytest
 
 from backend.common.models.site import ScrapeMethodConfiguration
-from backend.common.models.document import RetrievedDocument
+from backend.common.models.document import RetrievedDocument, RetrievedDocumentLimitTags
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.site import BaseUrl, ScrapeMethodConfiguration, Site
 from backend.app.routes.documents import get_documents
 from backend.common.db.init import init_db
 
+RetrievedDocumentLimitTags.Settings.projection = None  # type: ignore
 
 class TestGetDocuments:
     def simple_site(self):
