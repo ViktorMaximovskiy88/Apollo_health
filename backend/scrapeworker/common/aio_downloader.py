@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 import logging
+from ssl import SSLContext
 import tempfile
-from turtle import down
+import ssl
 import aiofiles
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Any
+from typing import AsyncGenerator
 from aiohttp import ClientSession, ClientResponse, BasicAuth, TCPConnector
 from backend.common.models.proxy import Proxy
 from backend.scrapeworker.common.models import Download
@@ -36,8 +37,21 @@ class AioDownloader:
     session: ClientSession
 
     def __init__(self):
-        self.session = ClientSession(connector=TCPConnector(verify_ssl=False))
+        self.session = ClientSession(connector=TCPConnector(ssl=self.permissive_ssl_context()))
         self.rate_limiter = RateLimiter()
+    
+    def permissive_ssl_context(self):
+        context = SSLContext()
+        context.options |= ssl.OP_NO_SSLv2
+        context.options |= ssl.OP_NO_SSLv3
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
+        ciphers = context.get_ciphers()
+        all_ciphers = ':'.join(c['name'] for c in ciphers) + ':HIGH:!DH:!aNULL'
+        context.set_ciphers(all_ciphers)
+
+        return context
 
     async def close(self):
         await self.session.close()
