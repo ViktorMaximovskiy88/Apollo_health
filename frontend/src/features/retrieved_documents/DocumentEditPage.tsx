@@ -4,10 +4,9 @@ import { useGetDocumentQuery } from './documentsApi';
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 
-import Title from 'antd/lib/typography/Title';
 import { DocumentForm } from './DocumentForm';
 import { RetrievedDocumentViewer } from './RetrievedDocumentViewer';
-import { PageHeader, PageLayout } from '../../components';
+import { PageLayout } from '../../components';
 
 export function DocumentEditPage() {
   const params = useParams();
@@ -20,8 +19,7 @@ export function DocumentEditPage() {
   }
 
   return (
-    <PageLayout>
-      <PageHeader header={doc.name} />
+    <PageLayout title={doc.name}>
       <div className="flex space-x-4 overflow-auto flex-grow">
         <div className="w-1/2 h-full overflow-auto">
           <DocumentForm doc={doc} />

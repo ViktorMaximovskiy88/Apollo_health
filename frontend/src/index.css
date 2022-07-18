@@ -74,6 +74,19 @@ h1.ant-typography {
   border-right-color: var(--blue-primary);
 }
 
+.ant-btn {
+  background-color: white;
+}
+
 .ant-btn-primary {
   background-color: var(--blue-primary);
+}
+
+.ant-btn-link {
+  background-color: transparent;
+  color: var(--blue-primary);
+}
+
+.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--blue-primary);
 }

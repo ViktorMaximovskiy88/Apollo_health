@@ -1,11 +1,10 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
-import Title from 'antd/lib/typography/Title';
 import NumberFilter from '@inovua/reactdatagrid-community/NumberFilter';
 import { useParams } from 'react-router-dom';
 import { useGetExtractionTaskQuery, useLazyGetExtractionTaskResultsQuery } from './extractionsApi';
 import { useCallback } from 'react';
 import { TypeSingleSortInfo, TypeSingleFilterValue } from '@inovua/reactdatagrid-community/types';
-import { PageHeader, PageLayout } from '../../components';
+import { PageLayout } from '../../components';
 
 export function ExtractionEditPage() {
   const { extractionId } = useParams();
@@ -155,8 +154,7 @@ export function ExtractionEditPage() {
   ];
 
   return (
-    <PageLayout>
-      <PageHeader header="Extraction Results" />
+    <PageLayout title="Extraction Results">
       <ReactDataGrid
         dataSource={loadData}
         columns={columns}

@@ -41,7 +41,6 @@ export const useBreadcrumbs = async () => {
       const result: any = await dispatch(
         docDocumentsApi.endpoints.getDocDocument.initiate(docDocId)
       );
-      console.log(result);
       return { url: docDocId, label: result.data.name } as any;
     },
     ':userId': async (userId: string) => {

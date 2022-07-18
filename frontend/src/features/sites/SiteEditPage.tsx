@@ -1,11 +1,9 @@
-import Title from 'antd/lib/typography/Title';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Site, CollectionMethod } from './types';
 import { SiteForm } from './SiteForm';
 import { useGetSiteQuery, useUpdateSiteMutation } from './sitesApi';
-import { Layout } from 'antd';
 import { useCancelAllSiteScrapeTasksMutation } from '../collections/siteScrapeTasksApi';
-import { PageHeader, PageLayout } from '../../components';
+import { PageLayout } from '../../components';
 
 export function SiteEditPage() {
   const params = useParams();
@@ -27,8 +25,7 @@ export function SiteEditPage() {
     navigate(-1);
   }
   return (
-    <PageLayout>
-      <PageHeader header={'Edit Site'} />
+    <PageLayout title={'Edit Site'}>
       <SiteForm onFinish={tryUpdateSite} initialValues={site} />
     </PageLayout>
   );

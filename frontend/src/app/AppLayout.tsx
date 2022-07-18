@@ -9,15 +9,8 @@ import { breadcrumbState, menuState } from './appSlice';
 export function AppLayout() {
   return (
     <div className={classNames('flex flex-col h-full')}>
-      <div>
-        <AppBar />
-      </div>
-      <div className={classNames('flex items-center h-[60px] p-4 border-gray-300 border-b-[1px]')}>
-        <AppBreadcrumbs />
-      </div>
-      <div className={classNames('flex items-center')}>
-        <Outlet />
-      </div>
+      <AppBar />
+      <Outlet />
     </div>
   );
 }

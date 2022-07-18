@@ -1,10 +1,9 @@
 import { Button } from 'antd';
-import Title from 'antd/lib/typography/Title';
 import { useParams } from 'react-router-dom';
 import { useRunExtractionTaskMutation } from './extractionsApi';
 import { useGetDocumentQuery } from '../retrieved_documents/documentsApi';
 import { ExtractionTasksTable } from './ExtractionTasksTable';
-import { PageHeader, PageLayout } from '../../components';
+import { PageLayout } from '../../components';
 
 export function DocExtractionPage() {
   const params = useParams();
@@ -15,12 +14,16 @@ export function DocExtractionPage() {
   if (!docId || !doc) return null;
 
   return (
-    <PageLayout>
-      <PageHeader header={`Extractions - ${doc.name}`}>
-        <Button className="ml-auto" onClick={() => runExtractionForDoc(docId)}>
-          Run Extraction
-        </Button>
-      </PageHeader>
+    <PageLayout
+      title={`Extractions - ${doc.name}`}
+      toolbar={
+        <>
+          <Button className="ml-auto" onClick={() => runExtractionForDoc(docId)}>
+            Run Extraction
+          </Button>
+        </>
+      }
+    >
       <ExtractionTasksTable />
     </PageLayout>
   );

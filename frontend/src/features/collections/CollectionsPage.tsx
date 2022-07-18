@@ -12,7 +12,7 @@ import { CollectionMethod } from '../sites/types';
 import { ErrorLogModal } from './ErrorLogModal';
 import { SiteStatus } from '../sites/siteStatus';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
-import { PageHeader, PageLayout } from '../../components';
+import { MainLayout } from '../../components';
 
 export function CollectionsPage() {
   const [modalVisible, setModalVisible] = useState(false);
@@ -36,8 +36,9 @@ export function CollectionsPage() {
         setVisible={setModalVisible}
         errorTraceback={errorTraceback}
       />
-      <PageLayout>
-        <PageHeader header={'Collections'}>
+      <MainLayout
+        pageTitle={'Collections'}
+        pageToolbar={
           <>
             {site &&
             site.collection_method === CollectionMethod.Automated &&
@@ -51,9 +52,10 @@ export function CollectionsPage() {
               <ManualCollectionButton site={site} refetch={refetch} runScrape={runScrape} />
             ) : null}
           </>
-        </PageHeader>
+        }
+      >
         <CollectionsDataTable siteId={siteId} openErrorModal={openErrorModal} />
-      </PageLayout>
+      </MainLayout>
     </>
   );
 }

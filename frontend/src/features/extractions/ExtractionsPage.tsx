@@ -1,10 +1,9 @@
-import { PageHeader, PageLayout } from '../../components';
+import { PageLayout } from '../../components';
 import { ExtractedDocumentsTable } from './ExtractedDocumentsTable';
 
 export function ExtractionsPage() {
   return (
-    <PageLayout>
-      <PageHeader header={'Extracted Documents'} />
+    <PageLayout title={'Extracted Documents'}>
       <ExtractedDocumentsTable />
     </PageLayout>
   );

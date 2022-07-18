@@ -7,8 +7,8 @@ import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
 import { SiteDataTable } from './SiteDataTable';
 import { QuickFilter } from './QuickFilter';
-import { PageLayout, PageHeader } from '../../components';
 import { client, baseApiUrl } from '../../app/base-api';
+import { PageLayout } from '../../components';
 
 function CreateSite() {
   return (
@@ -118,13 +118,17 @@ function BulkUpload() {
 export function SitesHomePage() {
   const [isLoading, setLoading] = useState(false);
   return (
-    <PageLayout>
-      <PageHeader header={'Sites'}>
-        <QuickFilter isLoading={isLoading} />
-        <CreateSite />
-        <BulkActions />
-        <BulkUpload />
-      </PageHeader>
+    <PageLayout
+      title={'Sites'}
+      toolbar={
+        <>
+          <QuickFilter isLoading={isLoading} />
+          <CreateSite />
+          <BulkActions />
+          <BulkUpload />
+        </>
+      }
+    >
       <SiteDataTable setLoading={setLoading} />
     </PageLayout>
   );

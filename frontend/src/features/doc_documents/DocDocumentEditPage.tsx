@@ -1,10 +1,8 @@
-import Layout from 'antd/lib/layout/layout';
-import Title from 'antd/lib/typography/Title';
 import { useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 import { DocDocumentForm } from './DocDocumentForm';
 import { RetrievedDocumentViewer } from '../retrieved_documents/RetrievedDocumentViewer';
-import { PageHeader, PageLayout } from '../../components';
+import { PageLayout } from '../../components';
 
 export function DocDocumentEditPage() {
   const { docDocumentId: docId } = useParams();
@@ -16,7 +14,6 @@ export function DocDocumentEditPage() {
 
   return (
     <PageLayout>
-      <PageHeader header={doc.name} />
       <div className="flex space-x-4 overflow-hidden h-full">
         <div className="flex-1 h-full overflow-auto">
           <DocDocumentForm doc={doc} />
