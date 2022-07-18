@@ -4,7 +4,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import tempLogo from '../assets/temp-logo.png';
 import { useSelector } from 'react-redux';
 import { useBreadcrumbs } from './use-breadcrumbs';
-import { breadcrumbState } from './appSlice';
+import { breadcrumbState, menuState } from './appSlice';
 
 export function AppLayout() {
   return (
@@ -23,12 +23,12 @@ export function AppLayout() {
 }
 
 export function AppBreadcrumbs() {
-  const state: any = useSelector(breadcrumbState);
+  const breadcrumbs: any = useSelector(breadcrumbState);
   useBreadcrumbs();
 
   return (
     <>
-      {state.breadcrumbs.map((crumb: any, i: number) => (
+      {breadcrumbs.map((crumb: any, i: number) => (
         <div className="text-[22px] text-gray-500" key={`${crumb.label}`}>
           {i > 0 && <span className="mx-2">/</span>}
           {crumb.label}
@@ -73,11 +73,11 @@ function isCurrentClasses(path: string, key: string) {
 
 function AppMenu() {
   const location = useLocation();
-  const state: any = useSelector(breadcrumbState);
+  const menu: any = useSelector(menuState);
 
   return (
     <div className="flex flex-row">
-      {state.menu.items.map((menuItem: any) => (
+      {menu.items.map((menuItem: any) => (
         <Link
           key={menuItem.url}
           className={classNames(
