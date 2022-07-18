@@ -90,7 +90,6 @@ export const useBreadcrumbs = async () => {
       let i = 0;
       for (const part of pathParts) {
         const url = paths.slice(0, i + 1).join('/');
-        console.log(url);
         const resolver = crumbs[part];
         if (typeof resolver === 'string') {
           promises.push(Promise.resolve({ url, label: resolver }));
