@@ -29,23 +29,23 @@ export const useBreadcrumbs = async () => {
 
   // async resolvers that get cached and more or less act like prefetch
   const asyncResolvers = {
-    ':siteId': async (siteId: string) => {
+    ':siteId': async (siteId: string, url: string) => {
       const result: any = await dispatch(sitesApi.endpoints.getSite.initiate(siteId));
-      return { url: siteId, label: result.data.name };
+      return { url, label: result.data.name };
     },
-    ':docId': async (docId: string) => {
+    ':docId': async (docId: string, url: string) => {
       const result: any = await dispatch(documentsApi.endpoints.getDocument.initiate(docId));
-      return { url: docId, label: result.data.name } as any;
+      return { url, label: result.data.name } as any;
     },
-    ':docDocId': async (docDocId: string) => {
+    ':docDocId': async (docDocId: string, url: string) => {
       const result: any = await dispatch(
         docDocumentsApi.endpoints.getDocDocument.initiate(docDocId)
       );
-      return { url: docDocId, label: result.data.name } as any;
+      return { url, label: result.data.name } as any;
     },
-    ':userId': async (userId: string) => {
+    ':userId': async (userId: string, url: string) => {
       const result: any = await dispatch(usersApi.endpoints.getUser.initiate(userId));
-      return { url: userId, label: result.data.full_name } as any;
+      return { url, label: result.data.full_name } as any;
     },
   };
 
@@ -75,6 +75,7 @@ export const useBreadcrumbs = async () => {
 
   useEffect(() => {
     const promises: any[] = [];
+    const paths = location.pathname.split('/');
     for (let route of routes) {
       const matcher = new URLPattern({ pathname: route });
       const match = matcher.exec(location);
@@ -83,17 +84,21 @@ export const useBreadcrumbs = async () => {
         continue;
       }
 
-      const pathParts = route.split('/').slice(1);
-      const crumbs = matched[`/${pathParts[0]}`];
+      const pathParts = route.split('/');
+      const crumbs = matched[`/${pathParts[1]}`];
 
+      let i = 0;
       for (const part of pathParts) {
+        const url = paths.slice(0, i + 1).join('/');
+        console.log(url);
         const resolver = crumbs[part];
         if (typeof resolver === 'string') {
-          promises.push(Promise.resolve({ url: part, label: resolver }));
+          promises.push(Promise.resolve({ url, label: resolver }));
         } else if (resolver != undefined) {
           const id = match.pathname.groups[part.slice(1)] as string;
-          promises.push(Promise.resolve(resolver(id)));
+          promises.push(Promise.resolve(resolver(id, url)));
         }
+        i++;
       }
     }
 
