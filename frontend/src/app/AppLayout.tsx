@@ -18,9 +18,8 @@ export function AppLayout() {
 export function AppBreadcrumbs() {
   const breadcrumbs: any = useSelector(breadcrumbState);
   useBreadcrumbs();
-
   return (
-    <>
+    <div className="flex">
       {breadcrumbs.map((crumb: any, i: number) => (
         <div
           className={classNames(
@@ -33,7 +32,7 @@ export function AppBreadcrumbs() {
           {crumb.label}
         </div>
       ))}
-    </>
+    </div>
   );
 }
 
@@ -56,8 +55,7 @@ export function AppBar() {
       <Link to="/sites">
         <img src={tempLogo} alt="SourceHub" className="mr-4" />
       </Link>
-      {/* <AppMenu /> */}
-      <div className="flex flex-1"></div>
+      <div data-type="spacer" className="flex flex-1"></div>
       <AppMenu />
       <AppUser />
     </div>

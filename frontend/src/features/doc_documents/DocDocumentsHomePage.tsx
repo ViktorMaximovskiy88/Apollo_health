@@ -1,5 +1,5 @@
 import { DocDocumentsDataTable } from './DocDocumentsDataTable';
-import { MainLayout, PageLayout } from '../../components';
+import { MainLayout } from '../../components';
 
 export function DocDocumentsHomePage() {
   return (

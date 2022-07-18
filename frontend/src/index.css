@@ -1,5 +1,4 @@
 @import '~antd/dist/antd.css';
-@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -13,26 +12,13 @@ body {
   overflow: hidden;
 }
 
+#root {
+  height: 100%;
+}
+
 :root {
-  --app-menu-height: 70px;
-  --section-toolbar-height: 60px;
-  --page-toolbar-height: 72px;
   --blue-primary: #5a9bc9;
   --bg-menu-selected: #e8f1f7;
-}
-
-.section-body-layout {
-  height: calc(100vh - var(--app-menu-height) - var(--section-toolbar-height));
-}
-
-.page-body-layout {
-  height: calc(100vh - var(--app-menu-height) - var(--page-toolbar-height));
-}
-
-.section-page-body-layout {
-  height: calc(
-    100vh - var(--app-menu-height) - var(--section-toolbar-height) - var(--page-toolbar-height)
-  );
 }
 
 body {
@@ -100,4 +86,8 @@ h1.ant-typography {
 
 .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
   color: var(--blue-primary);
+}
+
+h1 {
+  font-size: 22px;
 }

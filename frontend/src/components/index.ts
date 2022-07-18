@@ -3,5 +3,4 @@ export * from './ButtonLink';
 export * from './ListDatePicker';
 export * from './OfficeFileViewer';
 export * from './MainLayout';
-export * from './SectionLayout';
-export * from './PageLayout';
+export * from './Layout';

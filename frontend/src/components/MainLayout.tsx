@@ -1,6 +1,5 @@
-import classNames from 'classnames';
-import { PageLayout } from './PageLayout';
-import { SectionLayout } from './SectionLayout';
+import { AppBreadcrumbs } from '../app/AppLayout';
+import { Layout } from './Layout';
 
 interface PropTypes {
   children?: any;
@@ -21,19 +20,15 @@ export function MainLayout({
 }: PropTypes) {
   const useSection = !!(sectionToolbar || sidebar || breadcrumbs);
 
-  return (
-    <div className={classNames('flex flex-col flex-1')}>
-      {useSection ? (
-        <SectionLayout sidebar={sidebar} toolbar={sectionToolbar}>
-          <PageLayout toolbar={pageToolbar} title={pageTitle} section={true}>
-            {children}
-          </PageLayout>
-        </SectionLayout>
-      ) : (
-        <PageLayout toolbar={pageToolbar} title={pageTitle}>
-          {children}
-        </PageLayout>
-      )}
-    </div>
+  return useSection ? (
+    <Layout title={<AppBreadcrumbs />} sidebar={sidebar} toolbar={sectionToolbar} gap={false}>
+      <Layout toolbar={pageToolbar} title={pageTitle}>
+        {children}
+      </Layout>
+    </Layout>
+  ) : (
+    <Layout toolbar={pageToolbar} title={pageTitle}>
+      {children}
+    </Layout>
   );
 }
