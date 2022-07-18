@@ -12,7 +12,7 @@ export function AppLayout() {
       <div>
         <AppBar />
       </div>
-      <div className={classNames('flex items-center h-[60px] p-4')}>
+      <div className={classNames('flex items-center h-[60px] p-4 border-gray-300 border-b-[1px]')}>
         <AppBreadcrumbs />
       </div>
       <div className={classNames('flex items-center')}>
@@ -29,8 +29,14 @@ export function AppBreadcrumbs() {
   return (
     <>
       {breadcrumbs.map((crumb: any, i: number) => (
-        <div className="text-[22px] text-gray-500" key={`${crumb.label}`}>
-          {i > 0 && <span className="mx-2">/</span>}
+        <div
+          className={classNames(
+            'text-[16px]',
+            i == breadcrumbs.length - 1 ? 'text-gray-900' : 'text-gray-500'
+          )}
+          key={`${crumb.label}`}
+        >
+          {i > 0 && <span className={classNames('mx-2')}>/</span>}
           {crumb.label}
         </div>
       ))}

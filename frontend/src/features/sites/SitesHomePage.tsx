@@ -2,16 +2,13 @@ import { Button, Layout, Upload, Dropdown, Space, Menu, notification } from 'ant
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useRunBulkMutation } from '../collections/siteScrapeTasksApi';
-
-import { SiteBreadcrumbs } from './SiteBreadcrumbs';
 import { LoadingOutlined, UploadOutlined, DownOutlined } from '@ant-design/icons';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
-
 import { SiteDataTable } from './SiteDataTable';
 import { QuickFilter } from './QuickFilter';
+import { HeaderBar } from '../../components';
 import { client, baseApiUrl } from '../../app/base-api';
-import { AppBreadcrumbs } from '../../app/AppLayout';
 
 function CreateSite() {
   return (
@@ -122,15 +119,12 @@ export function SitesHomePage() {
   const [isLoading, setLoading] = useState(false);
   return (
     <Layout className="p-4 bg-transparent pt-0">
-      <div className="flex justify-end items-center">
-        {/* <AppBreadcrumbs /> */}
-        <div className="py-2 items-center space-x-2">
-          <QuickFilter isLoading={isLoading} />
-          <CreateSite />
-          <BulkActions />
-          <BulkUpload />
-        </div>
-      </div>
+      <HeaderBar header={'Sites'}>
+        <QuickFilter isLoading={isLoading} />
+        <CreateSite />
+        <BulkActions />
+        <BulkUpload />
+      </HeaderBar>
       <SiteDataTable setLoading={setLoading} />
     </Layout>
   );

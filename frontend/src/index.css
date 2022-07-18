@@ -1,6 +1,10 @@
 @import '~antd/dist/antd.css';
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* TODO get fancier with the tw integration  */
+/* https://tailwindcss.com/docs/adding-custom-styles */
 
 html,
 body {
