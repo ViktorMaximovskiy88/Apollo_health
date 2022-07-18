@@ -24,7 +24,7 @@ class TestGetDocuments:
                 follow_links=False,
                 follow_link_keywords=[],
                 follow_link_url_keywords=[],
-        ),
+            ),
             disabled=False,
             cron="5 * * * *",
             base_urls=[
@@ -43,8 +43,9 @@ class TestGetDocuments:
         first_collected_date: datetime,
     ) -> RetrievedDocument:
         doc = RetrievedDocument(
-            name='test',
-            checksum='test',
+            name="test",
+            checksum="test",
+            text_checksum="test",
             site_id=site.id,
             scrape_task_id=scrape_task.id,
             first_collected_date=first_collected_date,

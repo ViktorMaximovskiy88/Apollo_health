@@ -14,7 +14,7 @@ from playwright.async_api import ProxySettings
 from tenacity import AttemptManager
 from backend.scrapeworker.common.rate_limiter import RateLimiter
 from random import shuffle
-from backend.common.storage.hash import hash_bytes
+from backend.common.storage.hash import DocStreamHasher
 
 default_headers: dict[str, str] = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -89,9 +89,7 @@ class AioDownloader:
                     f"Downloaded {download.request.url}, got {response.status}"
                 )
 
-        if not response:
-            raise Exception(f"Failed to download url {download.request.url}")
-        yield response
+                yield response
         
     # just return the aio useable proxy list
     def convert_proxy(self, proxy: Proxy) -> list[AioProxy]:
@@ -145,15 +143,18 @@ class AioDownloader:
             yield attempt, proxy_settings
 
     @asynccontextmanager
-    async def tempfile_path(self, download: Download, body: bytes):
+    async def tempfile_path(self, download: Download, response: ClientResponse):
         download.guess_extension()
+        hasher = DocStreamHasher()
         with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
             download.file_path = temp.name
             async with aiofiles.open(download.file_path, "wb") as fd:
-                await fd.write(body)
+                async for data in response.content.iter_any():
+                    await fd.write(data)
+                    hasher.update(data)
                 await fd.flush()
 
-            download.file_hash = hash_bytes(body)
+            download.file_hash = hasher.hexdigest()
             yield download.file_path, download.file_hash
 
     async def download_to_tempfile(
@@ -162,23 +163,12 @@ class AioDownloader:
         proxies: list[tuple[Proxy | None, ProxySettings | None]] = [],
     ):
         url = download.request.url
-        body = None  # self.redis.get(url)
-        if body == "DISCARD":
-            return
+        logging.info(f"Attempting download {url}")
+        async with self.download_url(download, proxies) as response:
+            if not response.ok:
+                return
 
-        if body:
-            logging.info(f"Using cached {url}")
-        else:
-            logging.info(f"Attempting download {url}")
-            async with self.download_url(download, proxies) as response:
+            download.response.from_headers(response.headers)
 
-                if not response.ok:
-                    # self.redis.set(url, "DISCARD", ex=60 * 60 * 1)  # 1 hour
-                    return
-
-                download.response.from_headers(response.headers)
-                body = await response.read()
-                # self.redis.set(url, body, ex=60 * 60 * 1)  # 1 hour
-
-        async with self.tempfile_path(download, body) as (temp_path, hash):
-            yield temp_path, hash
+            async with self.tempfile_path(download, response) as (temp_path, hash):
+                yield temp_path, hash
