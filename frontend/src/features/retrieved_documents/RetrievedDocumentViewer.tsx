@@ -30,7 +30,7 @@ export function RetrievedDocumentViewer({ docId, doc }: PropTypes) {
     key,
     value,
   }));
-  console.log(docId);
+
   return (
     <Worker workerUrl="/pdf.worker.min.js">
       <Tabs className="h-full" tabBarStyle={tw`h-10`}>

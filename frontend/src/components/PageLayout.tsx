@@ -26,7 +26,7 @@ export function PageLayout({ title, toolbar, children, section = false }: PropTy
       <div className={classNames('flex flex-1 flex-col')}>
         <div
           className={classNames(
-            'flex flex-col p-4 bg-zinc-50',
+            'flex flex-col p-4 bg-zinc-50 overflow-auto',
             section && showPageHeader
               ? 'section-page-body-layout'
               : section && !showPageHeader
