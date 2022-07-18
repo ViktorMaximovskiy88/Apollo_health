@@ -2,8 +2,9 @@ import classNames from 'classnames';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import tempLogo from '../assets/temp-logo.png';
+import { useSelector } from 'react-redux';
 import { useBreadcrumbs } from './use-breadcrumbs';
-import useAppStore from './use-app-store';
+import { breadcrumbState } from './appSlice';
 
 export function AppLayout() {
   return (
@@ -22,7 +23,7 @@ export function AppLayout() {
 }
 
 export function AppBreadcrumbs() {
-  const { state }: any = useAppStore();
+  const state: any = useSelector(breadcrumbState);
   useBreadcrumbs();
 
   return (
@@ -72,7 +73,7 @@ function isCurrentClasses(path: string, key: string) {
 
 function AppMenu() {
   const location = useLocation();
-  const { state }: any = useAppStore();
+  const state: any = useSelector(breadcrumbState);
 
   return (
     <div className="flex flex-row">
