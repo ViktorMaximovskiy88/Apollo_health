@@ -8,7 +8,7 @@ import { render, screen, act } from '../../test/test-utils';
 import { useAccessToken } from '../../common/hooks';
 
 jest.mock('react-router-dom');
-jest.mock('../../app/use-access-token');
+jest.mock('../../common/hooks');
 
 const server = setupServer(...handlers);
 
