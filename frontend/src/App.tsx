@@ -6,7 +6,6 @@ import { DocumentEditPage } from './features/retrieved_documents/DocumentEditPag
 import { CollectionsPage } from './features/collections/CollectionsPage';
 import { SiteCreatePage } from './features/sites/SiteCreatePage';
 import { SiteEditPage } from './features/sites/SiteEditPage';
-import { SitePage } from './features/sites/SitePage';
 import { SitesHomePage } from './features/sites/SitesHomePage';
 import { UserCreatePage } from './features/users/UserCreatePage';
 import { UserEditPage } from './features/users/UserEditPage';
@@ -54,20 +53,18 @@ function App() {
           <Route path="new" element={<SiteCreatePage />} />
           <Route path=":siteId">
             <Route path="edit" element={<SiteEditPage />} />
-            <Route element={<SitePage />}>
-              <Route path="scrapes" element={<CollectionsPage />} />
-              <Route path="documents">
-                <Route index element={<DocumentsPage />} />
-                <Route path=":docId">
-                  <Route path="edit" element={<DocumentEditPage />} />
-                </Route>
+            <Route path="scrapes" element={<CollectionsPage />} />
+            <Route path="documents">
+              <Route index element={<DocumentsPage />} />
+              <Route path=":docId">
+                <Route path="edit" element={<DocumentEditPage />} />
               </Route>
-              <Route path="extraction">
-                <Route index element={<ExtractionsPage />} />
-                <Route path="document/:docId">
-                  <Route index element={<DocExtractionPage />} />
-                  <Route path=":extractionId" element={<ExtractionEditPage />} />
-                </Route>
+            </Route>
+            <Route path="extraction">
+              <Route index element={<ExtractionsPage />} />
+              <Route path="document/:docId">
+                <Route index element={<DocExtractionPage />} />
+                <Route path=":extractionId" element={<ExtractionEditPage />} />
               </Route>
             </Route>
           </Route>

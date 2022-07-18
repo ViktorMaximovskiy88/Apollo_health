@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useRunExtractionTaskMutation } from './extractionsApi';
 import { useGetDocumentQuery } from '../retrieved_documents/documentsApi';
 import { ExtractionTasksTable } from './ExtractionTasksTable';
-import { PageLayout } from '../../components';
+import { MainLayout } from '../../components';
 
 export function DocExtractionPage() {
   const params = useParams();
@@ -14,9 +14,9 @@ export function DocExtractionPage() {
   if (!docId || !doc) return null;
 
   return (
-    <PageLayout
-      title={`Extractions - ${doc.name}`}
-      toolbar={
+    <MainLayout
+      pageTitle={`Extractions - ${doc.name}`}
+      pageToolbar={
         <>
           <Button className="ml-auto" onClick={() => runExtractionForDoc(docId)}>
             Run Extraction
@@ -25,6 +25,6 @@ export function DocExtractionPage() {
       }
     >
       <ExtractionTasksTable />
-    </PageLayout>
+    </MainLayout>
   );
 }

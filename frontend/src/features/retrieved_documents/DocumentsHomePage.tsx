@@ -97,8 +97,8 @@ export function DocumentsHomePage() {
   ];
   return (
     <MainLayout
-      title="Documents"
-      toolbar={
+      pageTitle="Documents"
+      pageToolbar={
         <>
           <Button className="ml-auto">Create Document</Button>
         </>

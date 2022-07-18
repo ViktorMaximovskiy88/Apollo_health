@@ -25,7 +25,7 @@ export function SectionLayout({ children, toolbar, sidebar, scrollBody = true }:
         {sidebar}
         <div
           className={classNames(
-            'flex flex-col app-body-layout p-4 pt-0 bg-zinc-50',
+            'flex flex-1 flex-col section-body-layout bg-zinc-50',
             scrollBody ? 'overflow-auto' : 'overflow-hidden'
           )}
         >

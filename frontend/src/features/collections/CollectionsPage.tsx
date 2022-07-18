@@ -11,6 +11,7 @@ import { CollectionsDataTable } from './CollectionsDataTable';
 import { CollectionMethod } from '../sites/types';
 import { ErrorLogModal } from './ErrorLogModal';
 import { SiteStatus } from '../sites/siteStatus';
+import { SiteMenu } from '../sites/SiteMenu';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
 import { MainLayout } from '../../components';
 
@@ -37,6 +38,7 @@ export function CollectionsPage() {
         errorTraceback={errorTraceback}
       />
       <MainLayout
+        sidebar={<SiteMenu />}
         pageTitle={'Collections'}
         pageToolbar={
           <>

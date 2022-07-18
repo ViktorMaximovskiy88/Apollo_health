@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Site } from './types';
 import { SiteForm } from './SiteForm';
 import { useAddSiteMutation } from './sitesApi';
-import { PageLayout } from '../../components';
+import { MainLayout } from '../../components';
 
 export function SiteCreatePage() {
   const [addSite] = useAddSiteMutation();
@@ -14,8 +14,8 @@ export function SiteCreatePage() {
   }
 
   return (
-    <PageLayout title={'Create Site'}>
+    <MainLayout pageTitle={'Create Site'}>
       <SiteForm onFinish={tryAddSite} />
-    </PageLayout>
+    </MainLayout>
   );
 }

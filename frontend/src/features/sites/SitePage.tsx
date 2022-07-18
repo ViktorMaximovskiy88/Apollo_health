@@ -1,6 +1,6 @@
 import { Layout, Menu } from 'antd';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { SectionLayout } from '../../components';
+import { MainLayout } from '../../components';
 
 export function SitePage() {
   const subpages = [
@@ -11,7 +11,7 @@ export function SitePage() {
   const location = useLocation();
   const current = location.pathname.split('/')[3];
   return (
-    <SectionLayout
+    <MainLayout
       sidebar={
         <Layout.Sider width={175}>
           <Menu mode="inline" className="h-full" selectedKeys={[current]} items={subpages} />
@@ -19,6 +19,6 @@ export function SitePage() {
       }
     >
       <Outlet />
-    </SectionLayout>
+    </MainLayout>
   );
 }

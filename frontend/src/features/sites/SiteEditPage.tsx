@@ -3,7 +3,7 @@ import { Site, CollectionMethod } from './types';
 import { SiteForm } from './SiteForm';
 import { useGetSiteQuery, useUpdateSiteMutation } from './sitesApi';
 import { useCancelAllSiteScrapeTasksMutation } from '../collections/siteScrapeTasksApi';
-import { PageLayout } from '../../components';
+import { MainLayout } from '../../components';
 
 export function SiteEditPage() {
   const params = useParams();
@@ -25,8 +25,8 @@ export function SiteEditPage() {
     navigate(-1);
   }
   return (
-    <PageLayout title={'Edit Site'}>
+    <MainLayout pageTitle={'Edit Site'}>
       <SiteForm onFinish={tryUpdateSite} initialValues={site} />
-    </PageLayout>
+    </MainLayout>
   );
 }

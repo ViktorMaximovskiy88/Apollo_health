@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { PageLayout } from '../../components';
+import { MainLayout } from '../../components';
 import { User } from './types';
 import { UserForm } from './UserForm';
 import { useAddUserMutation } from './usersApi';
@@ -14,8 +14,8 @@ export function UserCreatePage() {
   }
 
   return (
-    <PageLayout title={'Create User'}>
+    <MainLayout pageTitle={'Create User'}>
       <UserForm onFinish={tryAddUser} />
-    </PageLayout>
+    </MainLayout>
   );
 }

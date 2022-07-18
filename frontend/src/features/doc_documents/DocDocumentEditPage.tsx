@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 import { DocDocumentForm } from './DocDocumentForm';
 import { RetrievedDocumentViewer } from '../retrieved_documents/RetrievedDocumentViewer';
-import { PageLayout } from '../../components';
+import { MainLayout } from '../../components';
 
 export function DocDocumentEditPage() {
   const { docDocumentId: docId } = useParams();
@@ -13,7 +13,7 @@ export function DocDocumentEditPage() {
   }
 
   return (
-    <PageLayout>
+    <MainLayout>
       <div className="flex space-x-4 overflow-hidden h-full">
         <div className="flex-1 h-full overflow-auto">
           <DocDocumentForm doc={doc} />
@@ -22,6 +22,6 @@ export function DocDocumentEditPage() {
           <RetrievedDocumentViewer doc={doc} docId={doc.retrieved_document_id} />
         </div>
       </div>
-    </PageLayout>
+    </MainLayout>
   );
 }

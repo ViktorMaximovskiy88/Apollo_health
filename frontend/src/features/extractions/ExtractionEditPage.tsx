@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { useGetExtractionTaskQuery, useLazyGetExtractionTaskResultsQuery } from './extractionsApi';
 import { useCallback } from 'react';
 import { TypeSingleSortInfo, TypeSingleFilterValue } from '@inovua/reactdatagrid-community/types';
-import { PageLayout } from '../../components';
+import { MainLayout } from '../../components';
 
 export function ExtractionEditPage() {
   const { extractionId } = useParams();
@@ -154,7 +154,7 @@ export function ExtractionEditPage() {
   ];
 
   return (
-    <PageLayout title="Extraction Results">
+    <MainLayout pageTitle="Extraction Results">
       <ReactDataGrid
         dataSource={loadData}
         columns={columns}
@@ -164,6 +164,6 @@ export function ExtractionEditPage() {
         defaultFilterValue={defaultFilterValue}
         defaultSortInfo={defaultSortInfo}
       />
-    </PageLayout>
+    </MainLayout>
   );
 }

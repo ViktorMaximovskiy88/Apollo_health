@@ -6,7 +6,7 @@ interface PropTypes {
   children?: any;
   pageTitle?: any;
   pageToolbar?: any;
-  sectionTitle?: any;
+  breadcrumbs?: boolean;
   sectionToolbar?: any;
   sidebar?: any;
 }
@@ -16,14 +16,16 @@ export function MainLayout({
   pageToolbar,
   sectionToolbar,
   sidebar,
+  breadcrumbs = true,
   children,
 }: PropTypes) {
-  const useSection = !!(sectionToolbar || sidebar);
+  const useSection = !!(sectionToolbar || sidebar || breadcrumbs);
+
   return (
-    <div className={classNames('')}>
+    <div className={classNames('flex flex-col flex-1')}>
       {useSection ? (
         <SectionLayout sidebar={sidebar} toolbar={sectionToolbar}>
-          <PageLayout toolbar={pageToolbar} title={pageTitle}>
+          <PageLayout toolbar={pageToolbar} title={pageTitle} section={true}>
             {children}
           </PageLayout>
         </SectionLayout>

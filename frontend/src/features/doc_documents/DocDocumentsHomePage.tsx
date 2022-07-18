@@ -1,10 +1,10 @@
 import { DocDocumentsDataTable } from './DocDocumentsDataTable';
-import { PageLayout } from '../../components';
+import { MainLayout, PageLayout } from '../../components';
 
 export function DocDocumentsHomePage() {
   return (
-    <PageLayout title={'Documents'}>
+    <MainLayout pageTitle={'Documents'}>
       <DocDocumentsDataTable />
-    </PageLayout>
+    </MainLayout>
   );
 }

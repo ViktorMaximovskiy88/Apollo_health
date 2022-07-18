@@ -1,10 +1,11 @@
-import { PageLayout } from '../../components';
+import { MainLayout } from '../../components';
 import { ExtractedDocumentsTable } from './ExtractedDocumentsTable';
+import { SiteMenu } from '../sites/SiteMenu';
 
 export function ExtractionsPage() {
   return (
-    <PageLayout title={'Extracted Documents'}>
+    <MainLayout pageTitle={'Extracted Documents'} sidebar={<SiteMenu />}>
       <ExtractedDocumentsTable />
-    </PageLayout>
+    </MainLayout>
   );
 }

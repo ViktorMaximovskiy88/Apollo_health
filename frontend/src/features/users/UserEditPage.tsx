@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { PageLayout } from '../../components';
+import { MainLayout } from '../../components';
 import { User } from './types';
 import { UserForm } from './UserForm';
 import { useGetUserQuery, useUpdateUserMutation } from './usersApi';
@@ -17,8 +17,8 @@ export function UserEditPage() {
     navigate('/users');
   }
   return (
-    <PageLayout title={'Edit User'}>
+    <MainLayout pageTitle={'Edit User'}>
       <UserForm onFinish={tryUpdateUser} initialValues={user} />
-    </PageLayout>
+    </MainLayout>
   );
 }

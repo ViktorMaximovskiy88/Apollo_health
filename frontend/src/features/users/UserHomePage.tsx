@@ -1,6 +1,6 @@
 import { Button, Popconfirm, Table, Tag } from 'antd';
 import { Link } from 'react-router-dom';
-import { PageLayout } from '../../components';
+import { MainLayout } from '../../components';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { User } from './types';
@@ -59,9 +59,9 @@ export function UsersHomePage() {
     },
   ];
   return (
-    <PageLayout
-      title="Users"
-      toolbar={
+    <MainLayout
+      pageTitle="Users"
+      pageToolbar={
         <>
           <Link className="ml-auto" to="new">
             <Button>Create User</Button>
@@ -70,6 +70,6 @@ export function UsersHomePage() {
       }
     >
       <Table dataSource={formattedUsers} columns={columns} />
-    </PageLayout>
+    </MainLayout>
   );
 }
