@@ -5,6 +5,7 @@ import { SiteForm } from './SiteForm';
 import { useGetSiteQuery, useUpdateSiteMutation } from './sitesApi';
 import { Layout } from 'antd';
 import { useCancelAllSiteScrapeTasksMutation } from '../collections/siteScrapeTasksApi';
+import { PageHeader, PageLayout } from '../../components';
 
 export function SiteEditPage() {
   const params = useParams();
@@ -26,11 +27,9 @@ export function SiteEditPage() {
     navigate(-1);
   }
   return (
-    <Layout className="p-4 bg-transparent">
-      <div className="flex">
-        <Title level={4}>Edit Site</Title>
-      </div>
+    <PageLayout>
+      <PageHeader header={'Edit Site'} />
       <SiteForm onFinish={tryUpdateSite} initialValues={site} />
-    </Layout>
+    </PageLayout>
   );
 }

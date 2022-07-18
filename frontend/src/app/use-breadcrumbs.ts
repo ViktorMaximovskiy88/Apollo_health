@@ -1,18 +1,25 @@
 import { useEffect } from 'react';
 import { sitesApi } from '../features/sites/sitesApi';
 import { documentsApi } from '../features/retrieved_documents/documentsApi';
+import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { useLocation } from 'react-router-dom';
 import { setBreadcrumbs, breadcrumbState } from './appSlice';
 import { useDispatch, useSelector } from 'react-redux';
+import { usersApi } from '../features/users/usersApi';
 
 const routes = [
   '/sites',
+  '/sites/new',
   '/sites/:siteId/edit',
   '/sites/:siteId/scrapes',
   '/sites/:siteId/documents',
   '/sites/:siteId/documents/:docId/edit',
   '/sites/:siteId/extraction',
   '/documents',
+  '/documents/:docDocId',
+  '/users',
+  '/users/new',
+  '/users/:userId/edit',
 ];
 
 export const useBreadcrumbs = async () => {
@@ -20,14 +27,26 @@ export const useBreadcrumbs = async () => {
   const location = useLocation();
 
   // async resolvers that get cached and more or less act like prefetch
-  const shared = {
+  const asyncResolvers = {
     ':siteId': async (siteId: string) => {
       const result: any = await dispatch(sitesApi.endpoints.getSite.initiate(siteId));
       return { url: siteId, label: result.data.name };
     },
     ':docId': async (docId: string) => {
       const result: any = await dispatch(documentsApi.endpoints.getDocument.initiate(docId));
+      console.log(result);
       return { url: docId, label: result.data.name } as any;
+    },
+    ':docDocId': async (docDocId: string) => {
+      const result: any = await dispatch(
+        docDocumentsApi.endpoints.getDocDocument.initiate(docDocId)
+      );
+      console.log(result);
+      return { url: docDocId, label: result.data.name } as any;
+    },
+    ':userId': async (userId: string) => {
+      const result: any = await dispatch(usersApi.endpoints.getUser.initiate(userId));
+      return { url: userId, label: result.data.full_name } as any;
     },
   };
 
@@ -35,16 +54,23 @@ export const useBreadcrumbs = async () => {
   // will move as needed
   const matched: any = {
     '/sites': {
+      new: 'Create',
       sites: 'Sites',
       edit: 'Edit',
       scrapes: 'Collections',
       documents: 'Documents',
       extraction: 'Extracted Content',
-      ...shared,
+      ...asyncResolvers,
     },
     '/documents': {
       documents: 'All Documents',
-      ...shared,
+      ...asyncResolvers,
+    },
+    '/users': {
+      users: 'Users',
+      new: 'Create',
+      edit: 'Edit',
+      ...asyncResolvers,
     },
   };
 

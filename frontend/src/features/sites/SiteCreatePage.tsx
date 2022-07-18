@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Site } from './types';
 import { SiteForm } from './SiteForm';
 import { useAddSiteMutation } from './sitesApi';
+import { PageHeader, PageLayout } from '../../components';
 
 export function SiteCreatePage() {
   const [addSite] = useAddSiteMutation();
@@ -15,11 +16,9 @@ export function SiteCreatePage() {
   }
 
   return (
-    <Layout className="bg-transparent p-4">
-      <div className="flex">
-        <Title level={3}>Create Site</Title>
-      </div>
+    <PageLayout>
+      <PageHeader header={'Create Site'} />
       <SiteForm onFinish={tryAddSite} />
-    </Layout>
+    </PageLayout>
   );
 }

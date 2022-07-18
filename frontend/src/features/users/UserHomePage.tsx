@@ -1,29 +1,23 @@
 import { Layout, Button, Popconfirm, Table, Tag } from 'antd';
 import Title from 'antd/lib/typography/Title';
 import { Link } from 'react-router-dom';
+import { PageHeader, PageLayout } from '../../components';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { User } from './types';
-import {
-  useDeleteUserMutation,
-  useGetChangeLogQuery,
-  useGetUsersQuery,
-} from './usersApi';
+import { useDeleteUserMutation, useGetChangeLogQuery, useGetUsersQuery } from './usersApi';
 
 export function UsersHomePage() {
   const { data: users } = useGetUsersQuery();
   const [deleteUser] = useDeleteUserMutation();
-  const formattedUsers =
-    users?.filter((u) => !u.disabled).map((u) => ({ ...u, key: u._id })) || [];
+  const formattedUsers = users?.filter((u) => !u.disabled).map((u) => ({ ...u, key: u._id })) || [];
   const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
   const columns = [
     {
       title: 'Name',
       key: 'name',
       render: (user: User) => {
-        return (
-          <ButtonLink to={`${user._id}/edit`}>{user.full_name}</ButtonLink>
-        );
+        return <ButtonLink to={`${user._id}/edit`}>{user.full_name}</ButtonLink>;
       },
     },
     { title: 'Email', key: 'email', dataIndex: 'email' },
@@ -51,10 +45,7 @@ export function UsersHomePage() {
       render: (user: User) => {
         return (
           <>
-            <ChangeLogModal
-              target={user}
-              useChangeLogQuery={useGetChangeLogQuery}
-            />
+            <ChangeLogModal target={user} useChangeLogQuery={useGetChangeLogQuery} />
             <Popconfirm
               title={`Are you sure you want to delete '${user.full_name}'?`}
               okText="Yes"
@@ -69,16 +60,13 @@ export function UsersHomePage() {
     },
   ];
   return (
-    <Layout className="bg-transparent p-4">
-      <div className="flex">
-        <Title className="inline-block" level={4}>
-          Users
-        </Title>
+    <PageLayout>
+      <PageHeader header="Users">
         <Link className="ml-auto" to="new">
           <Button>Create User</Button>
         </Link>
-      </div>
+      </PageHeader>
       <Table dataSource={formattedUsers} columns={columns} />
-    </Layout>
+    </PageLayout>
   );
 }

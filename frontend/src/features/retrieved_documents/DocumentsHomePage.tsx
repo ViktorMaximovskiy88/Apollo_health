@@ -10,6 +10,7 @@ import {
   useGetDocumentsQuery,
 } from './documentsApi';
 import { RetrievedDocument } from './types';
+import { PageHeader, PageLayout } from '../../components';
 
 export function DocumentsHomePage() {
   const [searchParams] = useSearchParams();
@@ -96,14 +97,11 @@ export function DocumentsHomePage() {
     },
   ];
   return (
-    <div>
-      <div className="flex">
-        <Title className="inline-block" level={4}>
-          Documents
-        </Title>
+    <PageLayout>
+      <PageHeader header="Documents">
         <Button className="ml-auto">Create Document</Button>
-      </div>
+      </PageHeader>
       <Table dataSource={documents} columns={columns} rowKey={(doc) => doc._id} />
-    </div>
+    </PageLayout>
   );
 }

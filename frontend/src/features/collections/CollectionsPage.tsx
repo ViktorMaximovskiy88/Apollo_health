@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button, Layout } from 'antd';
 import { useParams } from 'react-router-dom';
-import Title from 'antd/lib/typography/Title';
 import { useNavigate } from 'react-router-dom';
 import {
   useRunSiteScrapeTaskMutation,
@@ -13,6 +12,7 @@ import { CollectionMethod } from '../sites/types';
 import { ErrorLogModal } from './ErrorLogModal';
 import { SiteStatus } from '../sites/siteStatus';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
+import { PageHeader, PageLayout } from '../../components';
 
 export function CollectionsPage() {
   const [modalVisible, setModalVisible] = useState(false);
@@ -36,23 +36,24 @@ export function CollectionsPage() {
         setVisible={setModalVisible}
         errorTraceback={errorTraceback}
       />
-      <Layout className="bg-white">
-        <div className="flex">
-          <Title level={4}>Collections</Title>
-          {site &&
-          site.collection_method === CollectionMethod.Automated &&
-          site.status !== SiteStatus.Inactive ? (
-            <Button onClick={() => runScrape(site._id)} className="ml-auto">
-              Run Collection
-            </Button>
-          ) : site &&
-            site.collection_method === CollectionMethod.Manual &&
+      <PageLayout>
+        <PageHeader header={'Collections'}>
+          <>
+            {site &&
+            site.collection_method === CollectionMethod.Automated &&
             site.status !== SiteStatus.Inactive ? (
-            <ManualCollectionButton site={site} refetch={refetch} runScrape={runScrape} />
-          ) : null}
-        </div>
+              <Button onClick={() => runScrape(site._id)} className="ml-auto">
+                Run Collection
+              </Button>
+            ) : site &&
+              site.collection_method === CollectionMethod.Manual &&
+              site.status !== SiteStatus.Inactive ? (
+              <ManualCollectionButton site={site} refetch={refetch} runScrape={runScrape} />
+            ) : null}
+          </>
+        </PageHeader>
         <CollectionsDataTable siteId={siteId} openErrorModal={openErrorModal} />
-      </Layout>
+      </PageLayout>
     </>
   );
 }

@@ -1,6 +1,7 @@
 import { Layout } from 'antd';
 import Title from 'antd/lib/typography/Title';
 import { useNavigate, useParams } from 'react-router-dom';
+import { PageHeader, PageLayout } from '../../components';
 import { User } from './types';
 import { UserForm } from './UserForm';
 import { useGetUserQuery, useUpdateUserMutation } from './usersApi';
@@ -18,11 +19,9 @@ export function UserEditPage() {
     navigate('/users');
   }
   return (
-    <Layout className="bg-transparent p-4">
-      <div className="flex">
-        <Title level={4}>Edit User</Title>
-      </div>
+    <PageLayout>
+      <PageHeader header={'Edit User'} />
       <UserForm onFinish={tryUpdateUser} initialValues={user} />
-    </Layout>
+    </PageLayout>
   );
 }

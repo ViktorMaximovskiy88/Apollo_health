@@ -7,6 +7,7 @@ import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 import Title from 'antd/lib/typography/Title';
 import { DocumentForm } from './DocumentForm';
 import { RetrievedDocumentViewer } from './RetrievedDocumentViewer';
+import { PageHeader, PageLayout } from '../../components';
 
 export function DocumentEditPage() {
   const params = useParams();
@@ -19,8 +20,8 @@ export function DocumentEditPage() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <Title level={4}>{doc.name}</Title>
+    <PageLayout>
+      <PageHeader header={doc.name} />
       <div className="flex space-x-4 overflow-auto flex-grow">
         <div className="w-1/2 h-full overflow-auto">
           <DocumentForm doc={doc} />
@@ -29,6 +30,6 @@ export function DocumentEditPage() {
           <RetrievedDocumentViewer doc={doc} docId={docId} />
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }

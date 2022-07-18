@@ -10,6 +10,7 @@ html,
 body {
   height: 100%;
   width: 100%;
+  overflow: hidden;
 }
 
 :root {
@@ -19,7 +20,7 @@ body {
   --bg-menu-selected: #e8f1f7;
 }
 
-.ant-layout {
+.app-body-layout {
   height: calc(100vh - var(--app-menu-height) - var(--app-breadcrumb-height));
 }
 
@@ -50,7 +51,11 @@ h1.ant-typography {
   border-radius: 0.25rem;
 }
 
-.ant-switch-checked {
+.ant-switch {
+  background-color: var(--bg-menu-selected);
+}
+
+.ant-switch.ant-switch-checked {
   background-color: var(--blue-primary);
 }
 
@@ -67,4 +72,8 @@ h1.ant-typography {
 
 .ant-menu-inline .ant-menu-item::after {
   border-right-color: var(--blue-primary);
+}
+
+.ant-btn-primary {
+  background-color: var(--blue-primary);
 }
