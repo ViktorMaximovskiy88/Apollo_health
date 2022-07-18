@@ -2,20 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
+body {
+  height: 100%;
+  width: 100%;
+}
+
+:root {
+  --app-menu-height: 70px;
+  --app-breadcrumb-height: 60px;
+  --blue-primary: #5a9bc9;
+  --bg-menu-selected: #e8f1f7;
+}
+
+.ant-layout {
+  height: calc(100vh - var(--app-menu-height) - var(--app-breadcrumb-height));
+}
+
+body {
+  font-family: 'Nunito';
+}
+
+h1.ant-typography {
+  font-size: 32px;
+}
+
 .ant-tabs-pdf-viewer .ant-tabs-content {
   height: 100%;
 }
 
-
-.ant-input, .ant-picker, .ant-btn:not(.ant-btn-link) {
+.ant-input,
+.ant-picker,
+.ant-btn:not(.ant-btn-link) {
   padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: 0.25rem;
   border: 1px solid #d9d9d9;
   height: auto;
 }
 
 .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
   height: auto;
-  padding: 0.25rem 0.75rem; 
-  border-radius: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem;
+}
+
+.ant-switch-checked {
+  background-color: var(--blue-primary);
+}
+
+.ant-menu-item-selected a,
+.ant-menu-item-selected a:hover {
+  color: var(--blue-primary);
+}
+.ant-menu-item-selected {
+  color: var(--blue-primary);
+}
+.ant-menu:not(.ant-menu-horizontal) .ant-menu-item-selected {
+  background-color: var(--bg-menu-selected);
+}
+
+.ant-menu-inline .ant-menu-item::after {
+  border-right-color: var(--blue-primary);
 }

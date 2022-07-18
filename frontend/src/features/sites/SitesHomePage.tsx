@@ -11,6 +11,7 @@ import { UploadFile } from 'antd/lib/upload/interface';
 import { SiteDataTable } from './SiteDataTable';
 import { QuickFilter } from './QuickFilter';
 import { client, baseApiUrl } from '../../app/base-api';
+import { AppBreadcrumbs } from '../../app/AppLayout';
 
 function CreateSite() {
   return (
@@ -100,28 +101,30 @@ function BulkUpload() {
     }
   };
   return (
-    <Upload
-      name="file"
-      accept=".csv,.txt,.xlsx"
-      action={`${baseApiUrl}/sites/upload`}
-      headers={{
-        Authorization: `Bearer ${token}`,
-      }}
-      showUploadList={false}
-      onChange={onChange}
-    >
-      <Button icon={uploading ? <LoadingOutlined /> : <UploadOutlined />} />
-    </Upload>
+    <Button>
+      <Upload
+        name="file"
+        accept=".csv,.txt,.xlsx"
+        action={`${baseApiUrl}/sites/upload`}
+        headers={{
+          Authorization: `Bearer ${token}`,
+        }}
+        showUploadList={false}
+        onChange={onChange}
+      >
+        {uploading ? <LoadingOutlined /> : <UploadOutlined />}
+      </Upload>
+    </Button>
   );
 }
 
 export function SitesHomePage() {
   const [isLoading, setLoading] = useState(false);
   return (
-    <Layout className="p-4 bg-transparent">
-      <div className="flex">
-        <SiteBreadcrumbs />
-        <div className="ml-auto space-x-2">
+    <Layout className="p-4 bg-transparent pt-0">
+      <div className="flex justify-end items-center">
+        {/* <AppBreadcrumbs /> */}
+        <div className="py-2 items-center space-x-2">
           <QuickFilter isLoading={isLoading} />
           <CreateSite />
           <BulkActions />

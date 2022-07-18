@@ -1,4 +1,3 @@
-import { StringUnitLength } from 'luxon';
 import { BaseDocument, TaskStatus } from '../../common';
 
 export interface TherapyTag {
@@ -24,7 +23,6 @@ export interface TaskLock {
 }
 
 export interface DocDocument extends BaseDocument {
-  _id: string;
   site_id: string;
   retrieved_document_id: string;
   classification_status: TaskStatus;

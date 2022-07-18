@@ -4,9 +4,7 @@ import { Site, CollectionMethod } from './types';
 import { SiteForm } from './SiteForm';
 import { useGetSiteQuery, useUpdateSiteMutation } from './sitesApi';
 import { Layout } from 'antd';
-import {
-  useCancelAllSiteScrapeTasksMutation,
-} from '../collections/siteScrapeTasksApi';
+import { useCancelAllSiteScrapeTasksMutation } from '../collections/siteScrapeTasksApi';
 
 export function SiteEditPage() {
   const params = useParams();
@@ -19,8 +17,11 @@ export function SiteEditPage() {
   async function tryUpdateSite(update: Partial<Site>) {
     update._id = params.siteId;
     await updateSite(update);
-    if (site!.collection_method === CollectionMethod.Automated && update.collection_method === CollectionMethod.Manual) {
-      await cancelAllScrapes(params.siteId)
+    if (
+      site!.collection_method === CollectionMethod.Automated &&
+      update.collection_method === CollectionMethod.Manual
+    ) {
+      await cancelAllScrapes(params.siteId);
     }
     navigate(-1);
   }
