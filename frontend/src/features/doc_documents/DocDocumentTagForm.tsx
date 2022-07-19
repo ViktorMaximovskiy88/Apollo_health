@@ -145,7 +145,7 @@ export function DocDocumentTagForm(props: { doc: DocDocument }) {
         </div>
       </div>
 
-      <div className="flex flex-col p-2 h-full overflow-auto flex-1 h-[calc(100%_-_152px)]">
+      <div className="flex flex-col p-2 h-full overflow-auto flex-1 h-[calc(100%_-_136px)]">
         {filteredList.map((tag) => (
           <div
             className="flex flex-row py-3"
