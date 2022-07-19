@@ -7,6 +7,8 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   extractedDocumentTableState,
   setExtractedDocumentTableFilter,
+  setExtractedDocumentTableLimit,
+  setExtractedDocumentTableSkip,
   setExtractedDocumentTableSort,
 } from './extractionsSlice';
 import { prettyDateFromISO, prettyDateTimeFromISO } from '../../common';
@@ -14,6 +16,7 @@ import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useGetDocumentsQuery } from '../retrieved_documents/documentsApi';
 import { RetrievedDocument } from '../retrieved_documents/types';
 import { useGetChangeLogQuery } from './extractionsApi';
+import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
 
 const columns = [
   {
@@ -83,6 +86,56 @@ const columns = [
   },
 ];
 
+const useFilter = () => {
+  const tableState = useSelector(extractedDocumentTableState);
+  const dispatch = useDispatch();
+  const onFilterChange = useCallback(
+    (filter: TypeFilterValue) => dispatch(setExtractedDocumentTableFilter(filter)),
+    [dispatch]
+  );
+  const filterProps = {
+    defaultFilterValue: tableState.filter,
+    onFilterValueChange: onFilterChange,
+  };
+  return filterProps;
+};
+
+const useSort = () => {
+  const tableState = useSelector(extractedDocumentTableState);
+  const dispatch = useDispatch();
+  const onSortChange = useCallback(
+    (sort: TypeSortInfo) => dispatch(setExtractedDocumentTableSort(sort)),
+    [dispatch]
+  );
+  const sortProps = {
+    defaultSortInfo: tableState.sort,
+    onSortInfoChange: onSortChange,
+  };
+  return sortProps;
+};
+
+const useControlledPagination = () => {
+  const tableState = useSelector(extractedDocumentTableState);
+  const dispatch = useDispatch();
+
+  const onLimitChange = useCallback(
+    (limit: number) => dispatch(setExtractedDocumentTableLimit(limit)),
+    [dispatch]
+  );
+  const onSkipChange = useCallback(
+    (skip: number) => dispatch(setExtractedDocumentTableSkip(skip)),
+    [dispatch]
+  );
+  const controlledPaginationProps = {
+    pagination: true,
+    limit: tableState.pagination.limit,
+    onLimitChange,
+    skip: tableState.pagination.skip,
+    onSkipChange,
+  };
+  return controlledPaginationProps;
+};
+
 export function ExtractedDocumentsTable() {
   const [searchParams] = useSearchParams();
   const params = useParams();
@@ -97,26 +150,18 @@ export function ExtractedDocumentsTable() {
     { pollingInterval: 5000 }
   );
 
-  const tableState = useSelector(extractedDocumentTableState);
-  const dispatch = useDispatch();
-  const onFilterChange = useCallback(
-    (filter: any) => dispatch(setExtractedDocumentTableFilter(filter)),
-    [dispatch]
-  );
-  const onSortChange = useCallback(
-    (sort: any) => dispatch(setExtractedDocumentTableSort(sort)),
-    [dispatch]
-  );
+  const filterProps = useFilter();
+  const sortProps = useSort();
+  const controlledPagination = useControlledPagination();
 
   return (
     <ReactDataGrid
-      dataSource={documents || []}
+      dataSource={documents ?? []}
+      {...filterProps}
+      {...sortProps}
+      {...controlledPagination}
       rowHeight={50}
       columns={columns}
-      defaultFilterValue={tableState.filter}
-      onFilterValueChange={onFilterChange}
-      defaultSortInfo={tableState.sort}
-      onSortInfoChange={onSortChange}
     />
   );
 }

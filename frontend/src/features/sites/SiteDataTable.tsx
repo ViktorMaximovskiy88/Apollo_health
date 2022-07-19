@@ -27,36 +27,84 @@ function disableLoadingMask(data: {
   return <></>;
 }
 
-interface SiteDataTablePropTypes {
-  setLoading: (loading: boolean) => void;
-}
-export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
-  const [deletedSite, setDeletedSite] = useState('');
+const useFilter = () => {
   const tableState = useSelector(siteTableState);
-  const [getSitesFn] = useLazyGetSitesQuery();
-  const [deleteSite] = useDeleteSiteMutation();
-  const columns = useMemo(
-    () => createColumns(deleteSite, setDeletedSite),
-    [deleteSite, setDeletedSite]
-  );
   const dispatch = useDispatch();
   const onFilterChange = useCallback(
     (filter: TypeFilterValue) => dispatch(setSiteTableFilter(filter)),
     [dispatch]
   );
+  const filterProps = {
+    defaultFilterValue: tableState.filter,
+    onFilterValueChange: onFilterChange,
+  };
+  return filterProps;
+};
+
+const useSort = () => {
+  const tableState = useSelector(siteTableState);
+  const dispatch = useDispatch();
   const onSortChange = useCallback(
     (sort: TypeSortInfo) => dispatch(setSiteTableSort(sort)),
     [dispatch]
   );
+  const sortProps = {
+    defaultSortInfo: tableState.sort,
+    onSortInfoChange: onSortChange,
+  };
+  return sortProps;
+};
+
+const useControlledPagination = ({
+  isActive,
+  setActive,
+}: {
+  isActive: boolean;
+  setActive: (active: boolean) => void;
+}) => {
+  const tableState = useSelector(siteTableState);
+
+  const dispatch = useDispatch();
   const onLimitChange = useCallback(
     (limit: number) => dispatch(setSiteTableLimit(limit)),
     [dispatch]
   );
   const onSkipChange = useCallback((skip: number) => dispatch(setSiteTableSkip(skip)), [dispatch]);
 
-  // Trigger update every 10 seconds by invalidating memoized callback
-  const { setActive, isActive, watermark } = useInterval(10000);
+  const renderPaginationToolbar = useCallback(
+    (paginationProps: TypePaginationProps) => {
+      return (
+        <GridPaginationToolbar
+          paginationProps={{ ...paginationProps }}
+          autoRefreshValue={isActive}
+          autoRefreshClick={setActive}
+        />
+      );
+    },
+    [isActive, setActive]
+  );
 
+  const controlledPaginationProps = {
+    pagination: true,
+    limit: tableState.pagination.limit,
+    onLimitChange,
+    skip: tableState.pagination.skip,
+    onSkipChange,
+    renderPaginationToolbar,
+  };
+  return controlledPaginationProps;
+};
+
+interface SiteDataTablePropTypes {
+  setLoading: (loading: boolean) => void;
+}
+export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
+  // Trigger update every 10 seconds by invalidating memoized callback
+  const { isActive, setActive, watermark } = useInterval(10000);
+
+  const [getSitesFn] = useLazyGetSitesQuery();
+
+  const [deletedSite, setDeletedSite] = useState('');
   interface TableInfoType {
     limit: number;
     skip: number;
@@ -76,37 +124,25 @@ export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
     [getSitesFn, watermark, setLoading, deletedSite] // watermark is not inside useCallback
   );
 
-  const renderPaginationToolbar = useCallback(
-    (paginationProps: TypePaginationProps) => {
-      return (
-        <GridPaginationToolbar
-          paginationProps={{ ...paginationProps }}
-          autoRefreshValue={isActive}
-          autoRefreshClick={setActive}
-        />
-      );
-    },
-    [isActive, setActive]
+  const [deleteSite] = useDeleteSiteMutation();
+  const columns = useMemo(
+    () => createColumns(deleteSite, setDeletedSite),
+    [deleteSite, setDeletedSite]
   );
+
+  const filterProps = useFilter();
+  const sortProps = useSort();
+  const controlledPagination = useControlledPagination({ isActive, setActive });
 
   return (
     <ReactDataGrid
       dataSource={loadData}
+      {...filterProps}
+      {...sortProps}
+      {...controlledPagination}
       columns={columns}
       rowHeight={50}
-      pagination
-      defaultFilterValue={tableState.filter}
-      filterValue={tableState.filter}
-      onFilterValueChange={onFilterChange}
-      defaultSortInfo={tableState.sort}
-      onSortInfoChange={onSortChange}
-      sortInfo={tableState.sort}
       renderLoadMask={disableLoadingMask}
-      limit={tableState.pagination.limit}
-      skip={tableState.pagination.skip}
-      onLimitChange={onLimitChange}
-      onSkipChange={onSkipChange}
-      renderPaginationToolbar={renderPaginationToolbar}
       activateRowOnFocus={false}
     />
   );
