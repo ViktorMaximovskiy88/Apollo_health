@@ -159,7 +159,7 @@ export function DocDocumentsDataTable() {
         />
       );
     },
-    [isActive]
+    [isActive, setActive]
   );
 
   return (
