@@ -123,7 +123,7 @@ class DateParser:
                         if i + 2 == len(self.date_rgxs):
                             pieces = datetext.split(r"[., ]")
                             datetext = f"20{pieces[-1]}-{pieces[0]}-01"
-                        date = parser.parse(datetext)
+                        date = parser.parse(datetext, ignoretz=True)
                         label = self.get_date_label(line, last_index, m.start())
                         if not label:  # If no match, check right of date
                             label = self.get_date_label(

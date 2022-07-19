@@ -41,6 +41,7 @@ class DocDocument(BaseDocument):
     name: str
     checksum: str
     file_extension: str
+    text_checksum: str | None = None
 
     # Document Type
     document_type: str | None = None
@@ -110,6 +111,8 @@ class UpdateDocDocument(BaseModel):
     classification_lock: TaskLock | None = None
     name: str | None = None
     document_type: str | None = None
+    checksum: str | None = None
+    text_checksum: str | None = None
 
     effective_date: datetime | None = None
     last_reviewed_date: datetime | None = None

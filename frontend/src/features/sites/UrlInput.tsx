@@ -46,7 +46,11 @@ function useValidateUrlAndErrorMessage(form: FormInstance, initialValues?: Site)
       return (
         <p>
           URL is in use by{' '}
-          <a href={`../${urlCheck.site?._id}/scrapes`} target="_blank" rel="noopener noreferrer">
+          <a
+            href={`/sites/${urlCheck.site?._id}/scrapes`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             {`${urlCheck.site?.name}`}
           </a>
         </p>
