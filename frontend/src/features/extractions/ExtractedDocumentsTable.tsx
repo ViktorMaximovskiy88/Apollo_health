@@ -8,7 +8,7 @@ import {
   extractedDocumentTableState,
   setExtractedDocumentTableFilter,
   setExtractedDocumentTableSort,
-} from '../../app/uiSlice';
+} from './extractionsSlice';
 import { prettyDateFromISO, prettyDateTimeFromISO } from '../../common';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useGetDocumentsQuery } from '../retrieved_documents/documentsApi';
@@ -76,10 +76,7 @@ const columns = [
     render: ({ data: doc }: { data: RetrievedDocument }) => {
       return (
         <>
-          <ChangeLogModal
-            target={doc}
-            useChangeLogQuery={useGetChangeLogQuery}
-          />
+          <ChangeLogModal target={doc} useChangeLogQuery={useGetChangeLogQuery} />
         </>
       );
     },

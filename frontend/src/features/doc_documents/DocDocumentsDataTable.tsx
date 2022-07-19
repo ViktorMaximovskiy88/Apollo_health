@@ -8,7 +8,7 @@ import {
   setDocDocumentTableFilter,
   setDocDocumentTableSort,
   docDocumentTableState,
-} from '../../app/uiSlice';
+} from './docDocumentsSlice';
 import {
   prettyDateTimeFromISO,
   scrapeTaskStatusDisplayName,

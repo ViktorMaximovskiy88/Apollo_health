@@ -10,10 +10,15 @@ import { extractionTasksApi } from '../features/extractions/extractionsApi';
 import { proxiesApi } from '../features/proxies/proxiesApi';
 import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { rtkAuth } from '../common/auth-middleware';
-import uiReducer from './uiSlice';
+import sitesReducer from '../features/sites/sitesSlice';
+import collectionsReducer from '../features/collections/collectionsSlice';
+import docDocumentsReducer from '../features/doc_documents/docDocumentsSlice';
+import documentsReducer from '../features/sites/documentsSlice';
+import extractionsReducer from '../features/extractions/extractionsSlice';
 
-const { createReduxHistory, routerMiddleware, routerReducer } =
-  createReduxHistoryContext({ history: createBrowserHistory() });
+const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
+  history: createBrowserHistory(),
+});
 
 export const store = configureStore({
   reducer: {
@@ -24,7 +29,11 @@ export const store = configureStore({
     [extractionTasksApi.reducerPath]: extractionTasksApi.reducer,
     [proxiesApi.reducerPath]: proxiesApi.reducer,
     [docDocumentsApi.reducerPath]: docDocumentsApi.reducer,
-    ui: uiReducer,
+    sites: sitesReducer,
+    collections: collectionsReducer,
+    docDocuments: docDocumentsReducer,
+    documents: documentsReducer,
+    extractions: extractionsReducer,
     router: routerReducer,
   },
   middleware: (getDefaultMiddleware) =>
@@ -37,7 +46,7 @@ export const store = configureStore({
       proxiesApi.middleware,
       docDocumentsApi.middleware,
       routerMiddleware,
-      rtkAuth,
+      rtkAuth
     ),
 });
 

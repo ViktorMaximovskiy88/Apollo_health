@@ -9,11 +9,7 @@ import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import {
-  documentTableState,
-  setDocumentTableFilter,
-  setDocumentTableSort,
-} from '../../app/uiSlice';
+import { documentTableState, setDocumentTableFilter, setDocumentTableSort } from './documentsSlice';
 
 const columns = [
   {

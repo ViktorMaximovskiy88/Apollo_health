@@ -7,7 +7,7 @@ import {
   setSiteTableLimit,
   setSiteTableSkip,
   siteTableState,
-} from '../../app/uiSlice';
+} from './sitesSlice';
 import { GridPaginationToolbar } from '../../components';
 import { useDeleteSiteMutation, useLazyGetSitesQuery } from './sitesApi';
 import { useInterval } from '../../common/hooks';

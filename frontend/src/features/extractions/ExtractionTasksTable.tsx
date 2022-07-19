@@ -8,7 +8,7 @@ import {
   extractionTaskTableState,
   setExtractionTaskTableFilter,
   setExtractionTaskTableSort,
-} from '../../app/uiSlice';
+} from './extractionsSlice';
 import {
   prettyDateDistance,
   prettyDateFromISO,
@@ -34,8 +34,7 @@ const columns = [
         placeholder: 'Select Date',
       };
     },
-    render: ({ value: queued_time }: { value: string }) =>
-      prettyDateFromISO(queued_time),
+    render: ({ value: queued_time }: { value: string }) => prettyDateFromISO(queued_time),
   },
   {
     header: 'Elapsed',
@@ -82,11 +81,7 @@ const columns = [
     name: 'extraction_count',
     defaultFlex: 1,
     render: ({ data: task }: { data: ExtractionTask }) => {
-      return (
-        <ButtonLink to={task._id}>
-          {task.extraction_count} Extractions
-        </ButtonLink>
-      );
+      return <ButtonLink to={task._id}>{task.extraction_count} Extractions</ButtonLink>;
     },
   },
 ];
