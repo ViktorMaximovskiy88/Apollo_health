@@ -84,7 +84,6 @@ export function DocDocumentTagForm(props: { doc: DocDocument }) {
   const applyFilter = (tag: any) => {
     const currentPage = 0;
     const validPage = pageFilter == 'doc' ? true : currentPage == tag.page;
-    console.log(validPage, tagTypeFilter, tag.type);
     return tagTypeFilter.includes(tag.type) && validPage;
   };
 
@@ -93,6 +92,7 @@ export function DocDocumentTagForm(props: { doc: DocDocument }) {
     const filteredTags = tags.filter((tag: any) => {
       return (tag.text.match(regex) || tag.code.match(regex)) && applyFilter(tag);
     });
+    console.log(filteredTags);
     setFilteredList(filteredTags);
 
     return;
@@ -100,7 +100,7 @@ export function DocDocumentTagForm(props: { doc: DocDocument }) {
 
   const onSearch = (e: any) => {
     const search = e.target.value;
-    setSearchTerm(searchTerm);
+    setSearchTerm(search);
   };
 
   return (
@@ -145,12 +145,12 @@ export function DocDocumentTagForm(props: { doc: DocDocument }) {
         </div>
       </div>
 
-      <div className="flex flex-col p-2 h-full overflow-auto flex-1 h-[calc(100%_-_136px)]">
-        {filteredList.map((tag) => (
+      <div className="flex flex-col p-2 pr-4 h-full overflow-auto flex-1 h-[calc(100%_-_136px)]">
+        {filteredList.map((tag, i) => (
           <div
             className="flex flex-row py-3"
             style={{ borderTop: '1px solid #ccc' }}
-            key={tag.code}
+            key={`${tag.code}-${i}`}
           >
             <div className="flex flex-1">{tag.text}</div>
             <div className="">
