@@ -11,15 +11,13 @@ interface PropTypes {
 
 export function Layout({ title, toolbar, sidebar, children, gap = true }: PropTypes) {
   const showPageHeader = !!(title || toolbar);
+
   return (
-    <div
-      data-component="page-layout"
-      className={classNames('flex flex-col flex-1 overflow-hidden')}
-    >
+    <div className={classNames('flex flex-col flex-1 overflow-hidden h-full')}>
       {showPageHeader && (
         <div
           className={classNames(
-            'box-border h-[72px] flex items-center p-4',
+            'box-border h-[60px] flex items-center p-4',
             title ? 'justify-between' : 'justify-end'
           )}
         >
@@ -27,7 +25,7 @@ export function Layout({ title, toolbar, sidebar, children, gap = true }: PropTy
           <div className={classNames('space-x-2')}>{toolbar}</div>
         </div>
       )}
-      <div className={classNames('flex flex-1')}>
+      <div className={classNames('flex flex-1', showPageHeader ? 'layout-with-header' : 'layout')}>
         {sidebar}
         <div
           className={classNames(

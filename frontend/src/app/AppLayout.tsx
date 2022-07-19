@@ -8,7 +8,7 @@ import { breadcrumbState, menuState } from './appSlice';
 
 export function AppLayout() {
   return (
-    <div className={classNames('flex flex-col h-full')}>
+    <div className={classNames('flex flex-col h-screen')}>
       <AppBar />
       <Outlet />
     </div>

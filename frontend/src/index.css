@@ -7,18 +7,26 @@
 
 html,
 body {
-  height: 100%;
-  width: 100%;
+  height: 100vh;
+  width: 100vw;
   overflow: hidden;
 }
 
 #root {
-  height: 100%;
+  height: 100vh;
 }
 
 :root {
   --blue-primary: #5a9bc9;
   --bg-menu-selected: #e8f1f7;
+}
+
+.layout {
+  height: 100%;
+}
+
+.layout-with-header {
+  height: calc(100% - 60px);
 }
 
 body {
