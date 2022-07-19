@@ -13,8 +13,16 @@ import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './sitesApi';
 import { Site } from './types';
 import { SiteStatus, siteStatusDisplayName, siteStatusStyledDisplay } from './siteStatus';
+import { useGetUsersQuery } from '../users/usersApi';
+import { ReactNode } from 'react';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
+
+const Assignee = ({ id }: { id: string }) => {
+  const { data: users } = useGetUsersQuery();
+  const [assignee] = users?.filter((user) => user._id === id) ?? [];
+  return <>{assignee?.full_name}</>;
+};
 
 export const createColumns = (deleteSite: any, setDeletedSite: any) => {
   async function handleDeleteSite(site: Site) {
@@ -129,6 +137,11 @@ export const createColumns = (deleteSite: any, setDeletedSite: any) => {
       render: ({ value: status }: { value: TaskStatus }) => {
         return styledDisplay(status);
       },
+    },
+    {
+      header: 'Assignee',
+      name: 'assignee',
+      render: ({ value }: { value: string }): ReactNode => <Assignee id={value} />,
     },
     {
       header: 'Tags',
