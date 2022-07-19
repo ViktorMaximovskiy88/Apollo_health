@@ -1,5 +1,5 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
-import { ReactNode, useCallback, useMemo } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSiteTableFilter, setSiteTableSort, siteTableState } from '../../app/uiSlice';
 import { GridPaginationToolbar } from '../../components';
@@ -21,10 +21,14 @@ interface SiteDataTablePropTypes {
   setLoading: (loading: boolean) => void;
 }
 export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
+  const [deletedSite, setDeletedSite] = useState('');
   const tableState = useSelector(siteTableState);
   const [getSitesFn] = useLazyGetSitesQuery();
   const [deleteSite] = useDeleteSiteMutation();
-  const columns = useMemo(() => createColumns(deleteSite), [deleteSite]);
+  const columns = useMemo(
+    () => createColumns(deleteSite, setDeletedSite),
+    [deleteSite, setDeletedSite]
+  );
   const dispatch = useDispatch();
   const onFilterChange = useCallback(
     (filter: TypeFilterValue) => dispatch(setSiteTableFilter(filter)),
@@ -48,7 +52,7 @@ export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
       return { data: sites, count };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [getSitesFn, watermark, setLoading] // watermark is not inside useCallback
+    [getSitesFn, watermark, setLoading, deletedSite] // watermark is not inside useCallback
   );
 
   const renderPaginationToolbar = useCallback(
