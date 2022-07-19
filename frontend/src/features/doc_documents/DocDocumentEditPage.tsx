@@ -27,17 +27,17 @@ export function DocDocumentEditPage() {
       }
     >
       <div className="flex space-x-4 overflow-hidden h-full">
-        <div className="flex-1 h-full overflow-auto">
-          <Tabs className="h-full">
-            <Tabs.TabPane tab="Info" key="info" className="h-full overflow-auto bg-white p-4">
+        <div className="flex-1 h-full overflow-hidden">
+          <Tabs className="h-full ant-tabs-h-full ">
+            <Tabs.TabPane tab="Info" key="info" className="bg-white p-4 overflow-auto">
               <DocDocumentInfoForm doc={doc} />
             </Tabs.TabPane>
-            <Tabs.TabPane tab="Tags" key="tags" className="h-full overflow-auto bg-white p-4">
+            <Tabs.TabPane tab="Tags" key="tags" className="bg-white p-4 h-full">
               <DocDocumentTagForm doc={doc} />
             </Tabs.TabPane>
           </Tabs>
         </div>
-        <div className="flex-1 h-full overflow-hidden ant-tabs-pdf-viewer">
+        <div className="flex-1 h-full overflow-hidden ant-tabs-h-full">
           <RetrievedDocumentViewer doc={doc} docId={doc.retrieved_document_id} />
         </div>
       </div>

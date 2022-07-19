@@ -1,6 +1,6 @@
 import { BaseDocument, TaskStatus } from '../../common';
 
-export interface TherapyTag {
+export interface BaseDocTag {
   text: string;
   page: number;
   code: string;
@@ -8,13 +8,8 @@ export interface TherapyTag {
   relevancy: number;
 }
 
-export interface IndicationTag {
-  text: string;
-  page: number;
-  code: string;
-  score: number;
-  relevancy: number;
-}
+export interface TherapyTag extends BaseDocTag {}
+export interface IndicationTag extends BaseDocTag {}
 
 export interface TaskLock {
   work_queue_id: string;

@@ -37,23 +37,22 @@ h1.ant-typography {
   font-size: 32px;
 }
 
-.ant-tabs-pdf-viewer .ant-tabs-content {
+/* ant tab helpers */
+.ant-tabs-h-full .ant-tabs-content {
   height: 100%;
+}
+
+.ant-tabs-scroll .ant-tabs-content-holder {
+  overflow: auto;
 }
 
 .ant-input,
 .ant-picker,
-.ant-btn:not(.ant-btn-link) {
+.ant-btn:not(.ant-input-search-button):not(.ant-btn-link) {
   padding: 0.5rem 0.75rem;
   border-radius: 0.25rem;
   border: 1px solid #d9d9d9;
   height: auto;
-}
-
-.ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-  height: auto;
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.25rem;
 }
 
 .ant-switch {

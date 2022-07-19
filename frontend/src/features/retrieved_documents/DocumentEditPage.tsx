@@ -24,7 +24,7 @@ export function DocumentEditPage() {
         <div className="w-1/2 h-full overflow-auto">
           <DocumentForm doc={doc} />
         </div>
-        <div className="w-1/2 h-full overflow-auto ant-tabs-pdf-viewer">
+        <div className="w-1/2 h-full overflow-auto ant-tabs-h-full">
           <RetrievedDocumentViewer doc={doc} docId={docId} />
         </div>
       </div>

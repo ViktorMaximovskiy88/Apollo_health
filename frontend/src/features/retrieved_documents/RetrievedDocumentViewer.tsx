@@ -1,4 +1,5 @@
-import { Viewer, Worker } from '@react-pdf-viewer/core';
+import { useState } from 'react';
+import { Viewer, Worker, PageChangeEvent } from '@react-pdf-viewer/core';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 import { OfficeFileLoader } from '../../components/OfficeFileViewer';
 
@@ -6,7 +7,6 @@ import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 
 import { Table, Tabs } from 'antd';
-import tw from 'twin.macro';
 import { useAccessToken } from '../../common/hooks';
 import { baseApiUrl } from '../../app/base-api';
 
@@ -23,6 +23,7 @@ interface PropTypes {
 export function RetrievedDocumentViewer({ docId, doc }: PropTypes) {
   const token = useAccessToken();
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
+  const [currentPage, setCurrentPage] = useState(0);
 
   if (!(token && doc)) return null;
 
@@ -31,15 +32,21 @@ export function RetrievedDocumentViewer({ docId, doc }: PropTypes) {
     value,
   }));
 
+  function handlePageChange(e: PageChangeEvent) {
+    setCurrentPage(e.currentPage);
+  }
+
   return (
     <Worker workerUrl="/pdf.worker.min.js">
-      <Tabs className="h-full" tabBarStyle={tw`h-10`}>
+      <Tabs className="h-full">
         <Tabs.TabPane tab="Document" key="document" className="h-full overflow-auto">
           {doc.file_extension === 'pdf' ? (
             <Viewer
+              initialPage={currentPage}
               withCredentials={true}
               fileUrl={`${baseApiUrl}/documents/${docId}.${doc.file_extension}`}
               plugins={[defaultLayoutPluginInstance]}
+              onPageChange={handlePageChange}
               httpHeaders={{
                 Authorization: `Bearer ${token}`,
               }}
@@ -48,7 +55,7 @@ export function RetrievedDocumentViewer({ docId, doc }: PropTypes) {
             <OfficeFileLoader docId={docId} />
           )}
         </Tabs.TabPane>
-        <Tabs.TabPane tab="Metadata" key="metadata">
+        <Tabs.TabPane tab="Metadata" key="properties">
           <Table dataSource={dataSource} columns={columns} pagination={false} />
         </Tabs.TabPane>
       </Tabs>
