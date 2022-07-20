@@ -4,7 +4,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import tempLogo from '../assets/temp-logo.png';
 import { useSelector } from 'react-redux';
 import { useBreadcrumbs } from './use-breadcrumbs';
-import { breadcrumbState, menuState } from './appSlice';
+import { breadcrumbState, menuState } from './navSlice';
 
 export function AppLayout() {
   return (

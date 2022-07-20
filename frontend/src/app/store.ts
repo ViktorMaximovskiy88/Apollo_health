@@ -11,7 +11,7 @@ import { proxiesApi } from '../features/proxies/proxiesApi';
 import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { rtkAuth } from '../common/auth-middleware';
 import uiReducer from './uiSlice';
-import appSlice from './appSlice';
+import navSlice from './navSlice';
 
 const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
   history: createBrowserHistory(),
@@ -27,7 +27,7 @@ export const store = configureStore({
     [proxiesApi.reducerPath]: proxiesApi.reducer,
     [docDocumentsApi.reducerPath]: docDocumentsApi.reducer,
     ui: uiReducer,
-    app: appSlice.reducer,
+    nav: navSlice.reducer,
     router: routerReducer,
   },
   middleware: (getDefaultMiddleware) =>

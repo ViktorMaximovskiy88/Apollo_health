@@ -1,6 +1,5 @@
 import { Layout, Menu } from 'antd';
-import { Link, Outlet, useLocation, useParams } from 'react-router-dom';
-import { MainLayout } from '../../components';
+import { Link, useLocation, useParams } from 'react-router-dom';
 
 export function SiteMenu() {
   const { siteId } = useParams();

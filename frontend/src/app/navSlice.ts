@@ -12,7 +12,7 @@ interface MenuItem {
   label: string;
 }
 
-export const appSlice = createSlice({
+export const navSlice = createSlice({
   name: 'nav',
   initialState: {
     breadcrumbs: [] as Breadcrumb[],
@@ -42,15 +42,15 @@ export const appSlice = createSlice({
 });
 
 export const breadcrumbState = createSelector(
-  (state: RootState) => state.app.breadcrumbs,
+  (state: RootState) => state.nav.breadcrumbs,
   (breadcrumbState) => breadcrumbState
 );
 
 export const menuState = createSelector(
-  (state: RootState) => state.app.menu,
+  (state: RootState) => state.nav.menu,
   (menuState) => menuState
 );
 
-export const { actions, reducer } = appSlice;
-export const { appendBreadcrumb, setBreadcrumbs, appendBreadcrumbs } = appSlice.actions;
-export default appSlice;
+export const { actions, reducer } = navSlice;
+export const { appendBreadcrumb, setBreadcrumbs, appendBreadcrumbs } = navSlice.actions;
+export default navSlice;
