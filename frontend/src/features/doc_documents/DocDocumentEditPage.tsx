@@ -58,7 +58,7 @@ export function DocDocumentEditPage() {
               console.log('values', values);
             }}
           >
-            <Tabs className="h-full ant-tabs-h-full ">
+            <Tabs className="h-full ant-tabs-h-full">
               <Tabs.TabPane tab="Info" key="info" className="bg-white p-4 overflow-auto">
                 <DocDocumentInfoForm doc={doc} form={form} />
               </Tabs.TabPane>
