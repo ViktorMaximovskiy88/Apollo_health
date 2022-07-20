@@ -591,18 +591,14 @@ export function DocDocumentTagForm(props: { doc: DocDocument; form: any }) {
     setSearchTerm(search);
   };
 
-  // The scrollable element for your list
+  //  virtual list
   const parentRef = useRef() as React.MutableRefObject<HTMLDivElement>;
-
-  // The virtualizer
   const rowVirtualizer = useVirtualizer({
     count: filteredList.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 55.5,
-    overscan: 5,
+    overscan: 10,
   });
-
-  console.log(rowVirtualizer.getTotalSize());
 
   return (
     <>
