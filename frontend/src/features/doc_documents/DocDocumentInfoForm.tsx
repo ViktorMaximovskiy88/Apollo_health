@@ -204,15 +204,23 @@ export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
       <Hr />
 
       <Form.Item name="base_url" label="Base URL">
-        <Input disabled />
+        {doc.base_url && (
+          <a target="_blank" href={doc.base_url}>
+            {doc.base_url}
+          </a>
+        )}
       </Form.Item>
 
       <Form.Item name="link_text" label="Link Text">
-        <TextArea disabled autoSize={true} />
+        {doc.link_text}
       </Form.Item>
 
       <Form.Item className="grow" name="url" label="Link URL">
-        <TextArea disabled autoSize={true} />
+        {doc.url && (
+          <a target="_blank" href={doc.url}>
+            {doc.url}
+          </a>
+        )}
       </Form.Item>
     </>
   );
