@@ -13,11 +13,21 @@ export function ListDatePicker(props: {
   label: string;
   name: string;
   style?: object;
+  onChange?: Function;
 }) {
   /*
    *  Togglable date picker to select a custom date, or a date from a predefined list.
    */
-  const { className, dateList, form, defaultValue, label, name, style } = props;
+  const {
+    className,
+    dateList,
+    form,
+    defaultValue,
+    label,
+    name,
+    style,
+    onChange = () => {},
+  } = props;
 
   const existsInList = (dateList || []).find((date) => date === defaultValue);
 
@@ -38,6 +48,7 @@ export function ListDatePicker(props: {
       update[name] = value;
     }
     form.setFieldsValue(update);
+    onChange();
   }
 
   const dateOptions = (dateList || [])

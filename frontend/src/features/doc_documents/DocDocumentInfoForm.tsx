@@ -3,7 +3,6 @@ import { Form, Select, Switch, Input, DatePicker } from 'antd';
 import { ListDatePicker, Hr } from '../../components';
 import { prettyDate } from '../../common';
 import { DocDocument } from './types';
-const { TextArea } = Input;
 
 export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
   const { doc, form } = props;
@@ -31,35 +30,6 @@ export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
     { value: 'BasicTableExtraction', label: 'Basic Table Extraction' },
     { value: 'UHCFormularyExtraction', label: 'UHC Formulary Extraction' },
     { value: 'MedigoldFormularyExtraction', label: 'Medigold Formulary Extraction' },
-  ];
-
-  const dateFields = [
-    {
-      name: 'effective_date',
-      label: 'Effective Date',
-      value: doc.effective_date,
-    },
-    { name: 'end_date', label: 'End Date', value: doc.end_date },
-    {
-      name: 'last_updated_date',
-      label: 'Last Updated Date',
-      value: doc.last_updated_date,
-    },
-    {
-      name: 'next_review_date',
-      label: 'Next Review Date',
-      value: doc.next_review_date,
-    },
-    {
-      name: 'next_update_date',
-      label: 'Next Update Date',
-      value: doc.next_update_date,
-    },
-    {
-      name: 'published_date',
-      label: 'Published Date',
-      value: doc.published_date,
-    },
   ];
 
   return (
@@ -162,7 +132,15 @@ export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
           label={'Published Date'}
           dateList={doc.identified_dates}
         />
-        {/* maintains spacing; would love to dictch antd form layout */}
+
+        <ListDatePicker
+          form={form}
+          className="flex-1"
+          name="first_collected_date"
+          defaultValue={doc.first_collected_date}
+          label={'First Collected Date'}
+          dateList={doc.identified_dates}
+        />
         <ListDatePicker
           form={form}
           className="flex-1"
@@ -171,7 +149,6 @@ export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
           label={'Last Collected Date'}
           dateList={doc.identified_dates}
         />
-        <div className="grow"></div>
       </div>
 
       <Hr />

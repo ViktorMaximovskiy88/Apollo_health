@@ -12,6 +12,9 @@ import { DocDocument, BaseDocTag } from './types';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import groupBy from 'lodash.groupby';
+import compact from 'lodash.compact';
+import maxBy from 'lodash.maxby';
+import { WarningFilled } from '@ant-design/icons';
 
 export function DocDocumentEditPage() {
   const navigate = useNavigate();
@@ -19,13 +22,15 @@ export function DocDocumentEditPage() {
   const { data: doc } = useGetDocDocumentQuery(docId);
   const [form] = useForm();
   const [updateDocDocument] = useUpdateDocDocumentMutation();
-  const [tags, setTags] = useState([] as any[]);
+  const [tags, setTags] = useState([] as BaseDocTag[]);
+  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     if (doc) {
       const therapyTags = doc.therapy_tags.map((tag) => ({ ...tag, type: 'therapy' }));
       const indicationTags = doc.indication_tags.map((tag) => ({ ...tag, type: 'indication' }));
       setTags([...therapyTags, ...indicationTags]);
+      finalEffectiveDate();
     }
   }, [doc]);
 
@@ -56,11 +61,42 @@ export function DocDocumentEditPage() {
     navigate(-1);
   }
 
+  function finalEffectiveDate() {
+    const values = form.getFieldsValue(true);
+    const computeFromFields = compact([
+      values.effective_date,
+      values.last_reviewed_date,
+      values.last_updated_date,
+    ]);
+
+    const currentValue = dateToMoment(doc?.final_effective_date);
+    if (computeFromFields.length > 0) {
+      const finalEffectiveDate = maxBy(computeFromFields, (date) => date.unix());
+      form.setFieldsValue({ final_effective_date: finalEffectiveDate });
+      setHasChanges(currentValue != finalEffectiveDate);
+    } else {
+      form.setFieldsValue({ final_effective_date: values.first_collected_date });
+      setHasChanges(currentValue != values.first_collected_date);
+    }
+  }
+
   return (
     <MainLayout
       sectionToolbar={
-        <>
-          <Button>Cancel</Button>
+        <div className="flex items-center space-x-4">
+          {hasChanges && (
+            <div className="text-orange-400">
+              <WarningFilled /> You have unsaved changes
+            </div>
+          )}
+
+          <Button
+            onClick={() => {
+              navigate(-1);
+            }}
+          >
+            Cancel
+          </Button>
           <Button
             type="primary"
             onClick={() => {
@@ -69,12 +105,16 @@ export function DocDocumentEditPage() {
           >
             Submit
           </Button>
-        </>
+        </div>
       }
     >
       <div className="flex space-x-4 overflow-hidden h-full">
         <div className="flex-1 h-full overflow-hidden">
           <Form
+            onFieldsChange={() => {
+              setHasChanges(true);
+              finalEffectiveDate();
+            }}
             className="h-full"
             layout="vertical"
             form={form}
@@ -92,14 +132,17 @@ export function DocDocumentEditPage() {
                   onAddTag={(tag: BaseDocTag) => {
                     tags.unshift(tag);
                     setTags([...tags]);
+                    setHasChanges(true);
                   }}
                   onDeleteTag={(tag: any) => {
                     const index = tags.findIndex((t) => t.code === tag.code);
                     tags.splice(index, 1);
                     setTags([...tags]);
+                    setHasChanges(true);
                   }}
                   onEditTag={(tag: any) => {
-                    console.log('editing tag');
+                    console.log('editing tag', tag);
+                    setHasChanges(true);
                   }}
                 />
               </Tabs.TabPane>

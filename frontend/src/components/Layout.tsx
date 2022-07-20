@@ -7,9 +7,17 @@ interface PropTypes {
   sidebar?: any;
   gap?: boolean;
   className?: string;
+  border?: boolean;
 }
 
-export function Layout({ title, toolbar, sidebar, children, gap = true }: PropTypes) {
+export function Layout({
+  title,
+  toolbar,
+  sidebar,
+  children,
+  gap = true,
+  border = false,
+}: PropTypes) {
   const showPageHeader = !!(title || toolbar);
 
   return (
@@ -18,7 +26,8 @@ export function Layout({ title, toolbar, sidebar, children, gap = true }: PropTy
         <div
           className={classNames(
             'box-border h-[60px] flex items-center p-4',
-            title ? 'justify-between' : 'justify-end'
+            title ? 'justify-between' : 'justify-end',
+            border ? 'border-2 border-zinc-100' : ''
           )}
         >
           {title}

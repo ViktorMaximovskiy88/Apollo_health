@@ -21,7 +21,13 @@ export function MainLayout({
   const useSection = !!(sectionToolbar || sidebar || breadcrumbs);
 
   return useSection ? (
-    <Layout title={<AppBreadcrumbs />} sidebar={sidebar} toolbar={sectionToolbar} gap={false}>
+    <Layout
+      title={<AppBreadcrumbs />}
+      sidebar={sidebar}
+      toolbar={sectionToolbar}
+      gap={false}
+      border={true}
+    >
       <Layout toolbar={pageToolbar} title={pageTitle}>
         {children}
       </Layout>
