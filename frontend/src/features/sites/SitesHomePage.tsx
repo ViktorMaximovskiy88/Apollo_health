@@ -24,16 +24,16 @@ function BulkActions() {
   const [runBulk] = useRunBulkMutation();
   const onMenuSelect = async (key: string) => {
     const response: any = await runBulk(key);
-    if (response.data.scrapes_launched === 0 || response.data.canceled_srapes === 0) {
+    if (response.data.scrapes_launched === 0 || response.data.canceled_scrapes === 0) {
       notification.error({
         message: 'Whoops!',
         description: 'No sites were found!',
       });
-    } else if (response.data.canceled_srapes) {
+    } else if (response.data.canceled_scrapes) {
       notification.success({
         message: 'Success!',
-        description: `${response.data.canceled_srapes} site${
-          response.data.canceled_srapes > 1 ? 's was' : ' were'
+        description: `${response.data.canceled_scrapes} site${
+          response.data.canceled_scrapes > 1 ? 's were' : ' was'
         } canceled from the collection queue!`,
       });
     } else {

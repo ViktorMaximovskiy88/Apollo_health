@@ -12,6 +12,7 @@ from backend.common.db.init import init_db
 
 RetrievedDocumentLimitTags.Settings.projection = None  # type: ignore
 
+
 class TestGetDocuments:
     def simple_site(self):
         site = Site(
