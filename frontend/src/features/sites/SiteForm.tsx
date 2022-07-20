@@ -22,7 +22,11 @@ function SiteStatusSelect() {
   );
 }
 
-export function SiteForm(props: { onFinish: (user: Partial<Site>) => void; initialValues?: Site }) {
+export function SiteForm(props: {
+  onFinish: (user: Partial<Site>) => void;
+  initialValues?: Site;
+  readOnly?: boolean;
+}) {
   const initialFollowLinks = props.initialValues?.scrape_method_configuration.follow_links || false;
   const [followLinks, setFollowLinks] = useState<boolean>(initialFollowLinks);
   const [form] = useForm();
@@ -95,16 +99,18 @@ export function SiteForm(props: { onFinish: (user: Partial<Site>) => void; initi
       </Form.Item>
       <Assignee form={form} />
       <SiteStatusSelect />
-      <Form.Item>
-        <Space>
-          <Button type="primary" htmlType="submit">
-            Submit
-          </Button>
-          <Link to="/sites">
-            <Button htmlType="submit">Cancel</Button>
-          </Link>
-        </Space>
-      </Form.Item>
+      {props.readOnly ? null : (
+        <Form.Item>
+          <Space>
+            <Button type="primary" htmlType="submit">
+              Submit
+            </Button>
+            <Link to="/sites">
+              <Button htmlType="submit">Cancel</Button>
+            </Link>
+          </Space>
+        </Form.Item>
+      )}
     </Form>
   );
 }
