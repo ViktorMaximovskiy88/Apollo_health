@@ -6,6 +6,7 @@ export interface BaseDocTag {
   code: string;
   score: number;
   relevancy: number;
+  type: string;
 }
 
 export interface TherapyTag extends BaseDocTag {}

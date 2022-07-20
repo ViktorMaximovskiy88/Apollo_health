@@ -88,6 +88,15 @@ export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
         </Form.Item>
       </div>
 
+      <div className="flex space-x-8">
+        <Form.Item className="flex-1" label="Therapy Tag Relevance" required={true}>
+          <Select options={[]} />
+        </Form.Item>
+        <Form.Item label={'Lineage'} className="flex-1">
+          <Select options={[]} />
+        </Form.Item>
+      </div>
+
       <Hr />
 
       <div className="flex flex-1 space-x-8">

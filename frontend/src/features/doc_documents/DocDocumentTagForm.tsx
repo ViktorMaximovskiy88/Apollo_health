@@ -8,56 +8,7 @@ import { BaseDocTag } from './types';
 
 export function DocDocumentTagForm(props: { doc: DocDocument; form: any }) {
   const { doc } = props;
-
-  const allTags: BaseDocTag[] = [...doc.therapy_tags, ...doc.indication_tags];
-
-  const tags = [
-    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
-    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
-    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
-    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
-    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
-    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
-    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
-    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
-    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
-    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
-    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
-    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
-    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
-    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
-    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
-    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
-    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
-    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
-    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
-    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
-    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
-    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
-    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
-    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
-    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
-    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
-    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
-    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
-    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
-    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
-    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
-    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
-    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
-    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
-    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
-    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
-    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
-    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
-    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
-    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
-    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
-    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
-    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
-    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
-    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
-  ];
+  const tags: BaseDocTag[] = [...doc.therapy_tags, ...doc.indication_tags];
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredList, setFilteredList] = useState(tags);
@@ -121,8 +72,8 @@ export function DocDocumentTagForm(props: { doc: DocDocument; form: any }) {
               { label: 'Therapy Group', value: 'therapy-group' },
             ]}
             value={tagTypeFilter}
-            onChange={(e: any) => {
-              setTagTypeFilter(e);
+            onChange={(values: any) => {
+              setTagTypeFilter(values);
             }}
           />
         </div>
