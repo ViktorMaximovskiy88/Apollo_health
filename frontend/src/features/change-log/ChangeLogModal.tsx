@@ -7,7 +7,7 @@ import {
 } from '@reduxjs/toolkit/dist/query';
 import { UseQuery } from '@reduxjs/toolkit/dist/query/react/buildHooks';
 import { Button, Modal, Table } from 'antd';
-import { prettyDateTimeFromISO  } from "../../common";
+import { prettyDateTimeFromISO } from '../../common';
 import { useState } from 'react';
 import { useGetUsersQuery } from '../users/usersApi';
 import { ChangeLog, Patch } from './types';
@@ -68,13 +68,7 @@ export function ChangeLogDeltaTable(props: { log: ChangeLog }) {
 type ChangeLogUseQuery = UseQuery<
   QueryDefinition<
     string,
-    BaseQueryFn<
-      string | FetchArgs,
-      unknown,
-      FetchBaseQueryError,
-      {},
-      FetchBaseQueryMeta
-    >,
+    BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError, {}, FetchBaseQueryMeta>,
     'ChangeLog',
     ChangeLog[]
   >

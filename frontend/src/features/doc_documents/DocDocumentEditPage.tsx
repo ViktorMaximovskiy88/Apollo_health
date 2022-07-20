@@ -11,9 +11,7 @@ import { useUpdateDocDocumentMutation } from './docDocumentApi';
 import { DocDocument, BaseDocTag } from './types';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import groupBy from 'lodash.groupby';
-import compact from 'lodash.compact';
-import maxBy from 'lodash.maxby';
+import { maxBy, compact, groupBy } from 'lodash';
 import { WarningFilled } from '@ant-design/icons';
 
 export function DocDocumentEditPage() {

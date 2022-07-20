@@ -76,10 +76,7 @@ const columns = [
     render: ({ data: doc }: { data: RetrievedDocument }) => {
       return (
         <>
-          <ChangeLogModal
-            target={doc}
-            useChangeLogQuery={useGetChangeLogQuery}
-          />
+          <ChangeLogModal target={doc} useChangeLogQuery={useGetChangeLogQuery} />
         </>
       );
     },

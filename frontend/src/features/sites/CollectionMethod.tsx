@@ -78,17 +78,25 @@ function ProxyExclusions() {
   );
 }
 
-function WaitFor(){
+function WaitFor() {
   return (
-      <Form.Item name={["scrape_method_configuration", "wait_for"]} label={
-          <>
-            <span style={{"marginRight":"5px"}}>Wait For</span>
-            <Tooltip placement="right" title="Collection will wait for specific words to appear before continuing."><QuestionCircleOutlined /></Tooltip>
-          </>
-        }>
-        <Select mode="tags" />
-      </Form.Item>
-  )
+    <Form.Item
+      name={['scrape_method_configuration', 'wait_for']}
+      label={
+        <>
+          <span style={{ marginRight: '5px' }}>Wait For</span>
+          <Tooltip
+            placement="right"
+            title="Collection will wait for specific words to appear before continuing."
+          >
+            <QuestionCircleOutlined />
+          </Tooltip>
+        </>
+      }
+    >
+      <Select mode="tags" />
+    </Form.Item>
+  );
 }
 
 function ScrapeMethodConfiguration() {

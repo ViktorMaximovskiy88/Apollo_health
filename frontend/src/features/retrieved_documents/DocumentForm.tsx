@@ -56,7 +56,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     url: doc.url,
     base_url: doc.base_url,
     lang_code: doc.lang_code,
-    link_text: doc?.context_metadata?.link_text,
+    link_text: doc.context_metadata?.link_text,
     effective_date: convertDate(doc.effective_date),
     end_date: convertDate(doc.end_date),
     last_updated_date: convertDate(doc.last_updated_date),

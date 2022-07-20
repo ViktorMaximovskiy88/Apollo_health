@@ -18,11 +18,7 @@ interface CreateColumnsType {
   openErrorModal: (errorTraceback: string) => void;
 }
 
-export const createColumns = ({
-  cancelScrape,
-  isCanceling,
-  openErrorModal,
-}: CreateColumnsType) => {
+export const createColumns = ({ cancelScrape, isCanceling, openErrorModal }: CreateColumnsType) => {
   return [
     {
       header: 'Start Time',
@@ -82,8 +78,7 @@ export const createColumns = ({
           },
         ],
       },
-      render: ({ value: status }: { value: TaskStatus }) =>
-        styledDisplay(status),
+      render: ({ value: status }: { value: TaskStatus }) => styledDisplay(status),
     },
     {
       header: 'Document Count',
@@ -92,16 +87,11 @@ export const createColumns = ({
       minWidth: 300,
       render: ({ data: task }: { data: SiteScrapeTask }) => {
         const linksFound = `(${task.links_found} Links)`;
-        const showLinksFounds =
-          task.links_found > 0 && task.documents_found !== task.links_found;
-        const docsCount = `${task.documents_found} Documents ${
-          showLinksFounds ? linksFound : ''
-        }`;
+        const showLinksFounds = task.links_found > 0 && task.documents_found !== task.links_found;
+        const docsCount = `${task.documents_found} Documents ${showLinksFounds ? linksFound : ''}`;
 
         return (
-          <ButtonLink
-            to={`/sites/${task.site_id}/documents?scrape_task_id=${task._id}`}
-          >
+          <ButtonLink to={`/sites/${task.site_id}/documents?scrape_task_id=${task._id}`}>
             {docsCount}
           </ButtonLink>
         );
@@ -118,7 +108,7 @@ export const createColumns = ({
           case CollectionMethod.Automated:
             return <span>Automated</span>;
         }
-      }
+      },
     },
     {
       header: 'Actions',
@@ -126,27 +116,25 @@ export const createColumns = ({
         switch (task.status) {
           case TaskStatus.InProgress:
           case TaskStatus.Queued:
-          if (task.collection_type === CollectionMethod.Automated) {
-            return (
-              <Button
-                danger
-                type="primary"
-                disabled={isCanceling}
-                onClick={() => cancelScrape(task._id)}
-              >
-                Cancel
-              </Button>
-            );
-          } else {
-            return null
-          }
+            if (task.collection_type === CollectionMethod.Automated) {
+              return (
+                <Button
+                  danger
+                  type="primary"
+                  disabled={isCanceling}
+                  onClick={() => cancelScrape(task._id)}
+                >
+                  Cancel
+                </Button>
+              );
+            } else {
+              return null;
+            }
           case TaskStatus.Failed:
             return (
               <Button
                 danger
-                onClick={() =>
-                  openErrorModal(task.error_message || 'traceback not found')
-                }
+                onClick={() => openErrorModal(task.error_message || 'traceback not found')}
               >
                 Error Log
               </Button>

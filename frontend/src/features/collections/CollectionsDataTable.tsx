@@ -1,9 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import ReactDataGrid from '@inovua/reactdatagrid-community';
-import {
-  TypeFilterValue,
-  TypeSortInfo,
-} from '@inovua/reactdatagrid-community/types';
+import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   collectionTableState,
@@ -21,16 +18,12 @@ interface DataTablePropTypes {
   openErrorModal: (errorTraceback: string) => void;
 }
 
-export function CollectionsDataTable({
-  siteId,
-  openErrorModal,
-}: DataTablePropTypes) {
+export function CollectionsDataTable({ siteId, openErrorModal }: DataTablePropTypes) {
   const { data: scrapeTasks } = useGetScrapeTasksForSiteQuery(siteId, {
     pollingInterval: 3000,
     skip: !siteId,
   });
-  const [cancelScrape, { isLoading: isCanceling }] =
-    useCancelSiteScrapeTaskMutation();
+  const [cancelScrape, { isLoading: isCanceling }] = useCancelSiteScrapeTaskMutation();
 
   const columns = useMemo(
     () => createColumns({ cancelScrape, isCanceling, openErrorModal }),
