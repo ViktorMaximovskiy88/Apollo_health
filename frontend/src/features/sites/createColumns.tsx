@@ -16,7 +16,7 @@ import { SiteStatus, siteStatusDisplayName, siteStatusStyledDisplay } from './si
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
-export const createColumns = (deleteSite: any) => {
+export const createColumns = (deleteSite: any, setDeletedSite: any) => {
   async function handleDeleteSite(site: Site) {
     try {
       await deleteSite(site).unwrap();
@@ -24,6 +24,7 @@ export const createColumns = (deleteSite: any) => {
         message: 'Site Deleted',
         description: `Successfully deleted ${site.name}`,
       });
+      setDeletedSite(site);
     } catch (err) {
       if (isErrorWithData(err)) {
         notification.error({
