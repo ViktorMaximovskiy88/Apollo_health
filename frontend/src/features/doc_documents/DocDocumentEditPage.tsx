@@ -37,8 +37,7 @@ export function DocDocumentEditPage() {
           <Button>Cancel</Button>
           <Button
             type="primary"
-            onClick={(e) => {
-              console.log(e);
+            onClick={() => {
               form.submit();
             }}
           >

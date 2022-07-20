@@ -1,14 +1,64 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Button, Radio, Tag, Checkbox, Input } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 import debounce from 'lodash.debounce';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 import { DocDocument } from './types';
 import { BaseDocTag } from './types';
 
 export function DocDocumentTagForm(props: { doc: DocDocument; form: any }) {
   const { doc } = props;
-  const tags: BaseDocTag[] = [...doc.therapy_tags, ...doc.indication_tags];
+
+  const allTags: BaseDocTag[] = [...doc.therapy_tags, ...doc.indication_tags];
+
+  const tags = [
+    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
+    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
+    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
+    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
+    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
+    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
+    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
+    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
+    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
+    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
+    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
+    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
+    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
+    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
+    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
+    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
+    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
+    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
+    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
+    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
+    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
+    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
+    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
+    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
+    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
+    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
+    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
+    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
+    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
+    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
+    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
+    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
+    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
+    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
+    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
+    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
+    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
+    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
+    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
+    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
+    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
+    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
+    { text: 'Tag a', code: 'a', type: 'indication', page: 1 },
+    { text: 'tag b', code: 'b', type: 'therapy', page: 2 },
+    { text: 'tag c', code: 'c', type: 'therapy-group', page: 3 },
+  ];
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredList, setFilteredList] = useState(tags);
@@ -46,6 +96,16 @@ export function DocDocumentTagForm(props: { doc: DocDocument; form: any }) {
     setSearchTerm(search);
   };
 
+  // The scrollable element for your list
+  const parentRef = useRef() as React.MutableRefObject<HTMLDivElement>;
+
+  // The virtualizer
+  const rowVirtualizer = useVirtualizer({
+    count: filteredList.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 55.5,
+  });
+
   return (
     <>
       <div className="flex flex-col bg-white">
@@ -79,27 +139,41 @@ export function DocDocumentTagForm(props: { doc: DocDocument; form: any }) {
         </div>
       </div>
 
-      <div className="flex flex-col p-2 pr-4 overflow-auto flex-1 h-[calc(100%_-_136px)]">
-        {filteredList.map((tag, i) => (
-          <div
-            className="flex flex-row py-3"
-            style={{ borderTop: '1px solid #ccc' }}
-            key={`${tag.code}-${i}`}
-          >
-            <div className="flex flex-1">{tag.text}</div>
-            <div className="">
-              <Tag className="capitalize select-none cursor-default">{tag.type}</Tag>
-            </div>
-            <div className="flex">
-              <DeleteOutlined
-                className="cursor-pointer"
-                onClick={(e) => {
-                  console.log(e);
-                }}
-              />
-            </div>
-          </div>
-        ))}
+      <div
+        className="flex flex-col p-2 pr-4 overflow-auto flex-1 h-[calc(100%_-_136px)]"
+        ref={parentRef}
+      >
+        <div
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative',
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+            const tag = filteredList[virtualItem.index];
+            return (
+              <div
+                className="flex flex-row py-4"
+                style={{ borderTop: '1px solid #ccc' }}
+                key={virtualItem.index}
+              >
+                <div className="flex flex-1">{tag.text}</div>
+                <div className="">
+                  <Tag className="capitalize select-none cursor-default">{tag.type}</Tag>
+                </div>
+                <div className="flex">
+                  <DeleteOutlined
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                      console.log(e);
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="flex flex-col bg-white">

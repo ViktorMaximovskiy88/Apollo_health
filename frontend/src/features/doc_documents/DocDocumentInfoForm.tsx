@@ -64,10 +64,6 @@ export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
 
   return (
     <>
-      <Form.Item name="name" label="Document ID">
-        {doc._id}
-      </Form.Item>
-
       <Form.Item name="name" label="Name" required={true}>
         <Input />
       </Form.Item>
@@ -167,7 +163,14 @@ export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
           dateList={doc.identified_dates}
         />
         {/* maintains spacing; would love to dictch antd form layout */}
-        <div className="grow"></div>
+        <ListDatePicker
+          form={form}
+          className="flex-1"
+          name="last_collected_date"
+          defaultValue={doc.last_collected_date}
+          label={'Last Collected Date'}
+          dateList={doc.identified_dates}
+        />
         <div className="grow"></div>
       </div>
 
