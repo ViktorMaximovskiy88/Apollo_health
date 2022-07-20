@@ -13,11 +13,21 @@ export function ListDatePicker(props: {
   label: string;
   name: string;
   style?: object;
+  onChange?: Function;
 }) {
   /*
    *  Togglable date picker to select a custom date, or a date from a predefined list.
    */
-  const { className, dateList, form, defaultValue, label, name, style } = props;
+  const {
+    className,
+    dateList,
+    form,
+    defaultValue,
+    label,
+    name,
+    style,
+    onChange = () => {},
+  } = props;
 
   const existsInList = (dateList || []).find((date) => date === defaultValue);
 
@@ -25,19 +35,21 @@ export function ListDatePicker(props: {
 
   function onSelectionMethodChange(e: RadioChangeEvent) {
     setSelectionMethod(e.target.value);
+    onChange();
   }
 
   function handleOnChange(value?: moment.Moment | string | null) {
     const update: any = {};
     if (moment.isMoment(value)) {
       // if receiving value from date picker
-      update[name] = value.utc().startOf('day').toISOString();
+      update[name] = value.startOf('day').toISOString();
     } else if (value === undefined) {
       update[name] = null;
     } else {
       update[name] = value;
     }
     form.setFieldsValue(update);
+    onChange();
   }
 
   const dateOptions = (dateList || [])

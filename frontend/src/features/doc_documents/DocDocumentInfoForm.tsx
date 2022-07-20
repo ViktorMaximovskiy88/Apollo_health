@@ -4,8 +4,12 @@ import { ListDatePicker, Hr } from '../../components';
 import { prettyDate } from '../../common';
 import { DocDocument } from './types';
 
-export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
-  const { doc, form } = props;
+export function DocDocumentInfoForm(props: {
+  doc: DocDocument;
+  form: any;
+  onFieldChange: Function;
+}) {
+  const { doc, form, onFieldChange } = props;
 
   const [automatedExtraction, setAutomatedExtraction] = useState(doc.automated_content_extraction);
 
@@ -73,6 +77,7 @@ export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
           defaultValue={doc.effective_date}
           label={'Effective Date'}
           dateList={doc.identified_dates}
+          onChange={onFieldChange}
         />
 
         <ListDatePicker
@@ -82,6 +87,7 @@ export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
           defaultValue={doc.end_date}
           label={'End Date'}
           dateList={doc.identified_dates}
+          onChange={onFieldChange}
         />
 
         <ListDatePicker
@@ -91,6 +97,7 @@ export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
           defaultValue={doc.last_updated_date}
           label={'Last Updated Date'}
           dateList={doc.identified_dates}
+          onChange={onFieldChange}
         />
       </div>
 
@@ -102,6 +109,7 @@ export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
           defaultValue={doc.last_reviewed_date}
           label={'Last Reviewed Date'}
           dateList={doc.identified_dates}
+          onChange={onFieldChange}
         />
 
         <ListDatePicker
@@ -111,6 +119,7 @@ export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
           defaultValue={doc.next_review_date}
           label={'Next Review Date'}
           dateList={doc.identified_dates}
+          onChange={onFieldChange}
         />
 
         <ListDatePicker
@@ -120,6 +129,7 @@ export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
           defaultValue={doc.next_update_date}
           label={'Next Update Date'}
           dateList={doc.identified_dates}
+          onChange={onFieldChange}
         />
       </div>
 
@@ -131,6 +141,7 @@ export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
           defaultValue={doc.published_date}
           label={'Published Date'}
           dateList={doc.identified_dates}
+          onChange={onFieldChange}
         />
 
         <ListDatePicker
@@ -140,6 +151,7 @@ export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
           defaultValue={doc.first_collected_date}
           label={'First Collected Date'}
           dateList={doc.identified_dates}
+          onChange={onFieldChange}
         />
         <ListDatePicker
           form={form}
@@ -148,6 +160,7 @@ export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
           defaultValue={doc.last_collected_date}
           label={'Last Collected Date'}
           dateList={doc.identified_dates}
+          onChange={onFieldChange}
         />
       </div>
 

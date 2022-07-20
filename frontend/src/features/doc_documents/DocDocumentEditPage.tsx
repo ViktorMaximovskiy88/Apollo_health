@@ -40,6 +40,7 @@ export function DocDocumentEditPage() {
 
   const initialValues = {
     ...doc,
+    final_effective_date: dateToMoment(doc.final_effective_date),
     effective_date: dateToMoment(doc.effective_date),
     end_date: dateToMoment(doc.end_date),
     last_updated_date: dateToMoment(doc.last_updated_date),
@@ -47,6 +48,8 @@ export function DocDocumentEditPage() {
     next_update_date: dateToMoment(doc.next_update_date),
     published_date: dateToMoment(doc.published_date),
     last_reviewed_date: dateToMoment(doc.last_reviewed_date),
+    first_collected_date: dateToMoment(doc.first_collected_date),
+    last_collected_date: dateToMoment(doc.last_collected_date),
   };
 
   async function onFinish(doc: Partial<DocDocument>) {
@@ -64,20 +67,19 @@ export function DocDocumentEditPage() {
   function finalEffectiveDate() {
     const values = form.getFieldsValue(true);
     const computeFromFields = compact([
-      values.effective_date,
-      values.last_reviewed_date,
-      values.last_updated_date,
+      dateToMoment(values.effective_date),
+      dateToMoment(values.last_reviewed_date),
+      dateToMoment(values.last_updated_date),
     ]);
 
-    const currentValue = dateToMoment(doc?.final_effective_date);
-    if (computeFromFields.length > 0) {
-      const finalEffectiveDate = maxBy(computeFromFields, (date) => date.unix());
-      form.setFieldsValue({ final_effective_date: finalEffectiveDate });
-      setHasChanges(currentValue != finalEffectiveDate);
-    } else {
-      form.setFieldsValue({ final_effective_date: values.first_collected_date });
-      setHasChanges(currentValue != values.first_collected_date);
-    }
+    const finalEffectiveDate =
+      computeFromFields.length > 0
+        ? maxBy(computeFromFields, (date) => date.unix())
+        : values.first_collected_date;
+
+    form.setFieldsValue({
+      final_effective_date: finalEffectiveDate.startOf('day'),
+    });
   }
 
   return (
@@ -124,7 +126,14 @@ export function DocDocumentEditPage() {
           >
             <Tabs className="h-full ant-tabs-h-full">
               <Tabs.TabPane tab="Info" key="info" className="bg-white p-4 overflow-auto">
-                <DocDocumentInfoForm doc={doc} form={form} />
+                <DocDocumentInfoForm
+                  doc={doc}
+                  form={form}
+                  onFieldChange={() => {
+                    setHasChanges(true);
+                    finalEffectiveDate();
+                  }}
+                />
               </Tabs.TabPane>
               <Tabs.TabPane tab="Tags" key="tags" className="bg-white p-4 h-full">
                 <DocDocumentTagForm

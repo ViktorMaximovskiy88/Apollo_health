@@ -22,7 +22,7 @@ from playwright_stealth import stealth_async
 from urllib.parse import urlparse
 
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
-from backend.common.models.doc_document import DocDocument
+from backend.common.models.doc_document import DocDocument, calc_final_effective_date
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
@@ -155,6 +155,7 @@ class ScrapeWorker:
             file_extension=retrieved_document.file_extension,
             identified_dates=retrieved_document.identified_dates,
         )
+        doc_document.final_effective_date = calc_final_effective_date(doc_document)
         await create_and_log(self.logger, await self.get_user(), doc_document)
 
     async def attempt_download(self, download: Download):

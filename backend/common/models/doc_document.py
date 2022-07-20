@@ -1,6 +1,6 @@
 from datetime import datetime
 from beanie import Indexed, PydanticObjectId
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from backend.common.core.enums import LangCode, TaskStatus
 from backend.common.models.base_document import BaseDocument
 
@@ -115,6 +115,7 @@ class UpdateDocDocument(BaseModel):
     checksum: str | None = None
     text_checksum: str | None = None
 
+    final_effective_date: datetime | None = None
     effective_date: datetime | None = None
     last_reviewed_date: datetime | None = None
     last_updated_date: datetime | None = None
@@ -144,3 +145,21 @@ class UpdateDocDocument(BaseModel):
     content_extraction_task_id: PydanticObjectId | None = None
     content_extraction_status: TaskStatus = TaskStatus.QUEUED
     content_extraction_lock: TaskLock | None = None
+
+
+def calc_final_effective_date(doc) -> datetime:
+    computeFromFields = []
+    if doc.effective_date:
+        computeFromFields.append(doc.effective_date)
+    if doc.last_reviewed_date:
+        computeFromFields.append(doc.last_reviewed_date)
+    if doc.last_updated_date:
+        computeFromFields.append(doc.last_updated_date)
+
+    final_effective_date = (
+        max(computeFromFields)
+        if len(computeFromFields) > 0
+        else doc.last_collected_date
+    )
+
+    return final_effective_date
