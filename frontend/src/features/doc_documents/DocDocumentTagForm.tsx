@@ -99,12 +99,7 @@ export function DocDocumentTagForm(props: { doc: DocDocument; form: any }) {
     <>
       <div className="flex flex-col bg-white">
         <div className="flex flex-1 items-center">
-          <Input.Search
-            enterButton={<>Search</>}
-            allowClear={true}
-            placeholder="Search"
-            onChange={debounce(onSearch, 250)}
-          />
+          <Input.Search allowClear={true} placeholder="Search" onChange={debounce(onSearch, 250)} />
         </div>
         <div className="py-2 flex flex-1 space-x-2 items-center justify-between">
           <Radio.Group

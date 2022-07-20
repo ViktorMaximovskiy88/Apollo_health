@@ -107,3 +107,16 @@ h1.ant-typography {
 a {
   color: var(--blue-primary);
 }
+
+.ant-radio-button-wrapper-checked:not([class*=' ant-radio-button-wrapper-disabled']).ant-radio-button-wrapper:first-child {
+  border-right-color: var(--blue-primary);
+}
+.ant-radio-button-wrapper .ant-radio-button-wrapper-checked {
+  border-color: var(--blue-primary);
+}
+.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
+  background-color: var(--blue-primary);
+}
+.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
+  color: white;
+}
