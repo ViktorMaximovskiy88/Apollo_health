@@ -1,17 +1,12 @@
-import { Button, Radio, Tag, Checkbox, Form, Select, Space, Switch, Input, DatePicker } from 'antd';
-import { useForm } from 'antd/lib/form/Form';
-import moment from 'moment';
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { prettyDate } from '../../common';
-import { DocDocument } from './types';
-import { BaseDocTag } from '../doc_documents/types';
-import { useUpdateDocDocumentMutation } from './docDocumentApi';
-import { FilterOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useEffect, useState } from 'react';
+import { Button, Radio, Tag, Checkbox, Input } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons';
 import debounce from 'lodash.debounce';
-const { TextArea } = Input;
 
-export function DocDocumentTagForm(props: { doc: DocDocument }) {
+import { DocDocument } from './types';
+import { BaseDocTag } from './types';
+
+export function DocDocumentTagForm(props: { doc: DocDocument; form: any }) {
   const { doc } = props;
 
   const allTags: BaseDocTag[] = [...doc.therapy_tags, ...doc.indication_tags];
@@ -92,10 +87,7 @@ export function DocDocumentTagForm(props: { doc: DocDocument }) {
     const filteredTags = tags.filter((tag: any) => {
       return (tag.text.match(regex) || tag.code.match(regex)) && applyFilter(tag);
     });
-    console.log(filteredTags);
     setFilteredList(filteredTags);
-
-    return;
   };
 
   const onSearch = (e: any) => {
@@ -138,14 +130,10 @@ export function DocDocumentTagForm(props: { doc: DocDocument }) {
               setTagTypeFilter(e);
             }}
           />
-          {/* 
-          <Button>
-            <FilterOutlined />
-          </Button> */}
         </div>
       </div>
 
-      <div className="flex flex-col p-2 pr-4 h-full overflow-auto flex-1 h-[calc(100%_-_136px)]">
+      <div className="flex flex-col p-2 pr-4 overflow-auto flex-1 h-[calc(100%_-_136px)]">
         {filteredList.map((tag, i) => (
           <div
             className="flex flex-row py-3"

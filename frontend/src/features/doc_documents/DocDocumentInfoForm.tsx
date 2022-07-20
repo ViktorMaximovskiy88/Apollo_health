@@ -1,69 +1,14 @@
-import { Button, Form, Select, Space, Switch, Input, DatePicker } from 'antd';
-import { useForm } from 'antd/lib/form/Form';
-import moment from 'moment';
-import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { Form, Select, Switch, Input, DatePicker } from 'antd';
+import { ListDatePicker, Hr } from '../../components';
 import { prettyDate } from '../../common';
 import { DocDocument } from './types';
-import { useUpdateDocDocumentMutation } from './docDocumentApi';
 const { TextArea } = Input;
 
-export function DocDocumentInfoForm(props: { doc: DocDocument }) {
-  const navigate = useNavigate();
-  const params = useParams();
-  const [updateDocDocument] = useUpdateDocDocumentMutation();
-  const [form] = useForm();
-  const doc = props.doc;
+export function DocDocumentInfoForm(props: { doc: DocDocument; form: any }) {
+  const { doc, form } = props;
 
   const [automatedExtraction, setAutomatedExtraction] = useState(doc.automated_content_extraction);
-  const [docTypeConfidence, setDocTypeConfidence] = useState(doc.doc_type_confidence);
-
-  function setFormState(modified: Partial<DocDocument>) {
-    if (modified.automated_content_extraction !== undefined) {
-      setAutomatedExtraction(modified.automated_content_extraction);
-    } else if (modified.document_type !== undefined) {
-      if (modified.document_type === doc.document_type) {
-        setDocTypeConfidence(doc.doc_type_confidence);
-      } else {
-        setDocTypeConfidence(-1);
-      }
-    }
-  }
-
-  function onCancel(e: React.SyntheticEvent) {
-    e.preventDefault();
-    navigate(-1);
-  }
-
-  async function onFinish(doc: Partial<DocDocument>) {
-    await updateDocDocument({
-      ...doc,
-      _id: params.docId,
-    });
-    navigate(-1);
-  }
-
-  function convertDate(date?: string) {
-    if (date) return moment(date);
-    return undefined;
-  }
-
-  const initialValues = {
-    name: doc.name,
-    document_type: doc.document_type,
-    automated_content_extraction: doc.automated_content_extraction,
-    automated_content_extraction_class: doc.automated_content_extraction_class,
-    url: doc.url,
-    base_url: doc.base_url,
-    lang_code: doc.lang_code,
-    // link_text: doc?.context_metadata?.link_text?,
-    effective_date: convertDate(doc.effective_date),
-    end_date: convertDate(doc.end_date),
-    last_updated_date: convertDate(doc.last_updated_date),
-    next_review_date: convertDate(doc.next_review_date),
-    next_update_date: convertDate(doc.next_update_date),
-    published_date: convertDate(doc.published_date),
-  };
 
   const documentTypes = [
     { value: 'Authorization Policy', label: 'Authorization Policy' },
@@ -81,8 +26,6 @@ export function DocDocumentInfoForm(props: { doc: DocDocument }) {
     { value: 'es', label: 'Spanish' },
     { value: 'other', label: 'Other' },
   ];
-
-  const confidencePercent = docTypeConfidence ? `${Math.floor(docTypeConfidence * 100)}%` : '-';
 
   const extractionOptions = [
     { value: 'BasicTableExtraction', label: 'Basic Table Extraction' },
@@ -120,14 +63,7 @@ export function DocDocumentInfoForm(props: { doc: DocDocument }) {
   ];
 
   return (
-    <Form
-      layout="vertical"
-      form={form}
-      requiredMark={false}
-      initialValues={initialValues}
-      onFinish={onFinish}
-      onValuesChange={setFormState}
-    >
+    <>
       <Form.Item name="name" label="Document ID">
         {doc._id}
       </Form.Item>
@@ -136,42 +72,124 @@ export function DocDocumentInfoForm(props: { doc: DocDocument }) {
         <Input />
       </Form.Item>
 
-      <div className="flex space-x-2">
-        <Form.Item className="grow" name="document_type" label="Document Type" required={true}>
+      <Hr />
+
+      <div className="flex space-x-8">
+        <Form.Item className="flex-1" name="document_type" label="Document Type" required={true}>
           <Select options={documentTypes} />
         </Form.Item>
-        <Form.Item label="Confidence">
-          <div className="flex justify-center">{confidencePercent}</div>
+        <Form.Item name={'final_effective_date'} label={'Final Effective Date'} className="flex-1">
+          <DatePicker
+            className="flex flex-1"
+            disabled
+            placeholder=""
+            format={(value) => prettyDate(value.toDate())}
+          />
         </Form.Item>
       </div>
 
-      <div className="flex flex-wrap gap-x-3">
-        {dateFields.map((field, i) => {
-          return (
-            <Form.Item key={i} name={field.name} label={field.label} style={{ flex: '1 0 32%' }}>
-              <DatePicker disabled placeholder="" format={(value) => prettyDate(value.toDate())} />
-            </Form.Item>
-          );
-        })}
+      <Hr />
+
+      <div className="flex flex-1 space-x-8">
+        <ListDatePicker
+          form={form}
+          className="flex-1"
+          name="effective_date"
+          defaultValue={doc.effective_date}
+          label={'Effective Date'}
+          dateList={doc.identified_dates}
+        />
+
+        <ListDatePicker
+          form={form}
+          className="flex-1"
+          name="end_date"
+          defaultValue={doc.end_date}
+          label={'End Date'}
+          dateList={doc.identified_dates}
+        />
+
+        <ListDatePicker
+          form={form}
+          className="flex-1"
+          name="last_updated_date"
+          defaultValue={doc.last_updated_date}
+          label={'Last Updated Date'}
+          dateList={doc.identified_dates}
+        />
       </div>
 
-      <Form.Item name="lang_code" label="Language">
-        <Select options={languageCodes} />
-      </Form.Item>
+      <div className="flex flex-1 space-x-8">
+        <ListDatePicker
+          form={form}
+          className="flex-1"
+          name="last_reviewed_date"
+          defaultValue={doc.last_reviewed_date}
+          label={'Last Reviewed Date'}
+          dateList={doc.identified_dates}
+        />
 
-      <Form.Item
-        name="automated_content_extraction"
-        label="Automated Content Extraction"
-        valuePropName="checked"
-      >
-        <Switch />
-      </Form.Item>
+        <ListDatePicker
+          form={form}
+          className="flex-1"
+          name="next_review_date"
+          defaultValue={doc.next_review_date}
+          label={'Next Review Date'}
+          dateList={doc.identified_dates}
+        />
+
+        <ListDatePicker
+          form={form}
+          className="flex-1"
+          name="next_update_date"
+          defaultValue={doc.next_update_date}
+          label={'Next Update Date'}
+          dateList={doc.identified_dates}
+        />
+      </div>
+
+      <div className="flex flex-1 space-x-8">
+        <ListDatePicker
+          form={form}
+          className="flex-1"
+          name="published_date"
+          defaultValue={doc.published_date}
+          label={'Published Date'}
+          dateList={doc.identified_dates}
+        />
+        {/* maintains spacing; would love to dictch antd form layout */}
+        <div className="grow"></div>
+        <div className="grow"></div>
+      </div>
+
+      <Hr />
+
+      <div className="flex space-x-8">
+        <Form.Item name="lang_code" label="Language" className="flex-1">
+          <Select options={languageCodes} />
+        </Form.Item>
+
+        <Form.Item
+          className="flex-1"
+          name="automated_content_extraction"
+          label="Automated Content Extraction"
+          valuePropName="checked"
+        >
+          <Switch
+            onChange={(checked: boolean) => {
+              setAutomatedExtraction(checked);
+            }}
+          />
+        </Form.Item>
+      </div>
 
       {automatedExtraction && (
         <Form.Item name="automated_content_extraction_class" label="Extraction Strategy">
           <Select options={extractionOptions} />
         </Form.Item>
       )}
+
+      <Hr />
 
       <Form.Item name="base_url" label="Base URL">
         <Input disabled />
@@ -184,17 +202,6 @@ export function DocDocumentInfoForm(props: { doc: DocDocument }) {
       <Form.Item className="grow" name="url" label="Link URL">
         <TextArea disabled autoSize={true} />
       </Form.Item>
-
-      <Form.Item>
-        <Space>
-          <Button type="primary" htmlType="submit">
-            Submit
-          </Button>
-          <Button htmlType="submit" onClick={onCancel}>
-            Cancel
-          </Button>
-        </Space>
-      </Form.Item>
-    </Form>
+    </>
   );
 }

@@ -2,14 +2,14 @@ import { Form, Radio, Select, DatePicker } from 'antd';
 import type { RadioChangeEvent } from 'antd';
 import moment from 'moment';
 import { useState } from 'react';
-import { prettyDate, prettyDateFromISO } from '../common';
+import { prettyDate, prettyDateFromISO, dateToMoment } from '../common';
 import { FormInstance } from 'antd';
 
 export function ListDatePicker(props: {
   className?: string;
   dateList?: string[];
   form: FormInstance;
-  initialDate?: string;
+  defaultValue?: string;
   label: string;
   name: string;
   style?: object;
@@ -17,9 +17,9 @@ export function ListDatePicker(props: {
   /*
    *  Togglable date picker to select a custom date, or a date from a predefined list.
    */
-  const { className, dateList, form, initialDate, label, name, style } = props;
+  const { className, dateList, form, defaultValue, label, name, style } = props;
 
-  const existsInList = (dateList || []).find((date) => date === initialDate);
+  const existsInList = (dateList || []).find((date) => date === defaultValue);
 
   const [selectionMethod, setSelectionMethod] = useState(existsInList ? 'list' : 'custom');
 
@@ -47,7 +47,7 @@ export function ListDatePicker(props: {
     }))
     .sort((a, b) => +new Date(b.value) - +new Date(a.value));
 
-  const defaultDate = initialDate ? moment(initialDate) : undefined;
+  const defaultDate = dateToMoment(defaultValue);
 
   return (
     <Form.Item className={className} label={label} style={style}>
@@ -64,7 +64,7 @@ export function ListDatePicker(props: {
         {selectionMethod === 'list' && (
           <Select
             allowClear
-            defaultValue={existsInList ? initialDate : null}
+            defaultValue={existsInList ? defaultValue : null}
             options={dateOptions}
             onChange={(value) => handleOnChange(value)}
           />

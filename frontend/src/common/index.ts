@@ -1,10 +1,4 @@
-export {
-  prettyDateFromISO,
-  prettyDateUTCFromISO,
-  prettyDateTimeFromISO,
-  prettyDate,
-  prettyDateDistance,
-} from './date';
+export * from './date';
 
 export {
   TaskStatus,

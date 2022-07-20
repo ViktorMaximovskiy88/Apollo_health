@@ -28,10 +28,8 @@ export function AppBreadcrumbs() {
           )}
           key={`${crumb.label}`}
         >
-          <Link to={crumb.url}>
-            {i > 0 && <span className={classNames('mx-2')}>/</span>}
-            {crumb.label}
-          </Link>
+          {i > 0 && <span className={classNames('mx-2')}>/</span>}
+          <Link to={crumb.url}>{crumb.label}</Link>
         </div>
       ))}
     </div>

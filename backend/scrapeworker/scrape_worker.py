@@ -153,6 +153,7 @@ class ScrapeWorker:
             therapy_tags=retrieved_document.therapy_tags,
             indication_tags=retrieved_document.indication_tags,
             file_extension=retrieved_document.file_extension,
+            identified_dates=retrieved_document.identified_dates,
         )
         await create_and_log(self.logger, await self.get_user(), doc_document)
 

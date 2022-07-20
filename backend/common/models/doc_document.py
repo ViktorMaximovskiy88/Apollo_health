@@ -56,6 +56,7 @@ class DocDocument(BaseDocument):
     next_update_date: datetime | None = None
     first_created_date: datetime | None = None
     published_date: datetime | None = None
+    identified_dates: list[datetime] | None = None
 
     # Manual/Calculated Dates
     final_effective_date: datetime | None = None
