@@ -1,5 +1,4 @@
 import { Button, Form, Input, Select, Space } from 'antd';
-
 import { useForm } from 'antd/lib/form/Form';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
@@ -7,6 +6,7 @@ import { Site, CollectionMethod } from './types';
 import { UrlFormFields } from './UrlFormField';
 import { CollectionMethodComponent } from './CollectionMethod';
 import { SiteStatus } from './siteStatus';
+import { Assignee } from './AssigneeInput';
 
 function SiteStatusSelect() {
   const siteStatuses = [
@@ -93,6 +93,7 @@ export function SiteForm(props: { onFinish: (user: Partial<Site>) => void; initi
       <Form.Item name="tags" label="Tags">
         <Select mode="tags" />
       </Form.Item>
+      <Assignee form={form} />
       <SiteStatusSelect />
       <Form.Item>
         <Space>
