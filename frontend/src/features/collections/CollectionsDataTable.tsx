@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
 import ReactDataGrid from '@inovua/reactdatagrid-community';
-import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   collectionTableState,
@@ -14,34 +13,8 @@ import {
   useGetScrapeTasksForSiteQuery,
 } from './siteScrapeTasksApi';
 import { createColumns } from './createColumns';
-
-const useFilter = () => {
-  const tableState = useSelector(collectionTableState);
-  const dispatch = useDispatch();
-  const onFilterChange = useCallback(
-    (filter: TypeFilterValue) => dispatch(setCollectionTableFilter(filter)),
-    [dispatch]
-  );
-  const filterProps = {
-    defaultFilterValue: tableState.filter,
-    onFilterValueChange: onFilterChange,
-  };
-  return filterProps;
-};
-
-const useSort = () => {
-  const tableState = useSelector(collectionTableState);
-  const dispatch = useDispatch();
-  const onSortChange = useCallback(
-    (sort: TypeSortInfo) => dispatch(setCollectionTableSort(sort)),
-    [dispatch]
-  );
-  const sortProps = {
-    defaultSortInfo: tableState.sort,
-    onSortInfoChange: onSortChange,
-  };
-  return sortProps;
-};
+import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
+import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 
 const useControlledPagination = () => {
   const tableState = useSelector(collectionTableState);
@@ -75,8 +48,8 @@ export function CollectionsDataTable({ siteId, openErrorModal }: DataTablePropTy
     skip: !siteId,
   });
 
-  const filterProps = useFilter();
-  const sortProps = useSort();
+  const filterProps = useDataTableFilter(collectionTableState, setCollectionTableFilter);
+  const sortProps = useDataTableSort(collectionTableState, setCollectionTableSort);
   const controlledPagination = useControlledPagination();
 
   const [cancelScrape, { isLoading: isCanceling }] = useCancelSiteScrapeTaskMutation();

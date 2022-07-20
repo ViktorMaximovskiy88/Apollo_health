@@ -16,7 +16,8 @@ import {
   setDocumentTableSkip,
   setDocumentTableSort,
 } from './documentsSlice';
-import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
+import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
+import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 
 const columns = [
   {
@@ -122,33 +123,6 @@ const columns = [
     },
   },
 ];
-const useFilter = () => {
-  const tableState = useSelector(documentTableState);
-  const dispatch = useDispatch();
-  const onFilterChange = useCallback(
-    (filter: TypeFilterValue) => dispatch(setDocumentTableFilter(filter)),
-    [dispatch]
-  );
-  const filterProps = {
-    defaultFilterValue: tableState.filter,
-    onFilterValueChange: onFilterChange,
-  };
-  return filterProps;
-};
-
-const useSort = () => {
-  const tableState = useSelector(documentTableState);
-  const dispatch = useDispatch();
-  const onSortChange = useCallback(
-    (sort: TypeSortInfo) => dispatch(setDocumentTableSort(sort)),
-    [dispatch]
-  );
-  const sortProps = {
-    defaultSortInfo: tableState.sort,
-    onSortInfoChange: onSortChange,
-  };
-  return sortProps;
-};
 
 const useControlledPagination = () => {
   const tableState = useSelector(documentTableState);
@@ -186,8 +160,8 @@ export function DocumentsTable() {
     { pollingInterval: 5000 }
   );
 
-  const filterProps = useFilter();
-  const sortProps = useSort();
+  const filterProps = useDataTableFilter(documentTableState, setDocumentTableFilter);
+  const sortProps = useDataTableSort(documentTableState, setDocumentTableSort);
   const controlledPagination = useControlledPagination();
 
   return (

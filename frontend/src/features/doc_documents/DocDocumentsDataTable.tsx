@@ -23,11 +23,9 @@ import { Site } from '../sites/types';
 import { useGetChangeLogQuery, useLazyGetDocDocumentsQuery } from './docDocumentApi';
 import { DocDocument } from './types';
 import { useInterval } from '../../common/hooks';
-import {
-  TypeFilterValue,
-  TypePaginationProps,
-  TypeSortInfo,
-} from '@inovua/reactdatagrid-community/types';
+import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
+import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
+import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
@@ -130,34 +128,6 @@ const columns = [
   },
 ];
 
-const useFilter = () => {
-  const tableState = useSelector(docDocumentTableState);
-  const dispatch = useDispatch();
-  const onFilterChange = useCallback(
-    (filter: TypeFilterValue) => dispatch(setDocDocumentTableFilter(filter)),
-    [dispatch]
-  );
-  const filterProps = {
-    defaultFilterValue: tableState.filter,
-    onFilterValueChange: onFilterChange,
-  };
-  return filterProps;
-};
-
-const useSort = () => {
-  const tableState = useSelector(docDocumentTableState);
-  const dispatch = useDispatch();
-  const onSortChange = useCallback(
-    (sort: TypeSortInfo) => dispatch(setDocDocumentTableSort(sort)),
-    [dispatch]
-  );
-  const sortProps = {
-    defaultSortInfo: tableState.sort,
-    onSortInfoChange: onSortChange,
-  };
-  return sortProps;
-};
-
 const useControlledPagination = ({
   isActive,
   setActive,
@@ -217,8 +187,8 @@ export function DocDocumentsDataTable() {
     [getDocDocumentsFn, watermark]
   );
 
-  const filterProps = useFilter();
-  const sortProps = useSort();
+  const filterProps = useDataTableFilter(docDocumentTableState, setDocDocumentTableFilter);
+  const sortProps = useDataTableSort(docDocumentTableState, setDocDocumentTableSort);
   const controlledPagination = useControlledPagination({ isActive, setActive });
 
   return (

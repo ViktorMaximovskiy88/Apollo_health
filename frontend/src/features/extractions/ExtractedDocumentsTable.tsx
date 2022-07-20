@@ -16,7 +16,8 @@ import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useGetDocumentsQuery } from '../retrieved_documents/documentsApi';
 import { RetrievedDocument } from '../retrieved_documents/types';
 import { useGetChangeLogQuery } from './extractionsApi';
-import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
+import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
+import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 
 const columns = [
   {
@@ -86,34 +87,6 @@ const columns = [
   },
 ];
 
-const useFilter = () => {
-  const tableState = useSelector(extractedDocumentTableState);
-  const dispatch = useDispatch();
-  const onFilterChange = useCallback(
-    (filter: TypeFilterValue) => dispatch(setExtractedDocumentTableFilter(filter)),
-    [dispatch]
-  );
-  const filterProps = {
-    defaultFilterValue: tableState.filter,
-    onFilterValueChange: onFilterChange,
-  };
-  return filterProps;
-};
-
-const useSort = () => {
-  const tableState = useSelector(extractedDocumentTableState);
-  const dispatch = useDispatch();
-  const onSortChange = useCallback(
-    (sort: TypeSortInfo) => dispatch(setExtractedDocumentTableSort(sort)),
-    [dispatch]
-  );
-  const sortProps = {
-    defaultSortInfo: tableState.sort,
-    onSortInfoChange: onSortChange,
-  };
-  return sortProps;
-};
-
 const useControlledPagination = () => {
   const tableState = useSelector(extractedDocumentTableState);
   const dispatch = useDispatch();
@@ -150,8 +123,11 @@ export function ExtractedDocumentsTable() {
     { pollingInterval: 5000 }
   );
 
-  const filterProps = useFilter();
-  const sortProps = useSort();
+  const filterProps = useDataTableFilter(
+    extractedDocumentTableState,
+    setExtractedDocumentTableFilter
+  );
+  const sortProps = useDataTableSort(extractedDocumentTableState, setExtractedDocumentTableSort);
   const controlledPagination = useControlledPagination();
 
   return (

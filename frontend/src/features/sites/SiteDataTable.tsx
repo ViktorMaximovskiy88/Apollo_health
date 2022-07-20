@@ -17,6 +17,8 @@ import {
   TypeSortInfo,
 } from '@inovua/reactdatagrid-community/types';
 import { createColumns } from './createColumns';
+import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
+import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 
 function disableLoadingMask(data: {
   visible: boolean;
@@ -26,34 +28,6 @@ function disableLoadingMask(data: {
 }) {
   return <></>;
 }
-
-const useFilter = () => {
-  const tableState = useSelector(siteTableState);
-  const dispatch = useDispatch();
-  const onFilterChange = useCallback(
-    (filter: TypeFilterValue) => dispatch(setSiteTableFilter(filter)),
-    [dispatch]
-  );
-  const filterProps = {
-    defaultFilterValue: tableState.filter,
-    onFilterValueChange: onFilterChange,
-  };
-  return filterProps;
-};
-
-const useSort = () => {
-  const tableState = useSelector(siteTableState);
-  const dispatch = useDispatch();
-  const onSortChange = useCallback(
-    (sort: TypeSortInfo) => dispatch(setSiteTableSort(sort)),
-    [dispatch]
-  );
-  const sortProps = {
-    defaultSortInfo: tableState.sort,
-    onSortInfoChange: onSortChange,
-  };
-  return sortProps;
-};
 
 const useControlledPagination = ({
   isActive,
@@ -130,8 +104,8 @@ export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
     [deleteSite, setDeletedSite]
   );
 
-  const filterProps = useFilter();
-  const sortProps = useSort();
+  const filterProps = useDataTableFilter(siteTableState, setSiteTableFilter);
+  const sortProps = useDataTableSort(siteTableState, setSiteTableSort);
   const controlledPagination = useControlledPagination({ isActive, setActive });
 
   return (
