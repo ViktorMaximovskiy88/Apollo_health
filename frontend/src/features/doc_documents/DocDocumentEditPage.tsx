@@ -10,7 +10,7 @@ import { dateToMoment } from '../../common/date';
 import { useUpdateDocDocumentMutation } from './docDocumentApi';
 import { DocDocument, BaseDocTag } from './types';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import groupBy from 'lodash.groupby';
 
 export function DocDocumentEditPage() {
@@ -19,7 +19,15 @@ export function DocDocumentEditPage() {
   const { data: doc } = useGetDocDocumentQuery(docId);
   const [form] = useForm();
   const [updateDocDocument] = useUpdateDocDocumentMutation();
-  const [tags, setTags] = useState([...(doc?.therapy_tags ?? []), ...(doc?.indication_tags ?? [])]);
+  const [tags, setTags] = useState([] as any[]);
+
+  useEffect(() => {
+    if (doc) {
+      const therapyTags = doc.therapy_tags.map((tag) => ({ ...tag, type: 'therapy' }));
+      const indicationTags = doc.indication_tags.map((tag) => ({ ...tag, type: 'indication' }));
+      setTags([...therapyTags, ...indicationTags]);
+    }
+  }, [doc]);
 
   if (!doc) {
     return <></>;
