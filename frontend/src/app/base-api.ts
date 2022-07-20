@@ -1,4 +1,4 @@
-import { createApi, fetchBaseQuery as defaultRetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery as defaultFetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 import { Auth0Client } from '@auth0/auth0-spa-js';
 import settings from '../settings';
@@ -11,7 +11,7 @@ const client = new Auth0Client({
 });
 
 const fetchBaseQuery = (options: any = {}) => {
-  return defaultRetchBaseQuery({
+  return defaultFetchBaseQuery({
     baseUrl: settings.baseApiUrl,
     prepareHeaders: async function prepareHeaders(headers) {
       const token = await client.getTokenSilently();

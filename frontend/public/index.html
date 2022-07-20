@@ -5,8 +5,31 @@
   <meta charset="utf-8" />
   <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/favicon.svg" />
   <meta name="description" content="Source Hub" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito">
   <title>Source Hub</title>
+
+  <!-- no judgements; this avoids so much tomfoolery -->
+  <script>
+    // so this _REALLY_ is blocking and we want that...
+    const url = "/api/v1/settings";
+    const req = new XMLHttpRequest();
+    req.open('GET', url, false);
+    req.send(null);
+
+    const jsonResponse = req.response;
+    const data = JSON.parse(jsonResponse);
+
+    window._settings = {
+      baseApiUrl: '/api/v1',
+      auth0: {
+        domain: data.auth0_domain,
+        clientId: data.auth0_client_id,
+        audience: data.auth0_audience,
+        cacheLocation: 'localstorage',
+        redirectUri: window.location.origin,
+      }
+    };
+  </script>
+
 </head>
 
 <body>
