@@ -43,7 +43,7 @@ export function Assignee({ form }: { form: FormInstance }) {
   };
 
   const validateStatus = (): '' | 'error' => {
-    if (name === '') {
+    if (!name) {
       return '';
     }
     const currentAssignee = users?.find((user) => user._id === currentAssigneeId);
