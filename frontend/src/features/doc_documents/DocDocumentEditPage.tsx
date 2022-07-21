@@ -22,6 +22,7 @@ export function DocDocumentEditPage() {
   const [updateDocDocument] = useUpdateDocDocumentMutation();
   const [tags, setTags] = useState([] as BaseDocTag[]);
   const [hasChanges, setHasChanges] = useState(false);
+  const [pageNumber, setPageNumber] = useState(0);
 
   useEffect(() => {
     if (doc) {
@@ -148,16 +149,23 @@ export function DocDocumentEditPage() {
                     setHasChanges(true);
                   }}
                   onEditTag={(tag: any) => {
-                    console.log('editing tag', tag);
                     setHasChanges(true);
                   }}
+                  currentPage={pageNumber}
                 />
               </Tabs.TabPane>
             </Tabs>
           </Form>
         </div>
         <div className="flex-1 h-full overflow-hidden ant-tabs-h-full">
-          <RetrievedDocumentViewer doc={doc} docId={doc.retrieved_document_id} />
+          <RetrievedDocumentViewer
+            doc={doc}
+            docId={doc.retrieved_document_id}
+            onPageChange={(page: number) => {
+              console.log('page', page, 'pageNumber', pageNumber);
+              setPageNumber(page);
+            }}
+          />
         </div>
       </div>
     </MainLayout>
