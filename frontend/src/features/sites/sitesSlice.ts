@@ -14,6 +14,7 @@ export const initialState = {
         type: 'select',
         value: null,
       },
+      { name: 'tags', operator: 'contains', type: 'string', value: '' },
     ],
     pagination: { limit: 50, skip: 0 },
   },
