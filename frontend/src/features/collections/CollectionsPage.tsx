@@ -39,7 +39,7 @@ export function CollectionsPage() {
       <AddDocumentModal
         visible={newDocumentModalVisible}
         setVisible={setNewDocumentModalVisible}
-        data={site}
+        siteId={siteId}
       />
       <Layout className="bg-white">
         <div className="flex">

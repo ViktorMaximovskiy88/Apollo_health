@@ -9,13 +9,13 @@ import { prettyDate } from '../../common';
 interface AddDocumentModalPropTypes {
   visible: boolean;
   setVisible: (visible: boolean) => void;
-  data: any;
+  siteId: any;
 }
 
 export function AddDocumentModal({
     visible,
     setVisible,
-    data,
+    siteId,
 }: AddDocumentModalPropTypes) {
     const [form] = useForm();
     const [fileList, setFileList] = useState<UploadFile>()
