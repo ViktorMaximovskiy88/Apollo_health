@@ -1,5 +1,5 @@
 import { Button, Layout, Upload, Dropdown, Space, Menu, notification } from 'antd';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRunBulkMutation } from '../collections/siteScrapeTasksApi';
 
@@ -9,8 +9,40 @@ import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
 
 import { SiteDataTable } from './SiteDataTable';
-import { QuickFilter } from './QuickFilter';
 import { client } from '../../app/base-api';
+import { QuickFilter } from './QuickFilter';
+
+function BulkUpload() {
+  const [uploading, setUploading] = useState(false);
+  const [token, setToken] = useState('');
+  useEffect(() => {
+    client.getTokenSilently().then((t) => setToken(t));
+  }, [setToken]);
+
+  const onChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
+    console.log(info);
+    if (info.file.status === 'uploading') {
+      setUploading(true);
+    }
+    if (info.file.status === 'done') {
+      setUploading(false);
+    }
+  };
+  return (
+    <Upload
+      name="file"
+      accept=".csv,.txt,.xlsx"
+      action="/api/v1/sites/upload"
+      headers={{
+        Authorization: `Bearer ${token}`,
+      }}
+      showUploadList={false}
+      onChange={onChange}
+    >
+      <Button icon={uploading ? <LoadingOutlined /> : <UploadOutlined />} />
+    </Upload>
+  );
+}
 
 function CreateSite() {
   return (
@@ -81,37 +113,6 @@ function BulkActions() {
         </Button>
       </Space>
     </Dropdown>
-  );
-}
-
-function BulkUpload() {
-  const [uploading, setUploading] = useState(false);
-  const [token, setToken] = useState('');
-  useEffect(() => {
-    client.getTokenSilently().then((t) => setToken(t));
-  }, [setToken]);
-
-  const onChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
-    if (info.file.status === 'uploading') {
-      setUploading(true);
-    }
-    if (info.file.status === 'done') {
-      setUploading(false);
-    }
-  };
-  return (
-    <Upload
-      name="file"
-      accept=".csv,.txt,.xlsx"
-      action="/api/v1/sites/upload"
-      headers={{
-        Authorization: `Bearer ${token}`,
-      }}
-      showUploadList={false}
-      onChange={onChange}
-    >
-      <Button icon={uploading ? <LoadingOutlined /> : <UploadOutlined />} />
-    </Upload>
   );
 }
 

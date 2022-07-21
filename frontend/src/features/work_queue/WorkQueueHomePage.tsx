@@ -1,14 +1,13 @@
-import { Layout, Button, Popconfirm, Table } from 'antd';
+import { Layout, Button, Table, notification } from 'antd';
 import Title from 'antd/lib/typography/Title';
-import { Link } from 'react-router-dom';
+import { useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
-import { ChangeLogModal } from '../change_log/ChangeLogModal';
 import { WorkQueue } from './types';
 import {
-  useDeleteWorkQueueMutation,
-  useGetChangeLogQuery,
   useGetWorkQueueCountsQuery,
   useGetWorkQueuesQuery,
+  useTakeNextWorkItemMutation,
 } from './workQueuesApi';
 
 export function WorkQueueHomePage() {
@@ -17,7 +16,26 @@ export function WorkQueueHomePage() {
     pollingInterval: 5000,
     refetchOnMountOrArgChange: true,
   });
-  const [deleteWorkQueue] = useDeleteWorkQueueMutation();
+  const [takeNextWorkItem] = useTakeNextWorkItemMutation();
+  const navigate = useNavigate();
+
+  const takeNext = useCallback(
+    async (queueId: string) => {
+      const response = await takeNextWorkItem(queueId);
+      if ('data' in response) {
+        if (!response.data.acquired_lock) {
+          notification.success({
+            message: 'Queue Empty',
+            description: 'Congratulations! This queue has been emptied.',
+          });
+        } else {
+          navigate(`${queueId}/${response.data.item_id}/process`);
+        }
+      }
+    },
+    [takeNextWorkItem, navigate]
+  );
+
   const columns = [
     {
       title: 'Name',
@@ -30,30 +48,18 @@ export function WorkQueueHomePage() {
       title: 'Count',
       key: 'count',
       render: (wq: WorkQueue) => {
-        const count = workQueueCounts?.find((wqc) => wqc.work_queue_id === wq._id)?.count
-        return count
-      }
+        const count = workQueueCounts?.find((wqc) => wqc.work_queue_id === wq._id)?.count;
+        return count;
+      },
     },
     {
       title: 'Actions',
-      key: 'action',
+      key: 'take',
       render: (wq: WorkQueue) => {
         return (
-          <>
-            <ButtonLink to={`${wq._id}/edit`}>Edit</ButtonLink>
-            <ChangeLogModal
-              target={wq}
-              useChangeLogQuery={useGetChangeLogQuery}
-            />
-            <Popconfirm
-              title={`Are you sure you want to delete '${wq.name}'?`}
-              okText="Yes"
-              cancelText="No"
-              onConfirm={() => deleteWorkQueue(wq)}
-            >
-              <ButtonLink danger>Delete</ButtonLink>
-            </Popconfirm>
-          </>
+          <Button onClick={() => takeNext(wq._id)} size="small">
+            Take Next
+          </Button>
         );
       },
     },
@@ -68,7 +74,7 @@ export function WorkQueueHomePage() {
           <Button>Create</Button>
         </Link>
       </div>
-      <Table dataSource={workQueues} columns={columns} pagination={{ pageSize: 50 }}/>
+      <Table dataSource={workQueues} rowKey="_id" columns={columns} pagination={false} />
     </Layout>
   );
 }

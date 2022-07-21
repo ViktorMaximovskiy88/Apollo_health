@@ -1,4 +1,5 @@
 import { BaseDocument, TaskStatus } from "../../common";
+import { ApprovalStatus } from "../../common/approvalStatus";
 
 export interface TherapyTag {
     text: string;
@@ -25,7 +26,7 @@ export interface TaskLock {
 export interface DocDocument extends BaseDocument {
     site_id: string
     retrieved_document_id: string
-    classification_status: TaskStatus
+    classification_status: ApprovalStatus
     classification_lock: TaskLock
     name: string
     checksum: string
