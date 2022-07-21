@@ -26,8 +26,9 @@ export function SiteForm(props: {
   onFinish: (user: Partial<Site>) => void;
   initialValues?: Site;
   readOnly?: boolean;
+  setReadOnly?: (readOnly: boolean) => void;
 }) {
-  const initialFollowLinks = props.initialValues?.scrape_method_configuration.follow_links || false;
+  const initialFollowLinks = props.initialValues?.scrape_method_configuration.follow_links ?? false;
   const [followLinks, setFollowLinks] = useState<boolean>(initialFollowLinks);
   const [form] = useForm();
 
@@ -42,7 +43,7 @@ export function SiteForm(props: {
 
   function setFormState(modified: Partial<Site>) {
     if (modified.scrape_method_configuration?.follow_links !== undefined) {
-      setFollowLinks(modified.scrape_method_configuration?.follow_links);
+      setFollowLinks(modified.scrape_method_configuration.follow_links);
     }
   }
 
@@ -99,7 +100,11 @@ export function SiteForm(props: {
       </Form.Item>
       <Assignee form={form} />
       <SiteStatusSelect />
-      {props.readOnly ? null : (
+      {props.readOnly ? (
+        <Button onClick={() => props.setReadOnly?.(false)} type="primary">
+          Edit Site
+        </Button>
+      ) : (
         <Form.Item>
           <Space>
             <Button type="primary" htmlType="submit">
