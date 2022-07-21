@@ -178,7 +178,7 @@ export function DocDocumentsDataTable() {
       const count = data?.total ?? 0;
       return { data: sites, count };
     },
-    [getDocDocumentsFn, watermark]
+    [getDocDocumentsFn, watermark] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const filterProps = useDataTableFilter(docDocumentTableState, setDocDocumentTableFilter);
