@@ -7,6 +7,7 @@ import { usersApi } from '../features/users/usersApi';
 import { sitesApi } from '../features/sites/sitesApi';
 import { documentsApi } from '../features/retrieved_documents/documentsApi';
 import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
+import { workQueuesApi } from '../features/work_queue/workQueuesApi';
 
 const routes = [
   '/sites',
@@ -21,6 +22,9 @@ const routes = [
   '/users',
   '/users/new',
   '/users/:userId/edit',
+  '/work-queues',
+  '/work-queues/new',
+  '/work-queues/:workQueueId',
 ];
 
 export const useBreadcrumbs = async () => {
@@ -47,6 +51,10 @@ export const useBreadcrumbs = async () => {
       const result: any = await dispatch(usersApi.endpoints.getUser.initiate(userId));
       return { url, label: result.data.full_name } as any;
     },
+    ':workQueueId': async (userId: string, url: string) => {
+      const result: any = await dispatch(workQueuesApi.endpoints.getWorkQueue.initiate(userId));
+      return { url, label: result.data.name } as any;
+    },
   };
 
   // Mapping paths to display labels based on the root menu item; many are shared...
@@ -71,6 +79,11 @@ export const useBreadcrumbs = async () => {
       edit: 'Edit',
       ...asyncResolvers,
     },
+    '/work-queues': {
+      'work-queues': 'Work Queues',
+      new: 'Create',
+      ...asyncResolvers,
+    },
   };
 
   useEffect(() => {
@@ -93,7 +106,7 @@ export const useBreadcrumbs = async () => {
         const resolver = crumbs[part];
         if (typeof resolver === 'string') {
           promises.push(Promise.resolve({ url, label: resolver }));
-        } else if (resolver != undefined) {
+        } else if (resolver !== undefined) {
           const id = match.pathname.groups[part.slice(1)] as string;
           promises.push(Promise.resolve(resolver(id, url)));
         }

@@ -368,7 +368,7 @@ class ScrapeWorker:
                         self.preprocess_download(download, base_url)
                         all_downloads.append(download)
 
-            return all_downloads
+        return all_downloads
 
     async def follow_links(self, url) -> list[str]:
         urls: list[str] = []
@@ -386,7 +386,7 @@ class ScrapeWorker:
                 for dl in await crawler.execute():
                     urls.append(dl.request.url)
 
-            return urls
+        return urls
 
     def should_process_download(self, download: Download):
         url = download.request.url

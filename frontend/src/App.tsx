@@ -14,8 +14,10 @@ import { DocumentsPage } from './features/sites/DocumentsPage';
 import { ExtractionsPage } from './features/extractions/ExtractionsPage';
 import { DocExtractionPage } from './features/extractions/DocExtractionPage';
 import { ExtractionEditPage } from './features/extractions/ExtractionEditPage';
+import { WorkQueueHomePage } from './features/work_queue/WorkQueueHomePage';
+import { WorkQueuePage } from './features/work_queue/WorkQueuePage';
 import { DocDocumentEditPage } from './features/doc_documents/DocDocumentEditPage';
-
+import { ProcessWorkItemPage, ReadonlyWorkItemPage } from './features/work_queue/WorkItemPage';
 import { AppLayout } from './app/AppLayout';
 
 function AppHomePage() {
@@ -48,6 +50,16 @@ function App() {
     <Routes>
       <Route path="/" element={<AppLayout />}>
         <Route path="/home/*" element={<AppHomePage />} />
+        <Route path="/work-queues">
+          <Route index element={<WorkQueueHomePage />} />
+          <Route path=":queueId">
+            <Route index element={<WorkQueuePage />} />
+            <Route path=":itemId">
+              <Route path="process" element={<ProcessWorkItemPage />} />
+              <Route path="read-only" element={<ReadonlyWorkItemPage />} />
+            </Route>
+          </Route>
+        </Route>
         <Route path="/sites">
           <Route index element={<SitesHomePage />} />
           <Route path="new" element={<SiteCreatePage />} />

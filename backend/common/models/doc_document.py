@@ -1,7 +1,7 @@
 from datetime import datetime
 from beanie import Indexed, PydanticObjectId
-from pydantic import BaseModel, validator
-from backend.common.core.enums import LangCode, TaskStatus
+from pydantic import BaseModel
+from backend.common.core.enums import ApprovalStatus, LangCode, TaskStatus
 from backend.common.models.base_document import BaseDocument
 
 
@@ -32,15 +32,20 @@ class TaskLock(BaseModel):
     expires: datetime
 
 
-class DocDocument(BaseDocument):
+class LockableDocument(BaseModel):
+    locks: list[TaskLock] = []
+
+
+class DocDocument(BaseDocument, LockableDocument):
     site_id: Indexed(PydanticObjectId)  # type: ignore
     retrieved_document_id: Indexed(PydanticObjectId)  # type: ignore
-    classification_status: TaskStatus = TaskStatus.QUEUED
+    classification_status: Indexed(str) = ApprovalStatus.QUEUED  # type: ignore
+    content_extraction_status: Indexed(str) = ApprovalStatus.QUEUED  # type: ignore
     classification_lock: TaskLock | None = None
 
     name: str
     checksum: str
-    file_extension: str
+    file_extension: str | None = None
     text_checksum: str | None = None
 
     # Document Type
@@ -143,11 +148,11 @@ class UpdateDocDocument(BaseModel):
     automated_content_extraction: bool = False
     automated_content_extraction_class: str | None = None
     content_extraction_task_id: PydanticObjectId | None = None
-    content_extraction_status: TaskStatus = TaskStatus.QUEUED
+    content_extraction_status: ApprovalStatus = ApprovalStatus.QUEUED
     content_extraction_lock: TaskLock | None = None
 
 
-def calc_final_effective_date(doc) -> datetime:
+def calc_final_effective_date(doc: DocDocument) -> datetime:
     computeFromFields = []
     if doc.effective_date:
         computeFromFields.append(doc.effective_date)

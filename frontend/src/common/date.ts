@@ -69,16 +69,20 @@ export function prettyDate(value: Date, dateFormat = DateTime.DATE_MED): string 
   return DateTime.fromJSDate(value, { zone: 'utc' }).toLocal().toLocaleString(dateFormat);
 }
 
+export function dateDuration(startDate: string, endDate?: string) {
+  const startDateTime = DateTime.fromISO(startDate);
+  const endDateTime = endDate ? DateTime.fromISO(endDate) : DateTime.now();
+  const duration = endDateTime.diff(startDateTime, ['hours', 'minutes', 'seconds', 'milliseconds']);
+  return duration;
+}
+
 /**
  * Pretty relative date renders a date distance from the start date until the end date.
  * If the end date is missing the start date is relative to now.
  */
 export function prettyDateDistance(startDate: string, endDate?: string): string {
-  const startDateTime = DateTime.fromISO(startDate);
-  const endDateTime = endDate ? DateTime.fromISO(endDate) : DateTime.now();
-
   // precision
-  const duration = endDateTime.diff(startDateTime, ['hours', 'minutes', 'seconds', 'milliseconds']);
+  const duration = dateDuration(startDate, endDate);
 
   // display format
   return stripZeroUnitsFromDuration(duration, ['hours', 'minutes', 'seconds']).toHuman();
