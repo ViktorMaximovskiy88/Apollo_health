@@ -16,6 +16,7 @@ import {
   useLazyGetWorkQueueItemsQuery,
   useTakeNextWorkItemMutation,
 } from './workQueuesApi';
+import { MainLayout } from '../../components';
 
 export function WorkQueuePage() {
   const queueId = useParams().queueId;
@@ -123,15 +124,13 @@ export function WorkQueuePage() {
   ];
 
   return (
-    <Layout className="bg-transparent p-4">
-      <div className="flex">
-        <Title className="inline-block" level={4}>
-          {wq.name}
-        </Title>
-        <div className="ml-auto">
+    <MainLayout
+      sectionToolbar={
+        <>
           <Button onClick={takeNext}>Take Next</Button>
-        </div>
-      </div>
+        </>
+      }
+    >
       <ReactDataGrid
         dataSource={loadData}
         columns={columns}
@@ -142,6 +141,6 @@ export function WorkQueuePage() {
         renderPaginationToolbar={renderPaginationToolbar}
         activateRowOnFocus={false}
       />
-    </Layout>
+    </MainLayout>
   );
 }

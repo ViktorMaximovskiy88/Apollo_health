@@ -9,6 +9,7 @@ import {
   useGetWorkQueuesQuery,
   useTakeNextWorkItemMutation,
 } from './workQueuesApi';
+import { MainLayout } from '../../components';
 
 export function WorkQueueHomePage() {
   const { data: workQueues } = useGetWorkQueuesQuery();
@@ -65,16 +66,16 @@ export function WorkQueueHomePage() {
     },
   ];
   return (
-    <Layout className="bg-transparent p-4">
-      <div className="flex">
-        <Title className="inline-block" level={4}>
-          Work Queues
-        </Title>
-        <Link className="ml-auto" to="new">
-          <Button>Create</Button>
-        </Link>
-      </div>
+    <MainLayout
+      sectionToolbar={
+        <>
+          <Link className="ml-auto" to="new">
+            <Button>Create</Button>
+          </Link>
+        </>
+      }
+    >
       <Table dataSource={workQueues} rowKey="_id" columns={columns} pagination={false} />
-    </Layout>
+    </MainLayout>
   );
 }

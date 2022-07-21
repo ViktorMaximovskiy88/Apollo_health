@@ -19,6 +19,7 @@ export const navSlice = createSlice({
     menu: {
       items: [
         { url: '/sites', label: 'Sites' },
+        { url: '/work-queues', label: 'Work Queues' },
         {
           url: '/documents',
           label: 'All Documents',

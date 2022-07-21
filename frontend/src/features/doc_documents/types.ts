@@ -36,6 +36,7 @@ export interface DocDocument extends BaseDocument {
   next_update_date: string;
   first_created_date: string;
   published_date: string;
+  identified_dates: string[];
 
   final_effective_date: string;
   end_date: string;
