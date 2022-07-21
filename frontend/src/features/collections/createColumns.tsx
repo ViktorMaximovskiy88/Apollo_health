@@ -16,12 +16,14 @@ interface CreateColumnsType {
   cancelScrape: (taskId: string) => void;
   isCanceling: boolean;
   openErrorModal: (errorTraceback: string) => void;
+  openNewDocumentModal: () => void;
 }
 
 export const createColumns = ({
   cancelScrape,
   isCanceling,
   openErrorModal,
+  openNewDocumentModal
 }: CreateColumnsType) => {
   return [
     {
@@ -138,7 +140,12 @@ export const createColumns = ({
               </Button>
             );
           } else {
-            return null
+            return (
+              <Button
+                onClick={openNewDocumentModal}>
+                Create document
+              </Button>
+            );
           }
           case TaskStatus.Failed:
             return (

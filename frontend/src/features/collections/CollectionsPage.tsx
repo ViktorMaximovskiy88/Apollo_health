@@ -10,12 +10,14 @@ import { useGetSiteQuery } from '../sites/sitesApi';
 import { CollectionsDataTable } from './CollectionsDataTable';
 import { CollectionMethod } from '../sites/types';
 import { ErrorLogModal } from './ErrorLogModal';
+import { AddDocumentModal } from "./addDocumentModal";
 import { SiteStatus } from '../sites/siteStatus';
 import { TaskStatus } from "../../common/scrapeTaskStatus";
 
 export function CollectionsPage() {
   const [modalVisible, setModalVisible] = useState(false);
   const [errorTraceback, setErrorTraceback] = useState('');
+  const [newDocumentModalVisible, setNewDocumentModalVisible]= useState(false);
   
   const openErrorModal = (errorTraceback: string): void => {
     setErrorTraceback(errorTraceback);
@@ -34,6 +36,11 @@ export function CollectionsPage() {
         setVisible={setModalVisible}
         errorTraceback={errorTraceback}
       />
+      <AddDocumentModal
+        visible={newDocumentModalVisible}
+        setVisible={setNewDocumentModalVisible}
+        data={site}
+      />
       <Layout className="bg-white">
         <div className="flex">
           <Title level={4}>Collections</Title>
@@ -49,7 +56,7 @@ export function CollectionsPage() {
           :
           null}
         </div>
-        <CollectionsDataTable siteId={siteId} openErrorModal={openErrorModal} />
+        <CollectionsDataTable siteId={siteId} openErrorModal={openErrorModal} openNewDocumentModal={() => setNewDocumentModalVisible(true)} />
       </Layout>
     </>
   );

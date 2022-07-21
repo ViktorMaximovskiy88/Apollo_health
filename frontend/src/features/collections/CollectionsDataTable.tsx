@@ -19,11 +19,13 @@ import { createColumns } from './createColumns';
 interface DataTablePropTypes {
   siteId: string;
   openErrorModal: (errorTraceback: string) => void;
+  openNewDocumentModal:() => void;
 }
 
 export function CollectionsDataTable({
   siteId,
   openErrorModal,
+  openNewDocumentModal,
 }: DataTablePropTypes) {
   const { data: scrapeTasks } = useGetScrapeTasksForSiteQuery(siteId, {
     pollingInterval: 3000,
@@ -33,8 +35,8 @@ export function CollectionsDataTable({
     useCancelSiteScrapeTaskMutation();
 
   const columns = useMemo(
-    () => createColumns({ cancelScrape, isCanceling, openErrorModal }),
-    [cancelScrape, isCanceling, openErrorModal]
+    () => createColumns({ cancelScrape, isCanceling, openErrorModal, openNewDocumentModal }),
+    [cancelScrape, isCanceling, openErrorModal, openNewDocumentModal]
   );
 
   const tableState = useSelector(collectionTableState);
