@@ -53,7 +53,7 @@ export function ExtractionEditPage() {
       });
       return { data: formattedExtractions, count };
     },
-    [getResultsFn]
+    [extractionId, getResultsFn]
   );
 
   if (!extractionTask) return null;
@@ -75,6 +75,7 @@ export function ExtractionEditPage() {
         return (
           <a
             target="_blank"
+            rel="noreferrer"
             href={`https://mor.nlm.nih.gov/RxNav/search?searchBy=RXCUI&searchTerm=${value}`}
           >
             {value}

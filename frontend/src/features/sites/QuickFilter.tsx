@@ -3,12 +3,7 @@ import { SyncOutlined, DownOutlined } from '@ant-design/icons';
 import { DateTime } from 'luxon';
 import isEqual from 'lodash/isEqual';
 import some from 'lodash/some';
-import {
-  initialState,
-  setSiteTableFilter,
-  setSiteTableSort,
-  siteTableState,
-} from '../../app/uiSlice';
+import { initialState, setSiteTableFilter, setSiteTableSort, siteTableState } from './sitesSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { SiteStatus } from './siteStatus';
 import { TypeSingleFilterValue } from '@inovua/reactdatagrid-community/types';
@@ -47,7 +42,7 @@ function QuickFilterComponent({ isLoading = false }: QuickFilterPropTypes) {
   const dispatch = useDispatch();
 
   const reset = () => {
-    dispatch(setSiteTableSort(initialState.sites.table.sort));
+    dispatch(setSiteTableSort(initialState.table.sort));
     let filters = siteTable.filter.slice();
     filters = removeQuickFilters(filters);
     return dispatch(setSiteTableFilter(filters));

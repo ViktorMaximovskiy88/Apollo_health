@@ -61,7 +61,7 @@ export const createColumns = ({ cancelScrape, isCanceling, openErrorModal }: Cre
             label: displayName(TaskStatus.Canceled),
           },
           {
-            id: TaskStatus.Canceled,
+            id: TaskStatus.Canceling,
             label: displayName(TaskStatus.Canceling),
           },
           {

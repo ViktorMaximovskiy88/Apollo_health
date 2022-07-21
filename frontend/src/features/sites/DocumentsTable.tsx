@@ -12,8 +12,12 @@ import { useSelector, useDispatch } from 'react-redux';
 import {
   documentTableState,
   setDocumentTableFilter,
+  setDocumentTableLimit,
+  setDocumentTableSkip,
   setDocumentTableSort,
-} from '../../app/uiSlice';
+} from './documentsSlice';
+import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
+import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 
 const columns = [
   {
@@ -120,6 +124,29 @@ const columns = [
   },
 ];
 
+const useControlledPagination = () => {
+  const tableState = useSelector(documentTableState);
+
+  const dispatch = useDispatch();
+  const onLimitChange = useCallback(
+    (limit: number) => dispatch(setDocumentTableLimit(limit)),
+    [dispatch]
+  );
+  const onSkipChange = useCallback(
+    (skip: number) => dispatch(setDocumentTableSkip(skip)),
+    [dispatch]
+  );
+
+  const controlledPaginationProps = {
+    pagination: true,
+    limit: tableState.pagination.limit,
+    onLimitChange,
+    skip: tableState.pagination.skip,
+    onSkipChange,
+  };
+  return controlledPaginationProps;
+};
+
 export function DocumentsTable() {
   const [searchParams] = useSearchParams();
   const params = useParams();
@@ -133,23 +160,18 @@ export function DocumentsTable() {
     { pollingInterval: 5000 }
   );
 
-  const tableState = useSelector(documentTableState);
-  const dispatch = useDispatch();
-  const onFilterChange = useCallback(
-    (filter: any) => dispatch(setDocumentTableFilter(filter)),
-    [dispatch]
-  );
-  const onSortChange = useCallback((sort: any) => dispatch(setDocumentTableSort(sort)), [dispatch]);
+  const filterProps = useDataTableFilter(documentTableState, setDocumentTableFilter);
+  const sortProps = useDataTableSort(documentTableState, setDocumentTableSort);
+  const controlledPagination = useControlledPagination();
 
   return (
     <ReactDataGrid
-      dataSource={documents || []}
+      dataSource={documents ?? []}
+      {...filterProps}
+      {...sortProps}
+      {...controlledPagination}
       rowHeight={50}
       columns={columns}
-      defaultFilterValue={tableState.filter}
-      onFilterValueChange={onFilterChange}
-      defaultSortInfo={tableState.sort}
-      onSortInfoChange={onSortChange}
     />
   );
 }
