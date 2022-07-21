@@ -10,12 +10,13 @@ export function DocDocumentTagForm(props: {
   onDeleteTag: Function;
   onEditTag: Function;
   onAddTag: Function;
+  currentPage: number;
 }) {
-  const { tags, onEditTag, onAddTag, onDeleteTag } = props;
+  const { tags, onEditTag, onAddTag, onDeleteTag, currentPage } = props;
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredList, setFilteredList] = useState(tags);
   const [tagTypeFilter, setTagTypeFilter] = useState(['indication', 'therapy', 'therapy-group']);
-  const [pageFilter, setPageFilter] = useState('doc');
+  const [pageFilter, setPageFilter] = useState('page');
 
   const hasActiveFilters = () => {
     return pageFilter == 'page' || tagTypeFilter.length > 0 || searchTerm;
@@ -27,18 +28,18 @@ export function DocDocumentTagForm(props: {
     } else {
       setFilteredList(tags);
     }
-  }, [searchTerm, tagTypeFilter, pageFilter, tags]);
+  }, [searchTerm, tagTypeFilter, pageFilter, tags, currentPage]);
 
   const applyFilter = (tag: any) => {
-    const currentPage = 0;
     const validPage = pageFilter == 'doc' ? true : currentPage == tag.page;
+    console.log(currentPage == tag.page, 'currentPage', currentPage, 'tag.page', tag.page);
     return tagTypeFilter.includes(tag.type) && validPage;
   };
 
   const applyFilters = () => {
     const regex = new RegExp(searchTerm, 'i');
     const filteredTags = tags.filter(
-      (tag: any) => (tag.text.match(regex) || tag.code.match(regex)) && applyFilter(tag)
+      (tag: any) => (tag.text?.match(regex) || tag.code?.match(regex)) && applyFilter(tag)
     );
     setFilteredList(filteredTags);
   };
@@ -67,13 +68,12 @@ export function DocDocumentTagForm(props: {
           <Radio.Group
             value={pageFilter}
             onChange={(e: any) => {
-              console.log(e);
               setPageFilter(e.target.value);
             }}
             optionType="button"
             options={[
-              { label: 'Doc Tags', value: 'doc' },
               { label: 'Page Tags', value: 'page' },
+              { label: 'Doc Tags', value: 'doc' },
             ]}
           />
           <Checkbox.Group
@@ -114,6 +114,7 @@ export function DocDocumentTagForm(props: {
                 key={virtualItem.index}
               >
                 <div className="flex flex-1">{tag.text}</div>
+                <div className="flex px-2">{tag.page + 1}</div>
                 <div className="">
                   <Tag className="capitalize select-none cursor-default">{tag.type}</Tag>
                 </div>
@@ -143,20 +144,7 @@ export function DocDocumentTagForm(props: {
           <div>
             Showing {filteredList.length} of {tags.length} Tags
           </div>
-          <Button
-            onClick={(e) => {
-              onAddTag({
-                text: `Tag ${+new Date()}`,
-                code: `${+new Date()}`,
-                score: -1,
-                type: 'indication',
-                relevancy: 1,
-                page: 1,
-              });
-            }}
-          >
-            Add Tag
-          </Button>
+          <Button onClick={(e) => {}}>Add Tag</Button>
         </div>
       </div>
     </>

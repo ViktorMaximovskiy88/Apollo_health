@@ -18,12 +18,12 @@ const columns = [
 interface PropTypes {
   doc: any;
   docId: any;
+  onPageChange?: Function;
 }
 
-export function RetrievedDocumentViewer({ docId, doc }: PropTypes) {
+export function RetrievedDocumentViewer({ docId, doc, onPageChange = () => {} }: PropTypes) {
   const token = useAccessToken();
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
-  const [currentPage, setCurrentPage] = useState(0);
 
   if (!(token && doc)) return null;
 
@@ -32,21 +32,21 @@ export function RetrievedDocumentViewer({ docId, doc }: PropTypes) {
     value,
   }));
 
-  function handlePageChange(e: PageChangeEvent) {
-    setCurrentPage(e.currentPage);
-  }
-
   return (
     <Worker workerUrl="/pdf.worker.min.js">
       <Tabs className="h-full">
         <Tabs.TabPane tab="Document" key="document" className="h-full overflow-auto">
-          {doc.file_extension === 'pdf' ? (
+          {doc.file_extension === 'pdf' || !doc.file_extension ? (
             <Viewer
-              initialPage={currentPage}
               withCredentials={true}
-              fileUrl={`${baseApiUrl}/documents/${docId}.${doc.file_extension}`}
+              fileUrl={`${baseApiUrl}/documents/${docId}.pdf`}
               plugins={[defaultLayoutPluginInstance]}
-              onPageChange={handlePageChange}
+              onPageChange={(e: PageChangeEvent) => {
+                // BUG: we dont get a page 0 event from the viewer ???
+                // JumpToDestination maybe invert this...
+                console.log('currentPage', e.currentPage);
+                onPageChange(e.currentPage);
+              }}
               httpHeaders={{
                 Authorization: `Bearer ${token}`,
               }}
