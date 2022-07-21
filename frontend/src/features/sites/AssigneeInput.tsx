@@ -9,42 +9,57 @@ interface OptionType {
 }
 
 export function Assignee({ form }: { form: FormInstance }) {
-  const { data } = useGetUsersQuery();
-  const users: OptionType[] =
-    data?.map((user) => ({ label: user.full_name, value: user._id })) ?? [];
-  users.unshift({ label: 'Unassigned', value: null });
-  const initialAssigneeId = form.getFieldValue('assignee');
-  const [initialAssignee] = users.filter((user) => initialAssigneeId === user.value);
-  const [value, setValue] = useState<string | null>(
-    initialAssignee?.label === 'Unassigned' ? null : initialAssignee?.label ?? null
-  );
-  const [options, setOptions] = useState<OptionType[]>(users);
+  const { data: users } = useGetUsersQuery();
 
-  const onSearch = (searchText: string) => {
-    setOptions(
+  const options: OptionType[] =
+    users?.map((user) => ({ label: user.full_name, value: user._id })) ?? [];
+  options.unshift({ label: 'Unassigned', value: null });
+
+  const currentAssigneeId = form.getFieldValue('assignee');
+
+  const initialAssigneeName = options.find((option) => currentAssigneeId === option.value);
+  const [name, setName] = useState<string | null>(
+    initialAssigneeName?.label === 'Unassigned' ? null : initialAssigneeName?.label ?? null
+  );
+
+  const [filteredOptions, setFilteredOptions] = useState<OptionType[]>(options);
+
+  const onSearch = (searchText: string): void => {
+    setFilteredOptions(
       searchText
-        ? users.filter((user) => user.label.toLowerCase().includes(searchText.toLocaleLowerCase()))
-        : users
+        ? options.filter((option) =>
+            option.label.toLowerCase().includes(searchText.toLocaleLowerCase())
+          )
+        : options
     );
   };
-
-  const onSelect = (assigneeId: string, option: OptionType) => {
+  const onSelect = (assigneeId: string, option: OptionType): void => {
     form.setFieldsValue({ assignee: assigneeId });
     const newAssigneeName = option.label === 'Unassigned' ? null : option.label;
-    setValue(newAssigneeName);
+    setName(newAssigneeName);
+  };
+  const onChange = (name: string) => {
+    setName(name);
   };
 
-  const onChange = (data: any) => {
-    setValue(data);
+  const validateStatus = (): '' | 'error' => {
+    if (name === '') {
+      return '';
+    }
+    const currentAssignee = users?.find((user) => user._id === currentAssigneeId);
+    if (name === currentAssignee?.full_name) {
+      return '';
+    }
+    return 'error';
   };
 
   return (
     <>
-      <Form.Item label="Assignee">
+      <Form.Item label="Assignee" validateStatus={validateStatus()}>
         <AutoComplete // element only displays fullname of selected assignee
           placeholder="Unassigned"
-          value={value}
-          options={options}
+          value={name}
+          options={filteredOptions}
           onSelect={onSelect}
           onSearch={onSearch}
           onChange={onChange}
