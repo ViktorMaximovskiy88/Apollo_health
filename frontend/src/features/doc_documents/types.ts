@@ -26,6 +26,7 @@ export interface DocDocument extends BaseDocument {
   classification_lock: TaskLock;
   name: string;
   checksum: string;
+  file_extension: string;
   document_type: string;
   doc_type_confidence: number;
 

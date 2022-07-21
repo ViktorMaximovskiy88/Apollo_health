@@ -45,7 +45,7 @@ class DocDocument(BaseDocument, LockableDocument):
 
     name: str
     checksum: str
-    file_extension: str
+    file_extension: str | None = None
     text_checksum: str | None = None
 
     # Document Type
