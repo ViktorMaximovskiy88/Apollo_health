@@ -1,5 +1,4 @@
-import { Layout, Button, Table, notification } from 'antd';
-import Title from 'antd/lib/typography/Title';
+import { Button, Table, notification } from 'antd';
 import { useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';

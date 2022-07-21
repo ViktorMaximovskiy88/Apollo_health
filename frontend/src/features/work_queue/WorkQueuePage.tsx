@@ -1,7 +1,6 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
-import { Layout, Button, notification } from 'antd';
-import Title from 'antd/lib/typography/Title';
+import { Button, notification } from 'antd';
 import { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BaseDocument } from '../../common';

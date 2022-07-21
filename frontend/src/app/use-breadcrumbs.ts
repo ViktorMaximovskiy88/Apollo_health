@@ -106,7 +106,7 @@ export const useBreadcrumbs = async () => {
         const resolver = crumbs[part];
         if (typeof resolver === 'string') {
           promises.push(Promise.resolve({ url, label: resolver }));
-        } else if (resolver != undefined) {
+        } else if (resolver !== undefined) {
           const id = match.pathname.groups[part.slice(1)] as string;
           promises.push(Promise.resolve(resolver(id, url)));
         }
