@@ -8,16 +8,18 @@ export const docDocumentsApi = createApi({
   baseQuery: fetchBaseQuery(),
   tagTypes: ['DocDocument', 'ChangeLog'],
   endpoints: (builder) => ({
-    getDocDocuments: builder.query<{ data: DocDocument[], total: number },
-    { limit: number, skip: number, sortInfo: TypeSortInfo, filterValue: TypeFilterValue}>({
-      query: ({limit, skip, sortInfo, filterValue }) => {
+    getDocDocuments: builder.query<
+      { data: DocDocument[]; total: number },
+      { limit: number; skip: number; sortInfo: TypeSortInfo; filterValue: TypeFilterValue }
+    >({
+      query: ({ limit, skip, sortInfo, filterValue }) => {
         const args = [
           `limit=${encodeURIComponent(limit)}`,
           `skip=${encodeURIComponent(skip)}`,
           `sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`,
           `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
-        ].join('&')
-        return `/doc-documents/?${args}`
+        ].join('&');
+        return `/doc-documents/?${args}`;
       },
       providesTags: (results) => {
         const tags = [{ type: 'DocDocument' as const, id: 'LIST' }];
@@ -27,16 +29,11 @@ export const docDocumentsApi = createApi({
     }),
     getDocDocument: builder.query<DocDocument, string | undefined>({
       query: (id) => `/doc-documents/${id}`,
-      providesTags: (_r, _e, id) => [
-        { type: 'DocDocument' as const, id },
-      ],
+      providesTags: (_r, _e, id) => [{ type: 'DocDocument' as const, id }],
     }),
-    updateDocDocument: builder.mutation<
-      DocDocument,
-      Partial<DocDocument>
-    >({
+    updateDocDocument: builder.mutation<DocDocument, Partial<DocDocument>>({
       query: (body) => ({
-        url: `/doc-ldocuments/${body._id}`,
+        url: `/doc-documents/${body._id}`,
         method: 'POST',
         body,
       }),

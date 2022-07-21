@@ -31,8 +31,10 @@ class TaskLock(BaseModel):
     user_id: PydanticObjectId
     expires: datetime
 
+
 class LockableDocument(BaseModel):
     locks: list[TaskLock] = []
+
 
 class DocDocument(BaseDocument, LockableDocument):
     site_id: Indexed(PydanticObjectId)  # type: ignore
@@ -43,6 +45,7 @@ class DocDocument(BaseDocument, LockableDocument):
 
     name: str
     checksum: str
+    file_extension: str
     text_checksum: str | None = None
 
     # Document Type
@@ -58,6 +61,7 @@ class DocDocument(BaseDocument, LockableDocument):
     next_update_date: datetime | None = None
     first_created_date: datetime | None = None
     published_date: datetime | None = None
+    identified_dates: list[datetime] | None = None
 
     # Manual/Calculated Dates
     final_effective_date: datetime | None = None
@@ -85,11 +89,11 @@ class DocDocument(BaseDocument, LockableDocument):
     content_extraction_task_id: PydanticObjectId | None = None
 
     tags: list[str] = []
-    
+
 
 class DocDocumentLimitTags(DocDocument):
     class Settings:
-        projection = { "therapy_tags": { "$slice": 10 }, "indication_tags": { "$slice": 10 } }
+        projection = {"therapy_tags": {"$slice": 10}, "indication_tags": {"$slice": 10}}
 
 
 class UpdateTherapyTag(BaseModel):
@@ -116,6 +120,7 @@ class UpdateDocDocument(BaseModel):
     checksum: str | None = None
     text_checksum: str | None = None
 
+    final_effective_date: datetime | None = None
     effective_date: datetime | None = None
     last_reviewed_date: datetime | None = None
     last_updated_date: datetime | None = None
@@ -145,3 +150,21 @@ class UpdateDocDocument(BaseModel):
     content_extraction_task_id: PydanticObjectId | None = None
     content_extraction_status: ApprovalStatus = ApprovalStatus.QUEUED
     content_extraction_lock: TaskLock | None = None
+
+
+def calc_final_effective_date(doc: DocDocument) -> datetime:
+    computeFromFields = []
+    if doc.effective_date:
+        computeFromFields.append(doc.effective_date)
+    if doc.last_reviewed_date:
+        computeFromFields.append(doc.last_reviewed_date)
+    if doc.last_updated_date:
+        computeFromFields.append(doc.last_updated_date)
+
+    final_effective_date = (
+        max(computeFromFields)
+        if len(computeFromFields) > 0
+        else doc.last_collected_date
+    )
+
+    return final_effective_date

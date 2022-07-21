@@ -26,6 +26,7 @@ default_headers: dict[str, str] = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36",
 }
 
+
 @dataclass
 class AioProxy:
     proxy: str
@@ -37,9 +38,11 @@ class AioDownloader:
     session: ClientSession
 
     def __init__(self):
-        self.session = ClientSession(connector=TCPConnector(ssl=self.permissive_ssl_context()))
+        self.session = ClientSession(
+            connector=TCPConnector(ssl=self.permissive_ssl_context())
+        )
         self.rate_limiter = RateLimiter()
-    
+
     def permissive_ssl_context(self):
         context = SSLContext()
         context.options |= ssl.OP_NO_SSLv2
@@ -48,7 +51,7 @@ class AioDownloader:
         context.verify_mode = ssl.CERT_NONE
 
         ciphers = context.get_ciphers()
-        all_ciphers = ':'.join(c['name'] for c in ciphers) + ':HIGH:!DH:!aNULL'
+        all_ciphers = ":".join(c["name"] for c in ciphers) + ":HIGH:!DH:!aNULL"
         context.set_ciphers(all_ciphers)
 
         return context
@@ -90,7 +93,7 @@ class AioDownloader:
                 )
 
                 yield response
-        
+
     # just return the aio useable proxy list
     def convert_proxy(self, proxy: Proxy) -> list[AioProxy]:
         proxy_auth = None

@@ -27,12 +27,13 @@ from backend.app.routes import (
 
 app = FastAPI()
 
+
 @app.on_event("startup")
 async def app_init():
     await init_db()
     if settings.is_local:
         await run_migrations()
-    await create_system_users()        
+    await create_system_users()
     if not settings.disable_proxies and await Proxy.count() == 0:
         await create_proxies()
     await create_default_work_queues()
@@ -45,17 +46,18 @@ frontend_build_dir = Path(__file__).parent.joinpath("../../frontend/build").reso
 # liveness
 @app.get("/ping", include_in_schema=False)
 async def ping():
-    return {"ok" : True}
+    return {"ok": True}
+
 
 @app.get("/api/v1/settings", include_in_schema=False)
 async def react_settings():
     return settings.frontend
 
+
 @app.get("/api/v1/auth/authorize", response_class=HTMLResponse, tags=["Auth"])
 async def login_page(request: Request):
-    return templates.TemplateResponse(
-        "login.html", {"request": request}
-    )
+    return templates.TemplateResponse("login.html", {"request": request})
+
 
 app.add_middleware(GZipMiddleware)
 
@@ -71,6 +73,7 @@ app.include_router(proxies.router, prefix=prefix)
 app.include_router(doc_documents.router, prefix=prefix)
 app.include_router(work_queues.router, prefix=prefix)
 
+
 @app.middleware("http")
 async def frontend_routing(request: Request, call_next: Any):
     response = await call_next(request)
@@ -83,5 +86,6 @@ async def frontend_routing(request: Request, call_next: Any):
             return HTMLResponse(file.read())
 
     return response
+
 
 app.mount("/", StaticFiles(directory=frontend_build_dir, html=True), name="static")

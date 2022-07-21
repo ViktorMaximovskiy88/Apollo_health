@@ -104,7 +104,7 @@ async def start_scrape_task(
 
 
 @router.post("/bulk-run")
-async def runBulkByType(
+async def run_bulk_by_type(
     type: str,
     logger: Logger = Depends(get_logger),
     current_user: User = Security(get_current_user),
@@ -234,10 +234,14 @@ async def update_scrape_task(
     "/{id}/cancel",
     response_model=SiteScrapeTask,
     dependencies=[Security(get_current_user)],
+    responses={
+        406: {"description": "Scrape task is not queued or in progress."},
+    },
 )
 async def cancel_scrape_task(
     target: SiteScrapeTask = Depends(get_target),
 ):
+    site = await Site.get(target.site_id)
     canceled_queued_task = (
         await SiteScrapeTask.get_motor_collection().find_one_and_update(
             {"_id": target.id, "status": TaskStatus.QUEUED},
@@ -248,6 +252,8 @@ async def cancel_scrape_task(
     if canceled_queued_task:
         scrape_task = SiteScrapeTask.parse_obj(canceled_queued_task)
         typer.secho(f"Canceled Task {scrape_task.id} ", fg=typer.colors.BLUE)
+        if site:
+            await site.set({Site.last_run_status: TaskStatus.CANCELED})
         return scrape_task
 
     acquired = await SiteScrapeTask.get_motor_collection().find_one_and_update(
@@ -262,4 +268,11 @@ async def cancel_scrape_task(
     if acquired:
         scrape_task = SiteScrapeTask.parse_obj(acquired)
         typer.secho(f"Set Task {scrape_task.id} 'Canceling'", fg=typer.colors.BLUE)
+        if site:
+            await site.set({Site.last_run_status: TaskStatus.CANCELING})
         return scrape_task
+
+    raise HTTPException(
+        status_code=status.HTTP_406_NOT_ACCEPTABLE,
+        detail="Scrape task is not queued or in progress.",
+    )

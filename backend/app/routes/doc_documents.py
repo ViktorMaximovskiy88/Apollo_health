@@ -1,10 +1,20 @@
 from datetime import datetime
 import json
 from beanie import PydanticObjectId
-from beanie.odm.operators.update.general import Set
 from fastapi import APIRouter, Depends, HTTPException, Request, status, Security
-from backend.app.routes.table_query import TableFilterInfo, TableQueryResponse, TableSortInfo, get_query_json_list, query_table
-from backend.common.models.doc_document import DocDocument, DocDocumentLimitTags, UpdateDocDocument
+from backend.app.routes.table_query import (
+    TableFilterInfo,
+    TableQueryResponse,
+    TableSortInfo,
+    get_query_json_list,
+    query_table,
+)
+from backend.common.models.doc_document import (
+    DocDocument,
+    DocDocumentLimitTags,
+    UpdateDocDocument,
+    calc_final_effective_date,
+)
 from backend.common.models.site import Site
 from backend.common.models.user import User
 from backend.app.utils.logger import (
@@ -20,6 +30,7 @@ router = APIRouter(
     tags=["DocDocuments"],
 )
 
+
 async def get_target(id: PydanticObjectId) -> DocDocument:
     task = await DocDocument.get(id)
     if not task:
@@ -29,6 +40,7 @@ async def get_target(id: PydanticObjectId) -> DocDocument:
         )
     return task
 
+
 @router.get(
     "/",
     response_model=TableQueryResponse,
@@ -37,11 +49,14 @@ async def get_target(id: PydanticObjectId) -> DocDocument:
 async def read_doc_documents(
     limit: int | None = None,
     skip: int | None = None,
-    sorts: list[TableSortInfo] = Depends(get_query_json_list('sorts', TableSortInfo)),
-    filters: list[TableFilterInfo] = Depends(get_query_json_list('filters', TableFilterInfo))
+    sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
+    filters: list[TableFilterInfo] = Depends(
+        get_query_json_list("filters", TableFilterInfo)
+    ),
 ):
     query = DocDocument.find({}).project(DocDocumentLimitTags)
     return await query_table(query, limit, skip, sorts, filters)
+
 
 @router.get(
     "/{id}",
@@ -53,6 +68,7 @@ async def read_extraction_task(
 ):
     return target
 
+
 @router.post("/{id}", response_model=DocDocument)
 async def update_extraction_task(
     updates: UpdateDocDocument,
@@ -60,5 +76,6 @@ async def update_extraction_task(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
+    updates.final_effective_date = calc_final_effective_date(updates)
     updated = await update_and_log_diff(logger, current_user, target, updates)
     return updated

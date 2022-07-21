@@ -11,6 +11,8 @@ import { workQueuesApi } from '../features/work_queue/workQueuesApi';
 import { proxiesApi } from '../features/proxies/proxiesApi';
 import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { rtkAuth } from '../common/auth-middleware';
+
+import navSlice from './navSlice';
 import sitesReducer from '../features/sites/sitesSlice';
 import collectionsReducer from '../features/collections/collectionsSlice';
 import docDocumentsReducer from '../features/doc_documents/docDocumentsSlice';
@@ -31,6 +33,7 @@ export const store = configureStore({
     [workQueuesApi.reducerPath]: workQueuesApi.reducer,
     [proxiesApi.reducerPath]: proxiesApi.reducer,
     [docDocumentsApi.reducerPath]: docDocumentsApi.reducer,
+    nav: navSlice.reducer,
     sites: sitesReducer,
     collections: collectionsReducer,
     docDocuments: docDocumentsReducer,

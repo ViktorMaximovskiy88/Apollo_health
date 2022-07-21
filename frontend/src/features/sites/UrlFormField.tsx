@@ -1,9 +1,5 @@
 import { Button, Form, Input, Select } from 'antd';
-import {
-  LinkOutlined,
-  MinusCircleOutlined,
-  PlusOutlined,
-} from '@ant-design/icons';
+import { LinkOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { Site } from './types';
 import { FormInstance } from 'antd/lib/form/Form';
 import { FormListFieldData } from 'antd/lib/form/FormList';
@@ -27,12 +23,7 @@ interface UrlStatusPropTypes {
 }
 function UrlStatus({ name, field }: UrlStatusPropTypes) {
   return (
-    <Form.Item
-      {...field}
-      name={[name, 'status']}
-      label="URL Status"
-      className="mb-0"
-    >
+    <Form.Item {...field} name={[name, 'status']} label="URL Status" className="mb-0">
       <Select
         options={[
           { value: 'ACTIVE', label: 'Active' },
@@ -89,10 +80,7 @@ function RemoveButton({ fields, remove, name }: RemoveButtonPropTypes) {
   }
   return (
     <Form.Item label=" " className="mb-0">
-      <MinusCircleOutlined
-        className="text-gray-500"
-        onClick={() => remove(name)}
-      />
+      <MinusCircleOutlined className="text-gray-500" onClick={() => remove(name)} />
     </Form.Item>
   );
 }
