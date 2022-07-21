@@ -19,12 +19,7 @@ interface CreateColumnsType {
   openNewDocumentModal: () => void;
 }
 
-export const createColumns = ({
-  cancelScrape,
-  isCanceling,
-  openErrorModal,
-  openNewDocumentModal
-}: CreateColumnsType) => {
+export const createColumns = ({ cancelScrape, isCanceling, openErrorModal, openNewDocumentModal }: CreateColumnsType) => {
   return [
     {
       header: 'Start Time',
@@ -67,7 +62,7 @@ export const createColumns = ({
             label: displayName(TaskStatus.Canceled),
           },
           {
-            id: TaskStatus.Canceled,
+            id: TaskStatus.Canceling,
             label: displayName(TaskStatus.Canceling),
           },
           {
@@ -84,8 +79,7 @@ export const createColumns = ({
           },
         ],
       },
-      render: ({ value: status }: { value: TaskStatus }) =>
-        styledDisplay(status),
+      render: ({ value: status }: { value: TaskStatus }) => styledDisplay(status),
     },
     {
       header: 'Document Count',
@@ -94,16 +88,11 @@ export const createColumns = ({
       minWidth: 300,
       render: ({ data: task }: { data: SiteScrapeTask }) => {
         const linksFound = `(${task.links_found} Links)`;
-        const showLinksFounds =
-          task.links_found > 0 && task.documents_found !== task.links_found;
-        const docsCount = `${task.documents_found} Documents ${
-          showLinksFounds ? linksFound : ''
-        }`;
+        const showLinksFounds = task.links_found > 0 && task.documents_found !== task.links_found;
+        const docsCount = `${task.documents_found} Documents ${showLinksFounds ? linksFound : ''}`;
 
         return (
-          <ButtonLink
-            to={`/sites/${task.site_id}/documents?scrape_task_id=${task._id}`}
-          >
+          <ButtonLink to={`/sites/${task.site_id}/documents?scrape_task_id=${task._id}`}>
             {docsCount}
           </ButtonLink>
         );
@@ -120,7 +109,7 @@ export const createColumns = ({
           case CollectionMethod.Automated:
             return <span>Automated</span>;
         }
-      }
+      },
     },
     {
       header: 'Actions',
@@ -151,9 +140,7 @@ export const createColumns = ({
             return (
               <Button
                 danger
-                onClick={() =>
-                  openErrorModal(task.error_message || 'traceback not found')
-                }
+                onClick={() => openErrorModal(task.error_message || 'traceback not found')}
               >
                 Error Log
               </Button>

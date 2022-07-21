@@ -116,7 +116,9 @@ yarn build
 
 ```bash
 source .venv/bin/activate
-cd backend
+
+export GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=1
+export GRPC_PYTHON_BUILD_SYSTEM_ZLIB=1
 
 # poetry install python deps
 PIP_CONSTRAINT=build-constraints.txt CFLAGS="-mavx -DWARN(a)=(a) -I /opt/homebrew/opt/protobuf/include" \

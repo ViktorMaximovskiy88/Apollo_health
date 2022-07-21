@@ -1,10 +1,10 @@
-import React, { useCallback } from 'react';
 import PaginationToolbar from '@inovua/reactdatagrid-community/packages/PaginationToolbar';
 import { Switch } from 'antd';
+import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
 
-interface PropTypes {
-  paginationProps: any;
-  autoRefreshClick: any;
+interface GridPaginationToolbarType {
+  paginationProps: TypePaginationProps;
+  autoRefreshClick: (isAutoRefresh: boolean) => void;
   autoRefreshValue: boolean;
 }
 /**
@@ -16,16 +16,14 @@ export function GridPaginationToolbar({
   paginationProps,
   autoRefreshClick,
   autoRefreshValue,
-}: PropTypes) {
+}: GridPaginationToolbarType) {
   return (
     <div className="flex flex-col">
       <PaginationToolbar
         {...paginationProps}
         bordered={false}
         style={{ width: 'fit-content' }}
-        onClick={() => {
-          autoRefreshClick(false);
-        }}
+        onClick={() => autoRefreshClick(false)}
       />
       <div
         className="flex justify-end items-end box-border leading-[2.5rem] h-[42px]"

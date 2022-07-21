@@ -10,18 +10,22 @@ class RateLimiter:
         self.wait_between_requests = wait_between_requests
         pass
 
-    async def wait(self):
+    def remaining_wait(self):
         time_since_last_request = datetime.now() - self.last_request_time
         remaining_wait = (
             self.wait_between_requests - time_since_last_request.total_seconds()
         )
-        if remaining_wait > 0:
-            await asyncio.sleep(remaining_wait)
-            await self.wait()
+        return remaining_wait
+
+    async def wait(self):
+        wait = self.remaining_wait()
+        while wait > 0:
+            await asyncio.sleep(wait)
+            wait = self.remaining_wait()
 
     def increase_wait(self):
         print("increased_wait", self.wait_between_requests)
-        if self.wait_between_requests < 64:
+        if self.wait_between_requests < 32:
             self.wait_between_requests *= 1.5
 
     def decrease_wait(self):

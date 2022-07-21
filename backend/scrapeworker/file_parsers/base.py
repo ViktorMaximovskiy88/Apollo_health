@@ -64,6 +64,7 @@ class FileParser(ABC):
             "next_update_date": date_parser.next_update_date["date"],
             "published_date": date_parser.published_date["date"],
             "title": title,
+            "text": self.text,
             "document_type": document_type,
             "confidence": confidence,
             "lang_code": lang_code,
