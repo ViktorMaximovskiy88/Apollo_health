@@ -3,10 +3,7 @@ import { useForm } from 'antd/lib/form/Form';
 import { Link } from 'react-router-dom';
 import { User } from './types';
 
-export function UserForm(props: {
-  onFinish: (user: Partial<User>) => void;
-  initialValues?: User;
-}) {
+export function UserForm(props: { onFinish: (user: Partial<User>) => void; initialValues?: User }) {
   const [form] = useForm();
 
   const roles = [
@@ -28,11 +25,7 @@ export function UserForm(props: {
       <Form.Item name="full_name" label="Name" rules={[{ required: true }]}>
         <Input />
       </Form.Item>
-      <Form.Item
-        name="email"
-        label="Email"
-        rules={[{ required: true, type: 'email' }]}
-      >
+      <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
         <Input />
       </Form.Item>
       <Form.Item name="password" label="Password">

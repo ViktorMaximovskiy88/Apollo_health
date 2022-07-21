@@ -1,17 +1,20 @@
 import { Button } from 'antd';
-import Title from 'antd/lib/typography/Title';
+import { MainLayout } from '../../components';
 import { DocumentsTable } from './DocumentsTable';
+import { SiteMenu } from './SiteMenu';
 
 export function DocumentsPage() {
   return (
-    <>
-      <div className="flex">
-        <Title className="inline-block" level={4}>
-          Documents
-        </Title>
-        <Button className="ml-auto">Create Document</Button>
-      </div>
+    <MainLayout
+      sidebar={<SiteMenu />}
+      pageTitle={'Documents'}
+      pageToolbar={
+        <>
+          <Button className="ml-auto">Create Document</Button>
+        </>
+      }
+    >
       <DocumentsTable />
-    </>
+    </MainLayout>
   );
 }

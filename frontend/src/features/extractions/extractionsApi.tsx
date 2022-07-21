@@ -8,30 +8,31 @@ export const extractionTasksApi = createApi({
   baseQuery: fetchBaseQuery(),
   tagTypes: ['ExtractionTask', 'ExtractionTaskResult', 'ChangeLog'],
   endpoints: (builder) => ({
-    getExtractionTasksForDoc: builder.query<
-      ExtractionTask[],
-      string | undefined
-    >({
+    getExtractionTasksForDoc: builder.query<ExtractionTask[], string | undefined>({
       query: (docId) => `/extraction-tasks/?retrieved_document_id=${docId}`,
       providesTags: (_r, _e, id) => [{ type: 'ExtractionTask' as const, id }],
     }),
     getExtractionTaskResults: builder.query<
-      { data: ContentExtractionResult[], total: number },
-      { id: string, limit: number, skip: number, sortInfo: TypeSortInfo, filterValue: TypeFilterValue}
+      { data: ContentExtractionResult[]; total: number },
+      {
+        id: string;
+        limit: number;
+        skip: number;
+        sortInfo: TypeSortInfo;
+        filterValue: TypeFilterValue;
+      }
     >({
-      query: ({limit, skip, sortInfo, filterValue, id }) => {
+      query: ({ limit, skip, sortInfo, filterValue, id }) => {
         const args = [
           `extraction_id=${encodeURIComponent(id)}`,
           `limit=${encodeURIComponent(limit)}`,
           `skip=${encodeURIComponent(skip)}`,
           `sorts=${encodeURIComponent(JSON.stringify(sortInfo))}`,
           `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
-        ].join('&')
-        return `/extraction-tasks/results/?${args}`
+        ].join('&');
+        return `/extraction-tasks/results/?${args}`;
       },
-      providesTags: (_r, _e, { id }) => [
-        { type: 'ExtractionTaskResult' as const, id },
-      ],
+      providesTags: (_r, _e, { id }) => [{ type: 'ExtractionTaskResult' as const, id }],
     }),
     runExtractionTask: builder.mutation<ExtractionTask, string>({
       query: (docId) => ({
@@ -44,10 +45,7 @@ export const extractionTasksApi = createApi({
       query: (id) => `/extraction-tasks/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'ExtractionTask' as const, id }],
     }),
-    updateExtractionTask: builder.mutation<
-      ExtractionTask,
-      Partial<ExtractionTask>
-    >({
+    updateExtractionTask: builder.mutation<ExtractionTask, Partial<ExtractionTask>>({
       query: (body) => ({
         url: `/extraction-tasks/${body._id}`,
         method: 'POST',

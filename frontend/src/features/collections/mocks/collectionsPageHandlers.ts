@@ -40,8 +40,7 @@ db.scrapeTask.create({
   links_found: 0,
 });
 
-const timeOut = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+const timeOut = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 const processScrape = async (scrapeTaskId: string): Promise<void> => {
   await timeOut(1000);
@@ -70,31 +69,25 @@ export const handlers = [
   rest.get('http://localhost/api/v1/sites/site-id1', async (req, res, ctx) => {
     return res(ctx.json({ collection_method: CollectionMethod.Automated }));
   }),
-  rest.get(
-    'http://localhost/api/v1/site-scrape-tasks/',
-    async (req, res, ctx) => {
-      return res(ctx.json(db.scrapeTask.getAll().reverse()));
-    }
-  ),
-  rest.put(
-    'http://localhost/api/v1/site-scrape-tasks/',
-    async (req, res, ctx) => {
-      const newScrape = db.scrapeTask.create({
-        _id: faker.database.mongodbObjectId(),
-        site_id: faker.database.mongodbObjectId(),
-        queued_time: '2022-06-20T14:17:19.185000',
-        start_time: '2022-06-20T14:17:22.497000',
-        end_time: '2022-06-20T14:17:22.594000',
-        last_active: '2022-06-20T14:17:22.594000',
-        status: TaskStatus.Queued,
-        documents_found: 0,
-        new_documents_found: 0,
-        worker_id: faker.database.mongodbObjectId(),
-        error_message: '',
-        links_found: 0,
-      });
-      processScrape(newScrape._id);
-      return res(ctx.json({}));
-    }
-  ),
+  rest.get('http://localhost/api/v1/site-scrape-tasks/', async (req, res, ctx) => {
+    return res(ctx.json(db.scrapeTask.getAll().reverse()));
+  }),
+  rest.put('http://localhost/api/v1/site-scrape-tasks/', async (req, res, ctx) => {
+    const newScrape = db.scrapeTask.create({
+      _id: faker.database.mongodbObjectId(),
+      site_id: faker.database.mongodbObjectId(),
+      queued_time: '2022-06-20T14:17:19.185000',
+      start_time: '2022-06-20T14:17:22.497000',
+      end_time: '2022-06-20T14:17:22.594000',
+      last_active: '2022-06-20T14:17:22.594000',
+      status: TaskStatus.Queued,
+      documents_found: 0,
+      new_documents_found: 0,
+      worker_id: faker.database.mongodbObjectId(),
+      error_message: '',
+      links_found: 0,
+    });
+    processScrape(newScrape._id);
+    return res(ctx.json({}));
+  }),
 ];

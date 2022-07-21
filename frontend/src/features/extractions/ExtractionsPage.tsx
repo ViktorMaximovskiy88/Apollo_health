@@ -1,15 +1,11 @@
-import Title from 'antd/lib/typography/Title';
+import { MainLayout } from '../../components';
 import { ExtractedDocumentsTable } from './ExtractedDocumentsTable';
+import { SiteMenu } from '../sites/SiteMenu';
 
 export function ExtractionsPage() {
   return (
-    <>
-      <div className="flex">
-        <Title className="inline-block" level={4}>
-          Extracted Documents
-        </Title>
-      </div>
+    <MainLayout pageTitle={'Extracted Documents'} sidebar={<SiteMenu />}>
       <ExtractedDocumentsTable />
-    </>
+    </MainLayout>
   );
 }

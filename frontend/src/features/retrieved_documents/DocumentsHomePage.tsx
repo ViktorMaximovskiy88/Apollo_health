@@ -1,5 +1,4 @@
 import { Button, Popconfirm, Table } from 'antd';
-import Title from 'antd/lib/typography/Title';
 import { prettyDateFromISO, prettyDateTimeFromISO } from '../../common';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
@@ -10,6 +9,7 @@ import {
   useGetDocumentsQuery,
 } from './documentsApi';
 import { RetrievedDocument } from './types';
+import { MainLayout } from '../../components';
 
 export function DocumentsHomePage() {
   const [searchParams] = useSearchParams();
@@ -96,14 +96,15 @@ export function DocumentsHomePage() {
     },
   ];
   return (
-    <div>
-      <div className="flex">
-        <Title className="inline-block" level={4}>
-          Documents
-        </Title>
-        <Button className="ml-auto">Create Document</Button>
-      </div>
+    <MainLayout
+      pageTitle="Documents"
+      pageToolbar={
+        <>
+          <Button className="ml-auto">Create Document</Button>
+        </>
+      }
+    >
       <Table dataSource={documents} columns={columns} rowKey={(doc) => doc._id} />
-    </div>
+    </MainLayout>
   );
 }

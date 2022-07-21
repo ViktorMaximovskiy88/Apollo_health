@@ -6,11 +6,7 @@ interface ErrorLogModalPropTypes {
   errorTraceback: string;
 }
 
-export function ErrorLogModal({
-  visible,
-  setVisible,
-  errorTraceback,
-}: ErrorLogModalPropTypes) {
+export function ErrorLogModal({ visible, setVisible, errorTraceback }: ErrorLogModalPropTypes) {
   return (
     <Modal
       visible={visible}
@@ -18,12 +14,7 @@ export function ErrorLogModal({
       onCancel={() => setVisible(false)}
       width={1000}
       footer={[
-        <Button
-          className="px-10"
-          type="primary"
-          key="back"
-          onClick={() => setVisible(false)}
-        >
+        <Button className="px-10" type="primary" key="back" onClick={() => setVisible(false)}>
           Ok
         </Button>,
       ]}

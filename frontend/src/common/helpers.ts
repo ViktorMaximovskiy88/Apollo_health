@@ -3,7 +3,7 @@
  */
 export function isErrorWithData(
   error: unknown
-): error is { data: {detail: string}, status: number } {
+): error is { data: { detail: string }; status: number } {
   return (
     typeof error === 'object' &&
     error != null &&
@@ -11,5 +11,5 @@ export function isErrorWithData(
     typeof (error as any).data === 'object' &&
     'status' in error &&
     typeof (error as any).status === 'number'
-  )
+  );
 }

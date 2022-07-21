@@ -2,6 +2,121 @@
 @tailwind components;
 @tailwind utilities;
 
-.ant-tabs-pdf-viewer .ant-tabs-content {
+/* TODO get fancier with the tw integration  */
+/* https://tailwindcss.com/docs/adding-custom-styles */
+
+html,
+body {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+#root {
+  height: 100vh;
+}
+
+:root {
+  --blue-primary: #5a9bc9;
+  --bg-menu-selected: #e8f1f7;
+}
+
+.layout {
   height: 100%;
+}
+
+.layout-with-header {
+  height: calc(100% - 60px);
+}
+
+body {
+  font-family: 'Nunito';
+}
+
+h1.ant-typography {
+  font-size: 32px;
+}
+
+/* ant tab helpers */
+.ant-tabs-h-full .ant-tabs-content {
+  height: 100%;
+}
+
+.ant-tabs-scroll .ant-tabs-content-holder {
+  overflow: auto;
+}
+
+.ant-input,
+.ant-picker,
+.ant-btn:not(.ant-input-search-button):not(.ant-btn-link) {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  border: 1px solid #d9d9d9;
+  height: auto;
+}
+
+.ant-switch {
+  background-color: var(--bg-menu-selected);
+}
+
+.ant-switch.ant-switch-checked {
+  background-color: var(--blue-primary);
+}
+
+.ant-menu-item-selected a,
+.ant-menu-item-selected a:hover {
+  color: var(--blue-primary);
+}
+.ant-menu-item-selected {
+  color: var(--blue-primary);
+}
+.ant-menu:not(.ant-menu-horizontal) .ant-menu-item-selected {
+  background-color: var(--bg-menu-selected);
+}
+
+.ant-menu-inline .ant-menu-item::after {
+  border-right-color: var(--blue-primary);
+}
+
+.ant-btn {
+  background-color: white;
+}
+
+.ant-btn-primary {
+  background-color: var(--blue-primary);
+}
+
+.ant-btn-link {
+  background-color: transparent;
+  color: var(--blue-primary);
+}
+
+.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--blue-primary);
+}
+.ant-checkbox-checked .ant-checkbox-inner {
+  background-color: var(--blue-primary);
+  border-color: var(--blue-primary);
+}
+.ant-checkbox-wrapper:hover .ant-checkbox-inner,
+.ant-checkbox:hover .ant-checkbox-inner,
+.ant-checkbox-input:focus + .ant-checkbox-inner {
+  border-color: var(--blue-primary);
+}
+
+a {
+  color: var(--blue-primary);
+}
+
+.ant-radio-button-wrapper-checked:not([class*=' ant-radio-button-wrapper-disabled']).ant-radio-button-wrapper:first-child {
+  border-right-color: var(--blue-primary);
+}
+.ant-radio-button-wrapper .ant-radio-button-wrapper-checked {
+  border-color: var(--blue-primary);
+}
+.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
+  background-color: var(--blue-primary);
+}
+.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
+  color: white;
 }
