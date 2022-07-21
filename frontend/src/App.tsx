@@ -19,14 +19,11 @@ import { DocExtractionPage } from './features/extractions/DocExtractionPage';
 import { ExtractionEditPage } from './features/extractions/ExtractionEditPage';
 import { WorkQueueHomePage } from './features/work_queue/WorkQueueHomePage';
 import { WorkQueuePage } from './features/work_queue/WorkQueuePage';
-import {
-  ProcessDocumentAssessmentPage,
-  ReadonlyDocumentAssessmentPage,
-} from './features/assessments/DocumentAssessmentPage';
 import { useAuth0 } from '@auth0/auth0-react';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import tw from 'twin.macro';
 import { DocDocumentEditPage } from './features/doc_documents/DocDocumentEditPage';
+import { ProcessWorkItemPage, ReadonlyWorkItemPage } from './features/work_queue/WorkItemPage';
 
 function TopNav() {
   const location = useLocation();
@@ -119,9 +116,9 @@ function App() {
           <Route index element={<WorkQueueHomePage />} />
           <Route path=":queueId">
             <Route index element={<WorkQueuePage />} />
-            <Route path=":assessmentId">
-              <Route path="process" element={<ProcessDocumentAssessmentPage />} />
-              <Route path="read-only" element={<ReadonlyDocumentAssessmentPage />} />
+            <Route path=":itemId">
+              <Route path="process" element={<ProcessWorkItemPage />} />
+              <Route path="read-only" element={<ReadonlyWorkItemPage />} />
             </Route>
           </Route>
         </Route>

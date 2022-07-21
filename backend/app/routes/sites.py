@@ -1,5 +1,4 @@
 import io
-import json
 import urllib.parse
 import zipfile
 from beanie import PydanticObjectId
@@ -9,14 +8,19 @@ from fastapi import (
     Depends,
     HTTPException,
     Query,
-    Request,
     UploadFile,
     status,
     Security,
 )
 from openpyxl import load_workbook
 from pydantic import BaseModel, HttpUrl
-from backend.app.routes.table_query import TableFilterInfo, TableQueryResponse, TableSortInfo, query_table
+from backend.app.routes.table_query import (
+    TableFilterInfo,
+    TableQueryResponse,
+    TableSortInfo,
+    get_query_json_list,
+    query_table,
+)
 
 from backend.common.models.site import (
     BaseUrl,
@@ -49,24 +53,16 @@ async def get_target(id: PydanticObjectId):
         )
     return user
 
-def get_query_json_list(arg: str, type):
-    def func(request: Request):
-        value_str = request.query_params.get(arg, None)
-        if value_str:
-            values: list[type] = json.loads(value_str)
-            return [type.parse_obj(v) for v in values]
-        else:
-            return []
-
-    return func
 
 @router.get("/", response_model=TableQueryResponse)
 async def read_sites(
     current_user: User = Depends(get_current_user),
     limit: int | None = None,
     skip: int | None = None,
-    sorts: list[TableSortInfo] = Depends(get_query_json_list('sorts', TableSortInfo)),
-    filters: list[TableFilterInfo] = Depends(get_query_json_list('filters', TableFilterInfo))
+    sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
+    filters: list[TableFilterInfo] = Depends(
+        get_query_json_list("filters", TableFilterInfo)
+    ),
 ):
     query = Site.find({})
     return await query_table(query, limit, skip, sorts, filters)

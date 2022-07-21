@@ -8,7 +8,6 @@ import { documentsApi } from '../features/retrieved_documents/documentsApi';
 import { siteScrapeTasksApi } from '../features/collections/siteScrapeTasksApi';
 import { extractionTasksApi } from '../features/extractions/extractionsApi';
 import { workQueuesApi } from '../features/work_queue/workQueuesApi';
-import { assessmentsApi } from '../features/assessments/assessmentsApi';
 import { proxiesApi } from '../features/proxies/proxiesApi';
 import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { rtkAuth } from '../common/auth-middleware';
@@ -25,7 +24,6 @@ export const store = configureStore({
     [documentsApi.reducerPath]: documentsApi.reducer,
     [extractionTasksApi.reducerPath]: extractionTasksApi.reducer,
     [workQueuesApi.reducerPath]: workQueuesApi.reducer,
-    [assessmentsApi.reducerPath]: assessmentsApi.reducer,
     [proxiesApi.reducerPath]: proxiesApi.reducer,
     [docDocumentsApi.reducerPath]: docDocumentsApi.reducer,
     ui: uiReducer,
@@ -39,7 +37,6 @@ export const store = configureStore({
       documentsApi.middleware,
       extractionTasksApi.middleware,
       workQueuesApi.middleware,
-      assessmentsApi.middleware,
       proxiesApi.middleware,
       docDocumentsApi.middleware,
       routerMiddleware,

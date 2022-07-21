@@ -212,8 +212,8 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.24.26"
-description = "Type annotations for boto3 1.24.26 generated with mypy-boto3-builder 7.7.2"
+version = "1.24.30"
+description = "Type annotations for boto3 1.24.30 generated with mypy-boto3-builder 7.9.0"
 category = "dev"
 optional = false
 python-versions = ">=3.6"
@@ -227,6 +227,7 @@ mypy-boto3-lambda = {version = ">=1.24.0,<1.25.0", optional = true, markers = "e
 mypy-boto3-rds = {version = ">=1.24.0,<1.25.0", optional = true, markers = "extra == \"essential\""}
 mypy-boto3-s3 = {version = ">=1.24.0,<1.25.0", optional = true, markers = "extra == \"essential\""}
 mypy-boto3-sqs = {version = ">=1.24.0,<1.25.0", optional = true, markers = "extra == \"essential\""}
+types-s3transfer = "*"
 typing-extensions = ">=4.1.0"
 
 [package.extras]
@@ -392,7 +393,6 @@ kafkaconnect = ["mypy-boto3-kafkaconnect (>=1.24.0,<1.25.0)"]
 kendra = ["mypy-boto3-kendra (>=1.24.0,<1.25.0)"]
 keyspaces = ["mypy-boto3-keyspaces (>=1.24.0,<1.25.0)"]
 kinesis = ["mypy-boto3-kinesis (>=1.24.0,<1.25.0)"]
-ssm = ["mypy-boto3-ssm (>=1.24.0,<1.25.0)"]
 kinesis-video-archived-media = ["mypy-boto3-kinesis-video-archived-media (>=1.24.0,<1.25.0)"]
 kinesis-video-media = ["mypy-boto3-kinesis-video-media (>=1.24.0,<1.25.0)"]
 kinesis-video-signaling = ["mypy-boto3-kinesis-video-signaling (>=1.24.0,<1.25.0)"]
@@ -512,6 +512,7 @@ snow-device-management = ["mypy-boto3-snow-device-management (>=1.24.0,<1.25.0)"
 snowball = ["mypy-boto3-snowball (>=1.24.0,<1.25.0)"]
 sns = ["mypy-boto3-sns (>=1.24.0,<1.25.0)"]
 sqs = ["mypy-boto3-sqs (>=1.24.0,<1.25.0)"]
+ssm = ["mypy-boto3-ssm (>=1.24.0,<1.25.0)"]
 ssm-contacts = ["mypy-boto3-ssm-contacts (>=1.24.0,<1.25.0)"]
 ssm-incidents = ["mypy-boto3-ssm-incidents (>=1.24.0,<1.25.0)"]
 sso = ["mypy-boto3-sso (>=1.24.0,<1.25.0)"]
@@ -1703,7 +1704,6 @@ description = "Industrial-strength Natural Language Processing (NLP) in Python"
 category = "main"
 optional = false
 python-versions = ">=3.6"
-develop = false
 
 [package.dependencies]
 catalogue = ">=2.0.6,<2.1.0"
@@ -1720,7 +1720,7 @@ requests = ">=2.13.0,<3.0.0"
 spacy-legacy = ">=3.0.9,<3.1.0"
 spacy-loggers = ">=1.0.0,<2.0.0"
 srsly = ">=2.4.3,<3.0.0"
-thinc = ">=8.1.0.dev3,<8.2.0"
+thinc = ">=8.1.0,<8.2.0"
 tqdm = ">=4.38.0,<5.0.0"
 typer = ">=0.3.0,<0.5.0"
 wasabi = ">=0.9.1,<1.1.0"
@@ -1737,6 +1737,8 @@ cuda112 = ["cupy-cuda112 (>=5.0.0b4,<11.0.0)"]
 cuda113 = ["cupy-cuda113 (>=5.0.0b4,<11.0.0)"]
 cuda114 = ["cupy-cuda114 (>=5.0.0b4,<11.0.0)"]
 cuda115 = ["cupy-cuda115 (>=5.0.0b4,<11.0.0)"]
+cuda116 = ["cupy-cuda116 (>=5.0.0b4,<11.0.0)"]
+cuda117 = ["cupy-cuda117 (>=5.0.0b4,<11.0.0)"]
 cuda80 = ["cupy-cuda80 (>=5.0.0b4,<11.0.0)"]
 cuda90 = ["cupy-cuda90 (>=5.0.0b4,<11.0.0)"]
 cuda91 = ["cupy-cuda91 (>=5.0.0b4,<11.0.0)"]
@@ -1747,12 +1749,6 @@ lookups = ["spacy-lookups-data (>=1.0.3,<1.1.0)"]
 ray = ["spacy-ray (>=0.1.0,<1.0.0)"]
 th = ["pythainlp (>=2.0)"]
 transformers = ["spacy-transformers (>=1.1.2,<1.2.0)"]
-
-[package.source]
-type = "git"
-url = "https://github.com/explosion/spaCy.git"
-reference = "master"
-resolved_reference = "308a612ec98f27098fe7f69ec20be0b5e88d51fa"
 
 [[package]]
 name = "spacy-legacy"
@@ -1811,7 +1807,7 @@ doc = ["reno", "sphinx", "tornado (>=4.5)"]
 
 [[package]]
 name = "thinc"
-version = "8.1.0.dev3"
+version = "8.1.0"
 description = "A refreshing functional take on deep learning, compatible with your favorite libraries"
 category = "main"
 optional = false
@@ -1905,6 +1901,14 @@ all = ["colorama (>=0.4.3,<0.5.0)", "shellingham (>=1.3.0,<2.0.0)"]
 dev = ["autoflake (>=1.3.1,<2.0.0)", "flake8 (>=3.8.3,<4.0.0)"]
 doc = ["mkdocs (>=1.1.2,<2.0.0)", "mkdocs-material (>=8.1.4,<9.0.0)", "mdx-include (>=1.4.1,<2.0.0)"]
 test = ["shellingham (>=1.3.0,<2.0.0)", "pytest (>=4.4.0,<5.4.0)", "pytest-cov (>=2.10.0,<3.0.0)", "coverage (>=5.2,<6.0)", "pytest-xdist (>=1.32.0,<2.0.0)", "pytest-sugar (>=0.9.4,<0.10.0)", "mypy (==0.910)", "black (>=22.3.0,<23.0.0)", "isort (>=5.0.6,<6.0.0)"]
+
+[[package]]
+name = "types-s3transfer"
+version = "0.6.0"
+description = "Type annotations and code completion for s3transfer"
+category = "dev"
+optional = false
+python-versions = "*"
 
 [[package]]
 name = "typing-extensions"
@@ -2060,7 +2064,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.10.3"
-content-hash = "fcd49f3d8953a512d16e37cbb5a9d6974e2ba7cfdcffd14d5902fcde1c023cea"
+content-hash = "5ef86f1c7101dadcfe0ef5936b69507dbd5db2d0cc351c590fcb9be57e9046cd"
 
 [metadata.files]
 aiodns = []
@@ -3078,27 +3082,7 @@ tenacity = [
     {file = "tenacity-8.0.1-py3-none-any.whl", hash = "sha256:f78f4ea81b0fabc06728c11dc2a8c01277bfc5181b321a4770471902e3eb844a"},
     {file = "tenacity-8.0.1.tar.gz", hash = "sha256:43242a20e3e73291a28bcbcacfd6e000b02d3857a9a9fff56b297a27afdc932f"},
 ]
-thinc = [
-    {file = "thinc-8.1.0.dev3-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:29f007ea7a0969215e6305d869298669eede81ff6d3af6ab9e1dba89a12d20dc"},
-    {file = "thinc-8.1.0.dev3-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:8f5153972e272ea33ac9256be08fe1963c11bf6cee28bc3dcfccf350ab962b5e"},
-    {file = "thinc-8.1.0.dev3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:aae08daa1dc2ddf02923cc2f8bb5cf71aa1d3cc0e8f7cb34e9ec7f4d853c9ed3"},
-    {file = "thinc-8.1.0.dev3-cp310-cp310-win_amd64.whl", hash = "sha256:bd19ba01ae8d5042fb9f7fff088a6d33c8a898b829fecb7620d72ce53d985a99"},
-    {file = "thinc-8.1.0.dev3-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:7864906d8c3a0301ea67340fdd49861ec7fc406f83237b27f11ec28c9c803bd6"},
-    {file = "thinc-8.1.0.dev3-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:affe6cec3040940d049e2c770241aa9378646e2460868739a282d92ed616a695"},
-    {file = "thinc-8.1.0.dev3-cp36-cp36m-win_amd64.whl", hash = "sha256:c64fa94ad635774e8c51e1b3862c1d533bdd57180f58f637c5eca3557e0e3405"},
-    {file = "thinc-8.1.0.dev3-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:a59d212d7b37fc002b5e2e273574aa15dd725e54aba08e615e185b89af0344a2"},
-    {file = "thinc-8.1.0.dev3-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fd8357d6ae26b31769a724e877ef9c59a8c414b46279c2ba5215cfa49bb8fa18"},
-    {file = "thinc-8.1.0.dev3-cp37-cp37m-win_amd64.whl", hash = "sha256:9da8d238e4b3a1daf418e952aff19a6315bd3e9862b16a4783dce16810cd8489"},
-    {file = "thinc-8.1.0.dev3-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:168a75eff72570645ca108206a971a96b408a0e98d1cc088f3b535c345d4dbe7"},
-    {file = "thinc-8.1.0.dev3-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:0c4c58ee160d440b0cc69a555c6acf1594d0e99a86dd0a763143956354132c2b"},
-    {file = "thinc-8.1.0.dev3-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4d9e86cff0cbd873de681c134fc715b9d1f2e5adabf789a7f8e43388f8417517"},
-    {file = "thinc-8.1.0.dev3-cp38-cp38-win_amd64.whl", hash = "sha256:c6ecb7015fb165012827a25e5ce88baa2123a7157aba1b813003a049fadd8e67"},
-    {file = "thinc-8.1.0.dev3-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:ce809221400e1c62c62b333393a8d9f56cea85c9aa7274bb63bfb8b51cab0c31"},
-    {file = "thinc-8.1.0.dev3-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:7d0bad0d294a9cdb46dd6e3e6666f199c594a98332ad5646184594ef7aecb97f"},
-    {file = "thinc-8.1.0.dev3-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b8038047b5a52a22e99f27cf8e3a58498d03d201a687935585880518b2819d3f"},
-    {file = "thinc-8.1.0.dev3-cp39-cp39-win_amd64.whl", hash = "sha256:f42ab5c13b32cc721455b7933937008fe473078e816b39c80c42512a728bfee5"},
-    {file = "thinc-8.1.0.dev3.tar.gz", hash = "sha256:755763c48d8419deafee7b6c64dd2192450602805896e88c77eb18d976402f13"},
-]
+thinc = []
 threadpoolctl = [
     {file = "threadpoolctl-3.1.0-py3-none-any.whl", hash = "sha256:8b99adda265feb6773280df41eece7b2e6561b772d21ffd52e372f999024907b"},
     {file = "threadpoolctl-3.1.0.tar.gz", hash = "sha256:a335baacfaa4400ae1f0d8e3a58d6674d2f8828e3716bb2802c44955ad391380"},
@@ -3119,6 +3103,7 @@ typer = [
     {file = "typer-0.4.1-py3-none-any.whl", hash = "sha256:e8467f0ebac0c81366c2168d6ad9f888efdfb6d4e1d3d5b4a004f46fa444b5c3"},
     {file = "typer-0.4.1.tar.gz", hash = "sha256:5646aef0d936b2c761a10393f0384ee6b5c7fe0bb3e5cd710b17134ca1d99cff"},
 ]
+types-s3transfer = []
 typing-extensions = []
 ujson = []
 urllib3 = [

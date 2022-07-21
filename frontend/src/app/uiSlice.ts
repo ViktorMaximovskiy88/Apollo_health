@@ -85,6 +85,7 @@ export const initialState = {
           type: 'select',
           value: null,
         },
+        { name: 'tags', operator: 'contains', type: 'string', value: '' },
       ],
     },
   },
@@ -93,7 +94,9 @@ export const initialState = {
       sort: { name: 'last_collected_date', dir: -1 as 1 | -1 | 0 },
       filter: [
         { name: 'name', operator: 'contains', type: 'string', value: '' },
+        { name: 'first_collected_date', operator: 'before', type: 'date', value: '' },
         { name: 'last_collected_date', operator: 'before', type: 'date', value: '' },
+        { name: 'classification_status', operator: 'eq', type: 'select', value: null },
       ],
     },
   },

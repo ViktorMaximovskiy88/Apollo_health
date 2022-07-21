@@ -5,43 +5,64 @@ from backend.common.models.work_queue import SubmitAction, WorkQueue
 
 
 async def create_default_work_queues():
-    triage = WorkQueue(
-        name="Triage",
-        document_query={ 'triage_status': 'QUEUED' },
+    if await WorkQueue.count():
+        return
+
+    await WorkQueue(
+        name="Classification",
+        collection_name="DocDocument",
+        frontend_component="DocDocumentClassificationPage",
+        document_query={ 'classification_status': 'QUEUED' },
+        sort_query=['last_collected_date'],
         user_query={ 'roles': { '$in': [ "admin", "triage" ] } },
         submit_actions=[
-            SubmitAction(label="Submit", submit_action={ 'triage_status': 'PENDING_APPROVAL' }, primary=True),
-            SubmitAction(label="Hold", submit_action={ 'triage_status': 'HOLD' }),
+            SubmitAction(
+                label="Submit",
+                reassignable=True,
+                require_comment=True,
+                submit_action={ 'classification_status': 'APPROVED' },
+                primary=True
+            ),
+            SubmitAction(label="Hold", submit_action={ 'classification_status': 'HOLD' }),
         ],
-    )
-    triage_hold = WorkQueue(
-        name="Triage Hold",
-        document_query={ 'triage_status': 'HOLD' },
+    ).save()
+    await WorkQueue(
+        name="Classification Hold",
+        collection_name="DocDocument",
+        frontend_component="DocDocumentClassificationPage",
+        document_query={ 'classification_status': 'HOLD' },
+        sort_query=['last_collected_date'],
         user_query={ 'roles': { '$in': [ "admin" ] } },
         submit_actions=[
-            SubmitAction(label="Approve", submit_action={ 'triage_status': 'APPROVED' }, primary=True),
-            SubmitAction(label="Back To Queue", submit_action={ 'triage_status': 'QUEUED' }),
+            SubmitAction(label="Approve", submit_action={ 'classification_status': 'APPROVED' }, primary=True),
+            SubmitAction(label="Back To Queue", submit_action={ 'classification_status': 'QUEUED' }),
         ],
-    )
-    approval = WorkQueue(
-        name="Triage Approval",
-        document_query={ 'triage_status': 'PENDING_APPROVAL' },
+    ).save()
+
+    await WorkQueue(
+        name="Content Extraction",
+        collection_name="DocDocument",
+        sort_query=['last_collected_date'],
+        frontend_component="ContentExtractionApprovalPage",
+        document_query={ 'content_extraction_task_id': { '$ne': None }, 'content_extraction_status': 'QUEUED' },
+        user_query={ 'roles': { '$in': [ "admin", "triage" ] } },
+        submit_actions=[
+            SubmitAction(label="Submit", submit_action={ 'content_extraction_status': 'APPROVED' }, primary=True),
+            SubmitAction(label="Hold", submit_action={ 'content_extraction_status': 'HOLD' }),
+        ],
+    ).save()
+    await WorkQueue(
+        name="Content Extraction Hold",
+        collection_name="DocDocument",
+        sort_query=['last_collected_date'],
+        frontend_component="ContentExtractionApprovalPage",
+        document_query={ 'content_extraction_task_id': { '$ne': None }, 'content_extraction_status': 'HOLD' },
         user_query={ 'roles': { '$in': [ "admin" ] } },
         submit_actions=[
-            SubmitAction(label="Approve", submit_action={ 'triage_status': 'APPROVED' }, primary=True),
-            SubmitAction(label="Reject", submit_action={ 'triage_status': 'QUEUED' }),
+            SubmitAction(label="Approve", submit_action={ 'content_extraction_status': 'APPROVED' }, primary=True),
+            SubmitAction(label="Back To Queue", submit_action={ 'content_extraction_status': 'QUEUED' }),
         ],
-    )
-    approved = WorkQueue(
-        name="Triage Approval",
-        document_query={ 'triage_status': 'APPROVED' },
-        user_query={ 'roles': { '$in': [ "admin" ] } },
-        submit_actions=[],
-    )
-    await triage_hold.save()
-    await approved.save()
-    #await triage.save()
-    #await approval.save()
+    ).save()
 
 
 async def execute():

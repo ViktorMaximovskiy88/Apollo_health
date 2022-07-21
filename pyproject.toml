@@ -38,11 +38,9 @@ async-lru = "^1.0.3"
 pycld3 = "^0.22"
 numpy = "<1.23.0"
 
-# SpaCy <3.4 requires pydantic < 1.9, beanie requires pydantic 1.10
-# use bleeding edge SpaCy until next release
-spacy = {git = "https://github.com/explosion/spaCy.git"}
-# SciSpacy has requires older SpaCy, which we aren't using due to pydantic issue
-# However per an open ticket, there is not compatability issue with later SpaCy
+spacy = "^3.4.0"
+# SciSpacy requires older SpaCy, which we aren't using due to pydantic issue
+# However per an open ticket, there is no compatability issue with later SpaCy
 # This fork is identical except for bumped SpaCy version requirement
 scispacy = {git = "https://github.com/mbrown-bhe/scispacy.git", rev = "main"}
 pymongo = {version = "<4", extras = ["aws"]}

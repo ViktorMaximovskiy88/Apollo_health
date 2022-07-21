@@ -75,7 +75,12 @@ async def start_scrape_task(
     logger: Logger = Depends(get_logger),
 ):
     site = await Site.get(site_id)
-    site_scrape_task = None;
+    if not site:
+        raise HTTPException(
+            detail=f"Site {id} Not Found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    site_scrape_task = None
     if site.collection_method == CollectionMethod.Manual:
         site_scrape_task = SiteScrapeTask(
             site_id=site_id, 
@@ -124,7 +129,7 @@ async def runBulkByType(
         query["last_run_status"] = {"$ne": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}
 
     async for site in Site.find_many(query):
-        site_id: PydanticObjectId = site.id
+        site_id: PydanticObjectId = site.id  # type: ignore
 
         if bulk_type == "cancel-active":
             total_scrapes += 1

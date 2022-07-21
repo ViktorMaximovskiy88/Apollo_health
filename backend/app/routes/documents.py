@@ -63,7 +63,11 @@ async def get_documents(
         query["automated_content_extraction"] = automated_content_extraction
 
     documents: list[RetrievedDocumentLimitTags] = (
-        await RetrievedDocument.find_many(query).project(RetrievedDocumentLimitTags).sort("-first_collected_date").to_list()
+        await RetrievedDocument
+          .find_many(query)
+          .sort("-first_collected_date")
+          .project(RetrievedDocumentLimitTags)
+          .to_list()
     )
     return documents
 

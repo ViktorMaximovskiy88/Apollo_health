@@ -7,11 +7,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from backend.app.scripts.add_user import create_system_users
 from backend.app.scripts.create_proxy_records import create_proxies
+from backend.app.scripts.create_work_queues import create_default_work_queues
 from backend.common.db.init import init_db
 from backend.common.db.migrations import run_migrations
 from backend.app.core.settings import settings
 from backend.common.models.proxy import Proxy
-from backend.common.models.user import User
 from backend.app.routes import (
     auth,
     sites,
@@ -35,6 +35,7 @@ async def app_init():
     await create_system_users()        
     if not settings.disable_proxies and await Proxy.count() == 0:
         await create_proxies()
+    await create_default_work_queues()
 
 
 template_dir = Path(__file__).parent.joinpath("templates")

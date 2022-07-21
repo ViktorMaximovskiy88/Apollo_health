@@ -1,4 +1,4 @@
-from typing import TypeVar
+from typing import Any, TypeVar
 from jsonpatch import JsonPatch, JsonPointer
 from bson import json_util
 from datetime import datetime
@@ -56,11 +56,14 @@ async def update_and_log_diff(
     logger: Logger,
     current_user: User,
     target: Document,
-    updates: BaseModel,
+    updates: BaseModel | dict[str, Any],
     session: AsyncIOMotorClientSession | None = None,
 ):
     original = target.dict()
-    await target.update(Set(updates.dict(exclude_unset=True)), session=session)
+    if isinstance(updates, BaseModel):
+        updates = updates.dict(exclude_unset=True)
+
+    await target.update(Set(updates), session=session)
     updated = target.dict()
     patch = JsonPatch.from_diff(original, updated, dumps=json_util.dumps).patch
     for op in patch:

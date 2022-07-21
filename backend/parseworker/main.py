@@ -23,6 +23,7 @@ from backend.parseworker.rxnorm_entity_linker_model import RxNormEntityLinkerMod
 from backend.common.db.init import init_db
 from backend.common.models.site import Site
 from backend.common.core.enums import TaskStatus
+import backend.parseworker.extractors as extractor_classes
 
 app = typer.Typer()
 
@@ -31,7 +32,6 @@ async def start_worker_async():
     await init_db()
     worker_id = uuid4()
     rxnorm_model = RxNormEntityLinkerModel()
-    extractor_classes = importlib.import_module("backend.parseworker.extractors")
     user = await User.by_email("admin@mmitnetwork.com")
     logger = Logger()
     if not user:
