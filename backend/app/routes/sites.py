@@ -64,7 +64,8 @@ async def read_sites(
         get_query_json_list("filters", TableFilterInfo)
     ),
 ):
-    query = Site.find({})
+
+    query = Site.find({"disabled": False})
     return await query_table(query, limit, skip, sorts, filters)
 
 
