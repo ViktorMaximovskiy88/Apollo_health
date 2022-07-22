@@ -12,6 +12,7 @@ import { workQueuesApi } from '../features/work_queue/workQueuesApi';
 const routes = [
   '/sites',
   '/sites/new',
+  '/sites/:siteId',
   '/sites/:siteId/edit',
   '/sites/:siteId/scrapes',
   '/sites/:siteId/documents',
