@@ -158,6 +158,41 @@ class ScrapeWorker:
         doc_document.final_effective_date = calc_final_effective_date(doc_document)
         await create_and_log(self.logger, await self.get_user(), doc_document)
 
+    # TODO we temporarily update allthethings. as our code matures, this likely dies
+    async def update_retrieved_document(
+        self,
+        document: RetrievedDocument,
+        download: Download,
+        parsed_content: dict(),
+    ) -> UpdateRetrievedDocument:
+        # TODO needs to be utcnow
+        now = datetime.now()
+        updated_doc = UpdateRetrievedDocument(
+            context_metadata=download.metadata.dict(),
+            doc_type_confidence=parsed_content["confidence"],
+            document_type=parsed_content["document_type"],
+            effective_date=parsed_content["effective_date"],
+            end_date=parsed_content["end_date"],
+            last_updated_date=parsed_content["last_updated_date"],
+            last_reviewed_date=parsed_content["last_reviewed_date"],
+            next_review_date=parsed_content["next_review_date"],
+            next_update_date=parsed_content["next_update_date"],
+            published_date=parsed_content["published_date"],
+            identified_dates=parsed_content["identified_dates"],
+            lang_code=parsed_content["lang_code"],
+            last_collected_date=now,
+            therapy_tags=parsed_content["therapy_tags"],
+            indication_tags=parsed_content["indication_tags"],
+            metadata=parsed_content["metadata"],
+            name=parsed_content["title"],
+            scrape_task_id=self.scrape_task.id,
+            similar_text_checksums=document.similar_text_checksums,
+        )
+        await update_and_log_diff(
+            self.logger, await self.get_user(), document, updated_doc
+        )
+        return updated_doc
+
     async def attempt_download(self, download: Download):
         url = download.request.url
         proxies = await self.get_proxy_settings()
@@ -168,9 +203,8 @@ class ScrapeWorker:
             if parsed_content is None:
                 continue
 
-            now = datetime.now()
-            dest_path = f"{checksum}.{download.file_extension}"
             document = None
+            dest_path = f"{checksum}.{download.file_extension}"
 
             logging.info(f"dest_path={dest_path} temp_path={temp_path}")
 
@@ -181,69 +215,71 @@ class ScrapeWorker:
                 await self.scrape_task.update(
                     Inc({SiteScrapeTask.new_documents_found: 1})
                 )
+
             document = await RetrievedDocument.find_one(
                 RetrievedDocument.checksum == checksum
             )
 
             if document:
-                updates = UpdateRetrievedDocument(
-                    context_metadata=download.metadata.dict(),
-                    doc_type_confidence=parsed_content["confidence"],
-                    document_type=parsed_content["document_type"],
-                    effective_date=parsed_content["effective_date"],
-                    end_date=parsed_content["end_date"],
-                    last_updated_date=parsed_content["last_updated_date"],
-                    last_reviewed_date=parsed_content["last_reviewed_date"],
-                    next_review_date=parsed_content["next_review_date"],
-                    next_update_date=parsed_content["next_update_date"],
-                    published_date=parsed_content["published_date"],
-                    identified_dates=parsed_content["identified_dates"],
-                    lang_code=parsed_content["lang_code"],
-                    last_collected_date=now,
-                    therapy_tags=parsed_content["therapy_tags"],
-                    indication_tags=parsed_content["indication_tags"],
-                    metadata=parsed_content["metadata"],
-                    name=parsed_content["title"],
-                    scrape_task_id=self.scrape_task.id,
-                )
-                await update_and_log_diff(
-                    self.logger, await self.get_user(), document, updates
+                _updated_doc = await self.update_retrieved_document(
+                    document=document,
+                    download=download,
+                    parsed_content=parsed_content,
                 )
                 await self.update_doc_document(document)
             else:
+
                 text_checksum = await self.text_handler.save_text(
                     parsed_content["text"]
                 )
-                document = RetrievedDocument(
-                    base_url=download.metadata.base_url,
-                    checksum=checksum,
-                    text_checksum=text_checksum,
-                    context_metadata=download.metadata.dict(),
-                    doc_type_confidence=parsed_content["confidence"],
-                    document_type=parsed_content["document_type"],
-                    effective_date=parsed_content["effective_date"],
-                    end_date=parsed_content["end_date"],
-                    last_updated_date=parsed_content["last_updated_date"],
-                    last_reviewed_date=parsed_content["last_reviewed_date"],
-                    next_review_date=parsed_content["next_review_date"],
-                    next_update_date=parsed_content["next_update_date"],
-                    published_date=parsed_content["published_date"],
-                    file_extension=download.file_extension,
-                    content_type=download.content_type,
-                    first_collected_date=now,
-                    identified_dates=parsed_content["identified_dates"],
-                    lang_code=parsed_content["lang_code"],
-                    last_collected_date=now,
-                    metadata=parsed_content["metadata"],
-                    name=parsed_content["title"],
-                    scrape_task_id=self.scrape_task.id,
-                    site_id=self.site.id,
-                    url=url,
-                    therapy_tags=parsed_content["therapy_tags"],
-                    indication_tags=parsed_content["indication_tags"],
+
+                document = await RetrievedDocument.find_one(
+                    RetrievedDocument.text_checksum == text_checksum
+                    or RetrievedDocument.text_checksum
+                    in RetrievedDocument.similar_text_checksums
                 )
-                await create_and_log(self.logger, await self.get_user(), document)
-                await self.create_doc_document(document)
+
+                if document:
+                    document.similar_text_checksums.add(text_checksum)
+                    _updated_doc = await self.update_retrieved_document(
+                        document=document,
+                        download=download,
+                        parsed_content=parsed_content,
+                    )
+                    await self.update_doc_document(document)
+                else:
+                    now = datetime.now()
+                    document = RetrievedDocument(
+                        base_url=download.metadata.base_url,
+                        checksum=checksum,
+                        text_checksum=text_checksum,
+                        context_metadata=download.metadata.dict(),
+                        doc_type_confidence=parsed_content["confidence"],
+                        document_type=parsed_content["document_type"],
+                        effective_date=parsed_content["effective_date"],
+                        end_date=parsed_content["end_date"],
+                        last_updated_date=parsed_content["last_updated_date"],
+                        last_reviewed_date=parsed_content["last_reviewed_date"],
+                        next_review_date=parsed_content["next_review_date"],
+                        next_update_date=parsed_content["next_update_date"],
+                        published_date=parsed_content["published_date"],
+                        file_extension=download.file_extension,
+                        content_type=download.content_type,
+                        first_collected_date=now,
+                        identified_dates=parsed_content["identified_dates"],
+                        lang_code=parsed_content["lang_code"],
+                        last_collected_date=now,
+                        metadata=parsed_content["metadata"],
+                        name=parsed_content["title"],
+                        scrape_task_id=self.scrape_task.id,
+                        site_id=self.site.id,
+                        url=url,
+                        therapy_tags=parsed_content["therapy_tags"],
+                        indication_tags=parsed_content["indication_tags"],
+                    )
+
+                    await create_and_log(self.logger, await self.get_user(), document)
+                    await self.create_doc_document(document)
 
             await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
             await self.scrape_task.update(
