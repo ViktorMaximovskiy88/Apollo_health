@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import Title from 'antd/lib/typography/Title';
-import { Layout } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Site, CollectionMethod } from './types';
 import { SiteForm } from './SiteForm';
 import { useGetSiteQuery, useUpdateSiteMutation } from './sitesApi';
 import { useCancelAllSiteScrapeTasksMutation } from '../collections/siteScrapeTasksApi';
+import { MainLayout } from '../../components';
 
 export function SiteViewPage() {
   const params = useParams();
@@ -30,16 +29,13 @@ export function SiteViewPage() {
   }
 
   return (
-    <Layout className="p-4 bg-transparent">
-      <div className="flex">
-        <Title level={4}>{readOnly ? 'View' : 'Edit'} Site</Title>
-      </div>
+    <MainLayout pageTitle={`${readOnly ? 'View' : 'Edit'} Site`}>
       <SiteForm
         readOnly={readOnly}
         setReadOnly={setReadOnly}
         initialValues={site}
         onFinish={tryUpdateSite}
       />
-    </Layout>
+    </MainLayout>
   );
 }

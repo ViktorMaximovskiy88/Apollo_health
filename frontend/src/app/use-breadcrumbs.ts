@@ -13,6 +13,7 @@ const routes = [
   '/sites',
   '/sites/new',
   '/sites/:siteId',
+  '/sites/:siteId/view',
   '/sites/:siteId/edit',
   '/sites/:siteId/scrapes',
   '/sites/:siteId/documents',
@@ -64,6 +65,7 @@ export const useBreadcrumbs = async () => {
     '/sites': {
       new: 'Create',
       sites: 'Sites',
+      view: 'View',
       edit: 'Edit',
       scrapes: 'Collections',
       documents: 'Documents',
