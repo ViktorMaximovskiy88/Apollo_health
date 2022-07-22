@@ -1,4 +1,5 @@
 from datetime import datetime
+from email.policy import default
 from beanie import Indexed, PydanticObjectId
 from pydantic import BaseModel
 from backend.common.models.base_document import BaseDocument
@@ -68,7 +69,7 @@ class UpdateRetrievedDocument(BaseModel):
     metadata: dict | None = None
     context_metadata: dict | None = None
     lang_code: LangCode | None = None
-    similar_text_checksums: set[str] = []
+    similar_text_checksums: set[str] = Indexed(set[str], default=set())
 
     therapy_tags: list[TherapyTag] | None = None
     indication_tags: list[IndicationTag] | None = None
