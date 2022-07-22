@@ -17,8 +17,6 @@ import {
   TypeSortInfo,
 } from '@inovua/reactdatagrid-community/types';
 import { createColumns } from './createColumns';
-import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
-import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 
 function disableLoadingMask(data: {
   visible: boolean;
@@ -74,7 +72,7 @@ export const useSiteFilter = () => {
   const dispatch = useDispatch();
   const onFilterChange = useCallback(
     (filter: TypeFilterValue) => dispatch(setSiteTableFilter(filter)),
-    [dispatch, setSiteTableFilter]
+    [dispatch]
   );
   const filterProps = {
     defaultFilterValue: filterValue,
@@ -89,7 +87,7 @@ export const useSiteSort = () => {
   const dispatch = useDispatch();
   const onSortChange = useCallback(
     (sortInfo: TypeSortInfo) => dispatch(setSiteTableSort(sortInfo)),
-    [dispatch, setSiteTableSort]
+    [dispatch]
   );
   const sortProps = {
     defaultSortInfo: sortInfo,
