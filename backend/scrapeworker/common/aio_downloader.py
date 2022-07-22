@@ -5,7 +5,7 @@ import tempfile
 import ssl
 import aiofiles
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator
 from aiohttp import ClientSession, ClientResponse, BasicAuth, TCPConnector
 from backend.common.models.proxy import Proxy
 from backend.scrapeworker.common.models import Download
@@ -59,40 +59,29 @@ class AioDownloader:
     async def close(self):
         await self.session.close()
 
-    @asynccontextmanager
-    async def download_url(
-        self,
-        download: Download,
-        proxies: list[tuple[Proxy | None, ProxySettings | None]] = [],
-    ):
-        response: ClientResponse | None = None
+    async def send_request(self, download: Download, proxy: AioProxy | None):
         headers = default_headers | download.request.headers
-        async for attempt, proxy in self.proxy_with_backoff(proxies):
-            with attempt:
-                # TODO de-duplicate this...
-                if proxy:
-                    response = await self.session.request(
-                        url=download.request.url,
-                        method=download.request.method,
-                        headers=headers,
-                        data=download.request.data,
-                        proxy=proxy.proxy,
-                        proxy_auth=proxy.proxy_auth,
-                    )
-                else:
-                    response = await self.session.request(
-                        url=download.request.url,
-                        method=download.request.method,
-                        headers=headers,
-                        data=download.request.data,
-                    )
+        # TODO de-duplicate this...
+        if proxy:
+            response = await self.session.request(
+                url=download.request.url,
+                method=download.request.method,
+                headers=headers,
+                data=download.request.data,
+                proxy=proxy.proxy,
+                proxy_auth=proxy.proxy_auth,
+            )
+        else:
+            response = await self.session.request(
+                url=download.request.url,
+                method=download.request.method,
+                headers=headers,
+                data=download.request.data,
+            )
 
-                download.response.status = response.status
-                logging.info(
-                    f"Downloaded {download.request.url}, got {response.status}"
-                )
-
-                yield response
+        download.response.status = response.status
+        logging.info(f"Downloaded {download.request.url}, got {response.status}")
+        return response
 
     # just return the aio useable proxy list
     def convert_proxy(self, proxy: Proxy) -> list[AioProxy]:
@@ -145,20 +134,22 @@ class AioDownloader:
             )
             yield attempt, proxy_settings
 
-    @asynccontextmanager
-    async def tempfile_path(self, download: Download, response: ClientResponse):
-        download.guess_extension()
+    async def write_response_to_file(
+        self,
+        download: Download,
+        response: ClientResponse,
+        temp: tempfile._TemporaryFileWrapper,
+    ):
         hasher = DocStreamHasher()
-        with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
-            download.file_path = temp.name
-            async with aiofiles.open(download.file_path, "wb") as fd:
-                async for data in response.content.iter_any():
-                    await fd.write(data)
-                    hasher.update(data)
-                await fd.flush()
+        download.file_path = temp.name
+        async with aiofiles.open(download.file_path, "wb") as fd:
+            async for data in response.content.iter_any():
+                await fd.write(data)
+                hasher.update(data)
+            await fd.flush()
 
-            download.file_hash = hasher.hexdigest()
-            yield download.file_path, download.file_hash
+        download.file_hash = hasher.hexdigest()
+        return download.file_path, download.file_hash
 
     async def download_to_tempfile(
         self,
@@ -167,11 +158,16 @@ class AioDownloader:
     ):
         url = download.request.url
         logging.info(f"Attempting download {url}")
-        async with self.download_url(download, proxies) as response:
-            if not response.ok:
-                return
+        async for attempt, proxy in self.proxy_with_backoff(proxies):
+            with attempt:
+                response = await self.send_request(download, proxy)
 
-            download.response.from_headers(response.headers)
+                if not response.ok:
+                    return
 
-            async with self.tempfile_path(download, response) as (temp_path, hash):
-                yield temp_path, hash
+                download.response.from_headers(response.headers)
+                download.guess_extension()
+                with tempfile.NamedTemporaryFile(
+                    suffix=f".{download.file_extension}"
+                ) as temp:
+                    yield await self.write_response_to_file(download, response, temp)
