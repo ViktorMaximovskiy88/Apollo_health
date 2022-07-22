@@ -13,9 +13,7 @@ export function siteStatusDisplayName(status: SiteStatus): string {
   return name;
 }
 
-export function siteStatusStyledDisplay(
-  status: SiteStatus
-): React.ReactElement {
+export function siteStatusStyledDisplay(status: SiteStatus): React.ReactElement {
   const { name, style } = statusDisplayAndStyle(status);
   if (!name && !style) {
     return <span />;

@@ -50,6 +50,9 @@ class BaseS3Client:
             ExtraArgs={"ContentType": content_type},
         )
 
+    def write_object_mem(self, relative_key: str, object: bytes) -> None:
+        self.bucket.put_object(Key=self.get_full_path(relative_key), Body=object)
+
     def download_directory(self, relative_prefix, local_path):
         prefix = self.get_full_path(relative_prefix)
         nopref_prefix = prefix.removeprefix("/")
@@ -105,3 +108,11 @@ class ModelStorageClient(BaseS3Client):
 
 class DocumentStorageClient(BaseS3Client):
     root_path = settings.document_path
+
+
+class TextStorageClient(BaseS3Client):
+    root_path = settings.text_path
+
+
+class DiffStorageClient(BaseS3Client):
+    root_path = settings.diff_path

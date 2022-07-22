@@ -15,6 +15,7 @@ class RetrievedDocument(BaseDocument):
     last_collected_date: datetime | None = None
     url: str | None = None
     checksum: Indexed(str)  # type: ignore
+    text_checksum: str | None = None
     disabled: bool = False
     name: str
     metadata: dict = {}
@@ -58,6 +59,7 @@ class UpdateRetrievedDocument(BaseModel):
     last_collected_date: datetime | None = None
     url: str | None = None
     checksum: str | None = None
+    text_checksum: str | None = None
     disabled: bool | None = None
     name: str | None = None
     document_type: str | None = None
@@ -73,9 +75,11 @@ class UpdateRetrievedDocument(BaseModel):
     automated_content_extraction_class: str | None = None
 
 class RetrievedDocumentLimitTags(RetrievedDocument):
+    class Collection:
+        name = "RetrievedDocument"
+
     class Settings:
         projection = { 'therapy_tags': { '$slice': 10 }, 'indication_tags': { '$slice': 10 } }
-
 
 # Deprecated
 class CollectionTimeRetrievedDocument(RetrievedDocument):

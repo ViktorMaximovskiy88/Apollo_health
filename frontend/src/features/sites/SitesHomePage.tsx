@@ -1,16 +1,14 @@
-import { Button, Layout, Upload, Dropdown, Space, Menu, notification } from 'antd';
+import { Button, Upload, Dropdown, Space, Menu, notification } from 'antd';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useRunBulkMutation } from '../collections/siteScrapeTasksApi';
-
-import { SiteBreadcrumbs } from './SiteBreadcrumbs';
 import { LoadingOutlined, UploadOutlined, DownOutlined } from '@ant-design/icons';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
-
 import { SiteDataTable } from './SiteDataTable';
 import { QuickFilter } from './QuickFilter';
-import { client } from '../../app/base-api';
+import { client, baseApiUrl } from '../../app/base-api';
+import { MainLayout } from '../../components';
 
 function CreateSite() {
   return (
@@ -24,16 +22,16 @@ function BulkActions() {
   const [runBulk] = useRunBulkMutation();
   const onMenuSelect = async (key: string) => {
     const response: any = await runBulk(key);
-    if (response.data.scrapes_launched === 0 || response.data.canceled_srapes === 0) {
+    if (response.data.scrapes_launched === 0 || response.data.canceled_scrapes === 0) {
       notification.error({
         message: 'Whoops!',
         description: 'No sites were found!',
       });
-    } else if (response.data.canceled_srapes) {
+    } else if (response.data.canceled_scrapes) {
       notification.success({
         message: 'Success!',
-        description: `${response.data.canceled_srapes} site${
-          response.data.canceled_srapes > 1 ? 's was' : ' were'
+        description: `${response.data.canceled_scrapes} site${
+          response.data.canceled_scrapes > 1 ? 's were' : ' was'
         } canceled from the collection queue!`,
       });
     } else {
@@ -100,35 +98,38 @@ function BulkUpload() {
     }
   };
   return (
-    <Upload
-      name="file"
-      accept=".csv,.txt,.xlsx"
-      action="/api/v1/sites/upload"
-      headers={{
-        Authorization: `Bearer ${token}`,
-      }}
-      showUploadList={false}
-      onChange={onChange}
-    >
-      <Button icon={uploading ? <LoadingOutlined /> : <UploadOutlined />} />
-    </Upload>
+    <Button>
+      <Upload
+        name="file"
+        accept=".csv,.txt,.xlsx"
+        action={`${baseApiUrl}/sites/upload`}
+        headers={{
+          Authorization: `Bearer ${token}`,
+        }}
+        showUploadList={false}
+        onChange={onChange}
+      >
+        {uploading ? <LoadingOutlined /> : <UploadOutlined />}
+      </Upload>
+    </Button>
   );
 }
 
 export function SitesHomePage() {
   const [isLoading, setLoading] = useState(false);
   return (
-    <Layout className="p-4 bg-transparent">
-      <div className="flex">
-        <SiteBreadcrumbs />
-        <div className="ml-auto space-x-2">
+    <MainLayout
+      pageTitle={'Sites'}
+      pageToolbar={
+        <>
           <QuickFilter isLoading={isLoading} />
           <CreateSite />
           <BulkActions />
           <BulkUpload />
-        </div>
-      </div>
+        </>
+      }
+    >
       <SiteDataTable setLoading={setLoading} />
-    </Layout>
+    </MainLayout>
   );
 }

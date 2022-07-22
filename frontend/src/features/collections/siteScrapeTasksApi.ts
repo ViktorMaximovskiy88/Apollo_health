@@ -14,14 +14,11 @@ export const siteScrapeTasksApi = createApi({
     runSiteScrapeTask: builder.mutation<SiteScrapeTask, string>({
       query: (siteId) => ({
         url: `/site-scrape-tasks/?site_id=${siteId}`,
-        method: 'PUT'
+        method: 'PUT',
       }),
       invalidatesTags: (_r, _e, id) => [{ type: 'SiteScrapeTask', id }],
     }),
-    updateSiteScrapeTask: builder.mutation<
-      SiteScrapeTask,
-      Partial<SiteScrapeTask>
-    >({
+    updateSiteScrapeTask: builder.mutation<SiteScrapeTask, Partial<SiteScrapeTask>>({
       query: (body) => ({
         url: `/site-scrape-tasks/${body._id}`,
         method: 'POST',
@@ -60,9 +57,7 @@ export const siteScrapeTasksApi = createApi({
         url: `/site-scrape-tasks/cancel-all?site_id=${siteId}`,
         method: 'POST',
       }),
-      invalidatesTags: (_r, _e, id) => [
-        { type: 'SiteScrapeTask', id }
-      ],
+      invalidatesTags: (_r, _e, id) => [{ type: 'SiteScrapeTask', id }],
     }),
     getChangeLog: builder.query<ChangeLog[], string>({
       query: (id) => `/change-log/${id}`,
@@ -74,7 +69,7 @@ export const siteScrapeTasksApi = createApi({
         method: 'POST',
       }),
       invalidatesTags: (_r, _e, id) => [{ type: 'SiteScrapeTask', id }],
-    })
+    }),
   }),
 });
 

@@ -7,8 +7,10 @@ import { useParams } from 'react-router-dom';
 import {
   extractionTaskTableState,
   setExtractionTaskTableFilter,
+  setExtractionTaskTableLimit,
+  setExtractionTaskTableSkip,
   setExtractionTaskTableSort,
-} from '../../app/uiSlice';
+} from './extractionsSlice';
 import {
   prettyDateDistance,
   prettyDateFromISO,
@@ -19,6 +21,8 @@ import {
 import { ButtonLink } from '../../components/ButtonLink';
 import { useGetExtractionTasksForDocQuery } from './extractionsApi';
 import { ExtractionTask } from './types';
+import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
+import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 
 const columns = [
   {
@@ -34,8 +38,7 @@ const columns = [
         placeholder: 'Select Date',
       };
     },
-    render: ({ value: queued_time }: { value: string }) =>
-      prettyDateFromISO(queued_time),
+    render: ({ value: queued_time }: { value: string }) => prettyDateFromISO(queued_time),
   },
   {
     header: 'Elapsed',
@@ -82,14 +85,32 @@ const columns = [
     name: 'extraction_count',
     defaultFlex: 1,
     render: ({ data: task }: { data: ExtractionTask }) => {
-      return (
-        <ButtonLink to={task._id}>
-          {task.extraction_count} Extractions
-        </ButtonLink>
-      );
+      return <ButtonLink to={task._id}>{task.extraction_count} Extractions</ButtonLink>;
     },
   },
 ];
+
+const useControlledPagination = () => {
+  const tableState = useSelector(extractionTaskTableState);
+  const dispatch = useDispatch();
+
+  const onLimitChange = useCallback(
+    (limit: number) => dispatch(setExtractionTaskTableLimit(limit)),
+    [dispatch]
+  );
+  const onSkipChange = useCallback(
+    (skip: number) => dispatch(setExtractionTaskTableSkip(skip)),
+    [dispatch]
+  );
+  const controlledPaginationProps = {
+    pagination: true,
+    limit: tableState.pagination.limit,
+    onLimitChange,
+    skip: tableState.pagination.skip,
+    onSkipChange,
+  };
+  return controlledPaginationProps;
+};
 
 export function ExtractionTasksTable() {
   const params = useParams();
@@ -99,26 +120,18 @@ export function ExtractionTasksTable() {
     pollingInterval: 5000,
   });
 
-  const tableState = useSelector(extractionTaskTableState);
-  const dispatch = useDispatch();
-  const onFilterChange = useCallback(
-    (filter: any) => dispatch(setExtractionTaskTableFilter(filter)),
-    [dispatch]
-  );
-  const onSortChange = useCallback(
-    (sort: any) => dispatch(setExtractionTaskTableSort(sort)),
-    [dispatch]
-  );
+  const filterProps = useDataTableFilter(extractionTaskTableState, setExtractionTaskTableFilter);
+  const sortProps = useDataTableSort(extractionTaskTableState, setExtractionTaskTableSort);
+  const controlledPagination = useControlledPagination();
 
   return (
     <ReactDataGrid
-      dataSource={documents || []}
+      dataSource={documents ?? []}
+      {...filterProps}
+      {...sortProps}
+      {...controlledPagination}
       rowHeight={50}
       columns={columns}
-      defaultFilterValue={tableState.filter}
-      onFilterValueChange={onFilterChange}
-      defaultSortInfo={tableState.sort}
-      onSortInfoChange={onSortChange}
     />
   );
 }

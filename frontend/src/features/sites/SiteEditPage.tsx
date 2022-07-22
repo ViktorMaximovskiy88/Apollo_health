@@ -1,12 +1,9 @@
-import Title from 'antd/lib/typography/Title';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Site, CollectionMethod } from './types';
 import { SiteForm } from './SiteForm';
 import { useGetSiteQuery, useUpdateSiteMutation } from './sitesApi';
-import { Layout } from 'antd';
-import {
-  useCancelAllSiteScrapeTasksMutation,
-} from '../collections/siteScrapeTasksApi';
+import { useCancelAllSiteScrapeTasksMutation } from '../collections/siteScrapeTasksApi';
+import { MainLayout } from '../../components';
 
 export function SiteEditPage() {
   const params = useParams();
@@ -19,17 +16,17 @@ export function SiteEditPage() {
   async function tryUpdateSite(update: Partial<Site>) {
     update._id = params.siteId;
     await updateSite(update);
-    if (site!.collection_method === CollectionMethod.Automated && update.collection_method === CollectionMethod.Manual) {
-      await cancelAllScrapes(params.siteId)
+    if (
+      site!.collection_method === CollectionMethod.Automated &&
+      update.collection_method === CollectionMethod.Manual
+    ) {
+      await cancelAllScrapes(params.siteId);
     }
     navigate(-1);
   }
   return (
-    <Layout className="p-4 bg-transparent">
-      <div className="flex">
-        <Title level={4}>Edit Site</Title>
-      </div>
+    <MainLayout pageTitle={'Edit Site'}>
       <SiteForm onFinish={tryUpdateSite} initialValues={site} />
-    </Layout>
+    </MainLayout>
   );
 }

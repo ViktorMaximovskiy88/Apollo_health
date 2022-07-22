@@ -8,19 +8,24 @@ import {
   setDocDocumentTableFilter,
   setDocDocumentTableSort,
   docDocumentTableState,
-} from '../../app/uiSlice';
-import {
-  prettyDateTimeFromISO,
-  scrapeTaskStatusDisplayName,
-  scrapeTaskStatusStyledDisplay,
-} from '../../common';
+  setDocDocumentTableLimit,
+  setDocDocumentTableSkip,
+} from './docDocumentsSlice';
+import { prettyDateTimeFromISO } from '../../common';
 import { ButtonLink, GridPaginationToolbar } from '../../components';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { TaskStatus } from '../../common';
 import { Site } from '../sites/types';
 import { useGetChangeLogQuery, useLazyGetDocDocumentsQuery } from './docDocumentApi';
 import { DocDocument } from './types';
 import { useInterval } from '../../common/hooks';
+import {
+  ApprovalStatus,
+  approvalStatusDisplayName,
+  approvalStatusStyledDisplay,
+} from '../../common/approvalStatus';
+import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
+import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
+import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
@@ -74,19 +79,13 @@ const columns = [
     filterEditor: SelectFilter,
     filterEditorProps: {
       placeholder: 'All',
-      dataSource: [
-        { id: TaskStatus.Finished, label: scrapeTaskStatusDisplayName(TaskStatus.Finished) },
-        { id: TaskStatus.Canceled, label: scrapeTaskStatusDisplayName(TaskStatus.Canceled) },
-        { id: TaskStatus.Queued, label: scrapeTaskStatusDisplayName(TaskStatus.Queued) },
-        { id: TaskStatus.Failed, label: scrapeTaskStatusDisplayName(TaskStatus.Failed) },
-        {
-          id: TaskStatus.InProgress,
-          label: scrapeTaskStatusDisplayName(TaskStatus.InProgress),
-        },
-      ],
+      dataSource: Object.values(ApprovalStatus).map((status) => ({
+        id: status,
+        label: approvalStatusDisplayName(status),
+      })),
     },
     render: ({ data: doc }: { data: DocDocument }) => {
-      return scrapeTaskStatusStyledDisplay(doc.classification_status);
+      return approvalStatusStyledDisplay(doc.classification_status);
     },
   },
   {
@@ -123,34 +122,27 @@ const columns = [
   },
 ];
 
-export function DocDocumentsDataTable() {
+const useControlledPagination = ({
+  isActive,
+  setActive,
+}: {
+  isActive: boolean;
+  setActive: (active: boolean) => void;
+}) => {
   const tableState = useSelector(docDocumentTableState);
-  const [getDocDocumentsFn] = useLazyGetDocDocumentsQuery();
   const dispatch = useDispatch();
-  const onFilterChange = useCallback(
-    (filter: any) => dispatch(setDocDocumentTableFilter(filter)),
+
+  const onLimitChange = useCallback(
+    (limit: number) => dispatch(setDocDocumentTableLimit(limit)),
     [dispatch]
   );
-  const onSortChange = useCallback(
-    (sort: any) => dispatch(setDocDocumentTableSort(sort)),
+  const onSkipChange = useCallback(
+    (skip: number) => dispatch(setDocDocumentTableSkip(skip)),
     [dispatch]
-  );
-
-  // Trigger update every 10 seconds by invalidating memoized callback
-  const { setActive, isActive, watermark } = useInterval(10000);
-
-  const loadData = useCallback(
-    async (tableInfo: any) => {
-      const { data } = await getDocDocumentsFn(tableInfo);
-      const sites = data?.data || [];
-      const count = data?.total || 0;
-      return { data: sites, count };
-    },
-    [getDocDocumentsFn, watermark]
   );
 
   const renderPaginationToolbar = useCallback(
-    (paginationProps: any) => {
+    (paginationProps: TypePaginationProps) => {
       return (
         <GridPaginationToolbar
           paginationProps={{ ...paginationProps }}
@@ -159,21 +151,49 @@ export function DocDocumentsDataTable() {
         />
       );
     },
-    [isActive]
+    [isActive, setActive]
   );
+
+  const controlledPaginationProps = {
+    pagination: true,
+    limit: tableState.pagination.limit,
+    onLimitChange,
+    skip: tableState.pagination.skip,
+    onSkipChange,
+    renderPaginationToolbar,
+  };
+  return controlledPaginationProps;
+};
+
+export function DocDocumentsDataTable() {
+  // Trigger update every 10 seconds by invalidating memoized callback
+  const { isActive, setActive, watermark } = useInterval(10000);
+
+  const [getDocDocumentsFn] = useLazyGetDocDocumentsQuery();
+
+  const loadData = useCallback(
+    async (tableInfo: any) => {
+      const { data } = await getDocDocumentsFn(tableInfo);
+      const sites = data?.data ?? [];
+      const count = data?.total ?? 0;
+      return { data: sites, count };
+    },
+    [getDocDocumentsFn, watermark] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  const filterProps = useDataTableFilter(docDocumentTableState, setDocDocumentTableFilter);
+  const sortProps = useDataTableSort(docDocumentTableState, setDocDocumentTableSort);
+  const controlledPagination = useControlledPagination({ isActive, setActive });
 
   return (
     <ReactDataGrid
       dataSource={loadData}
+      {...filterProps}
+      {...sortProps}
+      {...controlledPagination}
       columns={columns}
       rowHeight={50}
-      pagination
-      defaultFilterValue={tableState.filter}
-      onFilterValueChange={onFilterChange}
-      defaultSortInfo={tableState.sort}
-      onSortInfoChange={onSortChange}
       renderLoadMask={() => <></>}
-      renderPaginationToolbar={renderPaginationToolbar}
       activateRowOnFocus={false}
     />
   );

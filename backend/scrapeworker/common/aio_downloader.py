@@ -26,6 +26,7 @@ default_headers: dict[str, str] = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36",
 }
 
+
 @dataclass
 class AioProxy:
     proxy: str
@@ -37,9 +38,11 @@ class AioDownloader:
     session: ClientSession
 
     def __init__(self):
-        self.session = ClientSession(connector=TCPConnector(ssl=self.permissive_ssl_context()))
+        self.session = ClientSession(
+            connector=TCPConnector(ssl=self.permissive_ssl_context())
+        )
         self.rate_limiter = RateLimiter()
-    
+
     def permissive_ssl_context(self):
         context = SSLContext()
         context.options |= ssl.OP_NO_SSLv2
@@ -48,14 +51,14 @@ class AioDownloader:
         context.verify_mode = ssl.CERT_NONE
 
         ciphers = context.get_ciphers()
-        all_ciphers = ':'.join(c['name'] for c in ciphers) + ':HIGH:!DH:!aNULL'
+        all_ciphers = ":".join(c["name"] for c in ciphers) + ":HIGH:!DH:!aNULL"
         context.set_ciphers(all_ciphers)
 
         return context
 
     async def close(self):
         await self.session.close()
-    
+
     async def send_request(self, download: Download, proxy: AioProxy | None):
         headers = default_headers | download.request.headers
         # TODO de-duplicate this...
@@ -77,11 +80,9 @@ class AioDownloader:
             )
 
         download.response.status = response.status
-        logging.info(
-            f"Downloaded {download.request.url}, got {response.status}"
-        )
+        logging.info(f"Downloaded {download.request.url}, got {response.status}")
         return response
-        
+
     # just return the aio useable proxy list
     def convert_proxy(self, proxy: Proxy) -> list[AioProxy]:
         proxy_auth = None
@@ -133,7 +134,12 @@ class AioDownloader:
             )
             yield attempt, proxy_settings
 
-    async def write_response_to_file(self, download: Download, response: ClientResponse, temp: tempfile._TemporaryFileWrapper):
+    async def write_response_to_file(
+        self,
+        download: Download,
+        response: ClientResponse,
+        temp: tempfile._TemporaryFileWrapper,
+    ):
         hasher = DocStreamHasher()
         download.file_path = temp.name
         async with aiofiles.open(download.file_path, "wb") as fd:
@@ -161,6 +167,7 @@ class AioDownloader:
 
                 download.response.from_headers(response.headers)
                 download.guess_extension()
-                with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
+                with tempfile.NamedTemporaryFile(
+                    suffix=f".{download.file_extension}"
+                ) as temp:
                     yield await self.write_response_to_file(download, response, temp)
-                

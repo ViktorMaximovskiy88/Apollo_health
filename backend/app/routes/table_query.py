@@ -1,6 +1,9 @@
+import json
 from typing import Generic, TypeVar
+from beanie import PydanticObjectId
 from dateutil import parser
 from beanie.odm.queries.find import FindMany
+from fastapi import Request
 
 from pydantic import BaseModel
 
@@ -22,6 +25,16 @@ class TableQueryResponse(BaseModel, Generic[T]):
     data: list[T]
     total: int
 
+def get_query_json_list(arg: str, type):
+    def func(request: Request):
+        value_str = request.query_params.get(arg, None)
+        if value_str:
+            values: list[type] = json.loads(value_str)
+            return [type.parse_obj(v) for v in values]
+        else:
+            return []
+
+    return func
 
 async def query_table(
     query: FindMany[T],  # type: ignore
@@ -43,6 +56,11 @@ async def query_table(
             value = parser.parse(filter.value)
         else:
             value = filter.value
+
+        try:
+            value = PydanticObjectId(value)
+        except:
+            pass
 
         if filter.operator == 'contains':
             query = query.find({ filter.name: { '$regex': value, '$options': 'i' } })

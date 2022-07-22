@@ -1,13 +1,10 @@
 import { Form, Input } from 'antd';
 import { useState } from 'react';
 import { ActiveUrlResponse, BaseUrl, Site } from './types';
-import { fetchWithAuth } from '../../app/base-api';
+import { fetchWithAuth, baseApiUrl } from '../../app/base-api';
 import { FormInstance } from 'antd/lib/form/Form';
 
-function useValidateUrlAndErrorMessage(
-  form: FormInstance,
-  initialValues?: Site
-) {
+function useValidateUrlAndErrorMessage(form: FormInstance, initialValues?: Site) {
   const [urlValidation, setUrlValidation] = useState<{
     [id: string]: ActiveUrlResponse;
   }>({});
@@ -15,7 +12,7 @@ function useValidateUrlAndErrorMessage(
   async function validateUrl(fieldKey: number, value: string) {
     const currentSite = initialValues ? initialValues._id : '';
     const checkUrl = encodeURIComponent(value);
-    let url = encodeURI(`/api/v1/sites/active-url?url=${checkUrl}`);
+    let url = encodeURI(`${baseApiUrl}/sites/active-url?url=${checkUrl}`);
     if (currentSite) url += `&currentSite=${currentSite}`;
     const check = await fetchWithAuth(url);
     const activeUrlResponse = await check.json();
@@ -50,7 +47,7 @@ function useValidateUrlAndErrorMessage(
         <p>
           URL is in use by{' '}
           <a
-            href={`../${urlCheck.site?._id}/scrapes`}
+            href={`/sites/${urlCheck.site?._id}/scrapes`}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -71,17 +68,8 @@ interface UrlInputPropTypes {
   field: { fieldKey?: number };
   form: FormInstance;
 }
-export function UrlInput({
-  initialValues,
-  fieldKey,
-  name,
-  field,
-  form,
-}: UrlInputPropTypes) {
-  const { validateUrl, createErrorMessage } = useValidateUrlAndErrorMessage(
-    form,
-    initialValues
-  );
+export function UrlInput({ initialValues, fieldKey, name, field, form }: UrlInputPropTypes) {
+  const { validateUrl, createErrorMessage } = useValidateUrlAndErrorMessage(form, initialValues);
 
   return (
     <Form.Item

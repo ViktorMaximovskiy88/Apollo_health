@@ -2,14 +2,13 @@ from datetime import datetime
 from beanie import PydanticObjectId
 from beanie.odm.operators.update.general import Set
 from fastapi import APIRouter, Depends, HTTPException, status, Security
-import pymongo
 from pymongo import ReturnDocument
 import typer
 
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask, UpdateSiteScrapeTask
 from backend.common.models.user import User
-from backend.common.core.enums import TaskStatus
+from backend.common.core.enums import SiteStatus, TaskStatus
 from backend.app.utils.logger import (
     Logger,
     create_and_log,
@@ -75,14 +74,19 @@ async def start_scrape_task(
     logger: Logger = Depends(get_logger),
 ):
     site = await Site.get(site_id)
-    site_scrape_task = None;
+    if not site:
+        raise HTTPException(
+            detail=f"Site {id} Not Found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    site_scrape_task = None
     if site.collection_method == CollectionMethod.Manual:
         site_scrape_task = SiteScrapeTask(
-            site_id=site_id, 
-            start_time=datetime.now(), 
-            queued_time=datetime.now(), 
-            status=TaskStatus.IN_PROGRESS, 
-            collection_type=CollectionMethod.Manual
+            site_id=site_id,
+            start_time=datetime.now(),
+            queued_time=datetime.now(),
+            status=TaskStatus.IN_PROGRESS,
+            collection_type=CollectionMethod.Manual,
         )
     else:
         site_scrape_task = SiteScrapeTask(site_id=site_id, queued_time=datetime.now())
@@ -100,7 +104,7 @@ async def start_scrape_task(
 
 
 @router.post("/bulk-run")
-async def runBulkByType(
+async def run_bulk_by_type(
     type: str,
     logger: Logger = Depends(get_logger),
     current_user: User = Security(get_current_user),
@@ -110,44 +114,45 @@ async def runBulkByType(
     query = {
         "disabled": False,
         "base_urls": {"$exists": True, "$not": {"$size": 0}},
-        "collection_method": {"$ne": [CollectionMethod.Manual]},
+        "collection_method": {"$ne": CollectionMethod.Manual},
+        "status": {"$ne": SiteStatus.INACTIVE},
     }
     if bulk_type == "unrun":
         query["last_run_status"] = None
     elif bulk_type == "failed":
-        query["last_run_status"] = {"$ne": [TaskStatus.FAILED, TaskStatus.CANCELED]}
+        query["last_run_status"] = {"$in": [TaskStatus.FAILED, TaskStatus.CANCELED]}
     elif bulk_type == "canceled":
         query["last_run_status"] = TaskStatus.CANCELED
     elif bulk_type == "cancel-active":
-       query["last_run_status"] = {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}
+        del query["status"]
+        query["last_run_status"] = {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}
     elif bulk_type == "all":
-        query["last_run_status"] = {"$ne": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}
+        query["last_run_status"] = {"$nin": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}
 
     async for site in Site.find_many(query):
-        site_id: PydanticObjectId = site.id
+        site_id: PydanticObjectId = site.id  # type: ignore
 
         if bulk_type == "cancel-active":
             total_scrapes += 1
-            result = await SiteScrapeTask.get_motor_collection().update_many(
-                {"site_id": site_id, "status":{ "$in": [ TaskStatus.QUEUED, TaskStatus.IN_PROGRESS ] }},
-                {"$set": {"status": TaskStatus.CANCELING}}
+            await SiteScrapeTask.get_motor_collection().update_many(
+                {
+                    "site_id": site_id,
+                    "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]},
+                },
+                {"$set": {"status": TaskStatus.CANCELING}},
             )
-            await site.update(
-                Set(
-                    {
-                        Site.last_run_status: TaskStatus.CANCELING
-
-                    }
-                )
-            )
+            await site.update(Set({Site.last_run_status: TaskStatus.CANCELING}))
         else:
             site_scrape_task = SiteScrapeTask(
-                site_id=site_id, queued_time=datetime.now())
+                site_id=site_id, queued_time=datetime.now()
+            )
             site_scrape_task = await try_queue_unique_task(site_scrape_task)
             if site_scrape_task:
                 total_scrapes += 1
-                await logger.background_log_change(current_user, site_scrape_task, "CREATE")
-                await Site.find_one(Site.id == site.id).update(
+                await logger.background_log_change(
+                    current_user, site_scrape_task, "CREATE"
+                )
+                await site.update(
                     Set(
                         {
                             Site.last_run_status: site_scrape_task.status,
@@ -156,9 +161,9 @@ async def runBulkByType(
                 )
 
     if bulk_type == "cancel-active":
-        return {"status": True, "canceled_srapes": total_scrapes}
+        return {"status": True, "canceled_scrapes": total_scrapes}
     else:
-         return {"status": True, "scrapes_launched": total_scrapes}
+        return {"status": True, "scrapes_launched": total_scrapes}
 
 
 @router.post("/cancel-all", response_model=SiteScrapeTask)
@@ -167,11 +172,21 @@ async def cancel_all_site_scrape_task(
     current_user: User = Depends(get_current_user),
 ):
     # fetch the site to determine the last_run_status is either QUEUED or IN_PROGRESS
-    site = await Site.find_one({"_id": site_id, "last_run_status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}})
+    site = await Site.find_one(
+        {
+            "_id": site_id,
+            "last_run_status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]},
+        }
+    )
     if site:
         if site.collection_method == CollectionMethod.Manual:
 
-            last_site_task = await SiteScrapeTask.find_one({"site_id": site_id, "status":{ "$in": [ TaskStatus.QUEUED, TaskStatus.IN_PROGRESS ] }})
+            last_site_task = await SiteScrapeTask.find_one(
+                {
+                    "site_id": site_id,
+                    "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]},
+                }
+            )
 
             if last_site_task.documents_found == 0:
                 result = await SiteScrapeTask.get_motor_collection().update_many(
@@ -181,14 +196,20 @@ async def cancel_all_site_scrape_task(
                 await site.update(Set({Site.last_run_status: TaskStatus.CANCELED}))
             else:
                 result = await SiteScrapeTask.get_motor_collection().update_many(
-                    {"site_id": site_id, "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}},
+                    {
+                        "site_id": site_id,
+                        "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]},
+                    },
                     {"$set": {"status": TaskStatus.FINISHED}},
                 )
                 await site.update(Set({Site.last_run_status: TaskStatus.FINISHED}))
         else:
             # If the site is found, fetch all tasks and cancel all queued or in progress tasks
             result = await SiteScrapeTask.get_motor_collection().update_many(
-                {"site_id": site_id, "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}},
+                {
+                    "site_id": site_id,
+                    "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]},
+                },
                 {"$set": {"status": TaskStatus.CANCELING}},
             )
             await site.update(Set({Site.last_run_status: TaskStatus.CANCELING}))
@@ -213,10 +234,14 @@ async def update_scrape_task(
     "/{id}/cancel",
     response_model=SiteScrapeTask,
     dependencies=[Security(get_current_user)],
+    responses={
+        406: {"description": "Scrape task is not queued or in progress."},
+    },
 )
 async def cancel_scrape_task(
     target: SiteScrapeTask = Depends(get_target),
 ):
+    site = await Site.get(target.site_id)
     canceled_queued_task = (
         await SiteScrapeTask.get_motor_collection().find_one_and_update(
             {"_id": target.id, "status": TaskStatus.QUEUED},
@@ -227,6 +252,8 @@ async def cancel_scrape_task(
     if canceled_queued_task:
         scrape_task = SiteScrapeTask.parse_obj(canceled_queued_task)
         typer.secho(f"Canceled Task {scrape_task.id} ", fg=typer.colors.BLUE)
+        if site:
+            await site.set({Site.last_run_status: TaskStatus.CANCELED})
         return scrape_task
 
     acquired = await SiteScrapeTask.get_motor_collection().find_one_and_update(
@@ -241,4 +268,11 @@ async def cancel_scrape_task(
     if acquired:
         scrape_task = SiteScrapeTask.parse_obj(acquired)
         typer.secho(f"Set Task {scrape_task.id} 'Canceling'", fg=typer.colors.BLUE)
+        if site:
+            await site.set({Site.last_run_status: TaskStatus.CANCELING})
         return scrape_task
+
+    raise HTTPException(
+        status_code=status.HTTP_406_NOT_ACCEPTABLE,
+        detail="Scrape task is not queued or in progress.",
+    )

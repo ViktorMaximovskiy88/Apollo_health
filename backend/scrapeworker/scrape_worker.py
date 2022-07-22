@@ -10,45 +10,42 @@ from tenacity.wait import wait_random_exponential
 from tenacity._asyncio import AsyncRetrying
 from tenacity.stop import stop_after_attempt
 from beanie.odm.operators.update.array import Push
-from beanie.odm.operators.update.general import Inc
+from beanie.odm.operators.update.general import Inc, Set
 from urllib.parse import urlparse
-from backend.common.models.doc_document import DocDocument
-from backend.common.models.proxy import Proxy
-from backend.common.models.site import Site
-from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
-from backend.common.models.site_scrape_task import SiteScrapeTask
 from playwright.async_api import Response as PlaywrightResponse
 from playwright.async_api import (
-    Browser,
     BrowserContext,
     ProxySettings,
     Page,
 )
-
 from playwright_stealth import stealth_async
-from backend.common.models.user import User
-from backend.scrapeworker.common.aio_downloader import AioDownloader
-from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
+from urllib.parse import urlparse
+
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
+from backend.common.models.doc_document import DocDocument, calc_final_effective_date
+from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
+from backend.common.models.proxy import Proxy
+from backend.common.models.site import Site
+from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.models.user import User
+from backend.common.core.enums import TaskStatus
 from backend.common.storage.client import DocumentStorageClient
+from backend.scrapeworker.common.aio_downloader import AioDownloader
 from backend.scrapeworker.common.exceptions import (
     CanceledTaskException,
     NoDocsCollectedException,
 )
-from backend.scrapeworker.common.models import Download, Request, Response
-from backend.scrapeworker.scrapers import scrapers
-from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
+from backend.scrapeworker.common.models import Download, Request
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
-from backend.scrapeworker.common.aio_downloader import default_headers
-from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
-from backend.common.storage.client import DocumentStorageClient
-from backend.scrapeworker.file_parsers import parse_by_type
-from backend.common.core.enums import TaskStatus
+from backend.scrapeworker.common.text_handler import TextHandler
 from backend.scrapeworker.document_tagging.indication_tagging import IndicationTagger
 from backend.scrapeworker.document_tagging.taggers import Taggers
 from backend.scrapeworker.document_tagging.therapy_tagging import TherapyTagger
+from backend.scrapeworker.file_parsers import parse_by_type
 from backend.scrapeworker.playbook import ScrapePlaybook
 from backend.scrapeworker.common.utils import get_extension_from_path_like
+from backend.scrapeworker.scrapers import scrapers
+from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
 
 
 def is_google(url):
@@ -79,6 +76,7 @@ class ScrapeWorker:
         self.site = site
         self.seen_urls = set()
         self.doc_client = DocumentStorageClient()
+        self.text_handler = TextHandler()
         self.downloader = AioDownloader()
         self.playbook = ScrapePlaybook(self.site.playbook)
         self.logger = Logger()
@@ -136,6 +134,7 @@ class ScrapeWorker:
             retrieved_document_id=retrieved_document.id,  # type: ignore
             name=retrieved_document.name,
             checksum=retrieved_document.checksum,
+            text_checksum=retrieved_document.text_checksum,
             document_type=retrieved_document.document_type,
             doc_type_confidence=retrieved_document.doc_type_confidence,
             end_date=retrieved_document.end_date,
@@ -153,7 +152,10 @@ class ScrapeWorker:
             base_url=retrieved_document.base_url,
             therapy_tags=retrieved_document.therapy_tags,
             indication_tags=retrieved_document.indication_tags,
+            file_extension=retrieved_document.file_extension,
+            identified_dates=retrieved_document.identified_dates,
         )
+        doc_document.final_effective_date = calc_final_effective_date(doc_document)
         await create_and_log(self.logger, await self.get_user(), doc_document)
 
     async def attempt_download(self, download: Download):
@@ -209,9 +211,13 @@ class ScrapeWorker:
                 )
                 await self.update_doc_document(document)
             else:
+                text_checksum = await self.text_handler.save_text(
+                    parsed_content["text"]
+                )
                 document = RetrievedDocument(
                     base_url=download.metadata.base_url,
                     checksum=checksum,
+                    text_checksum=text_checksum,
                     context_metadata=download.metadata.dict(),
                     doc_type_confidence=parsed_content["confidence"],
                     document_type=parsed_content["document_type"],
@@ -223,7 +229,7 @@ class ScrapeWorker:
                     next_update_date=parsed_content["next_update_date"],
                     published_date=parsed_content["published_date"],
                     file_extension=download.file_extension,
-                    content_type=download.response.content_type,
+                    content_type=download.content_type,
                     first_collected_date=now,
                     identified_dates=parsed_content["identified_dates"],
                     lang_code=parsed_content["lang_code"],
@@ -362,7 +368,7 @@ class ScrapeWorker:
                         self.preprocess_download(download, base_url)
                         all_downloads.append(download)
 
-            return all_downloads
+        return all_downloads
 
     async def follow_links(self, url) -> list[str]:
         urls: list[str] = []
@@ -380,7 +386,7 @@ class ScrapeWorker:
                 for dl in await crawler.execute():
                     urls.append(dl.request.url)
 
-            return urls
+        return urls
 
     def should_process_download(self, download: Download):
         url = download.request.url
