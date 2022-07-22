@@ -64,6 +64,8 @@ function App() {
           <Route index element={<SitesHomePage />} />
           <Route path="new" element={<SiteCreatePage />} />
           <Route path=":siteId">
+            {/* duped because we want this */}
+            <Route index element={<SiteEditPage />} />
             <Route path="edit" element={<SiteEditPage />} />
             <Route path="scrapes" element={<CollectionsPage />} />
             <Route path="documents">
