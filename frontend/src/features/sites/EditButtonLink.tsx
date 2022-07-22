@@ -7,6 +7,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User } from '../users/types';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useUpdateSiteMutation } from './sitesApi';
+import { SiteStatus } from './siteStatus';
 
 const useCurrentUser = (): User | undefined => {
   const { user: auth0User } = useAuth0();
@@ -18,8 +20,16 @@ export const EditButtonLink = ({ site }: { site: Site }): JSX.Element => {
   const navigate = useNavigate();
   const currentUser = useCurrentUser();
   const [visible, setVisible] = useState(false);
+  const [updateSite] = useUpdateSiteMutation();
 
-  const confirm = () => navigate(`${site._id}/edit`);
+  const confirm = async () => {
+    if (!currentUser?._id) {
+      throw new Error(`Current user id not found. Found instead: ${currentUser?._id}`);
+    }
+    const update = { _id: site._id, assignee: currentUser?._id, status: SiteStatus.QualityHold };
+    await updateSite(update);
+    navigate(`${site._id}/edit`);
+  };
   const cancel = () => {
     setVisible(false);
   };

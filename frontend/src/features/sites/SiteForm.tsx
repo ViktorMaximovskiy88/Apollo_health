@@ -1,6 +1,6 @@
 import { Button, Form, Input, Popconfirm, Select, Space } from 'antd';
 import { FormInstance, useForm } from 'antd/lib/form/Form';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { Site, CollectionMethod } from './types';
 import { UrlFormFields } from './UrlFormField';
@@ -10,6 +10,7 @@ import { Assignee } from './AssigneeInput';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useGetUsersQuery } from '../users/usersApi';
 import { User } from '../users/types';
+import { useUpdateSiteMutation } from './sitesApi';
 
 const useCurrentUser = (): User | undefined => {
   const { user: auth0User } = useAuth0();
@@ -25,8 +26,19 @@ interface ToggleReadOnlyPropTypes {
 function ToggleReadOnly({ setReadOnly, form }: ToggleReadOnlyPropTypes) {
   const currentUser = useCurrentUser();
   const [visible, setVisible] = useState(false);
+  const [updateSite] = useUpdateSiteMutation();
+  const params = useParams();
 
-  const confirm = () => {
+  const confirm = async () => {
+    if (!currentUser?._id) {
+      throw new Error(`Current user id not found. Found instead: ${currentUser?._id}`);
+    }
+    const update: Partial<Site> = {
+      _id: params.siteId,
+      assignee: currentUser._id,
+      status: SiteStatus.QualityHold,
+    };
+    await updateSite(update);
     setReadOnly?.(false);
     form.setFieldsValue({
       assignee: currentUser?._id,
