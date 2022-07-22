@@ -1,37 +1,68 @@
 import { Form, Input, AutoComplete } from 'antd';
 import { FormInstance } from 'antd/lib/form/Form';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { User } from '../users/types';
 import { useGetUsersQuery } from '../users/usersApi';
 
 interface OptionType {
   label: string;
   value: string | null;
 }
-
-export function Assignee({ form }: { form: FormInstance }) {
-  const { data: users } = useGetUsersQuery();
-
-  const options: OptionType[] =
-    users?.map((user) => ({ label: user.full_name, value: user._id })) ?? [];
-  options.unshift({ label: 'Unassigned', value: null });
-
-  const currentAssigneeId = form.getFieldValue('assignee');
-
+const useOptions = (users?: User[]): OptionType[] => {
+  return useMemo(() => {
+    const options: OptionType[] =
+      users?.map((user: User) => ({ label: user.full_name, value: user._id })) ?? [];
+    options.unshift({ label: 'Unassigned', value: null });
+    return options;
+  }, [users]);
+};
+const useNameState = (
+  options: OptionType[],
+  currentAssigneeId: string
+): [string | null, (name: string | null) => void] => {
   const initialAssigneeName = options.find((option) => currentAssigneeId === option.value);
   const [name, setName] = useState<string | null>(
     initialAssigneeName?.label === 'Unassigned' ? null : initialAssigneeName?.label ?? null
   );
+  return [name, setName];
+};
+interface KeepFieldsInSyncTypes {
+  currentAssigneeId: string;
+  options: OptionType[];
+  setName: (name: string | null) => void;
+}
+const useKeepFieldsInSync = ({ options, currentAssigneeId, setName }: KeepFieldsInSyncTypes) => {
+  useEffect(() => {
+    const option = options.find((option: OptionType) => option.value === currentAssigneeId);
+    const newAssigneeName = option?.label === 'Unassigned' ? null : option?.label;
+    setName(newAssigneeName ?? null);
+  }, [currentAssigneeId, options, setName]);
+};
+const filterOptions = (searchText: string, options: OptionType[]): OptionType[] => {
+  let newFilteredOptions = options;
+  if (searchText) {
+    newFilteredOptions = options.filter((option) =>
+      option.label.toLowerCase().includes(searchText.toLowerCase())
+    );
+  }
+  return newFilteredOptions;
+};
 
+export function Assignee({ form }: { form: FormInstance }) {
+  const { data: users } = useGetUsersQuery();
+
+  const options: OptionType[] = useOptions(users);
+
+  const currentAssigneeId = form.getFieldValue('assignee');
+
+  const [name, setName] = useNameState(options, currentAssigneeId);
   const [filteredOptions, setFilteredOptions] = useState<OptionType[]>(options);
 
+  useKeepFieldsInSync({ options, currentAssigneeId, setName });
+
   const onSearch = (searchText: string): void => {
-    setFilteredOptions(
-      searchText
-        ? options.filter((option) =>
-            option.label.toLowerCase().includes(searchText.toLocaleLowerCase())
-          )
-        : options
-    );
+    const newFilteredOptions = filterOptions(searchText, options);
+    setFilteredOptions(newFilteredOptions);
   };
   const onSelect = (assigneeId: string, option: OptionType): void => {
     form.setFieldsValue({ assignee: assigneeId });
@@ -56,7 +87,7 @@ export function Assignee({ form }: { form: FormInstance }) {
   return (
     <>
       <Form.Item label="Assignee" validateStatus={validateStatus()}>
-        <AutoComplete // element only displays fullname of selected assignee
+        <AutoComplete // element only displays full_name of selected assignee
           placeholder="Unassigned"
           value={name}
           options={filteredOptions}
@@ -65,7 +96,7 @@ export function Assignee({ form }: { form: FormInstance }) {
           onChange={onChange}
         />
       </Form.Item>
-      <Form.Item // the element that actually saves the assignee user id
+      <Form.Item // element that actually saves the assignee user id
         hidden
         label="assignee id - should be hidden"
         name="assignee"

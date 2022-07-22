@@ -1,7 +1,7 @@
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Popconfirm, Tag, notification } from 'antd';
-import { InfoCircleOutlined, EditOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined } from '@ant-design/icons';
 import {
   prettyDateTimeFromISO,
   TaskStatus,
@@ -16,11 +16,12 @@ import { Site } from './types';
 import { SiteStatus, siteStatusDisplayName, siteStatusStyledDisplay } from './siteStatus';
 import { useGetUsersQuery } from '../users/usersApi';
 import { ReactNode } from 'react';
+import { EditButtonLink } from './EditButtonLink';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
 const Assignee = ({ id }: { id: string }) => {
-  // separate component because need to use hook
+  // to use hook
   const { data: users } = useGetUsersQuery();
   const [assignee] = users?.filter((user) => user._id === id) ?? [];
   return <>{assignee?.full_name}</>;
@@ -175,9 +176,7 @@ export const createColumns = (deleteSite: any, setDeletedSite: any) => {
             <ButtonLink to={`${site._id}/view`}>
               <InfoCircleOutlined />
             </ButtonLink>
-            <ButtonLink to={`${site._id}/edit`}>
-              <EditOutlined />
-            </ButtonLink>
+            <EditButtonLink site={site} />
             <ChangeLogModal target={site} useChangeLogQuery={useGetChangeLogQuery} />
             <Popconfirm
               title={`Are you sure you want to delete '${site.name}'?`}

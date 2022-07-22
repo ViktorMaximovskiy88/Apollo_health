@@ -1,5 +1,5 @@
-import { Button, Form, Input, Select, Space } from 'antd';
-import { useForm } from 'antd/lib/form/Form';
+import { Button, Form, Input, Popconfirm, Select, Space } from 'antd';
+import { FormInstance, useForm } from 'antd/lib/form/Form';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { Site, CollectionMethod } from './types';
@@ -7,6 +7,59 @@ import { UrlFormFields } from './UrlFormField';
 import { CollectionMethodComponent } from './CollectionMethod';
 import { SiteStatus } from './siteStatus';
 import { Assignee } from './AssigneeInput';
+import { useAuth0 } from '@auth0/auth0-react';
+import { useGetUsersQuery } from '../users/usersApi';
+import { User } from '../users/types';
+
+const useCurrentUser = (): User | undefined => {
+  const { user: auth0User } = useAuth0();
+  const { data: users } = useGetUsersQuery();
+  const currentUser: User | undefined = users?.find((user) => user.email === auth0User?.email);
+  return currentUser;
+};
+
+interface ToggleReadOnlyPropTypes {
+  form: FormInstance;
+  setReadOnly?: (readOnly: boolean) => void;
+}
+function ToggleReadOnly({ setReadOnly, form }: ToggleReadOnlyPropTypes) {
+  const currentUser = useCurrentUser();
+  const [visible, setVisible] = useState(false);
+
+  const confirm = () => {
+    setReadOnly?.(false);
+    form.setFieldsValue({
+      assignee: currentUser?._id,
+      status: SiteStatus.QualityHold,
+    });
+  };
+  const cancel = () => {
+    setVisible(false);
+  };
+
+  const handleVisibleChange = () => {
+    const siteAssignee = form.getFieldValue('assignee');
+    if (!siteAssignee || siteAssignee === currentUser?._id) {
+      confirm();
+    } else {
+      setVisible(true);
+    }
+  };
+
+  return (
+    <Popconfirm
+      title="Site is already assigned. Would you like to take over assignment?"
+      okText="Yes"
+      cancelText="No"
+      onConfirm={confirm}
+      onCancel={cancel}
+      visible={visible}
+      onVisibleChange={handleVisibleChange}
+    >
+      <Button type="primary">Edit Site</Button>
+    </Popconfirm>
+  );
+}
 
 function SiteStatusSelect() {
   const siteStatuses = [
@@ -101,9 +154,7 @@ export function SiteForm(props: {
       <Assignee form={form} />
       <SiteStatusSelect />
       {props.readOnly ? (
-        <Button onClick={() => props.setReadOnly?.(false)} type="primary">
-          Edit Site
-        </Button>
+        <ToggleReadOnly setReadOnly={props.setReadOnly} form={form} />
       ) : (
         <Form.Item>
           <Space>
