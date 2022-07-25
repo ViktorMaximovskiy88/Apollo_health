@@ -195,9 +195,13 @@ class ScrapeWorker:
                 self.doc_client.write_object(dest_path, temp_path, download.content_type)
                 await self.scrape_task.update(Inc({SiteScrapeTask.new_documents_found: 1}))
 
-            document = await RetrievedDocument.find_one(RetrievedDocument.checksum == checksum)
+            document = await RetrievedDocument.find_one(
+                RetrievedDocument.checksum == checksum
+                or checksum in RetrievedDocument.file_checksum_aliases
+            )
 
             if document:
+                logging.info("updating doc")
                 await self.update_retrieved_document(
                     document=document,
                     download=download,
@@ -210,11 +214,11 @@ class ScrapeWorker:
 
                 document = await RetrievedDocument.find_one(
                     RetrievedDocument.text_checksum == text_checksum
-                    or checksum in RetrievedDocument.file_checksum_aliases
                 )
 
                 if document:
-                    document.file_checksum_aliases.add(text_checksum)
+                    logging.info("updating doc w/alias")
+                    document.file_checksum_aliases.add(checksum)
                     await self.update_retrieved_document(
                         document=document,
                         download=download,
@@ -222,6 +226,7 @@ class ScrapeWorker:
                     )
                     await self.update_doc_document(document)
                 else:
+                    logging.info("creating doc")
                     now = datetime.now()
                     document = RetrievedDocument(
                         base_url=download.metadata.base_url,

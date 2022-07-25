@@ -37,7 +37,7 @@ class RetrievedDocument(BaseDocument):
     file_extension: str | None = None
     content_type: str | None = None
     # full text is the same for checksums in the below set
-    file_checksum_aliases: list[str] = Indexed(set[str], default=list())
+    file_checksum_aliases: set[str] = set()
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
@@ -71,7 +71,7 @@ class UpdateRetrievedDocument(BaseModel):
     metadata: dict | None = None
     context_metadata: dict | None = None
     lang_code: LangCode | None = None
-    file_checksum_aliases: list[str] = Indexed(list[str], default=list())
+    file_checksum_aliases: set[str] = set()
 
     therapy_tags: list[TherapyTag] | None = None
     indication_tags: list[IndicationTag] | None = None
