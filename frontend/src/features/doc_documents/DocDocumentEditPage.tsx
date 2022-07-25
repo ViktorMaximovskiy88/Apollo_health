@@ -148,9 +148,7 @@ export function DocDocumentEditPage() {
                     setTags([...tags]);
                     setHasChanges(true);
                   }}
-                  onEditTag={(tag: any) => {
-                    setHasChanges(true);
-                  }}
+                  onEditTag={(tag: any) => {}}
                   currentPage={pageNumber}
                 />
               </Tabs.TabPane>

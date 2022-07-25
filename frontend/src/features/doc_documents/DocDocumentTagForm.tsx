@@ -30,7 +30,6 @@ export function DocDocumentTagForm(props: {
     }
 
     _tags = orderBy(_tags, ['page', 'type', 'text'], ['asc', 'asc', 'desc']);
-
     setFilteredList(_tags);
   }, [searchTerm, tagTypeFilter, pageFilter, tags, currentPage]);
 
