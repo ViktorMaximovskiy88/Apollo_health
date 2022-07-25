@@ -201,7 +201,7 @@ class ScrapeWorker:
             )
 
             if document:
-                logging.info("updating doc")
+                logging.debug("updating doc")
                 await self.update_retrieved_document(
                     document=document,
                     download=download,
@@ -217,7 +217,7 @@ class ScrapeWorker:
                 )
 
                 if document:
-                    logging.info("updating doc w/alias")
+                    logging.debug("updating doc w/alias")
                     document.file_checksum_aliases.add(checksum)
                     await self.update_retrieved_document(
                         document=document,
@@ -226,7 +226,7 @@ class ScrapeWorker:
                     )
                     await self.update_doc_document(document)
                 else:
-                    logging.info("creating doc")
+                    logging.debug("creating doc")
                     now = datetime.now()
                     document = RetrievedDocument(
                         base_url=download.metadata.base_url,
