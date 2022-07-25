@@ -3,10 +3,10 @@ import { Button, Radio, Tag, Checkbox, Input } from 'antd';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { debounce, orderBy } from 'lodash';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { BaseDocTag } from './types';
+import { TherapyTag, IndicationTag } from './types';
 
 export function DocDocumentTagForm(props: {
-  tags: BaseDocTag[];
+  tags: Array<TherapyTag | IndicationTag>;
   onDeleteTag: Function;
   onEditTag: Function;
   onAddTag: Function;
@@ -33,16 +33,16 @@ export function DocDocumentTagForm(props: {
     setFilteredList(_tags);
   }, [searchTerm, tagTypeFilter, pageFilter, tags, currentPage]);
 
-  const applyFilter = (tag: BaseDocTag) => {
+  const applyFilter = (tag: TherapyTag | IndicationTag) => {
     const validPage = pageFilter == 'doc' ? true : currentPage == tag.page;
     console.debug(currentPage == tag.page, 'currentPage', currentPage, 'tag.page', tag.page);
-    return tagTypeFilter.includes(tag.type) && validPage;
+    return tagTypeFilter.includes(tag._type) && validPage;
   };
 
   const applyFilters = () => {
     const regex = new RegExp(searchTerm, 'i');
     return tags.filter(
-      (tag: BaseDocTag) =>
+      (tag: TherapyTag | IndicationTag) =>
         (tag.text?.match(regex) || `${tag.code ?? ''}`.match(regex)) && applyFilter(tag)
     );
   };
@@ -119,7 +119,7 @@ export function DocDocumentTagForm(props: {
                 <div className="flex flex-1">{tag.text}</div>
                 <div className="flex px-2">{tag.page + 1}</div>
                 <div className="">
-                  <Tag className="capitalize select-none cursor-default">{tag.type}</Tag>
+                  <Tag className="capitalize select-none cursor-default">{tag._type}</Tag>
                 </div>
                 <div className="flex">
                   <EditOutlined

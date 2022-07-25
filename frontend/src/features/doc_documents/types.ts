@@ -2,16 +2,23 @@ import { BaseDocument } from '../../common';
 import { ApprovalStatus } from '../../common/approvalStatus';
 
 export interface BaseDocTag {
+  _type: string;
+}
+
+export interface TherapyTag extends BaseDocTag {
+  name: string;
   text: string;
   page: number;
   code: string;
   score: number;
   relevancy: number;
-  type: string;
 }
 
-export interface TherapyTag extends BaseDocTag {}
-export interface IndicationTag extends BaseDocTag {}
+export interface IndicationTag extends BaseDocTag {
+  text: string;
+  page: number;
+  code: string;
+}
 
 export interface TaskLock {
   work_queue_id: string;

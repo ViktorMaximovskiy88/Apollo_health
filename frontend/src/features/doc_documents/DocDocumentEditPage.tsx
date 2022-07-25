@@ -8,7 +8,7 @@ import { Tabs } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { dateToMoment } from '../../common/date';
 import { useUpdateDocDocumentMutation } from './docDocumentApi';
-import { DocDocument, BaseDocTag } from './types';
+import { DocDocument, TherapyTag, IndicationTag } from './types';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { maxBy, compact, groupBy } from 'lodash';
@@ -20,14 +20,14 @@ export function DocDocumentEditPage() {
   const { data: doc } = useGetDocDocumentQuery(docId);
   const [form] = useForm();
   const [updateDocDocument] = useUpdateDocDocumentMutation();
-  const [tags, setTags] = useState([] as BaseDocTag[]);
+  const [tags, setTags] = useState([] as Array<TherapyTag | IndicationTag>);
   const [hasChanges, setHasChanges] = useState(false);
   const [pageNumber, setPageNumber] = useState(0);
 
   useEffect(() => {
     if (doc) {
-      const therapyTags = doc.therapy_tags.map((tag) => ({ ...tag, type: 'therapy' }));
-      const indicationTags = doc.indication_tags.map((tag) => ({ ...tag, type: 'indication' }));
+      const therapyTags = doc.therapy_tags.map((tag) => ({ ...tag, _type: 'therapy' }));
+      const indicationTags = doc.indication_tags.map((tag) => ({ ...tag, _type: 'indication' }));
       setTags([...therapyTags, ...indicationTags]);
       finalEffectiveDate();
     }
@@ -53,8 +53,8 @@ export function DocDocumentEditPage() {
 
   async function onFinish(doc: Partial<DocDocument>) {
     const tagsByType = groupBy(tags, 'type');
-    doc.indication_tags = tagsByType['indication'];
-    doc.therapy_tags = tagsByType['therapy'];
+    doc.indication_tags = tagsByType['indication'] as IndicationTag[];
+    doc.therapy_tags = tagsByType['therapy'] as TherapyTag[];
 
     await updateDocDocument({
       ...doc,
@@ -137,7 +137,7 @@ export function DocDocumentEditPage() {
               <Tabs.TabPane tab="Tags" key="tags" className="bg-white p-4 h-full">
                 <DocDocumentTagForm
                   tags={tags}
-                  onAddTag={(tag: BaseDocTag) => {
+                  onAddTag={(tag: TherapyTag | IndicationTag) => {
                     tags.unshift(tag);
                     setTags([...tags]);
                     setHasChanges(true);
@@ -148,7 +148,7 @@ export function DocDocumentEditPage() {
                     setTags([...tags]);
                     setHasChanges(true);
                   }}
-                  onEditTag={(tag: any) => {}}
+                  onEditTag={(tag: TherapyTag | IndicationTag) => {}}
                   currentPage={pageNumber}
                 />
               </Tabs.TabPane>
