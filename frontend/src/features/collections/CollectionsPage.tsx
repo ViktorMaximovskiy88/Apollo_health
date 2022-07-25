@@ -80,6 +80,7 @@ function ManualCollectionButton(props: any) {
     refetch();
   }
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
+
   if (activeStatuses.includes(site.last_run_status)) {
     return (
       <Button className="ml-auto" onClick={handleCancelScrape}>

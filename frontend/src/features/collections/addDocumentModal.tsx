@@ -5,6 +5,7 @@ import type { UploadProps } from 'antd';
 import type { UploadFile } from 'antd/es/upload/interface';
 import { UploadOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { prettyDate } from '../../common';
+import { documentTypes } from "./types";
 
 interface AddDocumentModalPropTypes {
   visible: boolean;
@@ -28,11 +29,15 @@ export function AddDocumentModal({
 
 
     }
+    function onCancel(){
+        form.resetFields();
+        setVisible(false);
+    }
     return (
         <Modal
           visible={visible}
           title="Add new document"
-          onCancel={() => setVisible(false)}
+          onCancel={onCancel}
           width={1000}
           footer={null}
         >
@@ -64,7 +69,7 @@ export function AddDocumentModal({
                   <Button type="primary" htmlType="submit">
                     Save
                   </Button>
-                    <Button onClick={() => setVisible(false)} htmlType="submit">Cancel</Button>
+                    <Button onClick={onCancel} htmlType="submit">Cancel</Button>
                 </Space>
               </Form.Item>
             </Form>
@@ -116,16 +121,6 @@ function UploadItem(props: any) {
 }
 
 function DocumentTypeItem(){
-    const documentTypes = [
-        { value: 'Authorization Policy', label: 'Authorization Policy' },
-        { value: 'Provider Guide', label: 'Provider Guide' },
-        { value: 'Treatment Request Form', label: 'Treatment Request Form' },
-        { value: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
-        { value: 'Covered Treatment List', label: 'Covered Treatment List' },
-        { value: 'Regulatory Document', label: 'Regulatory Document' },
-        { value: 'Formulary', label: 'Formulary' },
-        { value: 'Internal Reference', label: 'Internal Reference' },
-    ];
     return (
         <Form.Item className="grow" name="document_type" label="Document Type" rules={[{ required: true }]}>
             <Select options={documentTypes} />
@@ -150,22 +145,22 @@ function DateItems(props: any) {
     let fields = [[{
         "name":"effective_date",
         "title":"Effective Date"
-    },{
+    }],[{
         "name":"last_reviewed_date",
         "title":"Last Reviewed Date"
     },{
         "name":"last_updated_date",
         "title":"Last Updated Date"
-    }],[{
+    },{
         "name":"next_review_date",
         "title":"Next Review Date"
-    },{
+    }],[{
         "name":"next_update_date",
         "title":"Next Update Date"
     },{
         "name":"first_created_date",
         "title":"First Created Date"
-    }],[{
+    },{
         "name":"published_date",
         "title":"Published Date"
     }]]

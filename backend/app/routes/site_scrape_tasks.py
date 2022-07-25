@@ -170,7 +170,7 @@ async def cancel_all_site_scrape_task(
     site = await Site.find_one(
         {
             "_id": site_id,
-            "last_run_status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]},
+            "last_run_status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS, TaskStatus.FINISHED]},
         }
     )
     if site:
@@ -183,7 +183,7 @@ async def cancel_all_site_scrape_task(
                 }
             )
 
-            if last_site_task.documents_found == 0:
+            if last_site_task and last_site_task.documents_found == 0:
                 result = await SiteScrapeTask.get_motor_collection().update_many(
                     {"site_id": site_id, "status": {"$in": [TaskStatus.IN_PROGRESS]}},
                     {"$set": {"status": TaskStatus.CANCELED}},
