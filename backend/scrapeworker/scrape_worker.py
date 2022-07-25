@@ -210,7 +210,7 @@ class ScrapeWorker:
 
                 document = await RetrievedDocument.find_one(
                     RetrievedDocument.text_checksum == text_checksum
-                    or RetrievedDocument.text_checksum in RetrievedDocument.file_checksum_aliases
+                    or checksum in RetrievedDocument.file_checksum_aliases
                 )
 
                 if document:
