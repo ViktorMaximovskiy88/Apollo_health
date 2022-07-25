@@ -1,4 +1,5 @@
 import io
+import json
 import urllib.parse
 import zipfile
 from beanie import PydanticObjectId
@@ -38,6 +39,7 @@ from backend.app.utils.logger import (
     update_and_log_diff,
 )
 from backend.app.utils.user import get_current_user
+from backend.common.core.enums import SiteStatus
 
 router = APIRouter(
     prefix="/sites",
@@ -45,13 +47,13 @@ router = APIRouter(
 )
 
 
-async def get_target(id: PydanticObjectId):
-    user = await Site.get(id)
-    if not user:
+async def get_target(id: PydanticObjectId) -> Site:
+    site = await Site.get(id)
+    if not site:
         raise HTTPException(
             detail=f"Site {id} Not Found", status_code=status.HTTP_404_NOT_FOUND
         )
-    return user
+    return site
 
 
 @router.get("/", response_model=TableQueryResponse)
@@ -64,9 +66,19 @@ async def read_sites(
         get_query_json_list("filters", TableFilterInfo)
     ),
 ):
-
     query = Site.find({"disabled": False})
     return await query_table(query, limit, skip, sorts, filters)
+
+
+@router.get(
+    "/download", response_model=list[NewSite], dependencies=[Security(get_current_user)]
+)
+async def download_sites():
+    return (
+        await Site.find({"disabled": False, "status": {"$ne": SiteStatus.INACTIVE}})
+        .project(NewSite)
+        .to_list()
+    )
 
 
 class ActiveUrlResponse(BaseModel):
@@ -97,7 +109,7 @@ async def check_url(
 
 @router.get("/{id}", response_model=Site, dependencies=[Security(get_current_user)])
 async def read_site(
-    target: User = Depends(get_target),
+    target: Site = Depends(get_target),
 ):
     return target
 
@@ -122,22 +134,74 @@ async def create_site(
     return new_site
 
 
+def parse_line(line):
+    name: str
+    base_url_str: str
+    tag_str: str
+    doc_ext_str: str
+    url_keyw_str: str
+    collection_method: str
+    scrape_method = "SimpleDocumentScrape"
+    cron = "0 16 * * *"
+    name, base_url_str, tag_str, doc_ext_str, url_keyw_str, collection_method = line  # type: ignore
+
+    tags = tag_str.split(",") if tag_str else []
+    base_urls = base_url_str.split(",") if base_url_str else []
+    doc_exts = doc_ext_str.split(",") if doc_ext_str else ["pdf"]
+    url_keyws = url_keyw_str.split(",") if url_keyw_str else []
+    collection_method = collection_method if collection_method else "AUTOMATED"
+    scrape_method_configuration = ScrapeMethodConfiguration(
+        document_extensions=doc_exts,
+        url_keywords=url_keyws,
+        proxy_exclusions=[],
+        wait_for=[],
+        follow_links=False,
+        follow_link_keywords=[],
+        follow_link_url_keywords=[],
+    )
+    base_urls = list(
+        map(lambda url: BaseUrl(url=HttpUrl(url, scheme="https")), base_urls)
+    )
+    return Site(
+        name=name,
+        base_urls=base_urls,
+        scrape_method=scrape_method,
+        collection_method=collection_method,
+        scrape_method_configuration=scrape_method_configuration,
+        tags=tags,
+        disabled=False,
+        cron=cron,
+    )
+
+
+def get_sites_from_json(file: UploadFile):
+    content = file.file.read()
+    content_obj = json.loads(content)
+    for site in content_obj:
+        site["disabled"] = False
+        site["status"] = SiteStatus.NEW
+        new_site = Site.parse_obj(site)
+        yield new_site
+
+
 def get_lines_from_xlsx(file: UploadFile):
     wb = load_workbook(io.BytesIO(file.file.read()))
     sheet = wb[wb.sheetnames[0]]
     for i, line in enumerate(sheet.values):  # type: ignore
         if i == 0:
             continue  # skip header
-        yield line
+        yield parse_line(line)
 
 
 def get_lines_from_text_file(file: UploadFile):
     for line in file.file:
         line = line.decode("utf-8").strip()
-        yield line.split("\t")
+        yield parse_line(line.split("\t"))
 
 
-def get_lines_from_upload(file: UploadFile):
+def get_sites_from_upload(file: UploadFile):
+    if file.content_type == "application/json":
+        return get_sites_from_json(file)
     try:
         return get_lines_from_xlsx(file)
     except zipfile.BadZipFile:
@@ -151,44 +215,9 @@ async def upload_sites(
     logger: Logger = Depends(get_logger),
 ):
     new_sites: list[Site] = []
-    for line in get_lines_from_upload(file):
-        name: str
-        base_url_str: str
-        tag_str: str
-        doc_ext_str: str
-        url_keyw_str: str
-        collection_method: str
-        scrape_method = "SimpleDocumentScrape"
-        cron = "0 16 * * *"
-        name, base_url_str, tag_str, doc_ext_str, url_keyw_str, collection_method = line  # type: ignore
-        tags = tag_str.split(",") if tag_str else []
-        base_urls = base_url_str.split(",") if base_url_str else []
-        doc_exts = doc_ext_str.split(",") if doc_ext_str else ["pdf"]
-        url_keyws = url_keyw_str.split(",") if url_keyw_str else []
-        scrape_method_configuration = ScrapeMethodConfiguration(
-            document_extensions=doc_exts,
-            url_keywords=url_keyws,
-            proxy_exclusions=[],
-            wait_for=[],
-            follow_links=False,
-            follow_link_keywords=[],
-            follow_link_url_keywords=[],
-        )
-        if await Site.find_one(Site.base_urls == base_urls):
+    for new_site in get_sites_from_upload(file):
+        if await Site.find_one(Site.base_urls == new_site.base_urls):
             continue
-        base_urls = list(
-            map(lambda url: BaseUrl(url=HttpUrl(url, scheme="https")), base_urls)
-        )
-        new_site = Site(
-            name=name,
-            base_urls=base_urls,
-            scrape_method=scrape_method,
-            collection_method=collection_method,
-            scrape_method_configuration=scrape_method_configuration,
-            tags=tags,
-            disabled=False,
-            cron=cron,
-        )
         new_sites.append(new_site)
         await create_and_log(logger, current_user, new_site)
 

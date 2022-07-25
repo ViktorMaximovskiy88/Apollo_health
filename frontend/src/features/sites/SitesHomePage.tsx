@@ -2,12 +2,12 @@ import { Button, Upload, Dropdown, Space, Menu, notification } from 'antd';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useRunBulkMutation } from '../collections/siteScrapeTasksApi';
-import { LoadingOutlined, UploadOutlined, DownOutlined } from '@ant-design/icons';
+import { LoadingOutlined, UploadOutlined, DownOutlined, DownloadOutlined } from '@ant-design/icons';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
 import { SiteDataTable } from './SiteDataTable';
 import { QuickFilter } from './QuickFilter';
-import { client, baseApiUrl } from '../../app/base-api';
+import { baseApiUrl, client, fetchWithAuth } from '../../app/base-api';
 import { MainLayout } from '../../components';
 
 function CreateSite() {
@@ -101,7 +101,7 @@ function BulkUpload() {
     <Button>
       <Upload
         name="file"
-        accept=".csv,.txt,.xlsx"
+        accept=".csv,.txt,.xlsx,.json"
         action={`${baseApiUrl}/sites/upload`}
         headers={{
           Authorization: `Bearer ${token}`,
@@ -111,6 +111,30 @@ function BulkUpload() {
       >
         {uploading ? <LoadingOutlined /> : <UploadOutlined />}
       </Upload>
+    </Button>
+  );
+}
+
+function BulkDownload() {
+  const downloadJson = () => {
+    fetchWithAuth(`${baseApiUrl}/sites/download`)
+      .then((res) => {
+        return res.blob();
+      })
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'sites.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      });
+  };
+
+  return (
+    <Button onClick={downloadJson}>
+      <DownloadOutlined />
     </Button>
   );
 }
@@ -126,6 +150,7 @@ export function SitesHomePage() {
           <CreateSite />
           <BulkActions />
           <BulkUpload />
+          <BulkDownload />
         </>
       }
     >
