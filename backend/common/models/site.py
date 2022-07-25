@@ -40,7 +40,7 @@ class NewSite(BaseModel):
     scrape_method_configuration: ScrapeMethodConfiguration
     tags: list[str] = []
     playbook: str | None = None
-    cron: str
+    cron: str | None = ""
     status: str | None = SiteStatus.NEW
 
 
