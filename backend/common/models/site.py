@@ -35,8 +35,8 @@ class BaseUrl(BaseModel):
 class NewSite(BaseModel):
     name: str
     base_urls: list[BaseUrl] = []
-    collection_method: str
-    scrape_method: str
+    collection_method: str | None = CollectionMethod.Automated
+    scrape_method: str | None = ""
     scrape_method_configuration: ScrapeMethodConfiguration
     tags: list[str] = []
     playbook: str | None = None
