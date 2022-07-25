@@ -21,7 +21,7 @@ export function AddDocumentModal({
     const [form] = useForm();
     const [fileList, setFileList] = useState<UploadFile>()
     const initialValues = {
-        "language":"English"
+        "lang_code":"English"
     }
     function saveDocument(){
 
@@ -86,28 +86,13 @@ function UploadItem(props: any) {
       accept:".pdf, .xlsx, .docx",
       multiple: false,
       maxCount:1,
-      onChange(info) {
-        if (info.file.status !== 'uploading') {
-          console.log(info.file, info.fileList);
-        }
-        if (info.file.status === 'done') {
-          message.success(`${info.file.name} file uploaded successfully`);
-        } else if (info.file.status === 'error') {
-          message.error(`${info.file.name} file upload failed.`);
-        }
-      },
-      progress: {
-        strokeColor: {
-          '0%': '#108ee9',
-          '100%': '#87d068',
-        },
-        strokeWidth: 3,
-        format: percent => percent && `${parseFloat(percent.toFixed(2))}%`,
-      },
+      beforeUpload: file => {
+        setFileList([...fileList, file]);
+        return false;
+      }
     };
-
     return (
-        <Form.Item name="files" label={
+        <Form.Item name="document_file" label={
           <>
             <span style={{"marginRight":"5px"}}>Upload Document</span>
             <Tooltip placement="right" title="Only upload .pdf, .xlsx and .docx"><QuestionCircleOutlined /></Tooltip>
