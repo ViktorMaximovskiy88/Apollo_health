@@ -255,6 +255,7 @@ class ScrapeWorker:
                         url=url,
                         therapy_tags=parsed_content["therapy_tags"],
                         indication_tags=parsed_content["indication_tags"],
+                        file_checksum_aliases=(checksum),
                     )
 
                     await create_and_log(self.logger, await self.get_user(), document)
