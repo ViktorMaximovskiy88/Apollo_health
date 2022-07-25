@@ -48,12 +48,12 @@ const filterOptions = (searchText: string, options: OptionType[]): OptionType[] 
   return newFilteredOptions;
 };
 
-export function Assignee({ form }: { form: FormInstance }) {
+export function Assignee(props: { form: FormInstance }) {
   const { data: users } = useGetUsersQuery();
 
   const options: OptionType[] = useOptions(users);
 
-  const currentAssigneeId = form.getFieldValue('assignee');
+  const currentAssigneeId = props.form.getFieldValue('assignee');
 
   const [name, setName] = useNameState(options, currentAssigneeId);
   const [filteredOptions, setFilteredOptions] = useState<OptionType[]>(options);
@@ -65,7 +65,7 @@ export function Assignee({ form }: { form: FormInstance }) {
     setFilteredOptions(newFilteredOptions);
   };
   const onSelect = (assigneeId: string, option: OptionType): void => {
-    form.setFieldsValue({ assignee: assigneeId });
+    props.form.setFieldsValue({ assignee: assigneeId });
     const newAssigneeName = option.label === 'Unassigned' ? null : option.label;
     setName(newAssigneeName);
   };
