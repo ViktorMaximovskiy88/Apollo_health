@@ -1,9 +1,10 @@
 from datetime import datetime
-from email.policy import default
+
 from beanie import Indexed, PydanticObjectId
 from pydantic import BaseModel
-from backend.common.models.base_document import BaseDocument
+
 from backend.common.core.enums import LangCode
+from backend.common.models.base_document import BaseDocument
 from backend.common.models.doc_document import IndicationTag, TherapyTag
 
 
