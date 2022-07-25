@@ -9,20 +9,7 @@ import { SiteStatus } from './siteStatus';
 import { Assignee } from './AssigneeInput';
 import { SiteSubmitButton as Submit } from './SiteSubmitButton';
 import { ToggleReadOnly } from './ToggleReadOnly';
-
-function SiteStatusSelect() {
-  const siteStatuses = [
-    { value: SiteStatus.New, label: 'New' },
-    { value: SiteStatus.QualityHold, label: 'Quality Hold' },
-    { value: SiteStatus.Inactive, label: 'Inactive' },
-    { value: SiteStatus.Online, label: 'Online' },
-  ];
-  return (
-    <Form.Item name="status" label="Site Status">
-      <Select options={siteStatuses} />
-    </Form.Item>
-  );
-}
+import { SiteStatusSelect as Status } from './SiteStatusSelect';
 
 export function SiteForm(props: {
   onFinish: (update: Partial<Site>) => void;
@@ -101,7 +88,7 @@ export function SiteForm(props: {
         <Select mode="tags" />
       </Form.Item>
       <Assignee form={form} />
-      <SiteStatusSelect />
+      <Status form={form} />
       {props.readOnly ? (
         <ToggleReadOnly setReadOnly={props.setReadOnly} form={form} />
       ) : (
