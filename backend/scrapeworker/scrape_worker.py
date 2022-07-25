@@ -5,45 +5,38 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from random import shuffle
 from typing import Any, AsyncGenerator, Callable, Coroutine
-from async_lru import alru_cache
-from tenacity.wait import wait_random_exponential
-from tenacity._asyncio import AsyncRetrying
-from tenacity.stop import stop_after_attempt
-from beanie.odm.operators.update.array import Push
-from beanie.odm.operators.update.general import Inc, Set
-from urllib.parse import urlparse
-from playwright.async_api import Response as PlaywrightResponse
-from playwright.async_api import (
-    BrowserContext,
-    ProxySettings,
-    Page,
-)
-from playwright_stealth import stealth_async
 from urllib.parse import urlparse
 
+from async_lru import alru_cache
+from beanie.odm.operators.update.array import Push
+from beanie.odm.operators.update.general import Inc
+from playwright.async_api import BrowserContext, Page, ProxySettings
+from playwright.async_api import Response as PlaywrightResponse
+from playwright_stealth import stealth_async
+from tenacity._asyncio import AsyncRetrying
+from tenacity.stop import stop_after_attempt
+from tenacity.wait import wait_random_exponential
+
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
+from backend.common.core.enums import TaskStatus
 from backend.common.models.doc_document import DocDocument, calc_final_effective_date
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
-from backend.common.core.enums import TaskStatus
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.common.aio_downloader import AioDownloader
-from backend.scrapeworker.common.exceptions import (
-    CanceledTaskException,
-    NoDocsCollectedException,
-)
+from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocsCollectedException
 from backend.scrapeworker.common.models import Download, Request
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.scrapeworker.common.text_handler import TextHandler
+from backend.scrapeworker.common.utils import get_extension_from_path_like
 from backend.scrapeworker.document_tagging.indication_tagging import IndicationTagger
 from backend.scrapeworker.document_tagging.taggers import Taggers
 from backend.scrapeworker.document_tagging.therapy_tagging import TherapyTagger
 from backend.scrapeworker.file_parsers import parse_by_type
 from backend.scrapeworker.playbook import ScrapePlaybook
-from backend.scrapeworker.common.utils import get_extension_from_path_like
 from backend.scrapeworker.scrapers import scrapers
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
 
@@ -64,9 +57,7 @@ class ScrapeWorker:
     def __init__(
         self,
         playwright,
-        get_browser_context: Callable[
-            [ProxySettings | None], Coroutine[Any, Any, BrowserContext]
-        ],
+        get_browser_context: Callable[[ProxySettings | None], Coroutine[Any, Any, BrowserContext]],
         scrape_task: SiteScrapeTask,
         site: Site,
     ) -> None:
@@ -119,11 +110,7 @@ class ScrapeWorker:
         )
         if doc_document:
             await doc_document.update(
-                {
-                    "$set": {
-                        "last_collected_date": retrieved_document.last_collected_date
-                    }
-                }
+                {"$set": {"last_collected_date": retrieved_document.last_collected_date}}
             )
         else:
             await self.create_doc_document(retrieved_document)
@@ -186,19 +173,15 @@ class ScrapeWorker:
             metadata=parsed_content["metadata"],
             name=parsed_content["title"],
             scrape_task_id=self.scrape_task.id,
-            similar_text_checksums=document.similar_text_checksums,
+            file_checksum_aliases=document.file_checksum_aliases,
         )
-        await update_and_log_diff(
-            self.logger, await self.get_user(), document, updated_doc
-        )
+        await update_and_log_diff(self.logger, await self.get_user(), document, updated_doc)
         return updated_doc
 
     async def attempt_download(self, download: Download):
         url = download.request.url
         proxies = await self.get_proxy_settings()
-        async for (temp_path, checksum) in self.downloader.download_to_tempfile(
-            download, proxies
-        ):
+        async for (temp_path, checksum) in self.downloader.download_to_tempfile(download, proxies):
             parsed_content = await parse_by_type(temp_path, download, self.taggers)
             if parsed_content is None:
                 continue
@@ -209,19 +192,13 @@ class ScrapeWorker:
             logging.info(f"dest_path={dest_path} temp_path={temp_path}")
 
             if not self.doc_client.object_exists(dest_path):
-                self.doc_client.write_object(
-                    dest_path, temp_path, download.content_type
-                )
-                await self.scrape_task.update(
-                    Inc({SiteScrapeTask.new_documents_found: 1})
-                )
+                self.doc_client.write_object(dest_path, temp_path, download.content_type)
+                await self.scrape_task.update(Inc({SiteScrapeTask.new_documents_found: 1}))
 
-            document = await RetrievedDocument.find_one(
-                RetrievedDocument.checksum == checksum
-            )
+            document = await RetrievedDocument.find_one(RetrievedDocument.checksum == checksum)
 
             if document:
-                _updated_doc = await self.update_retrieved_document(
+                await self.update_retrieved_document(
                     document=document,
                     download=download,
                     parsed_content=parsed_content,
@@ -229,19 +206,16 @@ class ScrapeWorker:
                 await self.update_doc_document(document)
             else:
 
-                text_checksum = await self.text_handler.save_text(
-                    parsed_content["text"]
-                )
+                text_checksum = await self.text_handler.save_text(parsed_content["text"])
 
                 document = await RetrievedDocument.find_one(
                     RetrievedDocument.text_checksum == text_checksum
-                    or RetrievedDocument.text_checksum
-                    in RetrievedDocument.similar_text_checksums
+                    or RetrievedDocument.text_checksum in RetrievedDocument.file_checksum_aliases
                 )
 
                 if document:
-                    document.similar_text_checksums.add(text_checksum)
-                    _updated_doc = await self.update_retrieved_document(
+                    document.file_checksum_aliases.add(text_checksum)
+                    await self.update_retrieved_document(
                         document=document,
                         download=download,
                         parsed_content=parsed_content,
@@ -300,9 +274,7 @@ class ScrapeWorker:
                 raise CanceledTaskException("Task was canceled.")
             await asyncio.sleep(5)
 
-    async def wait_for_completion_or_cancel(
-        self, downloads: list[Coroutine[None, None, None]]
-    ):
+    async def wait_for_completion_or_cancel(self, downloads: list[Coroutine[None, None, None]]):
         tasks = [asyncio.create_task(download) for download in downloads]
 
         try:
@@ -325,7 +297,7 @@ class ScrapeWorker:
             i = attempt.retry_state.attempt_number - 1
             proxy, proxy_setting = proxy_settings[i % n_proxies]
             logging.info(
-                f"{i} Trying proxy {proxy and proxy.name} - {proxy_setting and proxy_setting.get('server')}"
+                f"{i} Trying proxy {proxy and proxy.name} - {proxy_setting and proxy_setting.get('server')}"  # noqa
             )
             yield attempt, proxy_setting
 
@@ -334,13 +306,13 @@ class ScrapeWorker:
             if len(self.site.scrape_method_configuration.wait_for) > 0:
                 await page.locator(
                     ", ".join(
-                        f":text('{wf}')"
-                        for wf in self.site.scrape_method_configuration.wait_for
+                        f":text('{wf}')" for wf in self.site.scrape_method_configuration.wait_for
                     )
                 ).first.wait_for()
-        except:
+        except Exception as ex:
+            logging.error(ex)
             raise Exception(
-                f"Wait for dom elements {self.site.scrape_method_configuration.wait_for} have timed out"
+                f"Wait for dom elements {self.site.scrape_method_configuration.wait_for} have timed out"  # noqa
             )
 
     @asynccontextmanager
@@ -380,9 +352,7 @@ class ScrapeWorker:
         download.metadata.base_url = base_url
         if is_google(download.request.url):
             google_id = get_google_id(download.request.url)
-            download.request.url = (
-                f"https://drive.google.com/u/0/uc?id={google_id}&export=download"
-            )
+            download.request.url = f"https://drive.google.com/u/0/uc?id={google_id}&export=download"
 
     async def queue_downloads(self, url: str, base_url: str):
         all_downloads: list[Download] = []

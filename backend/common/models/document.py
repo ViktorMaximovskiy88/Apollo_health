@@ -36,7 +36,8 @@ class RetrievedDocument(BaseDocument):
     lang_code: LangCode | None = None
     file_extension: str | None = None
     content_type: str | None = None
-    similar_text_checksums: set[str] = []
+    # full text is the same for checksums in the below set
+    file_checksum_aliases: set[str] = Indexed(set[str], default=set())
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
@@ -70,7 +71,7 @@ class UpdateRetrievedDocument(BaseModel):
     metadata: dict | None = None
     context_metadata: dict | None = None
     lang_code: LangCode | None = None
-    similar_text_checksums: set[str] = Indexed(set[str], default=set())
+    file_checksum_aliases: set[str] = set()
 
     therapy_tags: list[TherapyTag] | None = None
     indication_tags: list[IndicationTag] | None = None
