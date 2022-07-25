@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Button, Radio, Tag, Checkbox, Input } from 'antd';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
-import debounce from 'lodash.debounce';
+import { debounce, orderBy } from 'lodash';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { BaseDocTag } from './types';
 
@@ -23,25 +23,29 @@ export function DocDocumentTagForm(props: {
   };
 
   useEffect(() => {
+    let _tags = tags;
+
     if (hasActiveFilters()) {
-      applyFilters();
-    } else {
-      setFilteredList(tags);
+      _tags = applyFilters();
     }
+
+    _tags = orderBy(_tags, ['page', 'type', 'text'], ['asc', 'asc', 'desc']);
+
+    setFilteredList(_tags);
   }, [searchTerm, tagTypeFilter, pageFilter, tags, currentPage]);
 
-  const applyFilter = (tag: any) => {
+  const applyFilter = (tag: BaseDocTag) => {
     const validPage = pageFilter == 'doc' ? true : currentPage == tag.page;
-    console.log(currentPage == tag.page, 'currentPage', currentPage, 'tag.page', tag.page);
+    console.debug(currentPage == tag.page, 'currentPage', currentPage, 'tag.page', tag.page);
     return tagTypeFilter.includes(tag.type) && validPage;
   };
 
   const applyFilters = () => {
     const regex = new RegExp(searchTerm, 'i');
-    const filteredTags = tags.filter(
-      (tag: any) => (tag.text?.match(regex) || tag.code?.match(regex)) && applyFilter(tag)
+    return tags.filter(
+      (tag: BaseDocTag) =>
+        (tag.text?.match(regex) || `${tag.code ?? ''}`.match(regex)) && applyFilter(tag)
     );
-    setFilteredList(filteredTags);
   };
 
   const onSearch = (e: any) => {
