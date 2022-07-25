@@ -1,9 +1,21 @@
-import { Form, Radio, Select, DatePicker } from 'antd';
-import type { RadioChangeEvent } from 'antd';
+import { Form, Button, Select, DatePicker } from 'antd';
+import { Dropdown, Menu } from 'antd';
 import moment from 'moment';
 import { useState } from 'react';
-import { prettyDate, prettyDateFromISO, dateToMoment } from '../common';
+import { prettyDate, prettyFromISO, prettyDateFromISO, dateToMoment } from '../common';
 import { FormInstance } from 'antd';
+import { DownOutlined } from '@ant-design/icons';
+
+function ButtonFocus(hasFocus: boolean) {
+  return hasFocus
+    ? {
+        borderColor: '#40a9ff',
+        boxShadow: '0 0 0 2px rgb(24 144 255 / 20%)',
+        clipPath: 'inset(-5px -5px -5px 0px)',
+        outline: 0,
+      }
+    : {};
+}
 
 export function ListDatePicker(props: {
   className?: string;
@@ -12,6 +24,7 @@ export function ListDatePicker(props: {
   defaultValue?: string;
   label: string;
   name: string;
+  disabled?: boolean;
   style?: object;
   onChange?: Function;
 }) {
@@ -27,70 +40,76 @@ export function ListDatePicker(props: {
     name,
     style,
     onChange = () => {},
+    disabled = false,
   } = props;
 
-  const existsInList = (dateList || []).find((date) => date === defaultValue);
+  const [hasFocus, setHasFocus] = useState(false);
 
-  const [selectionMethod, setSelectionMethod] = useState(existsInList ? 'list' : 'custom');
-
-  function onSelectionMethodChange(e: RadioChangeEvent) {
-    setSelectionMethod(e.target.value);
-    onChange();
-  }
-
-  function handleOnChange(value?: moment.Moment | string | null) {
-    const update: any = {};
-    if (moment.isMoment(value)) {
-      // if receiving value from date picker
-      update[name] = value.startOf('day').toISOString();
-    } else if (value === undefined) {
-      update[name] = null;
-    } else {
-      update[name] = value;
-    }
-    form.setFieldsValue(update);
-    onChange();
-  }
+  const defaultDate = dateToMoment(defaultValue);
+  const [value, setValue] = useState(defaultDate);
 
   const dateOptions = (dateList || [])
     .map((d) => ({
-      value: d,
+      key: prettyDateFromISO(d),
       label: prettyDateFromISO(d),
     }))
-    .sort((a, b) => +new Date(b.value) - +new Date(a.value));
+    .sort((a, b) => +new Date(b.key) - +new Date(a.key));
 
-  const defaultDate = dateToMoment(defaultValue);
+  const menu = (
+    <Menu
+      onClick={(e: any) => {
+        const value = dateToMoment(e.key);
+        setValue(value);
+        form.setFieldsValue({
+          [name]: value,
+        });
+      }}
+      items={dateOptions}
+    />
+  );
 
   return (
-    <Form.Item className={className} label={label} style={style}>
-      <Radio.Group
-        className="mb-1"
-        onChange={onSelectionMethodChange}
-        defaultValue={selectionMethod}
-      >
-        <Radio value="list">From List</Radio>
-        <Radio value="custom">Custom</Radio>
-      </Radio.Group>
+    <div className="flex">
+      <Form.Item className={className} label={label} style={style}>
+        <DatePicker
+          name={name}
+          disabled={disabled}
+          style={{ borderRight: 'none', borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
+          defaultValue={defaultDate}
+          value={value}
+          onChange={(value: any) => {
+            setValue(value);
+            form.setFieldsValue({
+              [name]: value,
+            });
+          }}
+          format={(value) => prettyDate(value.toDate())}
+          onFocus={() => {
+            setHasFocus(true);
+          }}
+          onBlur={() => {
+            setHasFocus(false);
+          }}
+        />
 
-      <Form.Item name={name} noStyle preserve>
-        {selectionMethod === 'list' && (
-          <Select
-            allowClear
-            defaultValue={existsInList ? defaultValue : null}
-            options={dateOptions}
-            onChange={(value) => handleOnChange(value)}
-          />
-        )}
-
-        {selectionMethod === 'custom' && (
-          <DatePicker
-            style={{ width: '100%' }}
-            defaultValue={defaultDate}
-            format={(value) => prettyDate(value.toDate())}
-            onChange={(value) => handleOnChange(value)}
-          />
-        )}
+        <Dropdown
+          disabled={disabled || dateOptions.length === 0}
+          overlay={menu}
+          trigger={['click']}
+          placement="bottomRight"
+        >
+          <Button
+            style={{
+              borderLeft: 'none',
+              borderTopLeftRadius: 0,
+              borderBottomLeftRadius: 0,
+              ...ButtonFocus(hasFocus),
+            }}
+          >
+            <DownOutlined />
+          </Button>
+        </Dropdown>
       </Form.Item>
-    </Form.Item>
+    </div>
   );
 }
