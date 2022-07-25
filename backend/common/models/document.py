@@ -75,9 +75,11 @@ class UpdateRetrievedDocument(BaseModel):
     automated_content_extraction_class: str | None = None
 
 class RetrievedDocumentLimitTags(RetrievedDocument):
+    class Collection:
+        name = "RetrievedDocument"
+
     class Settings:
         projection = { 'therapy_tags': { '$slice': 10 }, 'indication_tags': { '$slice': 10 } }
-
 
 # Deprecated
 class CollectionTimeRetrievedDocument(RetrievedDocument):

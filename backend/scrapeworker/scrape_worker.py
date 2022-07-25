@@ -22,7 +22,7 @@ from playwright_stealth import stealth_async
 from urllib.parse import urlparse
 
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
-from backend.common.models.doc_document import DocDocument
+from backend.common.models.doc_document import DocDocument, calc_final_effective_date
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
@@ -152,7 +152,10 @@ class ScrapeWorker:
             base_url=retrieved_document.base_url,
             therapy_tags=retrieved_document.therapy_tags,
             indication_tags=retrieved_document.indication_tags,
+            file_extension=retrieved_document.file_extension,
+            identified_dates=retrieved_document.identified_dates,
         )
+        doc_document.final_effective_date = calc_final_effective_date(doc_document)
         await create_and_log(self.logger, await self.get_user(), doc_document)
 
     async def attempt_download(self, download: Download):
@@ -226,7 +229,7 @@ class ScrapeWorker:
                     next_update_date=parsed_content["next_update_date"],
                     published_date=parsed_content["published_date"],
                     file_extension=download.file_extension,
-                    content_type=download.response.content_type,
+                    content_type=download.content_type,
                     first_collected_date=now,
                     identified_dates=parsed_content["identified_dates"],
                     lang_code=parsed_content["lang_code"],
@@ -365,7 +368,7 @@ class ScrapeWorker:
                         self.preprocess_download(download, base_url)
                         all_downloads.append(download)
 
-            return all_downloads
+        return all_downloads
 
     async def follow_links(self, url) -> list[str]:
         urls: list[str] = []
@@ -383,7 +386,7 @@ class ScrapeWorker:
                 for dl in await crawler.execute():
                     urls.append(dl.request.url)
 
-            return urls
+        return urls
 
     def should_process_download(self, download: Download):
         url = download.request.url

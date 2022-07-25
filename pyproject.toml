@@ -38,11 +38,9 @@ async-lru = "^1.0.3"
 pycld3 = "^0.22"
 numpy = "<1.23.0"
 
-# SpaCy <3.4 requires pydantic < 1.9, beanie requires pydantic 1.10
-# use bleeding edge SpaCy until next release
-spacy = {git = "https://github.com/explosion/spaCy.git"}
-# SciSpacy has requires older SpaCy, which we aren't using due to pydantic issue
-# However per an open ticket, there is not compatability issue with later SpaCy
+spacy = "^3.4.0"
+# SciSpacy requires older SpaCy, which we aren't using due to pydantic issue
+# However per an open ticket, there is no compatability issue with later SpaCy
 # This fork is identical except for bumped SpaCy version requirement
 scispacy = {git = "https://github.com/mbrown-bhe/scispacy.git", rev = "main"}
 pymongo = {version = "<4", extras = ["aws"]}
@@ -58,7 +56,30 @@ black = "^22.3.0"
 boto3-stubs = {extras = ["essential"], version = "^1.21.42"}
 pytest = "^7.1.1"
 pytest-asyncio = "^0.18.3"
+flake8 = "^4.0.1"
+isort = "^5.10.1"
+pre-commit = "^2.20.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+line_length = 100
+profile = "black"
+skip_glob = []
+
+[tool.black]
+exclude = '''
+/(
+    \.git
+  | __pycache__
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+include = '(backend\/.*$|\.pyi?$)'
+line-length = 100
+target-version = ['py310']

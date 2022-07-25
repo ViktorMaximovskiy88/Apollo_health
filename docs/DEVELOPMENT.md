@@ -125,6 +125,8 @@ PIP_CONSTRAINT=build-constraints.txt CFLAGS="-mavx -DWARN(a)=(a) -I /opt/homebre
     LDFLAGS="-L/opt/homebrew/opt/protobuf/lib" \
     poetry install
 
+# setup precommit hooks
+poetry run pre-commit install
 playwright install chromium
 playwright install-deps
 
@@ -261,7 +263,7 @@ yarn start
 In case we run into problems running system on Windows, we checked an option running using WSL2
 Follow instructions in https://code.visualstudio.com/docs/remote/wsl-tutorial up to 'Python development' section
 Follow https://docs.microsoft.com/en-us/windows/wsl/tutorials/wsl-containers to run Docker containers. You will be running all docker containers from Windows terminal
-Then follow above WSL2 instructions to install all required components. You might need to add 'sudo' to some commands.  
+Then follow above WSL2 instructions to install all required components. You might need to add 'sudo' to some commands.
 Note: I was able to clone git repository only using HTTPS command from Windows instructions. I was not able to start VS Code from WSL terminal.
 Instead I started VS Code on Windows, used 'Remote WSL' extension to switch to Ubuntu and then selected Ubuntu directory where project was installed
 Confirm that python version is 3.10.4 before you generate virtual environment

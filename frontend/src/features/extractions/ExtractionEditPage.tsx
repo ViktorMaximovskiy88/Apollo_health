@@ -1,10 +1,10 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
-import Title from 'antd/lib/typography/Title';
 import NumberFilter from '@inovua/reactdatagrid-community/NumberFilter';
 import { useParams } from 'react-router-dom';
 import { useGetExtractionTaskQuery, useLazyGetExtractionTaskResultsQuery } from './extractionsApi';
 import { useCallback } from 'react';
 import { TypeSingleSortInfo, TypeSingleFilterValue } from '@inovua/reactdatagrid-community/types';
+import { MainLayout } from '../../components';
 
 export function ExtractionEditPage() {
   const { extractionId } = useParams();
@@ -17,7 +17,7 @@ export function ExtractionEditPage() {
       sortInfo = sortInfo.map((info) => {
         if (info.name.startsWith('t_')) {
           return { ...info, name: `translation.${info.name.replace(/^t_/, '')}` };
-        } else if (info.name === 'page' || info.name == 'row') {
+        } else if (info.name === 'page' || info.name === 'row') {
           return info;
         } else {
           return { ...info, name: `result.${info.name}` };
@@ -27,7 +27,7 @@ export function ExtractionEditPage() {
       filterValue = filterValue.map((filter) => {
         if (filter.name.startsWith('t_')) {
           return { ...filter, name: `translation.${filter.name.replace(/^t_/, '')}` };
-        } else if (filter.name === 'page' || filter.name == 'row') {
+        } else if (filter.name === 'page' || filter.name === 'row') {
           return filter;
         } else {
           return { ...filter, name: `result.${filter.name}` };
@@ -155,12 +155,7 @@ export function ExtractionEditPage() {
   ];
 
   return (
-    <>
-      <div className="flex">
-        <Title className="inline-block" level={4}>
-          Extraction Results
-        </Title>
-      </div>
+    <MainLayout pageTitle="Extraction Results">
       <ReactDataGrid
         dataSource={loadData}
         columns={columns}
@@ -170,6 +165,6 @@ export function ExtractionEditPage() {
         defaultFilterValue={defaultFilterValue}
         defaultSortInfo={defaultSortInfo}
       />
-    </>
+    </MainLayout>
   );
 }

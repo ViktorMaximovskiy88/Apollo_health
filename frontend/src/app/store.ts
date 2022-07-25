@@ -7,9 +7,12 @@ import { sitesApi } from '../features/sites/sitesApi';
 import { documentsApi } from '../features/retrieved_documents/documentsApi';
 import { siteScrapeTasksApi } from '../features/collections/siteScrapeTasksApi';
 import { extractionTasksApi } from '../features/extractions/extractionsApi';
+import { workQueuesApi } from '../features/work_queue/workQueuesApi';
 import { proxiesApi } from '../features/proxies/proxiesApi';
 import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { rtkAuth } from '../common/auth-middleware';
+
+import navSlice from './navSlice';
 import sitesReducer from '../features/sites/sitesSlice';
 import collectionsReducer from '../features/collections/collectionsSlice';
 import docDocumentsReducer from '../features/doc_documents/docDocumentsSlice';
@@ -27,8 +30,10 @@ export const store = configureStore({
     [siteScrapeTasksApi.reducerPath]: siteScrapeTasksApi.reducer,
     [documentsApi.reducerPath]: documentsApi.reducer,
     [extractionTasksApi.reducerPath]: extractionTasksApi.reducer,
+    [workQueuesApi.reducerPath]: workQueuesApi.reducer,
     [proxiesApi.reducerPath]: proxiesApi.reducer,
     [docDocumentsApi.reducerPath]: docDocumentsApi.reducer,
+    nav: navSlice.reducer,
     sites: sitesReducer,
     collections: collectionsReducer,
     docDocuments: docDocumentsReducer,
@@ -43,6 +48,7 @@ export const store = configureStore({
       siteScrapeTasksApi.middleware,
       documentsApi.middleware,
       extractionTasksApi.middleware,
+      workQueuesApi.middleware,
       proxiesApi.middleware,
       docDocumentsApi.middleware,
       routerMiddleware,

@@ -1,7 +1,7 @@
 import { Form, Input } from 'antd';
 import { useState } from 'react';
 import { ActiveUrlResponse, BaseUrl, Site } from './types';
-import { fetchWithAuth } from '../../app/base-api';
+import { fetchWithAuth, baseApiUrl } from '../../app/base-api';
 import { FormInstance } from 'antd/lib/form/Form';
 
 function useValidateUrlAndErrorMessage(form: FormInstance, initialValues?: Site) {
@@ -12,7 +12,7 @@ function useValidateUrlAndErrorMessage(form: FormInstance, initialValues?: Site)
   async function validateUrl(fieldKey: number, value: string) {
     const currentSite = initialValues ? initialValues._id : '';
     const checkUrl = encodeURIComponent(value);
-    let url = encodeURI(`/api/v1/sites/active-url?url=${checkUrl}`);
+    let url = encodeURI(`${baseApiUrl}/sites/active-url?url=${checkUrl}`);
     if (currentSite) url += `&currentSite=${currentSite}`;
     const check = await fetchWithAuth(url);
     const activeUrlResponse = await check.json();

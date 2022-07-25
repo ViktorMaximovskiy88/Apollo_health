@@ -24,7 +24,7 @@ router = APIRouter(
 )
 
 
-async def get_target(id: PydanticObjectId):
+async def get_target(id: PydanticObjectId) -> RetrievedDocument:
     doc = await RetrievedDocument.get(id)
     if not doc:
         raise HTTPException(
@@ -63,7 +63,11 @@ async def get_documents(
         query["automated_content_extraction"] = automated_content_extraction
 
     documents: list[RetrievedDocumentLimitTags] = (
-        await RetrievedDocument.find_many(query).project(RetrievedDocumentLimitTags).sort("-first_collected_date").to_list()
+        await RetrievedDocument
+          .find_many(query)
+          .sort("-first_collected_date")
+          .project(RetrievedDocumentLimitTags)
+          .to_list()
     )
     return documents
 

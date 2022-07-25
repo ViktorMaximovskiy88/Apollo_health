@@ -28,14 +28,69 @@ def test_get_date_and_label():
     assert parser.next_update_date == {"date": datetime(2038, 1, 10)}
 
     text = """
-        Different formats, rev. 1/10/20 and v. 12/12 \n
-        with no label match here harv.2/1/2021
+        Different formats, rev. 1/10/20 and v. 12/12 4/20\n
+        with no label match here harv.2/27/2021 \n
+        and more labels - reviewed as of 03/2020 through Dec 2030
     """
     parser = DateParser(text, date_rgxs, label_rgxs)
     parser.extract_dates()
-    assert len(parser.unclassified_dates) == 3
+    assert len(parser.unclassified_dates) == 6
     assert parser.published_date == {"date": datetime(2012, 12, 1)}
     assert parser.last_updated_date == {"date": datetime(2020, 1, 10)}
+    assert parser.last_reviewed_date == {"date": datetime(2020, 3, 1)}
+    assert parser.end_date == {"date": datetime(2030, 12, 1)}
+
+
+def test_many_date_formats():
+    text = """
+        2020-01-20 2020/02/20 2020.03.20
+        04-20-2020 05/20/2020 06.20.2020
+        07-20-20 08/20/20 09.20.20
+        Oct 20 2020 Nov. 20 2020 Dec 20, 2020
+    """
+
+    parser = DateParser(text, date_rgxs, label_rgxs)
+    parser.extract_dates()
+    dates = []
+    for m in range(1, 13):
+        dates.append(datetime(2020, m, 20))
+
+    assert len(parser.unclassified_dates) == 12
+    for date in dates:
+        assert date in parser.unclassified_dates
+
+    text = """
+        20 Jan 2021 20 Feb 2021 20 Mar. 2021
+        20 April 2021 20 May, 2021 20 June 2021
+        July 20, 2021 August 20 2021 September 20, 2021
+    """
+
+    parser = DateParser(text, date_rgxs, label_rgxs)
+    parser.extract_dates()
+    dates = []
+    for m in range(1, 10):
+        dates.append(datetime(2021, m, 20))
+
+    assert len(parser.unclassified_dates) == 9
+    for date in dates:
+        assert date in parser.unclassified_dates
+
+    text = """
+        01/2022 02-2022 3-2022
+        Apr, 2022 - May 2022. Jun. 2022
+        07/22 08-22 9/22
+        October, 2022. November 2022, December 2022
+    """
+
+    parser = DateParser(text, date_rgxs, label_rgxs)
+    parser.extract_dates()
+    dates = []
+    for m in range(1, 13):
+        dates.append(datetime(2022, m, 1))
+
+    assert len(parser.unclassified_dates) == 12
+    for date in dates:
+        assert date in parser.unclassified_dates
 
 
 def test_get_date_and_label_multiple_lines():
@@ -131,3 +186,44 @@ def test_select_best_match():
     assert len(parser.unclassified_dates) == 3
     assert parser.end_date == {"date": datetime(2030, 4, 30)}
     assert parser.effective_date == {"date": datetime(2021, 10, 31)}
+
+
+def test_extract_date_span():
+    text = "12/1/2020 - 10/15/30"
+    parser = DateParser(text, date_rgxs, label_rgxs)
+    parser.extract_dates()
+    assert len(parser.unclassified_dates) == 2
+    assert parser.effective_date == {"date": datetime(2020, 12, 1)}
+    assert parser.end_date == {"date": datetime(2030, 10, 15)}
+
+    text = "This will also get a date May 2021     -      July 2030 with text around"
+    parser = DateParser(text, date_rgxs, label_rgxs)
+    parser.extract_dates()
+    assert len(parser.unclassified_dates) == 2
+    assert parser.effective_date == {"date": datetime(2021, 5, 1)}
+    assert parser.end_date == {"date": datetime(2030, 7, 1)}
+
+    text = "This will not grab a date span 10-10-2021 because - July 2030 of the text left of dash"
+    parser = DateParser(text, date_rgxs, label_rgxs)
+    parser.extract_dates()
+    assert len(parser.unclassified_dates) == 2
+    assert parser.effective_date == {"date": datetime(2021, 10, 10)}
+    assert parser.end_date == {"date": None}
+
+    text = "This will not grab a date span 12-10-2021 - because July 2030 of the text right of dash"
+    parser = DateParser(text, date_rgxs, label_rgxs)
+    parser.extract_dates()
+    assert len(parser.unclassified_dates) == 2
+    assert parser.effective_date == {"date": datetime(2021, 12, 10)}
+    assert parser.end_date == {"date": None}
+
+    text = """
+        date span 12/10/2021-1/5/2031 and 
+        other dates published 2010-10-31
+    """
+    parser = DateParser(text, date_rgxs, label_rgxs)
+    parser.extract_dates()
+    assert len(parser.unclassified_dates) == 3
+    assert parser.effective_date == {"date": datetime(2021, 12, 10)}
+    assert parser.end_date == {"date": datetime(2031, 1, 5)}
+    assert parser.published_date == {"date": datetime(2010, 10, 31)}

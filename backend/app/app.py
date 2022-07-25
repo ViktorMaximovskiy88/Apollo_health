@@ -7,11 +7,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from backend.app.scripts.add_user import create_system_users
 from backend.app.scripts.create_proxy_records import create_proxies
+from backend.app.scripts.create_work_queues import create_default_work_queues
 from backend.common.db.init import init_db
 from backend.common.db.migrations import run_migrations
 from backend.app.core.settings import settings
 from backend.common.models.proxy import Proxy
-from backend.common.models.user import User
 from backend.app.routes import (
     auth,
     sites,
@@ -19,6 +19,7 @@ from backend.app.routes import (
     proxies,
     documents,
     change_log,
+    work_queues,
     doc_documents,
     site_scrape_tasks,
     content_extraction_tasks,
@@ -26,14 +27,16 @@ from backend.app.routes import (
 
 app = FastAPI()
 
+
 @app.on_event("startup")
 async def app_init():
     await init_db()
     if settings.is_local:
         await run_migrations()
-    await create_system_users()        
+    await create_system_users()
     if not settings.disable_proxies and await Proxy.count() == 0:
         await create_proxies()
+    await create_default_work_queues()
 
 
 template_dir = Path(__file__).parent.joinpath("templates")
@@ -43,17 +46,18 @@ frontend_build_dir = Path(__file__).parent.joinpath("../../frontend/build").reso
 # liveness
 @app.get("/ping", include_in_schema=False)
 async def ping():
-    return {"ok" : True}
+    return {"ok": True}
+
 
 @app.get("/api/v1/settings", include_in_schema=False)
 async def react_settings():
     return settings.frontend
 
+
 @app.get("/api/v1/auth/authorize", response_class=HTMLResponse, tags=["Auth"])
 async def login_page(request: Request):
-    return templates.TemplateResponse(
-        "login.html", {"request": request}
-    )
+    return templates.TemplateResponse("login.html", {"request": request})
+
 
 app.add_middleware(GZipMiddleware)
 
@@ -67,6 +71,8 @@ app.include_router(documents.router, prefix=prefix)
 app.include_router(content_extraction_tasks.router, prefix=prefix)
 app.include_router(proxies.router, prefix=prefix)
 app.include_router(doc_documents.router, prefix=prefix)
+app.include_router(work_queues.router, prefix=prefix)
+
 
 @app.middleware("http")
 async def frontend_routing(request: Request, call_next: Any):
@@ -80,5 +86,6 @@ async def frontend_routing(request: Request, call_next: Any):
             return HTMLResponse(file.read())
 
     return response
+
 
 app.mount("/", StaticFiles(directory=frontend_build_dir, html=True), name="static")

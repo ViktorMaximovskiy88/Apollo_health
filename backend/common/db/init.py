@@ -2,6 +2,7 @@ from functools import cache
 from beanie import init_beanie
 from backend.common.db.settings import settings
 from backend.common.models.change_log import ChangeLog
+from backend.common.models.comment import Comment
 from backend.common.models.content_extraction_task import (
     ContentExtractionResult,
     ContentExtractionTask,
@@ -14,8 +15,10 @@ from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.models.document import RetrievedDocument
+from backend.common.models.work_queue import WorkQueue
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+
 
 
 @cache
@@ -44,12 +47,14 @@ async def init_db(mock=False, database_name=None):
         database=get_motor_db(mock, database_name),
         document_models=[
             User,
-            Proxy,
-            ChangeLog,
             Site,
+            Proxy,
+            Comment,
+            WorkQueue,
+            ChangeLog,
             Indication,
-            SiteScrapeTask,
             DocDocument,
+            SiteScrapeTask,
             RetrievedDocument,
             ContentExtractionTask,
             ContentExtractionResult,

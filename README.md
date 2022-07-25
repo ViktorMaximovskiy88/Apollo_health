@@ -59,8 +59,5 @@ Hi developer. See the [development](/docs/DEVELOPMENT.md) readme.
 
 ```bash
 # AFAIK this is m1 only (we really shouldnt need the exports)
-export PIP_CONSTRAINT="build-constraints.txt"
-export CFLAGS="-mavx -DWARN(a)=(a) -I /opt/homebrew/opt/protobuf/include"
-export LDFLAGS="-L/opt/homebrew/opt/protobuf/lib"
-poetry install
+PIP_CONSTRAINT="build-constraints.txt" CFLAGS="-mavx -DWARN(a)=(a) -I /opt/homebrew/opt/protobuf/include" LDFLAGS="-L/opt/homebrew/opt/protobuf/lib" poetry install
 ```
