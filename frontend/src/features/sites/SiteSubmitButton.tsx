@@ -2,17 +2,8 @@ import { Button, Popconfirm } from 'antd';
 import { FormInstance } from 'antd/lib/form/Form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
-import { useGetUsersQuery } from '../users/usersApi';
-import { User } from '../users/types';
 import { useLazyGetSiteQuery } from './sitesApi';
-
-const useCurrentUser = (): User | undefined => {
-  const { user: auth0User } = useAuth0();
-  const { data: users } = useGetUsersQuery();
-  const currentUser: User | undefined = users?.find((user) => user.email === auth0User?.email);
-  return currentUser;
-};
+import { useCurrentUser } from './useCurrentUser';
 
 export function SiteSubmitButton(props: { form: FormInstance }) {
   const params = useParams();

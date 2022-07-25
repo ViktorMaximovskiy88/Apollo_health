@@ -1,21 +1,12 @@
 import { Button, Popconfirm } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
-
 import { Site } from './types';
-import { useGetUsersQuery } from '../users/usersApi';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User } from '../users/types';
-import { useAuth0 } from '@auth0/auth0-react';
 import { useUpdateSiteMutation } from './sitesApi';
 import { SiteStatus } from './siteStatus';
+import { useCurrentUser } from './useCurrentUser';
 
-const useCurrentUser = (): User | undefined => {
-  const { user: auth0User } = useAuth0();
-  const { data: users } = useGetUsersQuery();
-  const currentUser: User | undefined = users?.find((user) => user.email === auth0User?.email);
-  return currentUser;
-};
 export const EditButtonLink = ({ site }: { site: Site }): JSX.Element => {
   const navigate = useNavigate();
   const currentUser = useCurrentUser();

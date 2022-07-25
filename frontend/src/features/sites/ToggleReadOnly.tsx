@@ -4,17 +4,8 @@ import { useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { Site } from './types';
 import { SiteStatus } from './siteStatus';
-import { useAuth0 } from '@auth0/auth0-react';
-import { useGetUsersQuery } from '../users/usersApi';
-import { User } from '../users/types';
 import { useUpdateSiteMutation } from './sitesApi';
-
-const useCurrentUser = (): User | undefined => {
-  const { user: auth0User } = useAuth0();
-  const { data: users } = useGetUsersQuery();
-  const currentUser: User | undefined = users?.find((user) => user.email === auth0User?.email);
-  return currentUser;
-};
+import { useCurrentUser } from './useCurrentUser';
 
 interface ToggleReadOnlyPropTypes {
   form: FormInstance;
