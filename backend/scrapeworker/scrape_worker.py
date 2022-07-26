@@ -315,7 +315,6 @@ class ScrapeWorker:
                         f":text('{wf}')" for wf in self.site.scrape_method_configuration.wait_for
                     )
                 ).first.wait_for()
-
         except Exception as ex:
             logging.error(ex)
             raise Exception(
