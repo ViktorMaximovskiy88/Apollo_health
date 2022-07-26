@@ -40,5 +40,5 @@ export interface ActiveUrlResponse {
 
 export enum CollectionMethod {
   Automated = 'AUTOMATED',
-  Manual = 'MANUAL'
+  Manual = 'MANUAL',
 }
