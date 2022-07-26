@@ -6,6 +6,7 @@ import type { UploadFile } from 'antd/es/upload/interface';
 import { UploadOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { prettyDate } from '../../common';
 import { documentTypes } from "./types";
+import { useAddDocumentMutation } from "../retrieved_documents/documentsApi"
 
 interface AddDocumentModalPropTypes {
   visible: boolean;
@@ -20,11 +21,14 @@ export function AddDocumentModal({
 }: AddDocumentModalPropTypes) {
     const [form] = useForm();
     const [fileList, setFileList] = useState<UploadFile>()
+    
     const initialValues = {
         "lang_code":"English"
     }
     function saveDocument(){
+        
 
+        
 
 
 
@@ -80,15 +84,36 @@ export function AddDocumentModal({
 
 function UploadItem(props: any) {
     const { fileList, setFileList } = props;
-
+    const [ addDoc ] = useAddDocumentMutation();
     const uploadProps: UploadProps = {
       name: 'file',
       accept:".pdf, .xlsx, .docx",
       multiple: false,
       maxCount:1,
-      beforeUpload: file => {
-        setFileList([...fileList, file]);
-        return false;
+      beforeUpload: options => {
+        return false
+      },
+      onChange: options => {
+        setFileList(options.fileList)
+        let file = options.fileList[0];
+        if (file && file.originFileObj) {
+            try {
+                let reader = new FileReader();
+                reader.onload = (e) => {
+                    if (e.target && e.target.result) {
+                        const base64 = e.target.result;
+                        addDoc({
+                            file,
+                            base64
+                        })
+                   }
+                };
+                reader.readAsDataURL(file.originFileObj);
+            }
+            catch(error) {
+                console.log(error)
+            }
+        }
       }
     };
     return (

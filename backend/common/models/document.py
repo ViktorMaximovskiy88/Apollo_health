@@ -31,6 +31,7 @@ class RetrievedDocument(BaseDocument):
     doc_type_confidence: float | None = None
     identified_dates: list[datetime] = []
     base_url: str | None = None
+
     lang_code: LangCode | None = None
     file_extension: str | None = None
     content_type: str | None = None
@@ -73,6 +74,11 @@ class UpdateRetrievedDocument(BaseModel):
 
     automated_content_extraction: bool | None = None
     automated_content_extraction_class: str | None = None
+
+class UploadDocument(BaseModel):
+    base64: str | None = None
+    file: dict | None = None
+
 
 class RetrievedDocumentLimitTags(RetrievedDocument):
     class Collection:
