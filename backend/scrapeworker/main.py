@@ -24,7 +24,7 @@ from backend.scrapeworker.common.exceptions import (
     CanceledTaskException,
     NoDocsCollectedException,
 )
-from backend.common.core.enums import TaskStatus
+from backend.common.core.enums import TaskStatus, CollectionMethod
 from backend.scrapeworker.common.aio_downloader import default_headers
 from backend.scrapeworker.log import (
     log_cancellation,
@@ -50,7 +50,7 @@ async def signal_handler():
 async def pull_task_from_queue(worker_id):
     now = datetime.now()
     acquired = await SiteScrapeTask.get_motor_collection().find_one_and_update(
-        {"status": TaskStatus.QUEUED},
+        {"status": TaskStatus.QUEUED, "collection_method": CollectionMethod.Automated},
         {
             "$set": {
                 "start_time": now,
