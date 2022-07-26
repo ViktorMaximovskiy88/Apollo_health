@@ -23,7 +23,7 @@ function SiteStatusSelect() {
 }
 
 export function SiteForm(props: { onFinish: (user: Partial<Site>) => void; initialValues?: Site }) {
-  const initialFollowLinks = props.initialValues?.scrape_method_configuration.follow_links || false;
+  const initialFollowLinks = props.initialValues?.scrape_method_configuration?.follow_links || false;
   const [followLinks, setFollowLinks] = useState<boolean>(initialFollowLinks);
   const [form] = useForm();
 
