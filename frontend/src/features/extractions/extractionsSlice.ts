@@ -1,5 +1,4 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { LOCATION_CHANGE } from 'redux-first-history';
 import { RootState } from '../../app/store';
 
 export const initialState = {
@@ -87,16 +86,6 @@ export const extractions = createSlice({
     setExtractionTableSkip: (state, action: PayloadAction<any>) => {
       state.extractions.table.pagination.skip = action.payload;
     },
-  },
-  extraReducers: (builder) => {
-    builder.addCase(LOCATION_CHANGE, (state, action: any) => {
-      const path: string = action.payload.location.pathname;
-      if (!path.startsWith('/sites/')) {
-        state.extracted_documents.table = initialState.extracted_documents.table;
-        state.extraction_tasks.table = initialState.extraction_tasks.table;
-        state.extractions.table = initialState.extractions.table;
-      }
-    });
   },
 });
 
