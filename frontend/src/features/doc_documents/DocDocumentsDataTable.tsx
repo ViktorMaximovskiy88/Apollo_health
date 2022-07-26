@@ -11,18 +11,18 @@ import {
   setDocDocumentTableLimit,
   setDocDocumentTableSkip,
 } from './docDocumentsSlice';
-import {
-  prettyDateTimeFromISO,
-  scrapeTaskStatusDisplayName,
-  scrapeTaskStatusStyledDisplay,
-} from '../../common';
+import { prettyDateTimeFromISO } from '../../common';
 import { ButtonLink, GridPaginationToolbar } from '../../components';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { TaskStatus } from '../../common';
 import { Site } from '../sites/types';
 import { useGetChangeLogQuery, useLazyGetDocDocumentsQuery } from './docDocumentApi';
 import { DocDocument } from './types';
 import { useInterval } from '../../common/hooks';
+import {
+  ApprovalStatus,
+  approvalStatusDisplayName,
+  approvalStatusStyledDisplay,
+} from '../../common/approvalStatus';
 import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
 import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
@@ -79,19 +79,13 @@ const columns = [
     filterEditor: SelectFilter,
     filterEditorProps: {
       placeholder: 'All',
-      dataSource: [
-        { id: TaskStatus.Finished, label: scrapeTaskStatusDisplayName(TaskStatus.Finished) },
-        { id: TaskStatus.Canceled, label: scrapeTaskStatusDisplayName(TaskStatus.Canceled) },
-        { id: TaskStatus.Queued, label: scrapeTaskStatusDisplayName(TaskStatus.Queued) },
-        { id: TaskStatus.Failed, label: scrapeTaskStatusDisplayName(TaskStatus.Failed) },
-        {
-          id: TaskStatus.InProgress,
-          label: scrapeTaskStatusDisplayName(TaskStatus.InProgress),
-        },
-      ],
+      dataSource: Object.values(ApprovalStatus).map((status) => ({
+        id: status,
+        label: approvalStatusDisplayName(status),
+      })),
     },
     render: ({ data: doc }: { data: DocDocument }) => {
-      return scrapeTaskStatusStyledDisplay(doc.classification_status);
+      return approvalStatusStyledDisplay(doc.classification_status);
     },
   },
   {
@@ -184,7 +178,7 @@ export function DocDocumentsDataTable() {
       const count = data?.total ?? 0;
       return { data: sites, count };
     },
-    [getDocDocumentsFn, watermark]
+    [getDocDocumentsFn, watermark] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const filterProps = useDataTableFilter(docDocumentTableState, setDocDocumentTableFilter);

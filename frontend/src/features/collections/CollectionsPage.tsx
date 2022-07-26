@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import { Button, Layout } from 'antd';
+import { Button } from 'antd';
 import { useParams } from 'react-router-dom';
-import Title from 'antd/lib/typography/Title';
 import { useNavigate } from 'react-router-dom';
-
 import {
   useRunSiteScrapeTaskMutation,
   useCancelAllSiteScrapeTasksMutation,
@@ -13,7 +11,9 @@ import { CollectionsDataTable } from './CollectionsDataTable';
 import { CollectionMethod } from '../sites/types';
 import { ErrorLogModal } from './ErrorLogModal';
 import { SiteStatus } from '../sites/siteStatus';
+import { SiteMenu } from '../sites/SiteMenu';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
+import { MainLayout } from '../../components';
 
 export function CollectionsPage() {
   const [modalVisible, setModalVisible] = useState(false);
@@ -36,23 +36,27 @@ export function CollectionsPage() {
         setVisible={setModalVisible}
         errorTraceback={errorTraceback}
       />
-      <Layout className="bg-white">
-        <div className="flex">
-          <Title level={4}>Collections</Title>
-          {site &&
-          site.collection_method === CollectionMethod.Automated &&
-          site.status !== SiteStatus.Inactive ? (
-            <Button onClick={() => runScrape(site._id)} className="ml-auto">
-              Run Collection
-            </Button>
-          ) : site &&
-            site.collection_method === CollectionMethod.Manual &&
+      <MainLayout
+        sidebar={<SiteMenu />}
+        pageTitle={'Collections'}
+        pageToolbar={
+          <>
+            {site &&
+            site.collection_method === CollectionMethod.Automated &&
             site.status !== SiteStatus.Inactive ? (
-            <ManualCollectionButton site={site} refetch={refetch} runScrape={runScrape} />
-          ) : null}
-        </div>
+              <Button onClick={() => runScrape(site._id)} className="ml-auto">
+                Run Collection
+              </Button>
+            ) : site &&
+              site.collection_method === CollectionMethod.Manual &&
+              site.status !== SiteStatus.Inactive ? (
+              <ManualCollectionButton site={site} refetch={refetch} runScrape={runScrape} />
+            ) : null}
+          </>
+        }
+      >
         <CollectionsDataTable siteId={siteId} openErrorModal={openErrorModal} />
-      </Layout>
+      </MainLayout>
     </>
   );
 }

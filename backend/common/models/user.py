@@ -38,4 +38,6 @@ class User(BaseDocument, UserPublic):
 
     @classmethod
     async def by_email(cls, email: str) -> Optional["User"]:
-        return await cls.find_one(cls.email == email.lower())
+        return await cls.find_one(
+            {"email": {"$regex": rf"^{email}$", "$options": "-i"}}
+        )

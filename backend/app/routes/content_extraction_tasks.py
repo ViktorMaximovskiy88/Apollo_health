@@ -3,7 +3,7 @@ import json
 from beanie import PydanticObjectId
 from beanie.odm.operators.update.general import Set
 from fastapi import APIRouter, Depends, HTTPException, Request, status, Security
-from backend.app.routes.table_query import TableFilterInfo, TableQueryResponse, TableSortInfo, query_table
+from backend.app.routes.table_query import TableFilterInfo, TableQueryResponse, TableSortInfo, get_query_json_list, query_table
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import Site
 
@@ -36,17 +36,6 @@ async def get_target(id: PydanticObjectId):
             status_code=status.HTTP_404_NOT_FOUND,
         )
     return task
-
-def get_query_json_list(arg: str, type):
-    def func(request: Request):
-        value_str = request.query_params.get(arg, None)
-        if value_str:
-            values: list[type] = json.loads(value_str)
-            return [type.parse_obj(v) for v in values]
-        else:
-            return []
-
-    return func
 
 @router.get(
     "/results/",

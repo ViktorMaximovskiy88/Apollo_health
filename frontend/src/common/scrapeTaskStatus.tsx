@@ -18,9 +18,7 @@ export function scrapeTaskStatusDisplayName(status: TaskStatus): string {
   return name;
 }
 
-export function scrapeTaskStatusStyledDisplay(
-  status: TaskStatus
-): React.ReactElement {
+export function scrapeTaskStatusStyledDisplay(status: TaskStatus): React.ReactElement {
   const { name, style } = statusDisplayAndStyle(status);
   if (!name && !style) {
     return <span />;

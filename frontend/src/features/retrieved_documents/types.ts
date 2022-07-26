@@ -8,6 +8,7 @@ export interface DocumentQuery {
 }
 
 export interface RetrievedDocument extends BaseDocument {
+  _id: string;
   site_id: string;
   scrape_task_id: string;
   logical_document_id?: string;

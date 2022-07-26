@@ -1667,6 +1667,11 @@
     schema-utils "^3.0.0"
     source-map "^0.7.3"
 
+"@reach/observe-rect@^1.1.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@reach/observe-rect/-/observe-rect-1.2.0.tgz#d7a6013b8aafcc64c778a0ccb83355a11204d3b2"
+  integrity sha512-Ba7HmkFgfQxZqqaeIWWkNK0rEhpxVQHIoVyW1YDSkGsGIXzcaW4deC8B0pZrNSSyLTdIk7y+5olKt5+g0GmFIQ==
+
 "@react-pdf-viewer/attachment@3.4.0":
   version "3.4.0"
   resolved "https://registry.yarnpkg.com/@react-pdf-viewer/attachment/-/attachment-3.4.0.tgz#36e4038d79099e56ea75dd74d119a0bb5305de84"
@@ -1998,6 +2003,21 @@
     "@svgr/plugin-svgo" "^5.5.0"
     loader-utils "^2.0.0"
 
+"@tanstack/react-virtual@^3.0.0-beta.12":
+  version "3.0.0-beta.12"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-virtual/-/react-virtual-3.0.0-beta.12.tgz#e62a1f51d018635493ecaa1fa16876188db68dc7"
+  integrity sha512-5ZztFUDq7QdtvdeYO48a8nzWFkF7unrbRtQr0N81Msm2epSrDZ0PPcyE8oXbhmy2os8cMPTmMYDzEyWBWXE+Iw==
+  dependencies:
+    "@reach/observe-rect" "^1.1.0"
+    "@tanstack/virtual-core" "3.0.0-beta.12"
+
+"@tanstack/virtual-core@3.0.0-beta.12":
+  version "3.0.0-beta.12"
+  resolved "https://registry.yarnpkg.com/@tanstack/virtual-core/-/virtual-core-3.0.0-beta.12.tgz#db220052dbefa042ecaa2b78edaf735ce4eb536b"
+  integrity sha512-b2jAPFoPVvgEDxIygFG43d4sn3DJHeohYiSUMIWXha8TcM2LR5pNxYsf+muQETUzLmB+7UNf+e0IUNKbzwMphA==
+  dependencies:
+    "@reach/observe-rect" "^1.1.0"
+
 "@testing-library/dom@^8.5.0":
   version "8.13.0"
   resolved "https://registry.yarnpkg.com/@testing-library/dom/-/dom-8.13.0.tgz#bc00bdd64c7d8b40841e27a70211399ad3af46f5"
@@ -2279,7 +2299,7 @@
   dependencies:
     "@types/lodash" "*"
 
-"@types/lodash@*", "@types/lodash@^4.14.172":
+"@types/lodash@*", "@types/lodash@^4.14.172", "@types/lodash@^4.14.182":
   version "4.14.182"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.182.tgz#05301a4d5e62963227eaafe0ce04dd77c54ea5c2"
   integrity sha512-/THyiqyQAP9AfARo4pF+aCGcyiQ94tX/Is2I7HofNRqoYLgN1PBoOWu2/zTA5zMxzP5EFutMtWtGAFRKUe961Q==
@@ -10236,6 +10256,11 @@ urix@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/urix/-/urix-0.1.0.tgz#da937f7a62e21fec1fd18d49b35c2935067a6c72"
   integrity sha1-2pN/emLiH+wf0Y1Js1wpNQZ6bHI=
+
+urlpattern-polyfill@^5.0.5:
+  version "5.0.5"
+  resolved "https://registry.yarnpkg.com/urlpattern-polyfill/-/urlpattern-polyfill-5.0.5.tgz#037adfd438161125f81d8199b9d493e91c5ce247"
+  integrity sha512-Oq4ak65m3IezuCqYnxMN0cKh1eiL62YurYDCXp6epo91iBhN+aesVW8+q0qtUC9r84jKuTWXomWrnpkY5WWuRg==
 
 util-deprecate@^1.0.1, util-deprecate@^1.0.2, util-deprecate@~1.0.1:
   version "1.0.2"

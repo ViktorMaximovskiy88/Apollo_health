@@ -69,6 +69,36 @@ const useControlledPagination = ({
   return controlledPaginationProps;
 };
 
+export const useSiteFilter = () => {
+  const { filter: filterValue }: { filter: TypeFilterValue } = useSelector(siteTableState);
+  const dispatch = useDispatch();
+  const onFilterChange = useCallback(
+    (filter: TypeFilterValue) => dispatch(setSiteTableFilter(filter)),
+    [dispatch, setSiteTableFilter]
+  );
+  const filterProps = {
+    defaultFilterValue: filterValue,
+    filterValue,
+    onFilterValueChange: onFilterChange,
+  };
+  return filterProps;
+};
+
+export const useSiteSort = () => {
+  const { sort: sortInfo }: { sort: TypeSortInfo } = useSelector(siteTableState);
+  const dispatch = useDispatch();
+  const onSortChange = useCallback(
+    (sortInfo: TypeSortInfo) => dispatch(setSiteTableSort(sortInfo)),
+    [dispatch, setSiteTableSort]
+  );
+  const sortProps = {
+    defaultSortInfo: sortInfo,
+    sortInfo,
+    onSortInfoChange: onSortChange,
+  };
+  return sortProps;
+};
+
 interface SiteDataTablePropTypes {
   setLoading: (loading: boolean) => void;
 }
@@ -104,8 +134,8 @@ export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
     [deleteSite, setDeletedSite]
   );
 
-  const filterProps = useDataTableFilter(siteTableState, setSiteTableFilter);
-  const sortProps = useDataTableSort(siteTableState, setSiteTableSort);
+  const filterProps = useSiteFilter();
+  const sortProps = useSiteSort();
   const controlledPagination = useControlledPagination({ isActive, setActive });
 
   return (

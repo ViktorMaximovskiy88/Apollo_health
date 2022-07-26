@@ -1,6 +1,5 @@
-import { Layout } from 'antd';
-import Title from 'antd/lib/typography/Title';
 import { useNavigate } from 'react-router-dom';
+import { MainLayout } from '../../components';
 import { User } from './types';
 import { UserForm } from './UserForm';
 import { useAddUserMutation } from './usersApi';
@@ -15,11 +14,8 @@ export function UserCreatePage() {
   }
 
   return (
-    <Layout className="bg-transparent p-4">
-      <div className="flex">
-        <Title level={4}>Create User</Title>
-      </div>
+    <MainLayout pageTitle={'Create User'}>
       <UserForm onFinish={tryAddUser} />
-    </Layout>
+    </MainLayout>
   );
 }

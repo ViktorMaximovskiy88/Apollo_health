@@ -1,28 +1,24 @@
 import asyncio
 import math
-from pathlib import Path
 import signal
 import sys
-from beanie import PydanticObjectId
+from datetime import datetime, timedelta
+from pathlib import Path
+
 import boto3
 import typer
-
-from datetime import datetime, timedelta
-from beanie.odm.operators.update.general import Set
+from beanie import PydanticObjectId
 
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 
-from backend.common.task_queues.unique_task_insert import try_queue_unique_task
-from backend.common.core.config import is_local, config
-from backend.common.models.user import User
-from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.common.core.enums import TaskStatus
-from backend.common.core.enums import SiteStatus
 from backend.app.utils.logger import Logger
-
+from backend.common.core.config import config, is_local
+from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
 from backend.common.db.init import init_db
 from backend.common.models.site import Site
-from backend.common.core.enums import CollectionMethod
+from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.models.user import User
+from backend.common.task_queues.unique_task_insert import try_queue_unique_task
 
 app = typer.Typer()
 
@@ -38,9 +34,7 @@ def compute_matching_crons(now: datetime):
                         # prefer cron as that's the format we're using
                         if day_of_week != "*":
                             day_of_week = (day_of_week + 1) % 7
-                        crons.append(
-                            f"{minute} {hour} {day_of_month} {month} {day_of_week}"
-                        )
+                        crons.append(f"{minute} {hour} {day_of_month} {month} {day_of_week}")
     return crons
 
 
@@ -56,10 +50,8 @@ def find_sites_eligible_for_scraping(crons, now=datetime.now()):
         {
             "cron": {"$in": crons},  # Should be run now
             "disabled": False,  # Is active
-            "status": SiteStatus.ONLINE,  # Is online
-            "collection_method": {
-                "$ne": CollectionMethod.Manual  # Isn't set to manual
-            },
+            "status": {"$in": [SiteStatus.ONLINE, SiteStatus.QUALITY_HOLD]},  # Is online
+            "collection_method": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
             "base_urls.status": "ACTIVE",  # has at least one active url
             "$or": [
                 {"last_run_time": None},  # has never been run
@@ -121,9 +113,7 @@ def scrapeworker_service_arn() -> str | None:
 
 def determine_current_instance_count():
     ecs = boto3.client("ecs")
-    services = ecs.describe_services(
-        cluster=cluster_arn(), services=[scrapeworker_service_arn()]
-    )
+    services = ecs.describe_services(cluster=cluster_arn(), services=[scrapeworker_service_arn()])
     return services["services"][0]["desiredCount"]
 
 
@@ -153,7 +143,7 @@ def get_new_cluster_size(queue_size, active_workers, tasks_per_worker):
 
 async def start_scaler():
     if is_local:
-        typer.secho(f"Cannot run scaler locally", fg=typer.colors.RED)
+        typer.secho("Cannot run scaler locally", fg=typer.colors.RED)
         return
 
     while True:
@@ -162,9 +152,7 @@ async def start_scaler():
         ).count()
         active_workers = determine_current_instance_count()
         tasks_per_worker = 2  # some setting
-        new_cluster_size = get_new_cluster_size(
-            queue_size, active_workers, tasks_per_worker
-        )
+        new_cluster_size = get_new_cluster_size(queue_size, active_workers, tasks_per_worker)
         update_cluster_size(new_cluster_size)
         await asyncio.sleep(30)
 
@@ -174,9 +162,7 @@ async def requeue_lost_task(task: SiteScrapeTask, now):
     typer.secho(message, fg=typer.colors.RED)
     new_task = SiteScrapeTask(id=task.id, site_id=task.site_id, queued_time=now)
     await new_task.save()
-    await Site.find_one(Site.id == task.site_id).update(
-        { "$set": { "last_run_status": task.status } }
-    )
+    await Site.find_one(Site.id == task.site_id).update({"$set": {"last_run_status": task.status}})
 
 
 async def start_hung_task_checker():
@@ -211,14 +197,14 @@ async def start_scheduler_and_scaler():
 
 
 def signal_handler(signum, frame):
-    typer.secho(f"Shutdown Requested, shutting down", fg=typer.colors.BLUE)
+    typer.secho("Shutdown Requested, shutting down", fg=typer.colors.BLUE)
     for task in background_tasks:
         task.cancel()
 
 
 @app.command()
 def start_worker():
-    typer.secho(f"Starting Scheduler", fg=typer.colors.GREEN)
+    typer.secho("Starting Scheduler", fg=typer.colors.GREEN)
     signal.signal(signal.SIGTERM, signal_handler)
     asyncio.run(start_scheduler_and_scaler())
 

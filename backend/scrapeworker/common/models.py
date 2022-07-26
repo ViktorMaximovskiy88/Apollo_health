@@ -66,7 +66,7 @@ class Download(BaseModel):
     metadata: Metadata = Metadata()
     request: Request
     response: Response = Response()
-    # TODO 'artifact' 'output' or is it indeed just the 'download' ...
+
     file_name: str | None = None
     file_extension: str | None = None
     file_path: str | None = None
@@ -75,7 +75,7 @@ class Download(BaseModel):
     content_hash: str | None = None
     content_type: str | None = None
 
-    def guess_extension(self) -> str | None:
+    def guess_extension(self) -> None:
         guess_ext = get_extension_from_path_like(self.request.url)
 
         if not guess_ext:
