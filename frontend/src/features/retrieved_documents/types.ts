@@ -36,8 +36,3 @@ export interface RetrievedDocument extends BaseDocument {
   automated_content_extraction: boolean;
   automated_content_extraction_class: string;
 }
-
-export interface UploadDocument extends BaseDocument {
-  file: any;
-  base64: any;
-}

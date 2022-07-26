@@ -80,10 +80,6 @@ class UpdateRetrievedDocument(BaseModel):
     automated_content_extraction: bool | None = None
     automated_content_extraction_class: str | None = None
 
-class UploadDocument(BaseModel):
-    base64: str | None = None
-    file: dict | None = None
-
 class RetrievedDocumentLimitTags(RetrievedDocument):
     class Collection:
         name = "RetrievedDocument"

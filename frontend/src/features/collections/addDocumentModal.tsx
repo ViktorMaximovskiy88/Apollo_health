@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button, Modal, Form, Space, Input, Upload, DatePicker, Select, Tooltip, message } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
-import type { UploadProps } from 'antd';
-import type { UploadFile } from 'antd/es/upload/interface';
-import { UploadOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { UploadChangeParam } from 'antd/lib/upload';
+import { UploadFile } from 'antd/lib/upload/interface';
+
+import { UploadOutlined, QuestionCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { prettyDate } from '../../common';
 import { useAddDocumentMutation } from "../retrieved_documents/documentsApi"
+import { baseApiUrl, client, fetchWithAuth } from '../../app/base-api';
 
 interface AddDocumentModalPropTypes {
   visible: boolean;
@@ -19,8 +21,6 @@ export function AddDocumentModal({
     siteId,
 }: AddDocumentModalPropTypes) {
     const [form] = useForm();
-    const [fileList, setFileList] = useState<UploadFile>()
-    
     const initialValues = {
         "lang_code":"English"
     }
@@ -57,7 +57,7 @@ export function AddDocumentModal({
                 initialValues={initialValues}
                 validateMessages={validateMessages}
                 onFinish={saveDocument}>
-                <UploadItem fileList={fileList} setFileList={setFileList} />
+                <UploadItem />
                 <div className="flex grow space-x-3">
                     <Form.Item className="grow" name="name" label="Document Name" rules={[{ required: true }]}>
                         <Input />
@@ -79,7 +79,7 @@ export function AddDocumentModal({
                   <Button type="primary" htmlType="submit">
                     Save
                   </Button>
-                    <Button onClick={onCancel} htmlType="submit">Cancel</Button>
+                  <Button onClick={onCancel} htmlType="submit">Cancel</Button>
                 </Space>
               </Form.Item>
             </Form>
@@ -89,39 +89,23 @@ export function AddDocumentModal({
 
 
 function UploadItem(props: any) {
-    const { fileList, setFileList } = props;
     const [ addDoc ] = useAddDocumentMutation();
-    const uploadProps: UploadProps = {
-      name: 'file',
-      accept:".pdf, .xlsx, .docx",
-      multiple: false,
-      maxCount:1,
-      beforeUpload: options => {
-        return false
-      },
-      onChange: options => {
-        setFileList(options.fileList)
-        let file = options.fileList[0];
-        if (file && file.originFileObj) {
-            try {
-                let reader = new FileReader();
-                reader.onload = (e) => {
-                    if (e.target && e.target.result) {
-                        const base64 = e.target.result;
-                        addDoc({
-                            file,
-                            base64
-                        })
-                   }
-                };
-                reader.readAsDataURL(file.originFileObj);
-            }
-            catch(error) {
-                console.log(error)
-            }
+    const [token, setToken] = useState('');
+    const [uploading, setUploading] = useState(false);
+
+    useEffect(() => {
+        client.getTokenSilently().then((t) => setToken(t));
+    }, [setToken]);
+
+    const onChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
+        if (info.file.status === 'uploading') {
+          setUploading(true);
         }
-      }
+        if (info.file.status === 'done') {
+          setUploading(false);
+        }
     };
+
     return (
         <Form.Item name="document_file" label={
           <>
@@ -129,8 +113,22 @@ function UploadItem(props: any) {
             <Tooltip placement="right" title="Only upload .pdf, .xlsx and .docx"><QuestionCircleOutlined /></Tooltip>
           </>
         } rules={[{ required: true }]}>
-            <Upload {...uploadProps} fileList={fileList}>
-                <Button icon={<UploadOutlined />}>Click to Upload</Button>
+            <Upload 
+                name="file"
+                accept=".pdf,.xlsx,.docx"
+                action={`${baseApiUrl}/documents/upload`}
+                headers={{
+                  Authorization: `Bearer ${token}`,
+                }}
+                showUploadList={false}
+                onChange={onChange}
+                >
+                {
+                    uploading ? 
+                    <Button icon={<LoadingOutlined />}>Uploading...</Button>
+                    : 
+                    <Button icon={<UploadOutlined />}>Click to Upload</Button>
+                }
             </Upload>
         </Form.Item>
     )

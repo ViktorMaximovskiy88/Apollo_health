@@ -1,11 +1,11 @@
 from datetime import datetime
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, HTTPException, status, Security
+from fastapi import APIRouter, Depends, HTTPException, status, Security, UploadFile
 from fastapi.responses import StreamingResponse
 
 from backend.common.models.content_extraction_task import ContentExtractionTask
-from backend.common.models.document import RetrievedDocument, RetrievedDocumentLimitTags, UpdateRetrievedDocument, UploadDocument
+from backend.common.models.document import RetrievedDocument, RetrievedDocumentLimitTags, UpdateRetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.app.utils.logger import (
@@ -112,6 +112,29 @@ async def read_document(
     return target
 
 
+@router.post("/upload")
+async def upload_document(
+    file: UploadFile,
+    current_user: User = Security(get_current_user),
+    logger: Logger = Depends(get_logger),
+):
+
+
+
+
+    print('Add a document', file)
+
+
+
+
+
+
+
+
+
+
+
+
 @router.post("/{id}", response_model=RetrievedDocument)
 async def update_document(
     updates: UpdateRetrievedDocument,
@@ -155,14 +178,6 @@ async def delete_document(
     )
     return {"success": True}
 
-
-@router.put("/")
-async def add_document(
-    target: UploadDocument,
-    current_user: User = Security(get_current_user),
-    logger: Logger = Depends(get_logger),
-):
-    print('Add a document', target)
 
 
 

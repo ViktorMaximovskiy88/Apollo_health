@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
-import { RetrievedDocument, DocumentQuery, UploadDocument } from './types';
+import { RetrievedDocument, DocumentQuery } from './types';
 
 function queryString(params: DocumentQuery) {
   return Object.entries(params)
@@ -26,7 +26,7 @@ export const documentsApi = createApi({
       query: (id) => `/documents/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'RetrievedDocument' as const, id }],
     }),
-    addDocument: builder.mutation<UploadDocument, Partial<UploadDocument>>({
+    addDocument: builder.mutation<RetrievedDocument, Partial<RetrievedDocument>>({
       query: (body) => ({ url: '/documents/', method: 'PUT', body })
     }),
     updateDocument: builder.mutation<RetrievedDocument, Partial<RetrievedDocument>>({
