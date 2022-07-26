@@ -17,6 +17,7 @@ from backend.app.utils.user import get_current_user
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.events.send_event_client import SendEventClient
 from backend.common.events.event_convert import EventConvert
+from backend.scrapeworker.common.aio_downloader import AioDownloader
 
 router = APIRouter(
     prefix="/documents",
@@ -117,12 +118,8 @@ async def upload_document(
     file: UploadFile,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
-):
-
-
-
-
-    print('Add a document', file)
+): 
+    print(file)
 
 
 
