@@ -1,10 +1,12 @@
 import logging
 from functools import cached_property
-from playwright.async_api import ElementHandle
-from backend.scrapeworker.common.models import Download, Metadata, Request
-from backend.scrapeworker.common.selectors import filter_by_href, filter_by_hidden_value
-from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 from urllib.parse import urljoin
+
+from playwright.async_api import ElementHandle
+
+from backend.scrapeworker.common.models import Download, Metadata, Request
+from backend.scrapeworker.common.selectors import filter_by_hidden_value, filter_by_href
+from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 
 
 class DirectDownloadScraper(PlaywrightBaseScraper):
@@ -23,7 +25,7 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
         )
 
         self.selectors = self.selectors + href_selectors + hidden_value_selectors
-        logging.debug(self.selectors)
+        logging.info(self.selectors)
         return ", ".join(self.selectors)
 
     async def execute(self) -> list[Download]:

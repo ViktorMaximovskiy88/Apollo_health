@@ -1,6 +1,8 @@
+# noqa E501
 import os
-import re
 import pathlib
+import re
+
 import magic
 
 
@@ -60,6 +62,7 @@ mimetype_to_extension_map = {
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
     "application/pdf": "pdf",
     "text/html": "html",
+    "application/octet-stream": None,
 }
 
 extension_to_mimetype_map = {v: k for k, v in mimetype_to_extension_map.items()}

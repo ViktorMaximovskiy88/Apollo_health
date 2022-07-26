@@ -23,7 +23,7 @@ from backend.common.models.doc_document import DocDocument, calc_final_effective
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
-from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.models.site_scrape_task import ScrapedLinks, SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.storage.client import DocumentStorageClient
 from backend.scrapeworker.common.aio_downloader import AioDownloader
@@ -181,7 +181,33 @@ class ScrapeWorker:
     async def attempt_download(self, download: Download):
         url = download.request.url
         proxies = await self.get_proxy_settings()
-        async for (temp_path, checksum) in self.downloader.download_to_tempfile(download, proxies):
+
+        download.seen_doc = await RetrievedDocument.find_one(RetrievedDocument.url == url)
+        seen_doc_id = download.seen_doc.id if download.seen_doc else None
+
+        async for (temp_path, checksum) in self.downloader.try_download_to_tempfile(
+            download, proxies
+        ):
+
+            await self.scrape_task.update(
+                Push(
+                    {
+                        SiteScrapeTask.scraped_links_log: ScrapedLinks(
+                            url=url,
+                            response=download.response,
+                            related_doc_by_url=seen_doc_id,
+                        )
+                    }
+                )
+            )
+
+            if (
+                download.seen_doc
+                and download.seen_doc.content_type != download.response.content_type
+            ):
+                raise Exception("something wrong")
+                # problemo
+
             parsed_content = await parse_by_type(temp_path, download, self.taggers)
             if parsed_content is None:
                 continue

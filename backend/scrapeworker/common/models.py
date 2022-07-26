@@ -1,15 +1,17 @@
 import re
 from typing import Any
+
+from aiohttp import ClientResponse
 from pydantic import BaseModel
 
-from backend.scrapeworker.playbook import PlaybookContext
+from backend.common.models.document import RetrievedDocument
 from backend.scrapeworker.common.utils import (
     extension_to_mimetype_map,
-    get_extension_from_path_like,
-    get_extension_from_path_like,
     get_extension_from_content_type,
     get_extension_from_file_mime_type,
+    get_extension_from_path_like,
 )
+from backend.scrapeworker.playbook import PlaybookContext
 
 
 class Metadata(BaseModel):
@@ -34,12 +36,14 @@ class Response(BaseModel):
     content_type: str | None = None
     content_disposition_filename: str | None = None
     status: int | None = None
+    content_length: int | None = None
 
-    def from_headers(self, headers):
+    def from_aio_response(self, response: ClientResponse):
+        headers = response.headers
+        self.status = response.status
         self.content_type = self.get_content_type(headers)
-        self.content_disposition_filename = self.get_content_disposition_filename(
-            headers
-        )
+        self.content_disposition_filename = self.get_content_disposition_filename(headers)
+        self.content_length = headers.get("content-length") or 0
 
     def get_content_disposition_filename(self, headers) -> str | None:
         matched = None
@@ -66,11 +70,14 @@ class Download(BaseModel):
     metadata: Metadata = Metadata()
     request: Request
     response: Response = Response()
+    seen_doc: RetrievedDocument | None = None
 
     file_name: str | None = None
     file_extension: str | None = None
     file_path: str | None = None
     file_hash: str | None = None
+    file_size: int = 0
+    alternate_url: str | None = None
 
     content_hash: str | None = None
     content_type: str | None = None
@@ -79,9 +86,8 @@ class Download(BaseModel):
         guess_ext = get_extension_from_path_like(self.request.url)
 
         if not guess_ext:
-            guess_ext = get_extension_from_path_like(
-                self.response.content_disposition_filename
-            )
+            guess_ext = get_extension_from_path_like(self.response.content_disposition_filename)
+
         if not guess_ext:
             guess_ext = get_extension_from_content_type(self.response.content_type)
 

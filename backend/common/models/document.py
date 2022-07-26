@@ -15,7 +15,7 @@ class RetrievedDocument(BaseDocument):
     logical_document_version: int | None = None
     first_collected_date: datetime | None = None
     last_collected_date: datetime | None = None
-    url: str | None = None
+    url: Indexed(str)  # type: ignore
     checksum: Indexed(str)  # type: ignore
     text_checksum: str | None = None
     disabled: bool = False

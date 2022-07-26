@@ -1,10 +1,19 @@
 from datetime import datetime
 from uuid import UUID
+
 from beanie import Indexed, PydanticObjectId
 from pydantic import BaseModel
+
+from backend.common.core.enums import CollectionMethod, TaskStatus
 from backend.common.models.base_document import BaseDocument
-from backend.common.core.enums import TaskStatus
-from backend.common.core.enums import CollectionMethod
+from backend.scrapeworker.common.models import Response
+
+
+class ScrapedLinks(BaseModel):
+    url: str
+    response: Response | None = None
+    related_doc_by_url: PydanticObjectId | None = None
+    related_doc_by_checksum: PydanticObjectId | None = None
 
 
 class SiteScrapeTask(BaseDocument):
@@ -22,6 +31,7 @@ class SiteScrapeTask(BaseDocument):
     links_found: int = 0
     retry_if_lost: bool = False
     collection_type: str | None = CollectionMethod.Automated
+    scraped_links_log: list[ScrapedLinks] = []
 
 
 class UpdateSiteScrapeTask(BaseModel):
