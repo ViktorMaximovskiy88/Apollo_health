@@ -120,19 +120,18 @@ async def create_site(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    print(site)
-    # new_site = Site(
-    #     name=site.name,
-    #     base_urls=site.base_urls,
-    #     scrape_method=site.scrape_method,
-    #     collection_method=site.collection_method,
-    #     scrape_method_configuration=site.scrape_method_configuration,
-    #     tags=site.tags,
-    #     disabled=False,
-    #     cron=site.cron,
-    # )
-    # await create_and_log(logger, current_user, new_site)
-    # return new_site
+    new_site = Site(
+        name=site.name,
+        base_urls=site.base_urls,
+        scrape_method=site.scrape_method,
+        collection_method=site.collection_method,
+        scrape_method_configuration=site.scrape_method_configuration,
+        tags=site.tags,
+        disabled=False,
+        cron=site.cron,
+    )
+    await create_and_log(logger, current_user, new_site)
+    return new_site
 
 
 def parse_line(line):
