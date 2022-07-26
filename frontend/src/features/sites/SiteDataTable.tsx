@@ -17,8 +17,7 @@ import {
   TypeSortInfo,
 } from '@inovua/reactdatagrid-community/types';
 import { createColumns } from './createColumns';
-import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
-import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
+import { useGetUsersQuery } from '../users/usersApi';
 
 function disableLoadingMask(data: {
   visible: boolean;
@@ -74,7 +73,7 @@ export const useSiteFilter = () => {
   const dispatch = useDispatch();
   const onFilterChange = useCallback(
     (filter: TypeFilterValue) => dispatch(setSiteTableFilter(filter)),
-    [dispatch, setSiteTableFilter]
+    [dispatch]
   );
   const filterProps = {
     defaultFilterValue: filterValue,
@@ -89,7 +88,7 @@ export const useSiteSort = () => {
   const dispatch = useDispatch();
   const onSortChange = useCallback(
     (sortInfo: TypeSortInfo) => dispatch(setSiteTableSort(sortInfo)),
-    [dispatch, setSiteTableSort]
+    [dispatch]
   );
   const sortProps = {
     defaultSortInfo: sortInfo,
@@ -128,10 +127,11 @@ export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
     [getSitesFn, watermark, setLoading, deletedSite] // watermark is not inside useCallback
   );
 
+  const { data: users } = useGetUsersQuery();
   const [deleteSite] = useDeleteSiteMutation();
   const columns = useMemo(
-    () => createColumns(deleteSite, setDeletedSite),
-    [deleteSite, setDeletedSite]
+    () => createColumns({ deleteSite, setDeletedSite, users }),
+    [deleteSite, setDeletedSite, users]
   );
 
   const filterProps = useSiteFilter();

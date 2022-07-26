@@ -61,6 +61,7 @@ export const sitesApi = createApi({
 
 export const {
   useGetSiteQuery,
+  useLazyGetSiteQuery,
   useGetSitesQuery,
   useLazyGetSitesQuery,
   useAddSiteMutation,

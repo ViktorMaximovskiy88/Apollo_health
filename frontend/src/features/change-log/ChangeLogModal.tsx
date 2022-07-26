@@ -11,6 +11,7 @@ import { prettyDateTimeFromISO } from '../../common';
 import { useState } from 'react';
 import { useGetUsersQuery } from '../users/usersApi';
 import { ChangeLog, Patch } from './types';
+import { User } from '../users/types';
 
 function prettyOp(op: string) {
   if (op === 'replace') {
@@ -30,6 +31,20 @@ function prettyPath(path: string) {
   return path;
 }
 
+function prettyUser(user?: User) {
+  if (!user) {
+    return 'Unassigned';
+  }
+  return `${user.full_name}`;
+}
+
+function prettyReassignment(op: Patch, users?: User[]) {
+  if (!users) return '';
+  const prevAssignee = users.find((user) => user._id === op.prev);
+  const currentAssignee = users.find((user) => user._id === op.value);
+  return `${prettyUser(prevAssignee)} -> ${prettyUser(currentAssignee)}`;
+}
+
 function prettyValue(op: Patch) {
   if (op.prev) {
     return `${op.prev?.toString()} -> ${op.value?.toString()}`;
@@ -40,7 +55,7 @@ function prettyValue(op: Patch) {
   }
 }
 
-export function ChangeLogDeltaTable(props: { log: ChangeLog }) {
+export function ChangeLogDeltaTable(props: { log: ChangeLog; users?: User[] }) {
   return (
     <table>
       <thead>
@@ -56,7 +71,11 @@ export function ChangeLogDeltaTable(props: { log: ChangeLog }) {
             <tr key={JSON.stringify(op)}>
               <td>{prettyOp(op.op)}</td>
               <td>{prettyPath(op.path)}</td>
-              <td>{prettyValue(op)}</td>
+              {op.path === '/assignee' ? (
+                <td>{prettyReassignment(op, props?.users)}</td>
+              ) : (
+                <td>{prettyValue(op)}</td>
+              )}
             </tr>
           );
         })}
@@ -156,7 +175,7 @@ export function ChangeLogModal(props: {
           dataSource={formattedLogs}
           columns={columns}
           expandable={{
-            expandedRowRender: (log) => <ChangeLogDeltaTable log={log} />,
+            expandedRowRender: (log) => <ChangeLogDeltaTable log={log} users={users} />,
             rowExpandable: (log) => !!log.delta,
           }}
         />

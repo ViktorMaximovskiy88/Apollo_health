@@ -14,6 +14,12 @@ export const initialState = {
         type: 'select',
         value: null,
       },
+      {
+        name: 'assignee',
+        operator: 'eq',
+        type: 'select',
+        value: '',
+      },
       { name: 'tags', operator: 'contains', type: 'string', value: '' },
     ],
     pagination: { limit: 50, skip: 0 },
