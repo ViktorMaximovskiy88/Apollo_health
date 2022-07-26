@@ -14,20 +14,18 @@ import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './sitesApi';
 import { Site } from './types';
 import { SiteStatus, siteStatusDisplayName, siteStatusStyledDisplay } from './siteStatus';
-import { useGetUsersQuery } from '../users/usersApi';
 import { ReactNode } from 'react';
 import { EditButtonLink } from './EditButtonLink';
+import { User } from '../users/types';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
-const Assignee = ({ id }: { id: string }) => {
-  // to use hook
-  const { data: users } = useGetUsersQuery();
-  const [assignee] = users?.filter((user) => user._id === id) ?? [];
-  return <>{assignee?.full_name}</>;
-};
-
-export const createColumns = (deleteSite: any, setDeletedSite: any) => {
+interface CreateColumnsType {
+  deleteSite: any;
+  setDeletedSite: (site: string) => void;
+  users?: User[];
+}
+export const createColumns = ({ deleteSite, setDeletedSite, users }: CreateColumnsType) => {
   async function handleDeleteSite(site: Site) {
     try {
       await deleteSite(site).unwrap();
@@ -35,7 +33,7 @@ export const createColumns = (deleteSite: any, setDeletedSite: any) => {
         message: 'Site Deleted',
         description: `Successfully deleted ${site.name}`,
       });
-      setDeletedSite(site);
+      setDeletedSite(site._id);
     } catch (err) {
       if (isErrorWithData(err)) {
         notification.error({
@@ -144,7 +142,16 @@ export const createColumns = (deleteSite: any, setDeletedSite: any) => {
     {
       header: 'Assignee',
       name: 'assignee',
-      render: ({ value }: { value: string }): ReactNode => <Assignee id={value} />,
+      minWidth: 200,
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        placeholder: 'All',
+        dataSource: users ? users.map((user) => ({ id: user._id, label: user.full_name })) : [],
+      },
+      render: ({ value: id }: { value: string }): ReactNode => {
+        const [assignee] = users?.filter((user) => user._id === id) ?? [];
+        return <>{assignee?.full_name}</>;
+      },
     },
     {
       header: 'Tags',

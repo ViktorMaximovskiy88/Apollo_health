@@ -17,6 +17,7 @@ import {
   TypeSortInfo,
 } from '@inovua/reactdatagrid-community/types';
 import { createColumns } from './createColumns';
+import { useGetUsersQuery } from '../users/usersApi';
 
 function disableLoadingMask(data: {
   visible: boolean;
@@ -126,10 +127,11 @@ export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
     [getSitesFn, watermark, setLoading, deletedSite] // watermark is not inside useCallback
   );
 
+  const { data: users } = useGetUsersQuery();
   const [deleteSite] = useDeleteSiteMutation();
   const columns = useMemo(
-    () => createColumns(deleteSite, setDeletedSite),
-    [deleteSite, setDeletedSite]
+    () => createColumns({ deleteSite, setDeletedSite, users }),
+    [deleteSite, setDeletedSite, users]
   );
 
   const filterProps = useSiteFilter();

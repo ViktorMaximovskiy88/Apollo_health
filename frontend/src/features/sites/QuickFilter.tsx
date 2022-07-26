@@ -7,6 +7,7 @@ import { initialState, setSiteTableFilter, setSiteTableSort, siteTableState } fr
 import { useDispatch, useSelector } from 'react-redux';
 import { SiteStatus } from './siteStatus';
 import { TypeSingleFilterValue } from '@inovua/reactdatagrid-community/types';
+import { useCurrentUser } from './useCurrentUser';
 
 enum QuickFilter {
   AssignedToMe = 'ASSIGNED_TO_ME',
@@ -30,8 +31,26 @@ const onHoldFilter = {
   value: SiteStatus.QualityHold,
 };
 
-function removeQuickFilters(filters: TypeSingleFilterValue[]): TypeSingleFilterValue[] {
-  return filters.filter((f) => !isEqual(f, sevenDaysFilter) && !isEqual(f, onHoldFilter));
+const unassignedFilter = { name: 'assignee', operator: 'empty', type: 'string', value: '' };
+
+const buildAssignedToMeFilter = (userId?: string) => ({
+  name: 'assignee',
+  operator: 'eq',
+  type: 'select',
+  value: userId ?? 'WILL_BE_CURRENT_USER_ID',
+});
+
+function removeQuickFilters(
+  filters: TypeSingleFilterValue[],
+  assignedToMeFilter: TypeSingleFilterValue
+): TypeSingleFilterValue[] {
+  return filters.filter(
+    (f) =>
+      !isEqual(f, sevenDaysFilter) &&
+      !isEqual(f, onHoldFilter) &&
+      !isEqual(f, unassignedFilter) &&
+      !isEqual(f, assignedToMeFilter)
+  );
 }
 
 interface QuickFilterPropTypes {
@@ -40,23 +59,27 @@ interface QuickFilterPropTypes {
 function QuickFilterComponent({ isLoading = false }: QuickFilterPropTypes) {
   const siteTable = useSelector(siteTableState);
   const dispatch = useDispatch();
+  const currentUser = useCurrentUser();
+  const assignedToMeFilter = buildAssignedToMeFilter(currentUser?._id);
 
   const reset = () => {
     dispatch(setSiteTableSort(initialState.table.sort));
-    let filters = siteTable.filter.slice();
-    filters = removeQuickFilters(filters);
+    const filters = removeQuickFilters(siteTable.filter.slice(), assignedToMeFilter);
     return dispatch(setSiteTableFilter(filters));
   };
 
   const onMenuSelect = (key: QuickFilter) => {
     dispatch(setSiteTableSort({ name: 'last_run_time', dir: 1 }));
+    const filters = removeQuickFilters(siteTable.filter.slice(), assignedToMeFilter);
     switch (key) {
       case QuickFilter.OnHoldLastSevenDays:
-        return dispatch(setSiteTableFilter([...siteTable.filter, sevenDaysFilter, onHoldFilter]));
+        return dispatch(setSiteTableFilter([...filters, sevenDaysFilter, onHoldFilter]));
       case QuickFilter.OnHoldLastSevenDaysAndUnassigned:
-        return; // TODO: update when assign functionality added
+        return dispatch(
+          setSiteTableFilter([...filters, sevenDaysFilter, onHoldFilter, unassignedFilter])
+        );
       case QuickFilter.AssignedToMe:
-        return; // TODO: update when assign functionality added
+        return dispatch(setSiteTableFilter([...filters, assignedToMeFilter]));
     }
   };
 
@@ -67,12 +90,10 @@ function QuickFilterComponent({ isLoading = false }: QuickFilterPropTypes) {
         {
           key: QuickFilter.AssignedToMe,
           label: 'Assigned to me',
-          disabled: true,
         },
         {
           key: QuickFilter.OnHoldLastSevenDaysAndUnassigned,
           label: 'On Hold last 7 days & Unassigned',
-          disabled: true,
         },
         {
           key: QuickFilter.OnHoldLastSevenDays,
@@ -82,8 +103,8 @@ function QuickFilterComponent({ isLoading = false }: QuickFilterPropTypes) {
     />
   );
 
-  const assignedToMe = false; // TODO: update when assign functionality added
-  const unassigned = false; // TODO: update when assign functionality added
+  const assignedToMe = some(siteTable.filter, assignedToMeFilter);
+  const unassigned = some(siteTable.filter, unassignedFilter);
   const onHold = some(siteTable.filter, onHoldFilter);
   const lastSevenDays = some(siteTable.filter, sevenDaysFilter);
 
@@ -92,7 +113,7 @@ function QuickFilterComponent({ isLoading = false }: QuickFilterPropTypes) {
       {isLoading ? (
         <Spin size="small" />
       ) : (
-        <div /> /* to keep Tags from moving left and right on load */
+        <div /* to keep Tags from moving left and right on load */ />
       )}
       {assignedToMe ? <Tag color="geekblue">Assigned To Me</Tag> : null}
       {unassigned ? <Tag color="cyan">Unassigned</Tag> : null}
