@@ -58,8 +58,8 @@ export function DocDocumentEditPage() {
       const tagsByType = groupBy(tags, '_type');
       await updateDocDocument({
         ...doc,
-        indication_tags: tagsByType['indication'] as IndicationTag[],
-        therapy_tags: tagsByType['therapy'] as TherapyTag[],
+        indication_tags: (tagsByType['indication'] ?? []) as IndicationTag[],
+        therapy_tags: (tagsByType['therapy'] ?? []) as TherapyTag[],
         _id: docId,
       });
       navigate(-1);
