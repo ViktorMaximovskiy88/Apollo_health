@@ -66,7 +66,7 @@ class Download(BaseModel):
     metadata: Metadata = Metadata()
     request: Request
     response: Response = Response()
-    # TODO 'artifact' 'output' or is it indeed just the 'download' ...
+
     file_name: str | None = None
     file_extension: str | None = None
     file_path: str | None = None

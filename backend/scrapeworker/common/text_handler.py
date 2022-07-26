@@ -13,10 +13,13 @@ class TextHandler:
     async def save_text(self, text: str) -> str:
         hash = hash_full_text(text)
         dest_path = f"{hash}.txt"
+        if self.text_client.object_exists(dest_path):
+            return hash
+
+        # TODO: can we just stream this to s3? double dipping here
         with tempfile.NamedTemporaryFile() as temp:
             async with aiofiles.open(temp.name, "w") as f:
                 await f.write(text)
-
             self.text_client.write_object(dest_path, temp.name)
         return hash
 

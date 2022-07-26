@@ -5,7 +5,6 @@ import type { UploadProps } from 'antd';
 import type { UploadFile } from 'antd/es/upload/interface';
 import { UploadOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { prettyDate } from '../../common';
-import { documentTypes } from "./types";
 import { useAddDocumentMutation } from "../retrieved_documents/documentsApi"
 
 interface AddDocumentModalPropTypes {
@@ -25,6 +24,12 @@ export function AddDocumentModal({
     const initialValues = {
         "lang_code":"English"
     }
+    const validateMessages = {
+        required: '${label} is required!',
+        types: {
+          url: '${label} is not a valid url!',
+        },
+    };
     function saveDocument(){
         
 
@@ -50,6 +55,7 @@ export function AddDocumentModal({
                 form={form}
                 requiredMark={false}
                 initialValues={initialValues}
+                validateMessages={validateMessages}
                 onFinish={saveDocument}>
                 <UploadItem fileList={fileList} setFileList={setFileList} />
                 <div className="flex grow space-x-3">
@@ -131,6 +137,16 @@ function UploadItem(props: any) {
 }
 
 function DocumentTypeItem(){
+    const documentTypes = [
+      { value: 'Authorization Policy', label: 'Authorization Policy' },
+      { value: 'Provider Guide', label: 'Provider Guide' },
+      { value: 'Treatment Request Form', label: 'Treatment Request Form' },
+      { value: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
+      { value: 'Covered Treatment List', label: 'Covered Treatment List' },
+      { value: 'Regulatory Document', label: 'Regulatory Document' },
+      { value: 'Formulary', label: 'Formulary' },
+      { value: 'Internal Reference', label: 'Internal Reference' },
+    ];
     return (
         <Form.Item className="grow" name="document_type" label="Document Type" rules={[{ required: true }]}>
             <Select options={documentTypes} />
