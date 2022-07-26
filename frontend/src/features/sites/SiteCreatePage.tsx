@@ -9,9 +9,8 @@ export function SiteCreatePage() {
   const navigate = useNavigate();
 
   async function tryAddSite(site: Partial<Site>) {
-    console.log(site)
     await addSite(site);
-    // navigate('..');
+    navigate('..');
   }
 
   return (
