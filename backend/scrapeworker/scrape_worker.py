@@ -315,6 +315,7 @@ class ScrapeWorker:
                         f":text('{wf}')" for wf in self.site.scrape_method_configuration.wait_for
                     )
                 ).first.wait_for()
+
         except Exception as ex:
             logging.error(ex)
             raise Exception(
@@ -337,7 +338,7 @@ class ScrapeWorker:
                 await stealth_async(page)
 
                 logging.debug(f"Awating response for {url}")
-                response = await page.goto(url, timeout=60000)
+                response = await page.goto(url, timeout=60000, wait_until="domcontentloaded")
                 logging.debug(f"Received response for {url}")
 
         if not page or not context or not response:
