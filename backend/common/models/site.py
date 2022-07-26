@@ -37,7 +37,7 @@ class NewSite(BaseModel):
     base_urls: list[BaseUrl] = []
     collection_method: str
     scrape_method: str
-    scrape_method_configuration: ScrapeMethodConfiguration | None = None
+    scrape_method_configuration: ScrapeMethodConfiguration
     tags: list[str] = []
     playbook: str | None = None
     cron: str
