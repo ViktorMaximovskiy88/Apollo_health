@@ -1,6 +1,8 @@
 from datetime import datetime
+
 from beanie import Indexed, PydanticObjectId
 from pydantic import BaseModel
+
 from backend.common.core.enums import ApprovalStatus, LangCode, TaskStatus
 from backend.common.models.base_document import BaseDocument
 
@@ -97,6 +99,7 @@ class DocDocumentLimitTags(DocDocument):
 
 
 class UpdateTherapyTag(BaseModel):
+    name: str | None = None
     text: str | None = None
     page: int | None = None
     code: str | None = None
@@ -162,9 +165,7 @@ def calc_final_effective_date(doc: DocDocument) -> datetime:
         computeFromFields.append(doc.last_updated_date)
 
     final_effective_date = (
-        max(computeFromFields)
-        if len(computeFromFields) > 0
-        else doc.last_collected_date
+        max(computeFromFields) if len(computeFromFields) > 0 else doc.last_collected_date
     )
 
     return final_effective_date

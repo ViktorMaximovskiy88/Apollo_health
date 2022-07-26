@@ -39,11 +39,18 @@ export function DocDocumentTagForm(props: {
     return tagTypeFilter.includes(tag._type) && validPage;
   };
 
+  const textFilter = (tag: any, field: string, searchRegex: RegExp) => {
+    return tag[field] ? tag[field].match(searchRegex) : true;
+  };
+
   const applyFilters = () => {
     const regex = new RegExp(searchTerm, 'i');
     return tags.filter(
-      (tag: TherapyTag | IndicationTag) =>
-        (tag.text?.match(regex) || `${tag.code ?? ''}`.match(regex)) && applyFilter(tag)
+      (tag: any) =>
+        (textFilter(tag, 'text', regex) ||
+          textFilter(tag, 'code', regex) ||
+          textFilter(tag, 'name', regex)) &&
+        applyFilter(tag)
     );
   };
 

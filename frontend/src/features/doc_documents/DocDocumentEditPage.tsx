@@ -22,6 +22,7 @@ export function DocDocumentEditPage() {
   const [updateDocDocument] = useUpdateDocDocumentMutation();
   const [tags, setTags] = useState([] as Array<TherapyTag | IndicationTag>);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [pageNumber, setPageNumber] = useState(0);
 
   useEffect(() => {
@@ -52,15 +53,21 @@ export function DocDocumentEditPage() {
   };
 
   async function onFinish(doc: Partial<DocDocument>) {
-    const tagsByType = groupBy(tags, 'type');
-    doc.indication_tags = tagsByType['indication'] as IndicationTag[];
-    doc.therapy_tags = tagsByType['therapy'] as TherapyTag[];
-
-    await updateDocDocument({
-      ...doc,
-      _id: docId,
-    });
-    navigate(-1);
+    setIsSaving(true);
+    try {
+      const tagsByType = groupBy(tags, '_type');
+      await updateDocDocument({
+        ...doc,
+        indication_tags: tagsByType['indication'] as IndicationTag[],
+        therapy_tags: tagsByType['therapy'] as TherapyTag[],
+        _id: docId,
+      });
+      navigate(-1);
+    } catch (error) {
+      //  TODO real errors please
+      console.error(error);
+      setIsSaving(false);
+    }
   }
 
   function finalEffectiveDate() {
@@ -85,13 +92,14 @@ export function DocDocumentEditPage() {
     <MainLayout
       sectionToolbar={
         <div className="flex items-center space-x-4">
-          {hasChanges && (
+          {hasChanges && !isSaving && (
             <div className="text-orange-400">
               <WarningFilled /> You have unsaved changes
             </div>
           )}
 
           <Button
+            disabled={isSaving}
             onClick={() => {
               navigate(-1);
             }}
@@ -99,6 +107,7 @@ export function DocDocumentEditPage() {
             Cancel
           </Button>
           <Button
+            loading={isSaving}
             type="primary"
             onClick={() => {
               form.submit();
@@ -112,6 +121,7 @@ export function DocDocumentEditPage() {
       <div className="flex space-x-4 overflow-hidden h-full">
         <div className="flex-1 h-full overflow-hidden">
           <Form
+            disabled={isSaving}
             onFieldsChange={() => {
               setHasChanges(true);
               finalEffectiveDate();
