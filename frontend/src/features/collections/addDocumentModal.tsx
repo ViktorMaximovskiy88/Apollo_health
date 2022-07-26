@@ -70,7 +70,7 @@ export function AddDocumentModal({
                         <Input />
                     </Form.Item>
                     <Form.Item className="grow" name="url" label="Link Url">
-                        <Input />
+                        <Input type="url" />
                     </Form.Item>
                 </div>
                 <DateItems />
@@ -107,12 +107,7 @@ function UploadItem(props: any) {
     };
 
     return (
-        <Form.Item name="document_file" label={
-          <>
-            <span style={{"marginRight":"5px"}}>Upload Document</span>
-            <Tooltip placement="right" title="Only upload .pdf, .xlsx and .docx"><QuestionCircleOutlined /></Tooltip>
-          </>
-        } rules={[{ required: true }]}>
+        <Form.Item name="document_file" label="Document File" rules={[{ required: true }]}>
             <Upload 
                 name="file"
                 accept=".pdf,.xlsx,.docx"
@@ -125,11 +120,12 @@ function UploadItem(props: any) {
                 >
                 {
                     uploading ? 
-                    <Button icon={<LoadingOutlined />}>Uploading...</Button>
+                    <Button style={{marginRight:"10px"}} icon={<LoadingOutlined />}>Uploading...</Button>
                     : 
-                    <Button icon={<UploadOutlined />}>Click to Upload</Button>
+                    <Button style={{marginRight:"10px"}} icon={<UploadOutlined />}>Click to Upload</Button>
                 }
             </Upload>
+            <Tooltip placement="right" title="Only upload .pdf, .xlsx and .docx"><QuestionCircleOutlined /></Tooltip>
         </Form.Item>
     )
 }
