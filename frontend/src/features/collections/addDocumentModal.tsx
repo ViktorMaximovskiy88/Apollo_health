@@ -8,6 +8,7 @@ import { UploadOutlined, QuestionCircleOutlined, LoadingOutlined, CheckCircleOut
 import { prettyDate } from '../../common';
 import { useAddDocumentMutation } from "../retrieved_documents/documentsApi"
 import { baseApiUrl, client, fetchWithAuth } from '../../app/base-api';
+import { RetrievedDocument } from "../retrieved_documents/types";
 
 interface AddDocumentModalPropTypes {
   setVisible: (visible: boolean) => void;
@@ -19,6 +20,8 @@ export function AddDocumentModal({
     siteId,
 }: AddDocumentModalPropTypes) {
     const [form] = useForm();
+    const [ addDoc ] = useAddDocumentMutation();
+
     const initialValues = {
         "lang_code":"English"
     }
@@ -28,13 +31,14 @@ export function AddDocumentModal({
           url: '${label} is not a valid url!',
         },
     };
-    function saveDocument(){
-        
-
-        
-
-
-
+    async function saveDocument(newDocument: RetrievedDocument){
+        try {
+            await addDoc(newDocument);
+            // setVisible(false);
+        }
+        catch(error) {
+            message.error('We could not save this document');
+        }
     }
     function onCancel(){
         setVisible(false);
@@ -54,7 +58,7 @@ export function AddDocumentModal({
                 initialValues={initialValues}
                 validateMessages={validateMessages}
                 onFinish={saveDocument}>
-                <UploadItem />
+                <UploadItem form={form} />
                 <div className="flex grow space-x-3">
                     <Form.Item className="grow" name="name" label="Document Name" rules={[{ required: true }]}>
                         <Input />
@@ -63,10 +67,13 @@ export function AddDocumentModal({
                     <LanguageItem />
                 </div>
                 <div className="flex grow space-x-3">
+                    <Form.Item className="grow" name="base_url" label="Base Url" rules={[{ type: 'url' }]}>
+                        <Input type="url" />
+                    </Form.Item>                    
                     <Form.Item className="grow" name="link_text" label="Link Text">
                         <Input />
                     </Form.Item>
-                    <Form.Item className="grow" name="url" label="Link Url">
+                    <Form.Item className="grow" name="url" label="Link Url" rules={[{ type: 'url' }]}>
                         <Input type="url" />
                     </Form.Item>
                 </div>
@@ -86,7 +93,7 @@ export function AddDocumentModal({
 
 
 function UploadItem(props: any) {
-    const [ addDoc ] = useAddDocumentMutation();
+    const { form } = props;
     const [token, setToken] = useState('');
     const [fileName, setFileName] = useState('');
     const [uploadStatus, setUploadStatus] = useState('');
@@ -97,13 +104,16 @@ function UploadItem(props: any) {
 
     const onChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
         setFileName(info.file.name);
+        form.setFieldsValue({
+            "document_file":info.file
+        })
         if (info.file.status === 'uploading') {
           setUploadStatus("uploading");
         }
         if (info.file.status === 'done') {
           setUploadStatus("done");
         }
-    };
+    }
 
     return (
         <Form.Item name="document_file" label="Document File" rules={[{ required: true }]}>
@@ -215,19 +225,6 @@ function DateItems(props: any) {
         </>
     )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

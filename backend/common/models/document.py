@@ -45,6 +45,7 @@ class RetrievedDocument(BaseDocument):
 
     automated_content_extraction: bool = False
     automated_content_extraction_class: str | None = None
+    document_file: dict | None = None
 
 
 class UpdateRetrievedDocument(BaseModel):
@@ -79,6 +80,9 @@ class UpdateRetrievedDocument(BaseModel):
 
     automated_content_extraction: bool | None = None
     automated_content_extraction_class: str | None = None
+
+
+
 
 class RetrievedDocumentLimitTags(RetrievedDocument):
     class Collection:
