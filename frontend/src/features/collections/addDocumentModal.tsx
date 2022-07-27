@@ -4,7 +4,7 @@ import { useForm } from 'antd/lib/form/Form';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
 
-import { UploadOutlined, QuestionCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { UploadOutlined, QuestionCircleOutlined, LoadingOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { prettyDate } from '../../common';
 import { useAddDocumentMutation } from "../retrieved_documents/documentsApi"
 import { baseApiUrl, client, fetchWithAuth } from '../../app/base-api';
@@ -89,7 +89,7 @@ function UploadItem(props: any) {
     const [ addDoc ] = useAddDocumentMutation();
     const [token, setToken] = useState('');
     const [fileName, setFileName] = useState('');
-    const [uploading, setUploading] = useState(false);
+    const [uploadStatus, setUploadStatus] = useState('');
 
     useEffect(() => {
         client.getTokenSilently().then((t) => setToken(t));
@@ -98,11 +98,11 @@ function UploadItem(props: any) {
     const onChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
         setFileName(info.file.name);
         if (info.file.status === 'uploading') {
-          setUploading(true);
+          setUploadStatus("uploading");
         }
-        // if (info.file.status === 'done') {
-        //   setUploading(false);
-        // }
+        if (info.file.status === 'done') {
+          setUploadStatus("done");
+        }
     };
 
     return (
@@ -118,9 +118,12 @@ function UploadItem(props: any) {
                 onChange={onChange}
                 >
                 {
-                    uploading ? 
+                    uploadStatus == "uploading" ? 
                     <Button style={{marginRight:"10px"}} icon={<LoadingOutlined />}>Uploading {fileName}...</Button>
                     : 
+                    uploadStatus == "done" ?
+                    <Button style={{marginRight:"10px"}} icon={<CheckCircleOutlined />}>{fileName} uploaded!</Button>
+                    :
                     <Button style={{marginRight:"10px"}} icon={<UploadOutlined />}>Click to Upload</Button>
                 }
             </Upload>
