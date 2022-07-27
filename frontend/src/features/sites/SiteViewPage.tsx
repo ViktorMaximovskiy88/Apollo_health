@@ -1,26 +1,20 @@
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Site, CollectionMethod } from './types';
 import { SiteForm } from './SiteForm';
 import { useGetSiteQuery, useUpdateSiteMutation } from './sitesApi';
 import { useCancelAllSiteScrapeTasksMutation } from '../collections/siteScrapeTasksApi';
 import { MainLayout } from '../../components';
-import { SiteStatus } from './siteStatus';
-import { useCurrentUser } from './useCurrentUser';
 
-export function SiteEditPage() {
+export function SiteViewPage() {
   const params = useParams();
   const { data: site } = useGetSiteQuery(params.siteId);
   const [updateSite] = useUpdateSiteMutation();
   const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
   const navigate = useNavigate();
-  const currentUser = useCurrentUser();
-  if (!site) return null;
+  const [readOnly, setReadOnly] = useState(true);
 
-  const initialValues = {
-    ...site,
-    assignee: currentUser?._id,
-    status: SiteStatus.QualityHold,
-  };
+  if (!site) return null;
 
   async function tryUpdateSite(update: Partial<Site>) {
     update._id = params.siteId;
@@ -33,9 +27,15 @@ export function SiteEditPage() {
     }
     navigate(-1);
   }
+
   return (
-    <MainLayout pageTitle={'Edit Site'}>
-      <SiteForm onFinish={tryUpdateSite} initialValues={initialValues} />
+    <MainLayout pageTitle={`${readOnly ? 'View' : 'Edit'} Site`}>
+      <SiteForm
+        readOnly={readOnly}
+        setReadOnly={setReadOnly}
+        initialValues={site}
+        onFinish={tryUpdateSite}
+      />
     </MainLayout>
   );
 }

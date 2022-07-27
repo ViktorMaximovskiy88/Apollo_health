@@ -19,6 +19,7 @@ import { WorkQueuePage } from './features/work_queue/WorkQueuePage';
 import { DocDocumentEditPage } from './features/doc_documents/DocDocumentEditPage';
 import { ProcessWorkItemPage, ReadonlyWorkItemPage } from './features/work_queue/WorkItemPage';
 import { AppLayout } from './app/AppLayout';
+import { SiteViewPage } from './features/sites/SiteViewPage';
 
 function AppHomePage() {
   return <>{'Home'}</>;
@@ -66,6 +67,7 @@ function App() {
           <Route path=":siteId">
             {/* duped because we want this */}
             <Route index element={<SiteEditPage />} />
+            <Route path="view" element={<SiteViewPage />} />
             <Route path="edit" element={<SiteEditPage />} />
             <Route path="scrapes" element={<CollectionsPage />} />
             <Route path="documents">

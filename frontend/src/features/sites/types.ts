@@ -27,6 +27,7 @@ export interface Site extends BaseDocument {
   cron: string;
   playbook?: string;
   status: string;
+  assignee?: string;
 }
 
 export interface Proxy extends BaseDocument {

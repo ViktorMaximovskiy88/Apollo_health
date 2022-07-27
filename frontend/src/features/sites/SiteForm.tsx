@@ -1,5 +1,4 @@
 import { Button, Form, Input, Select, Space } from 'antd';
-
 import { useForm } from 'antd/lib/form/Form';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
@@ -7,23 +6,19 @@ import { Site, CollectionMethod } from './types';
 import { UrlFormFields } from './UrlFormField';
 import { CollectionMethodComponent } from './CollectionMethod';
 import { SiteStatus } from './siteStatus';
+import { Assignee } from './AssigneeInput';
+import { SiteSubmitButton as Submit } from './SiteSubmitButton';
+import { ToggleReadOnly } from './ToggleReadOnly';
+import { SiteStatusSelect as Status } from './SiteStatusSelect';
 
-function SiteStatusSelect() {
-  const siteStatuses = [
-    { value: SiteStatus.New, label: 'New' },
-    { value: SiteStatus.QualityHold, label: 'Quality Hold' },
-    { value: SiteStatus.Inactive, label: 'Inactive' },
-    { value: SiteStatus.Online, label: 'Online' },
-  ];
-  return (
-    <Form.Item name="status" label="Site Status">
-      <Select options={siteStatuses} />
-    </Form.Item>
-  );
-}
 
-export function SiteForm(props: { onFinish: (user: Partial<Site>) => void; initialValues?: Site }) {
-  const initialFollowLinks = props.initialValues?.scrape_method_configuration?.follow_links || false;
+export function SiteForm(props: {
+  onFinish: (update: Partial<Site>) => void;
+  initialValues?: Site;
+  readOnly?: boolean;
+  setReadOnly?: (readOnly: boolean) => void;
+}) {
+  const initialFollowLinks = props.initialValues?.scrape_method_configuration.follow_links ?? false;
   const [followLinks, setFollowLinks] = useState<boolean>(initialFollowLinks);
   const [form] = useForm();
 
@@ -38,7 +33,7 @@ export function SiteForm(props: { onFinish: (user: Partial<Site>) => void; initi
 
   function setFormState(modified: Partial<Site>) {
     if (modified.scrape_method_configuration?.follow_links !== undefined) {
-      setFollowLinks(modified.scrape_method_configuration?.follow_links);
+      setFollowLinks(modified.scrape_method_configuration.follow_links);
     }
   }
 
@@ -93,17 +88,20 @@ export function SiteForm(props: { onFinish: (user: Partial<Site>) => void; initi
       <Form.Item name="tags" label="Tags">
         <Select mode="tags" />
       </Form.Item>
-      <SiteStatusSelect />
-      <Form.Item>
-        <Space>
-          <Button type="primary" htmlType="submit">
-            Submit
-          </Button>
-          <Link to="/sites">
-            <Button htmlType="submit">Cancel</Button>
-          </Link>
-        </Space>
-      </Form.Item>
+      <Assignee form={form} />
+      <Status form={form} />
+      {props.readOnly ? (
+        <ToggleReadOnly setReadOnly={props.setReadOnly} form={form} />
+      ) : (
+        <Form.Item>
+          <Space>
+            <Submit form={form} />
+            <Link to="/sites">
+              <Button htmlType="submit">Cancel</Button>
+            </Link>
+          </Space>
+        </Form.Item>
+      )}
     </Form>
   );
 }
