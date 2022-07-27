@@ -19,18 +19,26 @@ const useAlreadyAssignedModal = () => {
   const currentUser = useCurrentUser();
   const navigate = useNavigate();
   useEffect(() => {
-    if (site?.assignee && site.assignee !== currentUser?._id) {
+    if (!site?._id) return;
+
+    const assignCurrentUser = {
+      _id: site._id,
+      assignee: currentUser?._id,
+      status: SiteStatus.QualityHold,
+    };
+
+    if (!site.assignee) {
+      updateSite(assignCurrentUser);
+      return;
+    }
+
+    if (site.assignee !== currentUser?._id) {
       confirm({
         title: 'Site Already Assigned',
         icon: <ExclamationCircleOutlined />,
         content: 'Site is already assigned. Would you like to take over assignment?',
-        onOk: async () => {
-          const update = {
-            _id: site._id,
-            assignee: currentUser?._id,
-            status: SiteStatus.QualityHold,
-          };
-          await updateSite(update);
+        onOk: () => {
+          updateSite(assignCurrentUser);
         },
         onCancel: () => {
           navigate(-1);
