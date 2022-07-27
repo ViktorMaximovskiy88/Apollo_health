@@ -42,7 +42,9 @@ class RateLimiter:
 
             self.last_request_time = datetime.now()
             yield attempt
-
+            print(
+                "alksdjlaksjdlakjsdl kasd jlkd asljkasd lkjads ljkdsa ljkas dljk adsljka dsljkd ajkl"
+            )
             res = attempt.retry_state.outcome
             if res and not res.cancelled() and res.exception():
                 print(res.exception())
