@@ -41,8 +41,10 @@ const useControlledPagination = () => {
 interface DataTablePropTypes {
   siteId: string;
   openErrorModal: (errorTraceback: string) => void;
+  openNewDocumentModal:() => void;
 }
-export function CollectionsDataTable({ siteId, openErrorModal }: DataTablePropTypes) {
+
+export function CollectionsDataTable({ siteId, openErrorModal, openNewDocumentModal }: DataTablePropTypes) {
   const { data: scrapeTasks } = useGetScrapeTasksForSiteQuery(siteId, {
     pollingInterval: 3000,
     skip: !siteId,
@@ -55,8 +57,8 @@ export function CollectionsDataTable({ siteId, openErrorModal }: DataTablePropTy
   const [cancelScrape, { isLoading: isCanceling }] = useCancelSiteScrapeTaskMutation();
 
   const columns = useMemo(
-    () => createColumns({ cancelScrape, isCanceling, openErrorModal }),
-    [cancelScrape, isCanceling, openErrorModal]
+    () => createColumns({ cancelScrape, isCanceling, openErrorModal, openNewDocumentModal }),
+    [cancelScrape, isCanceling, openErrorModal, openNewDocumentModal]
   );
 
   return (

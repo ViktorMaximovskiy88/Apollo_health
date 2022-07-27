@@ -16,9 +16,10 @@ interface CreateColumnsType {
   cancelScrape: (taskId: string) => void;
   isCanceling: boolean;
   openErrorModal: (errorTraceback: string) => void;
+  openNewDocumentModal: () => void;
 }
 
-export const createColumns = ({ cancelScrape, isCanceling, openErrorModal }: CreateColumnsType) => {
+export const createColumns = ({ cancelScrape, isCanceling, openErrorModal, openNewDocumentModal }: CreateColumnsType) => {
   return [
     {
       header: 'Start Time',
@@ -116,20 +117,25 @@ export const createColumns = ({ cancelScrape, isCanceling, openErrorModal }: Cre
         switch (task.status) {
           case TaskStatus.InProgress:
           case TaskStatus.Queued:
-            if (task.collection_type === CollectionMethod.Automated) {
-              return (
-                <Button
-                  danger
-                  type="primary"
-                  disabled={isCanceling}
-                  onClick={() => cancelScrape(task._id)}
-                >
-                  Cancel
-                </Button>
-              );
-            } else {
-              return null;
-            }
+          if (task.collection_type === CollectionMethod.Automated) {
+            return (
+              <Button
+                danger
+                type="primary"
+                disabled={isCanceling}
+                onClick={() => cancelScrape(task._id)}
+              >
+                Cancel
+              </Button>
+            );
+          } else {
+            return (
+              <Button
+                onClick={openNewDocumentModal}>
+                Create document
+              </Button>
+            );
+          }
           case TaskStatus.Failed:
             return (
               <Button

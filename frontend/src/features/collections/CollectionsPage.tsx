@@ -10,6 +10,7 @@ import { useGetSiteQuery } from '../sites/sitesApi';
 import { CollectionsDataTable } from './CollectionsDataTable';
 import { CollectionMethod } from '../sites/types';
 import { ErrorLogModal } from './ErrorLogModal';
+import { AddDocumentModal } from "./addDocumentModal";
 import { SiteStatus } from '../sites/siteStatus';
 import { SiteMenu } from '../sites/SiteMenu';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
@@ -18,7 +19,7 @@ import { MainLayout } from '../../components';
 export function CollectionsPage() {
   const [modalVisible, setModalVisible] = useState(false);
   const [errorTraceback, setErrorTraceback] = useState('');
-
+  const [newDocumentModalVisible, setNewDocumentModalVisible]= useState(false);
   const openErrorModal = (errorTraceback: string): void => {
     setErrorTraceback(errorTraceback);
     setModalVisible(true);
@@ -36,6 +37,15 @@ export function CollectionsPage() {
         setVisible={setModalVisible}
         errorTraceback={errorTraceback}
       />
+      {
+        newDocumentModalVisible ?
+        <AddDocumentModal
+          setVisible={setNewDocumentModalVisible}
+          siteId={siteId}
+        />
+        :
+        null
+      }
       <MainLayout
         sidebar={<SiteMenu />}
         pageTitle={'Collections'}
@@ -55,7 +65,7 @@ export function CollectionsPage() {
           </>
         }
       >
-        <CollectionsDataTable siteId={siteId} openErrorModal={openErrorModal} />
+        <CollectionsDataTable siteId={siteId} openErrorModal={openErrorModal} openNewDocumentModal={() => setNewDocumentModalVisible(true)}  />
       </MainLayout>
     </>
   );
@@ -78,6 +88,7 @@ function ManualCollectionButton(props: any) {
     refetch();
   }
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
+
   if (activeStatuses.includes(site.last_run_status)) {
     return (
       <Button className="ml-auto" onClick={handleCancelScrape}>

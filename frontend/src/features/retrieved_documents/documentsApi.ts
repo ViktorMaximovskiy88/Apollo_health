@@ -27,8 +27,7 @@ export const documentsApi = createApi({
       providesTags: (_r, _e, id) => [{ type: 'RetrievedDocument' as const, id }],
     }),
     addDocument: builder.mutation<RetrievedDocument, Partial<RetrievedDocument>>({
-      query: (body) => ({ url: '/documents/', method: 'PUT', body }),
-      invalidatesTags: [{ type: 'RetrievedDocument', id: 'LIST' }],
+      query: (body) => ({ url: '/documents/', method: 'PUT', body })
     }),
     updateDocument: builder.mutation<RetrievedDocument, Partial<RetrievedDocument>>({
       query: (body) => ({
