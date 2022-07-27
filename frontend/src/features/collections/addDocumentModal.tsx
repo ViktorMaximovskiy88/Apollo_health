@@ -66,7 +66,7 @@ export function AddDocumentModal({
                     <LanguageItem />
                 </div>
                 <div className="flex grow space-x-3">
-                    <Form.Item className="grow" name="link_text" label="Link Text" rules={[{ required: true }]}>
+                    <Form.Item className="grow" name="link_text" label="Link Text">
                         <Input />
                     </Form.Item>
                     <Form.Item className="grow" name="url" label="Link Url">
