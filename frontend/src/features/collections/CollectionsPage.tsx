@@ -37,11 +37,15 @@ export function CollectionsPage() {
         setVisible={setModalVisible}
         errorTraceback={errorTraceback}
       />
-      <AddDocumentModal
-        visible={newDocumentModalVisible}
-        setVisible={setNewDocumentModalVisible}
-        siteId={siteId}
-      />
+      {
+        newDocumentModalVisible ?
+        <AddDocumentModal
+          setVisible={setNewDocumentModalVisible}
+          siteId={siteId}
+        />
+        :
+        null
+      }
       <MainLayout
         sidebar={<SiteMenu />}
         pageTitle={'Collections'}

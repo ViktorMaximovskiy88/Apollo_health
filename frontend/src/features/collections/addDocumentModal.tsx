@@ -10,13 +10,11 @@ import { useAddDocumentMutation } from "../retrieved_documents/documentsApi"
 import { baseApiUrl, client, fetchWithAuth } from '../../app/base-api';
 
 interface AddDocumentModalPropTypes {
-  visible: boolean;
   setVisible: (visible: boolean) => void;
   siteId: any;
 }
 
 export function AddDocumentModal({
-    visible,
     setVisible,
     siteId,
 }: AddDocumentModalPropTypes) {
@@ -39,12 +37,11 @@ export function AddDocumentModal({
 
     }
     function onCancel(){
-        form.resetFields();
         setVisible(false);
     }
     return (
         <Modal
-          visible={visible}
+          visible={true}
           title="Add new document"
           onCancel={onCancel}
           width={1000}
@@ -91,6 +88,7 @@ export function AddDocumentModal({
 function UploadItem(props: any) {
     const [ addDoc ] = useAddDocumentMutation();
     const [token, setToken] = useState('');
+    const [fileName, setFileName] = useState('');
     const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
@@ -98,12 +96,13 @@ function UploadItem(props: any) {
     }, [setToken]);
 
     const onChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
+        setFileName(info.file.name);
         if (info.file.status === 'uploading') {
           setUploading(true);
         }
-        if (info.file.status === 'done') {
-          setUploading(false);
-        }
+        // if (info.file.status === 'done') {
+        //   setUploading(false);
+        // }
     };
 
     return (
@@ -120,7 +119,7 @@ function UploadItem(props: any) {
                 >
                 {
                     uploading ? 
-                    <Button style={{marginRight:"10px"}} icon={<LoadingOutlined />}>Uploading...</Button>
+                    <Button style={{marginRight:"10px"}} icon={<LoadingOutlined />}>Uploading {fileName}...</Button>
                     : 
                     <Button style={{marginRight:"10px"}} icon={<UploadOutlined />}>Click to Upload</Button>
                 }

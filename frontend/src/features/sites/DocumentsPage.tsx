@@ -21,12 +21,15 @@ export function DocumentsPage() {
       }
     >
       <DocumentsTable />
-      <AddDocumentModal
-        visible={newDocumentModalVisible}
-        setVisible={setNewDocumentModalVisible}
-        siteId={params.siteId}
-      />
-      
+      {
+        newDocumentModalVisible ?
+        <AddDocumentModal
+          setVisible={setNewDocumentModalVisible}
+          siteId={params.siteId}
+        />
+        :
+        null
+      }
     </MainLayout>
   );
 }
