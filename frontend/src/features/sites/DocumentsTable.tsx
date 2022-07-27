@@ -53,6 +53,11 @@ const columns = [
     },
   },
   {
+    header: 'Link Text',
+    name: 'link_text',
+    render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
+  },
+  {
     header: 'Name',
     name: 'name',
     defaultFlex: 1,
@@ -147,18 +152,27 @@ const useControlledPagination = () => {
   return controlledPaginationProps;
 };
 
-export function DocumentsTable() {
+const useDocuments = (): RetrievedDocument[] => {
   const [searchParams] = useSearchParams();
   const params = useParams();
   const scrapeTaskId = searchParams.get('scrape_task_id');
   const siteId = params.siteId;
-  const { data: documents } = useGetDocumentsQuery(
+  const { data } = useGetDocumentsQuery(
     {
       scrape_task_id: scrapeTaskId,
       site_id: siteId,
     },
     { pollingInterval: 5000 }
   );
+  const documents = data?.map((document) => ({
+    ...document,
+    link_text: document?.context_metadata?.link_text,
+  }));
+  return documents ?? [];
+};
+
+export function DocumentsTable() {
+  const documents = useDocuments();
 
   const filterProps = useDataTableFilter(documentTableState, setDocumentTableFilter);
   const sortProps = useDataTableSort(documentTableState, setDocumentTableSort);
@@ -166,7 +180,7 @@ export function DocumentsTable() {
 
   return (
     <ReactDataGrid
-      dataSource={documents ?? []}
+      dataSource={documents}
       {...filterProps}
       {...sortProps}
       {...controlledPagination}
