@@ -166,7 +166,7 @@ const useDocuments = (): RetrievedDocument[] => {
   );
   const documents = data?.map((document) => ({
     ...document,
-    link_text: document?.context_metadata?.link_text,
+    link_text: document?.context_metadata?.link_text, // makes datatable filterable by link_text
   }));
   return documents ?? [];
 };
