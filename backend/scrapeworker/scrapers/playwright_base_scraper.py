@@ -9,7 +9,7 @@ from playwright.async_api import BrowserContext, ElementHandle, Page, ProxySetti
 from backend.common.core.config import config
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import ScrapeMethodConfiguration
-from backend.scrapeworker.common.models import Download, Metadata
+from backend.scrapeworker.common.models import DownloadContext, Metadata
 from backend.scrapeworker.playbook import PlaybookContext
 
 closest_heading_expression: str = """
@@ -98,5 +98,5 @@ class PlaywrightBaseScraper(ABC):
         return [proxy, proxies]
 
     @abstractmethod
-    async def execute(self) -> list[Download]:
+    async def execute(self) -> list[DownloadContext]:
         pass

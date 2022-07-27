@@ -14,7 +14,7 @@ from tenacity import AttemptManager
 from backend.common.core.config import config
 from backend.common.models.proxy import Proxy
 from backend.common.storage.hash import DocStreamHasher
-from backend.scrapeworker.common.models import Download
+from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.common.rate_limiter import RateLimiter
 
 default_headers: dict[str, str] = {
@@ -58,7 +58,7 @@ class AioDownloader:
     async def close(self):
         await self.session.close()
 
-    async def send_request(self, download: Download, proxy: AioProxy | None):
+    async def send_request(self, download: DownloadContext, proxy: AioProxy | None):
         headers = default_headers | download.request.headers
         if proxy:
             response = await self.session.request(
@@ -134,7 +134,7 @@ class AioDownloader:
 
     async def write_response_to_file(
         self,
-        download: Download,
+        download: DownloadContext,
         response: ClientResponse,
         temp: tempfile._TemporaryFileWrapper,
     ):
@@ -156,7 +156,7 @@ class AioDownloader:
 
     async def try_download_to_tempfile(
         self,
-        download: Download,
+        download: DownloadContext,
         proxies: list[tuple[Proxy | None, ProxySettings | None]] = [],
     ):
         url = download.request.url

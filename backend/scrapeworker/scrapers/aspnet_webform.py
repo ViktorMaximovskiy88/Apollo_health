@@ -1,15 +1,12 @@
 import logging
 from functools import cached_property
-from playwright.async_api import (
-    ElementHandle,
-    Route,
-    Request as RouteRequest,
-    APIResponse,
-    Error,
-    Locator,
-)
+
 from playwright._impl._api_structures import SetCookieParam
-from backend.scrapeworker.common.models import Download, Metadata, Request
+from playwright.async_api import APIResponse, ElementHandle, Locator
+from playwright.async_api import Request as RouteRequest
+from playwright.async_api import Route
+
+from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.selectors import filter_by_href
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 
@@ -19,7 +16,7 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
     type: str = "AspNetWebForm"
     requests: list[Request | None] = []
     metadatas: list[Metadata] = []
-    downloads: list[Download] = []
+    downloads: list[DownloadContext] = []
     links_found: int = 0
     last_metadata_index: int = 0
 
@@ -93,13 +90,13 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
             if request:
                 logging.info(f"#{index} downloading filename={request.filename}")
                 self.downloads.append(
-                    Download(
+                    DownloadContext(
                         metadata=self.metadatas[index],
                         request=request,
                     )
                 )
 
-    async def execute(self) -> list[Download]:
+    async def execute(self) -> list[DownloadContext]:
 
         await self.__setup()
         await self.__gather()

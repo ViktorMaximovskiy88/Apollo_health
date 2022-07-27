@@ -45,7 +45,8 @@ class RateLimiter:
 
             res = attempt.retry_state.outcome
             if res and not res.cancelled() and res.exception():
-                logging.error(res.exception())
+                print(res.exception())
+                logging.error("wha", exc_info=True)
                 self.increase_wait()
             else:
                 self.decrease_wait()

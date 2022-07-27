@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 
 from playwright.async_api import ElementHandle
 
-from backend.scrapeworker.common.models import Download, Metadata, Request
+from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.selectors import filter_by_hidden_value, filter_by_href
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 
@@ -28,8 +28,8 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
         logging.info(self.selectors)
         return ", ".join(self.selectors)
 
-    async def execute(self) -> list[Download]:
-        downloads: list[Download] = []
+    async def execute(self) -> list[DownloadContext]:
+        downloads: list[DownloadContext] = []
 
         link_handles = await self.page.query_selector_all(self.css_selector)
 
@@ -37,7 +37,7 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
         for link_handle in link_handles:
             metadata: Metadata = await self.extract_metadata(link_handle)
             downloads.append(
-                Download(
+                DownloadContext(
                     metadata=metadata,
                     request=Request(
                         url=urljoin(

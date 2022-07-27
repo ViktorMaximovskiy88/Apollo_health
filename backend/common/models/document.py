@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from backend.common.core.enums import LangCode
 from backend.common.models.base_document import BaseDocument
 from backend.common.models.doc_document import IndicationTag, TherapyTag
+from backend.scrapeworker.common.models import Response
 
 
 class RetrievedDocument(BaseDocument):
@@ -38,6 +39,7 @@ class RetrievedDocument(BaseDocument):
     content_type: str | None = None
     # full text is the same for checksums in the below set
     file_checksum_aliases: set[str] = set()
+    response: Response | None = None
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []

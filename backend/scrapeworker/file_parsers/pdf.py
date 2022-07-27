@@ -1,4 +1,5 @@
 import asyncio
+
 from backend.scrapeworker.file_parsers.base import FileParser
 
 
@@ -17,7 +18,7 @@ class PdfParse(FileParser):
         for line in info.split("\n"):
             if not line.strip():
                 continue
-            if not ":" in line:  # assume single value is broken into multiple lines
+            if ":" not in line:  # assume single value is broken into multiple lines
                 value = line.strip()
                 metadata[key] = f"{metadata[key]}; {value}"
                 continue
@@ -38,9 +39,5 @@ class PdfParse(FileParser):
         return pdftext_out.decode("utf-8", "ignore").strip()
 
     def get_title(self, metadata):
-        title = (
-            metadata.get("Title")
-            or metadata.get("Subject")
-            or str(self.filename_no_ext)
-        )
+        title = metadata.get("Title") or metadata.get("Subject") or str(self.filename_no_ext)
         return title
