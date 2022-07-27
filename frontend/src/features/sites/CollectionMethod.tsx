@@ -1,4 +1,4 @@
-import { Checkbox, Form, FormInstance, Select, Radio, Tooltip } from 'antd';
+import { Checkbox, Input, Form, FormInstance, Select, Radio, Tooltip, Switch } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { CollectionMethod } from './types';
 import { useGetProxiesQuery } from '../proxies/proxiesApi';
@@ -99,6 +99,50 @@ function WaitFor() {
   );
 }
 
+function WaitForTimeout() {
+  return (
+    <Form.Item
+      name={['scrape_method_configuration', 'wait_for_timeout_ms']}
+      label={
+        <>
+          <span style={{ marginRight: '5px' }}>Wait For Timeout (ms)</span>
+          <Tooltip
+            placement="right"
+            title="Collection will wait for specifed milliseconds before executing the page scrape."
+          >
+            <QuestionCircleOutlined />
+          </Tooltip>
+        </>
+      }
+    >
+      <Input
+        type={'number'}
+        onFocus={(e: any) => e.target.select()}
+        step={100}
+        min={0}
+        max={5000}
+      />
+    </Form.Item>
+  );
+}
+
+function SearchInFrames() {
+  return (
+    <Form.Item
+      name={['scrape_method_configuration', 'search_in_frames']}
+      label={
+        <>
+          <span style={{ marginRight: '5px' }}>Search in frames</span>
+          <Tooltip placement="right" title="Run the page scrape within an iframe">
+            <QuestionCircleOutlined />
+          </Tooltip>
+        </>
+      }
+    >
+      <Switch />
+    </Form.Item>
+  );
+}
 function ScrapeMethodConfiguration() {
   return (
     <Form.Item name="scrape_method_configuration">
@@ -106,6 +150,8 @@ function ScrapeMethodConfiguration() {
       <UrlKeywords />
       <ProxyExclusions />
       <WaitFor />
+      <WaitForTimeout />
+      <SearchInFrames />
     </Form.Item>
   );
 }

@@ -169,7 +169,9 @@ class AioDownloader:
                 # maybe not here... or just twice? stupid xls thing.
                 download.guess_extension()
 
-                response.raise_for_status()
+                if not response.ok:
+                    print(response.status, "response.status")
+                    continue
 
                 with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
                     yield await self.write_response_to_file(download, response, temp)

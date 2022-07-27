@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from abc import ABC, abstractmethod
 from functools import cached_property
 from urllib.parse import urlparse
@@ -45,19 +46,13 @@ class PlaywrightBaseScraper(ABC):
         raise NotImplementedError("css_selector is required ")
 
     async def is_applicable(self) -> bool:
-        await self.page.wait_for_timeout(2000)
+        if self.config.wait_for_timeout_ms:
+            await self.page.wait_for_timeout(self.config.wait_for_timeout_ms)
 
         element_handle = await self.page.query_selector(self.css_selector)
-        if element_handle is not None:
-            return True
-
-        child_frames = self.page.main_frame.child_frames
-
-        if len(child_frames) > 0:
-            element_handle = await child_frames[0].query_selector(self.css_selector)
-            return element_handle is not None
-
-        return False
+        result = element_handle is not None
+        logging.info(f"{self.__class__.__name__} is_applicable -> {result}")
+        return result
 
     async def extract_metadata(self, element: ElementHandle) -> Metadata:
 
