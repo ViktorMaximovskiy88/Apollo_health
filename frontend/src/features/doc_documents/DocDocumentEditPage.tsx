@@ -8,7 +8,7 @@ import { Tabs } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { dateToMoment } from '../../common/date';
 import { useUpdateDocDocumentMutation } from './docDocumentApi';
-import { DocDocument, BaseDocTag } from './types';
+import { DocDocument, TherapyTag, IndicationTag } from './types';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { maxBy, compact, groupBy } from 'lodash';
@@ -20,14 +20,15 @@ export function DocDocumentEditPage() {
   const { data: doc } = useGetDocDocumentQuery(docId);
   const [form] = useForm();
   const [updateDocDocument] = useUpdateDocDocumentMutation();
-  const [tags, setTags] = useState([] as BaseDocTag[]);
+  const [tags, setTags] = useState([] as Array<TherapyTag | IndicationTag>);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [pageNumber, setPageNumber] = useState(0);
 
   useEffect(() => {
     if (doc) {
-      const therapyTags = doc.therapy_tags.map((tag) => ({ ...tag, type: 'therapy' }));
-      const indicationTags = doc.indication_tags.map((tag) => ({ ...tag, type: 'indication' }));
+      const therapyTags = doc.therapy_tags.map((tag) => ({ ...tag, _type: 'therapy' }));
+      const indicationTags = doc.indication_tags.map((tag) => ({ ...tag, _type: 'indication' }));
       setTags([...therapyTags, ...indicationTags]);
       finalEffectiveDate();
     }
@@ -52,15 +53,21 @@ export function DocDocumentEditPage() {
   };
 
   async function onFinish(doc: Partial<DocDocument>) {
-    const tagsByType = groupBy(tags, 'type');
-    doc.indication_tags = tagsByType['indication'];
-    doc.therapy_tags = tagsByType['therapy'];
-
-    await updateDocDocument({
-      ...doc,
-      _id: docId,
-    });
-    navigate(-1);
+    setIsSaving(true);
+    try {
+      const tagsByType = groupBy(tags, '_type');
+      await updateDocDocument({
+        ...doc,
+        indication_tags: (tagsByType['indication'] ?? []) as IndicationTag[],
+        therapy_tags: (tagsByType['therapy'] ?? []) as TherapyTag[],
+        _id: docId,
+      });
+      navigate(-1);
+    } catch (error) {
+      //  TODO real errors please
+      console.error(error);
+      setIsSaving(false);
+    }
   }
 
   function finalEffectiveDate() {
@@ -85,13 +92,14 @@ export function DocDocumentEditPage() {
     <MainLayout
       sectionToolbar={
         <div className="flex items-center space-x-4">
-          {hasChanges && (
+          {hasChanges && !isSaving && (
             <div className="text-orange-400">
               <WarningFilled /> You have unsaved changes
             </div>
           )}
 
           <Button
+            disabled={isSaving}
             onClick={() => {
               navigate(-1);
             }}
@@ -99,6 +107,7 @@ export function DocDocumentEditPage() {
             Cancel
           </Button>
           <Button
+            loading={isSaving}
             type="primary"
             onClick={() => {
               form.submit();
@@ -112,6 +121,7 @@ export function DocDocumentEditPage() {
       <div className="flex space-x-4 overflow-hidden h-full">
         <div className="flex-1 h-full overflow-hidden">
           <Form
+            disabled={isSaving}
             onFieldsChange={() => {
               setHasChanges(true);
               finalEffectiveDate();
@@ -137,7 +147,7 @@ export function DocDocumentEditPage() {
               <Tabs.TabPane tab="Tags" key="tags" className="bg-white p-4 h-full">
                 <DocDocumentTagForm
                   tags={tags}
-                  onAddTag={(tag: BaseDocTag) => {
+                  onAddTag={(tag: TherapyTag | IndicationTag) => {
                     tags.unshift(tag);
                     setTags([...tags]);
                     setHasChanges(true);
@@ -148,9 +158,7 @@ export function DocDocumentEditPage() {
                     setTags([...tags]);
                     setHasChanges(true);
                   }}
-                  onEditTag={(tag: any) => {
-                    setHasChanges(true);
-                  }}
+                  onEditTag={(tag: TherapyTag | IndicationTag) => {}}
                   currentPage={pageNumber}
                 />
               </Tabs.TabPane>
