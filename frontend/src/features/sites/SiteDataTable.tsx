@@ -1,5 +1,5 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
-import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   setSiteTableFilter,
@@ -16,7 +16,7 @@ import {
   TypePaginationProps,
   TypeSortInfo,
 } from '@inovua/reactdatagrid-community/types';
-import { createColumns } from './createColumns';
+import { useColumns } from './useSiteColumns';
 import { useGetUsersQuery } from '../users/usersApi';
 
 function disableLoadingMask(data: {
@@ -129,10 +129,7 @@ export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
 
   const { data: users } = useGetUsersQuery();
   const [deleteSite] = useDeleteSiteMutation();
-  const columns = useMemo(
-    () => createColumns({ deleteSite, setDeletedSite, users }),
-    [deleteSite, setDeletedSite, users]
-  );
+  const columns = useColumns({ deleteSite, setDeletedSite, users });
 
   const filterProps = useSiteFilter();
   const sortProps = useSiteSort();
