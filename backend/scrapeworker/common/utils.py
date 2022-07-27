@@ -62,6 +62,8 @@ mimetype_to_extension_map = {
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
     "application/pdf": "pdf",
     "text/html": "html",
+    "text/csv": "csv",
+    "text/plain": "txt",
     "application/octet-stream": None,
 }
 

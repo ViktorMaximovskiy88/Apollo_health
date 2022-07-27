@@ -27,7 +27,7 @@ class FileParser(ABC):
         self.file_path = file_path
         self.url = url
         self.taggers = taggers
-        self.filename_no_ext = pathlib.Path(os.path.basename(self.url)).with_suffix("")
+        self.filename_no_ext = str(pathlib.Path(os.path.basename(self.url)).with_suffix(""))
 
     async def get_info(self) -> dict[str, str]:
         raise NotImplementedError("get_info is required")
