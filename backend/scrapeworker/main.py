@@ -124,7 +124,7 @@ async def start_worker_async(worker_id):
     loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.create_task(signal_handler()))
 
     async with async_playwright() as playwright:
-        browser = await playwright.chromium.launch(headless=False)
+        browser = await playwright.chromium.launch()
 
         async def get_browser_context(proxy) -> BrowserContext:
             global browser
@@ -138,7 +138,7 @@ async def start_worker_async(worker_id):
                 logging.error("Lost Browser")
                 logging.error(ex)
                 traceback.print_exc()
-                browser = await playwright.chromium.launch(headless=False)
+                browser = await playwright.chromium.launch()
                 return await browser.new_context(
                     extra_http_headers=default_headers,
                     proxy=proxy,
