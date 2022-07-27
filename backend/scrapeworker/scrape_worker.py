@@ -200,8 +200,7 @@ class ScrapeWorker:
                     }
                 )
             )
-            print(download.seen_doc.content_type)
-            print(download.response.content_type)
+
             # if (
             #     download.seen_doc
             #     and download.seen_doc.content_type != download.response.content_type

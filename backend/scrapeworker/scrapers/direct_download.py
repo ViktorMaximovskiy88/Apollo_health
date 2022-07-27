@@ -32,6 +32,14 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
         downloads: list[DownloadContext] = []
 
         link_handles = await self.page.query_selector_all(self.css_selector)
+        base_url = self.url
+
+        child_frames = self.page.main_frame.child_frames
+
+        if len(child_frames) > 0:
+            child_frame = child_frames[0]
+            link_handles += await child_frames[0].query_selector_all(self.css_selector)
+            base_url = child_frame.url
 
         link_handle: ElementHandle
         for link_handle in link_handles:
@@ -41,7 +49,7 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
                     metadata=metadata,
                     request=Request(
                         url=urljoin(
-                            self.url,
+                            base_url,
                             metadata.href,
                         ),
                     ),
