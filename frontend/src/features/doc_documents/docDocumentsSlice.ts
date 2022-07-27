@@ -1,5 +1,4 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { LOCATION_CHANGE } from 'redux-first-history';
 import { RootState } from '../../app/store';
 
 export const initialState = {
@@ -31,14 +30,6 @@ export const docDocuments = createSlice({
     setDocDocumentTableSkip: (state, action: PayloadAction<any>) => {
       state.table.pagination.skip = action.payload;
     },
-  },
-  extraReducers: (builder) => {
-    builder.addCase(LOCATION_CHANGE, (state, action: any) => {
-      const path: string = action.payload.location.pathname;
-      if (!path.startsWith('/sites/')) {
-        state.table = initialState.table;
-      }
-    });
   },
 });
 
