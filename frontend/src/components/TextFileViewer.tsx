@@ -28,7 +28,7 @@ export function TextFileViewer({ url }: TextFileViewerPropTypes) {
   }
 
   return (
-    <div>
+    <div data-type="text" className="bg-white p-8 border border-gray-200">
       <pre>{content}</pre>
     </div>
   );

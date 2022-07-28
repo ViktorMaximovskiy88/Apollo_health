@@ -39,7 +39,7 @@ export function CsvFileViewer({ url }: CsvFileViewerPropTypes) {
   }
 
   return (
-    <div className="bg-white p-8 border border-gray-200">
+    <div data-type="csv" className="bg-white p-8 border border-gray-200">
       {rows.map((cols: any) => (
         <div>
           {cols.map((cell: any) => (
