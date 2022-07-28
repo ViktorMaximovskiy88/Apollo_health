@@ -17,6 +17,7 @@ export const initialState = {
         type: 'date',
         value: '',
       },
+      { name: 'link_text', operator: 'contains', type: 'string', value: '' },
       { name: 'name', operator: 'contains', type: 'string', value: '' },
       { name: 'document_type', operator: 'eq', type: 'select', value: null },
     ],

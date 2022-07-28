@@ -80,6 +80,8 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
         metadata: Metadata
         for index, metadata in enumerate(self.metadatas):
             logging.debug(f"{index} of {len(self.metadatas)} count of metadata")
+            if not metadata.element_id:
+                continue
             locator: Locator = self.page.locator(f"#{metadata.element_id}")
             await locator.click()
 

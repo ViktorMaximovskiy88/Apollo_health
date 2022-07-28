@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -12,7 +12,7 @@ import {
   useCancelSiteScrapeTaskMutation,
   useGetScrapeTasksForSiteQuery,
 } from './siteScrapeTasksApi';
-import { createColumns } from './createColumns';
+import { useColumns } from './useColumns';
 import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 
@@ -41,8 +41,14 @@ const useControlledPagination = () => {
 interface DataTablePropTypes {
   siteId: string;
   openErrorModal: (errorTraceback: string) => void;
+  openNewDocumentModal: () => void;
 }
-export function CollectionsDataTable({ siteId, openErrorModal }: DataTablePropTypes) {
+
+export function CollectionsDataTable({
+  siteId,
+  openErrorModal,
+  openNewDocumentModal,
+}: DataTablePropTypes) {
   const { data: scrapeTasks } = useGetScrapeTasksForSiteQuery(siteId, {
     pollingInterval: 3000,
     skip: !siteId,
@@ -54,10 +60,7 @@ export function CollectionsDataTable({ siteId, openErrorModal }: DataTablePropTy
 
   const [cancelScrape, { isLoading: isCanceling }] = useCancelSiteScrapeTaskMutation();
 
-  const columns = useMemo(
-    () => createColumns({ cancelScrape, isCanceling, openErrorModal }),
-    [cancelScrape, isCanceling, openErrorModal]
-  );
+  const columns = useColumns({ cancelScrape, isCanceling, openErrorModal, openNewDocumentModal });
 
   return (
     <ReactDataGrid

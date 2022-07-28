@@ -12,3 +12,4 @@ export interface SiteScrapeTask extends BaseDocument {
   new_documents_found: number;
   collection_type: string;
 }
+

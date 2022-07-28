@@ -16,7 +16,7 @@ from playwright.async_api import BrowserContext, ProxySettings, async_playwright
 from pymongo import ReturnDocument
 
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
-from backend.common.core.enums import TaskStatus
+from backend.common.core.enums import CollectionMethod, TaskStatus
 from backend.common.db.init import init_db
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
@@ -42,7 +42,7 @@ async def signal_handler():
 async def pull_task_from_queue(worker_id):
     now = datetime.now()
     acquired = await SiteScrapeTask.get_motor_collection().find_one_and_update(
-        {"status": TaskStatus.QUEUED},
+        {"status": TaskStatus.QUEUED, "collection_method": CollectionMethod.Automated},
         {
             "$set": {
                 "start_time": now,

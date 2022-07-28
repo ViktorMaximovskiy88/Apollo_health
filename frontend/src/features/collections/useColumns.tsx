@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Button } from 'antd';
@@ -16,9 +17,15 @@ interface CreateColumnsType {
   cancelScrape: (taskId: string) => void;
   isCanceling: boolean;
   openErrorModal: (errorTraceback: string) => void;
+  openNewDocumentModal: () => void;
 }
 
-export const createColumns = ({ cancelScrape, isCanceling, openErrorModal }: CreateColumnsType) => {
+export const createColumns = ({
+  cancelScrape,
+  isCanceling,
+  openErrorModal,
+  openNewDocumentModal,
+}: CreateColumnsType) => {
   return [
     {
       header: 'Start Time',
@@ -128,7 +135,7 @@ export const createColumns = ({ cancelScrape, isCanceling, openErrorModal }: Cre
                 </Button>
               );
             } else {
-              return null;
+              return <Button onClick={openNewDocumentModal}>Create document</Button>;
             }
           case TaskStatus.Failed:
             return (
@@ -146,3 +153,14 @@ export const createColumns = ({ cancelScrape, isCanceling, openErrorModal }: Cre
     },
   ];
 };
+
+export const useColumns = ({
+  cancelScrape,
+  isCanceling,
+  openErrorModal,
+  openNewDocumentModal,
+}: CreateColumnsType) =>
+  useMemo(
+    () => createColumns({ cancelScrape, isCanceling, openErrorModal, openNewDocumentModal }),
+    [cancelScrape, isCanceling, openErrorModal, openNewDocumentModal]
+  );

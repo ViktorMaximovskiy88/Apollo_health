@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, HTTPException, status, Security
+from fastapi import APIRouter, Depends, HTTPException, status, Security, UploadFile
 from fastapi.responses import StreamingResponse
 
 from backend.common.models.content_extraction_task import ContentExtractionTask
@@ -17,6 +17,7 @@ from backend.app.utils.user import get_current_user
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.events.send_event_client import SendEventClient
 from backend.common.events.event_convert import EventConvert
+from backend.scrapeworker.common.aio_downloader import AioDownloader
 
 router = APIRouter(
     prefix="/documents",
@@ -112,6 +113,25 @@ async def read_document(
     return target
 
 
+@router.post("/upload")
+async def upload_document(
+    file: UploadFile,
+    current_user: User = Security(get_current_user),
+    logger: Logger = Depends(get_logger),
+): 
+    print(file)
+
+
+
+
+
+
+
+
+
+
+
+
 @router.post("/{id}", response_model=RetrievedDocument)
 async def update_document(
     updates: UpdateRetrievedDocument,
@@ -154,3 +174,28 @@ async def delete_document(
         logger, current_user, target, UpdateRetrievedDocument(disabled=True)
     )
     return {"success": True}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
