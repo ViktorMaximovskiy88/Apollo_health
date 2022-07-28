@@ -14,9 +14,10 @@ import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './sitesApi';
 import { Site } from './types';
 import { SiteStatus, siteStatusDisplayName, siteStatusStyledDisplay } from './siteStatus';
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { EditButtonLink } from './EditButtonLink';
 import { User } from '../users/types';
+import { TypeColumn } from '@inovua/reactdatagrid-community/types';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
@@ -25,7 +26,7 @@ interface CreateColumnsType {
   setDeletedSite: (site: string) => void;
   users?: User[];
 }
-export const createColumns = ({ deleteSite, setDeletedSite, users }: CreateColumnsType) => {
+const createColumns = ({ deleteSite, setDeletedSite, users }: CreateColumnsType) => {
   async function handleDeleteSite(site: Site) {
     try {
       await deleteSite(site).unwrap();
@@ -199,3 +200,13 @@ export const createColumns = ({ deleteSite, setDeletedSite, users }: CreateColum
     },
   ];
 };
+
+export const useColumns = ({
+  deleteSite,
+  setDeletedSite,
+  users,
+}: CreateColumnsType): TypeColumn[] =>
+  useMemo(
+    () => createColumns({ deleteSite, setDeletedSite, users }),
+    [deleteSite, setDeletedSite, users]
+  );

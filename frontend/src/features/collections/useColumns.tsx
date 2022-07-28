@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Button } from 'antd';
@@ -19,7 +20,12 @@ interface CreateColumnsType {
   openNewDocumentModal: () => void;
 }
 
-export const createColumns = ({ cancelScrape, isCanceling, openErrorModal, openNewDocumentModal }: CreateColumnsType) => {
+export const createColumns = ({
+  cancelScrape,
+  isCanceling,
+  openErrorModal,
+  openNewDocumentModal,
+}: CreateColumnsType) => {
   return [
     {
       header: 'Start Time',
@@ -117,25 +123,20 @@ export const createColumns = ({ cancelScrape, isCanceling, openErrorModal, openN
         switch (task.status) {
           case TaskStatus.InProgress:
           case TaskStatus.Queued:
-          if (task.collection_type === CollectionMethod.Automated) {
-            return (
-              <Button
-                danger
-                type="primary"
-                disabled={isCanceling}
-                onClick={() => cancelScrape(task._id)}
-              >
-                Cancel
-              </Button>
-            );
-          } else {
-            return (
-              <Button
-                onClick={openNewDocumentModal}>
-                Create document
-              </Button>
-            );
-          }
+            if (task.collection_type === CollectionMethod.Automated) {
+              return (
+                <Button
+                  danger
+                  type="primary"
+                  disabled={isCanceling}
+                  onClick={() => cancelScrape(task._id)}
+                >
+                  Cancel
+                </Button>
+              );
+            } else {
+              return <Button onClick={openNewDocumentModal}>Create document</Button>;
+            }
           case TaskStatus.Failed:
             return (
               <Button
@@ -152,3 +153,14 @@ export const createColumns = ({ cancelScrape, isCanceling, openErrorModal, openN
     },
   ];
 };
+
+export const useColumns = ({
+  cancelScrape,
+  isCanceling,
+  openErrorModal,
+  openNewDocumentModal,
+}: CreateColumnsType) =>
+  useMemo(
+    () => createColumns({ cancelScrape, isCanceling, openErrorModal, openNewDocumentModal }),
+    [cancelScrape, isCanceling, openErrorModal, openNewDocumentModal]
+  );
