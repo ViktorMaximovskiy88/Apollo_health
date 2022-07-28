@@ -1,6 +1,6 @@
 import { Viewer, Worker, PageChangeEvent } from '@react-pdf-viewer/core';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
-import { OfficeFileLoader, TextFileLoader, CsvFileLoader } from '../../components';
+import { OfficeFileLoader, TextFileLoader, CsvFileLoader, HtmlFileLoader } from '../../components';
 
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
@@ -54,6 +54,8 @@ export function RetrievedDocumentViewer({ docId, doc, onPageChange = () => {} }:
             <OfficeFileLoader docId={docId} />
           ) : doc.file_extension.includes('csv') ? (
             <CsvFileLoader docId={docId} />
+          ) : doc.file_extension.includes('html') ? (
+            <HtmlFileLoader docId={docId} />
           ) : (
             <TextFileLoader docId={docId} />
           )}

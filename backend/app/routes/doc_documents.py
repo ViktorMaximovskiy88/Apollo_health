@@ -1,7 +1,6 @@
-from datetime import datetime
-import json
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, HTTPException, Request, status, Security
+from fastapi import APIRouter, Depends, HTTPException, Security, status
+
 from backend.app.routes.table_query import (
     TableFilterInfo,
     TableQueryResponse,
@@ -9,21 +8,15 @@ from backend.app.routes.table_query import (
     get_query_json_list,
     query_table,
 )
+from backend.app.utils.logger import Logger, get_logger, update_and_log_diff
+from backend.app.utils.user import get_current_user
 from backend.common.models.doc_document import (
     DocDocument,
     DocDocumentLimitTags,
     UpdateDocDocument,
     calc_final_effective_date,
 )
-from backend.common.models.site import Site
 from backend.common.models.user import User
-from backend.app.utils.logger import (
-    Logger,
-    get_logger,
-    update_and_log_diff,
-)
-
-from backend.app.utils.user import get_current_user
 
 router = APIRouter(
     prefix="/doc-documents",
@@ -50,9 +43,7 @@ async def read_doc_documents(
     limit: int | None = None,
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
-    filters: list[TableFilterInfo] = Depends(
-        get_query_json_list("filters", TableFilterInfo)
-    ),
+    filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
     query = DocDocument.find({}).project(DocDocumentLimitTags)
     return await query_table(query, limit, skip, sorts, filters)
