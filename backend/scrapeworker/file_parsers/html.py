@@ -10,7 +10,6 @@ class HtmlParser(FileParser):
     async def get_text(self) -> str:
         document_bytes = await self.get_bytes()
         soup = bs4.BeautifulSoup(document_bytes, features="html.parser")
-        print("aslkdjalskdjalksdjlaksjd lkadslk dsalkjasd ljkads l asdkjasdljk")
         return " ".join([text for text in soup.find("body").stripped_strings])
 
     async def get_info(self) -> dict[str, str]:

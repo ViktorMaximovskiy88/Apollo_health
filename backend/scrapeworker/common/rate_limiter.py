@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from datetime import datetime
 
 from tenacity._asyncio import AsyncRetrying
@@ -42,13 +41,10 @@ class RateLimiter:
 
             self.last_request_time = datetime.now()
             yield attempt
-            print(
-                "alksdjlaksjdlakjsdl kasd jlkd asljkasd lkjads ljkdsa ljkas dljk adsljka dsljkd ajkl"
-            )
+
             res = attempt.retry_state.outcome
             if res and not res.cancelled() and res.exception():
                 print(res.exception())
-                logging.error("wha", exc_info=True)
                 self.increase_wait()
             else:
                 self.decrease_wait()

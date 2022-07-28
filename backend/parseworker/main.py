@@ -1,29 +1,26 @@
 import asyncio
-import importlib
-from pathlib import Path
 import sys
 import traceback
-from uuid import uuid4
-import typer
-
 from datetime import datetime
-import pymongo
-from pymongo import ReturnDocument
-from beanie.odm.operators.update.general import Set
+from pathlib import Path
+from uuid import uuid4
 
+import pymongo
+import typer
+from beanie.odm.operators.update.general import Set
+from pymongo import ReturnDocument
 
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
-from backend.app.utils.logger import Logger, update_and_log_diff
-from backend.common.models.doc_document import DocDocument, UpdateDocDocument
-from backend.common.models.user import User
-from backend.common.models.content_extraction_task import ContentExtractionTask
-from backend.common.models.document import RetrievedDocument
-from backend.parseworker.rxnorm_entity_linker_model import RxNormEntityLinkerModel
-
-from backend.common.db.init import init_db
-from backend.common.models.site import Site
-from backend.common.core.enums import TaskStatus
 import backend.parseworker.extractors as extractor_classes
+from backend.app.utils.logger import Logger, update_and_log_diff
+from backend.common.core.enums import TaskStatus
+from backend.common.db.init import init_db
+from backend.common.models.content_extraction_task import ContentExtractionTask
+from backend.common.models.doc_document import DocDocument, UpdateDocDocument
+from backend.common.models.document import RetrievedDocument
+from backend.common.models.site import Site
+from backend.common.models.user import User
+from backend.parseworker.rxnorm_entity_linker_model import RxNormEntityLinkerModel
 
 app = typer.Typer()
 
@@ -38,19 +35,17 @@ async def start_worker_async():
         raise Exception("No admin user found")
 
     while True:
-        acquired = (
-            await ContentExtractionTask.get_motor_collection().find_one_and_update(
-                {"status": TaskStatus.QUEUED},
-                {
-                    "$set": {
-                        "start_time": datetime.now(),
-                        "worker_id": worker_id,
-                        "status": TaskStatus.IN_PROGRESS,
-                    }
-                },
-                sort=[("queued_time", pymongo.ASCENDING)],
-                return_document=ReturnDocument.AFTER,
-            )
+        acquired = await ContentExtractionTask.get_motor_collection().find_one_and_update(
+            {"status": TaskStatus.QUEUED},
+            {
+                "$set": {
+                    "start_time": datetime.now(),
+                    "worker_id": worker_id,
+                    "status": TaskStatus.IN_PROGRESS,
+                }
+            },
+            sort=[("queued_time", pymongo.ASCENDING)],
+            return_document=ReturnDocument.AFTER,
         )
         if acquired:
             extract_task = ContentExtractionTask.parse_obj(acquired)
@@ -60,17 +55,13 @@ async def start_worker_async():
             )
             if not site or not doc:
                 raise Exception("Site not found")
-            doc_document = await DocDocument.find_one(
-                DocDocument.retrieved_document_id == doc.id
-            )
+            doc_document = await DocDocument.find_one(DocDocument.retrieved_document_id == doc.id)
             if not doc_document:
                 raise Exception("DocDocument not found")
 
             typer.secho(f"Acquired Task {extract_task.id}", fg=typer.colors.BLUE)
 
-            extraction_class = (
-                doc.automated_content_extraction_class or "BasicTableExtraction"
-            )
+            extraction_class = doc.automated_content_extraction_class or "BasicTableExtraction"
             ExtractWorker = getattr(extractor_classes, extraction_class)
 
             worker = ExtractWorker(extract_task, doc, site, rxnorm_model)
@@ -89,6 +80,7 @@ async def start_worker_async():
                     )
                 )
             except Exception as ex:
+                print(ex)
                 message = traceback.format_exc()
                 traceback.print_exc()
                 now = datetime.now()
@@ -107,7 +99,7 @@ async def start_worker_async():
 
 @app.command()
 def start_worker():
-    typer.secho(f"Starting Parse Worker", fg=typer.colors.GREEN)
+    typer.secho("Starting Parse Worker", fg=typer.colors.GREEN)
     asyncio.run(start_worker_async())
 
 

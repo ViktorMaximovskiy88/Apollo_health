@@ -152,7 +152,7 @@ class ScrapeWorker:
         download: DownloadContext,
         parsed_content: dict(),
     ) -> UpdateRetrievedDocument:
-        # TODO needs to be utcnow
+
         now = datetime.now()
         updated_doc = UpdateRetrievedDocument(
             context_metadata=download.metadata.dict(),
@@ -201,13 +201,6 @@ class ScrapeWorker:
                 )
             )
 
-            # if (
-            #     download.seen_doc
-            #     and download.seen_doc.content_type != download.response.content_type
-            # ):
-            #     raise Exception("something wrong")
-            #     # problemo
-
             parsed_content = await parse_by_type(temp_path, download, self.taggers)
             if parsed_content is None:
                 continue
@@ -218,7 +211,7 @@ class ScrapeWorker:
             logging.info(f"dest_path={dest_path} temp_path={temp_path}")
 
             if not self.doc_client.object_exists(dest_path):
-                self.doc_client.write_object(dest_path, temp_path, download.content_type)
+                self.doc_client.write_object(dest_path, temp_path, download.mimetype)
                 await self.scrape_task.update(Inc({SiteScrapeTask.new_documents_found: 1}))
 
             document = await RetrievedDocument.find_one(

@@ -43,7 +43,6 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
 
         link_handle: ElementHandle
         for index, link_handle in enumerate(self.link_handles):
-            print(f"#{index} metadata link")
             metadata = await self.extract_metadata(link_handle)
             self.metadatas.append(metadata)
 

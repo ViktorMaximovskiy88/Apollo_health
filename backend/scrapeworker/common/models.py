@@ -6,10 +6,10 @@ from pydantic import BaseModel
 
 from backend.common.models.base_document import BaseDocument
 from backend.scrapeworker.common.utils import (
-    extension_to_mimetype_map,
     get_extension_from_content_type,
-    get_extension_from_file_mime_type,
+    get_extension_from_file_mimetype,
     get_extension_from_path_like,
+    get_mimetype,
 )
 from backend.scrapeworker.playbook import PlaybookContext
 
@@ -80,6 +80,7 @@ class DownloadContext(BaseModel):
 
     content_hash: str | None = None
     content_type: str | None = None
+    mimetype: str | None = None
 
     def guess_extension(self) -> None:
         guessed_ext = get_extension_from_path_like(self.request.url)
@@ -90,8 +91,13 @@ class DownloadContext(BaseModel):
         if not guessed_ext:
             guessed_ext = get_extension_from_content_type(self.response.content_type)
 
-        if not guessed_ext:
-            guessed_ext = get_extension_from_file_mime_type(self.file_path)
-
         self.file_extension = guessed_ext
-        self.content_type = extension_to_mimetype_map[guessed_ext] or None
+        return self.file_extension
+
+    def set_extension_from_mimetype(self) -> None:
+        self.file_extension = get_extension_from_file_mimetype(self.file_path)
+        return self.file_extension
+
+    def set_mimetype(self) -> None:
+        self.mimetype = get_mimetype(self.file_path)
+        return self.mimetype

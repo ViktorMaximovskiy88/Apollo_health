@@ -1,11 +1,11 @@
 import os
+
 from backend.scrapeworker.common.utils import (
     compile_date_rgx,
-    get_extension_from_path_like,
     get_extension_from_content_type,
-    get_extension_from_file_mime_type,
+    get_extension_from_file_mimetype,
+    get_extension_from_path_like,
 )
-
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 fixture_path = os.path.join(current_path, "__fixtures__")
@@ -62,18 +62,18 @@ def test_get_extension_from_content_type_non_match():
     assert result is None
 
 
-def test_get_extension_from_file_mime_type_none():
-    result = get_extension_from_file_mime_type(None)
+def test_get_extension_from_file_mimetype_none():
+    result = get_extension_from_file_mimetype(None)
     assert result is None
 
 
-def test_get_extension_from_file_mime_type():
+def test_get_extension_from_file_mimetype():
     file_path = os.path.join(fixture_path, "test.docx")
-    result = get_extension_from_file_mime_type(file_path)
-    assert result is "docx"
+    result = get_extension_from_file_mimetype(file_path)
+    assert result == "docx"
 
 
-def test_get_extension_from_file_mime_type_non_match():
+def test_get_extension_from_file_mimetype_non_match():
     file_path = os.path.join(fixture_path, "music.mp3")
-    result = get_extension_from_file_mime_type(file_path)
+    result = get_extension_from_file_mimetype(file_path)
     assert result is None

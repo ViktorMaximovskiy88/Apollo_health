@@ -90,10 +90,17 @@ def get_extension_from_content_type(content_type: str | None) -> str | None:
     return mimetype_to_extension_map.get(content_type) or None
 
 
-def get_extension_from_file_mime_type(file_path: str | None):
+def get_mimetype(file_path: str | None):
     if file_path is None:
         return None
 
     mime = magic.Magic(mime=True)
-    mime_type = mime.from_file(file_path)
-    return mimetype_to_extension_map.get(mime_type) or None
+    return mime.from_file(file_path)
+
+
+def get_extension_from_file_mimetype(file_path: str | None):
+    if file_path is None:
+        return None
+
+    mimetype = get_mimetype(file_path)
+    return mimetype_to_extension_map.get(mimetype) or None

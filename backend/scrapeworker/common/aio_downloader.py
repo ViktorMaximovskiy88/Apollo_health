@@ -140,16 +140,17 @@ class AioDownloader:
     ):
         hasher = DocStreamHasher()
         download.file_path = temp.name
+
         async with aiofiles.open(download.file_path, "wb") as fd:
             async for data in response.content.iter_any():
                 await fd.write(data)
                 hasher.update(data)
             await fd.flush()
 
-        if download.file_extension == "bin":
-            download.guess_extension()
-
+        download.set_mimetype()
+        download.set_extension_from_mimetype()
         download.file_hash = hasher.hexdigest()
+
         return download.file_path, download.file_hash
 
     async def try_download_to_tempfile(
@@ -168,7 +169,6 @@ class AioDownloader:
                 download.guess_extension()
 
                 if not response.ok:
-                    print(response.status, "response.status")
                     continue
 
                 with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
