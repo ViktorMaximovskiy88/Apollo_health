@@ -31,6 +31,17 @@ export function DocDocumentTagForm(props: {
     return pageFilter == 'page' || tagTypeFilter.length > 0 || searchTerm;
   };
 
+  const sortOrder = (tags: any[], pageFilter: string) => {
+    if (pageFilter === 'page') {
+      return orderBy(tags, ['page', 'text', 'type'], ['asc', 'asc', 'asc']);
+    } else if (pageFilter === 'doc') {
+      return orderBy(tags, ['text', 'type', 'page'], ['asc', 'asc', 'asc']);
+    } else {
+      // same for now...
+      return orderBy(tags, ['text', 'type', 'page'], ['asc', 'asc', 'asc']);
+    }
+  };
+
   useEffect(() => {
     let _tags = tags;
 
@@ -38,7 +49,7 @@ export function DocDocumentTagForm(props: {
       _tags = applyFilters();
     }
 
-    _tags = orderBy(_tags, ['page', 'type', 'text'], ['asc', 'asc', 'desc']);
+    _tags = sortOrder(_tags, pageFilter);
     setFilteredList(_tags);
   }, [searchTerm, tagTypeFilter, pageFilter, tags, currentPage]);
 
