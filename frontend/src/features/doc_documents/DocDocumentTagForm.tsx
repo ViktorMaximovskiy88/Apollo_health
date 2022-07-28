@@ -60,7 +60,7 @@ export function DocDocumentTagForm(props: {
   };
 
   const textFilter = (tag: any, field: string, searchRegex: RegExp) => {
-    return tag[field] ? `${tag[field]}`.match(searchRegex) : true;
+    return tag[field] ? `${tag[field]}`.match(searchRegex) : false;
   };
 
   const applyFilters = () => {
