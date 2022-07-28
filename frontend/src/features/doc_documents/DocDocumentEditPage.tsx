@@ -27,8 +27,16 @@ export function DocDocumentEditPage() {
 
   useEffect(() => {
     if (doc) {
-      const therapyTags = doc.therapy_tags.map((tag) => ({ ...tag, _type: 'therapy' }));
-      const indicationTags = doc.indication_tags.map((tag) => ({ ...tag, _type: 'indication' }));
+      const therapyTags = doc.therapy_tags.map((tag) => ({
+        ...tag,
+        _type: 'therapy',
+        _normalizedValue: `${tag.name.toLowerCase()}${tag.text.toLowerCase()}`,
+      }));
+      const indicationTags = doc.indication_tags.map((tag) => ({
+        ...tag,
+        _type: 'indication',
+        _normalizedValue: tag.text.toLowerCase(),
+      }));
       setTags([...therapyTags, ...indicationTags]);
       finalEffectiveDate();
     }

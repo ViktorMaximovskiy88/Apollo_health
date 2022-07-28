@@ -33,12 +33,11 @@ export function DocDocumentTagForm(props: {
 
   const sortOrder = (tags: any[], pageFilter: string) => {
     if (pageFilter === 'page') {
-      return orderBy(tags, ['page', 'text', 'type'], ['asc', 'asc', 'asc']);
+      return orderBy(tags, ['page', '_normalizedValue', '_type']);
     } else if (pageFilter === 'doc') {
-      return orderBy(tags, ['text', 'type', 'page'], ['asc', 'asc', 'asc']);
+      return orderBy(tags, ['_normalizedValue', '_type', 'page']);
     } else {
-      // same for now...
-      return orderBy(tags, ['text', 'type', 'page'], ['asc', 'asc', 'asc']);
+      throw Error('what type though');
     }
   };
 
