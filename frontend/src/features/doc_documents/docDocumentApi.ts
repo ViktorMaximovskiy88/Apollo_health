@@ -13,10 +13,11 @@ export const docDocumentsApi = createApi({
       { limit: number; skip: number; sortInfo: TypeSortInfo; filterValue: TypeFilterValue }
     >({
       query: ({ limit, skip, sortInfo, filterValue }) => {
+        const sorts = sortInfo ? [sortInfo] : [];
         const args = [
           `limit=${encodeURIComponent(limit)}`,
           `skip=${encodeURIComponent(skip)}`,
-          `sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`,
+          `sorts=${encodeURIComponent(JSON.stringify(sorts))}`,
           `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
         ].join('&');
         return `/doc-documents/?${args}`;
