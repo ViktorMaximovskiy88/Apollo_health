@@ -175,7 +175,13 @@ async def add_document(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    print('Add document', document)
+    
+    print(document)
+
+
+
+
+
 
 
 

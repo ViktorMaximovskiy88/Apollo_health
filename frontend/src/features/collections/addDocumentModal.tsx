@@ -33,6 +33,7 @@ export function AddDocumentModal({
     };
     async function saveDocument(newDocument: RetrievedDocument){
         try {
+            newDocument.site_id = siteId;
             await addDoc(newDocument);
             // setVisible(false);
         }
@@ -211,6 +212,8 @@ function DateItems(props: any) {
                                             className="grow"
                                             label={field.title}>
                                             <DatePicker 
+                                                mode="date"
+                                                showTime={false}
                                                 style={{width:"100%"}}
                                                 format={(value) => prettyDate(value.toDate())} 
                                                 />

@@ -173,6 +173,7 @@ async def start_hung_task_checker():
         now = datetime.now()
         tasks = SiteScrapeTask.find(
             {
+
                 "status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.CANCELING]},
                 "$or": [
                     {"last_active": {"$lt": now - timedelta(minutes=1)}},
