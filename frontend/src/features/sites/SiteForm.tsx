@@ -88,7 +88,7 @@ export function SiteForm(props: {
       <Form.Item name="tags" label="Tags">
         <Select mode="tags" />
       </Form.Item>
-      <Assignee form={form} />
+      <Assignee />
       <Status form={form} />
       {props.readOnly ? (
         <ToggleReadOnly setReadOnly={props.setReadOnly} form={form} />
