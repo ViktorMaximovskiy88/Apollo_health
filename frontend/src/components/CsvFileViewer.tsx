@@ -19,19 +19,22 @@ export function CsvFileViewer({ url }: CsvFileViewerPropTypes) {
   let colWidth = 0;
 
   useEffect(() => {
-    fetch(url as string)
-      .then((res) => res.text())
-      .then((text) => {
-        // temp csv viewer (pretty dumb)
-        // doesnt handle escaped etc... WIP really naive
-        const _rows = text.split('\n').map((row) => {
-          const cols = row.split(',');
-          colWidth = cols.length; // maybe not right could be sparse
-          return cols;
-        });
+    if (url) {
+      fetch(url as string)
+        .then((res) => res.text())
+        .then((text) => {
+          // temp csv viewer (pretty dumb)
+          // doesnt handle escaped etc... WIP really naive
+          const _rows = text.split('\n').map((row) => {
+            const cols = row.match(/\s*("[^"]*"|[^,]*)\s*/);
+            debugger;
+            // colWidth = cols.length; // maybe not right could be sparse
+            return cols;
+          });
 
-        setRows(_rows);
-      });
+          setRows(_rows);
+        });
+    }
   }, [url]);
 
   if (!url) {

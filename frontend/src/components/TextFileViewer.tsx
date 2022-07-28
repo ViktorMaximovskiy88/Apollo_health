@@ -18,9 +18,11 @@ export function TextFileViewer({ url }: TextFileViewerPropTypes) {
   const [content, setContent] = useState('');
 
   useEffect(() => {
-    fetch(url as string)
-      .then((res) => res.text())
-      .then((text) => setContent(text));
+    if (url) {
+      fetch(url as string)
+        .then((res) => res.text())
+        .then((text) => setContent(text));
+    }
   }, [url]);
 
   if (!url) {
