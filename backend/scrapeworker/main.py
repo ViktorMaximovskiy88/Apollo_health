@@ -50,7 +50,7 @@ async def signal_handler():
 async def pull_task_from_queue(worker_id):
     now = datetime.now()
     acquired = await SiteScrapeTask.get_motor_collection().find_one_and_update(
-        {"status": TaskStatus.QUEUED, "collection_method": CollectionMethod.Automated},
+        {"status": TaskStatus.QUEUED, "collection_type": CollectionMethod.Automated},
         {
             "$set": {
                 "start_time": now,
