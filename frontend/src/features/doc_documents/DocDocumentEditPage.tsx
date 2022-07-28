@@ -30,7 +30,7 @@ export function DocDocumentEditPage() {
       const therapyTags = doc.therapy_tags.map((tag) => ({
         ...tag,
         _type: 'therapy',
-        _normalizedValue: `${tag.name.toLowerCase()}${tag.text.toLowerCase()}`,
+        _normalizedValue: `${tag.name.toLowerCase()}|${tag.text.toLowerCase()}`,
       }));
       const indicationTags = doc.indication_tags.map((tag) => ({
         ...tag,
