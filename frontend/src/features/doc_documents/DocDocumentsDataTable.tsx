@@ -89,6 +89,33 @@ const columns = [
     },
   },
   {
+    header: 'Document Type',
+    name: 'document_type',
+    minWidth: 200,
+    filterEditor: SelectFilter,
+    filterEditorProps: {
+      placeholder: 'All',
+      dataSource: [
+        { id: 'Authorization Policy', label: 'Authorization Policy' },
+        { id: 'Provider Guide', label: 'Provider Guide' },
+        { id: 'Treatment Request Form', label: 'Treatment Request Form' },
+        { id: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
+        { id: 'Covered Treatment List', label: 'Covered Treatment List' },
+        { id: 'Regulatory Document', label: 'Regulatory Document' },
+        { id: 'Formulary', label: 'Formulary' },
+        { id: 'Internal Reference', label: 'Internal Reference' },
+      ],
+    },
+    render: ({ value: document_type }: { value: string }) => {
+      return <>{document_type}</>;
+    },
+  },
+  {
+    header: 'Link Text',
+    name: 'link_text',
+    render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
+  },
+  {
     header: 'Tags',
     name: 'tags',
     render: ({ data: doc }: { data: DocDocument }) => {

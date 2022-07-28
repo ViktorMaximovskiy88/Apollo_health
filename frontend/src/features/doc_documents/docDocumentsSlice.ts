@@ -9,6 +9,8 @@ export const initialState = {
       { name: 'first_collected_date', operator: 'before', type: 'date', value: '' },
       { name: 'last_collected_date', operator: 'before', type: 'date', value: '' },
       { name: 'classification_status', operator: 'eq', type: 'select', value: null },
+      { name: 'document_type', operator: 'eq', type: 'select', value: null },
+      { name: 'link_text', operator: 'contains', type: 'string', value: '' },
     ],
     pagination: { limit: 50, skip: 0 },
   },
