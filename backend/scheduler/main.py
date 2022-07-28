@@ -150,7 +150,7 @@ async def start_scaler():
         queue_size = await SiteScrapeTask.find(
             {
             "status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.QUEUED]},
-            "collection_method": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
+            "collection_type": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
             },
         ).count()
         active_workers = determine_current_instance_count()
@@ -177,7 +177,7 @@ async def start_hung_task_checker():
         tasks = SiteScrapeTask.find(
             {
                 "status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.CANCELING]},
-                "collection_method": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
+                "collection_type": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
                 "$or": [
                     {"last_active": {"$lt": now - timedelta(minutes=1)}},
                     {"last_active": None},
