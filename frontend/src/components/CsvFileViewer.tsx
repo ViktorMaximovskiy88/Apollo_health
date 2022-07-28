@@ -1,5 +1,7 @@
+import { Table } from 'antd';
 import { useEffect, useState } from 'react';
 import { useGetDocumentViewerUrlQuery } from '../features/retrieved_documents/documentsApi';
+import { reduce, compact, camelCase } from 'lodash';
 
 interface CsvFileLoaderPropTypes {
   docId: string | undefined;
@@ -16,22 +18,41 @@ export function CsvFileLoader({ docId }: CsvFileLoaderPropTypes) {
 
 export function CsvFileViewer({ url }: CsvFileViewerPropTypes) {
   const [rows, setRows] = useState([] as any[]);
-  let colWidth = 0;
+  const [headers, setHeaders] = useState([] as any[]);
 
   useEffect(() => {
     if (url) {
       fetch(url as string)
         .then((res) => res.text())
         .then((text) => {
-          // temp csv viewer (pretty dumb)
-          // doesnt handle escaped etc... WIP really naive
-          const _rows = text.split('\n').map((row) => {
-            const cols = row.match(/\s*("[^"]+"|[^,]+)\s*/gi);
-            colWidth = (cols as []).length; // maybe not right could be sparse
-            return cols;
+          let _rows = text.split('\n').map((row) => {
+            return row.match(/\s*("[^"]+"|[^,]+)\s*/gi);
           });
 
-          setRows(_rows);
+          _rows = compact(_rows);
+
+          const headers = (_rows.shift() || []).map((header: string) => ({
+            title: header,
+            key: camelCase(header),
+            dataIndex: camelCase(header),
+          }));
+
+          const rows = _rows.map((cells: any, i: number) => {
+            return reduce(
+              cells,
+              (acc: any, cell: any, j: number) => {
+                acc.key = i;
+                if (cell) {
+                  acc[headers[j].dataIndex] = cell;
+                }
+                return acc;
+              },
+              {}
+            );
+          });
+
+          setHeaders(headers);
+          setRows(rows);
         });
     }
   }, [url]);
@@ -41,14 +62,8 @@ export function CsvFileViewer({ url }: CsvFileViewerPropTypes) {
   }
 
   return (
-    <div data-type="csv" className="bg-white p-8 border border-gray-200">
-      {rows.map((cols: any) => (
-        <div>
-          {cols.map((cell: any) => (
-            <div>{cell}</div>
-          ))}
-        </div>
-      ))}
+    <div data-type="csv" className="flex bg-white h-full overflow-auto">
+      <Table dataSource={rows} columns={headers} pagination={false} sticky={true} />
     </div>
   );
 }
