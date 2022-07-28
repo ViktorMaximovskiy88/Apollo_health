@@ -130,6 +130,7 @@ function SearchInFrames() {
   return (
     <Form.Item
       name={['scrape_method_configuration', 'search_in_frames']}
+      valuePropName="checked"
       label={
         <>
           <span style={{ marginRight: '5px' }}>Search in frames</span>

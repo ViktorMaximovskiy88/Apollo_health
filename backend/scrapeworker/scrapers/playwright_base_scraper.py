@@ -50,6 +50,13 @@ class PlaywrightBaseScraper(ABC):
             await self.page.wait_for_timeout(self.config.wait_for_timeout_ms)
 
         element_handle = await self.page.query_selector(self.css_selector)
+
+        if len(self.page.main_frame.child_frames) > 0 and self.config.search_in_frames:
+            child_frames = self.page.main_frame.child_frames
+            frame = child_frames[0]
+            await frame.wait_for_load_state("domcontentloaded")
+            element_handle = await frame.query_selector(self.css_selector)
+
         result = element_handle is not None
         logging.info(f"{self.__class__.__name__} is_applicable -> {result}")
         return result
