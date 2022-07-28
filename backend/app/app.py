@@ -1,31 +1,46 @@
 from pathlib import Path
 from typing import Any
+
 from fastapi import FastAPI, Request, status
-from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+
+from backend.app.core.settings import settings
+from backend.app.routes import (
+    auth,
+    change_log,
+    content_extraction_tasks,
+    doc_documents,
+    documents,
+    proxies,
+    site_scrape_tasks,
+    sites,
+    users,
+    work_queues,
+)
 from backend.app.scripts.add_user import create_system_users
 from backend.app.scripts.create_proxy_records import create_proxies
 from backend.app.scripts.create_work_queues import create_default_work_queues
 from backend.common.db.init import init_db
 from backend.common.db.migrations import run_migrations
-from backend.app.core.settings import settings
 from backend.common.models.proxy import Proxy
-from backend.app.routes import (
-    auth,
-    sites,
-    users,
-    proxies,
-    documents,
-    change_log,
-    work_queues,
-    doc_documents,
-    site_scrape_tasks,
-    content_extraction_tasks,
-)
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.on_event("startup")
@@ -43,7 +58,7 @@ template_dir = Path(__file__).parent.joinpath("templates")
 templates = Jinja2Templates(directory=template_dir)
 frontend_build_dir = Path(__file__).parent.joinpath("../../frontend/build").resolve()
 
-# liveness
+
 @app.get("/ping", include_in_schema=False)
 async def ping():
     return {"ok": True}
@@ -78,9 +93,8 @@ app.include_router(work_queues.router, prefix=prefix)
 async def frontend_routing(request: Request, call_next: Any):
     response = await call_next(request)
 
-    if (
-        response.status_code == status.HTTP_404_NOT_FOUND
-        and not request.url.path.startswith("/api")
+    if response.status_code == status.HTTP_404_NOT_FOUND and not request.url.path.startswith(
+        "/api"
     ):
         with open(frontend_build_dir.joinpath("index.html")) as file:
             return HTMLResponse(file.read())

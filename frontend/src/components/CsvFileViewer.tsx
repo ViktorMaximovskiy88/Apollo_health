@@ -26,9 +26,8 @@ export function CsvFileViewer({ url }: CsvFileViewerPropTypes) {
           // temp csv viewer (pretty dumb)
           // doesnt handle escaped etc... WIP really naive
           const _rows = text.split('\n').map((row) => {
-            const cols = row.match(/\s*("[^"]*"|[^,]*)\s*/);
-            debugger;
-            // colWidth = cols.length; // maybe not right could be sparse
+            const cols = row.match(/\s*("[^"]+"|[^,]+)\s*/gi);
+            colWidth = (cols as []).length; // maybe not right could be sparse
             return cols;
           });
 
