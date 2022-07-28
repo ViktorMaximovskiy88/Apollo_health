@@ -8,6 +8,8 @@ from fastapi.responses import StreamingResponse
 
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
+from backend.common.events.event_convert import EventConvert
+from backend.common.events.send_event_client import SendEventClient
 from backend.common.models.content_extraction_task import ContentExtractionTask
 from backend.common.models.doc_document import DocDocument, calc_final_effective_date
 from backend.common.models.document import (
@@ -204,6 +206,10 @@ async def update_document(
             queued_time=datetime.now(tz=timezone.utc),
         )
         await task.save()
+    # Sending Event Bridge Event.  Need to add condition when to send.
+    document_json = EventConvert(document=updated).convert()
+    send_evnt_client = SendEventClient()
+    response = send_evnt_client.send_event("document-details", document_json)  # noqa: F841
 
     return updated
 
