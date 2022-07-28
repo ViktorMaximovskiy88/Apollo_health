@@ -78,22 +78,20 @@ class DownloadContext(BaseModel):
     file_hash: str | None = None
     file_size: int = 0
 
-    alternate_url: str | None = None
-
     content_hash: str | None = None
     content_type: str | None = None
 
     def guess_extension(self) -> None:
-        guess_ext = get_extension_from_path_like(self.request.url)
+        guessed_ext = get_extension_from_path_like(self.request.url)
 
-        if not guess_ext:
-            guess_ext = get_extension_from_path_like(self.response.content_disposition_filename)
+        if not guessed_ext:
+            guessed_ext = get_extension_from_path_like(self.response.content_disposition_filename)
 
-        if not guess_ext:
-            guess_ext = get_extension_from_content_type(self.response.content_type)
+        if not guessed_ext:
+            guessed_ext = get_extension_from_content_type(self.response.content_type)
 
-        if not guess_ext:
-            guess_ext = get_extension_from_file_mime_type(self.file_path)
+        if not guessed_ext:
+            guessed_ext = get_extension_from_file_mime_type(self.file_path)
 
-        self.file_extension = guess_ext
-        self.content_type = extension_to_mimetype_map[guess_ext] or None
+        self.file_extension = guessed_ext
+        self.content_type = extension_to_mimetype_map[guessed_ext] or None

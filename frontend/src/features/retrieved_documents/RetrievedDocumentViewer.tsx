@@ -1,7 +1,6 @@
-import { useState } from 'react';
 import { Viewer, Worker, PageChangeEvent } from '@react-pdf-viewer/core';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
-import { OfficeFileLoader } from '../../components/OfficeFileViewer';
+import { OfficeFileLoader, TextFileLoader, CsvFileLoader } from '../../components';
 
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
@@ -51,8 +50,12 @@ export function RetrievedDocumentViewer({ docId, doc, onPageChange = () => {} }:
                 Authorization: `Bearer ${token}`,
               }}
             />
-          ) : (
+          ) : doc.file_extension.includes('xlsx', 'docx') ? (
             <OfficeFileLoader docId={docId} />
+          ) : doc.file_extension.includes('csv') ? (
+            <CsvFileLoader docId={docId} />
+          ) : (
+            <TextFileLoader docId={docId} />
           )}
         </Tabs.TabPane>
         <Tabs.TabPane tab="Metadata" key="properties">

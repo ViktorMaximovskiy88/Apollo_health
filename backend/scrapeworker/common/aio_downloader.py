@@ -146,9 +146,7 @@ class AioDownloader:
                 hasher.update(data)
             await fd.flush()
 
-        # TODO rewrite where/when the mimetype gets examined...
-        # we are abusing None for now...
-        if not download.file_extension:
+        if download.file_extension == "bin":
             download.guess_extension()
 
         download.file_hash = hasher.hexdigest()
@@ -166,7 +164,7 @@ class AioDownloader:
                 response = await self.send_request(download, proxy)
 
                 download.response.from_aio_response(response)
-                # maybe not here... or just twice? stupid xls thing.
+                # We only need this now due to the xlsx lib needing an ext (derp)
                 download.guess_extension()
 
                 if not response.ok:
@@ -175,4 +173,3 @@ class AioDownloader:
 
                 with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
                     yield await self.write_response_to_file(download, response, temp)
-                    download.guess_extension()

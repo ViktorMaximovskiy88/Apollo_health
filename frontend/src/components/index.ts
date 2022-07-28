@@ -5,3 +5,5 @@ export * from './OfficeFileViewer';
 export * from './MainLayout';
 export * from './Layout';
 export * from './Hr';
+export * from './TextFileViewer';
+export * from './CsvFileViewer';

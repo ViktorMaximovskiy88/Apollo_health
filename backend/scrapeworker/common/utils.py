@@ -64,10 +64,12 @@ mimetype_to_extension_map = {
     "text/html": "html",
     "text/csv": "csv",
     "text/plain": "txt",
-    "application/octet-stream": None,
+    "application/octet-stream": "bin",
 }
-
 extension_to_mimetype_map = {v: k for k, v in mimetype_to_extension_map.items()}
+
+supported_extensions = [*mimetype_to_extension_map.values()]
+supported_mimetypes = [*extension_to_mimetype_map.values()]
 
 
 def get_extension_from_path_like(path_like: str | None) -> str | None:
@@ -77,7 +79,7 @@ def get_extension_from_path_like(path_like: str | None) -> str | None:
     maybe_extension = pathlib.Path(os.path.basename(path_like))
     if maybe_extension:
         extension = maybe_extension.suffix[1:]
-        if extension in ["docx", "xlsx", "pdf", "html"]:
+        if extension in supported_extensions:
             return extension
 
 
