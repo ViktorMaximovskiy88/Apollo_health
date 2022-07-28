@@ -97,9 +97,9 @@ class ScrapeWorker:
 
     def url_not_seen(self, url, filename: str | None):
         # skip if we've already seen this url
-        if url in self.seen_urls:
-            return False
         key = f"{url}{filename}" if filename else url
+        if key in self.seen_urls:
+            return False
         logging.info(f"unseen target -> {key}")
         self.seen_urls.add(key)
         return True
@@ -329,12 +329,17 @@ class ScrapeWorker:
         context: BrowserContext | None = None
         page: Page | None = None
         response: PlaywrightResponse | None = None
+
+        async def handle_dialog(dialog):
+            await dialog.accept()
+
         async for attempt, proxy in self.try_each_proxy():
             with attempt:
                 context = await self.get_browser_context(proxy)
 
                 page = await context.new_page()
                 await stealth_async(page)
+                page.on("dialog", handle_dialog)
 
                 logging.debug(f"Awating response for {url}")
                 response = await page.goto(url, timeout=60000, wait_until="domcontentloaded")
@@ -402,9 +407,13 @@ class ScrapeWorker:
 
     def should_process_download(self, download: Download):
         url = download.request.url
-        cd_filename = download.response.content_disposition_filename
+        filename = (
+            download.response.content_disposition_filename
+            if download.response and download.response.content_disposition_filename
+            else download.request.filename
+        )
 
-        return not self.skip_url(url) and self.url_not_seen(url, cd_filename)
+        return not self.skip_url(url) and self.url_not_seen(url, filename)
 
     def is_artifact_file(self, url: str):
         extension = get_extension_from_path_like(url)
