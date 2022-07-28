@@ -3,6 +3,7 @@ import { ApprovalStatus } from '../../common/approvalStatus';
 
 export interface BaseDocTag {
   _type: string;
+  _normalized: string;
 }
 
 export interface TherapyTag extends BaseDocTag {
