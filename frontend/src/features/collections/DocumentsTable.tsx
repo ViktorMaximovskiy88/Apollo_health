@@ -13,7 +13,7 @@ import {
 } from './documentsSlice';
 import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
-import { useColumns } from './useDocumentColumns';
+import { useDocumentColumns as useColumns } from './useDocumentColumns';
 
 const useControlledPagination = () => {
   const tableState = useSelector(documentTableState);
