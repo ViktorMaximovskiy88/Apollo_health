@@ -122,6 +122,8 @@ async def upload_document(
     print(file)
 
 
+
+
 @router.post("/{id}", response_model=RetrievedDocument)
 async def update_document(
     updates: UpdateRetrievedDocument,
@@ -166,13 +168,18 @@ async def delete_document(
     return {"success": True}
 
 
+
 @router.put("/", response_model=RetrievedDocument, status_code=status.HTTP_201_CREATED)
 async def add_document(
-    target: RetrievedDocument,
+    document: RetrievedDocument,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    print('Add document', target)
+    print('Add document', document)
+
+
+
+
 
 
 

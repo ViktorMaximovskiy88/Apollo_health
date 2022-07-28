@@ -23,7 +23,7 @@ export function AddDocumentModal({
     const [ addDoc ] = useAddDocumentMutation();
 
     const initialValues = {
-        "lang_code":"English"
+        "lang_code":"en"
     }
     const validateMessages = {
         required: '${label} is required!',
@@ -225,8 +225,6 @@ function DateItems(props: any) {
         </>
     )
 }
-
-
 
 
 

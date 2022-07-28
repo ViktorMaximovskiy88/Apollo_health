@@ -16,7 +16,7 @@ class RetrievedDocument(BaseDocument):
     first_collected_date: datetime | None = None
     last_collected_date: datetime | None = None
     url: str | None = None
-    checksum: Indexed(str)  # type: ignore
+    checksum: Indexed(str) | None = None  # type: ignore
     text_checksum: str | None = None
     disabled: bool = False
     name: str
@@ -45,7 +45,6 @@ class RetrievedDocument(BaseDocument):
 
     automated_content_extraction: bool = False
     automated_content_extraction_class: str | None = None
-    document_file: dict | None = None
 
 
 class UpdateRetrievedDocument(BaseModel):
@@ -80,6 +79,9 @@ class UpdateRetrievedDocument(BaseModel):
 
     automated_content_extraction: bool | None = None
     automated_content_extraction_class: str | None = None
+
+
+
 
 
 
