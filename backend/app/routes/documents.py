@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, Security, UploadFile, status
@@ -136,7 +136,7 @@ async def update_document(
             site_id=target.site_id,
             scrape_task_id=target.scrape_task_id,
             retrieved_document_id=target.id,
-            queued_time=datetime.now(),
+            queued_time=datetime.now(tz=timezone.utc),
         )
         await task.save()
 

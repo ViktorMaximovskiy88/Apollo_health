@@ -1,14 +1,17 @@
+import logging
+from datetime import datetime, timezone
 from typing import Any, TypeVar
-from jsonpatch import JsonPatch, JsonPointer
-from bson import json_util
-from datetime import datetime
+
 from beanie import Document
-from fastapi import BackgroundTasks
-from pydantic import BaseModel
 from beanie.odm.operators.update.general import Set
+from bson import json_util
+from fastapi import BackgroundTasks
+from jsonpatch import JsonPatch, JsonPointer
+from motor.motor_asyncio import AsyncIOMotorClientSession
+from pydantic import BaseModel
+
 from backend.common.models.change_log import ChangeLog
 from backend.common.models.user import User
-from motor.motor_asyncio import AsyncIOMotorClientSession
 
 
 class Logger:
@@ -20,16 +23,14 @@ class Logger:
         log = ChangeLog(
             user_id=user.id,
             target_id=target.id,
-            time=datetime.now(),
+            time=datetime.now(tz=timezone.utc),
             action=action,
             collection=collection,
             delta=delta,
         )
         await log.save()
 
-    async def background_log_change(
-        self, user: User, target: Document, action, delta=None
-    ):
+    async def background_log_change(self, user: User, target: Document, action, delta=None):
         if self.background_tasks:
             self.background_tasks.add_task(self.log_change, user, target, action, delta)
         else:
@@ -39,7 +40,9 @@ class Logger:
 async def get_logger(background_tasks: BackgroundTasks):
     return Logger(background_tasks)
 
+
 T = TypeVar("T", bound=Document)
+
 
 async def create_and_log(
     logger: Logger,
@@ -71,7 +74,8 @@ async def update_and_log_diff(
             pointer = JsonPointer(op["path"])
             try:
                 op["prev"] = pointer.resolve(original)
-            except:
+            except Exception as ex:
+                logging.debug(ex)
                 pass
     await logger.background_log_change(current_user, target, "UPDATE", patch)
     return updated

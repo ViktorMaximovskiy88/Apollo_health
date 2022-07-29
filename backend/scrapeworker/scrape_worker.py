@@ -2,7 +2,7 @@ import asyncio
 import logging
 import re
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from random import shuffle
 from typing import Any, AsyncGenerator, Callable, Coroutine
 from urllib.parse import urlparse
@@ -153,7 +153,7 @@ class ScrapeWorker:
         parsed_content: dict(),
     ) -> UpdateRetrievedDocument:
         # TODO needs to be utcnow
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         updated_doc = UpdateRetrievedDocument(
             context_metadata=download.metadata.dict(),
             doc_type_confidence=parsed_content["confidence"],
@@ -227,7 +227,7 @@ class ScrapeWorker:
                     await self.update_doc_document(document)
                 else:
                     logging.debug("creating doc")
-                    now = datetime.now()
+                    now = datetime.now(tz=timezone.utc)
                     document = RetrievedDocument(
                         base_url=download.metadata.base_url,
                         checksum=checksum,

@@ -1,5 +1,6 @@
+import logging
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Generator
 
 from dateutil import parser
@@ -94,7 +95,8 @@ class DateParser:
                     date = parser.parse(datetext, ignoretz=True)
                     yield DateMatch(date, m, last_index)
                     last_index = m.end()
-                except Exception:
+                except Exception as ex:
+                    logging.debug(ex)
                     continue
 
     def extract_date_span(self, text: str, start: int) -> DateMatch | None:
@@ -132,8 +134,10 @@ class DateParser:
             if max_labeled_date:
                 self.effective_date = max_labeled_date
             else:
-                now = datetime.now()
-                dates_in_the_past = list(filter(lambda d: now > d, self.unclassified_dates))
+                now = datetime.now(tz=timezone.utc)
+                dates_in_the_past = list(
+                    filter(lambda d: now.timestamp() > d.timestamp(), self.unclassified_dates)
+                )
                 if dates_in_the_past:
                     latest_date = max(dates_in_the_past)
                     if valid_eff(latest_date):
@@ -150,13 +154,13 @@ class DateParser:
         """
 
         future_dates = ["end_date", "next_review_date", "next_update_date"]
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         existing_label: DateMatch = getattr(self, label)
         if label in future_dates:
             if not existing_label.date or existing_label.date > match.date:
                 setattr(self, label, match)
         else:
-            if now < match.date:
+            if now.timestamp() < match.date.timestamp():
                 return
             elif not existing_label.date or existing_label.date < match.date:
                 setattr(self, label, match)
