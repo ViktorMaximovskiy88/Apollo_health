@@ -52,7 +52,6 @@ export const docDocumentsApi = createApi({
 
 export const {
   useGetDocDocumentQuery,
-  useLazyGetDocDocumentQuery,
   useGetDocDocumentsQuery,
   useLazyGetDocDocumentsQuery,
   useUpdateDocDocumentMutation,
