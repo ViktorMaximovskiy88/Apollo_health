@@ -1,6 +1,8 @@
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, Security, status
+from pydantic import BaseModel
 
+from backend.app.routes.documents import get_target as get_retrieved_doc
 from backend.app.routes.table_query import (
     TableFilterInfo,
     TableQueryResponse,
@@ -18,6 +20,8 @@ from backend.common.models.doc_document import (
     UpdateDocDocument,
     calc_final_effective_date,
 )
+from backend.common.models.document import RetrievedDocument
+from backend.common.storage.text_handler import TextHandler
 from backend.common.models.user import User
 
 router = APIRouter(
@@ -60,6 +64,27 @@ async def read_extraction_task(
     target: DocDocument = Depends(get_target),
 ):
     return target
+
+
+class CompareResponse(BaseModel):
+    diff: str
+    org_doc: DocDocument
+    new_doc: RetrievedDocument
+
+
+@router.post(
+    "/diff/{id}",
+    response_model=CompareResponse,
+    dependencies=[Security(get_current_user)],
+)
+async def create_diff(
+    compare_id: PydanticObjectId,
+    target: DocDocument = Depends(get_target),
+):
+    text_handler = TextHandler()
+    compare_doc = await get_retrieved_doc(compare_id)
+    _, diff = await text_handler.create_diff(target.text_checksum, compare_doc.text_checksum)
+    return CompareResponse(diff=diff.decode("utf-8"), org_doc=target, new_doc=compare_doc)
 
 
 @router.post("/{id}", response_model=DocDocument)

@@ -26,11 +26,11 @@ from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.storage.client import DocumentStorageClient
+from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.aio_downloader import AioDownloader
 from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocsCollectedException
 from backend.scrapeworker.common.models import Download, Request
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
-from backend.scrapeworker.common.text_handler import TextHandler
 from backend.scrapeworker.common.utils import get_extension_from_path_like
 from backend.scrapeworker.document_tagging.indication_tagging import IndicationTagger
 from backend.scrapeworker.document_tagging.taggers import Taggers
