@@ -13,6 +13,7 @@ from backend.app.routes import (
     change_log,
     content_extraction_tasks,
     doc_documents,
+    document_family,
     documents,
     proxies,
     site_scrape_tasks,
@@ -48,6 +49,7 @@ templates = Jinja2Templates(directory=template_dir)
 frontend_build_dir = Path(__file__).parent.joinpath("../../frontend/build").resolve()
 
 
+# liveness
 @app.get("/ping", include_in_schema=False)
 async def ping():
     return {"ok": True}
@@ -76,6 +78,7 @@ app.include_router(content_extraction_tasks.router, prefix=prefix)
 app.include_router(proxies.router, prefix=prefix)
 app.include_router(doc_documents.router, prefix=prefix)
 app.include_router(work_queues.router, prefix=prefix)
+app.include_router(document_family.router, prefix=prefix)
 
 
 @app.middleware("http")

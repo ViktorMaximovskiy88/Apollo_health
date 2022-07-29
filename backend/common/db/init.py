@@ -12,6 +12,7 @@ from backend.common.models.content_extraction_task import (
 )
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
+from backend.common.models.document_family import DocumentFamily
 from backend.common.models.indication import Indication
 from backend.common.models.link_task_log import LinkBaseTask, LinkRetrievedTask, LinkTaskLog
 from backend.common.models.proxy import Proxy
@@ -61,5 +62,6 @@ async def init_db(mock=False, database_name=None):
             LinkTaskLog,
             LinkBaseTask,
             LinkRetrievedTask,
+            DocumentFamily,
         ],
     )
