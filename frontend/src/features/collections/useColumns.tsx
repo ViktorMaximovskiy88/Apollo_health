@@ -106,10 +106,10 @@ export const createColumns = ({
     },
     {
       header: 'Collection Type',
-      name: 'collection_type',
+      name: 'collection_method',
       maxWidth: 200,
-      render: ({ value: collection_type }: { value: string }) => {
-        switch (collection_type) {
+      render: ({ value: collection_method }: { value: string }) => {
+        switch (collection_method) {
           case CollectionMethod.Manual:
             return <span>Manual</span>;
           case CollectionMethod.Automated:
@@ -123,7 +123,7 @@ export const createColumns = ({
         switch (task.status) {
           case TaskStatus.InProgress:
           case TaskStatus.Queued:
-            if (task.collection_type === CollectionMethod.Automated) {
+            if (task.collection_method === CollectionMethod.Automated) {
               return (
                 <Button
                   danger

@@ -86,7 +86,7 @@ async def start_scrape_task(
             start_time=datetime.now(),
             queued_time=datetime.now(),
             status=TaskStatus.IN_PROGRESS,
-            collection_type=CollectionMethod.Manual,
+            collection_method=CollectionMethod.Manual,
         )
     else:
         site_scrape_task = SiteScrapeTask(site_id=site_id, queued_time=datetime.now())

@@ -21,7 +21,7 @@ class SiteScrapeTask(BaseDocument):
     error_message: str | None = None
     links_found: int = 0
     retry_if_lost: bool = False
-    collection_type: str | None = CollectionMethod.Automated
+    collection_method: str | None = CollectionMethod.Automated
 
 
 class UpdateSiteScrapeTask(BaseModel):
