@@ -154,7 +154,7 @@ export const createColumns = ({
   ];
 };
 
-export const useColumns = ({
+export const useCollectionsColumns = ({
   cancelScrape,
   isCanceling,
   openErrorModal,

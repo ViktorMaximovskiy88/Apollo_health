@@ -2,11 +2,11 @@ import { prettyDateFromISO, prettyDateUTCFromISO } from '../../common';
 import { Link } from 'react-router-dom';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { RetrievedDocument } from '../retrieved_documents/types';
-import { useGetChangeLogQuery } from './sitesApi';
+import { useGetChangeLogQuery } from '../sites/sitesApi';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 
-export const useColumns = () => [
+export const useDocumentColumns = () => [
   {
     header: 'First Collected',
     name: 'first_collected_date',
