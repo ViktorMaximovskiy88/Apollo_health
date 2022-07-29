@@ -1,21 +1,22 @@
 import os
-import re
 import pathlib
+import re
+
 import magic
 
 
 def compile_date_rgx():
     date_formats = [
-        r"(?<!\d|\/)[0-9]{4}(\/|-|\.)[0-9][0-9]?(\/|-|\.)[0-9][0-9]?(?!\d|\/)",  # yyyy-MM-dd with -, / or .
-        r"(?<!\d|\/)[0-9][0-9]?(\/|-|\.)[0-9][0-9]?(\/|-|\.)(?:\d{4}|\d{2})(?!\d|\/)",  # dd-MM-yyyy, dd-mm-yy. With -, / or .
-        r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).? [0-9][0-9]?,? [0-9][0-9][0-9][0-9]",  # M d, yyyy
-        r"(?<! \d|\w{2})[0-9][0-9]? (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).? [0-9][0-9][0-9][0-9]",  # d M yyyy
-        r"(?<! \d|\w{2})[0-9][0-9]? (January|February|March|April|May|June|July|August|September|October|November|December),? [0-9][0-9][0-9][0-9]",  # d M yyyy
-        r"(January|February|March|April|May|June|July|August|September|October|November|December) [0-9][0-9]?,? [0-9][0-9][0-9][0-9]",  # M d, yyyy
-        r"(?<!\d |\w{2})(January|February|March|April|May|June|July|August|September|October|November|December),? [0-9][0-9][0-9][0-9]",  # M, yyyy
-        r"(?<!\d |\w{2})(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).?,? [0-9]{4}",  # M, yyyy
-        r"(?<!\d|\/|-)[0-9][0-9]?(\/|-)\d{2}(?!\d|\/|-)",  # MM/yy with / or -
-        r"(?<!\d|\/|-)[0-9][0-9]?(\/|-)\d{4}(?!\d|\/|-)",  # MM/yyyy with / or -
+        r"(?<!\d|\/)[0-9]{4}[\/\-\.\|][0-9][0-9]?[\/\-\.\|][0-9][0-9]?(?!\d|\/)",  # yyyy-MM-dd with -, /, . or | # noqa
+        r"(?<!\d|\/)[0-9][0-9]?[\/\-\.\|][0-9][0-9]?[\/\-\.\|](?:\d{4}|\d{2})(?!\d|\/)",  # dd-MM-yyyy, dd-mm-yy. With -, /, . or | # noqa
+        r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).? [0-9][0-9]?,? [0-9][0-9][0-9][0-9]",  # M d, yyyy # noqa
+        r"(?<! \d|\w{2})[0-9][0-9]? (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).? [0-9][0-9][0-9][0-9]",  # d M yyyy # noqa
+        r"(?<! \d|\w{2})[0-9][0-9]? (January|February|March|April|May|June|July|August|September|October|November|December),? [0-9][0-9][0-9][0-9]",  # d M yyyy # noqa
+        r"(January|February|March|April|May|June|July|August|September|October|November|December) [0-9][0-9]?,? [0-9][0-9][0-9][0-9]",  # M d, yyyy # noqa
+        r"(?<!\d |\w{2})(January|February|March|April|May|June|July|August|September|October|November|December),? [0-9][0-9][0-9][0-9]",  # M, yyyy # noqa
+        r"(?<!\d |\w{2})(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).?,? [0-9]{4}",  # M, yyyy # noqa
+        r"(?<!\d|\/|-|\||\.)[0-9][0-9]?[\/\-\.\|]\d{2}(?!\d|\/|-|\||\.)",  # MM/yy with /, -, | or . # noqa
+        r"(?<!\d|\/|-|\||\.)[0-9][0-9]?[\/\-\.\|]\d{4}(?!\d|\/|-|\||\.)",  # MM/yyyy with /, -, | or . # noqa
     ]
     return [re.compile(fmt, flags=re.IGNORECASE) for fmt in date_formats]
 
@@ -29,18 +30,18 @@ def compile_label_rgx():
         r"ends": "end_date",
         r"through": "end_date",
         r"updated": "last_updated_date",
-        r"last updated": "last_updated_date",
         r"revision": "last_updated_date",
         r"revised": "last_updated_date",
         r"revis": "last_updated_date",
         r"rev\.": "last_updated_date",
         r"current": "last_updated_date",
-        r"page updated": "last_updated_date",
         r"reviewed on": "last_reviewed_date",
         r"reviewed date": "last_reviewed_date",
         r"reviewed as of": "last_reviewed_date",
         r"last review": "last_reviewed_date",
+        r"recent review": "last_reviewed_date",
         r"next review": "next_review_date",
+        r"annual review": "next_review_date",
         r"next update": "next_update_date",
         r"publish": "published_date",
         r"posted": "published_date",
