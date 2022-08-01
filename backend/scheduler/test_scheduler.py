@@ -1,14 +1,14 @@
-from beanie import PydanticObjectId
-from pydantic import HttpUrl
+from random import random
+
 import pytest
 import pytest_asyncio
+from beanie import PydanticObjectId
+from pydantic import HttpUrl
 
-from backend.common.db.init import init_db, get_motor_db, get_motor_client
+from backend.common.core.enums import SiteStatus, TaskStatus
+from backend.common.db.init import init_db
 from backend.common.models.site import BaseUrl, ScrapeMethodConfiguration, Site
 from backend.scheduler.main import enqueue_scrape_task, find_sites_eligible_for_scraping
-from backend.common.core.enums import SiteStatus
-from backend.common.core.enums import TaskStatus
-from random import random
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -32,9 +32,7 @@ def simple_site(cron):
         disabled=False,
         cron=cron,
         base_urls=[
-            BaseUrl(
-                url=HttpUrl("https://www.example.com/", scheme="https"), status="ACTIVE"
-            )
+            BaseUrl(url=HttpUrl("https://www.example.com/", scheme="https"), status="ACTIVE")
         ],
     )
     return site
@@ -98,7 +96,9 @@ async def test_not_finding_sites_not_online():
     site.status = SiteStatus.QUALITY_HOLD
     await site.save()
     sites = await find_sites_eligible_for_scraping(crons).to_list()
-    assert len(sites) == 0
+    assert len(sites) == 1  # Temporaily scraping quality hold sites
+    site.status = SiteStatus.INACTIVE
+    await site.save()
 
     site = simple_site(cron)
     site.status = SiteStatus.INACTIVE

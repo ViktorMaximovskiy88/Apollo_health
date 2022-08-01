@@ -1,5 +1,4 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { LOCATION_CHANGE } from 'redux-first-history';
 import { RootState } from '../../app/store';
 
 export const initialState = {
@@ -10,6 +9,8 @@ export const initialState = {
       { name: 'first_collected_date', operator: 'before', type: 'date', value: '' },
       { name: 'last_collected_date', operator: 'before', type: 'date', value: '' },
       { name: 'classification_status', operator: 'eq', type: 'select', value: null },
+      { name: 'document_type', operator: 'eq', type: 'select', value: null },
+      { name: 'link_text', operator: 'contains', type: 'string', value: '' },
     ],
     pagination: { limit: 50, skip: 0 },
   },
@@ -31,14 +32,6 @@ export const docDocuments = createSlice({
     setDocDocumentTableSkip: (state, action: PayloadAction<any>) => {
       state.table.pagination.skip = action.payload;
     },
-  },
-  extraReducers: (builder) => {
-    builder.addCase(LOCATION_CHANGE, (state, action: any) => {
-      const path: string = action.payload.location.pathname;
-      if (!path.startsWith('/sites/')) {
-        state.table = initialState.table;
-      }
-    });
   },
 });
 

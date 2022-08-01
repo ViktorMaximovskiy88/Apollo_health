@@ -35,12 +35,12 @@ class BaseUrl(BaseModel):
 class NewSite(BaseModel):
     name: str
     base_urls: list[BaseUrl] = []
-    collection_method: str
-    scrape_method: str
-    scrape_method_configuration: ScrapeMethodConfiguration
+    collection_method: str | None = CollectionMethod.Automated
+    scrape_method: str | None = ""
+    scrape_method_configuration: ScrapeMethodConfiguration | None = None
     tags: list[str] = []
     playbook: str | None = None
-    cron: str
+    cron: str | None = ""
     status: str | None = SiteStatus.NEW
 
 
@@ -56,6 +56,7 @@ class UpdateSite(BaseModel):
     scrape_method_configuration: UpdateScrapeMethodConfiguration | None = None
     playbook: str | None = None
     status: str | None = None
+    assignee: PydanticObjectId | None = None
 
 
 class Site(BaseDocument, NewSite):
@@ -63,10 +64,18 @@ class Site(BaseDocument, NewSite):
     last_run_status: str | None = None
     collection_method: str | None = CollectionMethod.Automated
     last_run_time: datetime | None = None
+    assignee: PydanticObjectId | None = None
 
 
 # Deprecated
-class NoStatusSite(Site):
+class NoAssigneeSite(Site):
+    assignee: PydanticObjectId | None = None
+
+    class Collection:
+        name = "Site"
+
+
+class NoStatusSite(NoAssigneeSite):
     status: str | None = None
 
     class Collection:
@@ -85,11 +94,13 @@ class NoFollowLinkSite(NoStatusSite):
     class Collection:
         name = "Site"
 
+
 class LastStatusSite(NoFollowLinkSite):
     last_status: str | None = None
 
     class Collection:
         name = "Site"
+
 
 class NoScrapeConfigSite(LastStatusSite):
     scrape_method_configuration: NoFollowLinkScrapeConfig | None = None

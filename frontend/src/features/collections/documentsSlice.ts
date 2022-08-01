@@ -1,5 +1,4 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { LOCATION_CHANGE } from 'redux-first-history';
 import { RootState } from '../../app/store';
 
 export const initialState = {
@@ -18,6 +17,7 @@ export const initialState = {
         type: 'date',
         value: '',
       },
+      { name: 'link_text', operator: 'contains', type: 'string', value: '' },
       { name: 'name', operator: 'contains', type: 'string', value: '' },
       { name: 'document_type', operator: 'eq', type: 'select', value: null },
     ],
@@ -41,14 +41,6 @@ export const documents = createSlice({
     setDocumentTableSkip: (state, action: PayloadAction<any>) => {
       state.table.pagination.skip = action.payload;
     },
-  },
-  extraReducers: (builder) => {
-    builder.addCase(LOCATION_CHANGE, (state, action: any) => {
-      const path: string = action.payload.location.pathname;
-      if (!path.startsWith('/sites/')) {
-        state.table = initialState.table;
-      }
-    });
   },
 });
 

@@ -1,25 +1,12 @@
 import { prettyDateFromISO, prettyDateUTCFromISO } from '../../common';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { useGetDocumentsQuery } from '../retrieved_documents/documentsApi';
 import { RetrievedDocument } from '../retrieved_documents/types';
-import { useGetChangeLogQuery } from './sitesApi';
-import ReactDataGrid from '@inovua/reactdatagrid-community';
+import { useGetChangeLogQuery } from '../sites/sitesApi';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
-import { useCallback } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import {
-  documentTableState,
-  setDocumentTableFilter,
-  setDocumentTableLimit,
-  setDocumentTableSkip,
-  setDocumentTableSort,
-} from './documentsSlice';
-import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
-import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 
-const columns = [
+export const useDocumentColumns = () => [
   {
     header: 'First Collected',
     name: 'first_collected_date',
@@ -51,6 +38,11 @@ const columns = [
     render: ({ value: last_collected_date }: { value: string }) => {
       return prettyDateFromISO(last_collected_date);
     },
+  },
+  {
+    header: 'Link Text',
+    name: 'link_text',
+    render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
   },
   {
     header: 'Name',
@@ -123,55 +115,3 @@ const columns = [
     },
   },
 ];
-
-const useControlledPagination = () => {
-  const tableState = useSelector(documentTableState);
-
-  const dispatch = useDispatch();
-  const onLimitChange = useCallback(
-    (limit: number) => dispatch(setDocumentTableLimit(limit)),
-    [dispatch]
-  );
-  const onSkipChange = useCallback(
-    (skip: number) => dispatch(setDocumentTableSkip(skip)),
-    [dispatch]
-  );
-
-  const controlledPaginationProps = {
-    pagination: true,
-    limit: tableState.pagination.limit,
-    onLimitChange,
-    skip: tableState.pagination.skip,
-    onSkipChange,
-  };
-  return controlledPaginationProps;
-};
-
-export function DocumentsTable() {
-  const [searchParams] = useSearchParams();
-  const params = useParams();
-  const scrapeTaskId = searchParams.get('scrape_task_id');
-  const siteId = params.siteId;
-  const { data: documents } = useGetDocumentsQuery(
-    {
-      scrape_task_id: scrapeTaskId,
-      site_id: siteId,
-    },
-    { pollingInterval: 5000 }
-  );
-
-  const filterProps = useDataTableFilter(documentTableState, setDocumentTableFilter);
-  const sortProps = useDataTableSort(documentTableState, setDocumentTableSort);
-  const controlledPagination = useControlledPagination();
-
-  return (
-    <ReactDataGrid
-      dataSource={documents ?? []}
-      {...filterProps}
-      {...sortProps}
-      {...controlledPagination}
-      rowHeight={50}
-      columns={columns}
-    />
-  );
-}

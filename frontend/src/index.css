@@ -49,7 +49,7 @@ h1.ant-typography {
 .ant-input,
 .ant-picker,
 .ant-btn:not(.ant-input-search-button):not(.ant-btn-link) {
-  padding: 0.5rem 0.75rem;
+  padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
   border: 1px solid #d9d9d9;
   height: auto;

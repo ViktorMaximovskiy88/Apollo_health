@@ -1,9 +1,11 @@
-import { Form, Radio, Select, DatePicker } from 'antd';
-import type { RadioChangeEvent } from 'antd';
-import moment from 'moment';
+import { Form, Button, DatePicker } from 'antd';
+import { DateTime } from 'luxon';
+import { Dropdown, Menu } from 'antd';
 import { useState } from 'react';
-import { prettyDate, prettyDateFromISO, dateToMoment } from '../common';
+import { prettyDate, prettyFromISO, dateToMoment } from '../common';
 import { FormInstance } from 'antd';
+import { DownOutlined } from '@ant-design/icons';
+import classNames from 'classnames';
 
 export function ListDatePicker(props: {
   className?: string;
@@ -12,6 +14,7 @@ export function ListDatePicker(props: {
   defaultValue?: string;
   label: string;
   name: string;
+  disabled?: boolean;
   style?: object;
   onChange?: Function;
 }) {
@@ -26,71 +29,66 @@ export function ListDatePicker(props: {
     label,
     name,
     style,
+    disabled = false,
     onChange = () => {},
   } = props;
 
-  const existsInList = (dateList || []).find((date) => date === defaultValue);
-
-  const [selectionMethod, setSelectionMethod] = useState(existsInList ? 'list' : 'custom');
-
-  function onSelectionMethodChange(e: RadioChangeEvent) {
-    setSelectionMethod(e.target.value);
-    onChange();
-  }
-
-  function handleOnChange(value?: moment.Moment | string | null) {
-    const update: any = {};
-    if (moment.isMoment(value)) {
-      // if receiving value from date picker
-      update[name] = value.startOf('day').toISOString();
-    } else if (value === undefined) {
-      update[name] = null;
-    } else {
-      update[name] = value;
-    }
-    form.setFieldsValue(update);
-    onChange();
-  }
+  const defaultDate = dateToMoment(defaultValue);
+  const [value, setValue] = useState(defaultDate);
 
   const dateOptions = (dateList || [])
     .map((d) => ({
-      value: d,
-      label: prettyDateFromISO(d),
+      key: prettyFromISO(d, DateTime.DATE_MED, false),
+      label: prettyFromISO(d, DateTime.DATE_MED, false),
     }))
-    .sort((a, b) => +new Date(b.value) - +new Date(a.value));
+    .sort((a, b) => +new Date(b.key) - +new Date(a.key));
 
-  const defaultDate = dateToMoment(defaultValue);
+  const menu = (
+    <Menu
+      onClick={(e: any) => {
+        const value = dateToMoment(e.key);
+        setValue(value);
+        form.setFieldsValue({
+          [name]: value,
+        });
+      }}
+      items={dateOptions}
+    />
+  );
 
   return (
-    <Form.Item className={className} label={label} style={style}>
-      <Radio.Group
-        className="mb-1"
-        onChange={onSelectionMethodChange}
-        defaultValue={selectionMethod}
+    <Form.Item name={name} className={classNames(className)} label={label} style={style}>
+      <DatePicker
+        disabled={disabled}
+        style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
+        defaultValue={defaultDate}
+        value={value}
+        onChange={(value: any) => {
+          setValue(value);
+          form.setFieldsValue({
+            [name]: value,
+          });
+          onChange();
+        }}
+        format={(value) => prettyDate(value.toDate())}
+      />
+
+      <Dropdown
+        disabled={disabled || dateOptions.length === 0}
+        overlay={menu}
+        trigger={['click']}
+        placement="bottomRight"
       >
-        <Radio value="list">From List</Radio>
-        <Radio value="custom">Custom</Radio>
-      </Radio.Group>
-
-      <Form.Item name={name} noStyle preserve>
-        {selectionMethod === 'list' && (
-          <Select
-            allowClear
-            defaultValue={existsInList ? defaultValue : null}
-            options={dateOptions}
-            onChange={(value) => handleOnChange(value)}
-          />
-        )}
-
-        {selectionMethod === 'custom' && (
-          <DatePicker
-            style={{ width: '100%' }}
-            defaultValue={defaultDate}
-            format={(value) => prettyDate(value.toDate())}
-            onChange={(value) => handleOnChange(value)}
-          />
-        )}
-      </Form.Item>
+        <Button
+          style={{
+            borderLeft: 'none',
+            borderTopLeftRadius: 0,
+            borderBottomLeftRadius: 0,
+          }}
+        >
+          <DownOutlined />
+        </Button>
+      </Dropdown>
     </Form.Item>
   );
 }

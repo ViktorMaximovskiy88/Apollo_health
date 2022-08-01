@@ -1,5 +1,6 @@
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, HTTPException, status, Security
+from beanie.odm.operators.find.evaluation import Text
+from fastapi import APIRouter, Depends, HTTPException, status, Security, Query
 from backend.app.utils.security import get_password_hash
 from backend.common.models.user import NewUser, User, UserPublic, UserUpdate
 from backend.app.utils.logger import (
@@ -8,6 +9,7 @@ from backend.app.utils.logger import (
     get_logger,
     update_and_log_diff,
 )
+import re
 
 from backend.app.utils.user import get_current_user, get_current_admin_user
 
@@ -38,8 +40,16 @@ async def read_current_user(
     response_model=list[UserPublic],
     dependencies=[Security(get_current_user)],
 )
-async def read_users():
-    users: list[User] = await User.find_many({}).to_list()
+async def read_users(
+    name: str | None = Query(default=None),
+):
+    users: list[User] = []
+    if name is None:
+        users = await User.find_many().to_list()
+    else:
+        users = await User.find_many(
+            {"full_name": {"$regex": name, "$options": "-i"}}
+        ).to_list()
     return users
 
 

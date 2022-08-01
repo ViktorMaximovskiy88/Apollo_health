@@ -1,13 +1,15 @@
 import logging
 import os
 import tempfile
-import boto3
 from contextlib import contextmanager
 from pathlib import Path
-from backend.common.storage.settings import settings
+
+import boto3
 from botocore.client import Config
 from botocore.errorfactory import ClientError
+
 from backend.common.core.config import config, is_local
+from backend.common.storage.settings import settings
 
 
 class BaseS3Client:
@@ -64,7 +66,7 @@ class BaseS3Client:
                 os.makedirs(os.path.dirname(rel_path))
             self.bucket.download_file(obj.key, str(rel_path))
 
-    def read_object(self, relative_key):
+    def read_object(self, relative_key: str) -> bytes:
         return self.read_object_stream(relative_key).read()
 
     @contextmanager
@@ -85,7 +87,7 @@ class BaseS3Client:
         try:
             self.bucket.Object(self.get_full_path(relative_key)).load()
             return True
-        except ClientError as ex:
+        except ClientError:
             return False
 
     def get_signed_url(self, relative_key, expires_in_seconds=60):

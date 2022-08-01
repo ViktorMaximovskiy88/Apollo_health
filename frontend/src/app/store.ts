@@ -16,7 +16,7 @@ import navSlice from './navSlice';
 import sitesReducer from '../features/sites/sitesSlice';
 import collectionsReducer from '../features/collections/collectionsSlice';
 import docDocumentsReducer from '../features/doc_documents/docDocumentsSlice';
-import documentsReducer from '../features/sites/documentsSlice';
+import documentsReducer from '../features/collections/documentsSlice';
 import extractionsReducer from '../features/extractions/extractionsSlice';
 
 const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({

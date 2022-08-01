@@ -1,14 +1,11 @@
 import logging
 from functools import cached_property
-from playwright.async_api import (
-    ElementHandle,
-    Route,
-    Request as RouteRequest,
-    APIResponse,
-    Error,
-    Locator,
-)
+
 from playwright._impl._api_structures import SetCookieParam
+from playwright.async_api import APIResponse, ElementHandle, Locator
+from playwright.async_api import Request as RouteRequest
+from playwright.async_api import Route
+
 from backend.scrapeworker.common.models import Download, Metadata, Request
 from backend.scrapeworker.common.selectors import filter_by_href
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
@@ -83,6 +80,8 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
         metadata: Metadata
         for index, metadata in enumerate(self.metadatas):
             logging.debug(f"{index} of {len(self.metadatas)} count of metadata")
+            if not metadata.element_id:
+                continue
             locator: Locator = self.page.locator(f"#{metadata.element_id}")
             await locator.click()
 

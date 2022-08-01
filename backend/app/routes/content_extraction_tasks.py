@@ -1,26 +1,26 @@
-from datetime import datetime
-import json
+from datetime import datetime, timezone
+
 from beanie import PydanticObjectId
 from beanie.odm.operators.update.general import Set
-from fastapi import APIRouter, Depends, HTTPException, Request, status, Security
-from backend.app.routes.table_query import TableFilterInfo, TableQueryResponse, TableSortInfo, get_query_json_list, query_table
-from backend.common.models.document import RetrievedDocument
-from backend.common.models.site import Site
+from fastapi import APIRouter, Depends, HTTPException, Security, status
 
+from backend.app.routes.table_query import (
+    TableFilterInfo,
+    TableQueryResponse,
+    TableSortInfo,
+    get_query_json_list,
+    query_table,
+)
+from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
+from backend.app.utils.user import get_current_user
 from backend.common.models.content_extraction_task import (
     ContentExtractionResult,
     ContentExtractionTask,
     UpdateContentExtractionTask,
 )
+from backend.common.models.document import RetrievedDocument
+from backend.common.models.site import Site
 from backend.common.models.user import User
-from backend.app.utils.logger import (
-    Logger,
-    create_and_log,
-    get_logger,
-    update_and_log_diff,
-)
-
-from backend.app.utils.user import get_current_user
 
 router = APIRouter(
     prefix="/extraction-tasks",
@@ -37,6 +37,7 @@ async def get_target(id: PydanticObjectId):
         )
     return task
 
+
 @router.get(
     "/results/",
     response_model=TableQueryResponse,
@@ -46,10 +47,10 @@ async def read_extraction_results(
     extraction_id: PydanticObjectId,
     limit: int | None = None,
     skip: int | None = None,
-    sorts: list[TableSortInfo] = Depends(get_query_json_list('sorts', TableSortInfo)),
-    filters: list[TableFilterInfo] = Depends(get_query_json_list('filters', TableFilterInfo))
+    sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
+    filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
-    query = ContentExtractionResult.find({'content_extraction_task_id': extraction_id})
+    query = ContentExtractionResult.find({"content_extraction_task_id": extraction_id})
     return await query_table(query, limit, skip, sorts, filters)
 
 
@@ -100,7 +101,7 @@ async def start_extraction_task(
         site_id=doc.site_id,
         scrape_task_id=doc.scrape_task_id,
         retrieved_document_id=doc.id,
-        queued_time=datetime.now(),
+        queued_time=datetime.now(tz=timezone.utc),
     )
 
     await create_and_log(logger, current_user, extraction_task)

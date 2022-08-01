@@ -1,18 +1,17 @@
 import traceback
+from datetime import datetime, timezone
+
 import typer
-from datetime import datetime
-from backend.common.core.enums import SiteStatus
-from backend.common.core.enums import TaskStatus
+from beanie.odm.operators.update.general import Set
+
+from backend.common.core.enums import SiteStatus, TaskStatus
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from beanie.odm.operators.update.general import Set
 
 
 async def log_error_status(scrape_task, site, message, task_status):
-    now = datetime.now()
-    site_status = (
-        SiteStatus.QUALITY_HOLD if task_status == TaskStatus.FAILED else site.status
-    )
+    now = datetime.now(tz=timezone.utc)
+    site_status = SiteStatus.QUALITY_HOLD if task_status == TaskStatus.FAILED else site.status
     await site.update(
         Set(
             {
@@ -35,7 +34,7 @@ async def log_error_status(scrape_task, site, message, task_status):
 
 async def log_success(scrape_task: SiteScrapeTask, site: Site):
     typer.secho(f"Finished Task {scrape_task.id}", fg=typer.colors.BLUE)
-    now = datetime.now()
+    now = datetime.now(tz=timezone.utc)
     await site.update(
         Set(
             {

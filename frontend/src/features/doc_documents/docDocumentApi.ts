@@ -1,7 +1,7 @@
 import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
 import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
-import { DocDocument } from './types';
+import { CompareRequest, CompareResponse, DocDocument } from './types';
 
 export const docDocumentsApi = createApi({
   reducerPath: 'docDocumentsApi',
@@ -13,10 +13,11 @@ export const docDocumentsApi = createApi({
       { limit: number; skip: number; sortInfo: TypeSortInfo; filterValue: TypeFilterValue }
     >({
       query: ({ limit, skip, sortInfo, filterValue }) => {
+        const sorts = sortInfo ? [sortInfo] : [];
         const args = [
           `limit=${encodeURIComponent(limit)}`,
           `skip=${encodeURIComponent(skip)}`,
-          `sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`,
+          `sorts=${encodeURIComponent(JSON.stringify(sorts))}`,
           `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
         ].join('&');
         return `/doc-documents/?${args}`;
@@ -42,6 +43,12 @@ export const docDocumentsApi = createApi({
         { type: 'ChangeLog', id },
       ],
     }),
+    createDiff: builder.mutation<CompareResponse, CompareRequest>({
+      query: (compareRequst) => ({
+        url: `/doc-documents/diff/${compareRequst._id}?compare_id=${compareRequst.compareId}`,
+        method: 'POST',
+      }),
+    }),
     getChangeLog: builder.query<ChangeLog[], string>({
       query: (id) => `/change-log/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
@@ -54,5 +61,6 @@ export const {
   useGetDocDocumentsQuery,
   useLazyGetDocDocumentsQuery,
   useUpdateDocDocumentMutation,
+  useCreateDiffMutation,
   useGetChangeLogQuery,
 } = docDocumentsApi;

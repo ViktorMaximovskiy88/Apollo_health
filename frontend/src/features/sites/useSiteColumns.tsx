@@ -1,6 +1,7 @@
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Popconfirm, Tag, notification } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
 import {
   prettyDateTimeFromISO,
   TaskStatus,
@@ -13,10 +14,19 @@ import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './sitesApi';
 import { Site } from './types';
 import { SiteStatus, siteStatusDisplayName, siteStatusStyledDisplay } from './siteStatus';
+import { ReactNode, useMemo } from 'react';
+import { EditButtonLink } from './EditButtonLink';
+import { User } from '../users/types';
+import { TypeColumn } from '@inovua/reactdatagrid-community/types';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
-export const createColumns = (deleteSite: any, setDeletedSite: any) => {
+interface CreateColumnsType {
+  deleteSite: any;
+  setDeletedSite: (site: string) => void;
+  users?: User[];
+}
+const createColumns = ({ deleteSite, setDeletedSite, users }: CreateColumnsType) => {
   async function handleDeleteSite(site: Site) {
     try {
       await deleteSite(site).unwrap();
@@ -24,7 +34,7 @@ export const createColumns = (deleteSite: any, setDeletedSite: any) => {
         message: 'Site Deleted',
         description: `Successfully deleted ${site.name}`,
       });
-      setDeletedSite(site);
+      setDeletedSite(site._id);
     } catch (err) {
       if (isErrorWithData(err)) {
         notification.error({
@@ -131,6 +141,20 @@ export const createColumns = (deleteSite: any, setDeletedSite: any) => {
       },
     },
     {
+      header: 'Assignee',
+      name: 'assignee',
+      minWidth: 200,
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        placeholder: 'All',
+        dataSource: users ? users.map((user) => ({ id: user._id, label: user.full_name })) : [],
+      },
+      render: ({ value: id }: { value: string }): ReactNode => {
+        const [assignee] = users?.filter((user) => user._id === id) ?? [];
+        return <>{assignee?.full_name}</>;
+      },
+    },
+    {
       header: 'Tags',
       name: 'tags',
       render: ({ value }: { value: string[] }) => {
@@ -157,7 +181,10 @@ export const createColumns = (deleteSite: any, setDeletedSite: any) => {
       render: ({ data: site }: { data: Site }) => {
         return (
           <>
-            <ButtonLink to={`${site._id}/edit`}>Edit</ButtonLink>
+            <ButtonLink to={`${site._id}/view`}>
+              <InfoCircleOutlined />
+            </ButtonLink>
+            <EditButtonLink site={site} />
             <ChangeLogModal target={site} useChangeLogQuery={useGetChangeLogQuery} />
             <Popconfirm
               title={`Are you sure you want to delete '${site.name}'?`}
@@ -173,3 +200,13 @@ export const createColumns = (deleteSite: any, setDeletedSite: any) => {
     },
   ];
 };
+
+export const useColumns = ({
+  deleteSite,
+  setDeletedSite,
+  users,
+}: CreateColumnsType): TypeColumn[] =>
+  useMemo(
+    () => createColumns({ deleteSite, setDeletedSite, users }),
+    [deleteSite, setDeletedSite, users]
+  );

@@ -1,12 +1,21 @@
 import { useEffect, useState, useRef } from 'react';
 import { Button, Radio, Tag, Checkbox, Input } from 'antd';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
-import debounce from 'lodash.debounce';
+import { debounce, orderBy } from 'lodash';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { BaseDocTag } from './types';
+import { TherapyTag, IndicationTag } from './types';
+
+function labelColorMap(type: string) {
+  const colorMap: any = {
+    indication: 'blue',
+    therapy: 'green',
+    'therapy-group': 'purple',
+  };
+  return colorMap[type];
+}
 
 export function DocDocumentTagForm(props: {
-  tags: BaseDocTag[];
+  tags: Array<TherapyTag | IndicationTag>;
   onDeleteTag: Function;
   onEditTag: Function;
   onAddTag: Function;
@@ -22,26 +31,46 @@ export function DocDocumentTagForm(props: {
     return pageFilter == 'page' || tagTypeFilter.length > 0 || searchTerm;
   };
 
-  useEffect(() => {
-    if (hasActiveFilters()) {
-      applyFilters();
+  const sortOrder = (tags: any[], pageFilter: string) => {
+    if (pageFilter === 'page') {
+      return orderBy(tags, ['page', '_normalized', '_type']);
+    } else if (pageFilter === 'doc') {
+      return orderBy(tags, ['_normalized', '_type', 'page']);
     } else {
-      setFilteredList(tags);
+      throw Error('what type though');
     }
+  };
+
+  useEffect(() => {
+    let _tags = tags;
+
+    if (hasActiveFilters()) {
+      _tags = applyFilters();
+    }
+
+    _tags = sortOrder(_tags, pageFilter);
+    setFilteredList(_tags);
   }, [searchTerm, tagTypeFilter, pageFilter, tags, currentPage]);
 
-  const applyFilter = (tag: any) => {
+  const applyFilter = (tag: TherapyTag | IndicationTag) => {
     const validPage = pageFilter == 'doc' ? true : currentPage == tag.page;
-    console.log(currentPage == tag.page, 'currentPage', currentPage, 'tag.page', tag.page);
-    return tagTypeFilter.includes(tag.type) && validPage;
+    console.debug(currentPage == tag.page, 'currentPage', currentPage, 'tag.page', tag.page);
+    return tagTypeFilter.includes(tag._type) && validPage;
+  };
+
+  const textFilter = (tag: any, field: string, searchRegex: RegExp) => {
+    return tag[field] ? `${tag[field]}`.match(searchRegex) : false;
   };
 
   const applyFilters = () => {
     const regex = new RegExp(searchTerm, 'i');
-    const filteredTags = tags.filter(
-      (tag: any) => (tag.text?.match(regex) || tag.code?.match(regex)) && applyFilter(tag)
+    return tags.filter(
+      (tag: any) =>
+        (textFilter(tag, 'text', regex) ||
+          textFilter(tag, 'code', regex) ||
+          textFilter(tag, 'name', regex)) &&
+        applyFilter(tag)
     );
-    setFilteredList(filteredTags);
   };
 
   const onSearch = (e: any) => {
@@ -54,7 +83,7 @@ export function DocDocumentTagForm(props: {
   const rowVirtualizer = useVirtualizer({
     count: filteredList.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 55.5,
+    estimateSize: () => 72,
     overscan: 10,
   });
 
@@ -97,41 +126,54 @@ export function DocDocumentTagForm(props: {
             position: 'relative',
           }}
         >
-          {rowVirtualizer.getVirtualItems().map((virtualItem) => {
-            const tag = filteredList[virtualItem.index];
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            const tag = filteredList[virtualRow.index];
             return (
               <div
-                className="flex flex-row py-4"
+                className="flex flex-col py-2 justify-center"
                 style={{
                   borderTop: '1px solid #ccc',
                   position: 'absolute',
                   top: 0,
                   left: 0,
                   width: '100%',
-                  height: `${virtualItem.size}px`,
-                  transform: `translateY(${virtualItem.start}px)`,
+                  height: `${virtualRow.size}px`,
+                  transform: `translateY(${virtualRow.start}px)`,
                 }}
-                key={virtualItem.index}
+                key={virtualRow.index}
+                ref={virtualRow.measureElement}
               >
-                <div className="flex flex-1">{tag.text}</div>
-                <div className="flex px-2">{tag.page + 1}</div>
-                <div className="">
-                  <Tag className="capitalize select-none cursor-default">{tag.type}</Tag>
+                <div className="flex">
+                  <div className="flex flex-1 font-bold">{tag.name}</div>
                 </div>
                 <div className="flex">
-                  <EditOutlined
-                    className="cursor-pointer p-2 flex items-center"
-                    onClick={() => {
-                      onEditTag(tag);
-                    }}
-                  />
+                  <div className="flex items-center flex-1">{tag.text}</div>
+                  <div className="flex items-center px-2">{tag.page + 1}</div>
+                  <div className="flex items-center w-32 justify-center">
+                    <Tag
+                      color={labelColorMap(tag._type)}
+                      className="capitalize select-none cursor-default"
+                    >
+                      {tag._type}
+                    </Tag>
+                  </div>
+                  <div className="flex justify-center space-x-2">
+                    <Button
+                      onClick={() => {
+                        onEditTag(tag);
+                      }}
+                    >
+                      <EditOutlined className="cursor-pointer" />
+                    </Button>
 
-                  <DeleteOutlined
-                    className="cursor-pointer p-2 flex items-center"
-                    onClick={() => {
-                      onDeleteTag(tag);
-                    }}
-                  />
+                    <Button
+                      onClick={() => {
+                        onDeleteTag(tag);
+                      }}
+                    >
+                      <DeleteOutlined className="cursor-pointer" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             );

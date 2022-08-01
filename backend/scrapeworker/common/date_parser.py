@@ -1,17 +1,26 @@
-from typing import Generator
-from dateutil import parser
-from datetime import datetime
+import logging
 import re
+from datetime import datetime, timezone
+from typing import Generator
+
+from dateutil import parser
 
 
 class DateMatch:
     def __init__(
-        self, date: datetime, match: re.Match[str], last_date_index: int
+        self,
+        date: datetime | None = None,
+        match: re.Match[str] = None,
+        last_date_index: int = None,
     ) -> None:
         self.date = date
-        self.start: int = match.start()
-        self.end: int = match.end()
         self.last_date_index = last_date_index
+        if match:
+            self.start: int = match.start()
+            self.end: int = match.end()
+        else:
+            self.start: int = None
+            self.end: int = None
 
 
 class DateParser:
@@ -25,32 +34,24 @@ class DateParser:
         self.date_rgxs = date_rgxs
         self.label_rgxs = label_rgxs
         self.whitespace_rgx = re.compile(r"\S")
-        self.effective_date = {
-            "date": None,
-        }
-        self.end_date = {
-            "date": None,
-        }
-        self.last_updated_date = {
-            "date": None,
-        }
-        self.last_reviewed_date = {
-            "date": None,
-        }
-        self.next_review_date = {
-            "date": None,
-        }
-        self.next_update_date = {
-            "date": None,
-        }
-        self.published_date = {
-            "date": None,
-        }
-        self.unclassified_dates = set()
+        self.effective_date = DateMatch()
+        self.end_date = DateMatch()
+        self.last_updated_date = DateMatch()
+        self.last_reviewed_date = DateMatch()
+        self.next_review_date = DateMatch()
+        self.next_update_date = DateMatch()
+        self.published_date = DateMatch()
+        self.unclassified_dates: set[datetime] = set()
 
-    def get_date_label(
-        self, line: str, start: int, end: int, target="END"
-    ) -> str | None:
+    def exclude_text(self, text: str) -> bool:
+        exclusions = ["omb approval"]
+        lower_text = text.lower()
+        for exclusion in exclusions:
+            if exclusion in lower_text:
+                return True
+        return False
+
+    def get_date_label(self, line: str, start: int, end: int, target="END") -> str | None:
         """
         Find date label between start and end indexes of given string.
         If multiple labels found, returns the label found closest to the `target` index.
@@ -60,6 +61,8 @@ class DateParser:
 
         closest_match = 0 if target == "END" else end
         matched_label = None
+        if target == "END" and end - start > 120:  # limit how far back to look
+            start = end - 120
         for rgx in label_rgxs:
             match = rgx.finditer(line, start, end)
             for m in match:
@@ -80,18 +83,27 @@ class DateParser:
                 try:
                     datetext = m.group()
                     if i + 1 == len(self.date_rgxs):
-                        month, year = re.split(r"[/-]", datetext)
+                        month, year = re.split(r"[/\-|\.]", datetext)
                         datetext = f"{year}-{month}-01"
                     if i + 2 == len(self.date_rgxs):
-                        month, year = re.split(r"[/-]", datetext)
+                        month, year = re.split(r"[/\-|\.]", datetext)
                         datetext = f"20{year}-{month}-01"
                     if i + 3 == len(self.date_rgxs) or i + 4 == len(self.date_rgxs):
                         pieces = re.split(r"[., ]", datetext)
                         datetext = f"{pieces[-1]}-{pieces[0]}-01"
+                    if i + 5 == len(self.date_rgxs) or i + 6 == len(self.date_rgxs):
+                        # check for a following date with a year
+                        second_date = self.extract_date_span(text, m.end())
+                        if second_date:
+                            datetext = f"{datetext} {second_date.date.year}"
+                        else:
+                            continue
+                    datetext = datetext.replace("|", "-")
                     date = parser.parse(datetext, ignoretz=True)
                     yield DateMatch(date, m, last_index)
                     last_index = m.end()
-                except:
+                except Exception as ex:
+                    logging.debug(ex)
                     continue
 
     def extract_date_span(self, text: str, start: int) -> DateMatch | None:
@@ -111,21 +123,36 @@ class DateParser:
                     return closest_match
         return None
 
-    def select_effective_date(self, dates: set[datetime]) -> datetime | None:
-        """
-        Select effective date as the highest date not in the future
-        """
+    def check_effective_date(self):
+        def valid_eff(date: datetime) -> bool:
+            return date != self.next_review_date.date
 
-        now = datetime.now()
-        dates_in_the_past = list(filter(lambda d: now > d, dates))
-        if dates_in_the_past:
-            return max(dates_in_the_past)
+        max_labeled_date: DateMatch | None = None
+        if self.published_date.date and valid_eff(self.published_date.date):
+            max_labeled_date = self.published_date
+        if self.last_updated_date.date and valid_eff(self.last_updated_date.date):
+            if not max_labeled_date or self.last_updated_date.date > max_labeled_date.date:
+                max_labeled_date = self.last_updated_date
+
+        if self.effective_date.date:
+            if max_labeled_date and self.effective_date.date < max_labeled_date.date:
+                self.effective_date = max_labeled_date
         else:
-            return None
+            if max_labeled_date:
+                self.effective_date = max_labeled_date
+            else:
+                now = datetime.now(tz=timezone.utc)
+                dates_in_the_past = list(
+                    filter(lambda d: now.timestamp() > d.timestamp(), self.unclassified_dates)
+                )
+                if dates_in_the_past:
+                    latest_date = max(dates_in_the_past)
+                    if valid_eff(latest_date):
+                        self.effective_date = DateMatch(latest_date)
 
     def update_label(
         self,
-        date: datetime,
+        match: DateMatch,
         label: str,
     ) -> None:
         """
@@ -134,22 +161,16 @@ class DateParser:
         """
 
         future_dates = ["end_date", "next_review_date", "next_update_date"]
-        now = datetime.now()
-        existing_label = getattr(self, label)
+        now = datetime.now(tz=timezone.utc)
+        existing_label: DateMatch = getattr(self, label)
         if label in future_dates:
-            if now > date:
-                return
-            elif not existing_label["date"] or existing_label["date"] > date:
-                new_label_data = {"date": date}
-                setattr(self, label, new_label_data)
+            if not existing_label.date or existing_label.date > match.date:
+                setattr(self, label, match)
         else:
-            if now < date:
+            if now.timestamp() < match.date.timestamp():
                 return
-
-            if not existing_label["date"] or existing_label["date"] < date:
-                new_label_data = {"date": date}
-                setattr(self, label, new_label_data)
-
+            elif not existing_label.date or existing_label.date < match.date:
+                setattr(self, label, match)
         return
 
     def extract_dates(self) -> None:
@@ -162,29 +183,27 @@ class DateParser:
         prev_line_index = 0
         for line in self.text.split("\n"):
             latest_match = 0  # Latest date match on current line
+            if self.exclude_text(line):
+                prev_line = ""
+                prev_line_index = 0
+                continue
             for m in self.get_dates(line):
                 end_date = self.extract_date_span(line, m.end)
                 if end_date:
-                    self.update_label(m.date, "effective_date")
-                    self.update_label(end_date.date, "end_date")
+                    self.update_label(m, "effective_date")
+                    self.update_label(end_date, "end_date")
                 else:
                     label = self.get_date_label(line, m.last_date_index, m.start)
                     if not label:  # If no match, check right of date
-                        label = self.get_date_label(line, m.end, m.end + 12, "START")
+                        label = self.get_date_label(line, m.end, m.end + 20, "START")
                     if not label:  # If no match, check previous line
-                        label = self.get_date_label(
-                            prev_line, prev_line_index, len(prev_line)
-                        )
+                        label = self.get_date_label(prev_line, prev_line_index, len(prev_line))
                     if label:
-                        self.update_label(m.date, label)
-
+                        self.update_label(m, label)
                 self.unclassified_dates.add(m.date)
                 latest_match = m.end if m.end > latest_match else latest_match
             if line != "":
                 prev_line = line
                 prev_line_index = latest_match
 
-        if not self.effective_date["date"]:
-            self.effective_date["date"] = self.select_effective_date(  # type: ignore
-                self.unclassified_dates
-            )
+        self.check_effective_date()

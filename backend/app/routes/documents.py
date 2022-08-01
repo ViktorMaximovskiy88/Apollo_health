@@ -1,11 +1,13 @@
 import tempfile
 from datetime import datetime
-import json 
+from datetime import datetime, timezone
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, HTTPException, status, Security, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Security, UploadFile, status
 from fastapi.responses import StreamingResponse
 
+from backend.app.utils.logger import Logger, get_logger, update_and_log_diff
+from backend.app.utils.user import get_current_user
 from backend.common.models.content_extraction_task import ContentExtractionTask
 from backend.common.models.document import RetrievedDocument, RetrievedDocumentLimitTags, UpdateRetrievedDocument
 from backend.common.models.doc_document import DocDocument, calc_final_effective_date
@@ -22,7 +24,7 @@ from backend.common.storage.client import DocumentStorageClient
 from backend.common.events.send_event_client import SendEventClient
 from backend.common.events.event_convert import EventConvert
 from backend.common.storage.hash import hash_bytes
-from backend.scrapeworker.common.text_handler import TextHandler
+from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.file_parsers import parse_by_type
 from backend.scrapeworker.common.models import Download, Request
 
@@ -72,11 +74,10 @@ async def get_documents(
         query["automated_content_extraction"] = automated_content_extraction
 
     documents: list[RetrievedDocumentLimitTags] = (
-        await RetrievedDocument
-          .find_many(query)
-          .sort("-first_collected_date")
-          .project(RetrievedDocumentLimitTags)
-          .to_list()
+        await RetrievedDocument.find_many(query)
+        .sort("-first_collected_date")
+        .project(RetrievedDocumentLimitTags)
+        .to_list()
     )
     return documents
 
@@ -191,25 +192,18 @@ async def update_document(
 ):
     updated = await update_and_log_diff(logger, current_user, target, updates)
 
-    ace_turned_on = (
-        updates.automated_content_extraction and not target.automated_content_extraction
-    )
+    ace_turned_on = updates.automated_content_extraction and not target.automated_content_extraction
     ace_class_changed = (
-        target.automated_content_extraction_class
-        != updates.automated_content_extraction_class
+        target.automated_content_extraction_class != updates.automated_content_extraction_class
     )
     if ace_turned_on or ace_class_changed:
         task = ContentExtractionTask(
             site_id=target.site_id,
             scrape_task_id=target.scrape_task_id,
             retrieved_document_id=target.id,
-            queued_time=datetime.now(),
+            queued_time=datetime.now(tz=timezone.utc),
         )
         await task.save()
-    # Sending Event Bridge Event.  Need to add condition when to send.
-    document_json = EventConvert(document=updated).convert()
-    send_evnt_client = SendEventClient()
-    response = send_evnt_client.send_event("document-details", document_json)
 
     return updated
 
@@ -220,11 +214,8 @@ async def delete_document(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    await update_and_log_diff(
-        logger, current_user, target, UpdateRetrievedDocument(disabled=True)
-    )
+    await update_and_log_diff(logger, current_user, target, UpdateRetrievedDocument(disabled=True))
     return {"success": True}
-
 
 
 @router.put("/", response_model=RetrievedDocument, status_code=status.HTTP_201_CREATED)
@@ -299,5 +290,4 @@ async def add_document(
     return {
         "success":True
     }
-
 

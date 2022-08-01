@@ -1,11 +1,11 @@
 import os
+
 from backend.scrapeworker.common.utils import (
     compile_date_rgx,
-    get_extension_from_path_like,
     get_extension_from_content_type,
     get_extension_from_file_mime_type,
+    get_extension_from_path_like,
 )
-
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 fixture_path = os.path.join(current_path, "__fixtures__")
@@ -13,7 +13,7 @@ fixture_path = os.path.join(current_path, "__fixtures__")
 
 def test_date_regexes_count():
     regexes = compile_date_rgx()
-    assert len(regexes) == 10
+    assert len(regexes) == 12
 
 
 def test_get_extension_from_path_like_none():
@@ -70,7 +70,7 @@ def test_get_extension_from_file_mime_type_none():
 def test_get_extension_from_file_mime_type():
     file_path = os.path.join(fixture_path, "test.docx")
     result = get_extension_from_file_mime_type(file_path)
-    assert result is "docx"
+    assert result == "docx"
 
 
 def test_get_extension_from_file_mime_type_non_match():

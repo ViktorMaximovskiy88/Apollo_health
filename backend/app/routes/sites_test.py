@@ -1,13 +1,12 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from pydantic import HttpUrl
 import pytest
+from pydantic import HttpUrl
 
-from backend.common.db.init import init_db
-from backend.common.models.site import ScrapeMethodConfiguration
-from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.common.models.site import BaseUrl, ScrapeMethodConfiguration, Site
 from backend.app.routes.sites import check_for_scrapetask
+from backend.common.db.init import init_db
+from backend.common.models.site import BaseUrl, ScrapeMethodConfiguration, Site
+from backend.common.models.site_scrape_task import SiteScrapeTask
 
 
 class TestDeleteSite:
@@ -40,7 +39,7 @@ class TestDeleteSite:
     ) -> SiteScrapeTask:
         scrape = SiteScrapeTask(
             site_id=site.id,
-            queued_time=datetime.now(),
+            queued_time=datetime.now(tz=timezone.utc),
         )
         return scrape
 

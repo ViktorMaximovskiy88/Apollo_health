@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Form, Select, Switch, Input, DatePicker } from 'antd';
 import { ListDatePicker, Hr } from '../../components';
+import { DocCompare } from './DocCompare';
 import { prettyDate } from '../../common';
 import { DocDocument } from './types';
 
@@ -66,6 +67,8 @@ export function DocDocumentInfoForm(props: {
           <Select options={[]} />
         </Form.Item>
       </div>
+
+      <DocCompare org_doc={doc} />
 
       <Hr />
 

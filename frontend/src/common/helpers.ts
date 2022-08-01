@@ -9,6 +9,7 @@ export function isErrorWithData(
     error != null &&
     'data' in error &&
     typeof (error as any).data === 'object' &&
+    typeof (error as any).data.detail === 'string' &&
     'status' in error &&
     typeof (error as any).status === 'number'
   );
