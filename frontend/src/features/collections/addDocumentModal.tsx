@@ -104,15 +104,25 @@ function UploadItem(props: any) {
     }, [setToken]);
 
     const onChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
-        setFileName(info.file.name);
-        form.setFieldsValue({
-            "document_file":info.file
-        })
-        if (info.file.status === 'uploading') {
+        const { file } = info;
+        setFileName(file.name);
+        if (file.status === 'uploading') {
           setUploadStatus("uploading");
         }
-        if (info.file.status === 'done') {
-          setUploadStatus("done");
+        if (file.status === 'done') {
+            const response: any = file.response;
+            if (response.error) {
+                setUploadStatus("");
+                message.error(response.error);
+                form.setFieldsValue({
+                    "document_file":""
+                })
+            } else if (response.success) {
+                setUploadStatus("done");
+                form.setFieldsValue({
+                    "document_file":response.data
+                })                
+            }
         }
     }
 

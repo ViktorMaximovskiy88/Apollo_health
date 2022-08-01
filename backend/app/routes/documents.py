@@ -125,6 +125,8 @@ async def upload_document(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ): 
+    text_handler = TextHandler()
+    
     content = await file.read();
     checksum = hash_bytes(content);
     file_extension = file.content_type.split('/')[1]
@@ -135,50 +137,38 @@ async def upload_document(
         or checksum in RetrievedDocument.file_checksum_aliases
     )
     
+    temp_path = ""
+    with tempfile.NamedTemporaryFile(delete=True, suffix="." + file_extension) as tmp:
+        tmp.write(content)
+        temp_path = tmp.name
+
+    download = Download(request=Request(url=temp_path), file_extension=file_extension)
+    parsed_content = await parse_by_type(temp_path,download,[])
+
+    text_checksum = await text_handler.save_text(parsed_content["text"])
+    text_checksum_document = await RetrievedDocument.find_one(
+        RetrievedDocument.text_checksum == text_checksum
+    )
+
     # use first hash to see if their is a retrieved document
-    if document:
+    if document or text_checksum_document:
         return {
-            "error":f"Document already exists {checksum}"
+            "error":f"This document already exists"
         }
     else:
         doc_client = DocumentStorageClient()
-        if doc_client.object_exists(dest_path):
-            print('Document already exists inside s3')
-            # save as Doc document and return
-        else:
-            file_path = ""
-            with tempfile.NamedTemporaryFile(delete=True, suffix="." + file_extension) as tmp:
-                tmp.write(content)
-                file_path = tmp.name
+        if not doc_client.object_exists(dest_path):
+            print('Uploading file...')
+            doc_client.write_object(dest_path, temp_path, file.content_type)
 
-            download = Download(request=Request(url=file_path), file_extension=file_extension)
-            parsed_content = await parse_by_type(file_path,download,[])
-
-            text_handler = TextHandler()
-            text_checksum = await text_handler.save_text(parsed_content["text"])
-            text_checksum_document = await RetrievedDocument.find_one(
-                RetrievedDocument.text_checksum == text_checksum
-            )
-
-            # check to see if text_check_sum exists, if not
-            if text_checksum_document:
-                return {
-                    "error":f"Document already exists {text_checksum_document}"
-                }
-            else:
-
-                print('Ready to upload!')
-
-
-            
-                # upload to s3
-                # Create DocDocument 
-
-
-
-
-
-
+        return {
+            "success": True,
+            "data": {
+                dest_path,
+                checksum,
+                text_checksum
+            }
+        }
 
 
 @router.post("/{id}", response_model=RetrievedDocument)
