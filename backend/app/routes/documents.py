@@ -96,13 +96,8 @@ async def viewer_document_link(
     target: RetrievedDocument = Depends(get_target),
 ):
     client = DocumentStorageClient()
-    try:
-        client = DocumentStorageClient()
-        url = client.get_signed_url(f"{target.checksum}.{target.file_extension}")
-        return {"url": url}
-    except Exception as ex:
-        print(ex)
-        raise ex
+    url = client.get_signed_url(f"{target.checksum}.{target.file_extension}")
+    return {"url": url}
 
 
 @router.get(
