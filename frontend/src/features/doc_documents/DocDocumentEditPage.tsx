@@ -10,8 +10,8 @@ import { dateToMoment } from '../../common/date';
 import { useUpdateDocDocumentMutation } from './docDocumentApi';
 import { DocDocument, TherapyTag, IndicationTag } from './types';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { compact, isEqual, groupBy, maxBy } from 'lodash';
+import { useCallback, useEffect, useState } from 'react';
+import { maxBy, compact, groupBy, isEqual } from 'lodash';
 import { WarningFilled } from '@ant-design/icons';
 
 export function DocDocumentEditPage() {
@@ -24,6 +24,24 @@ export function DocDocumentEditPage() {
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [pageNumber, setPageNumber] = useState(0);
+
+  const finalEffectiveDate = useCallback(() => {
+    const values = form.getFieldsValue(true);
+    const computeFromFields = compact([
+      dateToMoment(values.effective_date),
+      dateToMoment(values.last_reviewed_date),
+      dateToMoment(values.last_updated_date),
+    ]);
+
+    const finalEffectiveDate =
+      computeFromFields.length > 0
+        ? maxBy(computeFromFields, (date) => date.unix())
+        : values.first_collected_date;
+
+    form.setFieldsValue({
+      final_effective_date: finalEffectiveDate.startOf('day'),
+    });
+  }, [form]);
 
   useEffect(() => {
     if (doc) {
@@ -42,7 +60,7 @@ export function DocDocumentEditPage() {
       setTags([...therapyTags, ...indicationTags]);
       finalEffectiveDate();
     }
-  }, [doc]);
+  }, [doc, finalEffectiveDate]);
 
   if (!doc) {
     return <></>;
@@ -92,24 +110,6 @@ export function DocDocumentEditPage() {
       console.error(error);
       setIsSaving(false);
     }
-  }
-
-  function finalEffectiveDate() {
-    const values = form.getFieldsValue(true);
-    const computeFromFields = compact([
-      dateToMoment(values.effective_date),
-      dateToMoment(values.last_reviewed_date),
-      dateToMoment(values.last_updated_date),
-    ]);
-
-    const finalEffectiveDate =
-      computeFromFields.length > 0
-        ? maxBy(computeFromFields, (date) => date.unix())
-        : values.first_collected_date;
-
-    form.setFieldsValue({
-      final_effective_date: finalEffectiveDate.startOf('day'),
-    });
   }
 
   return (

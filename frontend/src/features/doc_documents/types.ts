@@ -18,7 +18,6 @@ export interface TherapyTag extends BaseDocTag {
 }
 
 export interface IndicationTag extends BaseDocTag {
-  id: string;
   name?: string;
   text: string;
   page: number;
