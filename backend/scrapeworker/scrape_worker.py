@@ -218,7 +218,7 @@ class ScrapeWorker:
 
                 if document:
                     logging.debug("updating doc w/alias")
-                    document.file_checksum_aliases.add(checksum)
+                    document.file_checksum_aliases.append(checksum)
                     await self.update_retrieved_document(
                         document=document,
                         download=download,
@@ -255,7 +255,7 @@ class ScrapeWorker:
                         url=url,
                         therapy_tags=parsed_content["therapy_tags"],
                         indication_tags=parsed_content["indication_tags"],
-                        file_checksum_aliases=set(checksum),
+                        file_checksum_aliases=[checksum],
                     )
 
                     await create_and_log(self.logger, await self.get_user(), document)
