@@ -219,6 +219,9 @@ class ScrapeWorker:
                 if document:
                     logging.debug("updating doc w/alias")
                     document.file_checksum_aliases.append(checksum)
+                    # unique, but cant use set in beanie as a type
+                    document.file_checksum_aliases = set(document.file_checksum_aliases)
+
                     await self.update_retrieved_document(
                         document=document,
                         download=download,
