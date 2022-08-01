@@ -1,5 +1,6 @@
 import { BaseDocument } from '../../common';
 import { ApprovalStatus } from '../../common/approvalStatus';
+import { RetrievedDocument } from '../retrieved_documents/types';
 
 export interface BaseDocTag {
   _type: string;
@@ -26,6 +27,15 @@ export interface TaskLock {
   work_queue_id: string;
   user_id: string;
   expires: string;
+}
+
+export interface CompareRequest extends BaseDocument {
+  compareId?: string;
+}
+export interface CompareResponse extends BaseDocument {
+  diff: string;
+  org_doc: DocDocument;
+  new_doc: RetrievedDocument;
 }
 
 export interface DocDocument extends BaseDocument {

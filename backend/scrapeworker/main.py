@@ -3,7 +3,7 @@ import logging
 import signal
 import sys
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Coroutine
 from uuid import uuid4
@@ -40,7 +40,7 @@ async def signal_handler():
 
 
 async def pull_task_from_queue(worker_id):
-    now = datetime.now()
+    now = datetime.now(tz=timezone.utc)
     acquired = await SiteScrapeTask.get_motor_collection().find_one_and_update(
         {"status": TaskStatus.QUEUED, "collection_type": CollectionMethod.Automated},
         {
@@ -63,7 +63,7 @@ async def pull_task_from_queue(worker_id):
 async def heartbeat_task(scrape_task: SiteScrapeTask):
     while True:
         await SiteScrapeTask.get_motor_collection().update_one(
-            {"_id": scrape_task.id}, {"$set": {"last_active": datetime.now()}}
+            {"_id": scrape_task.id}, {"$set": {"last_active": datetime.now(tz=timezone.utc)}}
         )
         await asyncio.sleep(10)
 
@@ -86,7 +86,7 @@ async def worker_fn(
         if not site:
             raise Exception("Site not found")
 
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         await site.update(
             Set(
                 {

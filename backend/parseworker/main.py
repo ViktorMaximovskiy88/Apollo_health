@@ -1,7 +1,8 @@
 import asyncio
+import logging
 import sys
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
@@ -39,7 +40,7 @@ async def start_worker_async():
             {"status": TaskStatus.QUEUED},
             {
                 "$set": {
-                    "start_time": datetime.now(),
+                    "start_time": datetime.now(tz=timezone.utc),
                     "worker_id": worker_id,
                     "status": TaskStatus.IN_PROGRESS,
                 }
@@ -68,7 +69,7 @@ async def start_worker_async():
             try:
                 await worker.run_extraction()
                 typer.secho(f"Finished Task {extract_task.id}", fg=typer.colors.BLUE)
-                now = datetime.now()
+                now = datetime.now(tz=timezone.utc)
                 update = UpdateDocDocument(content_extraction_task_id=extract_task.id)
                 await update_and_log_diff(logger, user, doc_document, update)
                 await extract_task.update(
@@ -80,10 +81,10 @@ async def start_worker_async():
                     )
                 )
             except Exception as ex:
-                print(ex)
+                logging.error(ex)
                 message = traceback.format_exc()
                 traceback.print_exc()
-                now = datetime.now()
+                now = datetime.now(tz=timezone.utc)
                 typer.secho(f"Task Failed {extract_task.id}", fg=typer.colors.RED)
                 await extract_task.update(
                     Set(

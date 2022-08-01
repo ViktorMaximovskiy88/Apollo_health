@@ -1,19 +1,26 @@
-from datetime import datetime
 import re
+from datetime import datetime, timezone
 from statistics import harmonic_mean
+
 import pdfplumber
 import redis
 from beanie.odm.operators.update.general import Inc, Set
-from backend.common.models.content_extraction_task import ContentExtractionResult, ContentExtractionTask, FormularyDatum
+
+from backend.app.utils.logger import Logger
+from backend.common.core.config import config
+from backend.common.models.content_extraction_task import (
+    ContentExtractionResult,
+    ContentExtractionTask,
+    FormularyDatum,
+)
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import Site
 from backend.common.models.user import User
 from backend.common.storage.client import DocumentStorageClient
 from backend.parseworker.rxnorm_entity_linker_model import RxNormEntityLinkerModel
-from backend.common.core.config import config
-from backend.app.utils.logger import Logger
 
-class BasicTableExtraction():
+
+class BasicTableExtraction:
     def __init__(
         self,
         extract_task: ContentExtractionTask,
@@ -27,11 +34,9 @@ class BasicTableExtraction():
         self.retrieved_document = retrieved_document
         self.rxnorm_model = rxnorm_model
         self.logger = Logger()
-        self.redis = redis.from_url(
-            config["REDIS_URL"], password=config["REDIS_PASSWORD"]
-        )
+        self.redis = redis.from_url(config["REDIS_URL"], password=config["REDIS_PASSWORD"])
         self.user = None
-        self.code_column = ''
+        self.code_column = ""
 
     async def get_user(self):
         if not self.user:
@@ -45,20 +50,20 @@ class BasicTableExtraction():
             return self.code_column
 
         header = [str(h) for h in table[0]]
-        cols = { h: [] for h in header }
+        cols = {h: [] for h in header}
         for line in table[1:]:
             for i, field in enumerate(header):
                 cols[field].append(str(line[i]))
         n_rows = len(table)
-        
+
         highest_score = 0
-        best_column = ''
+        best_column = ""
         for field, values in cols.items():
             n_unique = len(set(values))
             uniqueness = n_unique / n_rows
             candidates = self.rxnorm_model.find_candidates(values)
             n_can = 0
-            for _,_,_,score in candidates:
+            for _, _, _, score in candidates:
                 if score > 0.7:
                     n_can += 1
             matchness = n_can / n_rows
@@ -69,10 +74,12 @@ class BasicTableExtraction():
 
         self.code_column = best_column
         await self.extract_task.update(
-            Set({
-                ContentExtractionTask.header: header,
-                ContentExtractionTask.code_column: best_column,
-            })
+            Set(
+                {
+                    ContentExtractionTask.header: header,
+                    ContentExtractionTask.code_column: best_column,
+                }
+            )
         )
         return best_column
 
@@ -89,15 +96,15 @@ class BasicTableExtraction():
             rows.append(row)
 
         code_candidates = self.rxnorm_model.find_candidates(codes)
-        for row_number, ((text, candidate, name, score), row) in enumerate(zip(code_candidates, rows)):
+        for row_number, ((text, candidate, name, score), row) in enumerate(
+            zip(code_candidates, rows)
+        ):
             translation = FormularyDatum(score=score)
             if candidate and score > 0.5:
                 translation.code = candidate.concept_id
                 translation.name = name
 
-            await self.extract_task.update(
-                Inc({ContentExtractionTask.extraction_count: 1})
-            )
+            await self.extract_task.update(Inc({ContentExtractionTask.extraction_count: 1}))
             result = ContentExtractionResult(
                 page=page.page_number,
                 row=row_number,
@@ -105,24 +112,22 @@ class BasicTableExtraction():
                 scrape_task_id=self.extract_task.scrape_task_id,
                 retrieved_document_id=self.extract_task.retrieved_document_id,
                 content_extraction_task_id=self.extract_task.id,
-                first_collected_date=datetime.now(),
+                first_collected_date=datetime.now(tz=timezone.utc),
                 result=row,
-                translation=translation
+                translation=translation,
             )
             await result.save()
 
     def skip_table(self, table: list[list[str]]):
         cell = table[0][0]
-        return cell == "$" or \
-            cell == "Drug Tier" or \
-            cell is None
+        return cell == "$" or cell == "Drug Tier" or cell is None
 
     def clean_table(self, table: list[list[str | None]]):
         for row in table:
             for i, cell in enumerate(row):
-                row[i] = re.sub(r"\s+", ' ', str(cell))
+                row[i] = re.sub(r"\s+", " ", str(cell))
         return table
-    
+
     async def process_page(self, page):
         tables = page.extract_tables()
         for table in tables:

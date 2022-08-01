@@ -1,13 +1,13 @@
-from beanie import Document
-from datetime import datetime
-from fastapi import HTTPException
-import pytest
-import pytest_asyncio
+from datetime import datetime, timezone
 from random import random
 
+import pytest
+import pytest_asyncio
+from beanie import Document
+from fastapi import HTTPException
+
 from backend.app.routes.site_scrape_tasks import cancel_scrape_task, run_bulk_by_type
-from backend.common.core.enums import SiteStatus, TaskStatus
-from backend.common.core.enums import CollectionMethod
+from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
 from backend.common.db.init import init_db
 from backend.common.models.site import BaseUrl, HttpUrl, ScrapeMethodConfiguration, Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
@@ -21,9 +21,7 @@ async def before_each_test():
 
 
 class MockLogger:
-    async def background_log_change(
-        current_user: User, site_scrape_task: Document, action: str
-    ):
+    async def background_log_change(current_user: User, site_scrape_task: Document, action: str):
         assert type(current_user) == type(User)
         assert type(action) == str
         return None
@@ -31,11 +29,7 @@ class MockLogger:
 
 def simple_site(
     disabled=False,
-    base_urls=[
-        BaseUrl(
-            url=HttpUrl("https://www.example.com/", scheme="https"), status="ACTIVE"
-        )
-    ],
+    base_urls=[BaseUrl(url=HttpUrl("https://www.example.com/", scheme="https"), status="ACTIVE")],
     collection_method=CollectionMethod.Automated,
     status=SiteStatus.ONLINE,
     last_run_status=None,
@@ -64,7 +58,7 @@ def simple_scrape(site: Site, status=TaskStatus.QUEUED) -> SiteScrapeTask:
     scrape = SiteScrapeTask(
         site_id=site.id,
         status=status,
-        queued_time=datetime.now(),
+        queued_time=datetime.now(tz=timezone.utc),
     )
     return scrape
 
@@ -144,13 +138,9 @@ class TestRunBulk:
 
         res = await run_bulk_by_type("cancel-active", MockLogger, User)
         assert res == {"status": True, "canceled_scrapes": 2}
-        canceled_scrapes = await SiteScrapeTask.find(
-            {"status": TaskStatus.CANCELING}
-        ).to_list()
+        canceled_scrapes = await SiteScrapeTask.find({"status": TaskStatus.CANCELING}).to_list()
         assert len(canceled_scrapes) == 2
-        active_scrapes = await SiteScrapeTask.find(
-            {"status": TaskStatus.QUEUED}
-        ).to_list()
+        active_scrapes = await SiteScrapeTask.find({"status": TaskStatus.QUEUED}).to_list()
         assert len(active_scrapes) == 1
         assert active_scrapes[0].id == scrape_one.id
 

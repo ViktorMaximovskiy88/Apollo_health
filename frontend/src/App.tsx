@@ -10,7 +10,7 @@ import { SitesHomePage } from './features/sites/SitesHomePage';
 import { UserCreatePage } from './features/users/UserCreatePage';
 import { UserEditPage } from './features/users/UserEditPage';
 import { UsersHomePage } from './features/users/UserHomePage';
-import { DocumentsPage } from './features/sites/DocumentsPage';
+import { DocumentsPage } from './features/collections/DocumentsPage';
 import { ExtractionsPage } from './features/extractions/ExtractionsPage';
 import { DocExtractionPage } from './features/extractions/DocExtractionPage';
 import { ExtractionEditPage } from './features/extractions/ExtractionEditPage';

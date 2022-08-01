@@ -12,7 +12,7 @@ import {
   useCancelSiteScrapeTaskMutation,
   useGetScrapeTasksForSiteQuery,
 } from './siteScrapeTasksApi';
-import { useColumns } from './useColumns';
+import { useCollectionsColumns as useColumns } from './useCollectionsColumns';
 import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 
