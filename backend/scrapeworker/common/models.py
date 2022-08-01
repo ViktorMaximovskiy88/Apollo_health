@@ -4,7 +4,6 @@ from typing import Any
 from aiohttp import ClientResponse
 from pydantic import BaseModel
 
-from backend.common.models.base_document import BaseDocument
 from backend.scrapeworker.common.utils import (
     get_extension_from_content_type,
     get_extension_from_file_mimetype,
@@ -70,7 +69,6 @@ class DownloadContext(BaseModel):
     metadata: Metadata = Metadata()
     request: Request
     response: Response = Response()
-    seen_doc: BaseDocument | None = None
 
     file_name: str | None = None
     file_extension: str | None = None

@@ -27,7 +27,6 @@ class FileParser(ABC):
         self.file_path = file_path
         self.url = url
         self.taggers = taggers
-        print(self.url, self.file_path, "**** * * * ** * * *")
         file_name = self.url[:-1] if self.url[-1] == "/" else self.url
         self.filename_no_ext = str(pathlib.Path(os.path.basename(file_name)).with_suffix(""))
 
