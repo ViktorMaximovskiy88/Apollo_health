@@ -1,16 +1,16 @@
 import asyncio
 import logging
+from abc import ABC, abstractmethod
 from functools import cached_property
-from playwright.async_api import ElementHandle, ProxySettings, BrowserContext, Page
+from urllib.parse import urlparse
+
+from playwright.async_api import BrowserContext, ElementHandle, Page, ProxySettings
+
 from backend.common.core.config import config
-from backend.scrapeworker.common.models import Download, Metadata
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import ScrapeMethodConfiguration
-from urllib.parse import urlparse
-from abc import ABC, abstractmethod
-
+from backend.scrapeworker.common.models import Download, Metadata
 from backend.scrapeworker.playbook import PlaybookContext
-
 
 closest_heading_expression: str = """
     (node) => {
@@ -45,11 +45,21 @@ class PlaywrightBaseScraper(ABC):
     def css_selector(self) -> str:
         raise NotImplementedError("css_selector is required ")
 
+    @cached_property
+    def xpath_selector(self) -> str:
+        raise NotImplementedError("xpath_selector is required ")
+
     async def is_applicable(self) -> bool:
-        element_handle = await self.page.query_selector(
-            self.css_selector
-        )
-        result = element_handle is not None
+        await self.page.wait_for_timeout(2000)
+        css_handle = await self.page.query_selector(self.css_selector)
+
+        xpath_locator_count = 0
+        if self.xpath_selector:
+            xpath_locator = self.page.locator(self.xpath_selector)
+            xpath_locator_count = await xpath_locator.count()
+
+        result = css_handle is not None or xpath_locator_count > 0
+
         logging.info(f"{self.__class__.__name__} is_applicable -> {result}")
         return result
 

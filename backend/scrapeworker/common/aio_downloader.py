@@ -1,29 +1,26 @@
-from dataclasses import dataclass
 import logging
-from ssl import SSLContext
-import tempfile
 import ssl
+import tempfile
+from dataclasses import dataclass
+from random import shuffle
+from ssl import SSLContext
+from typing import AsyncGenerator
+
 import aiofiles
-from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
-from aiohttp import ClientSession, ClientResponse, BasicAuth, TCPConnector
-from backend.common.models.proxy import Proxy
-from backend.scrapeworker.common.models import Download
-from backend.common.core.config import config
+from aiohttp import BasicAuth, ClientResponse, ClientSession, TCPConnector
 from playwright.async_api import ProxySettings
 from tenacity import AttemptManager
-from backend.scrapeworker.common.rate_limiter import RateLimiter
-from random import shuffle
+
+from backend.common.core.config import config
+from backend.common.models.proxy import Proxy
 from backend.common.storage.hash import DocStreamHasher
+from backend.scrapeworker.common.models import Download
+from backend.scrapeworker.common.rate_limiter import RateLimiter
 
 default_headers: dict[str, str] = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     "Accept-Language": "en-US,en;q=0.9",
-    "Cache-Control": "no-cache",
     "Connection": "keep-alive",
-    "Pragma": "no-cache",
-    "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36",  # noqa
 }
 
 
@@ -38,9 +35,7 @@ class AioDownloader:
     session: ClientSession
 
     def __init__(self):
-        self.session = ClientSession(
-            connector=TCPConnector(ssl=self.permissive_ssl_context())
-        )
+        self.session = ClientSession(connector=TCPConnector(ssl=self.permissive_ssl_context()))
         self.rate_limiter = RateLimiter()
 
     def permissive_ssl_context(self):
@@ -130,7 +125,7 @@ class AioDownloader:
                 aio_proxies[i % proxy_count] if proxy_count > 0 else (None, None)
             )
             logging.info(
-                f"{i} Using proxy {proxy and proxy.name} ({proxy_settings and proxy_settings.proxy})"
+                f"{i} Using proxy {proxy and proxy.name} ({proxy_settings and proxy_settings.proxy})"  # noqa
             )
             yield attempt, proxy_settings
 
@@ -167,7 +162,5 @@ class AioDownloader:
 
                 download.response.from_headers(response.headers)
                 download.guess_extension()
-                with tempfile.NamedTemporaryFile(
-                    suffix=f".{download.file_extension}"
-                ) as temp:
+                with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
                     yield await self.write_response_to_file(download, response, temp)
