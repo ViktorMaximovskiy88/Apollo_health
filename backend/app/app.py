@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Request, status
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -24,23 +23,13 @@ from backend.app.routes import (
 from backend.app.scripts.add_user import create_system_users
 from backend.app.scripts.create_proxy_records import create_proxies
 from backend.app.scripts.create_work_queues import create_default_work_queues
+from backend.app.utils.cors import cors
 from backend.common.db.init import init_db
 from backend.common.db.migrations import run_migrations
 from backend.common.models.proxy import Proxy
 
 app = FastAPI()
-
-origins = [
-    "http://localhost:3000",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+cors(app)  # local only
 
 
 @app.on_event("startup")
