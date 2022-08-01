@@ -91,6 +91,13 @@ class DateParser:
                     if i + 3 == len(self.date_rgxs) or i + 4 == len(self.date_rgxs):
                         pieces = re.split(r"[., ]", datetext)
                         datetext = f"{pieces[-1]}-{pieces[0]}-01"
+                    if i + 5 == len(self.date_rgxs) or i + 6 == len(self.date_rgxs):
+                        # check for a following date with a year
+                        second_date = self.extract_date_span(text, m.end())
+                        if second_date:
+                            datetext = f"{datetext} {second_date.date.year}"
+                        else:
+                            continue
                     datetext = datetext.replace("|", "-")
                     date = parser.parse(datetext, ignoretz=True)
                     yield DateMatch(date, m, last_index)
