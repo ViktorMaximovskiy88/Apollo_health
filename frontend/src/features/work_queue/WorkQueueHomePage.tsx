@@ -22,16 +22,15 @@ export function WorkQueueHomePage() {
   const takeNext = useCallback(
     async (queueId: string) => {
       const response = await takeNextWorkItem(queueId);
-      if ('data' in response) {
-        if (!response.data.acquired_lock) {
-          notification.success({
-            message: 'Queue Empty',
-            description: 'Congratulations! This queue has been emptied.',
-          });
-        } else {
-          navigate(`${queueId}/${response.data.item_id}/process`);
-        }
+      if (!('data' in response)) return;
+      if (!response.data.acquired_lock) {
+        notification.success({
+          message: 'Queue Empty',
+          description: 'Congratulations! This queue has been emptied.',
+        });
+        return;
       }
+      navigate(`../../documents/${response.data.item_id}`);
     },
     [takeNextWorkItem, navigate]
   );

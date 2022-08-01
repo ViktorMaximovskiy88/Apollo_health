@@ -27,16 +27,15 @@ export function WorkQueuePage() {
 
   const takeNext = useCallback(async () => {
     const response = await takeNextWorkItem(queueId);
-    if ('data' in response) {
-      if (!response.data.acquired_lock) {
-        notification.success({
-          message: 'Queue Empty',
-          description: 'Congratulations! This queue has been emptied.',
-        });
-      } else {
-        navigate(`../${response.data.item_id}/process`);
-      }
+    if (!('data' in response)) return;
+    if (!response.data.acquired_lock) {
+      notification.success({
+        message: 'Queue Empty',
+        description: 'Congratulations! This queue has been emptied.',
+      });
+      return;
     }
+    navigate(`../../../../documents/${response.data.item_id}`);
   }, [takeNextWorkItem, navigate, queueId]);
 
   const { isActive, setActive, watermark } = useInterval(10000);
@@ -102,7 +101,7 @@ export function WorkQueuePage() {
       header: 'Actions',
       render: ({ data: item }: { data: BaseDocument }) => {
         return (
-          <ButtonLink type="default" to={`${item._id}/process`}>
+          <ButtonLink type="default" to={`../../../../documents/${item._id}`}>
             Take
           </ButtonLink>
         );
