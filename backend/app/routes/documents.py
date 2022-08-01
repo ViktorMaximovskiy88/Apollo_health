@@ -21,7 +21,7 @@ from backend.common.events.event_convert import EventConvert
 from backend.common.storage.hash import hash_bytes
 from backend.scrapeworker.common.text_handler import TextHandler
 from backend.scrapeworker.file_parsers import parse_by_type
-from backend.scrapeworker.common.models import Download
+from backend.scrapeworker.common.models import Download, Request
 
 
 
@@ -129,7 +129,7 @@ async def upload_document(
     checksum = hash_bytes(content);
     file_extension = file.content_type.split('/')[1]
     dest_path = f"{checksum}.{file_extension}"
-
+    
     document = await RetrievedDocument.find_one(
         RetrievedDocument.checksum == checksum
         or checksum in RetrievedDocument.file_checksum_aliases
@@ -144,41 +144,35 @@ async def upload_document(
         doc_client = DocumentStorageClient()
         if doc_client.object_exists(dest_path):
             print('Document already exists inside s3')
-            # save as Retrieved document and return
+            # save as Doc document and return
         else:
-
             file_path = ""
-
-
-            with tempfile.NamedTemporaryFile() as tmp:
+            with tempfile.NamedTemporaryFile(delete=True, suffix="." + file_extension) as tmp:
                 tmp.write(content)
                 file_path = tmp.name
 
-            download = Download({
-                "file_extension":file_extension,
-                "file_path":file_path
-            })
-
+            download = Download(request=Request(url=file_path), file_extension=file_extension)
             parsed_content = await parse_by_type(file_path,download,[])
 
-            print(parsed_content)
-
-
-
-            # text_handler = TextHandler()
-            # text_checksum = await text_handler.save_text(parsed_content["text"])
+            text_handler = TextHandler()
+            text_checksum = await text_handler.save_text(parsed_content["text"])
+            text_checksum_document = await RetrievedDocument.find_one(
+                RetrievedDocument.text_checksum == text_checksum
+            )
 
             # check to see if text_check_sum exists, if not
-            # upload to s3
+            if text_checksum_document:
+                return {
+                    "error":f"Document already exists {text_checksum_document}"
+                }
+            else:
+
+                print('Ready to upload!')
 
 
-
-
-
-
-
-
-
+            
+                # upload to s3
+                # Create DocDocument 
 
 
 
