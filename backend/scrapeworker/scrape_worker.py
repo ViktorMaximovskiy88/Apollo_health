@@ -109,9 +109,10 @@ class ScrapeWorker:
             DocDocument.retrieved_document_id == retrieved_document.id
         )
         if doc_document:
-            await doc_document.update(
-                {"$set": {"last_collected_date": retrieved_document.last_collected_date}}
-            )
+            if doc_document.text_checksum is None:  # Can be removed after text added to older docs
+                doc_document.text_checksum = retrieved_document.text_checksum
+            doc_document.last_collected_date = retrieved_document.last_collected_date
+            await doc_document.save()
         else:
             await self.create_doc_document(retrieved_document)
 
@@ -174,6 +175,7 @@ class ScrapeWorker:
             name=parsed_content["title"],
             scrape_task_id=self.scrape_task.id,
             file_checksum_aliases=document.file_checksum_aliases,
+            text_checksum=document.text_checksum,
         )
         await update_and_log_diff(self.logger, await self.get_user(), document, updated_doc)
         return updated_doc
@@ -201,6 +203,9 @@ class ScrapeWorker:
             )
 
             if document:
+                if document.text_checksum is None:  # Can be removed after text added to older docs
+                    text_checksum = await self.text_handler.save_text(parsed_content["text"])
+                    document.text_checksum = text_checksum
                 logging.debug("updating doc")
                 await self.update_retrieved_document(
                     document=document,
