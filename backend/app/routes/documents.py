@@ -7,11 +7,13 @@ from fastapi.responses import StreamingResponse
 
 from backend.common.models.content_extraction_task import ContentExtractionTask
 from backend.common.models.document import RetrievedDocument, RetrievedDocumentLimitTags, UpdateRetrievedDocument
+from backend.common.models.doc_document import DocDocument, calc_final_effective_date
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.app.utils.logger import (
     Logger,
     get_logger,
+    create_and_log,
     update_and_log_diff,
 )
 from backend.app.utils.user import get_current_user
@@ -22,7 +24,6 @@ from backend.common.storage.hash import hash_bytes
 from backend.scrapeworker.common.text_handler import TextHandler
 from backend.scrapeworker.file_parsers import parse_by_type
 from backend.scrapeworker.common.models import Download, Request
-
 
 
 router = APIRouter(
@@ -164,9 +165,13 @@ async def upload_document(
         return {
             "success": True,
             "data": {
-                dest_path,
-                checksum,
-                text_checksum
+                dest_path:dest_path,
+                checksum:checksum,
+                text_checksum:text_checksum,
+                parsed_content:parsed_content,
+                content_type: file.content_type,
+                file_extension: file_extension,
+                name:file.name
             }
         }
 
@@ -222,10 +227,68 @@ async def add_document(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
+    now = datetime.now()
+    document_file = document.document_file;
+    parsed_content = document_file.parsed_content;
+    new_document = RetrievedDocument(
+        base_url=document.base_url,
+        checksum=document_file.checksum,
+        text_checksum=document_file.text_checksum,
+        # context_metadata=download.metadata.dict(),
+        doc_type_confidence=parsed_content["confidence"],
+        document_type=parsed_content["document_type"],
+        effective_date=document.effective_date,
+        end_date=document.end_date,
+        last_updated_date=document.last_updated_date,
+        last_reviewed_date=document.last_reviewed_date,
+        next_review_date=document.next_review_date,
+        next_update_date=document.next_update_date,
+        published_date=document.published_date,
+        file_extension=document_file.file_extension,
+        content_type=document_file.content_type,
+        first_collected_date=now,
+        identified_dates=parsed_content["identified_dates"],
+        lang_code=document.lang_code,
+        last_collected_date=now,
+        metadata=parsed_content["metadata"],
+        name=document_file.name,
+        # scrape_task_id=self.scrape_task.id,
+        site_id=document.site_id,
+        url=document.url,
+        therapy_tags=parsed_content["therapy_tags"],
+        indication_tags=parsed_content["indication_tags"],
+        file_checksum_aliases=set(document_file.checksum),
+    )
+    doc_document = DocDocument(
+        site_id=document.site_id,
+        retrieved_document_id=new_document.id,  # type: ignore
+        name=document_file.name,
+        checksum=document_file.checksum,
+        text_checksum=document_file.text_checksum,
+        document_type=parsed_content["document_type"],
+        doc_type_confidence=parsed_content["confidence"],
+        effective_date=document.effective_date,
+        end_date=document.end_date,
+        last_updated_date=document.last_updated_date,
+        last_reviewed_date=document.last_reviewed_date,
+        next_review_date=document.next_review_date,
+        next_update_date=document.next_update_date,
+        published_date=document.published_date,
+        lang_code=document.lang_code,
+        first_collected_date=now,
+        last_collected_date=now,
+        link_text=document.link_text,
+        url=document.url,
+        base_url=document.base_url,
+        therapy_tags=parsed_content["therapy_tags"],
+        indication_tags=parsed_content["indication_tags"],
+        file_extension=document_file.file_extension,
+        identified_dates=parsed_content["identified_dates"]
+    )
+    doc_document.final_effective_date = calc_final_effective_date(doc_document)
+    await create_and_log(logger, current_user, new_document)
     
-    print(document)
-
-
+    await create_and_log(logger, current_user, doc_document)
 
 
 

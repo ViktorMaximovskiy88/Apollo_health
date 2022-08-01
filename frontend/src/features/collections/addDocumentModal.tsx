@@ -115,7 +115,7 @@ function UploadItem(props: any) {
                 setUploadStatus("");
                 message.error(response.error);
                 form.setFieldsValue({
-                    "document_file":""
+                    "document_file":"123123"
                 })
             } else if (response.success) {
                 setUploadStatus("done");
