@@ -1,5 +1,6 @@
 import tempfile
 from datetime import datetime
+import json 
 
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, status, Security, UploadFile
@@ -155,23 +156,10 @@ async def upload_document(
 
     # use first hash to see if their is a retrieved document
     if document or text_checksum_document:
-        # return {
-        #     "error":f"This document already exists"
-        # }
         return {
-            "success": True,
-            "data": {
-                "dest_path":dest_path,
-                "checksum":checksum,
-                "text_checksum":text_checksum,
-                "parsed_content":parsed_content,
-                "content_type":content_type,
-                "file_extension":file_extension,
-                "name":name
-            }
+            "error":f"This document already exists"
         }
     else:
-
         doc_client = DocumentStorageClient()
         if not doc_client.object_exists(dest_path):
             print('Uploading file...')
@@ -180,13 +168,16 @@ async def upload_document(
         return {
             "success": True,
             "data": {
-                "dest_path":dest_path,
                 "checksum":checksum,
                 "text_checksum":text_checksum,
-                "parsed_content":parsed_content,
                 "content_type":content_type,
                 "file_extension":file_extension,
-                "name":name
+                "name":name,
+                "metadata":parsed_content['metadata'],
+                "confidence":str(parsed_content['confidence']),
+                "therapy_tags":parsed_content['therapy_tags'],
+                "indication_tags":parsed_content['indication_tags'],
+                "identified_dates":parsed_content['identified_dates']
             }
         }
 
@@ -244,103 +235,69 @@ async def add_document(
 ):
     now = datetime.now()
     document_file = document.document_file;
-    parsed_content = document_file['parsed_content']
 
-    # new_document = RetrievedDocument(
-    #     base_url=document.base_url,
-    #     checksum=document_file["checksum"],
-    #     text_checksum=document_file["text_checksum"],
-    #     doc_type_confidence=parsed_content["confidence"],
-    #     document_type=parsed_content["document_type"],
-    #     effective_date=document.effective_date,
-    #     end_date=document.end_date,
-    #     last_updated_date=document.last_updated_date,
-    #     last_reviewed_date=document.last_reviewed_date,
-    #     next_review_date=document.next_review_date,
-    #     next_update_date=document.next_update_date,
-    #     published_date=document.published_date,
-    #     file_extension=document_file["file_extension"],
-    #     content_type=document_file["content_type"],
-    #     first_collected_date=now,
-    #     identified_dates=parsed_content["identified_dates"],
-    #     lang_code=document.lang_code,
-    #     last_collected_date=now,
-    #     metadata=parsed_content["metadata"],
-    #     name=document_file["name"],
-    #     site_id=document.site_id,
-    #     url=document.url,
-    #     therapy_tags=parsed_content["therapy_tags"],
-    #     indication_tags=parsed_content["indication_tags"],
-    #     file_checksum_aliases=set(document_file["checksum"]),
-    # )   
+    new_document = RetrievedDocument(
+        base_url=document.base_url,
+        checksum=document_file["checksum"],
+        text_checksum=document_file["text_checksum"],
+        doc_type_confidence=document_file["confidence"],
+        document_type=document.document_type,
+        effective_date=document.effective_date,
+        context_metadata=document_file['metadata'],
+        end_date=document.end_date,
+        last_updated_date=document.last_updated_date,
+        last_reviewed_date=document.last_reviewed_date,
+        next_review_date=document.next_review_date,
+        next_update_date=document.next_update_date,
+        published_date=document.published_date,
+        file_extension=document_file["file_extension"],
+        content_type=document_file["content_type"],
+        first_collected_date=now,
+        identified_dates=document_file["identified_dates"],
+        lang_code=document.lang_code,
+        last_collected_date=now,
+        metadata=document_file["metadata"],
+        name=document_file["name"],
+        site_id=document.site_id,
+        url=document.url,
+        therapy_tags=document_file["therapy_tags"],
+        indication_tags=document_file["indication_tags"],
+        file_checksum_aliases=set(document_file["checksum"]),
+    )   
+    await create_and_log(logger, current_user, new_document)
 
-    print(type(parsed_content))
+    doc_document = DocDocument(
+        site_id=document.site_id,
+        retrieved_document_id= new_document.id,  # type: ignore
+        name=document_file["name"],
+        checksum=document_file["checksum"],
+        text_checksum=document_file['text_checksum'],
+        document_type=document.document_type,
+        doc_type_confidence=document_file["confidence"],
+        effective_date=document.effective_date,
+        end_date=document.end_date,
+        last_updated_date=document.last_updated_date,
+        last_reviewed_date=document.last_reviewed_date,
+        next_review_date=document.next_review_date,
+        next_update_date=document.next_update_date,
+        published_date=document.published_date,
+        lang_code=document.lang_code,
+        first_collected_date=now,
+        last_collected_date=now,
+        link_text=document.link_text,
+        url=document.url,
+        base_url=document.base_url,
+        therapy_tags=document_file["therapy_tags"],
+        indication_tags=document_file["indication_tags"],
+        file_extension=document_file["file_extension"],
+        identified_dates=document_file["identified_dates"]
+    )
 
-
-
-    # doc_document = DocDocument(
-    #     site_id=document.site_id,
-    #     retrieved_document_id=new_document.id,  # type: ignore
-    #     name=document_file.name,
-    #     checksum=document_file.checksum,
-    #     text_checksum=document_file.text_checksum,
-    #     document_type=parsed_content["document_type"],
-    #     doc_type_confidence=parsed_content["confidence"],
-    #     effective_date=document.effective_date,
-    #     end_date=document.end_date,
-    #     last_updated_date=document.last_updated_date,
-    #     last_reviewed_date=document.last_reviewed_date,
-    #     next_review_date=document.next_review_date,
-    #     next_update_date=document.next_update_date,
-    #     published_date=document.published_date,
-    #     lang_code=document.lang_code,
-    #     first_collected_date=now,
-    #     last_collected_date=now,
-    #     link_text=document.link_text,
-    #     url=document.url,
-    #     base_url=document.base_url,
-    #     therapy_tags=parsed_content["therapy_tags"],
-    #     indication_tags=parsed_content["indication_tags"],
-    #     file_extension=document_file.file_extension,
-    #     identified_dates=parsed_content["identified_dates"]
-    # )
-    # doc_document.final_effective_date = calc_final_effective_date(doc_document)
-    # await create_and_log(logger, current_user, new_document)
-    # await create_and_log(logger, current_user, doc_document)
-
-    # return {
-    #     new_document,
-    #     document_file
-    # }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    doc_document.final_effective_date = calc_final_effective_date(doc_document)
+    await create_and_log(logger, current_user, doc_document)
+    
+    return {
+        "success":True
+    }
 
 

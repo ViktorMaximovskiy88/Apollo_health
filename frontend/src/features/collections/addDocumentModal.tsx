@@ -35,7 +35,7 @@ export function AddDocumentModal({
         try {
             newDocument.site_id = siteId;
             await addDoc(newDocument);
-            // setVisible(false);
+            setVisible(false);
         }
         catch(error) {
             message.error('We could not save this document');
