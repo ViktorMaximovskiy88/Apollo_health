@@ -16,6 +16,9 @@ export const navSlice = createSlice({
   name: 'nav',
   initialState: {
     breadcrumbs: [] as Breadcrumb[],
+    layout: {
+      appBarPosition: 'left',
+    },
     menu: {
       items: [
         { url: '/sites', label: 'Sites' },
@@ -39,6 +42,10 @@ export const navSlice = createSlice({
     appendBreadcrumbs: (state, action: PayloadAction<Breadcrumb[]>) => {
       state.breadcrumbs = [...state.breadcrumbs, ...action.payload];
     },
+    toggleAppBarPosition: (state) => {
+      console.log(state.layout.appBarPosition);
+      state.layout.appBarPosition = state.layout.appBarPosition == 'top' ? 'left' : 'top';
+    },
   },
 });
 
@@ -52,6 +59,12 @@ export const menuState = createSelector(
   (menuState) => menuState
 );
 
+export const layoutState = createSelector(
+  (state: RootState) => state.nav.layout,
+  (layout) => layout
+);
+
 export const { actions, reducer } = navSlice;
-export const { appendBreadcrumb, setBreadcrumbs, appendBreadcrumbs } = navSlice.actions;
+export const { appendBreadcrumb, setBreadcrumbs, appendBreadcrumbs, toggleAppBarPosition } =
+  navSlice.actions;
 export default navSlice;
