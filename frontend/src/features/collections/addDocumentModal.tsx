@@ -25,7 +25,7 @@ export function AddDocumentModal({
         pollingInterval: 3000
     });
     const [ addDoc ] = useAddDocumentMutation();
-    const [ fileData, setFileData ] = useState({});
+    const [ fileData, setFileData ] = useState<any>();
     const initialValues = {
         "lang_code":"en"
     }
@@ -35,17 +35,19 @@ export function AddDocumentModal({
           url: '${label} is not a valid url!',
         },
     };
-    async function saveDocument(newDocument: RetrievedDocument){
+    async function saveDocument(newDocument: any){
         try {
             newDocument.site_id = siteId;
             if (scrapeTasks) {
                newDocument.scrape_task_id = scrapeTasks[0]._id
             }
+            fileData.metadata.link_text = newDocument.link_text;
+            delete newDocument.link_text;
             await addDoc({
                 ...newDocument,
                 ...fileData
             });
-            // setVisible(false);
+            setVisible(false);
         }
         catch(error) {
             message.error('We could not save this document');

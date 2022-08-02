@@ -3,6 +3,8 @@ from datetime import datetime
 from datetime import datetime, timezone
 
 from beanie import PydanticObjectId, Indexed
+from beanie.odm.operators.update.general import Inc
+from beanie.odm.operators.update.array import Push
 from fastapi import APIRouter, Depends, HTTPException, Security, UploadFile, status
 from fastapi.responses import StreamingResponse
 
@@ -25,7 +27,6 @@ from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.file_parsers import parse_by_type
 from backend.scrapeworker.common.models import Download, Request
-
 
 router = APIRouter(
     prefix="/documents",
@@ -156,7 +157,7 @@ async def upload_document(
     # use first hash to see if their is a retrieved document
     if document or text_checksum_document:
         return {
-            "error":"This document already exists"
+            "error":"The document already exists"
         }
     else:
         doc_client = DocumentStorageClient()
@@ -272,7 +273,7 @@ async def add_document(
         lang_code=document.lang_code,
         first_collected_date=now,
         last_collected_date=now,
-        link_text=document.link_text,
+        link_text=document.metadata['link_text'],
         url=document.url,
         base_url=document.base_url,
         therapy_tags=document.therapy_tags,
@@ -282,6 +283,12 @@ async def add_document(
     )
     doc_document.final_effective_date = calc_final_effective_date(doc_document)
     await create_and_log(logger, current_user, doc_document)
+    
+    scrape_task = await SiteScrapeTask.get(document.scrape_task_id)
+    await scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
+    await scrape_task.update(
+        Push({SiteScrapeTask.retrieved_document_ids: new_document.id})
+    )
     return {
         "success":True
     }
