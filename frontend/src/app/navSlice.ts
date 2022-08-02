@@ -17,7 +17,7 @@ export const navSlice = createSlice({
   initialState: {
     breadcrumbs: [] as Breadcrumb[],
     layout: {
-      appBarPosition: 'left',
+      appBarPosition: 'top',
     },
     menu: {
       items: [
@@ -43,7 +43,6 @@ export const navSlice = createSlice({
       state.breadcrumbs = [...state.breadcrumbs, ...action.payload];
     },
     toggleAppBarPosition: (state) => {
-      console.log(state.layout.appBarPosition);
       state.layout.appBarPosition = state.layout.appBarPosition == 'top' ? 'left' : 'top';
     },
   },

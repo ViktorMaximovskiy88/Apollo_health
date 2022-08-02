@@ -113,7 +113,7 @@ function AppMenu() {
       )}
     >
       {menu.items.map(({ url, label }: any) => (
-        <Tooltip key={url} placement="right" title={label}>
+        <Tooltip key={url} placement={vertical ? 'right' : 'bottom'} title={label}>
           <Link
             className={classNames(
               'cursor-pointer flex rounded-md select-none',
