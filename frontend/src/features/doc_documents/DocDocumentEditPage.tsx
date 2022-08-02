@@ -14,8 +14,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { maxBy, compact, groupBy, isEqual } from 'lodash';
 import { WarningFilled } from '@ant-design/icons';
 
-const useFinalEffectiveDate = (form: FormInstance): (() => void) => {
-  const finalEffectiveDate = useCallback(() => {
+const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
+  const calculateFinalEffectiveDate = useCallback(() => {
     const values = form.getFieldsValue(true);
     const computeFromFields = compact([
       dateToMoment(values.effective_date),
@@ -32,16 +32,16 @@ const useFinalEffectiveDate = (form: FormInstance): (() => void) => {
       final_effective_date: finalEffectiveDate.startOf('day'),
     });
   }, [form]);
-  return finalEffectiveDate;
+  return calculateFinalEffectiveDate;
 };
 
 interface useTagsStateType {
   doc?: DocDocument;
-  finalEffectiveDate: () => void;
+  calculateFinalEffectiveDate: () => void;
 }
 const useTagsState = ({
   doc,
-  finalEffectiveDate,
+  calculateFinalEffectiveDate,
 }: useTagsStateType): [
   Array<TherapyTag | IndicationTag>,
   (tags: Array<TherapyTag | IndicationTag>) => void
@@ -64,9 +64,9 @@ const useTagsState = ({
         _normalized: tag.text.toLowerCase(),
       }));
       setTags([...therapyTags, ...indicationTags]);
-      finalEffectiveDate();
+      calculateFinalEffectiveDate();
     }
-  }, [doc, finalEffectiveDate]);
+  }, [doc, calculateFinalEffectiveDate]);
 
   return [tags, setTags];
 };
@@ -161,8 +161,8 @@ export function DocDocumentEditPage() {
   const { docDocumentId: docId } = useParams();
   const { data: doc } = useGetDocDocumentQuery(docId);
   const [form] = useForm();
-  const finalEffectiveDate = useFinalEffectiveDate(form);
-  const [tags, setTags] = useTagsState({ doc, finalEffectiveDate });
+  const calculateFinalEffectiveDate = useCalculateFinalEffectiveDate(form);
+  const [tags, setTags] = useTagsState({ doc, calculateFinalEffectiveDate });
   const [hasChanges, setHasChanges] = useState(false);
   const [pageNumber, setPageNumber] = useState(0);
   const [onFinish, isSaving] = useOnFinish({ doc, tags });
@@ -209,7 +209,7 @@ export function DocDocumentEditPage() {
             disabled={isSaving}
             onFieldsChange={() => {
               setHasChanges(true);
-              finalEffectiveDate();
+              calculateFinalEffectiveDate();
             }}
             className="h-full"
             layout="vertical"
@@ -225,7 +225,7 @@ export function DocDocumentEditPage() {
                   form={form}
                   onFieldChange={() => {
                     setHasChanges(true);
-                    finalEffectiveDate();
+                    calculateFinalEffectiveDate();
                   }}
                 />
               </Tabs.TabPane>
