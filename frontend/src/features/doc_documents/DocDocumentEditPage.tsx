@@ -32,20 +32,13 @@ const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
       final_effective_date: finalEffectiveDate.startOf('day'),
     });
   }, [form]);
+
   return calculateFinalEffectiveDate;
 };
 
-interface useTagsStateType {
-  doc?: DocDocument;
-  calculateFinalEffectiveDate: () => void;
-}
-const useTagsState = ({
-  doc,
-  calculateFinalEffectiveDate,
-}: useTagsStateType): [
-  Array<TherapyTag | IndicationTag>,
-  (tags: Array<TherapyTag | IndicationTag>) => void
-] => {
+const useTagsState = (
+  doc?: DocDocument
+): [Array<TherapyTag | IndicationTag>, (tags: Array<TherapyTag | IndicationTag>) => void] => {
   const [tags, setTags] = useState([] as Array<TherapyTag | IndicationTag>);
 
   useEffect(() => {
@@ -64,8 +57,7 @@ const useTagsState = ({
       _normalized: tag.text.toLowerCase(),
     }));
     setTags([...therapyTags, ...indicationTags]);
-    calculateFinalEffectiveDate();
-  }, [doc, calculateFinalEffectiveDate]);
+  }, [doc]);
 
   return [tags, setTags];
 };
@@ -160,11 +152,17 @@ export function DocDocumentEditPage() {
   const { docDocumentId: docId } = useParams();
   const { data: doc } = useGetDocDocumentQuery(docId);
   const [form] = useForm();
-  const calculateFinalEffectiveDate = useCalculateFinalEffectiveDate(form);
-  const [tags, setTags] = useTagsState({ doc, calculateFinalEffectiveDate });
+  const [tags, setTags] = useTagsState(doc);
   const [hasChanges, setHasChanges] = useState(false);
   const [pageNumber, setPageNumber] = useState(0);
   const [onFinish, isSaving] = useOnFinish({ doc, tags });
+
+  const calculateFinalEffectiveDate = useCalculateFinalEffectiveDate(form);
+
+  useEffect(() => {
+    if (!doc) return;
+    calculateFinalEffectiveDate();
+  }, [doc, calculateFinalEffectiveDate]);
 
   if (!doc) {
     return <></>;
