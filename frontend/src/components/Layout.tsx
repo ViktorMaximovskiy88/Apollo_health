@@ -39,7 +39,7 @@ export function Layout({
         <div
           className={classNames(
             'flex flex-1 flex-col bg-zinc-50 overflow-auto',
-            gap && 'p-4 ',
+            gap && 'p-2',
             showPageHeader && 'pt-0'
           )}
         >
