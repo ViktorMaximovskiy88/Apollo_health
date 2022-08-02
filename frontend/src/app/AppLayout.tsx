@@ -56,7 +56,10 @@ export function AppUser() {
 
   return (
     <div
-      className="flex text-[24px] cursor-pointer rounded-full bg-sky-100 p-1 mb-2"
+      className={classNames(
+        'flex text-[24px] cursor-pointer rounded-full bg-sky-100 p-1',
+        vertical ? 'mb-2' : ''
+      )}
       onClick={() => logout()}
     >
       <Tooltip
@@ -91,7 +94,7 @@ export function AppBar() {
           <img src={tempLogoBrand} alt="SourceHub" className="w-8 h-8 mt-1" />
         ) : (
           <>
-            <img src={tempLogo} alt="SourceHub" className="" />
+            <img src={tempLogo} alt="SourceHub" className="h-8" />
           </>
         )}
       </Link>
