@@ -13,8 +13,9 @@ class Forward:
     ):
         if output_document.collection_method:
             return
-            
+
         output_document.collection_method = input_document.collection_type
+
         if output_document.collection_type:
             output_document.collection_type = None;
 
@@ -28,8 +29,8 @@ class Backward:
     ):
         if output_document.collection_type:
             return
-        
+
         output_document.collection_type = input_document.collection_method
+            
         if output_document.collection_method:
             output_document.collection_method = None;
-
