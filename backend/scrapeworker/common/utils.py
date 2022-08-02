@@ -14,6 +14,8 @@ def compile_date_rgx():
         r"(?<! \d|\w{2})[0-9][0-9]? (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).? [0-9][0-9][0-9][0-9]",  # d M yyyy # noqa
         r"(?<! \d|\w{2})[0-9][0-9]? (January|February|March|April|May|June|July|August|September|October|November|December),? [0-9][0-9][0-9][0-9]",  # d M yyyy # noqa
         r"(January|February|March|April|May|June|July|August|September|October|November|December) [0-9][0-9]?,? [0-9][0-9][0-9][0-9]",  # M d, yyyy # noqa
+        r"(?<!\d |\w{2})(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).?,? [0-9][0-9]?(?!\d |\w{2})",  # M, dd # noqa
+        r"(?<!\d |\w{2})(January|February|March|April|May|June|July|August|September|October|November|December),? [0-9][0-9]?(?!\d |\w{2})",  # M, dd # noqa
         r"(?<!\d |\w{2})(January|February|March|April|May|June|July|August|September|October|November|December),? [0-9][0-9][0-9][0-9]",  # M, yyyy # noqa
         r"(?<!\d |\w{2})(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).?,? [0-9]{4}",  # M, yyyy # noqa
         r"(?<!\d|\/|-|\||\.)[0-9][0-9]?[\/\-\.\|]\d{2}(?!\d|\/|-|\||\.)",  # MM/yy with /, -, | or . # noqa
