@@ -5,7 +5,7 @@ import { DocDocumentTagForm } from './DocDocumentTagForm';
 import { RetrievedDocumentViewer } from '../retrieved_documents/RetrievedDocumentViewer';
 import { MainLayout } from '../../components';
 import { Tabs } from 'antd';
-import { useForm } from 'antd/lib/form/Form';
+import { FormInstance, useForm } from 'antd/lib/form/Form';
 import { dateToMoment } from '../../common/date';
 import { useUpdateDocDocumentMutation } from './docDocumentApi';
 import { DocDocument, TherapyTag, IndicationTag } from './types';
@@ -14,17 +14,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { maxBy, compact, groupBy, isEqual } from 'lodash';
 import { WarningFilled } from '@ant-design/icons';
 
-export function DocDocumentEditPage() {
-  const navigate = useNavigate();
-  const { docDocumentId: docId } = useParams();
-  const { data: doc } = useGetDocDocumentQuery(docId);
-  const [form] = useForm();
-  const [updateDocDocument] = useUpdateDocDocumentMutation();
-  const [tags, setTags] = useState([] as Array<TherapyTag | IndicationTag>);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [pageNumber, setPageNumber] = useState(0);
-
+const useFinalEffectiveDate = (form: FormInstance): (() => void) => {
   const finalEffectiveDate = useCallback(() => {
     const values = form.getFieldsValue(true);
     const computeFromFields = compact([
@@ -42,7 +32,23 @@ export function DocDocumentEditPage() {
       final_effective_date: finalEffectiveDate.startOf('day'),
     });
   }, [form]);
+  return finalEffectiveDate;
+};
 
+interface useTagsStateType {
+  doc?: DocDocument;
+  finalEffectiveDate: () => void;
+}
+const useTagsState = ({
+  doc,
+  finalEffectiveDate,
+}: useTagsStateType): [
+  Array<TherapyTag | IndicationTag>,
+  (tags: Array<TherapyTag | IndicationTag>) => void
+] => {
+  const [tags, setTags] = useState([] as Array<TherapyTag | IndicationTag>);
+
+  // set initial tags value
   useEffect(() => {
     if (doc) {
       const therapyTags = doc.therapy_tags.map((tag, i) => ({
@@ -62,40 +68,38 @@ export function DocDocumentEditPage() {
     }
   }, [doc, finalEffectiveDate]);
 
-  if (!doc) {
-    return <></>;
-  }
+  return [tags, setTags];
+};
 
-  const initialValues = {
-    ...doc,
-    final_effective_date: dateToMoment(doc.final_effective_date),
-    effective_date: dateToMoment(doc.effective_date),
-    end_date: dateToMoment(doc.end_date),
-    last_updated_date: dateToMoment(doc.last_updated_date),
-    next_review_date: dateToMoment(doc.next_review_date),
-    next_update_date: dateToMoment(doc.next_update_date),
-    published_date: dateToMoment(doc.published_date),
-    last_reviewed_date: dateToMoment(doc.last_reviewed_date),
-    first_collected_date: dateToMoment(doc.first_collected_date),
-    last_collected_date: dateToMoment(doc.last_collected_date),
-  };
+const buildInitialValues = (doc: DocDocument) => ({
+  ...doc,
+  final_effective_date: dateToMoment(doc.final_effective_date),
+  effective_date: dateToMoment(doc.effective_date),
+  end_date: dateToMoment(doc.end_date),
+  last_updated_date: dateToMoment(doc.last_updated_date),
+  next_review_date: dateToMoment(doc.next_review_date),
+  next_update_date: dateToMoment(doc.next_update_date),
+  published_date: dateToMoment(doc.published_date),
+  last_reviewed_date: dateToMoment(doc.last_reviewed_date),
+  first_collected_date: dateToMoment(doc.first_collected_date),
+  last_collected_date: dateToMoment(doc.last_collected_date),
+});
 
-  function handleTagEdit(newTag: TherapyTag | IndicationTag) {
-    setTags((prevState) => {
-      const update = [...prevState];
-      const index = update.findIndex((tag) => {
-        return tag.id === newTag.id;
-      });
-      if (index > -1) {
-        if (!isEqual(newTag, update[index])) setHasChanges(true);
-        update[index] = newTag;
-      }
-      return update;
-    });
-  }
+interface UseOnFinishType {
+  doc?: Partial<DocDocument>;
+  tags: Array<TherapyTag | IndicationTag>;
+}
+const useOnFinish = ({ doc, tags }: UseOnFinishType): [() => Promise<void>, boolean] => {
+  const navigate = useNavigate();
+  const { docDocumentId: docId } = useParams();
+  const [isSaving, setIsSaving] = useState(false);
+  const [updateDocDocument] = useUpdateDocDocumentMutation();
 
-  async function onFinish(doc: Partial<DocDocument>) {
+  const onFinish = async (): Promise<void> => {
+    if (!doc) return;
+
     setIsSaving(true);
+
     try {
       const tagsByType = groupBy(tags, '_type');
       await updateDocDocument({
@@ -110,7 +114,65 @@ export function DocDocumentEditPage() {
       console.error(error);
       setIsSaving(false);
     }
+  };
+
+  return [onFinish, isSaving];
+};
+
+interface TagsPropTypes {
+  tags: Array<TherapyTag | IndicationTag>;
+  setTags: (tags: (TherapyTag | IndicationTag)[]) => void;
+  setHasChanges: (hasChanges: boolean) => void;
+  currentPage: number;
+}
+function Tags({ tags, setTags, setHasChanges, currentPage }: TagsPropTypes) {
+  function handleTagEdit(newTag: TherapyTag | IndicationTag) {
+    const update = [...tags];
+    const index = update.findIndex((tag) => {
+      return tag.id === newTag.id;
+    });
+    if (index > -1) {
+      if (!isEqual(newTag, update[index])) setHasChanges(true);
+      update[index] = newTag;
+    }
+    setTags(update);
   }
+  return (
+    <DocDocumentTagForm
+      tags={tags}
+      onAddTag={(tag: TherapyTag | IndicationTag) => {
+        tags.unshift(tag);
+        setTags([...tags]);
+        setHasChanges(true);
+      }}
+      onDeleteTag={(tag: TherapyTag | IndicationTag) => {
+        const index = tags.findIndex((t) => t.id === tag.id);
+        tags.splice(index, 1);
+        setTags([...tags]);
+        setHasChanges(true);
+      }}
+      onEditTag={handleTagEdit}
+      currentPage={currentPage}
+    />
+  );
+}
+
+export function DocDocumentEditPage() {
+  const navigate = useNavigate();
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+  const [form] = useForm();
+  const finalEffectiveDate = useFinalEffectiveDate(form);
+  const [tags, setTags] = useTagsState({ doc, finalEffectiveDate });
+  const [hasChanges, setHasChanges] = useState(false);
+  const [pageNumber, setPageNumber] = useState(0);
+  const [onFinish, isSaving] = useOnFinish({ doc, tags });
+
+  if (!doc) {
+    return <></>;
+  }
+
+  const initialValues = buildInitialValues(doc);
 
   return (
     <MainLayout
@@ -169,20 +231,10 @@ export function DocDocumentEditPage() {
                 />
               </Tabs.TabPane>
               <Tabs.TabPane tab="Tags" key="tags" className="bg-white p-4 h-full">
-                <DocDocumentTagForm
+                <Tags
                   tags={tags}
-                  onAddTag={(tag: TherapyTag | IndicationTag) => {
-                    tags.unshift(tag);
-                    setTags([...tags]);
-                    setHasChanges(true);
-                  }}
-                  onDeleteTag={(tag: any) => {
-                    const index = tags.findIndex((t) => t.id === tag.id);
-                    tags.splice(index, 1);
-                    setTags([...tags]);
-                    setHasChanges(true);
-                  }}
-                  onEditTag={handleTagEdit}
+                  setTags={setTags}
+                  setHasChanges={setHasChanges}
                   currentPage={pageNumber}
                 />
               </Tabs.TabPane>
