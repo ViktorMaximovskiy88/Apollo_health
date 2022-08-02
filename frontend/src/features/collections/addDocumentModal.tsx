@@ -80,13 +80,13 @@ export function AddDocumentModal({
                     <LanguageItem />
                 </div>
                 <div className="flex grow space-x-3">
-                    <Form.Item className="grow" name="base_url" label="Base Url" rules={[{ type: 'url' }]}>
+                    <Form.Item className="grow" name="base_url" label="Base Url" rules={[{ type: 'url'}]}>
                         <Input type="url" />
                     </Form.Item>                    
                     <Form.Item className="grow" name="link_text" label="Link Text">
                         <Input />
                     </Form.Item>
-                    <Form.Item className="grow" name="url" label="Link Url" rules={[{ type: 'url' }]}>
+                    <Form.Item className="grow" name="url" label="Link Url" rules={[{ type: 'url', required: true  }]}>
                         <Input type="url" />
                     </Form.Item>
                 </div>

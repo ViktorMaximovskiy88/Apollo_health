@@ -24,7 +24,7 @@ from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.file_parsers import parse_by_type
-from backend.scrapeworker.common.models import Download, Request
+from backend.scrapeworker.common.models import DownloadContext, Request
 
 router = APIRouter(
     prefix="/documents",
@@ -144,7 +144,7 @@ async def upload_document(
         tmp.write(content)
         temp_path = tmp.name
 
-    download = Download(request=Request(url=temp_path), file_extension=file_extension)
+    download = DownloadContext(request=Request(url=temp_path), file_extension=file_extension)
     parsed_content = await parse_by_type(temp_path,download,[])
 
     text_checksum = await text_handler.save_text(parsed_content["text"])
@@ -154,26 +154,9 @@ async def upload_document(
 
     # use first hash to see if their is a retrieved document
     if document or text_checksum_document:
-        # return {
-        #     "error":"The document already exists"
-        # }
         return {
-            "success": True,
-            "data": {
-                "checksum":checksum,
-                "text_checksum":text_checksum,
-                "content_type":content_type,
-                "file_extension":file_extension,
-                "metadata":parsed_content['metadata'],
-                "doc_type_confidence":str(parsed_content['confidence']),
-                "therapy_tags":parsed_content['therapy_tags'],
-                "indication_tags":parsed_content['indication_tags'],
-                "identified_dates":parsed_content['identified_dates']
-            }
+            "error":"The document already exists"
         }
-
-
-
     else:
         doc_client = DocumentStorageClient()
         if not doc_client.object_exists(dest_path):
