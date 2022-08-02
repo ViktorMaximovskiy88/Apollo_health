@@ -1,14 +1,13 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
-from pydantic import HttpUrl
 import pytest
+from pydantic import HttpUrl
 
-from backend.common.models.site import ScrapeMethodConfiguration
-from backend.common.models.document import RetrievedDocument, RetrievedDocumentLimitTags
-from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.common.models.site import BaseUrl, ScrapeMethodConfiguration, Site
 from backend.app.routes.documents import get_documents
 from backend.common.db.init import init_db
+from backend.common.models.document import RetrievedDocument, RetrievedDocumentLimitTags
+from backend.common.models.site import BaseUrl, ScrapeMethodConfiguration, Site
+from backend.common.models.site_scrape_task import SiteScrapeTask
 
 RetrievedDocumentLimitTags.Settings.projection = None  # type: ignore
 
@@ -59,7 +58,7 @@ class TestGetDocuments:
     ) -> SiteScrapeTask:
         scrape = SiteScrapeTask(
             site_id=site.id,
-            queued_time=datetime.now(),
+            queued_time=datetime.now(tz=timezone.utc),
         )
         return scrape
 
@@ -76,7 +75,7 @@ class TestGetDocuments:
 
         docs: list[RetrievedDocument] = []
         for i in range(3):
-            first_collected_date = datetime.now() + timedelta(hours=i)
+            first_collected_date = datetime.now(tz=timezone.utc) + timedelta(hours=i)
             doc = self.simple_doc(site, scrapes[i % 2], first_collected_date)
             await doc.save()
             docs.append(doc)
@@ -168,8 +167,6 @@ class TestGetDocuments:
         assert len(ret_docs) == 2
         assert ret_docs[0].id == docs[2].id
 
-        second_ret_docs = await get_documents(
-            scrape_task_id=scrapes[1].id, site_id=site.id
-        )
+        second_ret_docs = await get_documents(scrape_task_id=scrapes[1].id, site_id=site.id)
         assert len(second_ret_docs) == 1
         assert second_ret_docs[0].id == docs[2].id

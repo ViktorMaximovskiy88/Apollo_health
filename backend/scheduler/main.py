@@ -2,7 +2,7 @@ import asyncio
 import math
 import signal
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import boto3
@@ -45,7 +45,7 @@ async def get_schedule_user():
     return user
 
 
-def find_sites_eligible_for_scraping(crons, now=datetime.now()):
+def find_sites_eligible_for_scraping(crons, now=datetime.now(tz=timezone.utc)):
     sites = Site.find(
         {
             "cron": {"$in": crons},  # Should be run now
@@ -72,7 +72,7 @@ def find_sites_eligible_for_scraping(crons, now=datetime.now()):
 
 
 async def enqueue_scrape_task(site_id: PydanticObjectId):
-    site_scrape_task = SiteScrapeTask(site_id=site_id, queued_time=datetime.now())
+    site_scrape_task = SiteScrapeTask(site_id=site_id, queued_time=datetime.now(tz=timezone.utc))
     return await try_queue_unique_task(site_scrape_task)
 
 
@@ -88,7 +88,7 @@ async def start_scheduler():
     logger = Logger()
     user = await get_schedule_user()
     while True:
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         crons = compute_matching_crons(now)
         sites = find_sites_eligible_for_scraping(crons, now)
 
@@ -173,7 +173,7 @@ async def start_hung_task_checker():
     Retry tasks that are in progress but are not longer sending a heartbeat
     """
     while True:
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         tasks = SiteScrapeTask.find(
             {
                 "status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.CANCELING]},

@@ -2,7 +2,7 @@ import asyncio
 import logging
 import re
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from random import shuffle
 from typing import Any, AsyncGenerator, Callable, Coroutine
 from urllib.parse import urlparse
@@ -26,11 +26,11 @@ from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.storage.client import DocumentStorageClient
+from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.aio_downloader import AioDownloader
 from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocsCollectedException
 from backend.scrapeworker.common.models import Download, Request
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
-from backend.scrapeworker.common.text_handler import TextHandler
 from backend.scrapeworker.common.utils import get_extension_from_path_like
 from backend.scrapeworker.document_tagging.indication_tagging import IndicationTagger
 from backend.scrapeworker.document_tagging.taggers import Taggers
@@ -109,9 +109,10 @@ class ScrapeWorker:
             DocDocument.retrieved_document_id == retrieved_document.id
         )
         if doc_document:
-            await doc_document.update(
-                {"$set": {"last_collected_date": retrieved_document.last_collected_date}}
-            )
+            if doc_document.text_checksum is None:  # Can be removed after text added to older docs
+                doc_document.text_checksum = retrieved_document.text_checksum
+            doc_document.last_collected_date = retrieved_document.last_collected_date
+            await doc_document.save()
         else:
             await self.create_doc_document(retrieved_document)
 
@@ -153,7 +154,7 @@ class ScrapeWorker:
         parsed_content: dict(),
     ) -> UpdateRetrievedDocument:
         # TODO needs to be utcnow
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         updated_doc = UpdateRetrievedDocument(
             context_metadata=download.metadata.dict(),
             doc_type_confidence=parsed_content["confidence"],
@@ -174,6 +175,7 @@ class ScrapeWorker:
             name=parsed_content["title"],
             scrape_task_id=self.scrape_task.id,
             file_checksum_aliases=document.file_checksum_aliases,
+            text_checksum=document.text_checksum,
         )
         await update_and_log_diff(self.logger, await self.get_user(), document, updated_doc)
         return updated_doc
@@ -201,6 +203,9 @@ class ScrapeWorker:
             )
 
             if document:
+                if document.text_checksum is None:  # Can be removed after text added to older docs
+                    text_checksum = await self.text_handler.save_text(parsed_content["text"])
+                    document.text_checksum = text_checksum
                 logging.debug("updating doc")
                 await self.update_retrieved_document(
                     document=document,
@@ -227,7 +232,7 @@ class ScrapeWorker:
                     await self.update_doc_document(document)
                 else:
                     logging.debug("creating doc")
-                    now = datetime.now()
+                    now = datetime.now(tz=timezone.utc)
                     document = RetrievedDocument(
                         base_url=download.metadata.base_url,
                         checksum=checksum,
