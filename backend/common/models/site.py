@@ -114,3 +114,13 @@ class SingleUrlSite(NoScrapeConfigSite):
 
     class Collection:
         name = "Site"
+
+class CollectionTypeSite(SingleUrlSite):
+    collection_type: str | None = CollectionMethod.Automated
+
+    class Collection:
+        name = "Site"
+
+
+
+
