@@ -1,7 +1,6 @@
 import { Button, Form, Input, Modal, notification, Typography } from 'antd';
 import { LinkOutlined } from '@ant-design/icons';
-import { useForm } from 'antd/lib/form/Form';
-import { ChangeEvent, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { parseDiff, Diff, Hunk } from 'react-diff-view';
 import 'react-diff-view/style/index.css';
@@ -10,7 +9,7 @@ import { isErrorWithData } from '../../common/helpers';
 import { Hr } from '../../components';
 import { useCreateDiffMutation } from './docDocumentApi';
 import { RetrievedDocument } from '../retrieved_documents/types';
-import { CompareRequest, DocDocument } from './types';
+import { DocDocument } from './types';
 
 function CompareModal(props: {
   diff?: string;
@@ -88,7 +87,6 @@ export function DocCompare(props: { org_doc: DocDocument }) {
       setIsModalVisible(true);
     } catch (err) {
       if (isErrorWithData(err)) {
-        console.log(err);
         notification.error({
           message: 'Error Creating Compare File',
           description: `${err.data.detail}`,

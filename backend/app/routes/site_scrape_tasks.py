@@ -71,10 +71,17 @@ async def start_scrape_task(
     site = await Site.get(site_id)
     if not site:
         raise HTTPException(
-            detail=f"Site {id} Not Found",
+            detail=f"Site {site_id} Not Found",
             status_code=status.HTTP_404_NOT_FOUND,
         )
-    site_scrape_task = None
+    site_scrape_task = await SiteScrapeTask.find_one(
+        {"site_id": site_id, "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}}
+    )
+    if site_scrape_task:
+        raise HTTPException(
+            detail=f"Scrapetask {site_scrape_task.id} is already queued or in progress.",
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+        )
     if site.collection_method == CollectionMethod.Manual:
         site_scrape_task = SiteScrapeTask(
             site_id=site_id,
