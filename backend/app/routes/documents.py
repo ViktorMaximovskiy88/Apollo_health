@@ -3,8 +3,6 @@ from datetime import datetime
 from datetime import datetime, timezone
 
 from beanie import PydanticObjectId, Indexed
-from beanie.odm.operators.update.general import Inc
-from beanie.odm.operators.update.array import Push
 from fastapi import APIRouter, Depends, HTTPException, Security, UploadFile, status
 from fastapi.responses import StreamingResponse
 
@@ -156,9 +154,26 @@ async def upload_document(
 
     # use first hash to see if their is a retrieved document
     if document or text_checksum_document:
+        # return {
+        #     "error":"The document already exists"
+        # }
         return {
-            "error":"The document already exists"
+            "success": True,
+            "data": {
+                "checksum":checksum,
+                "text_checksum":text_checksum,
+                "content_type":content_type,
+                "file_extension":file_extension,
+                "metadata":parsed_content['metadata'],
+                "doc_type_confidence":str(parsed_content['confidence']),
+                "therapy_tags":parsed_content['therapy_tags'],
+                "indication_tags":parsed_content['indication_tags'],
+                "identified_dates":parsed_content['identified_dates']
+            }
         }
+
+
+
     else:
         doc_client = DocumentStorageClient()
         if not doc_client.object_exists(dest_path):
@@ -273,7 +288,6 @@ async def add_document(
         lang_code=document.lang_code,
         first_collected_date=now,
         last_collected_date=now,
-        link_text=document.metadata['link_text'],
         url=document.url,
         base_url=document.base_url,
         therapy_tags=document.therapy_tags,
@@ -281,14 +295,19 @@ async def add_document(
         file_extension=document.file_extension,
         identified_dates=document.identified_dates
     )
+
+    if "link_text" in document.metadata:
+        doc_document.link_text = document.metadata['link_text']
+
     doc_document.final_effective_date = calc_final_effective_date(doc_document)
     await create_and_log(logger, current_user, doc_document)
     
     scrape_task = await SiteScrapeTask.get(document.scrape_task_id)
-    await scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
-    await scrape_task.update(
-        Push({SiteScrapeTask.retrieved_document_ids: new_document.id})
-    )
+    await scrape_task.update({
+      '$inc': { 'documents_found': 1 },
+      '$push': { 'retrieved_document_ids': new_document.id }
+    })
+
     return {
         "success":True
     }
