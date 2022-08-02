@@ -1,16 +1,16 @@
 import asyncio
 import logging
+from abc import ABC, abstractmethod
 from functools import cached_property
-from playwright.async_api import ElementHandle, ProxySettings, BrowserContext, Page
+from urllib.parse import urlparse
+
+from playwright.async_api import BrowserContext, ElementHandle, Page, ProxySettings
+
 from backend.common.core.config import config
-from backend.scrapeworker.common.models import Download, Metadata
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import ScrapeMethodConfiguration
-from urllib.parse import urlparse
-from abc import ABC, abstractmethod
-
+from backend.scrapeworker.common.models import DownloadContext, Metadata
 from backend.scrapeworker.playbook import PlaybookContext
-
 
 closest_heading_expression: str = """
     (node) => {
@@ -46,9 +46,17 @@ class PlaywrightBaseScraper(ABC):
         raise NotImplementedError("css_selector is required ")
 
     async def is_applicable(self) -> bool:
-        element_handle = await self.page.query_selector(
-            self.css_selector
-        )
+        if self.config.wait_for_timeout_ms:
+            await self.page.wait_for_timeout(self.config.wait_for_timeout_ms)
+
+        element_handle = await self.page.query_selector(self.css_selector)
+
+        if len(self.page.main_frame.child_frames) > 0 and self.config.search_in_frames:
+            child_frames = self.page.main_frame.child_frames
+            frame = child_frames[0]
+            await frame.wait_for_load_state("domcontentloaded")
+            element_handle = await frame.query_selector(self.css_selector)
+
         result = element_handle is not None
         logging.info(f"{self.__class__.__name__} is_applicable -> {result}")
         return result
@@ -99,5 +107,5 @@ class PlaywrightBaseScraper(ABC):
         return [proxy, proxies]
 
     @abstractmethod
-    async def execute(self) -> list[Download]:
+    async def execute(self) -> list[DownloadContext]:
         pass

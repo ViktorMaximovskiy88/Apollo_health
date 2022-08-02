@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import signal
 import sys
 import traceback
@@ -134,7 +135,8 @@ async def start_worker_async(worker_id):
                     ignore_https_errors=True,
                 )
             except Exception as ex:
-                print("Lost Browser", ex)
+                logging.error("Lost Browser")
+                logging.error(ex)
                 traceback.print_exc()
                 browser = await playwright.chromium.launch()
                 return await browser.new_context(

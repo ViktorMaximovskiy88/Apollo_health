@@ -104,6 +104,6 @@ async def update_extraction_task(
 
     # Sending Event Bridge Event.  Need to add condition when to send.
     document_json = EventConvert(document=updated).convert()
-    send_evnt_client = SendEventClient()
-    send_evnt_client.send_event("document-details", document_json)
+    send_event_client = SendEventClient()
+    send_event_client.send_event("document-details", document_json)
     return updated
