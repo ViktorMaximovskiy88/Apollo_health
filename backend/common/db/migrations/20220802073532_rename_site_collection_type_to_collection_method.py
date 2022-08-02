@@ -15,6 +15,9 @@ class Forward:
             return
             
         output_document.collection_method = input_document.collection_type
+        if output_document.collection_type:
+            output_document.collection_type = None;
+
 
 class Backward:
     @iterative_migration()
@@ -27,4 +30,6 @@ class Backward:
             return
         
         output_document.collection_type = input_document.collection_method
+        if output_document.collection_method:
+            output_document.collection_method = None;
 
