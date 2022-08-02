@@ -21,4 +21,6 @@ async def parse_by_type(file_path: str, download: DownloadContext, taggers: Tagg
     elif file_extension in ["txt", "csv"]:
         return await text.TextParser(file_path, url, taggers).parse()
     else:
+        # raise NotImplementedError(f"no parse for file ext {file_extension}")
         return None
+

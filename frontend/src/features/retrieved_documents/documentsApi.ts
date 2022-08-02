@@ -28,6 +28,10 @@ export const documentsApi = createApi({
     }),
     addDocument: builder.mutation<RetrievedDocument, Partial<RetrievedDocument>>({
       query: (body) => ({ url: '/documents/', method: 'PUT', body }),
+      invalidatesTags: (_r, _e, { _id: id }) => [
+        { type: 'RetrievedDocument', id },
+        { type: 'ChangeLog', id },
+      ],
     }),
     updateDocument: builder.mutation<RetrievedDocument, Partial<RetrievedDocument>>({
       query: (body) => ({

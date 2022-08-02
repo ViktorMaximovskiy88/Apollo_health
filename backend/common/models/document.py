@@ -33,7 +33,6 @@ class RetrievedDocument(BaseDocument):
     doc_type_confidence: float | None = None
     identified_dates: list[datetime] = []
     base_url: str | None = None
-
     lang_code: LangCode | None = None
     file_extension: str | None = None
     content_type: str | None = None

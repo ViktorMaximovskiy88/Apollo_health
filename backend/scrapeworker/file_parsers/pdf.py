@@ -37,7 +37,7 @@ class PdfParse(FileParser):
         )
         pdftext_out, _ = await process.communicate()
         return pdftext_out.decode("utf-8", "ignore").strip()
-
+        
     def get_title(self, metadata):
         title = metadata.get("Title") or metadata.get("Subject") or str(self.filename_no_ext)
         return title
