@@ -48,24 +48,23 @@ const useTagsState = ({
 ] => {
   const [tags, setTags] = useState([] as Array<TherapyTag | IndicationTag>);
 
-  // set initial tags value
   useEffect(() => {
-    if (doc) {
-      const therapyTags = doc.therapy_tags.map((tag, i) => ({
-        ...tag,
-        id: `${i}-therapy`,
-        _type: 'therapy',
-        _normalized: `${tag.name.toLowerCase()}|${tag.text.toLowerCase()}`,
-      }));
-      const indicationTags = doc.indication_tags.map((tag, i) => ({
-        ...tag,
-        id: `${i}-indication`,
-        _type: 'indication',
-        _normalized: tag.text.toLowerCase(),
-      }));
-      setTags([...therapyTags, ...indicationTags]);
-      calculateFinalEffectiveDate();
-    }
+    if (!doc) return;
+
+    const therapyTags = doc.therapy_tags.map((tag, i) => ({
+      ...tag,
+      id: `${i}-therapy`,
+      _type: 'therapy',
+      _normalized: `${tag.name.toLowerCase()}|${tag.text.toLowerCase()}`,
+    }));
+    const indicationTags = doc.indication_tags.map((tag, i) => ({
+      ...tag,
+      id: `${i}-indication`,
+      _type: 'indication',
+      _normalized: tag.text.toLowerCase(),
+    }));
+    setTags([...therapyTags, ...indicationTags]);
+    calculateFinalEffectiveDate();
   }, [doc, calculateFinalEffectiveDate]);
 
   return [tags, setTags];
