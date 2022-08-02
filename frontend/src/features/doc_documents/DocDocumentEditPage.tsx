@@ -141,8 +141,7 @@ function Tags({ tags, setTags, setHasChanges, currentPage }: TagsPropTypes) {
     <DocDocumentTagForm
       tags={tags}
       onAddTag={(tag: TherapyTag | IndicationTag) => {
-        tags.unshift(tag);
-        setTags([...tags]);
+        setTags([tag, ...tags]);
         setHasChanges(true);
       }}
       onDeleteTag={(tag: TherapyTag | IndicationTag) => {
