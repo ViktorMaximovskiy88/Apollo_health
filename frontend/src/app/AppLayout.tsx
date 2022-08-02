@@ -8,7 +8,13 @@ import { useSelector } from 'react-redux';
 import { useBreadcrumbs } from './use-breadcrumbs';
 import { Tooltip } from 'antd';
 import { breadcrumbState, menuState, layoutState, toggleAppBarPosition } from './navSlice';
-import { ProjectTwoTone, IdcardOutlined, InboxOutlined, FileTextTwoTone } from '@ant-design/icons';
+import {
+  ProjectTwoTone,
+  UserOutlined,
+  IdcardOutlined,
+  InboxOutlined,
+  FileTextTwoTone,
+} from '@ant-design/icons';
 
 export function AppLayout() {
   const layout: any = useSelector(layoutState);
@@ -45,9 +51,20 @@ export function AppBreadcrumbs() {
 
 export function AppUser() {
   const { user, logout } = useAuth0();
+  const layout: any = useSelector(layoutState);
+  const vertical: boolean = layout.appBarPosition == 'left';
+
   return (
-    <div className="flex cursor-pointer" onClick={() => logout()}>
-      {user?.given_name} {user?.family_name}
+    <div
+      className="flex text-[24px] cursor-pointer rounded-full bg-sky-100 p-1 mb-2"
+      onClick={() => logout()}
+    >
+      <Tooltip
+        title={`${user?.given_name} ${user?.family_name}`}
+        placement={vertical ? 'right' : 'bottom'}
+      >
+        <UserOutlined style={{ color: '#5a9bc9' }} />
+      </Tooltip>
     </div>
   );
 }
