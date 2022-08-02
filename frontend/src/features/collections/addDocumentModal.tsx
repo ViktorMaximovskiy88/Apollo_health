@@ -3,10 +3,11 @@ import { Button, Modal, Form, Space, Input, Upload, DatePicker, Select, Tooltip,
 import { useForm } from 'antd/lib/form/Form';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
-
 import { UploadOutlined, QuestionCircleOutlined, LoadingOutlined, CheckCircleOutlined } from '@ant-design/icons';
+
 import { prettyDate } from '../../common';
 import { useAddDocumentMutation } from "../retrieved_documents/documentsApi"
+import { useGetScrapeTasksForSiteQuery } from "./siteScrapeTasksApi"
 import { baseApiUrl, client, fetchWithAuth } from '../../app/base-api';
 import { RetrievedDocument } from "../retrieved_documents/types";
 
@@ -20,8 +21,11 @@ export function AddDocumentModal({
     siteId,
 }: AddDocumentModalPropTypes) {
     const [form] = useForm();
+    const { data: scrapeTasks } = useGetScrapeTasksForSiteQuery(siteId, {
+        pollingInterval: 3000
+    });
     const [ addDoc ] = useAddDocumentMutation();
-
+    const [ fileData, setFileData ] = useState({});
     const initialValues = {
         "lang_code":"en"
     }
@@ -34,8 +38,14 @@ export function AddDocumentModal({
     async function saveDocument(newDocument: RetrievedDocument){
         try {
             newDocument.site_id = siteId;
-            await addDoc(newDocument);
-            setVisible(false);
+            if (scrapeTasks) {
+               newDocument.scrape_task_id = scrapeTasks[0]._id
+            }
+            await addDoc({
+                ...newDocument,
+                ...fileData
+            });
+            // setVisible(false);
         }
         catch(error) {
             message.error('We could not save this document');
@@ -59,7 +69,7 @@ export function AddDocumentModal({
                 initialValues={initialValues}
                 validateMessages={validateMessages}
                 onFinish={saveDocument}>
-                <UploadItem form={form} />
+                <UploadItem form={form} setFileData={setFileData} />
                 <div className="flex grow space-x-3">
                     <Form.Item className="grow" name="name" label="Document Name" rules={[{ required: true }]}>
                         <Input />
@@ -94,7 +104,7 @@ export function AddDocumentModal({
 
 
 function UploadItem(props: any) {
-    const { form } = props;
+    const { setFileData } = props;
     const [token, setToken] = useState('');
     const [fileName, setFileName] = useState('');
     const [uploadStatus, setUploadStatus] = useState('');
@@ -114,20 +124,15 @@ function UploadItem(props: any) {
             if (response.error) {
                 setUploadStatus("");
                 message.error(response.error);
-                form.setFieldsValue({
-                    "document_file":""
-                })
             } else if (response.success) {
                 setUploadStatus("done");
-                form.setFieldsValue({
-                    "document_file":response.data
-                })                
+                setFileData(response.data);
             }
         }
     }
 
     return (
-        <Form.Item name="document_file" label="Document File" rules={[{ required: true }]}>
+        <Form.Item label="Document File" rules={[{ required: uploadStatus === "done" ? false : true }]}>
             <Upload 
                 name="file"
                 accept=".pdf,.xlsx,.docx"
@@ -139,10 +144,10 @@ function UploadItem(props: any) {
                 onChange={onChange}
                 >
                 {
-                    uploadStatus == "uploading" ? 
+                    uploadStatus === "uploading" ? 
                     <Button style={{marginRight:"10px"}} icon={<LoadingOutlined />}>Uploading {fileName}...</Button>
                     : 
-                    uploadStatus == "done" ?
+                    uploadStatus === "done" ?
                     <Button style={{marginRight:"10px"}} icon={<CheckCircleOutlined />}>{fileName} uploaded!</Button>
                     :
                     <Button style={{marginRight:"10px"}} icon={<UploadOutlined />}>Click to Upload</Button>

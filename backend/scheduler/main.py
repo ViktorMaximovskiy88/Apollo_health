@@ -176,7 +176,6 @@ async def start_hung_task_checker():
         now = datetime.now(tz=timezone.utc)
         tasks = SiteScrapeTask.find(
             {
-
                 "status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.CANCELING]},
                 "collection_type": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
                 "$or": [

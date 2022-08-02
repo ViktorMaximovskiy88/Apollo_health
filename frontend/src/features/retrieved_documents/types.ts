@@ -34,7 +34,6 @@ export interface RetrievedDocument extends BaseDocument {
   base_url: string;
   lang_code: string;
   file_extension: string;
-  document_file: any;
   automated_content_extraction: boolean;
   automated_content_extraction_class: string;
 }

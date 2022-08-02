@@ -2,7 +2,7 @@ import tempfile
 from datetime import datetime
 from datetime import datetime, timezone
 
-from beanie import PydanticObjectId
+from beanie import PydanticObjectId, Indexed
 from fastapi import APIRouter, Depends, HTTPException, Security, UploadFile, status
 from fastapi.responses import StreamingResponse
 
@@ -21,8 +21,6 @@ from backend.app.utils.logger import (
 )
 from backend.app.utils.user import get_current_user
 from backend.common.storage.client import DocumentStorageClient
-from backend.common.events.send_event_client import SendEventClient
-from backend.common.events.event_convert import EventConvert
 from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.file_parsers import parse_by_type
@@ -143,7 +141,7 @@ async def upload_document(
     )
     
     temp_path = ""
-    with tempfile.NamedTemporaryFile(delete=True, suffix="." + file_extension) as tmp:
+    with tempfile.NamedTemporaryFile(delete=False, suffix="." + file_extension) as tmp:
         tmp.write(content)
         temp_path = tmp.name
 
@@ -158,7 +156,7 @@ async def upload_document(
     # use first hash to see if their is a retrieved document
     if document or text_checksum_document:
         return {
-            "error":f"This document already exists"
+            "error":"This document already exists"
         }
     else:
         doc_client = DocumentStorageClient()
@@ -173,9 +171,8 @@ async def upload_document(
                 "text_checksum":text_checksum,
                 "content_type":content_type,
                 "file_extension":file_extension,
-                "name":name,
                 "metadata":parsed_content['metadata'],
-                "confidence":str(parsed_content['confidence']),
+                "doc_type_confidence":str(parsed_content['confidence']),
                 "therapy_tags":parsed_content['therapy_tags'],
                 "indication_tags":parsed_content['indication_tags'],
                 "identified_dates":parsed_content['identified_dates']
@@ -218,53 +215,53 @@ async def delete_document(
     return {"success": True}
 
 
-@router.put("/", response_model=RetrievedDocument, status_code=status.HTTP_201_CREATED)
+@router.put("/", status_code=status.HTTP_201_CREATED)
 async def add_document(
     document: RetrievedDocument,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     now = datetime.now()
-    document_file = document.document_file;
-
     new_document = RetrievedDocument(
         base_url=document.base_url,
-        checksum=document_file["checksum"],
-        text_checksum=document_file["text_checksum"],
-        doc_type_confidence=document_file["confidence"],
+        name=document.name,
+        text_checksum=document.text_checksum,
+        doc_type_confidence=document.doc_type_confidence,
         document_type=document.document_type,
         effective_date=document.effective_date,
-        context_metadata=document_file['metadata'],
+        context_metadata=document.metadata,
         end_date=document.end_date,
         last_updated_date=document.last_updated_date,
         last_reviewed_date=document.last_reviewed_date,
         next_review_date=document.next_review_date,
         next_update_date=document.next_update_date,
         published_date=document.published_date,
-        file_extension=document_file["file_extension"],
-        content_type=document_file["content_type"],
+        file_extension=document.file_extension,
+        content_type=document.content_type,
         first_collected_date=now,
-        identified_dates=document_file["identified_dates"],
+        identified_dates=document.identified_dates,
         lang_code=document.lang_code,
         last_collected_date=now,
-        metadata=document_file["metadata"],
-        name=document_file["name"],
+        metadata=document.metadata,
         site_id=document.site_id,
+        scrape_task_id=document.scrape_task_id,
         url=document.url,
-        therapy_tags=document_file["therapy_tags"],
-        indication_tags=document_file["indication_tags"],
-        file_checksum_aliases=set(document_file["checksum"]),
-    )   
+        therapy_tags=document.therapy_tags,
+        indication_tags=document.indication_tags,
+        file_checksum_aliases=set(document.checksum),
+        checksum=document.checksum
+    ) 
     await create_and_log(logger, current_user, new_document)
 
     doc_document = DocDocument(
         site_id=document.site_id,
-        retrieved_document_id= new_document.id,  # type: ignore
-        name=document_file["name"],
-        checksum=document_file["checksum"],
-        text_checksum=document_file['text_checksum'],
+        scrape_task_id=document.scrape_task_id,
+        retrieved_document_id=new_document.id,  # type: ignore
+        name=document.name,
+        checksum=document.checksum,
+        text_checksum=document.text_checksum,
         document_type=document.document_type,
-        doc_type_confidence=document_file["confidence"],
+        doc_type_confidence=document.doc_type_confidence,
         effective_date=document.effective_date,
         end_date=document.end_date,
         last_updated_date=document.last_updated_date,
@@ -278,15 +275,13 @@ async def add_document(
         link_text=document.link_text,
         url=document.url,
         base_url=document.base_url,
-        therapy_tags=document_file["therapy_tags"],
-        indication_tags=document_file["indication_tags"],
-        file_extension=document_file["file_extension"],
-        identified_dates=document_file["identified_dates"]
+        therapy_tags=document.therapy_tags,
+        indication_tags=document.indication_tags,
+        file_extension=document.file_extension,
+        identified_dates=document.identified_dates
     )
-
     doc_document.final_effective_date = calc_final_effective_date(doc_document)
     await create_and_log(logger, current_user, doc_document)
-    
     return {
         "success":True
     }
