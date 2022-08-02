@@ -105,4 +105,4 @@ def get_extension_from_file_mimetype(file_path: str | None):
         return None
 
     mimetype = get_mimetype(file_path)
-    return mimetype_to_extension_map.get(mimetype) or None
+    return mimetype_to_extension_map.get(mimetype)

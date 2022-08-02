@@ -80,7 +80,7 @@ class DownloadContext(BaseModel):
     content_type: str | None = None
     mimetype: str | None = None
 
-    def guess_extension(self) -> None:
+    def guess_extension(self) -> str | None:
         guessed_ext = get_extension_from_path_like(self.request.url)
 
         if not guessed_ext:
