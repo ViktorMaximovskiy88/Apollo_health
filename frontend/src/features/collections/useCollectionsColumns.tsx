@@ -105,7 +105,7 @@ export const createColumns = ({
       },
     },
     {
-      header: 'Collection Type',
+      header: 'Collection Method',
       name: 'collection_method',
       maxWidth: 200,
       render: ({ value: collection_method }: { value: string }) => {
