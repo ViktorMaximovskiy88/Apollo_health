@@ -11,13 +11,13 @@ class Forward:
         input_document: Site,
         output_document: CollectionTypeSite,
     ):
+        if output_document.collection_type:
+            output_document.collection_type = None;
+
         if output_document.collection_method:
             return
 
         output_document.collection_method = input_document.collection_type
-
-        if output_document.collection_type:
-            output_document.collection_type = None;
 
 
 class Backward:
@@ -27,10 +27,11 @@ class Backward:
         input_document: CollectionTypeSite,
         output_document: Site,
     ):
+        if output_document.collection_method:
+            output_document.collection_method = None;
+
         if output_document.collection_type:
             return
 
         output_document.collection_type = input_document.collection_method
             
-        if output_document.collection_method:
-            output_document.collection_method = None;
