@@ -59,7 +59,7 @@ export const documentsApi = createApi({
       providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
     }),
     getDocumentViewerUrl: builder.query<RetrievedDocument, string | undefined>({
-      query: (id) => `/documents/viewer/${id}`,
+      query: (id) => `/documents/viewer/${id}?_=${+new Date()}`,
       providesTags: (_r, _e, id) => [{ type: 'RetrievedDocument' as const, id }],
     }),
   }),

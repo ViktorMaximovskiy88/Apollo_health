@@ -2,19 +2,13 @@ import io
 import json
 import urllib.parse
 import zipfile
+
 from beanie import PydanticObjectId
 from beanie.operators import ElemMatch
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    Query,
-    UploadFile,
-    status,
-    Security,
-)
+from fastapi import APIRouter, Depends, HTTPException, Query, Security, UploadFile, status
 from openpyxl import load_workbook
 from pydantic import BaseModel, HttpUrl
+
 from backend.app.routes.table_query import (
     TableFilterInfo,
     TableQueryResponse,
@@ -22,24 +16,12 @@ from backend.app.routes.table_query import (
     get_query_json_list,
     query_table,
 )
-
-from backend.common.models.site import (
-    BaseUrl,
-    NewSite,
-    ScrapeMethodConfiguration,
-    Site,
-    UpdateSite,
-)
-from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.common.models.user import User
-from backend.app.utils.logger import (
-    Logger,
-    create_and_log,
-    get_logger,
-    update_and_log_diff,
-)
+from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.core.enums import SiteStatus
+from backend.common.models.site import BaseUrl, NewSite, ScrapeMethodConfiguration, Site, UpdateSite
+from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.models.user import User
 
 router = APIRouter(
     prefix="/sites",
@@ -50,9 +32,7 @@ router = APIRouter(
 async def get_target(id: PydanticObjectId) -> Site:
     site = await Site.get(id)
     if not site:
-        raise HTTPException(
-            detail=f"Site {id} Not Found", status_code=status.HTTP_404_NOT_FOUND
-        )
+        raise HTTPException(detail=f"Site {id} Not Found", status_code=status.HTTP_404_NOT_FOUND)
     return site
 
 
@@ -62,17 +42,13 @@ async def read_sites(
     limit: int | None = None,
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
-    filters: list[TableFilterInfo] = Depends(
-        get_query_json_list("filters", TableFilterInfo)
-    ),
+    filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
     query = Site.find({"disabled": False})
     return await query_table(query, limit, skip, sorts, filters)
 
 
-@router.get(
-    "/download", response_model=list[NewSite], dependencies=[Security(get_current_user)]
-)
+@router.get("/download", response_model=list[NewSite], dependencies=[Security(get_current_user)])
 async def download_sites():
     return (
         await Site.find({"disabled": False, "status": {"$ne": SiteStatus.INACTIVE}})
@@ -98,7 +74,7 @@ async def check_url(
     site = await Site.find_one(
         ElemMatch(Site.base_urls, {"url": urllib.parse.unquote(url)}),
         Site.id != current_site,
-        Site.disabled != True,
+        Site.disabled != True,  # noqa F401
     )
 
     if site:
@@ -159,9 +135,7 @@ def parse_line(line):
         follow_link_keywords=[],
         follow_link_url_keywords=[],
     )
-    base_urls = list(
-        map(lambda url: BaseUrl(url=HttpUrl(url, scheme="https")), base_urls)
-    )
+    base_urls = list(map(lambda url: BaseUrl(url=HttpUrl(url, scheme="https")), base_urls))
     return Site(
         name=name,
         base_urls=base_urls,
@@ -243,9 +217,7 @@ async def check_for_scrapetask(site_id: PydanticObjectId) -> list[SiteScrapeTask
 @router.delete(
     "/{id}",
     responses={
-        405: {
-            "description": "Item can't be deleted because of associated collection records."
-        },
+        405: {"description": "Item can't be deleted because of associated collection records."},
     },
 )
 async def delete_site(
@@ -255,7 +227,9 @@ async def delete_site(
     logger: Logger = Depends(get_logger),
 ):
     # check for associated collection records, return error if present
-    scrape_task = False  # await check_for_scrapetask(id) - will reimplement this check at a later date.
+    scrape_task = (
+        False  # await check_for_scrapetask(id) - will reimplement this check at a later date.
+    )
     if scrape_task:
         raise HTTPException(
             status_code=status.HTTP_405_METHOD_NOT_ALLOWED,

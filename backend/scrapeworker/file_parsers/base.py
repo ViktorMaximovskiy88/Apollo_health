@@ -1,12 +1,14 @@
 import os
 import pathlib
-
 from abc import ABC
 from typing import Any
-from backend.scrapeworker.doc_type_classifier import classify_doc_type
+
+import aiofiles
+
+from backend.scrapeworker.common.date_parser import DateParser
 from backend.scrapeworker.common.detect_lang import detect_lang
 from backend.scrapeworker.common.utils import date_rgxs, label_rgxs
-from backend.scrapeworker.common.date_parser import DateParser
+from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.document_tagging.taggers import Taggers
 
 
@@ -25,7 +27,8 @@ class FileParser(ABC):
         self.file_path = file_path
         self.url = url
         self.taggers = taggers
-        self.filename_no_ext = pathlib.Path(os.path.basename(self.url)).with_suffix("")
+        file_name = self.url.removesuffix("/")
+        self.filename_no_ext = str(pathlib.Path(os.path.basename(file_name)).with_suffix(""))
 
     async def get_info(self) -> dict[str, str]:
         raise NotImplementedError("get_info is required")
@@ -35,6 +38,10 @@ class FileParser(ABC):
 
     def get_title(self, _):
         raise NotImplementedError("get_title is required")
+
+    async def get_bytes(self):
+        async with aiofiles.open(self.file_path, mode="r") as file:
+            return await file.read()
 
     async def parse(self) -> dict[str, Any]:
         self.metadata = await self.get_info()
