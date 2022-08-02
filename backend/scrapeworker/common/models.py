@@ -96,6 +96,6 @@ class DownloadContext(BaseModel):
         self.file_extension = get_extension_from_file_mimetype(self.file_path)
         return self.file_extension
 
-    def set_mimetype(self) -> None:
+    def set_mimetype(self) -> str | None:
         self.mimetype = get_mimetype(self.file_path)
         return self.mimetype
