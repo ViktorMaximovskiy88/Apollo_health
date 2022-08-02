@@ -42,16 +42,19 @@ class PlaywrightBaseScraper(ABC):
         self.selectors = []
 
     @cached_property
-    def css_selector(self) -> str:
-        raise NotImplementedError("css_selector is required ")
+    def css_selector(self) -> str | None:
+        return None
 
     @cached_property
-    def xpath_selector(self) -> str:
-        raise NotImplementedError("xpath_selector is required ")
+    def xpath_selector(self) -> str | None:
+        return None
 
     async def is_applicable(self) -> bool:
         await self.page.wait_for_timeout(2000)
-        css_handle = await self.page.query_selector(self.css_selector)
+
+        css_handle = None
+        if self.css_selector:
+            css_handle = await self.page.query_selector(self.css_selector)
 
         xpath_locator_count = 0
         if self.xpath_selector:
