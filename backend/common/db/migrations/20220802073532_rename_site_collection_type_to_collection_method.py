@@ -12,7 +12,7 @@ class Forward:
         input_document: Site,
         output_document: CollectionTypeSite,
     ):
-        output_document.collection_type = input_document.collection_method
+        output_document.collection_method = input_document.collection_type
 
 class Backward:
     @iterative_migration()
@@ -21,4 +21,4 @@ class Backward:
         input_document: CollectionTypeSite,
         output_document: Site,
     ):
-        output_document.collection_method = input_document.collection_type
+        output_document.collection_type = input_document.collection_method
