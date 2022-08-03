@@ -37,7 +37,7 @@ class RetrievedDocument(BaseDocument):
     file_extension: str | None = None
     content_type: str | None = None
     # full text is the same for checksums in the below set
-    file_checksum_aliases: set[str] = set()
+    file_checksum_aliases: list[str] = list()
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
