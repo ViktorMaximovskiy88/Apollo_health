@@ -10,7 +10,7 @@ from backend.common.models.base_document import BaseDocument
 
 class ContentExtractionTask(BaseDocument):
     site_id: PydanticObjectId | None = None
-    user_id: PydanticObjectId | None = None
+    initiator_id: PydanticObjectId | None = None
     retrieved_document_id: PydanticObjectId | None = None
     scrape_task_id: PydanticObjectId | None = None
 
