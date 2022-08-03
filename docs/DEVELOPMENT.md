@@ -75,6 +75,10 @@ source ~/.zshrc
 pyenv install 3.10.3
 pyenv global 3.10.3
 
+# Install PDF Libraries
+brew install swig
+brew install xpdf
+
 # Install Poetry
 curl -sSL https://install.python-poetry.org | python3
 
@@ -168,9 +172,9 @@ yarn start
 
 ## Now what?
 
-If everything has gone well, go to http://localhost:3000 and you should be redirected to our Auth0 SSO login page. Upon login you should see the Sourcehub app.
+If everything has gone well, go to <http://localhost:3000> and you should be redirected to our Auth0 SSO login page. Upon login you should see the Sourcehub app.
 
-If that succeeds, try creating a site. I recommend Molina HealthCare OH Drug at https://www.molinahealthcare.com/providers/oh/duals/drug/formulary.aspx. Once created, go into it and click the 'Run Collection' button and hope for the best, watching the logs for activity/errors.
+If that succeeds, try creating a site. I recommend Molina HealthCare OH Drug at <https://www.molinahealthcare.com/providers/oh/duals/drug/formulary.aspx>. Once created, go into it and click the 'Run Collection' button and hope for the best, watching the logs for activity/errors.
 
 ## Testing
 
@@ -192,9 +196,9 @@ python -m pytest
 
 # Installers
 
-- Install node using Installer from https://nodejs.org/en/download/. This should install npm
-- Install Docker Desktop from https://docs.docker.com/desktop/windows/install/. The same Install will be used in WSL environment
-- Install 10.3.4 Python for Windows from https://www.python.org/downloads/. If you have any other older version installed, make sure that 10.3.4 becomes the default version. Check version by running 'python --version' command. This might require changing PATH environment variable
+- Install node using Installer from <https://nodejs.org/en/download/>. This should install npm
+- Install Docker Desktop from <https://docs.docker.com/desktop/windows/install/>. The same Install will be used in WSL environment
+- Install 10.3.4 Python for Windows from <https://www.python.org/downloads/>. If you have any other older version installed, make sure that 10.3.4 becomes the default version. Check version by running 'python --version' command. This might require changing PATH environment variable
 - Install Visual Studio Code
 - Install Git
 
@@ -261,8 +265,8 @@ yarn start
 # WSL2
 
 In case we run into problems running system on Windows, we checked an option running using WSL2
-Follow instructions in https://code.visualstudio.com/docs/remote/wsl-tutorial up to 'Python development' section
-Follow https://docs.microsoft.com/en-us/windows/wsl/tutorials/wsl-containers to run Docker containers. You will be running all docker containers from Windows terminal
+Follow instructions in <https://code.visualstudio.com/docs/remote/wsl-tutorial> up to 'Python development' section
+Follow <https://docs.microsoft.com/en-us/windows/wsl/tutorials/wsl-containers> to run Docker containers. You will be running all docker containers from Windows terminal
 Then follow above WSL2 instructions to install all required components. You might need to add 'sudo' to some commands.
 Note: I was able to clone git repository only using HTTPS command from Windows instructions. I was not able to start VS Code from WSL terminal.
 Instead I started VS Code on Windows, used 'Remote WSL' extension to switch to Ubuntu and then selected Ubuntu directory where project was installed

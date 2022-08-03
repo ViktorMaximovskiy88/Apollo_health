@@ -1,9 +1,10 @@
 from datetime import datetime
+
 from beanie import PydanticObjectId
 from pydantic import BaseModel, HttpUrl
-from backend.common.core.enums import SiteStatus
+
+from backend.common.core.enums import CollectionMethod, SiteStatus
 from backend.common.models.base_document import BaseDocument
-from backend.common.core.enums import CollectionMethod
 
 
 class ScrapeMethodConfiguration(BaseModel):
@@ -33,6 +34,7 @@ class BaseUrl(BaseModel):
 
 
 class NewSite(BaseModel):
+    user_id: PydanticObjectId | None = None
     name: str
     base_urls: list[BaseUrl] = []
     collection_method: str | None = CollectionMethod.Automated

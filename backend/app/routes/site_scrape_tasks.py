@@ -78,6 +78,7 @@ async def start_scrape_task(
     if site.collection_method == CollectionMethod.Manual:
         site_scrape_task = SiteScrapeTask(
             site_id=site_id,
+            user_id=current_user.id,
             start_time=datetime.now(tz=timezone.utc),
             queued_time=datetime.now(tz=timezone.utc),
             status=TaskStatus.IN_PROGRESS,

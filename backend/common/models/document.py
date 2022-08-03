@@ -10,6 +10,7 @@ from backend.common.models.doc_document import IndicationTag, TherapyTag
 
 class RetrievedDocument(BaseDocument):
     site_id: PydanticObjectId | None = None
+    user_id: PydanticObjectId | None = None
     scrape_task_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     logical_document_id: PydanticObjectId | None = None
     logical_document_version: int | None = None
@@ -49,6 +50,7 @@ class RetrievedDocument(BaseDocument):
 
 class UpdateRetrievedDocument(BaseModel):
     site_id: PydanticObjectId | None = None
+    user_id: PydanticObjectId | None = None
     effective_date: datetime | None = None
     end_date: datetime | None = None
     last_updated_date: datetime | None = None
@@ -79,6 +81,7 @@ class UpdateRetrievedDocument(BaseModel):
 
     automated_content_extraction: bool | None = None
     automated_content_extraction_class: str | None = None
+
 
 class RetrievedDocumentLimitTags(RetrievedDocument):
     class Collection:

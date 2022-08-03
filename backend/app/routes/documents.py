@@ -18,7 +18,7 @@ from backend.common.storage.client import DocumentStorageClient
 
 router = APIRouter(
     prefix="/documents",
-    tags=["Dcouments"],
+    tags=["Documents"],
 )
 
 

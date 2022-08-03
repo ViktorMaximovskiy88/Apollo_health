@@ -99,6 +99,7 @@ async def start_extraction_task(
 ):
     extraction_task = ContentExtractionTask(
         site_id=doc.site_id,
+        user_id=current_user.id,
         scrape_task_id=doc.scrape_task_id,
         retrieved_document_id=doc.id,
         queued_time=datetime.now(tz=timezone.utc),

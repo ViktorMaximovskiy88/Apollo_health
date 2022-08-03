@@ -1,14 +1,16 @@
 from datetime import datetime
 from uuid import UUID
+
 from beanie import Indexed, PydanticObjectId
 from pydantic import BaseModel
+
+from backend.common.core.enums import CollectionMethod, TaskStatus
 from backend.common.models.base_document import BaseDocument
-from backend.common.core.enums import TaskStatus
-from backend.common.core.enums import CollectionMethod
 
 
 class SiteScrapeTask(BaseDocument):
     site_id: Indexed(PydanticObjectId)  # type: ignore
+    user_id: PydanticObjectId | None = None
     queued_time: datetime
     start_time: datetime | None = None
     end_time: datetime | None = None
