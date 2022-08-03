@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from 'antd';
+import { Button, notification } from 'antd';
 import { useParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -10,16 +10,17 @@ import { useGetSiteQuery } from '../sites/sitesApi';
 import { CollectionsDataTable } from './CollectionsDataTable';
 import { CollectionMethod } from '../sites/types';
 import { ErrorLogModal } from './ErrorLogModal';
-import { AddDocumentModal } from "./addDocumentModal";
+import { AddDocumentModal } from './addDocumentModal';
 import { SiteStatus } from '../sites/siteStatus';
 import { SiteMenu } from '../sites/SiteMenu';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
 import { MainLayout } from '../../components';
+import { isErrorWithData } from '../../common/helpers';
 
 export function CollectionsPage() {
   const [modalVisible, setModalVisible] = useState(false);
   const [errorTraceback, setErrorTraceback] = useState('');
-  const [newDocumentModalVisible, setNewDocumentModalVisible]= useState(false);
+  const [newDocumentModalVisible, setNewDocumentModalVisible] = useState(false);
   const openErrorModal = (errorTraceback: string): void => {
     setErrorTraceback(errorTraceback);
     setModalVisible(true);
@@ -30,6 +31,27 @@ export function CollectionsPage() {
   const { data: site, refetch } = useGetSiteQuery(siteId);
   const [runScrape] = useRunSiteScrapeTaskMutation();
   if (!siteId) return null;
+
+  async function handleRunScrape() {
+    if (site?._id) {
+      try {
+        await runScrape(site._id).unwrap();
+      } catch (err) {
+        if (isErrorWithData(err)) {
+          notification.error({
+            message: 'Error Running Collection',
+            description: `${err.data.detail}`,
+          });
+        } else {
+          notification.error({
+            message: 'Error Running Collection',
+            description: JSON.stringify(err),
+          });
+        }
+      }
+    }
+  }
+
   return (
     <>
       <ErrorLogModal
@@ -37,15 +59,9 @@ export function CollectionsPage() {
         setVisible={setModalVisible}
         errorTraceback={errorTraceback}
       />
-      {
-        newDocumentModalVisible ?
-        <AddDocumentModal
-          setVisible={setNewDocumentModalVisible}
-          siteId={siteId}
-        />
-        :
-        null
-      }
+      {newDocumentModalVisible ? (
+        <AddDocumentModal setVisible={setNewDocumentModalVisible} siteId={siteId} />
+      ) : null}
       <MainLayout
         sidebar={<SiteMenu />}
         pageTitle={'Collections'}
@@ -54,7 +70,7 @@ export function CollectionsPage() {
             {site &&
             site.collection_method === CollectionMethod.Automated &&
             site.status !== SiteStatus.Inactive ? (
-              <Button onClick={() => runScrape(site._id)} className="ml-auto">
+              <Button onClick={() => handleRunScrape()} className="ml-auto">
                 Run Collection
               </Button>
             ) : site &&
@@ -65,7 +81,11 @@ export function CollectionsPage() {
           </>
         }
       >
-        <CollectionsDataTable siteId={siteId} openErrorModal={openErrorModal} openNewDocumentModal={() => setNewDocumentModalVisible(true)}  />
+        <CollectionsDataTable
+          siteId={siteId}
+          openErrorModal={openErrorModal}
+          openNewDocumentModal={() => setNewDocumentModalVisible(true)}
+        />
       </MainLayout>
     </>
   );

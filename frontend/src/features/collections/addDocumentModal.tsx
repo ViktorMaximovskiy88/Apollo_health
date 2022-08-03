@@ -3,11 +3,13 @@ import { Button, Modal, Form, Space, Input, Upload, DatePicker, Select, Tooltip,
 import { useForm } from 'antd/lib/form/Form';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
-
 import { UploadOutlined, QuestionCircleOutlined, LoadingOutlined, CheckCircleOutlined } from '@ant-design/icons';
+
 import { prettyDate } from '../../common';
 import { useAddDocumentMutation } from "../retrieved_documents/documentsApi"
+import { useGetScrapeTasksForSiteQuery } from "./siteScrapeTasksApi"
 import { baseApiUrl, client, fetchWithAuth } from '../../app/base-api';
+import { RetrievedDocument } from "../retrieved_documents/types";
 
 interface AddDocumentModalPropTypes {
   setVisible: (visible: boolean) => void;
@@ -19,8 +21,13 @@ export function AddDocumentModal({
     siteId,
 }: AddDocumentModalPropTypes) {
     const [form] = useForm();
+    const { data: scrapeTasks } = useGetScrapeTasksForSiteQuery(siteId, {
+        pollingInterval: 3000
+    });
+    const [ addDoc ] = useAddDocumentMutation();
+    const [ fileData, setFileData ] = useState<any>();
     const initialValues = {
-        "lang_code":"English"
+        "lang_code":"en"
     }
     const validateMessages = {
         required: '${label} is required!',
@@ -28,13 +35,23 @@ export function AddDocumentModal({
           url: '${label} is not a valid url!',
         },
     };
-    function saveDocument(){
-        
-
-        
-
-
-
+    async function saveDocument(newDocument: any){
+        try {
+            newDocument.site_id = siteId;
+            if (scrapeTasks) {
+               newDocument.scrape_task_id = scrapeTasks[0]._id
+            }
+            fileData.metadata.link_text = newDocument.link_text;
+            delete newDocument.link_text;
+            await addDoc({
+                ...newDocument,
+                ...fileData
+            });
+            setVisible(false);
+        }
+        catch(error) {
+            message.error('We could not save this document');
+        }
     }
     function onCancel(){
         setVisible(false);
@@ -54,7 +71,7 @@ export function AddDocumentModal({
                 initialValues={initialValues}
                 validateMessages={validateMessages}
                 onFinish={saveDocument}>
-                <UploadItem />
+                <UploadItem form={form} setFileData={setFileData} />
                 <div className="flex grow space-x-3">
                     <Form.Item className="grow" name="name" label="Document Name" rules={[{ required: true }]}>
                         <Input />
@@ -63,10 +80,13 @@ export function AddDocumentModal({
                     <LanguageItem />
                 </div>
                 <div className="flex grow space-x-3">
+                    <Form.Item className="grow" name="base_url" label="Base Url" rules={[{ type: 'url'}]}>
+                        <Input type="url" />
+                    </Form.Item>                    
                     <Form.Item className="grow" name="link_text" label="Link Text">
                         <Input />
                     </Form.Item>
-                    <Form.Item className="grow" name="url" label="Link Url">
+                    <Form.Item className="grow" name="url" label="Link Url" rules={[{ type: 'url', required: true  }]}>
                         <Input type="url" />
                     </Form.Item>
                 </div>
@@ -86,7 +106,7 @@ export function AddDocumentModal({
 
 
 function UploadItem(props: any) {
-    const [ addDoc ] = useAddDocumentMutation();
+    const { setFileData } = props;
     const [token, setToken] = useState('');
     const [fileName, setFileName] = useState('');
     const [uploadStatus, setUploadStatus] = useState('');
@@ -96,17 +116,25 @@ function UploadItem(props: any) {
     }, [setToken]);
 
     const onChange = (info: UploadChangeParam<UploadFile<unknown>>) => {
-        setFileName(info.file.name);
-        if (info.file.status === 'uploading') {
+        const { file } = info;
+        setFileName(file.name);
+        if (file.status === 'uploading') {
           setUploadStatus("uploading");
         }
-        if (info.file.status === 'done') {
-          setUploadStatus("done");
+        if (file.status === 'done') {
+            const response: any = file.response;
+            if (response.error) {
+                setUploadStatus("");
+                message.error(response.error);
+            } else if (response.success) {
+                setUploadStatus("done");
+                setFileData(response.data);
+            }
         }
-    };
+    }
 
     return (
-        <Form.Item name="document_file" label="Document File" rules={[{ required: true }]}>
+        <Form.Item label="Document File" rules={[{ required: uploadStatus === "done" ? false : true }]}>
             <Upload 
                 name="file"
                 accept=".pdf,.xlsx,.docx"
@@ -118,10 +146,10 @@ function UploadItem(props: any) {
                 onChange={onChange}
                 >
                 {
-                    uploadStatus == "uploading" ? 
+                    uploadStatus === "uploading" ? 
                     <Button style={{marginRight:"10px"}} icon={<LoadingOutlined />}>Uploading {fileName}...</Button>
                     : 
-                    uploadStatus == "done" ?
+                    uploadStatus === "done" ?
                     <Button style={{marginRight:"10px"}} icon={<CheckCircleOutlined />}>{fileName} uploaded!</Button>
                     :
                     <Button style={{marginRight:"10px"}} icon={<UploadOutlined />}>Click to Upload</Button>
@@ -201,6 +229,8 @@ function DateItems(props: any) {
                                             className="grow"
                                             label={field.title}>
                                             <DatePicker 
+                                                mode="date"
+                                                showTime={false}
                                                 style={{width:"100%"}}
                                                 format={(value) => prettyDate(value.toDate())} 
                                                 />
@@ -215,21 +245,6 @@ function DateItems(props: any) {
         </>
     )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

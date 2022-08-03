@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import signal
 import sys
 import traceback
@@ -41,7 +42,7 @@ async def signal_handler():
 async def pull_task_from_queue(worker_id):
     now = datetime.now(tz=timezone.utc)
     acquired = await SiteScrapeTask.get_motor_collection().find_one_and_update(
-        {"status": TaskStatus.QUEUED, "collection_type": CollectionMethod.Automated},
+        {"status": TaskStatus.QUEUED, "collection_method": CollectionMethod.Automated},
         {
             "$set": {
                 "start_time": now,
@@ -134,7 +135,8 @@ async def start_worker_async(worker_id):
                     ignore_https_errors=True,
                 )
             except Exception as ex:
-                print("Lost Browser", ex)
+                logging.error("Lost Browser")
+                logging.error(ex)
                 traceback.print_exc()
                 browser = await playwright.chromium.launch()
                 return await browser.new_context(

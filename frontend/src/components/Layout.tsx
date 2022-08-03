@@ -25,9 +25,9 @@ export function Layout({
       {showPageHeader && (
         <div
           className={classNames(
-            'box-border h-[60px] flex items-center p-4',
+            'box-border h-12 flex items-center p-2',
             title ? 'justify-between' : 'justify-end',
-            border ? 'border-2 border-zinc-100' : ''
+            border ? 'border border-zinc-100' : ''
           )}
         >
           {title}
@@ -39,7 +39,7 @@ export function Layout({
         <div
           className={classNames(
             'flex flex-1 flex-col bg-zinc-50 overflow-auto',
-            gap && 'p-4 ',
+            gap && 'p-2',
             showPageHeader && 'pt-0'
           )}
         >

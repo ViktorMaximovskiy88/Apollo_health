@@ -69,17 +69,6 @@ async def test_not_finding_sites_not_on_cron():
 
 
 @pytest.mark.asyncio
-async def test_not_finding_queued_sites():
-    cron = "0 * * * *"
-    site = simple_site(cron)
-    site.last_run_status = TaskStatus.QUEUED
-    site = await site.save()
-    crons = [cron]
-    sites = await find_sites_eligible_for_scraping(crons).to_list()
-    assert len(sites) == 0
-
-
-@pytest.mark.asyncio
 async def test_not_finding_sites_not_online():
     cron = "0 * * * *"
     crons = [cron]
@@ -108,10 +97,13 @@ async def test_not_finding_sites_not_online():
 
 
 @pytest.mark.asyncio
-async def test_not_finding_sites_already_queued():
-    site = simple_site("0 * * * *")
-    site.last_run_status = TaskStatus.QUEUED
-    site = await site.save()
+async def test_not_finding_queued_in_progress_sites():
+    site_one = simple_site("0 * * * *")
+    site_one.last_run_status = TaskStatus.QUEUED
+    site_two = simple_site("0 * * * *")
+    site_two.last_run_status = TaskStatus.IN_PROGRESS
+    await site_one.save()
+    await site_two.save()
     crons = ["0 * * * *"]
     sites = await find_sites_eligible_for_scraping(crons).to_list()
     assert len(sites) == 0

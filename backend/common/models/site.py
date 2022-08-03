@@ -12,6 +12,8 @@ class ScrapeMethodConfiguration(BaseModel):
     url_keywords: list[str]
     proxy_exclusions: list[PydanticObjectId] = []
     wait_for: list[str] = []
+    wait_for_timeout_ms: int = 0
+    search_in_frames: bool = False
     follow_links: bool = False
     follow_link_keywords: list[str]
     follow_link_url_keywords: list[str]
@@ -25,6 +27,8 @@ class UpdateScrapeMethodConfiguration(BaseModel):
     follow_links: bool | None = None
     follow_link_keywords: list[str] | None = None
     follow_link_url_keywords: list[str] | None = None
+    wait_for_timeout_ms: int = 0
+    search_in_frames: bool = False
 
 
 class BaseUrl(BaseModel):
@@ -113,6 +117,13 @@ class NoScrapeConfigSite(LastStatusSite):
 
 class SingleUrlSite(NoScrapeConfigSite):
     base_url: HttpUrl | None = None
+
+    class Collection:
+        name = "Site"
+
+
+class CollectionTypeSite(SingleUrlSite):
+    collection_type: str | None = CollectionMethod.Automated
 
     class Collection:
         name = "Site"

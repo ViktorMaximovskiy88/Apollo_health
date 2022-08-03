@@ -6,7 +6,11 @@ import pytest_asyncio
 from beanie import Document
 from fastapi import HTTPException
 
-from backend.app.routes.site_scrape_tasks import cancel_scrape_task, run_bulk_by_type
+from backend.app.routes.site_scrape_tasks import (
+    cancel_scrape_task,
+    run_bulk_by_type,
+    start_scrape_task,
+)
 from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
 from backend.common.db.init import init_db
 from backend.common.models.site import BaseUrl, HttpUrl, ScrapeMethodConfiguration, Site
@@ -55,12 +59,56 @@ def simple_site(
 
 
 def simple_scrape(site: Site, status=TaskStatus.QUEUED) -> SiteScrapeTask:
-    scrape = SiteScrapeTask(
+    return SiteScrapeTask(
         site_id=site.id,
         status=status,
         queued_time=datetime.now(tz=timezone.utc),
     )
-    return scrape
+
+
+class TestStartScrapeTask:
+    @pytest.mark.asyncio
+    async def test_run_collection(self):
+        site_one = await simple_site().save()
+
+        res = await start_scrape_task(site_one.id, User, MockLogger)
+        assert res.site_id == site_one.id
+        scrapes = await SiteScrapeTask.find({}).to_list()
+        assert len(scrapes) == 1
+        update_site = await Site.find_one({})
+        assert update_site.last_run_status == res.status == TaskStatus.QUEUED
+
+    async def test_no_site_found(self):
+        with pytest.raises(HTTPException) as e:
+            await start_scrape_task("62e823397ab9edcd2557612d", User, MockLogger)
+        assert isinstance(e.value, HTTPException)
+        assert e.value.status_code == 404
+        assert e.value.detail == "Site 62e823397ab9edcd2557612d Not Found"
+        scrapes = await SiteScrapeTask.find({}).to_list()
+        assert len(scrapes) == 0
+
+    @pytest.mark.asyncio
+    async def test_already_scraping(self):
+        site_one = await simple_site().save()
+        scrape_one = await simple_scrape(site_one).save()
+        site_two = await simple_site().save()
+        scrape_two = await simple_scrape(site_two, TaskStatus.IN_PROGRESS).save()
+
+        with pytest.raises(HTTPException) as e:
+            await start_scrape_task(site_one.id, User, MockLogger)
+        assert isinstance(e.value, HTTPException)
+        assert e.value.status_code == 406
+        assert e.value.detail == f"Scrapetask {scrape_one.id} is already queued or in progress."
+        scrapes = await SiteScrapeTask.find({}).to_list()
+        assert len(scrapes) == 2
+
+        with pytest.raises(HTTPException) as e:
+            await start_scrape_task(site_two.id, User, MockLogger)
+        assert isinstance(e.value, HTTPException)
+        assert e.value.status_code == 406
+        assert e.value.detail == f"Scrapetask {scrape_two.id} is already queued or in progress."
+        scrapes = await SiteScrapeTask.find({}).to_list()
+        assert len(scrapes) == 2
 
 
 class TestRunBulk:
