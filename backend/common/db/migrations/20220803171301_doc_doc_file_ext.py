@@ -15,8 +15,7 @@ class Forward:
         non_pdf_count = 0
         async for result in RetrievedDocument.find({"file_extension": {"$ne": "pdf"}}):
             doc_doc: DocDocument = DocDocument.find_one({"retrieved_document_id": result.id})
-            doc_doc.file_extension = result.file_extension
-            await doc_doc.save()
+            await doc_doc.update({"$set": {"file_extension": result.file_extension}})
             non_pdf_count += 1
 
         logging.info(f"updating non-pdfs -> modified_count={non_pdf_count}")
