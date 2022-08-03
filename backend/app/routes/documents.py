@@ -185,6 +185,7 @@ async def update_document(
     ace_class_changed = (
         target.automated_content_extraction_class != updates.automated_content_extraction_class
     )
+
     if ace_turned_on or ace_class_changed:
         task = ContentExtractionTask(
             site_id=target.site_id,
@@ -216,6 +217,7 @@ async def add_document(
     now = datetime.now()
     new_document = RetrievedDocument(
         base_url=document.base_url,
+        user_id=current_user.id,
         name=document.name,
         text_checksum=document.text_checksum,
         doc_type_confidence=document.doc_type_confidence,

@@ -49,7 +49,6 @@ class RetrievedDocument(BaseDocument):
 
 class UpdateRetrievedDocument(BaseModel):
     site_id: PydanticObjectId | None = None
-    user_id: PydanticObjectId | None = None
     effective_date: datetime | None = None
     end_date: datetime | None = None
     last_updated_date: datetime | None = None

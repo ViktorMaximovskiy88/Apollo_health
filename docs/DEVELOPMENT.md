@@ -161,7 +161,7 @@ python backend/scrapeworker/main.py
 source .venv/bin/activate
 python backend/parseworker/main.py
 
-# Parse Worker
+# Scheduler Worker
 source .venv/bin/activate
 python backend/scheduler/main.py
 
