@@ -38,7 +38,7 @@ class BaseUrl(BaseModel):
 
 
 class NewSite(BaseModel):
-    user_id: PydanticObjectId | None = None
+    creator_id: PydanticObjectId | None = None
     name: str
     base_urls: list[BaseUrl] = []
     collection_method: str | None = CollectionMethod.Automated

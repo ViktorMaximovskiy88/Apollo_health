@@ -98,7 +98,7 @@ async def create_site(
 ):
     new_site = Site(
         name=site.name,
-        user_id=current_user.id,
+        creator_id=current_user.id,
         base_urls=site.base_urls,
         scrape_method=site.scrape_method,
         collection_method=site.collection_method,
