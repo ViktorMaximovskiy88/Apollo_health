@@ -25,10 +25,6 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
         href_selectors = filter_by_href(webform=True)
         return ", ".join(href_selectors)
 
-    @cached_property
-    def xpath_selector(self) -> str:
-        return ""
-
     async def __setup(self):
         cookie: SetCookieParam = {
             "name": "AspxAutoDetectCookieSupport",

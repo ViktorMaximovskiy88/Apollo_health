@@ -73,10 +73,8 @@ class ContentfulScraper(PlaywrightBaseScraper):
         xpath_locator_count = await xpath_locator.count()
 
         for index in range(0, xpath_locator_count):
-
             try:
                 link_handle = await xpath_locator.nth(index).element_handle(timeout=1000)
-
                 async with self.page.expect_event("response", timeout=1000) as event_info:
 
                     await link_handle.click()
