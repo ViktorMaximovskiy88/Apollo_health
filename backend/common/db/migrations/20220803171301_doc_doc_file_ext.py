@@ -11,7 +11,7 @@ class Forward:
     async def doc_doc_file_ext(self, session):
 
         # getting crafty, we know these are pdfs are the lions share
-        # right now prod has 14 non pdfs, lets let it roll #yolo
+        # right now prod has 39 non pdfs, lets let it roll #yolo
         non_pdf_count = 0
         async for result in RetrievedDocument.find({"file_extension": {"$ne": "pdf"}}):
             doc_doc: DocDocument = DocDocument.find_one({"retrieved_document_id": result.id})
