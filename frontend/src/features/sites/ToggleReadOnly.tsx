@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Site } from './types';
 import { SiteStatus } from './siteStatus';
 import { useUpdateSiteMutation } from './sitesApi';
-import { useCurrentUser } from './useCurrentUser';
+import { useCurrentUser } from '../../common/hooks/use-current-user';
 
 interface ToggleReadOnlyPropTypes {
   form: FormInstance;

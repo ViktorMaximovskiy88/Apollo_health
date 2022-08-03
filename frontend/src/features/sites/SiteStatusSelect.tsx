@@ -5,7 +5,7 @@ import { Site } from './types';
 import { SiteStatus } from './siteStatus';
 import { FormInstance } from 'antd/lib/form/Form';
 import { useUpdateSiteMutation } from './sitesApi';
-import { useCurrentUser } from './useCurrentUser';
+import { useCurrentUser } from '../../common/hooks/use-current-user';
 
 const siteStatuses = [
   { value: SiteStatus.New, label: 'New' },

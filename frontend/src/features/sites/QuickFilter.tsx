@@ -7,7 +7,7 @@ import { initialState, setSiteTableFilter, setSiteTableSort, siteTableState } fr
 import { useDispatch, useSelector } from 'react-redux';
 import { SiteStatus } from './siteStatus';
 import { TypeSingleFilterValue } from '@inovua/reactdatagrid-community/types';
-import { useCurrentUser } from './useCurrentUser';
+import { useCurrentUser } from '../../common/hooks/use-current-user';
 
 enum QuickFilter {
   AssignedToMe = 'ASSIGNED_TO_ME',

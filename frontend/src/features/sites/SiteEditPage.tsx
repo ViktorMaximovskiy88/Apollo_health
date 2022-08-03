@@ -6,7 +6,7 @@ import { useGetSiteQuery, useUpdateSiteMutation } from './sitesApi';
 import { useCancelAllSiteScrapeTasksMutation } from '../collections/siteScrapeTasksApi';
 import { MainLayout } from '../../components';
 import { SiteStatus } from './siteStatus';
-import { useCurrentUser } from './useCurrentUser';
+import { useCurrentUser } from '../../common/hooks/use-current-user';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { useEffect } from 'react';
 import { SiteMenu } from '../sites/SiteMenu';
