@@ -37,7 +37,7 @@ export const createColumns = ({
       defaultFlex: 1,
       filterSearch: true,
       render: ({ data: doc }: { data: DocDocument }) => {
-        return <Link to={`${doc._id}/edit`}>{doc.name}</Link>;
+        return <Link to={`/documents/${doc._id}`}>{doc.name}</Link>;
       },
     },
     {
