@@ -10,7 +10,7 @@ from backend.common.models.base_document import BaseDocument
 
 class SiteScrapeTask(BaseDocument):
     site_id: Indexed(PydanticObjectId)  # type: ignore
-    user_id: PydanticObjectId | None = None
+    initiator_id: PydanticObjectId | None = None
     queued_time: datetime
     start_time: datetime | None = None
     end_time: datetime | None = None
