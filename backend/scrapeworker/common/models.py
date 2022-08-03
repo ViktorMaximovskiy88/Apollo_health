@@ -1,15 +1,16 @@
 import re
 from typing import Any
+
+from aiohttp import ClientResponse
 from pydantic import BaseModel
 
-from backend.scrapeworker.playbook import PlaybookContext
 from backend.scrapeworker.common.utils import (
-    extension_to_mimetype_map,
-    get_extension_from_path_like,
-    get_extension_from_path_like,
     get_extension_from_content_type,
-    get_extension_from_file_mime_type,
+    get_extension_from_file_mimetype,
+    get_extension_from_path_like,
+    get_mimetype,
 )
+from backend.scrapeworker.playbook import PlaybookContext
 
 
 class Metadata(BaseModel):
@@ -34,12 +35,14 @@ class Response(BaseModel):
     content_type: str | None = None
     content_disposition_filename: str | None = None
     status: int | None = None
+    content_length: int | None = None
 
-    def from_headers(self, headers):
+    def from_aio_response(self, response: ClientResponse):
+        headers = response.headers
+        self.status = response.status
         self.content_type = self.get_content_type(headers)
-        self.content_disposition_filename = self.get_content_disposition_filename(
-            headers
-        )
+        self.content_disposition_filename = self.get_content_disposition_filename(headers)
+        self.content_length = headers.get("content-length") or 0
 
     def get_content_disposition_filename(self, headers) -> str | None:
         matched = None
@@ -62,7 +65,7 @@ class Response(BaseModel):
             return None
 
 
-class Download(BaseModel):
+class DownloadContext(BaseModel):
     metadata: Metadata = Metadata()
     request: Request
     response: Response = Response()
@@ -71,22 +74,28 @@ class Download(BaseModel):
     file_extension: str | None = None
     file_path: str | None = None
     file_hash: str | None = None
+    file_size: int = 0
 
     content_hash: str | None = None
     content_type: str | None = None
+    mimetype: str | None = None
 
-    def guess_extension(self) -> None:
-        guess_ext = get_extension_from_path_like(self.request.url)
+    def guess_extension(self) -> str | None:
+        guessed_ext = get_extension_from_path_like(self.request.url)
 
-        if not guess_ext:
-            guess_ext = get_extension_from_path_like(
-                self.response.content_disposition_filename
-            )
-        if not guess_ext:
-            guess_ext = get_extension_from_content_type(self.response.content_type)
+        if not guessed_ext:
+            guessed_ext = get_extension_from_path_like(self.response.content_disposition_filename)
 
-        if not guess_ext:
-            guess_ext = get_extension_from_file_mime_type(self.file_path)
+        if not guessed_ext:
+            guessed_ext = get_extension_from_content_type(self.response.content_type)
 
-        self.file_extension = guess_ext
-        self.content_type = extension_to_mimetype_map[guess_ext] or None
+        self.file_extension = guessed_ext
+        return self.file_extension
+
+    def set_extension_from_mimetype(self) -> None:
+        self.file_extension = get_extension_from_file_mimetype(self.file_path)
+        return self.file_extension
+
+    def set_mimetype(self) -> str | None:
+        self.mimetype = get_mimetype(self.file_path)
+        return self.mimetype

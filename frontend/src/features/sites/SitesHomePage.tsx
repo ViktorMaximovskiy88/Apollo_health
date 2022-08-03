@@ -143,7 +143,6 @@ export function SitesHomePage() {
   const [isLoading, setLoading] = useState(false);
   return (
     <MainLayout
-      pageTitle={'Sites'}
       pageToolbar={
         <>
           <QuickFilter isLoading={isLoading} />

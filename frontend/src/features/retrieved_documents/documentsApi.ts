@@ -27,7 +27,11 @@ export const documentsApi = createApi({
       providesTags: (_r, _e, id) => [{ type: 'RetrievedDocument' as const, id }],
     }),
     addDocument: builder.mutation<RetrievedDocument, Partial<RetrievedDocument>>({
-      query: (body) => ({ url: '/documents/', method: 'PUT', body })
+      query: (body) => ({ url: '/documents/', method: 'PUT', body }),
+      invalidatesTags: (_r, _e, { _id: id }) => [
+        { type: 'RetrievedDocument', id },
+        { type: 'ChangeLog', id },
+      ],
     }),
     updateDocument: builder.mutation<RetrievedDocument, Partial<RetrievedDocument>>({
       query: (body) => ({
@@ -55,7 +59,7 @@ export const documentsApi = createApi({
       providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
     }),
     getDocumentViewerUrl: builder.query<RetrievedDocument, string | undefined>({
-      query: (id) => `/documents/viewer/${id}`,
+      query: (id) => `/documents/viewer/${id}?_=${+new Date()}`,
       providesTags: (_r, _e, id) => [{ type: 'RetrievedDocument' as const, id }],
     }),
   }),

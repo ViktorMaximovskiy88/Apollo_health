@@ -4,7 +4,7 @@ from functools import cached_property
 
 from playwright.async_api import APIResponse
 
-from backend.scrapeworker.common.models import Download, Metadata, Request, Response
+from backend.scrapeworker.common.models import DownloadContext, Metadata, Request, Response
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 
 
@@ -13,7 +13,7 @@ class ContentfulScraper(PlaywrightBaseScraper):
     type: str = "Contentful"
     requests: list[Request | None] = []
     metadatas: list[Metadata] = []
-    downloads: list[Download] = []
+    downloads: list[DownloadContext] = []
     links_found: int = 0
     last_metadata_index: int = 0
 
@@ -27,7 +27,7 @@ class ContentfulScraper(PlaywrightBaseScraper):
         xpaths_selectors = ['//a[@*[starts-with(name(), "data-v-")]][not(@href)]']
         return "|".join(xpaths_selectors)
 
-    async def __postprocess(self, response: APIResponse) -> Download | None:
+    async def __postprocess(self, response: APIResponse) -> DownloadContext | None:
         parsed = None
         content_type = None
         try:
@@ -38,7 +38,7 @@ class ContentfulScraper(PlaywrightBaseScraper):
                 parsed = json.loads(body)
                 file_field = parsed["fields"]["file"]
 
-                return Download(
+                return DownloadContext(
                     content_type=file_field["contentType"],
                     request=Request(
                         url=f'https:{file_field["url"]}',
@@ -47,7 +47,7 @@ class ContentfulScraper(PlaywrightBaseScraper):
                 )
             elif "assets" in response.url:
                 logging.debug(f"direct download {content_type}")
-                return Download(
+                return DownloadContext(
                     response=Response(content_type=content_type, status=response.status),
                     request=Request(
                         url=response.url,
@@ -61,8 +61,8 @@ class ContentfulScraper(PlaywrightBaseScraper):
             logging.error("exception", exc_info=1)
             return None
 
-    async def execute(self) -> list[Download]:
-        downloads: list[Download] = []
+    async def execute(self) -> list[DownloadContext]:
+        downloads: list[DownloadContext] = []
 
         xpath_locator = self.page.locator(self.xpath_selector)
         xpath_locator_count = await xpath_locator.count()

@@ -10,6 +10,6 @@ export interface SiteScrapeTask extends BaseDocument {
   error_message?: string | null;
   documents_found: number;
   new_documents_found: number;
-  collection_type: string;
+  collection_method: string;
 }
 

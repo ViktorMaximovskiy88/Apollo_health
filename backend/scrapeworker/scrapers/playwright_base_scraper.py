@@ -9,7 +9,7 @@ from playwright.async_api import BrowserContext, ElementHandle, Page, ProxySetti
 from backend.common.core.config import config
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import ScrapeMethodConfiguration
-from backend.scrapeworker.common.models import Download, Metadata
+from backend.scrapeworker.common.models import DownloadContext, Metadata
 from backend.scrapeworker.playbook import PlaybookContext
 
 closest_heading_expression: str = """
@@ -50,7 +50,9 @@ class PlaywrightBaseScraper(ABC):
         return None
 
     async def is_applicable(self) -> bool:
-        await self.page.wait_for_timeout(2000)
+
+        if self.config.wait_for_timeout_ms:
+            await self.page.wait_for_timeout(self.config.wait_for_timeout_ms)
 
         css_handle = None
         if self.css_selector:
@@ -60,6 +62,19 @@ class PlaywrightBaseScraper(ABC):
         if self.xpath_selector:
             xpath_locator = self.page.locator(self.xpath_selector)
             xpath_locator_count = await xpath_locator.count()
+
+        css_handle = await self.page.query_selector(self.css_selector)
+
+        if len(self.page.main_frame.child_frames) > 0 and self.config.search_in_frames:
+            child_frames = self.page.main_frame.child_frames
+            frame = child_frames[0]
+
+            await frame.wait_for_load_state("domcontentloaded")
+            css_handle = await frame.query_selector(self.css_selector)
+
+            if self.xpath_selector:
+                xpath_locator = frame.locator(self.xpath_selector)
+                xpath_locator_count = await xpath_locator.count()
 
         result = css_handle is not None or xpath_locator_count > 0
 
@@ -112,5 +127,5 @@ class PlaywrightBaseScraper(ABC):
         return [proxy, proxies]
 
     @abstractmethod
-    async def execute(self) -> list[Download]:
+    async def execute(self) -> list[DownloadContext]:
         pass

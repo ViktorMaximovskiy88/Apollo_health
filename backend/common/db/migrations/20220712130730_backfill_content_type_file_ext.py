@@ -1,7 +1,9 @@
 import logging
+
 from beanie import free_fall_migration
+
 from backend.common.models.document import RetrievedDocument
-from backend.scrapeworker.common.models import extension_to_mimetype_map
+from backend.scrapeworker.common.utils import extension_to_mimetype_map
 
 
 class Forward:
@@ -15,7 +17,7 @@ class Forward:
                 {"$set": {"content_type": extension_to_mimetype_map[ext]}},
             )
             logging.info(
-                f"updating {ext} -> acknowledged={result.acknowledged} matched_count={result.matched_count} modified_count={result.modified_count}"
+                f"updating {ext} -> acknowledged={result.acknowledged} matched_count={result.matched_count} modified_count={result.modified_count}"  # noqa
             )
 
         # updating the rest... to be what code default was -> pdf
@@ -33,7 +35,7 @@ class Forward:
         )
 
         logging.info(
-            f"updating pdf -> acknowledged={result.acknowledged} matched_count={result.matched_count} modified_count={result.modified_count}"
+            f"updating pdf -> acknowledged={result.acknowledged} matched_count={result.matched_count} modified_count={result.modified_count}"  # noqa
         )
 
 

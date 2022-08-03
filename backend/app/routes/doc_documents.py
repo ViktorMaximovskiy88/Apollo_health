@@ -21,8 +21,8 @@ from backend.common.models.doc_document import (
     calc_final_effective_date,
 )
 from backend.common.models.document import RetrievedDocument
-from backend.common.storage.text_handler import TextHandler
 from backend.common.models.user import User
+from backend.common.storage.text_handler import TextHandler
 
 router = APIRouter(
     prefix="/doc-documents",
@@ -83,6 +83,11 @@ async def create_diff(
 ):
     text_handler = TextHandler()
     compare_doc = await get_retrieved_doc(compare_id)
+    if target.text_checksum is None or compare_doc.text_checksum is None:
+        raise HTTPException(
+            detail="Doc Document or Retreived Document does not have an associated text file.",
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+        )
     _, diff = await text_handler.create_diff(target.text_checksum, compare_doc.text_checksum)
     return CompareResponse(diff=diff.decode("utf-8"), org_doc=target, new_doc=compare_doc)
 
@@ -99,6 +104,6 @@ async def update_extraction_task(
 
     # Sending Event Bridge Event.  Need to add condition when to send.
     document_json = EventConvert(document=updated).convert()
-    send_evnt_client = SendEventClient()
-    send_evnt_client.send_event("document-details", document_json)
+    send_event_client = SendEventClient()
+    send_event_client.send_event("document-details", document_json)
     return updated

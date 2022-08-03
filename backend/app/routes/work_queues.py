@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Type
 
 from beanie import PydanticObjectId
@@ -152,7 +152,7 @@ async def attempt_lock_acquire(
 
     now = datetime.now(tz=timezone.utc)
     if not expiry_time:
-        expiry_time = now + datetime.timedelta(seconds=grace)
+        expiry_time = now + timedelta(seconds=grace)
     await Collection.find_one({"_id": item_id}).update(
         {"$pull": {"locks": {"expires": {"$lt": now}}}}
     )
@@ -178,7 +178,10 @@ async def attempt_lock_acquire(
     if already_owned:
         item = LockableDocument.parse_obj(already_owned)
         lock = next(
-            filter(lambda l: l.work_queue_id == work_queue.id and l.expires > now, item.locks)
+            filter(
+                lambda l: l.work_queue_id == work_queue.id and l.expires.now(tz=timezone.utc) > now,
+                item.locks,
+            )
         )
         return TakeLockResponse(acquired_lock=True, lock=lock)
 
@@ -205,7 +208,10 @@ async def attempt_lock_acquire(
     if acquired:
         item = LockableDocument.parse_obj(acquired)
         lock = next(
-            filter(lambda l: l.work_queue_id == work_queue.id and l.expires > now, item.locks)
+            filter(
+                lambda l: l.work_queue_id == work_queue.id and l.expires.now(tz=timezone.utc) > now,
+                item.locks,
+            )
         )
         return TakeLockResponse(acquired_lock=True, lock=lock)
 
@@ -293,7 +299,7 @@ async def submit_work_item(
         dest_user = await User.get(body.reassignment)
         dest_queue = await WorkQueue.find_one(WorkQueue.name == action.dest_queue)
         if dest_queue and dest_user:
-            expires = datetime.now(tz=timezone.utc) + datetime.timedelta(days=365)
+            expires = datetime.now(tz=timezone.utc) + timedelta(days=365)
             await attempt_lock_acquire(dest_queue, item_id, dest_user, expires)
 
     if body.comment:

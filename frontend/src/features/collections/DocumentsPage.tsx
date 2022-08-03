@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { Button } from 'antd';
 import { MainLayout } from '../../components';
 import { DocumentsTable } from './DocumentsTable';
@@ -11,6 +11,7 @@ import { CollectionMethod } from '../sites/types';
 
 export function DocumentsPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const [newDocumentModalVisible, setNewDocumentModalVisible] = useState(false);
   const { data: site } = useGetSiteQuery(params.siteId);
   return (

@@ -1,3 +1,4 @@
+# noqa E501
 import os
 import pathlib
 import re
@@ -13,6 +14,8 @@ def compile_date_rgx():
         r"(?<! \d|\w{2})[0-9][0-9]? (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).? [0-9][0-9][0-9][0-9]",  # d M yyyy # noqa
         r"(?<! \d|\w{2})[0-9][0-9]? (January|February|March|April|May|June|July|August|September|October|November|December),? [0-9][0-9][0-9][0-9]",  # d M yyyy # noqa
         r"(January|February|March|April|May|June|July|August|September|October|November|December) [0-9][0-9]?,? [0-9][0-9][0-9][0-9]",  # M d, yyyy # noqa
+        r"(?<!\d |\w{2})(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).?,? [0-9][0-9]?(?!\d |\w{2})",  # M, dd # noqa
+        r"(?<!\d |\w{2})(January|February|March|April|May|June|July|August|September|October|November|December),? [0-9][0-9]?(?!\d |\w{2})",  # M, dd # noqa
         r"(?<!\d |\w{2})(January|February|March|April|May|June|July|August|September|October|November|December),? [0-9][0-9][0-9][0-9]",  # M, yyyy # noqa
         r"(?<!\d |\w{2})(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).?,? [0-9]{4}",  # M, yyyy # noqa
         r"(?<!\d|\/|-|\||\.)[0-9][0-9]?[\/\-\.\|]\d{2}(?!\d|\/|-|\||\.)",  # MM/yy with /, -, | or . # noqa
@@ -61,9 +64,14 @@ mimetype_to_extension_map = {
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
     "application/pdf": "pdf",
     "text/html": "html",
+    "text/csv": "csv",
+    "text/plain": "txt",
+    "application/octet-stream": "bin",
 }
-
 extension_to_mimetype_map = {v: k for k, v in mimetype_to_extension_map.items()}
+
+supported_extensions = [*mimetype_to_extension_map.values()]
+supported_mimetypes = [*extension_to_mimetype_map.values()]
 
 
 def get_extension_from_path_like(path_like: str | None) -> str | None:
@@ -73,7 +81,7 @@ def get_extension_from_path_like(path_like: str | None) -> str | None:
     maybe_extension = pathlib.Path(os.path.basename(path_like))
     if maybe_extension:
         extension = maybe_extension.suffix[1:]
-        if extension in ["docx", "xlsx", "pdf", "html"]:
+        if extension in supported_extensions:
             return extension
 
 
@@ -84,10 +92,17 @@ def get_extension_from_content_type(content_type: str | None) -> str | None:
     return mimetype_to_extension_map.get(content_type) or None
 
 
-def get_extension_from_file_mime_type(file_path: str | None):
+def get_mimetype(file_path: str | None):
     if file_path is None:
         return None
 
     mime = magic.Magic(mime=True)
-    mime_type = mime.from_file(file_path)
-    return mimetype_to_extension_map.get(mime_type) or None
+    return mime.from_file(file_path)
+
+
+def get_extension_from_file_mimetype(file_path: str | None):
+    if file_path is None:
+        return None
+
+    mimetype = get_mimetype(file_path)
+    return mimetype_to_extension_map.get(mimetype)

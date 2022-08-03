@@ -14,7 +14,7 @@ from tenacity import AttemptManager
 from backend.common.core.config import config
 from backend.common.models.proxy import Proxy
 from backend.common.storage.hash import DocStreamHasher
-from backend.scrapeworker.common.models import Download
+from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.common.rate_limiter import RateLimiter
 
 default_headers: dict[str, str] = {
@@ -54,9 +54,8 @@ class AioDownloader:
     async def close(self):
         await self.session.close()
 
-    async def send_request(self, download: Download, proxy: AioProxy | None):
+    async def send_request(self, download: DownloadContext, proxy: AioProxy | None):
         headers = default_headers | download.request.headers
-        # TODO de-duplicate this...
         if proxy:
             response = await self.session.request(
                 url=download.request.url,
@@ -125,30 +124,34 @@ class AioDownloader:
                 aio_proxies[i % proxy_count] if proxy_count > 0 else (None, None)
             )
             logging.info(
-                f"{i} Using proxy {proxy and proxy.name} ({proxy_settings and proxy_settings.proxy})"  # noqa
+                f"{i} Using proxy {proxy and proxy.name} ({proxy_settings and proxy_settings.proxy})"  # noqa E501
             )
             yield attempt, proxy_settings
 
     async def write_response_to_file(
         self,
-        download: Download,
+        download: DownloadContext,
         response: ClientResponse,
         temp: tempfile._TemporaryFileWrapper,
     ):
         hasher = DocStreamHasher()
         download.file_path = temp.name
+
         async with aiofiles.open(download.file_path, "wb") as fd:
             async for data in response.content.iter_any():
                 await fd.write(data)
                 hasher.update(data)
             await fd.flush()
 
+        download.set_mimetype()
+        download.set_extension_from_mimetype()
         download.file_hash = hasher.hexdigest()
+
         return download.file_path, download.file_hash
 
-    async def download_to_tempfile(
+    async def try_download_to_tempfile(
         self,
-        download: Download,
+        download: DownloadContext,
         proxies: list[tuple[Proxy | None, ProxySettings | None]] = [],
     ):
         url = download.request.url
@@ -157,10 +160,12 @@ class AioDownloader:
             with attempt:
                 response = await self.send_request(download, proxy)
 
-                if not response.ok:
-                    return
-
-                download.response.from_headers(response.headers)
+                download.response.from_aio_response(response)
+                # We only need this now due to the xlsx lib needing an ext (derp)
                 download.guess_extension()
+
+                if not response.ok:
+                    continue
+
                 with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
                     yield await self.write_response_to_file(download, response, temp)

@@ -29,7 +29,7 @@ from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.aio_downloader import AioDownloader
 from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocsCollectedException
-from backend.scrapeworker.common.models import Download, Request
+from backend.scrapeworker.common.models import DownloadContext, Request
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.scrapeworker.common.utils import get_extension_from_path_like
 from backend.scrapeworker.document_tagging.indication_tagging import IndicationTagger
@@ -109,9 +109,10 @@ class ScrapeWorker:
             DocDocument.retrieved_document_id == retrieved_document.id
         )
         if doc_document:
-            await doc_document.update(
-                {"$set": {"last_collected_date": retrieved_document.last_collected_date}}
-            )
+            if doc_document.text_checksum is None:  # Can be removed after text added to older docs
+                doc_document.text_checksum = retrieved_document.text_checksum
+            doc_document.last_collected_date = retrieved_document.last_collected_date
+            await doc_document.save()
         else:
             await self.create_doc_document(retrieved_document)
 
@@ -149,7 +150,7 @@ class ScrapeWorker:
     async def update_retrieved_document(
         self,
         document: RetrievedDocument,
-        download: Download,
+        download: DownloadContext,
         parsed_content: dict(),
     ) -> UpdateRetrievedDocument:
         # TODO needs to be utcnow
@@ -174,14 +175,19 @@ class ScrapeWorker:
             name=parsed_content["title"],
             scrape_task_id=self.scrape_task.id,
             file_checksum_aliases=document.file_checksum_aliases,
+            text_checksum=document.text_checksum,
         )
         await update_and_log_diff(self.logger, await self.get_user(), document, updated_doc)
         return updated_doc
 
-    async def attempt_download(self, download: Download):
+    async def attempt_download(self, download: DownloadContext):
         url = download.request.url
         proxies = await self.get_proxy_settings()
-        async for (temp_path, checksum) in self.downloader.download_to_tempfile(download, proxies):
+
+        async for (temp_path, checksum) in self.downloader.try_download_to_tempfile(
+            download, proxies
+        ):
+
             parsed_content = await parse_by_type(temp_path, download, self.taggers)
             if parsed_content is None:
                 continue
@@ -192,7 +198,7 @@ class ScrapeWorker:
             logging.info(f"dest_path={dest_path} temp_path={temp_path}")
 
             if not self.doc_client.object_exists(dest_path):
-                self.doc_client.write_object(dest_path, temp_path, download.content_type)
+                self.doc_client.write_object(dest_path, temp_path, download.mimetype)
                 await self.scrape_task.update(Inc({SiteScrapeTask.new_documents_found: 1}))
 
             document = await RetrievedDocument.find_one(
@@ -201,6 +207,9 @@ class ScrapeWorker:
             )
 
             if document:
+                if document.text_checksum is None:  # Can be removed after text added to older docs
+                    text_checksum = await self.text_handler.save_text(parsed_content["text"])
+                    document.text_checksum = text_checksum
                 logging.debug("updating doc")
                 await self.update_retrieved_document(
                     document=document,
@@ -218,7 +227,10 @@ class ScrapeWorker:
 
                 if document:
                     logging.debug("updating doc w/alias")
-                    document.file_checksum_aliases.add(checksum)
+                    document.file_checksum_aliases.append(checksum)
+                    # unique, but cant use set in beanie as a type
+                    document.file_checksum_aliases = set(document.file_checksum_aliases)
+
                     await self.update_retrieved_document(
                         document=document,
                         download=download,
@@ -255,7 +267,7 @@ class ScrapeWorker:
                         url=url,
                         therapy_tags=parsed_content["therapy_tags"],
                         indication_tags=parsed_content["indication_tags"],
-                        file_checksum_aliases=set(checksum),
+                        file_checksum_aliases=[checksum],
                     )
 
                     await create_and_log(self.logger, await self.get_user(), document)
@@ -359,14 +371,14 @@ class ScrapeWorker:
     def active_base_urls(self):
         return [url for url in self.site.base_urls if url.status == "ACTIVE"]
 
-    def preprocess_download(self, download: Download, base_url: str):
+    def preprocess_download(self, download: DownloadContext, base_url: str):
         download.metadata.base_url = base_url
         if is_google(download.request.url):
             google_id = get_google_id(download.request.url)
             download.request.url = f"https://drive.google.com/u/0/uc?id={google_id}&export=download"
 
     async def queue_downloads(self, url: str, base_url: str):
-        all_downloads: list[Download] = []
+        all_downloads: list[DownloadContext] = []
         async with self.playwright_context(url) as (base_page, context):
             async for (page, playbook_context) in self.playbook.run_playbook(base_page):
                 for Scraper in scrapers:
@@ -405,7 +417,7 @@ class ScrapeWorker:
 
         return urls
 
-    def should_process_download(self, download: Download):
+    def should_process_download(self, download: DownloadContext):
         url = download.request.url
         filename = (
             download.response.content_disposition_filename
@@ -420,14 +432,14 @@ class ScrapeWorker:
         return extension in ["docx", "pdf", "xlsx"]
 
     async def run_scrape(self):
-        all_downloads: list[Download] = []
+        all_downloads: list[DownloadContext] = []
         base_urls: list[str] = [base_url.url for base_url in self.active_base_urls()]
         logging.info(f"base_urls={base_urls}")
 
         for url in base_urls:
             # skip the parse step and download
             if self.is_artifact_file(url):
-                download = Download(request=Request(url=url))
+                download = DownloadContext(request=Request(url=url))
                 all_downloads.append(download)
                 continue
 
