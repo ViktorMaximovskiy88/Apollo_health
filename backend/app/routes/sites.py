@@ -74,7 +74,7 @@ async def check_url(
     site = await Site.find_one(
         ElemMatch(Site.base_urls, {"url": urllib.parse.unquote(url)}),
         Site.id != current_site,
-        Site.disabled is not True,
+        {"disabled": False},
     )
 
     if site:
