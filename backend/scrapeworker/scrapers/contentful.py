@@ -27,6 +27,11 @@ class ContentfulScraper(PlaywrightBaseScraper):
         xpaths_selectors = ['//a[@*[starts-with(name(), "data-v-")]][not(@href)]']
         return "|".join(xpaths_selectors)
 
+    async def is_applicable(self) -> bool:
+        parent_applicable = await super().is_applicable()
+        # TODO best way to sniff this narrowly...
+        return parent_applicable
+
     async def __postprocess(self, response: APIResponse) -> DownloadContext | None:
         parsed = None
         content_type = None
