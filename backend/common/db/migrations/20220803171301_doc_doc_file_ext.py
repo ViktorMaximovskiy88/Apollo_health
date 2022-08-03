@@ -12,13 +12,18 @@ class Forward:
 
         # getting crafty, we know these are pdfs are the lions share
         # right now prod has 39 non pdfs, lets let it roll #yolo
-        non_pdf_count = 0
+        non_pdf_match_count = 0
+        non_pdf_update_count = 0
         async for result in RetrievedDocument.find({"file_extension": {"$ne": "pdf"}}):
+            non_pdf_match_count += 1
             doc_doc: DocDocument = DocDocument.find_one({"retrieved_document_id": result.id})
-            await doc_doc.update({"$set": {"file_extension": result.file_extension}})
-            non_pdf_count += 1
+            if doc_doc:
+                await doc_doc.update({"$set": {"file_extension": result.file_extension}})
+                non_pdf_update_count += 1
 
-        logging.info(f"updating non-pdfs -> modified_count={non_pdf_count}")
+        logging.info(
+            f"updating non-pdfs -> matched_count={non_pdf_match_count} modified_count={non_pdf_update_count}"  # noqa
+        )
 
         # now we can move fast with this guy; the rest are pdf
         result = await DocDocument.get_motor_collection().update_many(
