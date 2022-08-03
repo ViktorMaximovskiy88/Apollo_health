@@ -8,8 +8,10 @@ import { DocDocument } from "./types";
 import { Link } from 'react-router-dom';
 
 interface CreateColumnsType {
+  handleNewVersion: (data: DocDocument) => void;
 }
 export const createColumns = ({
+  handleNewVersion
 }: CreateColumnsType) => {
   return [
     {
@@ -96,10 +98,12 @@ export const createColumns = ({
       header: 'Actions',
       name: 'action',
       minWidth: 200,
-      render: ({ data: site }: { data: DocDocument }) => {
+      render: ({ data: doc }: { data: DocDocument }) => {
         return (
           <>
-            
+            <Button size="small" onClick={() => handleNewVersion(doc)}>
+              Upload new version
+            </Button>            
           </>
         );
       },
@@ -107,8 +111,12 @@ export const createColumns = ({
   ]
 };
 
-export const useDocumentColumns = () =>
+
+export const useDocumentColumns = ({
+  handleNewVersion,
+}: CreateColumnsType) =>
   useMemo(
-    () => createColumns({}),
-    []
+    () => createColumns({ handleNewVersion }),
+    [handleNewVersion]
   );
+

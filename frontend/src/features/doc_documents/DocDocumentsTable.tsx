@@ -8,6 +8,7 @@ import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 import { GridPaginationToolbar } from '../../components';
 import { useDocumentColumns as useColumns } from './useDocDocumentColumns';
+import { DocDocument } from "./types";
 
 import {
   docDocumentTableState,
@@ -62,11 +63,17 @@ const useControlledPagination = ({
   return controlledPaginationProps;
 };
 
-export function DocDocumentsTable() {
+interface DataTablePropTypes {
+  handleNewVersion: (data: DocDocument) => void;
+}
+
+export function DocDocumentsTable({
+  handleNewVersion,
+}: DataTablePropTypes) {
   // Trigger update every 10 seconds by invalidating memoized callback
   const { isActive, setActive, watermark } = useInterval(10000);
   const params = useParams();
-  const columns = useColumns();
+  const columns = useColumns({handleNewVersion});
   const [getDocDocumentsFn] = useLazyGetDocDocumentsQuery();
 
   const loadData = useCallback(
@@ -97,3 +104,4 @@ export function DocDocumentsTable() {
     />
   );
 }
+

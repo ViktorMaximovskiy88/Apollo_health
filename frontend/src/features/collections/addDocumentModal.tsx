@@ -10,13 +10,16 @@ import { useAddDocumentMutation } from "../retrieved_documents/documentsApi"
 import { useGetScrapeTasksForSiteQuery } from "./siteScrapeTasksApi"
 import { baseApiUrl, client, fetchWithAuth } from '../../app/base-api';
 import { RetrievedDocument } from "../retrieved_documents/types";
+import { DocDocument } from "../doc_documents/types";
 
 interface AddDocumentModalPropTypes {
+  oldVersion?: DocDocument,
   setVisible: (visible: boolean) => void;
   siteId: any;
 }
 
 export function AddDocumentModal({
+    oldVersion,
     setVisible,
     siteId,
 }: AddDocumentModalPropTypes) {
@@ -26,8 +29,17 @@ export function AddDocumentModal({
     });
     const [ addDoc ] = useAddDocumentMutation();
     const [ fileData, setFileData ] = useState<any>();
-    const initialValues = {
-        "lang_code":"en"
+    let initialValues: Partial<DocDocument> | undefined = {
+         "lang_code":"en"
+    };
+    if (oldVersion) {
+        initialValues = {
+            "lang_code":oldVersion.lang_code,
+            "name":oldVersion.name,
+            "document_type":oldVersion.document_type,
+            "link_text":oldVersion.link_text,
+            "url":oldVersion.url
+        }
     }
     const validateMessages = {
         required: '${label} is required!',
@@ -43,6 +55,7 @@ export function AddDocumentModal({
             }
             fileData.metadata.link_text = newDocument.link_text;
             delete newDocument.link_text;
+            delete newDocument.document_file;
             await addDoc({
                 ...newDocument,
                 ...fileData
@@ -134,7 +147,7 @@ function UploadItem(props: any) {
     }
 
     return (
-        <Form.Item label="Document File" rules={[{ required: uploadStatus === "done" ? false : true }]}>
+        <Form.Item name="document_file" label="Document File" rules={[{ required: uploadStatus === "done" ? false : true }]}>
             <Upload 
                 name="file"
                 accept=".pdf,.xlsx,.docx"
