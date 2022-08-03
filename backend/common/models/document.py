@@ -10,7 +10,7 @@ from backend.common.models.doc_document import IndicationTag, TherapyTag
 
 class RetrievedDocument(BaseDocument):
     site_id: PydanticObjectId | None = None
-    user_id: PydanticObjectId | None = None
+    uploader_id: PydanticObjectId | None = None
     scrape_task_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     logical_document_id: PydanticObjectId | None = None
     logical_document_version: int | None = None

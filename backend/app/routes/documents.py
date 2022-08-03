@@ -217,7 +217,7 @@ async def add_document(
     now = datetime.now()
     new_document = RetrievedDocument(
         base_url=document.base_url,
-        user_id=current_user.id,
+        uploader_id=current_user.id,
         name=document.name,
         text_checksum=document.text_checksum,
         doc_type_confidence=document.doc_type_confidence,
