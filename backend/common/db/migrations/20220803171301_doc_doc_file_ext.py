@@ -14,7 +14,9 @@ class Forward:
         # right now prod has 39 non pdfs, lets let it roll #yolo
         non_pdf_count = 0
         async for result in RetrievedDocument.find({"file_extension": {"$ne": "pdf"}}):
-            doc_doc: DocDocument = DocDocument.find_one({"retrieved_document_id": result.id})
+            doc_doc: DocDocument = DocDocument.find_one(
+                {"retrieved_document_id": result.id, "file_extension": {"$exists": False}}
+            )
             await doc_doc.update({"$set": {"file_extension": result.file_extension}})
             non_pdf_count += 1
 
