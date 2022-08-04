@@ -46,7 +46,6 @@ async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(scheme))
         logging.error(ex)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 
-    URL = "https://parprdusemmitst01.blob.core.windows.net/autohunteddocs/1e7a028b-c1ef-4472-9b5a-01213ea47ebd/1e7a028b-c1ef-4472-9b5a-01213ea47ebd.htm"  # noqa
     headers = {"Authorization": f"Bearer {token}"}
     response = requests.get("https://mmit-test.auth0.com/userinfo", headers=headers)
     email: str = payload.get(email_key)
