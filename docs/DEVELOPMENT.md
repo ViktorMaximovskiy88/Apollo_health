@@ -62,7 +62,7 @@ xcode-select --install
 # brew is apt more or less
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-brew install gnupg coreutils awscli protobuf libmagic
+brew install gnupg coreutils awscli protobuf libmagic swig xpdf
 
 # Install Docker
 brew install docker
@@ -74,10 +74,6 @@ brew install pyenv
 source ~/.zshrc
 pyenv install 3.10.3
 pyenv global 3.10.3
-
-# Install PDF Libraries
-brew install swig
-brew install xpdf
 
 # Install Poetry
 curl -sSL https://install.python-poetry.org | python3
