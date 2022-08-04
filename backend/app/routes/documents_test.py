@@ -1,16 +1,77 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
+import pytest_asyncio
 from pydantic import HttpUrl
 
-from backend.app.routes.documents import get_documents
+from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
 from backend.common.db.init import init_db
 from backend.common.models.document import RetrievedDocument, RetrievedDocumentLimitTags
 from backend.common.models.site import BaseUrl, ScrapeMethodConfiguration, Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.models.user import User
+from backend.app.routes.documents import (
+    get_documents,
+    add_document
+)
 
 RetrievedDocumentLimitTags.Settings.projection = None  # type: ignore
 
+@pytest_asyncio.fixture(autouse=True)
+async def before_each_test():
+    random_name = str(random())
+    await init_db(mock=True, database_name=random_name)
+
+class MockLogger:
+    async def background_log_change(current_user: User, site_scrape_task: Document, action: str):
+        assert type(current_user) == type(User)
+        assert type(action) == str
+        return None
+
+def simple_scrape(site: Site, status=TaskStatus.QUEUED) -> SiteScrapeTask:
+    return SiteScrapeTask(
+        site_id=site.id,
+        status=status,
+        queued_time=datetime.now(tz=timezone.utc),
+    )
+
+def simple_site(
+    disabled=False,
+    base_urls=[BaseUrl(url=HttpUrl("https://www.example.com/", scheme="https"), status="ACTIVE")],
+    collection_method=CollectionMethod.Automated,
+    status=SiteStatus.ONLINE,
+    last_run_status=None,
+) -> Site:
+    return Site(
+        name="Test",
+        collection_method=collection_method,
+        scrape_method="",
+        scrape_method_configuration=ScrapeMethodConfiguration(
+            document_extensions=[],
+            url_keywords=[],
+            proxy_exclusions=[],
+            follow_links=False,
+            follow_link_keywords=[],
+            follow_link_url_keywords=[],
+        ),
+        disabled=disabled,
+        last_run_status=last_run_status,
+        status=status,
+        cron="0 * * * *",
+        base_urls=base_urls,
+    )
+
+def simple_manual_retrieved_document(site: Site, scrape_task: SiteScrapeTask) -> RetrievedDocument:
+    return RetrievedDocument(
+            name="test",
+            url="https://www.example.com",
+            lang_code="en",
+            document_type="Authorization Policy",
+            checksum="test",
+            text_checksum="test",
+            site_id=site.id,
+            scrape_task_id=scrape_task.id
+        )
 
 class TestGetDocuments:
     def simple_site(self):
@@ -170,3 +231,50 @@ class TestGetDocuments:
         second_ret_docs = await get_documents(scrape_task_id=scrapes[1].id, site_id=site.id)
         assert len(second_ret_docs) == 1
         assert second_ret_docs[0].id == docs[2].id
+
+
+
+class TestCreateDocuments:
+    @pytest.mark.asyncio
+    async def test_create_document(self):
+        site_one = await simple_site(collection_method=CollectionMethod.Manual).save()
+        scrape_one = await simple_scrape(site_one, status=TaskStatus.IN_PROGRESS).save()
+        doc = simple_manual_retrieved_document(site, scrape_one)
+
+        doc_data = await create_document(doc, User, MockLogger)
+
+        print(doc_data)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
