@@ -1,9 +1,11 @@
-import jwt
 import logging
 
+import jwt
+import requests
 from fastapi import Depends, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.exceptions import HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from backend.app.core.settings import settings
 from backend.common.models.user import User
 
@@ -14,16 +16,18 @@ jwks_client = jwt.PyJWKClient(
     cache_keys=True,
 )
 
+
 # key, alg
 def get_provider_detail(token: str):
     header = jwt.get_unverified_header(token)
-    if 'kid' in header and header['kid'] == 'local':
-        return (str(settings.secret_key), header['alg'])
+    if "kid" in header and header["kid"] == "local":
+        return (str(settings.secret_key), header["alg"])
     else:
-        return (jwks_client.get_signing_key_from_jwt(token).key, header['alg'])
+        return (jwks_client.get_signing_key_from_jwt(token).key, header["alg"])
+
 
 async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(scheme)) -> User:
-    
+
     try:
         token = auth.credentials
         email_key = settings.auth0.email_key
@@ -31,24 +35,35 @@ async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(scheme))
         audience = settings.auth0.audience
 
         [signing_key, algorithm] = get_provider_detail(token)
-        payload = jwt.decode(token, signing_key, algorithms=[algorithm], audience=audience)
+        payload = jwt.decode(
+            token,
+            signing_key,
+            algorithms=[algorithm],
+            audience=audience,
+        )
 
     except Exception as ex:
         logging.error(ex)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 
+    URL = "https://parprdusemmitst01.blob.core.windows.net/autohunteddocs/1e7a028b-c1ef-4472-9b5a-01213ea47ebd/1e7a028b-c1ef-4472-9b5a-01213ea47ebd.htm"  # noqa
+    headers = {"Authorization": f"Bearer {token}"}
+    response = requests.get("https://mmit-test.auth0.com/userinfo", headers=headers)
     email: str = payload.get(email_key)
-    if not email and payload.get(grant_key) == 'client-credentials':
+    if not email and payload.get(grant_key) == "client-credentials":
         email = "api@mmitnetwork.com"
-    
+
     user = await User.by_email(email)
 
     if not user:
+        # Get user first_name last_name from auth0.
+        response = requests.get(settings.user_info_key, headers=headers)
+        response_json = response.json()
+        response.close()
+        # Get user profile information from auth0 so we can populate name.
         user = User(
-            email=email.lower(), 
-            full_name=email.partition("@")[0],
+            email=email.lower(),
+            full_name=f"{response_json['given_name']} {response_json['family_name']}",
             is_admin=True,
             hashed_password="",
         )
