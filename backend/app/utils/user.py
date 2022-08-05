@@ -1,7 +1,7 @@
 import logging
 
+import aiohttp
 import jwt
-import requests
 from fastapi import Depends, status
 from fastapi.exceptions import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -24,6 +24,15 @@ def get_provider_detail(token: str):
         return (str(settings.secret_key), header["alg"])
     else:
         return (jwks_client.get_signing_key_from_jwt(token).key, header["alg"])
+
+
+# Given authorized auth0 token, return user info from /userinfo endpoint.
+async def get_auth0_user_info(token: str):
+    headers = {"Authorization": f"Bearer {token}"}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(settings.auth0.user_info_key, headers=headers) as resp:
+            json_resp = await resp.json()
+            return json_resp
 
 
 async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(scheme)) -> User:
@@ -53,15 +62,10 @@ async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(scheme))
     user = await User.by_email(email)
 
     if not user:
-        # Get user first_name last_name from auth0.
-        headers = {"Authorization": f"Bearer {token}"}
-        response = requests.get(settings.user_info_key, headers=headers)
-        response_json = response.json()
-        response.close()
-        # Get user profile information from auth0 so we can populate name.
+        user_info = await get_auth0_user_info(token=token)
         user = User(
             email=email.lower(),
-            full_name=f"{response_json['given_name']} {response_json['family_name']}",
+            full_name=f"{user_info['given_name']} {user_info['family_name']}",
             is_admin=True,
             hashed_password="",
         )
