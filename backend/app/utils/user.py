@@ -46,8 +46,6 @@ async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(scheme))
         logging.error(ex)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 
-    headers = {"Authorization": f"Bearer {token}"}
-    response = requests.get("https://mmit-test.auth0.com/userinfo", headers=headers)
     email: str = payload.get(email_key)
     if not email and payload.get(grant_key) == "client-credentials":
         email = "api@mmitnetwork.com"
@@ -56,6 +54,7 @@ async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(scheme))
 
     if not user:
         # Get user first_name last_name from auth0.
+        headers = {"Authorization": f"Bearer {token}"}
         response = requests.get(settings.user_info_key, headers=headers)
         response_json = response.json()
         response.close()
