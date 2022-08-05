@@ -38,6 +38,7 @@ class BaseUrl(BaseModel):
 
 
 class NewSite(BaseModel):
+    creator_id: PydanticObjectId | None = None
     name: str
     base_urls: list[BaseUrl] = []
     collection_method: str | None = CollectionMethod.Automated
@@ -120,12 +121,9 @@ class SingleUrlSite(NoScrapeConfigSite):
     class Collection:
         name = "Site"
 
+
 class CollectionTypeSite(SingleUrlSite):
     collection_type: str | None = CollectionMethod.Automated
 
     class Collection:
         name = "Site"
-
-
-
-

@@ -74,7 +74,7 @@ async def check_url(
     site = await Site.find_one(
         ElemMatch(Site.base_urls, {"url": urllib.parse.unquote(url)}),
         Site.id != current_site,
-        Site.disabled != True,  # noqa F401
+        {"disabled": False},
     )
 
     if site:
@@ -98,6 +98,7 @@ async def create_site(
 ):
     new_site = Site(
         name=site.name,
+        creator_id=current_user.id,
         base_urls=site.base_urls,
         scrape_method=site.scrape_method,
         collection_method=site.collection_method,
@@ -227,9 +228,7 @@ async def delete_site(
     logger: Logger = Depends(get_logger),
 ):
     # check for associated collection records, return error if present
-    scrape_task = (
-        False  # await check_for_scrapetask(id) - will reimplement this check at a later date.
-    )
+    scrape_task = False  # await check_for_scrapetask(id) - reimplement check at later date.
     if scrape_task:
         raise HTTPException(
             status_code=status.HTTP_405_METHOD_NOT_ALLOWED,

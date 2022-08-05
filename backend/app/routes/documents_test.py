@@ -44,6 +44,7 @@ class TestGetDocuments:
     ) -> RetrievedDocument:
         doc = RetrievedDocument(
             name="test",
+            url="https://www.example.com",
             checksum="test",
             text_checksum="test",
             site_id=site.id,
