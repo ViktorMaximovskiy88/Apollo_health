@@ -82,3 +82,16 @@ export interface DocDocument extends BaseDocument {
 
   tags: string[];
 }
+
+export interface DocumentFamily extends BaseDocument {
+  name: string;
+  document_type: string;
+  description: string;
+  sites: string[];
+  um_package: string;
+  benefit_type: string;
+  document_type_threshold: string;
+  therapy_tag_status_threshold: number;
+  lineage_threshold: number;
+  relevance: string[];
+}
