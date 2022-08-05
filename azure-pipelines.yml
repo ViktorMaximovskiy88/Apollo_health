@@ -92,6 +92,23 @@ stages:
                 $(Build.SourceVersion)
                 latest
 
+          - script: |
+              docker run -id --name test sourcehub-app:$(Build.BuildNumber) 
+              docker exec test bash -lc ". ./venv/bin/activate && pytest --junitxml='RESULTS.xml'"
+              TEST_EXIT_CODE=$? 
+              docker cp test:/home/user/backend/RESULTS.xml RESULTS.xml
+              docker stop test
+              exit $TEST_EXIT_CODE
+            displayName: Test SourceHub
+            continueOnError: true # Flip to false once all tests are passing initially
+          
+          - task: PublishTestResults@2
+            displayName: Publish Test Results
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFiles: '**/RESULTS*.xml'
+              testRunTitle: 'Test Results for SourceHub-$(Build.BuildNumber)'
+
           - task: ECRPushImage@1
             displayName: Push SourceHub App Image to ECR as SourceVersion
             inputs:

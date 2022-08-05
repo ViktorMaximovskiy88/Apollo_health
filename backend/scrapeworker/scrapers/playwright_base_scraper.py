@@ -42,22 +42,38 @@ class PlaywrightBaseScraper(ABC):
         self.selectors = []
 
     @cached_property
-    def css_selector(self) -> str:
-        raise NotImplementedError("css_selector is required ")
+    def css_selector(self) -> str | None:
+        return None
+
+    @cached_property
+    def xpath_selector(self) -> str | None:
+        return None
+
+    async def find_in_page(self, page: Page) -> bool:
+        css_handle = None
+        if self.css_selector:
+            css_handle = await page.query_selector(self.css_selector)
+
+        xpath_locator_count = 0
+        if self.xpath_selector:
+            xpath_locator = page.locator(self.xpath_selector)
+            xpath_locator_count = await xpath_locator.count()
+
+        return css_handle is not None or xpath_locator_count > 0
 
     async def is_applicable(self) -> bool:
-        if self.config.wait_for_timeout_ms:
-            await self.page.wait_for_timeout(self.config.wait_for_timeout_ms)
 
-        element_handle = await self.page.query_selector(self.css_selector)
+        timeout = self.config.wait_for_timeout_ms if self.config.wait_for_timeout_ms else 500
+        await self.page.wait_for_timeout(timeout)
 
+        in_parent_frame = await self.find_in_page(self.page)
+
+        in_child_frame = False
         if len(self.page.main_frame.child_frames) > 0 and self.config.search_in_frames:
             child_frames = self.page.main_frame.child_frames
-            frame = child_frames[0]
-            await frame.wait_for_load_state("domcontentloaded")
-            element_handle = await frame.query_selector(self.css_selector)
+            in_child_frame = await self.find_in_page(child_frames[0].page)
 
-        result = element_handle is not None
+        result = in_parent_frame or in_child_frame
         logging.info(f"{self.__class__.__name__} is_applicable -> {result}")
         return result
 
