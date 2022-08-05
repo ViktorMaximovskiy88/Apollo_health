@@ -140,7 +140,6 @@ async def upload_document(
         or checksum in RetrievedDocument.file_checksum_aliases
     )
     
-    temp_path = ""
     with tempfile.NamedTemporaryFile(delete=True, suffix="." + file_extension) as tmp:
         tmp.write(content)
         temp_path = tmp.name
@@ -156,7 +155,7 @@ async def upload_document(
         # use first hash to see if their is a retrieved document
         if document or text_checksum_document:
             return {
-                "error":"The document already exists"
+                "error":"The document already exists!"
             }
         else:
             doc_client = DocumentStorageClient()

@@ -5,9 +5,7 @@ import pytest
 import pytest_asyncio
 import aiofiles
 import os
-import tempfile
 from pydantic import HttpUrl
-from fastapi import UploadFile
 from beanie import Document
 
 from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
