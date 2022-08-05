@@ -17,7 +17,7 @@ class Auth0Settings(BaseSettings):
     issuer: str = Field(env="AUTH0_ISSUER")
     email_key: str = Field(default="https://mmit.com/email")
     grant_key: str = Field(default="gty")
-    user_info_key: str = Field(default="https://mmit-test.auth0.com/userinfo")
+    user_info_url: str = Field(default="https://mmit-test.auth0.com/userinfo")
 
 
 class Settings(BaseSettings):
