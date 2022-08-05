@@ -1,8 +1,9 @@
 import { Form, Select, Button, FormInstance } from 'antd';
-import { DocDocument } from './types';
-import { useState } from 'react';
+import { DocDocument, DocumentFamilyType, DocumentFamilyOption } from './types';
+import { useEffect, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { AddDocumentFamily } from './DocumentFamilyAddForm';
+import { useGetDocumentFamiliesQuery } from './documentFamilyApi';
 
 const { Option } = Select;
 
@@ -20,9 +21,33 @@ const useModal = (): [boolean, () => void, () => void] => {
   return [isVisible, showModal, closeModal];
 };
 
-export function DocumentFamily({ doc, form }: { doc: DocDocument; form: FormInstance }) {
-  const [options, setOptions] = useState<{ label: string; value: string }[]>([]);
+const useOptions = (
+  doc: DocDocument
+): [DocumentFamilyOption[], (options: DocumentFamilyOption[]) => void] => {
+  const { data: documentFamilies } = useGetDocumentFamiliesQuery({
+    siteId: doc.site_id,
+    documentType: doc.document_type,
+  });
+  const [options, setOptions] = useState<DocumentFamilyOption[]>([]);
 
+  useEffect(() => {
+    if (!documentFamilies) return;
+
+    const initialOptions = documentFamilies.map((df: DocumentFamilyType): DocumentFamilyOption => {
+      return {
+        ...df,
+        label: df.name,
+        value: df._id,
+      };
+    });
+    setOptions(initialOptions);
+  }, [documentFamilies]);
+
+  return [options, setOptions];
+};
+
+export function DocumentFamily({ doc, form }: { doc: DocDocument; form: FormInstance }) {
+  const [options, setOptions] = useOptions(doc);
   const [isModalVisible, showModal, closeModal] = useModal();
 
   return (

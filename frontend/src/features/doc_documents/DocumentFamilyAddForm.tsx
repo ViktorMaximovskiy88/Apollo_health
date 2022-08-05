@@ -1,5 +1,5 @@
 import { Form, Modal, InputNumber, Spin, Button, FormInstance } from 'antd';
-import { DocDocument, DocumentFamily as DocumentFamilyType } from './types';
+import { DocDocument, DocumentFamilyType, DocumentFamilyOption } from './types';
 import { useGetSiteQuery } from '../sites/sitesApi';
 import { Site } from '../sites/types';
 import { Name } from './DocumentFamilyNameField';
@@ -67,8 +67,8 @@ interface AddDocumentFamilyPropTypes {
   closeModal: () => void;
   visible: boolean;
   doc: DocDocument;
-  options: { label: string; value: string }[];
-  setOptions: (options: { label: string; value: string }[]) => void;
+  options: DocumentFamilyOption[];
+  setOptions: (options: DocumentFamilyOption[]) => void;
   docDocumentForm: FormInstance;
 }
 export function AddDocumentFamily({

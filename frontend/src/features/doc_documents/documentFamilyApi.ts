@@ -1,14 +1,21 @@
 import { createApi, fetchBaseQuery } from '../../app/base-api';
-import { DocumentFamily } from './types';
+import { DocumentFamilyType } from './types';
 
 export const documentFamilyApi = createApi({
   reducerPath: 'documentFamilyApi',
   baseQuery: fetchBaseQuery(),
   tagTypes: ['DocumentFamily', 'ChangeLog'],
   endpoints: (builder) => ({
-    getDocumentFamilies: builder.query<DocumentFamily[], undefined>({
-      query: () => {
-        return `/document-family/`;
+    getDocumentFamilies: builder.query<
+      DocumentFamilyType[],
+      { siteId: string; documentType: string }
+    >({
+      query: ({ siteId, documentType }) => {
+        const args = [
+          `site_id=${encodeURIComponent(siteId)}`,
+          `document_type=${encodeURIComponent(documentType)}`,
+        ].join('&');
+        return `/document-family/?${args}`;
       },
       providesTags: (results) => {
         const tags = [{ type: 'DocumentFamily' as const, id: 'LIST' }];
@@ -16,19 +23,19 @@ export const documentFamilyApi = createApi({
         return tags;
       },
     }),
-    getDocumentFamily: builder.query<DocumentFamily, string | undefined>({
+    getDocumentFamily: builder.query<DocumentFamilyType, string | undefined>({
       query: (id) => `/document-family/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'DocumentFamily' as const, id }],
     }),
-    getDocumentFamilyByName: builder.query<DocumentFamily, string>({
+    getDocumentFamilyByName: builder.query<DocumentFamilyType, string>({
       query: (name) => `/document-family/search-name/${name}`,
       providesTags: (_r, _e, name) => [{ type: 'DocumentFamily' as const, name }],
     }),
-    addDocumentFamily: builder.mutation<DocumentFamily, Partial<DocumentFamily>>({
+    addDocumentFamily: builder.mutation<DocumentFamilyType, Partial<DocumentFamilyType>>({
       query: (body) => ({ url: '/document-family/', method: 'PUT', body }),
       invalidatesTags: [{ type: 'DocumentFamily', id: 'LIST' }],
     }),
-    updateDocumentFamily: builder.mutation<DocumentFamily, Partial<DocumentFamily>>({
+    updateDocumentFamily: builder.mutation<DocumentFamilyType, Partial<DocumentFamilyType>>({
       query: (body) => ({
         url: `/document-family/${body._id}`,
         method: 'POST',

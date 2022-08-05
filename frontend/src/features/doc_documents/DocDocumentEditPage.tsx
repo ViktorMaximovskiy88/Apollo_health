@@ -87,11 +87,14 @@ const useOnFinish = ({ doc, tags }: UseOnFinishType): [() => Promise<void>, bool
   const [updateDocDocument] = useUpdateDocDocumentMutation();
 
   const onFinish = async (): Promise<void> => {
+    // TODO: get document families by site id and document id
     if (!doc) return;
 
     setIsSaving(true);
 
     try {
+      // TODO: addDocumentFamily() - add when not exists
+      //        use returned _id's to update DocDocument
       const tagsByType = groupBy(tags, '_type');
       await updateDocDocument({
         ...doc,

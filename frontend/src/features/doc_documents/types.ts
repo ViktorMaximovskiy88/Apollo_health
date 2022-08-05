@@ -83,7 +83,7 @@ export interface DocDocument extends BaseDocument {
   tags: string[];
 }
 
-export interface DocumentFamily extends BaseDocument {
+export interface DocumentFamilyType extends BaseDocument {
   name: string;
   document_type: string;
   description: string;
@@ -94,4 +94,9 @@ export interface DocumentFamily extends BaseDocument {
   therapy_tag_status_threshold: number;
   lineage_threshold: number;
   relevance: string[];
+}
+
+export interface DocumentFamilyOption extends DocumentFamilyType {
+  label?: string;
+  value?: string;
 }
