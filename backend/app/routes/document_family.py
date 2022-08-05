@@ -28,9 +28,20 @@ async def get_target(id: PydanticObjectId) -> DocumentFamily:
 @router.get("/", response_model=list[DocumentFamily])
 async def read_document_families(
     current_user: User = Security(get_current_user),
+    site_id: PydanticObjectId | None = None,
+    document_type: str | None = None,
 ):
-    document_families = await DocumentFamily.find({"disabled": False}).to_list()
-    return document_families
+    query = DocumentFamily.find(
+        {
+            "disabled": False,
+        }
+    )
+    if site_id:
+        query = query.find({"sites": site_id})
+    if document_type:
+        query = query.find({"document_type": document_type})
+
+    return await query.to_list()
 
 
 @router.get(
