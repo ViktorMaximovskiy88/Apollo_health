@@ -2,7 +2,7 @@ import { Form, Select, Button, FormInstance } from 'antd';
 import { DocDocument } from './types';
 import { useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
-import { AddDocumentFamily } from './AddDocumentFamilyForm';
+import { AddDocumentFamily } from './DocumentFamilyAddForm';
 
 const { Option } = Select;
 
