@@ -58,6 +58,8 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     lang_code: doc.lang_code,
     link_text: doc.context_metadata?.link_text,
     effective_date: convertDate(doc.effective_date),
+    first_collected_date: convertDate(doc.first_collected_date),
+    last_collected_date: convertDate(doc.last_collected_date),
     end_date: convertDate(doc.end_date),
     last_updated_date: convertDate(doc.last_updated_date),
     last_reviewed_date: convertDate(doc.last_reviewed_date),
@@ -116,6 +118,14 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     {
       name: 'published_date',
       label: 'Published Date',
+    },
+    {
+      name: 'first_collected_date',
+      label: 'First Collected Date',
+    },
+    {
+      name: 'last_collected_date',
+      label: 'Last Collected Date',
     },
   ];
 
