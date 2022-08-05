@@ -32,6 +32,7 @@ export function CollectionsPage() {
   const [runScrape] = useRunSiteScrapeTaskMutation();
   if (!siteId) return null;
 
+  console.log(siteId)
   async function handleRunScrape() {
     if (site?._id) {
       try {
@@ -108,7 +109,6 @@ function ManualCollectionButton(props: any) {
     refetch();
   }
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
-
   if (activeStatuses.includes(site.last_run_status)) {
     return (
       <Button className="ml-auto" onClick={handleCancelScrape}>

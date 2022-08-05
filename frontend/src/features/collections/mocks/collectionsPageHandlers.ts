@@ -69,6 +69,9 @@ export const handlers = [
   rest.get('http://localhost/api/v1/sites/site-id1', async (req, res, ctx) => {
     return res(ctx.json({ collection_method: CollectionMethod.Automated }));
   }),
+  rest.get('http://localhost/api/v1/sites/site-id2', async (req, res, ctx) => {
+    return res(ctx.json({ collection_method: CollectionMethod.Manual }));
+  }),
   rest.get('http://localhost/api/v1/site-scrape-tasks/', async (req, res, ctx) => {
     return res(ctx.json(db.scrapeTask.getAll().reverse()));
   }),
