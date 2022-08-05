@@ -71,18 +71,26 @@ curl -fsSL https://get.docker.com | sudo sh
 
 # Install PyEnv and Python
 brew install pyenv
+If you are using latest version of osx run this command: touch ~/.zshrc
 source ~/.zshrc
 pyenv install 3.10.3
 pyenv global 3.10.3
 
+Add pyenv path to ~/.zshrc (unless it is already there):
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH
+
 # Install Poetry
+
 curl -sSL https://install.python-poetry.org | python3
 
 # Install NVM and Node/Yarn
+
 curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 source ~/.zshrc
 nvm install node 18
 npm install yarn -g
+
 ```
 
 ## Application Setup
@@ -196,7 +204,7 @@ python -m pytest
 
 ### Windows Install
 
-# Installers
+## Installers
 
 - Install node using Installer from <https://nodejs.org/en/download/>. This should install npm
 - Install Docker Desktop from <https://docs.docker.com/desktop/windows/install/>. The same Install will be used in WSL environment
@@ -260,7 +268,7 @@ cd frontend
 yarn start
 ```
 
-# WSL2
+## WSL2
 
 In case we run into problems running system on Windows, we checked an option running using WSL2
 Follow instructions in <https://code.visualstudio.com/docs/remote/wsl-tutorial> up to 'Python development' section
