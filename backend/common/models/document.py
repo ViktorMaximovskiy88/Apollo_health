@@ -10,6 +10,7 @@ from backend.common.models.doc_document import IndicationTag, TherapyTag
 
 class RetrievedDocument(BaseDocument):
     site_id: PydanticObjectId | None = None
+    uploader_id: PydanticObjectId | None = None
     scrape_task_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     logical_document_id: PydanticObjectId | None = None
     logical_document_version: int | None = None
@@ -37,7 +38,7 @@ class RetrievedDocument(BaseDocument):
     file_extension: str | None = None
     content_type: str | None = None
     # full text is the same for checksums in the below set
-    file_checksum_aliases: set[str] = set()
+    file_checksum_aliases: list[str] = list()
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []

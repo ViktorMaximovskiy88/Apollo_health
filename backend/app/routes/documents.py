@@ -1,34 +1,30 @@
 import tempfile
-from datetime import datetime
 from datetime import datetime, timezone
 
-from beanie import PydanticObjectId, Indexed
+from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, Security, UploadFile, status
 from fastapi.responses import StreamingResponse
 
-from backend.app.utils.logger import Logger, get_logger, update_and_log_diff
+from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.models.content_extraction_task import ContentExtractionTask
-from backend.common.models.document import RetrievedDocument, RetrievedDocumentLimitTags, UpdateRetrievedDocument
 from backend.common.models.doc_document import DocDocument, calc_final_effective_date
+from backend.common.models.document import (
+    RetrievedDocument,
+    RetrievedDocumentLimitTags,
+    UpdateRetrievedDocument,
+)
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
-from backend.app.utils.logger import (
-    Logger,
-    get_logger,
-    create_and_log,
-    update_and_log_diff,
-)
-from backend.app.utils.user import get_current_user
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_handler import TextHandler
-from backend.scrapeworker.file_parsers import parse_by_type
 from backend.scrapeworker.common.models import DownloadContext, Request
+from backend.scrapeworker.file_parsers import parse_by_type
 
 router = APIRouter(
     prefix="/documents",
-    tags=["Dcouments"],
+    tags=["Documents"],
 )
 
 
@@ -124,7 +120,7 @@ async def upload_document(
     file: UploadFile,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
-): 
+):
     text_handler = TextHandler()
     
     content = await file.read();
@@ -133,7 +129,7 @@ async def upload_document(
     name = file.filename;
     file_extension = name.split('.')[-1]
     dest_path = f"{checksum}.{file_extension}"
-    
+
     document = await RetrievedDocument.find_one(
         RetrievedDocument.checksum == checksum
         or checksum in RetrievedDocument.file_checksum_aliases
@@ -191,6 +187,7 @@ async def update_document(
     ace_class_changed = (
         target.automated_content_extraction_class != updates.automated_content_extraction_class
     )
+
     if ace_turned_on or ace_class_changed:
         task = ContentExtractionTask(
             site_id=target.site_id,
@@ -222,6 +219,7 @@ async def add_document(
     now = datetime.now()
     new_document = RetrievedDocument(
         base_url=document.base_url,
+        uploader_id=current_user.id,
         name=document.name,
         text_checksum=document.text_checksum,
         doc_type_confidence=document.doc_type_confidence,
@@ -247,8 +245,8 @@ async def add_document(
         therapy_tags=document.therapy_tags,
         indication_tags=document.indication_tags,
         file_checksum_aliases=set(document.checksum),
-        checksum=document.checksum
-    ) 
+        checksum=document.checksum,
+    )
     await create_and_log(logger, current_user, new_document)
 
     doc_document = DocDocument(
@@ -275,22 +273,18 @@ async def add_document(
         therapy_tags=document.therapy_tags,
         indication_tags=document.indication_tags,
         file_extension=document.file_extension,
-        identified_dates=document.identified_dates
+        identified_dates=document.identified_dates,
     )
 
     if "link_text" in document.metadata:
-        doc_document.link_text = document.metadata['link_text']
+        doc_document.link_text = document.metadata["link_text"]
 
     doc_document.final_effective_date = calc_final_effective_date(doc_document)
     await create_and_log(logger, current_user, doc_document)
-    
+
     scrape_task = await SiteScrapeTask.get(document.scrape_task_id)
-    await scrape_task.update({
-      '$inc': { 'documents_found': 1 },
-      '$push': { 'retrieved_document_ids': new_document.id }
-    })
+    await scrape_task.update(
+        {"$inc": {"documents_found": 1}, "$push": {"retrieved_document_ids": new_document.id}}
+    )
 
-    return {
-        "success":True
-    }
-
+    return {"success": True}

@@ -18,13 +18,9 @@ from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.common.rate_limiter import RateLimiter
 
 default_headers: dict[str, str] = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",  # noqa E501
     "Accept-Language": "en-US,en;q=0.9",
-    "Cache-Control": "no-cache",
     "Connection": "keep-alive",
-    "Pragma": "no-cache",
-    "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36",  # noqa E501
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36",  # noqa
 }
 
 
