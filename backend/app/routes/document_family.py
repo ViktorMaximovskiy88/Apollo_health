@@ -11,7 +11,7 @@ from backend.common.models.document_family import (
 from backend.common.models.user import User
 
 router = APIRouter(
-    prefix="/document_family",
+    prefix="/document-family",
     tags=["Document Family"],
 )
 
@@ -33,9 +33,24 @@ async def read_document_families(
     return document_families
 
 
-@router.get("/{id}", response_model=DocumentFamily, dependencies=[Security(get_current_user)])
+@router.get(
+    "/search-name/{name}",
+)
+async def read_document_family_by_name(
+    name: str,
+    current_user: User = Security(get_current_user),
+):
+    found = await DocumentFamily.find_one({"name": name})
+    return found
+
+
+@router.get(
+    "/{id}",
+    response_model=DocumentFamily,
+)
 async def read_document_family(
     target: DocumentFamily = Depends(get_target),
+    current_user: User = Security(get_current_user),
 ):
     return target
 
