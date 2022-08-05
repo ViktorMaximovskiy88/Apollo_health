@@ -37,7 +37,7 @@ export interface RetrievedDocument extends BaseDocument {
   automated_content_extraction_class: string;
 }
 
-
+// id is added so that it can be used for both table filters and dropdown selections
 export const DocumentTypes = [
   { id: 'Authorization Policy', value: 'Authorization Policy', label: 'Authorization Policy' },
   { id: 'Provider Guide', value: 'Provider Guide', label: 'Provider Guide' },
