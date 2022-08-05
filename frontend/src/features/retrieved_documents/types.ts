@@ -36,3 +36,21 @@ export interface RetrievedDocument extends BaseDocument {
   automated_content_extraction: boolean;
   automated_content_extraction_class: string;
 }
+
+
+export const DocumentTypes = [
+  { id: 'Authorization Policy', value: 'Authorization Policy', label: 'Authorization Policy' },
+  { id: 'Provider Guide', value: 'Provider Guide', label: 'Provider Guide' },
+  { id: 'Treatment Request Form', value: 'Treatment Request Form', label: 'Treatment Request Form' },
+  { id: 'Payer Unlisted Policy', value: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
+  { id: 'Covered Treatment List', value: 'Covered Treatment List', label: 'Covered Treatment List' },
+  { id: 'Regulatory Document', value: 'Regulatory Document', label: 'Regulatory Document' },
+  { id: 'Formulary', value: 'Formulary', label: 'Formulary' },
+  { id: 'Internal Reference', value: 'Internal Reference', label: 'Internal Reference' },
+];
+
+export const LanguageCodes = [
+  { value: 'en', label: 'English' },
+  { value: 'es', label: 'Spanish' },
+  { value: 'other', label: 'Other' },
+];

@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { prettyDate } from '../../common';
 import { useUpdateDocumentMutation } from './documentsApi';
-import { RetrievedDocument } from './types';
+import { RetrievedDocument, DocumentTypes, LanguageCodes } from './types';
 const { TextArea } = Input;
 
 export function DocumentForm(props: { doc: RetrievedDocument }) {
@@ -66,23 +66,6 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     published_date: convertDate(doc.published_date),
   };
 
-  const documentTypes = [
-    { value: 'Authorization Policy', label: 'Authorization Policy' },
-    { value: 'Provider Guide', label: 'Provider Guide' },
-    { value: 'Treatment Request Form', label: 'Treatment Request Form' },
-    { value: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
-    { value: 'Covered Treatment List', label: 'Covered Treatment List' },
-    { value: 'Regulatory Document', label: 'Regulatory Document' },
-    { value: 'Formulary', label: 'Formulary' },
-    { value: 'Internal Reference', label: 'Internal Reference' },
-  ];
-
-  const languageCodes = [
-    { value: 'en', label: 'English' },
-    { value: 'es', label: 'Spanish' },
-    { value: 'other', label: 'Other' },
-  ];
-
   const confidencePercent = docTypeConfidence ? `${Math.floor(docTypeConfidence * 100)}%` : '-';
 
   const extractionOptions = [
@@ -134,7 +117,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
 
       <div className="flex space-x-2">
         <Form.Item className="grow" name="document_type" label="Document Type">
-          <Select options={documentTypes} />
+          <Select options={DocumentTypes} />
         </Form.Item>
         <Form.Item label="Confidence">
           <div className="flex justify-center">{confidencePercent}</div>
@@ -152,7 +135,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
       </div>
 
       <Form.Item name="lang_code" label="Language">
-        <Select options={languageCodes} />
+        <Select options={LanguageCodes} />
       </Form.Item>
 
       <Form.Item

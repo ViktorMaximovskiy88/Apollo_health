@@ -14,7 +14,7 @@ import {
 import { prettyDateFromISO, prettyDateTimeFromISO } from '../../common';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useGetDocumentsQuery } from '../retrieved_documents/documentsApi';
-import { RetrievedDocument } from '../retrieved_documents/types';
+import { RetrievedDocument, DocumentTypes } from '../retrieved_documents/types';
 import { useGetChangeLogQuery } from './extractionsApi';
 import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
@@ -51,16 +51,7 @@ const columns = [
     filterEditor: SelectFilter,
     filterEditorProps: {
       placeholder: 'All',
-      dataSource: [
-        { id: 'Authorization Policy', label: 'Authorization Policy' },
-        { id: 'Provider Guide', label: 'Provider Guide' },
-        { id: 'Treatment Request Form', label: 'Treatment Request Form' },
-        { id: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
-        { id: 'Covered Treatment List', label: 'Covered Treatment List' },
-        { id: 'Regulatory Document', label: 'Regulatory Document' },
-        { id: 'Formulary', label: 'Formulary' },
-        { id: 'Internal Reference', label: 'Internal Reference' },
-      ],
+      dataSource: DocumentTypes,
     },
     render: ({ value: document_type }: { value: string }) => {
       return <>{document_type}</>;
