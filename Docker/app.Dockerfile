@@ -8,6 +8,9 @@ RUN yarn run build
 
 FROM sourcehub-base:latest as backend
 
+ARG UNAME=user
+ARG HOME_DIR=/home/${UNAME}/
+
 WORKDIR ${HOME_DIR}/backend
 
 ADD pyproject.toml poetry.lock build-constraints.txt ./
@@ -23,6 +26,7 @@ RUN python3 -m venv venv && \
 RUN echo ". ${HOME_DIR}/backend/venv/bin/activate" >> ~/.bashrc
 
 ADD backend ./
+ADD pytest.ini ${HOME_DIR}
 
 COPY --from=frontend /frontend/build/ ${HOME_DIR}/frontend/build
 

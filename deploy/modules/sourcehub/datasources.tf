@@ -83,6 +83,10 @@ data "aws_iam_policy" "docrepo-contributor" {
   name = format("%s-%s-docrepo-contributor-mmit-policy-%02d", local.app_name, var.environment, var.revision)
 }
 
+data "aws_iam_policy" "sourcehub-eventbus-contributor" {
+  name = format("%s-%s-%s-eventbus-contributor-mmit-policy-%02d", local.app_name, var.environment, local.service_name, var.revision)
+}
+
 data "aws_service" "s3" {
   service_id = "s3"
 }
@@ -114,4 +118,8 @@ data "aws_ssm_parameter" "docrepo-bucket-name" {
 
 data "aws_ssm_parameter" "smartproxy-username" {
   name = "/apollo/smartproxy_username"
+}
+
+data "aws_cloudwatch_event_bus" "sourcehub" {
+  name = format("%s-%s-%s-%s-mmit-bus-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
 }

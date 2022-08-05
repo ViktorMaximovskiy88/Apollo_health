@@ -81,7 +81,7 @@ resource "aws_ecs_task_definition" "app" {
         },
         {
           name = "EVENT_BUS_ARN"
-          value = aws_cloudwatch_event_bus.sourcehub.arn
+          value = data.aws_cloudwatch_event_bus.sourcehub.arn
         },
         {
           name = "EVENT_SOURCE"
@@ -194,7 +194,7 @@ resource "aws_iam_role" "app-task" {
 
   managed_policy_arns = [
     data.aws_iam_policy.docrepo-contributor.arn,
-    aws_iam_policy.sourcehub-eventbus-contributor.arn
+    data.aws_iam_policy.sourcehub-eventbus-contributor.arn
   ]
 
   tags = merge(local.effective_tags, {

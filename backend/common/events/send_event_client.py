@@ -22,7 +22,7 @@ class SendEventClient:
             self.client = boto3.client("events")
 
     def send_event(self, detail_type, message_body):
-        logging.debug(
+        logging.info(
             f"Will send {detail_type} event with {self.source} source to {self.event_bus_name} event bus"  # noqa
         )
         response = self.client.put_events(
@@ -35,5 +35,5 @@ class SendEventClient:
                 }
             ]
         )
-        logging.debug(f"Event Send Response: {response}")
+        logging.info(f"Event Send Response: {response}")
         return response
