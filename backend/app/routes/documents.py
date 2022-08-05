@@ -126,11 +126,10 @@ async def upload_document(
     logger: Logger = Depends(get_logger),
 ): 
     text_handler = TextHandler()
+    
     content = await file.read();
-
     checksum = hash_bytes(content);
     content_type = file.content_type;
-
     name = file.filename;
     file_extension = name.split('.')[-1]
     dest_path = f"{checksum}.{file_extension}"

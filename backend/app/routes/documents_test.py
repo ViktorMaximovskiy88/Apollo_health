@@ -267,32 +267,3 @@ class TestCreateDocuments:
         assert len(first_ret_docs) == 1
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
