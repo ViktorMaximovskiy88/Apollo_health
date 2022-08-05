@@ -1,23 +1,13 @@
-import { Form, Input, Select, Modal, InputNumber, Spin, Button } from 'antd';
+import { Form, Select, Modal, InputNumber, Spin, Button } from 'antd';
 import { DocDocument } from './types';
 import { useState } from 'react';
 import { useGetSiteQuery } from '../sites/sitesApi';
 import { PlusOutlined } from '@ant-design/icons';
 import { Site } from '../sites/types';
+import { Name } from './DocumentFamilyNameField';
 
 const { Option } = Select;
 
-const Name = () => (
-  <Form.Item
-    name="name"
-    label="Document Family Name"
-    className="flex-1"
-    rules={[{ required: true, message: 'Please input a Document Family Name!' }]}
-    required
-  >
-    <Input />
-  </Form.Item>
-);
 const DocumentType = ({ doc }: { doc: DocDocument }) => (
   <Form.Item label="Document Type" className="flex-1">
     <b>{doc.document_type}</b>
@@ -118,6 +108,7 @@ export const AddDocumentFamily = ({ doc, closeModal, visible }: AddDocumentFamil
         name="add-document-family"
         layout="vertical"
         className="h-full"
+        autoComplete="off"
       >
         <div className="flex space-x-8">
           <Name />
