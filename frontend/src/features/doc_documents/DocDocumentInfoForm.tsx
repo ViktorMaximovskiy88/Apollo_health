@@ -25,7 +25,7 @@ export function DocDocumentInfoForm(props: {
       <Hr />
       <DocumentClassification doc={doc} />
       <Hr />
-      <DocumentFamily doc={doc} />
+      <DocumentFamily {...props} />
       <Hr />
       <DateFields {...props} />
       <Hr />

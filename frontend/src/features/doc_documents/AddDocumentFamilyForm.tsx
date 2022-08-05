@@ -1,4 +1,4 @@
-import { Form, Modal, InputNumber, Spin, Button } from 'antd';
+import { Form, Modal, InputNumber, Spin, Button, FormInstance } from 'antd';
 import { DocDocument, DocumentFamily as DocumentFamilyType } from './types';
 import { useGetSiteQuery } from '../sites/sitesApi';
 import { Site } from '../sites/types';
@@ -69,6 +69,7 @@ interface AddDocumentFamilyPropTypes {
   doc: DocDocument;
   options: { label: string; value: string }[];
   setOptions: (options: { label: string; value: string }[]) => void;
+  docDocumentForm: FormInstance;
 }
 export function AddDocumentFamily({
   doc,
@@ -76,22 +77,32 @@ export function AddDocumentFamily({
   visible,
   options,
   setOptions,
+  docDocumentForm,
 }: AddDocumentFamilyPropTypes) {
   const { data: site } = useGetSiteQuery(doc.site_id);
-  const [form] = Form.useForm();
+  const [documentFamilyForm] = Form.useForm();
   const [addDocumentFamily] = useAddDocumentFamilyMutation();
 
   const onFinish = async (documentFamily: DocumentFamilyType) => {
     documentFamily.sites = site?._id ? [site._id] : [];
     documentFamily.document_type = doc.document_type;
-    form.resetFields();
+
+    documentFamilyForm.resetFields();
     closeModal();
-    const { name, _id } = await addDocumentFamily(documentFamily).unwrap();
-    setOptions([{ label: name, value: _id }, ...options]);
+
+    const { _id, name } = await addDocumentFamily(documentFamily).unwrap();
+    documentFamily._id = _id;
+
+    setOptions([{ label: name, value: _id, ...documentFamily }, ...options]);
+
+    const selected = docDocumentForm.getFieldValue('document_families');
+    docDocumentForm.setFieldsValue({
+      document_families: [...selected, { label: name, value: _id, ...documentFamily }],
+    });
   };
 
   const onCancel = () => {
-    form.resetFields();
+    documentFamilyForm.resetFields();
     closeModal();
   };
 
@@ -107,7 +118,7 @@ export function AddDocumentFamily({
       <Form
         onFinish={onFinish}
         initialValues={initialValues}
-        form={form}
+        form={documentFamilyForm}
         name="add-document-family"
         layout="vertical"
         className="h-full"

@@ -1,4 +1,4 @@
-import { Form, Select, Button } from 'antd';
+import { Form, Select, Button, FormInstance } from 'antd';
 import { DocDocument } from './types';
 import { useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
@@ -20,7 +20,7 @@ const useModal = (): [boolean, () => void, () => void] => {
   return [isVisible, showModal, closeModal];
 };
 
-export function DocumentFamily({ doc }: { doc: DocDocument }) {
+export function DocumentFamily({ doc, form }: { doc: DocDocument; form: FormInstance }) {
   const [options, setOptions] = useState<{ label: string; value: string }[]>([]);
 
   const [isModalVisible, showModal, closeModal] = useModal();
@@ -33,6 +33,7 @@ export function DocumentFamily({ doc }: { doc: DocDocument }) {
         doc={doc}
         options={options}
         setOptions={setOptions}
+        docDocumentForm={form}
       />
       <Form.Item name="document_families" label="Document Family" className="flex-1">
         <Select mode="multiple" allowClear placeholder="None selected">
