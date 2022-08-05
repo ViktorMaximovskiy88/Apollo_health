@@ -24,6 +24,10 @@ export const documentFamilyApi = createApi({
       query: (name) => `/document-family/search-name/${name}`,
       providesTags: (_r, _e, name) => [{ type: 'DocumentFamily' as const, name }],
     }),
+    addDocumentFamily: builder.mutation<DocumentFamily, Partial<DocumentFamily>>({
+      query: (body) => ({ url: '/document-family/', method: 'PUT', body }),
+      invalidatesTags: [{ type: 'DocumentFamily', id: 'LIST' }],
+    }),
     updateDocumentFamily: builder.mutation<DocumentFamily, Partial<DocumentFamily>>({
       query: (body) => ({
         url: `/document-family/${body._id}`,
@@ -43,5 +47,6 @@ export const {
   useLazyGetDocumentFamilyByNameQuery,
   useGetDocumentFamiliesQuery,
   useLazyGetDocumentFamiliesQuery,
+  useAddDocumentFamilyMutation,
   useUpdateDocumentFamilyMutation,
 } = documentFamilyApi;

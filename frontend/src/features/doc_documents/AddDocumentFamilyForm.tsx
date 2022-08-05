@@ -3,6 +3,7 @@ import { DocDocument, DocumentFamily as DocumentFamilyType } from './types';
 import { useGetSiteQuery } from '../sites/sitesApi';
 import { Site } from '../sites/types';
 import { Name } from './DocumentFamilyNameField';
+import { useAddDocumentFamilyMutation } from './documentFamilyApi';
 
 const initialValues = {
   document_type_threshold: 75,
@@ -66,8 +67,8 @@ interface AddDocumentFamilyPropTypes {
   closeModal: () => void;
   visible: boolean;
   doc: DocDocument;
-  options: string[];
-  setOptions: (options: string[]) => void;
+  options: { label: string; value: string }[];
+  setOptions: (options: { label: string; value: string }[]) => void;
 }
 export function AddDocumentFamily({
   doc,
@@ -78,11 +79,15 @@ export function AddDocumentFamily({
 }: AddDocumentFamilyPropTypes) {
   const { data: site } = useGetSiteQuery(doc.site_id);
   const [form] = Form.useForm();
+  const [addDocumentFamily] = useAddDocumentFamilyMutation();
 
-  const onFinish = (documentFamily: DocumentFamilyType) => {
+  const onFinish = async (documentFamily: DocumentFamilyType) => {
+    documentFamily.sites = site?._id ? [site._id] : [];
+    documentFamily.document_type = doc.document_type;
     form.resetFields();
     closeModal();
-    setOptions([documentFamily.name, ...options]);
+    const { name, _id } = await addDocumentFamily(documentFamily).unwrap();
+    setOptions([{ label: name, value: _id }, ...options]);
   };
 
   const onCancel = () => {

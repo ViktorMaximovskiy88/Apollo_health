@@ -21,7 +21,7 @@ const useModal = (): [boolean, () => void, () => void] => {
 };
 
 export function DocumentFamily({ doc }: { doc: DocDocument }) {
-  const [options, setOptions] = useState<string[]>([]);
+  const [options, setOptions] = useState<{ label: string; value: string }[]>([]);
 
   const [isModalVisible, showModal, closeModal] = useModal();
 
@@ -34,10 +34,12 @@ export function DocumentFamily({ doc }: { doc: DocDocument }) {
         options={options}
         setOptions={setOptions}
       />
-      <Form.Item name="document_family" label="Document Family" className="flex-1">
+      <Form.Item name="document_families" label="Document Family" className="flex-1">
         <Select mode="multiple" allowClear placeholder="None selected">
-          {options.map((documentFamilyName) => (
-            <Option key={documentFamilyName}>{documentFamilyName}</Option>
+          {options.map(({ label, value }) => (
+            <Option key={value} value={value}>
+              {label}
+            </Option>
           ))}
         </Select>
       </Form.Item>
