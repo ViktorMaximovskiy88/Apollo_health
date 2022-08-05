@@ -90,4 +90,33 @@ describe(`CollectionsPage`, () => {
     jest.advanceTimersByTime(10000);
     expect(await screen.findByText(/finished/i)).toBeInTheDocument();
   });
+
+  it(`should open create document modal for manual collections when create document button clicked`, async () => {
+    const mockedUseParams = useParams as jest.Mock<Params>;
+    mockedUseParams.mockImplementation(() => ({
+      siteId: 'site-id1',
+    }));
+
+    // fixes `act` warning
+    // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
+    const dataGridDoneRendering = Promise.resolve();
+    render(<CollectionsPage />);
+    await act(async () => {
+      await dataGridDoneRendering;
+    });
+
+    expect(screen.getByText(/Manual/i)).toBeInTheDocument();
+
+    const createDocumentButton = await screen.findByRole('button', {
+      name: /Create Document/i,
+    });
+    expect(createDocumentButton).toBeInTheDocument();
+
+    userEvent.click(createDocumentButton);
+    expect(await screen.getByText(/Create Document/i)).toBeInTheDocument();
+  });
 });
+
+
+
+
