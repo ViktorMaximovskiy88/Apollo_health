@@ -242,7 +242,7 @@ async def add_document(
         url=document.url,
         therapy_tags=document.therapy_tags,
         indication_tags=document.indication_tags,
-        file_checksum_aliases=set(document.checksum),
+        file_checksum_aliases=[document.checksum],
         checksum=document.checksum,
     )
     await create_and_log(logger, current_user, new_document)
