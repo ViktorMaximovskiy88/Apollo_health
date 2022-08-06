@@ -148,22 +148,22 @@ export function DocDocumentInfoForm(props: {
         />
 
         <ListDatePicker
+          disabled={true}
           form={form}
           className="flex-1"
           name="first_collected_date"
           defaultValue={doc.first_collected_date}
           label={'First Collected Date'}
           dateList={doc.identified_dates}
-          onChange={onFieldChange}
         />
         <ListDatePicker
+          disabled={true}
           form={form}
           className="flex-1"
           name="last_collected_date"
           defaultValue={doc.last_collected_date}
           label={'Last Collected Date'}
           dateList={doc.identified_dates}
-          onChange={onFieldChange}
         />
       </div>
 

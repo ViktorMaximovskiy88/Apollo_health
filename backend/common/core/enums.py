@@ -22,10 +22,12 @@ class TaskStatus(str, Enum):
     CANCELED = "CANCELED"
     FAILED = "FAILED"
 
+
 class ApprovalStatus(str, Enum):
     QUEUED = "QUEUED"
     APPROVED = "APPROVED"
     HOLD = "HOLD"
+
 
 class SiteStatus(str, Enum):
     NEW = "NEW"
