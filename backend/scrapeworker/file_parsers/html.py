@@ -11,7 +11,7 @@ class HtmlParser(FileParser):
         document_bytes = await self.get_bytes()
         soup = bs4.BeautifulSoup(document_bytes, features="html.parser")
         # hack for now...
-        self.title = soup.find("title").string
+        self.title = soup.find("title").string.strip()
         return " ".join([text for text in soup.find("body").stripped_strings])
 
     async def get_info(self) -> dict[str, str]:

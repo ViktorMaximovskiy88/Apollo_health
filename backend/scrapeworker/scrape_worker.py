@@ -190,6 +190,7 @@ class ScrapeWorker:
 
             parsed_content = await parse_by_type(temp_path, download, self.taggers)
             if parsed_content is None:
+                logging.info(f"{download.request.url} {download.file_extension} cannot be parsed")
                 continue
 
             document = None
@@ -240,6 +241,12 @@ class ScrapeWorker:
                 else:
                     logging.debug("creating doc")
                     now = datetime.now(tz=timezone.utc)
+                    name = (
+                        parsed_content["title"]
+                        or download.metadata.link_text
+                        or download.file_name
+                        or download.request.url
+                    )
                     document = RetrievedDocument(
                         base_url=download.metadata.base_url,
                         checksum=checksum,
@@ -261,7 +268,7 @@ class ScrapeWorker:
                         lang_code=parsed_content["lang_code"],
                         last_collected_date=now,
                         metadata=parsed_content["metadata"],
-                        name=parsed_content["title"],
+                        name=name,
                         scrape_task_id=self.scrape_task.id,
                         site_id=self.site.id,
                         url=url,
