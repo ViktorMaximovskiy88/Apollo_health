@@ -23,7 +23,7 @@ from backend.common.models.doc_document import DocDocument, calc_final_effective
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
-from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.models.site_scrape_task import LinkContext, SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.text_handler import TextHandler
@@ -188,10 +188,30 @@ class ScrapeWorker:
             download, proxies
         ):
 
+            # log response error
+            if not (temp_path and checksum):
+                await self.scrape_task.update(
+                    Push(
+                        {
+                            SiteScrapeTask.link_entries: LinkContext(
+                                url=url,
+                                base_url=download.metadata.base_url,
+                                link_text=download.metadata.link_text,
+                                content_length=download.response.content_length,
+                                content_type=download.response.content_type,
+                                status=download.response.status,
+                            )
+                        }
+                    )
+                )
+                continue
+
+            # log no file parser found error
             parsed_content = await parse_by_type(temp_path, download, self.taggers)
             if parsed_content is None:
                 continue
 
+            # good times
             document = None
             dest_path = f"{checksum}.{download.file_extension}"
 
@@ -273,9 +293,9 @@ class ScrapeWorker:
                     await create_and_log(self.logger, await self.get_user(), document)
                     await self.create_doc_document(document)
 
-            await self.scrape_task.update(Inc({SiteScrapeTask.documents_found: 1}))
             await self.scrape_task.update(
-                Push({SiteScrapeTask.retrieved_document_ids: document.id})
+                Inc({SiteScrapeTask.documents_found: 1}),
+                Push({SiteScrapeTask.retrieved_document_ids: document.id}),
             )
 
     async def watch_for_cancel(self, tasks: list[asyncio.Task[None]]):

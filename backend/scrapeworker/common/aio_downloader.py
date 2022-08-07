@@ -164,8 +164,9 @@ class AioDownloader:
                 # We only need this now due to the xlsx lib needing an ext (derp)
                 download.guess_extension()
 
+                # how to identity proxy error vs site error...
                 if not response.ok:
-                    continue
+                    yield (None, None)
 
                 with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
                     yield await self.write_response_to_file(download, response, temp)

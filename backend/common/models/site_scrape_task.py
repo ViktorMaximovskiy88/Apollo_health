@@ -8,6 +8,15 @@ from backend.common.core.enums import CollectionMethod, TaskStatus
 from backend.common.models.base_document import BaseDocument
 
 
+class LinkContext(BaseModel):
+    base_url: str
+    url: str
+    link_text: str
+    content_type: str
+    content_length: int
+    status: int
+
+
 class SiteScrapeTask(BaseDocument):
     site_id: Indexed(PydanticObjectId)  # type: ignore
     initiator_id: PydanticObjectId | None = None
@@ -24,6 +33,7 @@ class SiteScrapeTask(BaseDocument):
     links_found: int = 0
     retry_if_lost: bool = False
     collection_method: str | None = CollectionMethod.Automated
+    link_entries: list[LinkContext] = []
 
 
 class UpdateSiteScrapeTask(BaseModel):
@@ -36,6 +46,7 @@ class UpdateSiteScrapeTask(BaseModel):
     new_documents_found: int | None = None
     error_message: str | None = None
     retry_if_lost: bool | None = False
+    link_entries: list[LinkContext] | None = []
 
 
 # Deprecated
