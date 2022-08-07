@@ -202,6 +202,25 @@ class ScrapeWorker:
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
                 await self.scrape_task.update(Inc({SiteScrapeTask.new_documents_found: 1}))
 
+            if download.file_extension == "html":
+                async with self.playwright_context(url) as (page, context):
+                    logging.info("screenshot of html")
+                    # ss
+                    dest_path = f"{checksum}.{download.file_extension}.png"
+                    await page.goto(download.request.url, wait_until="domcontentloaded")
+                    screenshot_bytes = await page.screenshot(full_page=True)
+                    self.doc_client.write_object_mem(
+                        relative_key=dest_path, object=screenshot_bytes
+                    )
+                    logging.info("screenshot of html complete")
+                    logging.info("pdf of html")
+                    # ss
+                    dest_path = f"{checksum}.{download.file_extension}.png"
+                    await page.goto(download.request.url, wait_until="domcontentloaded")
+                    pdf_bytes = await page.pdf()
+                    self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
+                    logging.info("pdf of html complete")
+
             document = await RetrievedDocument.find_one(
                 RetrievedDocument.checksum == checksum
                 or checksum in RetrievedDocument.file_checksum_aliases
@@ -378,7 +397,7 @@ class ScrapeWorker:
     def active_base_urls(self):
         return [url for url in self.site.base_urls if url.status == "ACTIVE"]
 
-    def preprocess_download(self, download: DownloadContext, base_url: str):
+    async def preprocess_download(self, download: DownloadContext, base_url: str):
         download.metadata.base_url = base_url
         if is_google(download.request.url):
             google_id = get_google_id(download.request.url)
