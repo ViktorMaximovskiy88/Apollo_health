@@ -203,23 +203,11 @@ class ScrapeWorker:
                 await self.scrape_task.update(Inc({SiteScrapeTask.new_documents_found: 1}))
 
             if download.file_extension == "html":
-                async with self.playwright_context(url) as (page, context):
-                    logging.info("screenshot of html")
-                    # ss
-                    dest_path = f"{checksum}.{download.file_extension}.png"
-                    await page.goto(download.request.url, wait_until="domcontentloaded")
-                    screenshot_bytes = await page.screenshot(full_page=True)
-                    self.doc_client.write_object_mem(
-                        relative_key=dest_path, object=screenshot_bytes
-                    )
-                    logging.info("screenshot of html complete")
-                    logging.info("pdf of html")
-                    # ss
-                    dest_path = f"{checksum}.{download.file_extension}.png"
+                async with self.playwright_context(url) as (page, _context):
+                    dest_path = f"{checksum}.{download.file_extension}.pdf"
                     await page.goto(download.request.url, wait_until="domcontentloaded")
                     pdf_bytes = await page.pdf()
                     self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
-                    logging.info("pdf of html complete")
 
             document = await RetrievedDocument.find_one(
                 RetrievedDocument.checksum == checksum
