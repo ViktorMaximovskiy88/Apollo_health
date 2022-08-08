@@ -206,7 +206,7 @@ class ScrapeWorker:
                 async with self.playwright_context(url) as (page, _context):
                     dest_path = f"{checksum}.{download.file_extension}.pdf"
                     await page.goto(download.request.url, wait_until="domcontentloaded")
-                    pdf_bytes = await page.pdf()
+                    pdf_bytes = await page.pdf(display_header_footer=False, print_background=True)
                     self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
 
             document = await RetrievedDocument.find_one(
