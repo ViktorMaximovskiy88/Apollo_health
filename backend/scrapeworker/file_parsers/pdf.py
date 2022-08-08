@@ -20,7 +20,7 @@ class PdfParse(FileParser):
         logging.info(
             f"after pdfinfo url={self.url} file_path={self.file_path} threads={threading.active_count()}"  # noqa
         )
-        info = pdfinfo_out.decode("utf-8", "ignore").strip()
+        info = pdfinfo_out.decode("iso-8859-1", "ignore").strip()
         metadata = {}
         key = ""
         for line in info.split("\n"):
@@ -50,7 +50,7 @@ class PdfParse(FileParser):
         logging.info(
             f"after pdftotext url={self.url} file_path={self.file_path} threads={threading.active_count()}"  # noqa
         )
-        return pdftext_out.decode("utf-8", "ignore").strip()
+        return pdftext_out.decode("iso-8859-1", "ignore").strip()
 
     def get_title(self, metadata):
         title = metadata.get("Title") or metadata.get("Subject") or str(self.filename_no_ext)
