@@ -1,15 +1,10 @@
-import { Form, Modal, InputNumber, Spin, Button, FormInstance } from 'antd';
+import { Form, Modal, Spin, Button, FormInstance } from 'antd';
 import { DocDocument, DocumentFamilyType } from './types';
 import { useGetSiteQuery } from '../sites/sitesApi';
 import { Site } from '../sites/types';
 import { Name } from './DocumentFamilyNameField';
 import { useAddDocumentFamilyMutation } from './documentFamilyApi';
-
-const initialValues = {
-  document_type_threshold: 75,
-  therapy_tag_status_threshold: 75,
-  lineage_threshold: 75,
-};
+import { ThresholdFields, initialThresholdValues } from './DocumentFamilyThresholdFields';
 
 const DocumentType = () => {
   const form = Form.useFormInstance();
@@ -25,39 +20,7 @@ const SiteName = ({ site }: { site?: Site }) => (
     {site?.name ? <b>{site.name}</b> : <Spin size="small" />}
   </Form.Item>
 );
-const DocumentTypeThreshold = () => (
-  <Form.Item
-    name="document_type_threshold"
-    label="Document Type Confidence Threshold"
-    className="flex-1"
-    rules={[{ required: true, message: 'Please input a Document Type Confidence Threshold!' }]}
-    required
-  >
-    <InputNumber min={1} max={100} addonAfter="%" />
-  </Form.Item>
-);
-const TherapyTagStatusThreshold = () => (
-  <Form.Item
-    name="therapy_tag_status_threshold"
-    label="Therapy Tag Confidence Threshold"
-    className="flex-1"
-    rules={[{ required: true, message: 'Please input a Therapy Tag Confidence Threshold!' }]}
-    required
-  >
-    <InputNumber min={1} max={100} addonAfter="%" />
-  </Form.Item>
-);
-const LineageThreshold = () => (
-  <Form.Item
-    name="lineage_threshold"
-    label="Lineage Confidence Threshold"
-    className="flex-1"
-    rules={[{ required: true, message: 'Please input a Lineage Confidence Threshold!' }]}
-    required
-  >
-    <InputNumber min={1} max={100} addonAfter="%" />
-  </Form.Item>
-);
+
 const Footer = ({ onCancel }: { onCancel: () => void }) => (
   <div className="ant-modal-footer mt-3">
     <Button onClick={onCancel}>Cancel</Button>
@@ -134,7 +97,7 @@ export function AddDocumentFamily({
     >
       <Form
         onFinish={onFinish}
-        initialValues={initialValues}
+        initialValues={initialThresholdValues}
         form={documentFamilyForm}
         name="add-document-family"
         layout="vertical"
@@ -148,11 +111,7 @@ export function AddDocumentFamily({
           <DocumentType />
           <SiteName site={site} />
         </div>
-        <div className="flex space-x-8">
-          <DocumentTypeThreshold />
-          <TherapyTagStatusThreshold />
-          <LineageThreshold />
-        </div>
+        <ThresholdFields />
         <Footer onCancel={onCancel} />
       </Form>
     </Modal>
