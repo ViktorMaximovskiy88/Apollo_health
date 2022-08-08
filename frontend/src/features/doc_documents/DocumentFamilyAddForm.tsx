@@ -11,11 +11,15 @@ const initialValues = {
   lineage_threshold: 75,
 };
 
-const DocumentType = ({ doc }: { doc: DocDocument }) => (
-  <Form.Item label="Document Type" className="flex-1">
-    <b>{doc.document_type}</b>
-  </Form.Item>
-);
+const DocumentType = () => {
+  const form = Form.useFormInstance();
+  const documentType = Form.useWatch('document_type', form);
+  return (
+    <Form.Item label="Document Type" className="flex-1">
+      <b>{documentType}</b>
+    </Form.Item>
+  );
+};
 const SiteName = ({ site }: { site?: Site }) => (
   <Form.Item label="Site Name" className="flex-1">
     {site?.name ? <b>{site.name}</b> : <Spin size="small" />}
@@ -64,12 +68,15 @@ const Footer = ({ onCancel }: { onCancel: () => void }) => (
 );
 
 const useAddDocumentFamily = (doc: DocDocument) => {
+  const form = Form.useFormInstance();
+  const documentType = Form.useWatch('document_type', form);
+
   const { data: site } = useGetSiteQuery(doc.site_id);
   const [addDocumentFamilyFn] = useAddDocumentFamilyMutation();
 
   async function addDocumentFamily(documentFamily: DocumentFamilyType): Promise<string> {
     documentFamily.sites = site?._id ? [site._id] : [];
-    documentFamily.document_type = doc.document_type;
+    documentFamily.document_type = documentType;
 
     const { _id } = await addDocumentFamilyFn(documentFamily).unwrap();
 
@@ -138,7 +145,7 @@ export function AddDocumentFamily({
           <Name />
         </div>
         <div className="flex space-x-8">
-          <DocumentType doc={doc} />
+          <DocumentType />
           <SiteName site={site} />
         </div>
         <div className="flex space-x-8">
