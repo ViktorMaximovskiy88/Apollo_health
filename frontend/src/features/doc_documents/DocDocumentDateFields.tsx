@@ -87,6 +87,7 @@ const PublishedDate = ({ form, doc, onFieldChange }: DateFieldPropTypes) => (
 );
 const FirstCollectedDate = ({ form, doc, onFieldChange }: DateFieldPropTypes) => (
   <ListDatePicker
+    disabled
     form={form}
     className="flex-1"
     name="first_collected_date"
@@ -98,6 +99,7 @@ const FirstCollectedDate = ({ form, doc, onFieldChange }: DateFieldPropTypes) =>
 );
 const LastCollectedDate = ({ form, doc, onFieldChange }: DateFieldPropTypes) => (
   <ListDatePicker
+    disabled
     form={form}
     className="flex-1"
     name="last_collected_date"
