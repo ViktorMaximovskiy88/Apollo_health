@@ -22,23 +22,26 @@ const useModal = (): [boolean, () => void, () => void] => {
 };
 
 const useOptions = (doc: DocDocument): [DocumentFamilyOption[]] => {
+  const form = Form.useFormInstance();
+
+  const documentType = Form.useWatch('document_type', form);
   const { data: documentFamilies } = useGetDocumentFamiliesQuery({
     siteId: doc.site_id,
-    documentType: doc.document_type,
+    documentType: documentType,
   });
+
   const [options, setOptions] = useState<DocumentFamilyOption[]>([]);
 
   useEffect(() => {
     if (!documentFamilies) return;
 
-    const initialOptions = documentFamilies.map((df: DocumentFamilyType): DocumentFamilyOption => {
+    const newOptions = documentFamilies.map((df: DocumentFamilyType): DocumentFamilyOption => {
       return {
-        ...df,
         label: df.name,
         value: df._id,
       };
     });
-    setOptions(initialOptions);
+    setOptions(newOptions);
   }, [documentFamilies]);
 
   return [options];
@@ -47,6 +50,17 @@ const useOptions = (doc: DocDocument): [DocumentFamilyOption[]] => {
 export function DocumentFamily({ doc, form }: { doc: DocDocument; form: FormInstance }) {
   const [options] = useOptions(doc);
   const [isModalVisible, showModal, closeModal] = useModal();
+
+  const documentType = Form.useWatch('document_type', form);
+  useEffect(() => {
+    if (!documentType) return;
+
+    if (documentType === doc.document_type) {
+      form.resetFields(['document_families']);
+    } else {
+      form.setFieldsValue({ document_families: [] });
+    }
+  }, [doc.document_type, documentType, form]);
 
   return (
     <div className="flex space-x-8">

@@ -5,7 +5,7 @@ import { DateFields } from './DocDocumentDateFields';
 import { DocumentClassification } from './DocDocumentClassificationFields';
 import { ExtractionFields } from './DocDocumentExtractionFields';
 import { UrlFields } from './DocDocumentUrlFields';
-import { DocumentFamily } from './DocumentFamilyFields';
+import { DocumentFamily } from './DocumentFamilyField';
 
 const Name = () => (
   <Form.Item name="name" label="Name" required={true}>
