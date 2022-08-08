@@ -1,5 +1,5 @@
 import { Form, Modal, InputNumber, Spin, Button, FormInstance } from 'antd';
-import { DocDocument, DocumentFamilyType, DocumentFamilyOption } from './types';
+import { DocDocument, DocumentFamilyType } from './types';
 import { useGetSiteQuery } from '../sites/sitesApi';
 import { Site } from '../sites/types';
 import { Name } from './DocumentFamilyNameField';
@@ -63,42 +63,52 @@ const Footer = ({ onCancel }: { onCancel: () => void }) => (
   </div>
 );
 
+const useAddDocumentFamily = (doc: DocDocument) => {
+  const { data: site } = useGetSiteQuery(doc.site_id);
+  const [addDocumentFamilyFn] = useAddDocumentFamilyMutation();
+
+  async function addDocumentFamily(documentFamily: DocumentFamilyType): Promise<string> {
+    documentFamily.sites = site?._id ? [site._id] : [];
+    documentFamily.document_type = doc.document_type;
+
+    const { _id } = await addDocumentFamilyFn(documentFamily).unwrap();
+
+    return _id;
+  }
+
+  return addDocumentFamily;
+};
+
+const saveInMultiselect = (docDocumentForm: FormInstance, documentFamilyId: string): void => {
+  const selected = docDocumentForm.getFieldValue('document_families');
+  docDocumentForm.setFieldsValue({
+    document_families: [...selected, documentFamilyId],
+  });
+};
+
 interface AddDocumentFamilyPropTypes {
   closeModal: () => void;
   visible: boolean;
   doc: DocDocument;
-  options: DocumentFamilyOption[];
-  setOptions: (options: DocumentFamilyOption[]) => void;
   docDocumentForm: FormInstance;
 }
 export function AddDocumentFamily({
   doc,
   closeModal,
   visible,
-  options,
-  setOptions,
   docDocumentForm,
 }: AddDocumentFamilyPropTypes) {
   const { data: site } = useGetSiteQuery(doc.site_id);
   const [documentFamilyForm] = Form.useForm();
-  const [addDocumentFamily] = useAddDocumentFamilyMutation();
+  const addDocumentFamily = useAddDocumentFamily(doc);
 
   const onFinish = async (documentFamily: DocumentFamilyType) => {
-    documentFamily.sites = site?._id ? [site._id] : [];
-    documentFamily.document_type = doc.document_type;
+    const documentFamilyId = await addDocumentFamily(documentFamily);
+
+    saveInMultiselect(docDocumentForm, documentFamilyId);
 
     documentFamilyForm.resetFields();
     closeModal();
-
-    const { _id, name } = await addDocumentFamily(documentFamily).unwrap();
-    documentFamily._id = _id;
-
-    setOptions([{ label: name, value: _id, ...documentFamily }, ...options]);
-
-    const selected = docDocumentForm.getFieldValue('document_families');
-    docDocumentForm.setFieldsValue({
-      document_families: [...selected, { label: name, value: _id, ...documentFamily }],
-    });
   };
 
   const onCancel = () => {

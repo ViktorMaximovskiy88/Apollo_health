@@ -76,25 +76,20 @@ const buildInitialValues = (doc: DocDocument) => ({
   last_collected_date: dateToMoment(doc.last_collected_date),
 });
 
-interface UseOnFinishType {
-  doc?: Partial<DocDocument>;
-  tags: Array<TherapyTag | IndicationTag>;
-}
-const useOnFinish = ({ doc, tags }: UseOnFinishType): [() => Promise<void>, boolean] => {
+const useOnFinish = (
+  tags: Array<TherapyTag | IndicationTag>
+): [(doc: Partial<DocDocument>) => Promise<void>, boolean] => {
   const navigate = useNavigate();
   const { docDocumentId: docId } = useParams();
   const [isSaving, setIsSaving] = useState(false);
   const [updateDocDocument] = useUpdateDocDocumentMutation();
 
-  const onFinish = async (): Promise<void> => {
-    // TODO: get document families by site id and document id
+  const onFinish = async (doc: Partial<DocDocument>): Promise<void> => {
     if (!doc) return;
 
     setIsSaving(true);
 
     try {
-      // TODO: addDocumentFamily() - add when not exists
-      //        use returned _id's to update DocDocument
       const tagsByType = groupBy(tags, '_type');
       await updateDocDocument({
         ...doc,
@@ -158,7 +153,7 @@ export function DocDocumentEditPage() {
   const [tags, setTags] = useTagsState(doc);
   const [hasChanges, setHasChanges] = useState(false);
   const [pageNumber, setPageNumber] = useState(0);
-  const [onFinish, isSaving] = useOnFinish({ doc, tags });
+  const [onFinish, isSaving] = useOnFinish(tags);
 
   const calculateFinalEffectiveDate = useCalculateFinalEffectiveDate(form);
 

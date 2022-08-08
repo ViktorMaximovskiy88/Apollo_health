@@ -2,7 +2,7 @@ import { Form, Select, Button, FormInstance } from 'antd';
 import { DocDocument, DocumentFamilyType, DocumentFamilyOption } from './types';
 import { useEffect, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
-import { AddDocumentFamily } from './DocumentFamilyAddForm';
+import { AddDocumentFamily as AddDocumentFamilyModal } from './DocumentFamilyAddForm';
 import { useGetDocumentFamiliesQuery } from './documentFamilyApi';
 
 const { Option } = Select;
@@ -21,9 +21,7 @@ const useModal = (): [boolean, () => void, () => void] => {
   return [isVisible, showModal, closeModal];
 };
 
-const useOptions = (
-  doc: DocDocument
-): [DocumentFamilyOption[], (options: DocumentFamilyOption[]) => void] => {
+const useOptions = (doc: DocDocument): [DocumentFamilyOption[]] => {
   const { data: documentFamilies } = useGetDocumentFamiliesQuery({
     siteId: doc.site_id,
     documentType: doc.document_type,
@@ -43,21 +41,19 @@ const useOptions = (
     setOptions(initialOptions);
   }, [documentFamilies]);
 
-  return [options, setOptions];
+  return [options];
 };
 
 export function DocumentFamily({ doc, form }: { doc: DocDocument; form: FormInstance }) {
-  const [options, setOptions] = useOptions(doc);
+  const [options] = useOptions(doc);
   const [isModalVisible, showModal, closeModal] = useModal();
 
   return (
     <div className="flex space-x-8">
-      <AddDocumentFamily
+      <AddDocumentFamilyModal
         closeModal={closeModal}
         visible={isModalVisible}
         doc={doc}
-        options={options}
-        setOptions={setOptions}
         docDocumentForm={form}
       />
       <Form.Item name="document_families" label="Document Family" className="flex-1">

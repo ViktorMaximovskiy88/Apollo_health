@@ -96,7 +96,7 @@ export interface DocumentFamilyType extends BaseDocument {
   relevance: string[];
 }
 
-export interface DocumentFamilyOption extends DocumentFamilyType {
+export interface DocumentFamilyOption {
   label?: string;
   value?: string;
 }
