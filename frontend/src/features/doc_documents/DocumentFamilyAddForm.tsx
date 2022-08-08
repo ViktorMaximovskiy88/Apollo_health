@@ -1,34 +1,9 @@
 import { Form, Modal, Spin, Button, FormInstance } from 'antd';
 import { DocDocument, DocumentFamilyType } from './types';
 import { useGetSiteQuery } from '../sites/sitesApi';
-import { Site } from '../sites/types';
 import { Name } from './DocumentFamilyNameField';
 import { useAddDocumentFamilyMutation } from './documentFamilyApi';
 import { ThresholdFields, initialThresholdValues } from './DocumentFamilyThresholdFields';
-
-const DocumentType = () => {
-  const form = Form.useFormInstance();
-  const documentType = Form.useWatch('document_type', form);
-  return (
-    <Form.Item label="Document Type" className="flex-1">
-      <b>{documentType}</b>
-    </Form.Item>
-  );
-};
-const SiteName = ({ site }: { site?: Site }) => (
-  <Form.Item label="Site Name" className="flex-1">
-    {site?.name ? <b>{site.name}</b> : <Spin size="small" />}
-  </Form.Item>
-);
-
-const Footer = ({ onCancel }: { onCancel: () => void }) => (
-  <div className="ant-modal-footer mt-3">
-    <Button onClick={onCancel}>Cancel</Button>
-    <Button type="primary" htmlType="submit">
-      Submit
-    </Button>
-  </div>
-);
 
 const useAddDocumentFamily = (doc: DocDocument) => {
   const form = Form.useFormInstance();
@@ -42,7 +17,6 @@ const useAddDocumentFamily = (doc: DocDocument) => {
     documentFamily.document_type = documentType;
 
     const { _id } = await addDocumentFamilyFn(documentFamily).unwrap();
-
     return _id;
   }
 
@@ -56,6 +30,33 @@ const saveInMultiselect = (docDocumentForm: FormInstance, documentFamilyId: stri
   });
 };
 
+const DocumentType = () => {
+  const form = Form.useFormInstance();
+  const documentType = Form.useWatch('document_type', form);
+  return (
+    <Form.Item label="Document Type" className="flex-1">
+      <b>{documentType}</b>
+    </Form.Item>
+  );
+};
+const SiteName = ({ doc }: { doc: DocDocument }) => {
+  const { data: site } = useGetSiteQuery(doc.site_id);
+  return (
+    <Form.Item label="Site Name" className="flex-1">
+      {site?.name ? <b>{site.name}</b> : <Spin size="small" />}
+    </Form.Item>
+  );
+};
+
+const Footer = ({ onCancel }: { onCancel: () => void }) => (
+  <div className="ant-modal-footer mt-3">
+    <Button onClick={onCancel}>Cancel</Button>
+    <Button type="primary" htmlType="submit">
+      Submit
+    </Button>
+  </div>
+);
+
 interface AddDocumentFamilyPropTypes {
   closeModal: () => void;
   visible: boolean;
@@ -68,13 +69,11 @@ export function AddDocumentFamily({
   visible,
   docDocumentForm,
 }: AddDocumentFamilyPropTypes) {
-  const { data: site } = useGetSiteQuery(doc.site_id);
   const [documentFamilyForm] = Form.useForm();
   const addDocumentFamily = useAddDocumentFamily(doc);
 
   const onFinish = async (documentFamily: DocumentFamilyType) => {
     const documentFamilyId = await addDocumentFamily(documentFamily);
-
     saveInMultiselect(docDocumentForm, documentFamilyId);
 
     documentFamilyForm.resetFields();
@@ -109,7 +108,7 @@ export function AddDocumentFamily({
         </div>
         <div className="flex space-x-8">
           <DocumentType />
-          <SiteName site={site} />
+          <SiteName doc={doc} />
         </div>
         <ThresholdFields />
         <Footer onCancel={onCancel} />
