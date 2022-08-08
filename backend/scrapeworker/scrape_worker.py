@@ -190,6 +190,7 @@ class ScrapeWorker:
 
             parsed_content = await parse_by_type(temp_path, download, self.taggers)
             if parsed_content is None:
+                logging.info(f"{download.request.url} {download.file_extension} cannot be parsed")
                 continue
 
             document = None
@@ -200,6 +201,13 @@ class ScrapeWorker:
             if not self.doc_client.object_exists(dest_path):
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
                 await self.scrape_task.update(Inc({SiteScrapeTask.new_documents_found: 1}))
+
+            if download.file_extension == "html":
+                async with self.playwright_context(url) as (page, _context):
+                    dest_path = f"{checksum}.{download.file_extension}.pdf"
+                    await page.goto(download.request.url, wait_until="domcontentloaded")
+                    pdf_bytes = await page.pdf(display_header_footer=False, print_background=True)
+                    self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
 
             document = await RetrievedDocument.find_one(
                 RetrievedDocument.checksum == checksum
@@ -240,6 +248,12 @@ class ScrapeWorker:
                 else:
                     logging.debug("creating doc")
                     now = datetime.now(tz=timezone.utc)
+                    name = (
+                        parsed_content["title"]
+                        or download.metadata.link_text
+                        or download.file_name
+                        or download.request.url
+                    )
                     document = RetrievedDocument(
                         base_url=download.metadata.base_url,
                         checksum=checksum,
@@ -261,7 +275,7 @@ class ScrapeWorker:
                         lang_code=parsed_content["lang_code"],
                         last_collected_date=now,
                         metadata=parsed_content["metadata"],
-                        name=parsed_content["title"],
+                        name=name,
                         scrape_task_id=self.scrape_task.id,
                         site_id=self.site.id,
                         url=url,
@@ -371,7 +385,7 @@ class ScrapeWorker:
     def active_base_urls(self):
         return [url for url in self.site.base_urls if url.status == "ACTIVE"]
 
-    def preprocess_download(self, download: DownloadContext, base_url: str):
+    async def preprocess_download(self, download: DownloadContext, base_url: str):
         download.metadata.base_url = base_url
         if is_google(download.request.url):
             google_id = get_google_id(download.request.url)
