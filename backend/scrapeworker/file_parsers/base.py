@@ -40,7 +40,7 @@ class FileParser(ABC):
         raise NotImplementedError("get_title is required")
 
     async def get_bytes(self):
-        async with aiofiles.open(self.file_path, mode="r") as file:
+        async with aiofiles.open(self.file_path, mode="r", encoding="iso-8859-1") as file:
             return await file.read()
 
     async def parse(self) -> dict[str, Any]:
