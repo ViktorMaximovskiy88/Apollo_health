@@ -1,4 +1,4 @@
-import { Form, Select, Button, FormInstance } from 'antd';
+import { Form, Select, Button } from 'antd';
 import { DocDocument, DocumentFamilyType, DocumentFamilyOption } from './types';
 import { useEffect, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
@@ -7,27 +7,27 @@ import { useGetDocumentFamiliesQuery } from './documentFamilyApi';
 
 const { Option } = Select;
 
-const useModal = (): [boolean, () => void, () => void] => {
-  const [isVisible, setIsVisible] = useState(false);
+const useSyncedValue = (doc: DocDocument) => {
+  const form = Form.useFormInstance();
+  const documentType = Form.useWatch('document_type', form);
+  useEffect(() => {
+    if (!documentType) return;
 
-  const showModal = () => {
-    setIsVisible(true);
-  };
-
-  const closeModal = () => {
-    setIsVisible(false);
-  };
-
-  return [isVisible, showModal, closeModal];
+    if (documentType === doc.document_type) {
+      form.resetFields(['document_families']);
+    } else {
+      form.setFieldsValue({ document_families: [] });
+    }
+  }, [doc.document_type, documentType, form]);
 };
 
-const useOptions = (doc: DocDocument): [DocumentFamilyOption[]] => {
+const useSyncedOptions = (doc: DocDocument): [DocumentFamilyOption[]] => {
   const form = Form.useFormInstance();
 
   const documentType = Form.useWatch('document_type', form);
   const { data: documentFamilies } = useGetDocumentFamiliesQuery({
     siteId: doc.site_id,
-    documentType: documentType,
+    documentType,
   });
 
   const [options, setOptions] = useState<DocumentFamilyOption[]>([]);
@@ -47,20 +47,30 @@ const useOptions = (doc: DocDocument): [DocumentFamilyOption[]] => {
   return [options];
 };
 
-export function DocumentFamily({ doc, form }: { doc: DocDocument; form: FormInstance }) {
-  const [options] = useOptions(doc);
+const useModal = (): [boolean, () => void, () => void] => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  const showModal = () => {
+    setIsVisible(true);
+  };
+
+  const closeModal = () => {
+    setIsVisible(false);
+  };
+
+  return [isVisible, showModal, closeModal];
+};
+
+const useSyncWithOtherFields = (doc: DocDocument): [DocumentFamilyOption[]] => {
+  useSyncedValue(doc);
+  const [options] = useSyncedOptions(doc);
+  return [options];
+};
+
+export function DocumentFamily({ doc }: { doc: DocDocument }) {
+  const form = Form.useFormInstance();
+  const [options] = useSyncWithOtherFields(doc);
   const [isModalVisible, showModal, closeModal] = useModal();
-
-  const documentType = Form.useWatch('document_type', form);
-  useEffect(() => {
-    if (!documentType) return;
-
-    if (documentType === doc.document_type) {
-      form.resetFields(['document_families']);
-    } else {
-      form.setFieldsValue({ document_families: [] });
-    }
-  }, [doc.document_type, documentType, form]);
 
   return (
     <div className="flex space-x-8">
