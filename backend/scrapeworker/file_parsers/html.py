@@ -1,3 +1,5 @@
+import logging
+
 import bs4
 
 from backend.scrapeworker.file_parsers.base import FileParser
@@ -13,7 +15,13 @@ class HtmlParser(FileParser):
 
         title_element = soup.find("title")
         self.title = title_element.string.strip() if title_element else None
-        return " ".join([text for text in soup.find("body").stripped_strings])
+
+        body_element = soup.find("body")
+        if body_element:
+            return " ".join([text for text in soup.find("body").stripped_strings])
+        else:
+            logging.error("no body tag found, why?")
+            return ""
 
     async def get_info(self) -> dict[str, str]:
         # what does an html pages info look like?
