@@ -1,10 +1,11 @@
 import { prettyDateFromISO, prettyDateUTCFromISO } from '../../common';
 import { Link } from 'react-router-dom';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { RetrievedDocument } from '../retrieved_documents/types';
+import { RetrievedDocument, DocumentTypes } from '../retrieved_documents/types';
 import { useGetChangeLogQuery } from '../sites/sitesApi';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
+
 
 export const useDocumentColumns = () => [
   {
@@ -59,16 +60,7 @@ export const useDocumentColumns = () => [
     filterEditor: SelectFilter,
     filterEditorProps: {
       placeholder: 'All',
-      dataSource: [
-        { id: 'Authorization Policy', label: 'Authorization Policy' },
-        { id: 'Provider Guide', label: 'Provider Guide' },
-        { id: 'Treatment Request Form', label: 'Treatment Request Form' },
-        { id: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
-        { id: 'Covered Treatment List', label: 'Covered Treatment List' },
-        { id: 'Regulatory Document', label: 'Regulatory Document' },
-        { id: 'Formulary', label: 'Formulary' },
-        { id: 'Internal Reference', label: 'Internal Reference' },
-      ],
+      dataSource: DocumentTypes,
     },
     render: ({ value: document_type }: { value: string }) => {
       return <>{document_type}</>;
