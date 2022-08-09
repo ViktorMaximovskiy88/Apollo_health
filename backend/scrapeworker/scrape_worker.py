@@ -394,7 +394,7 @@ class ScrapeWorker:
 
                 if not response.ok:
                     invalid_response = InvalidResponse(
-                        proxy_url=proxy["server"],
+                        proxy_url=proxy.get("server"),
                         status=response.status,
                         message=response.status_text,
                     )
@@ -405,7 +405,7 @@ class ScrapeWorker:
 
                 headers = await response.all_headers()
                 link_source_task.valid_response = ValidResponse(
-                    proxy_url=proxy["server"],
+                    proxy_url=proxy.get("server"),
                     status=response.status,
                     content_type=headers.get("content-type"),
                     content_length=headers.get("content-length"),
