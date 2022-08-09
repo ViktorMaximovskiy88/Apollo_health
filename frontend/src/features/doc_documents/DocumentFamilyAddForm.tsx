@@ -110,9 +110,7 @@ export function AddDocumentFamily({ closeModal, visible }: AddDocumentFamilyProp
         className="h-full"
         autoComplete="off"
       >
-        <div className="flex space-x-8">
-          <Name />
-        </div>
+        <Name />
         <div className="flex space-x-8">
           <DocumentType />
           <SiteName />

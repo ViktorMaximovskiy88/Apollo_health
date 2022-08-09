@@ -18,14 +18,16 @@ export const Name = () => {
   });
 
   return (
-    <Form.Item
-      name="name"
-      label="Document Family Name"
-      className="flex-1"
-      rules={[mustBeUnique, { required: true, message: 'Please input a Document Family Name!' }]}
-      required
-    >
-      <Input />
-    </Form.Item>
+    <div className="flex space-x-8">
+      <Form.Item
+        name="name"
+        label="Document Family Name"
+        className="flex-1"
+        rules={[mustBeUnique, { required: true, message: 'Please input a Document Family Name!' }]}
+        required
+      >
+        <Input />
+      </Form.Item>
+    </div>
   );
 };
