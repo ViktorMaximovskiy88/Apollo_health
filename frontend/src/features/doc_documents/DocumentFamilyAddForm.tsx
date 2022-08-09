@@ -6,6 +6,7 @@ import { useAddDocumentFamilyMutation } from './documentFamilyApi';
 import { ThresholdFields, initialThresholdValues } from './DocumentFamilyThresholdFields';
 import { useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
+import { useState } from 'react';
 
 const useAddDocumentFamily = () => {
   const [addDocumentFamilyFn] = useAddDocumentFamilyMutation();
@@ -60,10 +61,10 @@ const SiteName = () => {
   );
 };
 
-const Footer = ({ onCancel }: { onCancel: () => void }) => (
+const Footer = ({ onCancel, isLoading }: { onCancel: () => void; isLoading: boolean }) => (
   <div className="ant-modal-footer mt-3">
     <Button onClick={onCancel}>Cancel</Button>
-    <Button type="primary" htmlType="submit">
+    <Button type="primary" htmlType="submit" loading={isLoading}>
       Submit
     </Button>
   </div>
@@ -81,11 +82,13 @@ export function AddDocumentFamily({
   closeModal,
   visible,
 }: AddDocumentFamilyPropTypes) {
+  const [isLoading, setIsLoading] = useState(false);
   const docDocumentForm = Form.useFormInstance();
   const [documentFamilyForm] = Form.useForm();
   const addDocumentFamily = useAddDocumentFamily();
 
   const onFinish = async (documentFamily: DocumentFamilyType) => {
+    setIsLoading(true);
     const documentFamilyId = await addDocumentFamily(documentFamily);
     saveInMultiselect(docDocumentForm, documentFamilyId);
 
@@ -93,6 +96,7 @@ export function AddDocumentFamily({
 
     documentFamilyForm.resetFields();
     closeModal();
+    setIsLoading(false);
   };
 
   const onCancel = () => {
@@ -124,7 +128,7 @@ export function AddDocumentFamily({
           <SiteName />
         </div>
         <ThresholdFields docDocumentForm={docDocumentForm} />
-        <Footer onCancel={onCancel} />
+        <Footer onCancel={onCancel} isLoading={isLoading} />
       </Form>
     </Modal>
   );
