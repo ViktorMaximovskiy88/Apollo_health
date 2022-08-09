@@ -1,6 +1,6 @@
 import userEvent from '@testing-library/user-event';
 import { setupServer } from 'msw/node';
-import { useParams, Params } from 'react-router-dom';
+import { useParams, Params, MemoryRouter } from 'react-router-dom';
 
 import { DocumentEditPage } from './DocumentEditPage';
 import { handlers } from './mocks/documentEditPageHandlers';
@@ -54,9 +54,11 @@ describe('DocumentForm', () => {
     mockedUseAccessToken.mockReturnValue('123');
 
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-
-    render(<DocumentEditPage />);
-
+    render(
+      <MemoryRouter>
+        <DocumentEditPage />
+      </MemoryRouter>
+    );
     const effectiveDate = await screen.findByRole('textbox', {
       name: /Effective Date/i,
     });

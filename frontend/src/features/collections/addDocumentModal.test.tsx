@@ -1,10 +1,10 @@
 import userEvent from '@testing-library/user-event';
-import { render, screen, act } from '../../test/test-utils';
+import { MemoryRouter } from 'react-router-dom';
 import { setupServer } from 'msw/node';
+import { render, screen, act } from '../../test/test-utils';
 import { CollectionsPage } from './CollectionsPage';
 import { handlers } from './mocks/collectionsPageHandlers';
 import { useParams, Params } from 'react-router-dom';
-import { MemoryRouter } from 'react-router-dom';
 
 jest.mock('react-router-dom');
 
@@ -37,7 +37,7 @@ describe(`addDocumentModal`, () => {
   it(`should open modal when row create document is clicked and show errors when save button is clicked without info`, async () => {
     const mockedUseParams = useParams as jest.Mock<Params>;
     mockedUseParams.mockImplementation(() => ({
-      siteId: 'site-id2',
+      siteId: 'site-id1',
     }));
 
     // fixes `act` warning

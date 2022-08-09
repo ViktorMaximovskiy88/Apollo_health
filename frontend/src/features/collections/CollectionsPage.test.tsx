@@ -1,4 +1,5 @@
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { render, screen, act } from '../../test/test-utils';
 import { setupServer } from 'msw/node';
 import { CollectionsPage } from './CollectionsPage';
@@ -41,7 +42,11 @@ describe(`CollectionsPage`, () => {
     // fixes `act` warning
     // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
     const dataGridDoneRendering = Promise.resolve();
-    render(<CollectionsPage />);
+    render(
+      <MemoryRouter>
+        <CollectionsPage />
+      </MemoryRouter>
+    );
     await act(async () => {
       await dataGridDoneRendering;
     });
@@ -67,7 +72,11 @@ describe(`CollectionsPage`, () => {
     // fixes `act` warning
     // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
     const dataGridDoneRendering = Promise.resolve();
-    render(<CollectionsPage />);
+    render(
+      <MemoryRouter>
+        <CollectionsPage />
+      </MemoryRouter>
+    );
     await act(async () => {
       await dataGridDoneRendering;
     });
@@ -100,7 +109,11 @@ describe(`CollectionsPage`, () => {
     // fixes `act` warning
     // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
     const dataGridDoneRendering = Promise.resolve();
-    render(<CollectionsPage />);
+    render(
+      <MemoryRouter>
+        <CollectionsPage />
+      </MemoryRouter>
+    );
     await act(async () => {
       await dataGridDoneRendering;
     });
