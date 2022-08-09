@@ -391,10 +391,10 @@ class ScrapeWorker:
                 logging.info(f"Awating response for {url}")
                 # TODO lets set this timeout lower generally and let exceptions set it higher
                 response = await page.goto(url, timeout=10000, wait_until="domcontentloaded")
-
+                proxy_url = proxy.get("server") if proxy else None
                 if not response.ok:
                     invalid_response = InvalidResponse(
-                        proxy_url=proxy.get("server"),
+                        proxy_url=proxy_url,
                         status=response.status,
                         message=response.status_text,
                     )
@@ -405,7 +405,7 @@ class ScrapeWorker:
 
                 headers = await response.all_headers()
                 link_source_task.valid_response = ValidResponse(
-                    proxy_url=proxy.get("server"),
+                    proxy_url=proxy_url,
                     status=response.status,
                     content_type=headers.get("content-type"),
                     content_length=headers.get("content-length"),
