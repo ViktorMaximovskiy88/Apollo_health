@@ -6,11 +6,20 @@ from pydantic import BaseModel
 
 from backend.common.core.enums import CollectionMethod, TaskStatus
 from backend.common.models.base_document import BaseDocument
+from backend.scrapeworker.common.models import DownloadContext
+
+
+class FileMetadata(BaseModel):
+    checksum: str
+    file_name: str
+    file_size: int
+    mimetype: str
 
 
 class HttpResponse(BaseModel):
-    content_type: str
+    content_disposition: str | None
     content_length: int
+    content_type: str
     status: int
 
 
@@ -19,17 +28,19 @@ class ProxyResponse(BaseModel):
     response: HttpResponse
 
 
+# plus ... whatever
 class Location(BaseModel):
     base_url: str
+    link_text: str | None
     url: str
-    link_text: str
 
 
 class LinkTask(BaseModel):
+    file_metadata: FileMetadata | None
     location: Location
-    response: HttpResponse
-    retrieved_document_id: PydanticObjectId
-    proxy_respones: list[ProxyResponse]
+    proxy_respones: list[ProxyResponse] = []
+    response: HttpResponse | None
+    retrieved_document_id: PydanticObjectId | None
 
 
 class SiteScrapeTask(BaseDocument):
@@ -62,6 +73,54 @@ class UpdateSiteScrapeTask(BaseModel):
     error_message: str | None = None
     retry_if_lost: bool | None = False
     link_tasks: list[LinkTask] = []
+
+
+#  temp until i cleanse the downloadcontext
+def link_task_from_download(download: DownloadContext):
+    return LinkTask(
+        location=Location(
+            url=download.metadata.href,
+            base_url=download.metadata.base_url,
+        ),
+    )
+
+
+def create_followed_link_task(
+    url: str,
+    base_url: str,
+    link_text: str,
+    content_length: str,
+    content_type: str,
+    status: int,
+    content_disposition: str = None,
+):
+    return LinkTask(
+        location=Location(
+            url=url,
+            base_url=base_url,
+            link_text=link_text,
+        ),
+        http_response=HttpResponse(
+            content_length=content_length,
+            content_type=content_type,
+            status=status,
+            content_disposition=content_disposition,
+        ),
+    )
+
+
+def create_scraped_link_task(
+    url: str,
+    base_url: str,
+    link_text: str,
+):
+    return LinkTask(
+        location=Location(
+            url=url,
+            base_url=base_url,
+            link_text=link_text,
+        ),
+    )
 
 
 # Deprecated

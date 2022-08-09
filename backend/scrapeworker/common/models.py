@@ -34,6 +34,7 @@ class Request(BaseModel):
 class Response(BaseModel):
     content_type: str | None = None
     content_disposition_filename: str | None = None
+    content_disposition: str | None = None
     status: int | None = None
     content_length: int | None = None
 
@@ -46,8 +47,9 @@ class Response(BaseModel):
 
     def get_content_disposition_filename(self, headers) -> str | None:
         matched = None
-        if content_disposition := headers.get("content-disposition"):
-            matched = re.search('filename="(.*)";', content_disposition)
+        self.content_disposition = headers.get("content-disposition")
+        if self.content_disposition:
+            matched = re.search('filename="(.*)";', self.content_disposition)
 
         if matched:
             return matched.group(1)
@@ -65,6 +67,11 @@ class Response(BaseModel):
             return None
 
 
+class ProxyResponse(BaseModel):
+    proxy_url: str
+    response: Response
+
+
 class DownloadContext(BaseModel):
     metadata: Metadata = Metadata()
     request: Request
@@ -79,6 +86,8 @@ class DownloadContext(BaseModel):
     content_hash: str | None = None
     content_type: str | None = None
     mimetype: str | None = None
+
+    proxy_responses: list[ProxyResponse] = []
 
     def guess_extension(self) -> str | None:
         guessed_ext = get_extension_from_path_like(self.request.url)

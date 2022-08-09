@@ -13,6 +13,7 @@ from tenacity import AttemptManager
 
 from backend.common.core.config import config
 from backend.common.models.proxy import Proxy
+from backend.common.models.site_scrape_task import ProxyResponse
 from backend.common.storage.hash import DocStreamHasher
 from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.common.rate_limiter import RateLimiter
@@ -156,17 +157,27 @@ class AioDownloader:
     ):
         url = download.request.url
         logging.info(f"Attempting download {url}")
+
         async for attempt, proxy in self.proxy_with_backoff(proxies):
             with attempt:
                 response = await self.send_request(download, proxy)
 
                 download.response.from_aio_response(response)
-                # We only need this now due to the xlsx lib needing an ext (derp)
-                download.guess_extension()
+                download.proxy_responses.append(
+                    ProxyResponse(
+                        proxy_url=proxy.proxy,
+                        response=download.response,
+                    )
+                )
 
                 # how to identity proxy error vs site error...
                 if not response.ok:
-                    yield (None, None)
+                    print("failed")
+                    continue
+
+                # We only need this now due to the xlsx lib needing an ext (derp)
+                # TODO see if we can unhave this; the excel lib is dumb
+                download.guess_extension()
 
                 with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
                     yield await self.write_response_to_file(download, response, temp)
