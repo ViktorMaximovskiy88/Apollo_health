@@ -9,7 +9,7 @@ import { prettyDate } from '../../common';
 import { useAddDocumentMutation } from "../retrieved_documents/documentsApi"
 import { useGetScrapeTasksForSiteQuery } from "./siteScrapeTasksApi"
 import { baseApiUrl, client, fetchWithAuth } from '../../app/base-api';
-import { RetrievedDocument } from "../retrieved_documents/types";
+import { RetrievedDocument, DocumentTypes, LanguageCodes } from "../retrieved_documents/types";
 
 interface AddDocumentModalPropTypes {
   setVisible: (visible: boolean) => void;
@@ -161,32 +161,17 @@ function UploadItem(props: any) {
 }
 
 function DocumentTypeItem(){
-    const documentTypes = [
-      { value: 'Authorization Policy', label: 'Authorization Policy' },
-      { value: 'Provider Guide', label: 'Provider Guide' },
-      { value: 'Treatment Request Form', label: 'Treatment Request Form' },
-      { value: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
-      { value: 'Covered Treatment List', label: 'Covered Treatment List' },
-      { value: 'Regulatory Document', label: 'Regulatory Document' },
-      { value: 'Formulary', label: 'Formulary' },
-      { value: 'Internal Reference', label: 'Internal Reference' },
-    ];
     return (
         <Form.Item className="grow" name="document_type" label="Document Type" rules={[{ required: true }]}>
-            <Select options={documentTypes} />
+            <Select options={DocumentTypes} />
         </Form.Item>
     )
 }
 
 function LanguageItem(){
-    const languageCodes = [
-        { value: 'en', label: 'English' },
-        { value: 'es', label: 'Spanish' },
-        { value: 'other', label: 'Other' },
-    ];
     return (
         <Form.Item className="grow" name="lang_code" label="Language" rules={[{ required: true }]}>
-            <Select options={languageCodes} />
+            <Select options={LanguageCodes} />
         </Form.Item>
     )
 }

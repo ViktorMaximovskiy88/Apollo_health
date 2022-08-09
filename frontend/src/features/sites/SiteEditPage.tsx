@@ -9,6 +9,7 @@ import { SiteStatus } from './siteStatus';
 import { useCurrentUser } from './useCurrentUser';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { useEffect } from 'react';
+import { SiteMenu } from '../sites/SiteMenu';
 
 const { confirm } = Modal;
 
@@ -77,7 +78,7 @@ export function SiteEditPage() {
     navigate(-1);
   }
   return (
-    <MainLayout pageTitle={'Edit Site'}>
+    <MainLayout pageTitle={'Edit Site'} sidebar={<SiteMenu />}>
       <SiteForm onFinish={tryUpdateSite} initialValues={initialValues} />
     </MainLayout>
   );
