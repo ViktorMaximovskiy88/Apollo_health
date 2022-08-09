@@ -8,8 +8,7 @@ from beanie import PydanticObjectId
 from beanie.operators import ElemMatch
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, UploadFile, status
 from openpyxl import load_workbook
-
-# from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
+from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 from pydantic import BaseModel, HttpUrl
 
 from backend.app.routes.table_query import (
@@ -182,11 +181,14 @@ def get_lines_from_xlsx(file: UploadFile):
         if not line[0]:
             continue
         # Remove illegal characters.
-        # clean_line = []
-        # for line_value_i, line_value in enumerate(line):
-        #     clean_line.append(ILLEGAL_CHARACTERS_RE.sub("", line_value))
+        clean_line = []
+        for line_value in line:
+            if isinstance(line_value, str):
+                clean_line.append(ILLEGAL_CHARACTERS_RE.sub("", line_value))
+            else:
+                clean_line.append(line_value)
         # Yield parsed site.
-        yield parse_line(line)
+        yield parse_line(clean_line)
 
 
 def get_lines_from_text_file(file: UploadFile):
