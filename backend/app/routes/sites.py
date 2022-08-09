@@ -9,7 +9,7 @@ from beanie.operators import ElemMatch
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, UploadFile, status
 from openpyxl import load_workbook
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, ValidationError
 
 from backend.app.routes.table_query import (
     TableFilterInfo,
@@ -21,14 +21,7 @@ from backend.app.routes.table_query import (
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.core.enums import SiteStatus
-from backend.common.models.site import (
-    BaseUrl,
-    NewSite,
-    ScrapeMethodConfiguration,
-    Site,
-    UpdateSite,
-    is_valid_url,
-)
+from backend.common.models.site import BaseUrl, NewSite, ScrapeMethodConfiguration, Site, UpdateSite
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 
@@ -145,11 +138,18 @@ def parse_line(line):
         follow_link_keywords=[],
         follow_link_url_keywords=[],
     )
-    base_urls = list(map(lambda url: BaseUrl(url=HttpUrl(url, scheme="https")), base_urls))
+
+    clean_urls = []
+    for base_url in base_urls:
+        try:
+            parsed_url = BaseUrl(url=base_url)
+            clean_urls.append(parsed_url)
+        except ValidationError:
+            logging.error(f"site {name} has invalid url: {base_url}")
 
     return Site(
         name=name,
-        base_urls=base_urls,
+        base_urls=clean_urls,
         scrape_method=scrape_method,
         collection_method=collection_method,
         scrape_method_configuration=scrape_method_configuration,
@@ -216,14 +216,7 @@ async def upload_sites(
     for new_site in get_sites_from_upload(file):
         if await Site.find_one(Site.base_urls == new_site.base_urls):
             continue
-        # Verify base_urls.
-        has_invalid_url = False
-        for base_url in new_site.base_urls:
-            if is_valid_url(base_url.url) is False:
-                has_invalid_url = True
-                # TODO: Send json error?
-                logging.error(f"site {new_site.name} has invalid url: {base_url.url}")
-        if not has_invalid_url:
+        if new_site.base_urls:
             new_sites.append(new_site)
             await create_and_log(logger, current_user, new_site)
 
