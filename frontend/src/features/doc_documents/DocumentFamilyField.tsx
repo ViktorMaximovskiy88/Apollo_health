@@ -27,7 +27,10 @@ const useSyncedValue = () => {
   }, [doc, documentType, form]);
 };
 
-const useSyncedOptions = (): [DocumentFamilyOption[]] => {
+const useSyncedOptions = (): [
+  DocumentFamilyOption[],
+  (options: DocumentFamilyOption[]) => void
+] => {
   const form = Form.useFormInstance();
 
   const { docDocumentId: docId } = useParams();
@@ -53,7 +56,7 @@ const useSyncedOptions = (): [DocumentFamilyOption[]] => {
     setOptions(newOptions);
   }, [documentFamilies]);
 
-  return [options];
+  return [options, setOptions];
 };
 
 const useModal = (): [boolean, () => void, () => void] => {
@@ -124,18 +127,24 @@ const useMustMatchThresholds = () => {
 
 export function DocumentFamily() {
   useSyncedValue();
-  const [options] = useSyncedOptions();
+  const [options, setOptions] = useSyncedOptions();
   const [isModalVisible, showModal, closeModal] = useModal();
   const mustMatchThresholds = useMustMatchThresholds();
 
   return (
     <div className="flex space-x-8">
-      <AddDocumentFamilyModal closeModal={closeModal} visible={isModalVisible} />
+      <AddDocumentFamilyModal
+        closeModal={closeModal}
+        visible={isModalVisible}
+        options={options}
+        setOptions={setOptions}
+      />
       <Form.Item
         name="document_families"
         label="Document Family"
         className="flex-1"
         rules={[mustMatchThresholds]}
+        validateTrigger={['onFocus', 'onChange', 'onBlur']}
       >
         <Select mode="multiple" allowClear placeholder="None selected">
           {options.map(({ label, value }) => (

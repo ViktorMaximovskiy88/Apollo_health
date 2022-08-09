@@ -1,5 +1,5 @@
 import { Form, Modal, Spin, Button, FormInstance } from 'antd';
-import { DocumentFamilyType } from './types';
+import { DocumentFamilyOption, DocumentFamilyType } from './types';
 import { useGetSiteQuery } from '../sites/sitesApi';
 import { Name } from './DocumentFamilyNameField';
 import { useAddDocumentFamilyMutation } from './documentFamilyApi';
@@ -70,10 +70,17 @@ const Footer = ({ onCancel }: { onCancel: () => void }) => (
 );
 
 interface AddDocumentFamilyPropTypes {
+  options: DocumentFamilyOption[];
+  setOptions: (options: DocumentFamilyOption[]) => void;
   closeModal: () => void;
   visible: boolean;
 }
-export function AddDocumentFamily({ closeModal, visible }: AddDocumentFamilyPropTypes) {
+export function AddDocumentFamily({
+  options,
+  setOptions,
+  closeModal,
+  visible,
+}: AddDocumentFamilyPropTypes) {
   const docDocumentForm = Form.useFormInstance();
   const [documentFamilyForm] = Form.useForm();
   const addDocumentFamily = useAddDocumentFamily();
@@ -81,6 +88,8 @@ export function AddDocumentFamily({ closeModal, visible }: AddDocumentFamilyProp
   const onFinish = async (documentFamily: DocumentFamilyType) => {
     const documentFamilyId = await addDocumentFamily(documentFamily);
     saveInMultiselect(docDocumentForm, documentFamilyId);
+
+    setOptions([...options, { value: documentFamilyId, label: documentFamily.name }]);
 
     documentFamilyForm.resetFields();
     closeModal();
