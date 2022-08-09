@@ -53,7 +53,7 @@ export function AddDocumentModal({
             if (scrapeTasks) {
                newDocument.scrape_task_id = scrapeTasks[0]._id
             }
-            // used to determine how we handle this request
+            // used to determine how we handle this request if new_version or new document
             if (oldVersion) {
                 newDocument._id = oldVersion._id
             }
