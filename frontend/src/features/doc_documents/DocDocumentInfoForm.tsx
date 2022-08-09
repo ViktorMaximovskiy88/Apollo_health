@@ -30,7 +30,7 @@ export function DocDocumentInfoForm({
       <Hr />
       <DateFields onFieldChange={onFieldChange} />
       <Hr />
-      <ExtractionFields doc={doc} />
+      <ExtractionFields />
       <Hr />
       <UrlFields doc={doc} />
     </>

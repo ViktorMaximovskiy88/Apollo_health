@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { Form, Select, Switch } from 'antd';
-import { DocDocument } from './types';
+import { useParams } from 'react-router-dom';
+import { useGetDocDocumentQuery } from './docDocumentApi';
+
+const useAutomatedExtractionState = (): [boolean, (automatedExtraction: boolean) => void] => {
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+  return useState<boolean>(doc?.automated_content_extraction ?? false);
+};
 
 const languageCodes = [
   { value: 'en', label: 'English' },
@@ -14,10 +21,9 @@ const Language = () => (
   </Form.Item>
 );
 
-interface AutomatedContextExtractionPropTypes {
+const AutomatedContentExtraction = (props: {
   setAutomatedExtraction: (automatedExtraction: boolean) => void;
-}
-const AutomatedContentExtraction = (props: AutomatedContextExtractionPropTypes) => (
+}) => (
   <Form.Item
     className="flex-1"
     name="automated_content_extraction"
@@ -44,8 +50,8 @@ const ExtractionStrategy = () => (
   </Form.Item>
 );
 
-export const ExtractionFields = ({ doc }: { doc: DocDocument }) => {
-  const [automatedExtraction, setAutomatedExtraction] = useState(doc.automated_content_extraction);
+export const ExtractionFields = () => {
+  const [automatedExtraction, setAutomatedExtraction] = useAutomatedExtractionState();
   return (
     <>
       <div className="flex space-x-8">
