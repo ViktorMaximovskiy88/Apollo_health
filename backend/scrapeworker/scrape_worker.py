@@ -401,7 +401,7 @@ class ScrapeWorker:
 
                     link_source_task.invalid_responses.append(invalid_response)
                     logging.error(invalid_response)
-                    raise Exception(f"Could not load {url} via {invalid_response.proxy_url}")
+                    continue
 
                 headers = await response.all_headers()
                 link_source_task.valid_response = ValidResponse(
