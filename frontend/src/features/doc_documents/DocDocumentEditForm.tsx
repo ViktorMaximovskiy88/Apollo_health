@@ -2,11 +2,11 @@ import { Form, FormInstance, Tabs } from 'antd';
 import { DocDocument, IndicationTag, TherapyTag } from './types';
 import { DocDocumentTagForm } from './DocDocumentTagForm';
 import { dateToMoment } from '../../common';
-import { useCallback, useEffect } from 'react';
-import { compact, maxBy } from 'lodash';
+import { useCallback, useEffect, useState } from 'react';
+import { compact, groupBy, maxBy } from 'lodash';
 import { DocDocumentInfoForm } from './DocDocumentInfoForm';
-import { useParams } from 'react-router-dom';
-import { useGetDocDocumentQuery } from './docDocumentApi';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useGetDocDocumentQuery, useUpdateDocDocumentMutation } from './docDocumentApi';
 
 const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   const calculateFinalEffectiveDate = useCallback(() => {
@@ -30,6 +30,67 @@ const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   return calculateFinalEffectiveDate;
 };
 
+const useTagsState = (): [
+  Array<TherapyTag | IndicationTag>,
+  (tags: Array<TherapyTag | IndicationTag>) => void
+] => {
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+
+  const [tags, setTags] = useState<Array<TherapyTag | IndicationTag>>([]);
+
+  useEffect(() => {
+    if (!doc) return;
+
+    const therapyTags = doc.therapy_tags.map((tag) => ({
+      ...tag,
+      _type: 'therapy',
+      _normalized: `${tag.name.toLowerCase()}|${tag.text.toLowerCase()}`,
+    }));
+    const indicationTags = doc.indication_tags.map((tag) => ({
+      ...tag,
+      _type: 'indication',
+      _normalized: tag.text.toLowerCase(),
+    }));
+    setTags([...therapyTags, ...indicationTags]);
+  }, [doc]);
+
+  return [tags, setTags];
+};
+
+const useOnFinish = (
+  tags: Array<TherapyTag | IndicationTag>,
+  setIsSaving: (isSaving: boolean) => void
+): ((doc: Partial<DocDocument>) => Promise<void>) => {
+  const navigate = useNavigate();
+  const { docDocumentId: docId } = useParams();
+
+  const [updateDocDocument] = useUpdateDocDocumentMutation();
+
+  const onFinish = async (submittedDoc: Partial<DocDocument>): Promise<void> => {
+    if (!submittedDoc) return;
+
+    setIsSaving(true);
+
+    try {
+      const tagsByType = groupBy(tags, '_type');
+      await updateDocDocument({
+        ...submittedDoc,
+        indication_tags: (tagsByType['indication'] ?? []) as IndicationTag[],
+        therapy_tags: (tagsByType['therapy'] ?? []) as TherapyTag[],
+        _id: docId,
+      });
+      navigate(-1);
+    } catch (error) {
+      //  TODO real errors please
+      console.error(error);
+      setIsSaving(false);
+    }
+  };
+
+  return onFinish;
+};
+
 const buildInitialValues = (doc: DocDocument) => ({
   ...doc,
   final_effective_date: dateToMoment(doc.final_effective_date),
@@ -46,31 +107,29 @@ const buildInitialValues = (doc: DocDocument) => ({
 
 interface EditFormPropTypes {
   isSaving: boolean;
+  setIsSaving: (isSaving: boolean) => void;
   setHasChanges: (hasChanges: boolean) => void;
   form: FormInstance;
-  tags: Array<TherapyTag | IndicationTag>;
-  setTags: (tags: Array<TherapyTag | IndicationTag>) => void;
   pageNumber: number;
-  onFinish: (doc: Partial<DocDocument>) => Promise<void>;
 }
 export function DocDocumentEditForm({
   isSaving,
+  setIsSaving,
   setHasChanges,
   form,
-  tags,
-  setTags,
   pageNumber,
-  onFinish,
 }: EditFormPropTypes) {
-  const calculateFinalEffectiveDate = useCalculateFinalEffectiveDate(form);
-
   const { docDocumentId: docId } = useParams();
   const { data: doc } = useGetDocDocumentQuery(docId);
 
+  const calculateFinalEffectiveDate = useCalculateFinalEffectiveDate(form);
   useEffect(() => {
     if (!doc) return;
     calculateFinalEffectiveDate();
   }, [doc, calculateFinalEffectiveDate]);
+
+  const [tags, setTags] = useTagsState();
+  const onFinish = useOnFinish(tags, setIsSaving);
 
   if (!doc) return null;
   const initialValues = buildInitialValues(doc);
