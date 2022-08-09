@@ -19,7 +19,6 @@ export const userSlice = createSlice({
   initialState,
   reducers: {
     setUserTableFilter: (state, action: PayloadAction<any>) => {
-      console.log(state, initialState.table.filter);
       state.table.filter = action.payload;
     },
     setUserTableSort: (state, action: PayloadAction<any>) => {
