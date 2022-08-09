@@ -144,7 +144,6 @@ export function DocumentFamily() {
         label="Document Family"
         className="flex-1"
         rules={[mustMatchThresholds]}
-        validateTrigger={['onFocus', 'onChange', 'onBlur']}
       >
         <Select mode="multiple" allowClear placeholder="None selected">
           {options.map(({ label, value }) => (
