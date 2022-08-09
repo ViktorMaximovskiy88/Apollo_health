@@ -2,7 +2,7 @@ import { Form } from 'antd';
 import { DocDocument } from './types';
 
 const BaseUrl = ({ doc }: { doc: DocDocument }) => (
-  <Form.Item name="base_url" label="Base URL">
+  <Form.Item label="Base URL">
     {doc.base_url && (
       <a target="_blank" href={doc.base_url} rel="noreferrer">
         {doc.base_url}
@@ -11,12 +11,10 @@ const BaseUrl = ({ doc }: { doc: DocDocument }) => (
   </Form.Item>
 );
 const LinkText = ({ doc }: { doc: DocDocument }) => (
-  <Form.Item name="link_text" label="Link Text">
-    {doc.link_text}
-  </Form.Item>
+  <Form.Item label="Link Text">{doc.link_text}</Form.Item>
 );
 const LinkUrl = ({ doc }: { doc: DocDocument }) => (
-  <Form.Item className="grow" name="url" label="Link URL">
+  <Form.Item className="grow" label="Link URL">
     {doc.url && (
       <a target="_blank" href={doc.url} rel="noreferrer">
         {doc.url}
