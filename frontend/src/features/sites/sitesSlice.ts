@@ -31,13 +31,13 @@ export const sitesSlice = createSlice({
   initialState,
   reducers: {
     setSiteTableFilter: (state, action: PayloadAction<any>) => {
-      console.log(state, initialState.table.filter);
       state.table.filter = action.payload;
     },
     setSiteTableSort: (state, action: PayloadAction<any>) => {
       state.table.sort = action.payload;
     },
     setSiteTableLimit: (state, action: PayloadAction<any>) => {
+      git;
       state.table.pagination.limit = action.payload;
     },
     setSiteTableSkip: (state, action: PayloadAction<any>) => {

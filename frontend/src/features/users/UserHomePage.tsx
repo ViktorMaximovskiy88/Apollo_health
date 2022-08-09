@@ -118,47 +118,6 @@ export function UsersHomePage() {
         ],
       },
     },
-    // {
-    //   defaultFlex: 1,
-    //   header: 'Roles',
-    //   name: 'roles',
-    //   filterEditor: SelectFilter,
-    //   filterEditorProps: {
-    //     placeholder: 'All',
-    //     dataSource: [
-    //       {
-    //         id: UserRoles.Admin,
-    //         label: userRoleDisplayName(UserRoles.Admin),
-    //       },
-    //       {
-    //         id: UserRoles.Assessor,
-    //         label: userRoleDisplayName(UserRoles.Assessor),
-    //       },
-    //       {
-    //         id: UserRoles.Dashboard,
-    //         label: userRoleDisplayName(UserRoles.Dashboard),
-    //       },
-    //       {
-    //         id: UserRoles.ScrapeAdmin,
-    //         label: userRoleDisplayName(UserRoles.ScrapeAdmin),
-    //       },
-    //     ],
-    //   },
-    //   render: ({ data: user }: { data: User }) => {
-    //     return user.roles.map((role) => {
-    //       const simpleHash = role
-    //         .split('')
-    //         .map((c) => c.charCodeAt(0))
-    //         .reduce((a, b) => a + b);
-    //       const color = colors[simpleHash % colors.length];
-    //       return (
-    //         <Tag color={color} key={role}>
-    //           {role}
-    //         </Tag>
-    //       );
-    //     });
-    //   },
-    // },
     {
       header: 'Actions',
       name: 'action',
