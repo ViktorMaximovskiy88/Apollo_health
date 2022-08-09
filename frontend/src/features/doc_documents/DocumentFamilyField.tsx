@@ -86,18 +86,34 @@ const useMustMatchThresholds = () => {
   const mustMatchThresholds = () => ({
     async validator(_: Rule, selections: string[]) {
       if (!documentFamilies) return;
-      if (selections.length === 0) return Promise.resolve();
-      const selectedDocumentFamilies = documentFamilies.filter((df) => df._id in selections);
+      if (selections.length <= 1) return Promise.resolve();
+      const selectedDocumentFamilies = documentFamilies.filter((df) => selections.includes(df._id));
       const [firstDocumentFamily] = selectedDocumentFamilies;
+
       for (const df of selectedDocumentFamilies) {
         if (df.document_type_threshold !== firstDocumentFamily.document_type_threshold) {
-          return Promise.reject(`Document Type Thresholds different ${''}`);
+          return Promise.reject(
+            `Document Type Confidence Thresholds are different.
+            Document Family "${df.name}" has a threshold of ${df.document_type_threshold}%,
+            and Document Family "${firstDocumentFamily.name}" has a threshold of
+            ${firstDocumentFamily.document_type_threshold}%.`
+          );
         }
-        if (false) {
-          // therapy tag
+        if (df.therapy_tag_status_threshold !== firstDocumentFamily.therapy_tag_status_threshold) {
+          return Promise.reject(
+            `Therapy Tag Status Confidence Thresholds are different.
+            Document Family "${df.name}" has a threshold of ${df.therapy_tag_status_threshold}%,
+            and Document Family "${firstDocumentFamily.name}" has a threshold of
+            ${firstDocumentFamily.therapy_tag_status_threshold}%.`
+          );
         }
-        if (false) {
-          // lineage
+        if (df.lineage_threshold !== firstDocumentFamily.lineage_threshold) {
+          return Promise.reject(
+            `Lineage Confidence Thresholds are different.
+            Document Family "${df.name}" has a threshold of ${df.lineage_threshold}%,
+            and Document Family "${firstDocumentFamily.name}" has a threshold of
+            ${firstDocumentFamily.lineage_threshold}%.`
+          );
         }
       }
       return Promise.resolve();
