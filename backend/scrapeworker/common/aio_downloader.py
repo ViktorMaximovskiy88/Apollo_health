@@ -164,7 +164,7 @@ class AioDownloader:
         async for attempt, proxy in self.proxy_with_backoff(proxies):
             with attempt:
                 response: ClientResponse
-
+                proxy_url = proxy.proxy if proxy else None
                 try:
                     response = await self.send_request(download, proxy)
                     download.response.from_aio_response(response)
@@ -172,7 +172,7 @@ class AioDownloader:
                     # we catch so we can 'log' on the task and reraise for retry
                     download.invalid_responses.append(
                         InvalidResponse(
-                            proxy_url=proxy.proxy,
+                            proxy_url=proxy_url,
                             status=proxy_error.status,
                             message=proxy_error.message,
                         )
@@ -181,7 +181,7 @@ class AioDownloader:
 
                 if not response.ok:
                     invalid_response = InvalidResponse(
-                        proxy_url=proxy.proxy, **download.response.dict()
+                        proxy_url=proxy_url, **download.response.dict()
                     )
                     download.invalid_responses.append(invalid_response)
                     logging.error(invalid_response)
@@ -189,7 +189,7 @@ class AioDownloader:
                     continue
 
                 download.valid_response = ValidResponse(
-                    proxy_url=proxy.proxy, **download.response.dict()
+                    proxy_url=proxy_url, **download.response.dict()
                 )
                 # We only need this now due to the xlsx lib needing an ext (derp)
                 # TODO see if we can unhave this; the excel lib is dumb
