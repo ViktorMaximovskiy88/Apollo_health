@@ -1,13 +1,9 @@
 import tempfile
 from datetime import datetime, timezone
 
-<<<<<<< HEAD
-from beanie import PydanticObjectId, Indexed
+from beanie import PydanticObjectId
 from beanie.odm.operators.update.general import Set
 
-=======
-from beanie import PydanticObjectId
->>>>>>> 65e7040b21cc11dd8eda7ed00d184dbb715d48f9
 from fastapi import APIRouter, Depends, HTTPException, Security, UploadFile, status
 from fastapi.responses import StreamingResponse
 
