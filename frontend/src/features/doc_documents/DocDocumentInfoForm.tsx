@@ -28,7 +28,7 @@ export function DocDocumentInfoForm({
       <Hr />
       <DocumentFamily />
       <Hr />
-      <DateFields doc={doc} onFieldChange={onFieldChange} />
+      <DateFields onFieldChange={onFieldChange} />
       <Hr />
       <ExtractionFields doc={doc} />
       <Hr />

@@ -1,14 +1,13 @@
 import { Form } from 'antd';
+import { useParams } from 'react-router-dom';
 import { ListDatePicker } from '../../components';
-import { DocDocument } from './types';
+import { useGetDocDocumentQuery } from './docDocumentApi';
 
-interface DateFieldPropTypes {
-  doc: DocDocument;
-  onFieldChange: Function;
-}
-
-const EffectiveDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
+const EffectiveDate = ({ onFieldChange }: { onFieldChange: Function }) => {
   const form = Form.useFormInstance();
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+  if (!doc) return null;
   return (
     <ListDatePicker
       form={form}
@@ -21,8 +20,11 @@ const EffectiveDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
     />
   );
 };
-const EndDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
+const EndDate = ({ onFieldChange }: { onFieldChange: Function }) => {
   const form = Form.useFormInstance();
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+  if (!doc) return null;
   return (
     <ListDatePicker
       form={form}
@@ -35,8 +37,11 @@ const EndDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
     />
   );
 };
-const LastUpdatedDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
+const LastUpdatedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
   const form = Form.useFormInstance();
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+  if (!doc) return null;
   return (
     <ListDatePicker
       form={form}
@@ -49,8 +54,11 @@ const LastUpdatedDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
     />
   );
 };
-const LastReviewedDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
+const LastReviewedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
   const form = Form.useFormInstance();
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+  if (!doc) return null;
   return (
     <ListDatePicker
       form={form}
@@ -63,8 +71,11 @@ const LastReviewedDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
     />
   );
 };
-const NextReviewedDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
+const NextReviewedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
   const form = Form.useFormInstance();
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+  if (!doc) return null;
   return (
     <ListDatePicker
       form={form}
@@ -77,8 +88,11 @@ const NextReviewedDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
     />
   );
 };
-const NextUpdateDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
+const NextUpdateDate = ({ onFieldChange }: { onFieldChange: Function }) => {
   const form = Form.useFormInstance();
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+  if (!doc) return null;
   return (
     <ListDatePicker
       form={form}
@@ -91,8 +105,11 @@ const NextUpdateDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
     />
   );
 };
-const PublishedDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
+const PublishedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
   const form = Form.useFormInstance();
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+  if (!doc) return null;
   return (
     <ListDatePicker
       form={form}
@@ -105,8 +122,11 @@ const PublishedDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
     />
   );
 };
-const FirstCollectedDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
+const FirstCollectedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
   const form = Form.useFormInstance();
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+  if (!doc) return null;
   return (
     <ListDatePicker
       disabled
@@ -120,8 +140,11 @@ const FirstCollectedDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
     />
   );
 };
-const LastCollectedDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
+const LastCollectedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
   const form = Form.useFormInstance();
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+  if (!doc) return null;
   return (
     <ListDatePicker
       disabled
@@ -136,7 +159,7 @@ const LastCollectedDate = ({ doc, onFieldChange }: DateFieldPropTypes) => {
   );
 };
 
-export function DateFields(props: DateFieldPropTypes) {
+export function DateFields(props: { onFieldChange: Function }) {
   return (
     <>
       <div className="flex flex-1 space-x-8">
