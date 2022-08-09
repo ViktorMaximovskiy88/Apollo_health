@@ -264,6 +264,9 @@ class ScrapeWorker:
                     or download.file_name
                     or download.request.url
                 )
+
+                text_checksum = await self.text_handler.save_text(parsed_content["text"])
+
                 document = RetrievedDocument(
                     base_url=download.metadata.base_url,
                     checksum=checksum,
@@ -300,12 +303,13 @@ class ScrapeWorker:
             link_download_task.retrieved_document_id = document.id
 
             await self.scrape_task.update(
-                Inc({SiteScrapeTask.documents_found: 1}),
-                Push({SiteScrapeTask.retrieved_document_ids: document.id}),
-            )
-
-            await self.scrape_task.update(
-                Push({SiteScrapeTask.link_download_tasks: link_download_task}),
+                {
+                    "$inc": {"documents_found": 1},
+                    "$push": {
+                        "retrieved_document_ids": document.id,
+                        "link_download_tasks": link_download_task,
+                    },
+                }
             )
 
     async def watch_for_cancel(self, tasks: list[asyncio.Task[None]]):

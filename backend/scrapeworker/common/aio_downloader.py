@@ -7,7 +7,7 @@ from ssl import SSLContext
 from typing import AsyncGenerator
 
 import aiofiles
-from aiohttp import BasicAuth, ClientResponse, ClientSession, TCPConnector
+from aiohttp import BasicAuth, ClientHttpProxyError, ClientResponse, ClientSession, TCPConnector
 from playwright.async_api import ProxySettings
 from tenacity import AttemptManager
 
@@ -160,17 +160,29 @@ class AioDownloader:
 
         async for attempt, proxy in self.proxy_with_backoff(proxies):
             with attempt:
-                response = await self.send_request(download, proxy)
+                response: ClientResponse
 
-                download.response.from_aio_response(response)
+                try:
+                    response = await self.send_request(download, proxy)
+                    download.response.from_aio_response(response)
+                except ClientHttpProxyError as proxy_error:
+                    # we catch so we can 'log' on the task and reraise for retry
+                    download.invalid_responses.append(
+                        InvalidResponse(
+                            proxy_url=proxy.proxy,
+                            status=proxy_error.status,
+                            message=proxy_error.message,
+                        )
+                    )
+                    raise proxy_error
 
-                # how to identity proxy error vs site error...
                 if not response.ok:
                     invalid_response = InvalidResponse(
                         proxy_url=proxy.proxy, **download.response.dict()
                     )
                     download.invalid_responses.append(invalid_response)
                     logging.error(invalid_response)
+                    # may want to raise i dunno yet ...
                     continue
 
                 download.valid_response = ValidResponse(
