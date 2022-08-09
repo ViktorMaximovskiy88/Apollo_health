@@ -37,7 +37,6 @@ export const sitesSlice = createSlice({
       state.table.sort = action.payload;
     },
     setSiteTableLimit: (state, action: PayloadAction<any>) => {
-      git;
       state.table.pagination.limit = action.payload;
     },
     setSiteTableSkip: (state, action: PayloadAction<any>) => {
