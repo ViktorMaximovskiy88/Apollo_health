@@ -11,9 +11,13 @@ import { useEffect, useState } from 'react';
 import { groupBy } from 'lodash';
 import { WarningFilled } from '@ant-design/icons';
 
-const useTagsState = (
-  doc?: DocDocument
-): [Array<TherapyTag | IndicationTag>, (tags: Array<TherapyTag | IndicationTag>) => void] => {
+const useTagsState = (): [
+  Array<TherapyTag | IndicationTag>,
+  (tags: Array<TherapyTag | IndicationTag>) => void
+] => {
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+
   const [tags, setTags] = useState([] as Array<TherapyTag | IndicationTag>);
 
   useEffect(() => {
@@ -74,14 +78,12 @@ export function DocDocumentEditPage() {
   const { docDocumentId: docId } = useParams();
   const { data: doc } = useGetDocDocumentQuery(docId);
   const [form] = useForm();
-  const [tags, setTags] = useTagsState(doc);
+  const [tags, setTags] = useTagsState();
   const [hasChanges, setHasChanges] = useState(false);
   const [pageNumber, setPageNumber] = useState(0);
   const [onFinish, isSaving] = useOnFinish(tags);
 
-  if (!doc) {
-    return <></>;
-  }
+  if (!doc) return null;
 
   return (
     <MainLayout
@@ -118,7 +120,6 @@ export function DocDocumentEditPage() {
           isSaving={isSaving}
           setHasChanges={setHasChanges}
           form={form}
-          doc={doc}
           tags={tags}
           setTags={setTags}
           pageNumber={pageNumber}

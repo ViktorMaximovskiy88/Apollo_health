@@ -1,6 +1,5 @@
 import { Form, Input } from 'antd';
 import { Hr } from '../../components';
-import { DocDocument } from './types';
 import { DateFields } from './DocDocumentDateFields';
 import { DocumentClassification } from './DocDocumentClassificationFields';
 import { ExtractionFields } from './DocDocumentExtractionFields';
@@ -13,13 +12,7 @@ const Name = () => (
   </Form.Item>
 );
 
-export function DocDocumentInfoForm({
-  doc,
-  onFieldChange,
-}: {
-  doc: DocDocument;
-  onFieldChange: Function;
-}) {
+export function DocDocumentInfoForm({ onFieldChange }: { onFieldChange: Function }) {
   return (
     <>
       <Name />

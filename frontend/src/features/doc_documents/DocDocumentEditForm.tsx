@@ -5,6 +5,8 @@ import { dateToMoment } from '../../common';
 import { useCallback, useEffect } from 'react';
 import { compact, maxBy } from 'lodash';
 import { DocDocumentInfoForm } from './DocDocumentInfoForm';
+import { useParams } from 'react-router-dom';
+import { useGetDocDocumentQuery } from './docDocumentApi';
 
 const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   const calculateFinalEffectiveDate = useCallback(() => {
@@ -46,7 +48,6 @@ interface EditFormPropTypes {
   isSaving: boolean;
   setHasChanges: (hasChanges: boolean) => void;
   form: FormInstance;
-  doc: DocDocument;
   tags: Array<TherapyTag | IndicationTag>;
   setTags: (tags: Array<TherapyTag | IndicationTag>) => void;
   pageNumber: number;
@@ -56,7 +57,6 @@ export function DocDocumentEditForm({
   isSaving,
   setHasChanges,
   form,
-  doc,
   tags,
   setTags,
   pageNumber,
@@ -64,11 +64,15 @@ export function DocDocumentEditForm({
 }: EditFormPropTypes) {
   const calculateFinalEffectiveDate = useCalculateFinalEffectiveDate(form);
 
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+
   useEffect(() => {
     if (!doc) return;
     calculateFinalEffectiveDate();
   }, [doc, calculateFinalEffectiveDate]);
 
+  if (!doc) return null;
   const initialValues = buildInitialValues(doc);
 
   return (
@@ -89,7 +93,6 @@ export function DocDocumentEditForm({
         <Tabs className="h-full ant-tabs-h-full">
           <Tabs.TabPane tab="Info" key="info" className="bg-white p-4 overflow-auto">
             <DocDocumentInfoForm
-              doc={doc}
               onFieldChange={() => {
                 setHasChanges(true);
                 calculateFinalEffectiveDate();
