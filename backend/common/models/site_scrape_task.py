@@ -25,7 +25,7 @@ class ValidResponse(BaseModel):
 class InvalidResponse(BaseModel):
     proxy_url: str | None
     status: int
-    message: str
+    message: str | None
 
 
 # plus ... whatever
