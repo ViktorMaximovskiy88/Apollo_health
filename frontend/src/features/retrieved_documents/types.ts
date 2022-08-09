@@ -47,6 +47,7 @@ export const DocumentTypes = [
   { id: 'Regulatory Document', value: 'Regulatory Document', label: 'Regulatory Document' },
   { id: 'Formulary', value: 'Formulary', label: 'Formulary' },
   { id: 'Internal Reference', value: 'Internal Reference', label: 'Internal Reference' },
+  { id: 'Not Applicable', value: 'Not Applicable', label: 'Not Applicable' },
 ];
 
 export const LanguageCodes = [
