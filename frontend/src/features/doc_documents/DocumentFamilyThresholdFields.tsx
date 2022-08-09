@@ -1,20 +1,21 @@
-import { Form, FormInstance, InputNumber } from 'antd';
+import { Form, InputNumber } from 'antd';
 import { Rule } from 'antd/lib/form';
+import { useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 import { useGetDocumentFamiliesQuery } from './documentFamilyApi';
+import { DocDocumentFormContext } from './DocumentFamilyField';
 
 const useMustMatchThreshold = ({
-  docDocumentForm,
   thresholdType,
   thresholdName,
 }: {
-  docDocumentForm: FormInstance;
   thresholdType: string;
   thresholdName: 'document_type_threshold' | 'therapy_tag_status_threshold' | 'lineage_threshold';
 }) => {
   const { docDocumentId: docId } = useParams();
   const { data: doc } = useGetDocDocumentQuery(docId);
+  const docDocumentForm = useContext(DocDocumentFormContext);
 
   const documentType = Form.useWatch('document_type', docDocumentForm);
 
@@ -44,9 +45,8 @@ const useMustMatchThreshold = ({
   return mustMatchThreshold;
 };
 
-const DocumentTypeThreshold = ({ docDocumentForm }: { docDocumentForm: FormInstance }) => {
+const DocumentTypeThreshold = () => {
   const mustMatchThreshold = useMustMatchThreshold({
-    docDocumentForm,
     thresholdType: 'Document Type',
     thresholdName: 'document_type_threshold',
   });
@@ -65,9 +65,8 @@ const DocumentTypeThreshold = ({ docDocumentForm }: { docDocumentForm: FormInsta
     </Form.Item>
   );
 };
-const TherapyTagStatusThreshold = ({ docDocumentForm }: { docDocumentForm: FormInstance }) => {
+const TherapyTagStatusThreshold = () => {
   const mustMatchThreshold = useMustMatchThreshold({
-    docDocumentForm,
     thresholdType: 'Therapy Tag',
     thresholdName: 'therapy_tag_status_threshold',
   });
@@ -86,9 +85,8 @@ const TherapyTagStatusThreshold = ({ docDocumentForm }: { docDocumentForm: FormI
     </Form.Item>
   );
 };
-const LineageThreshold = ({ docDocumentForm }: { docDocumentForm: FormInstance }) => {
+const LineageThreshold = () => {
   const mustMatchThreshold = useMustMatchThreshold({
-    docDocumentForm,
     thresholdType: 'Lineage',
     thresholdName: 'lineage_threshold',
   });
@@ -114,12 +112,12 @@ export const initialThresholdValues = {
   lineage_threshold: 75,
 };
 
-export function ThresholdFields({ docDocumentForm }: { docDocumentForm: FormInstance }) {
+export function ThresholdFields() {
   return (
     <div className="flex space-x-8">
-      <DocumentTypeThreshold docDocumentForm={docDocumentForm} />
-      <TherapyTagStatusThreshold docDocumentForm={docDocumentForm} />
-      <LineageThreshold docDocumentForm={docDocumentForm} />
+      <DocumentTypeThreshold />
+      <TherapyTagStatusThreshold />
+      <LineageThreshold />
     </div>
   );
 }

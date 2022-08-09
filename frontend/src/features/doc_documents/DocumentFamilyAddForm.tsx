@@ -1,4 +1,4 @@
-import { Form, Modal, Spin, Button, FormInstance } from 'antd';
+import { Form, Modal, Spin, Button } from 'antd';
 import { DocumentFamilyOption, DocumentFamilyType } from './types';
 import { useGetSiteQuery } from '../sites/sitesApi';
 import { Name } from './DocumentFamilyNameField';
@@ -6,7 +6,8 @@ import { useAddDocumentFamilyMutation } from './documentFamilyApi';
 import { ThresholdFields, initialThresholdValues } from './DocumentFamilyThresholdFields';
 import { useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
+import { DocDocumentFormContext } from './DocumentFamilyField';
 
 const useAddDocumentFamily = () => {
   const [addDocumentFamilyFn] = useAddDocumentFamilyMutation();
@@ -32,14 +33,21 @@ const useAddDocumentFamily = () => {
   return addDocumentFamily;
 };
 
-const saveInMultiselect = (docDocumentForm: FormInstance, documentFamilyId: string): void => {
-  const selected = docDocumentForm.getFieldValue('document_families');
-  docDocumentForm.setFieldsValue({
-    document_families: [...selected, documentFamilyId],
-  });
+const useSaveInMultiselect = () => {
+  const docDocumentForm = useContext(DocDocumentFormContext);
+
+  const saveInMultiselect = (documentFamilyId: string): void => {
+    const selected = docDocumentForm.getFieldValue('document_families');
+    docDocumentForm.setFieldsValue({
+      document_families: [...selected, documentFamilyId],
+    });
+  };
+
+  return saveInMultiselect;
 };
 
-const DocumentType = ({ docDocumentForm }: { docDocumentForm: FormInstance }) => {
+const DocumentType = () => {
+  const docDocumentForm = useContext(DocDocumentFormContext);
   const documentType = docDocumentForm.getFieldValue('document_type');
   return (
     <Form.Item label="Document Type" className="flex-1">
@@ -47,6 +55,7 @@ const DocumentType = ({ docDocumentForm }: { docDocumentForm: FormInstance }) =>
     </Form.Item>
   );
 };
+
 const SiteName = () => {
   const { docDocumentId: docId } = useParams();
   const { data: doc } = useGetDocDocumentQuery(docId);
@@ -61,10 +70,10 @@ const SiteName = () => {
   );
 };
 
-const Footer = ({ onCancel, isLoading }: { onCancel: () => void; isLoading: boolean }) => (
+const Footer = ({ onCancel, isSaving }: { onCancel: () => void; isSaving: boolean }) => (
   <div className="ant-modal-footer mt-3">
     <Button onClick={onCancel}>Cancel</Button>
-    <Button type="primary" htmlType="submit" loading={isLoading}>
+    <Button type="primary" htmlType="submit" loading={isSaving}>
       Submit
     </Button>
   </div>
@@ -82,21 +91,23 @@ export function AddDocumentFamily({
   closeModal,
   visible,
 }: AddDocumentFamilyPropTypes) {
-  const [isLoading, setIsLoading] = useState(false);
-  const docDocumentForm = Form.useFormInstance();
+  const [isSaving, setIsSaving] = useState(false);
   const [documentFamilyForm] = Form.useForm();
   const addDocumentFamily = useAddDocumentFamily();
+  const saveInMultiselect = useSaveInMultiselect();
 
   const onFinish = async (documentFamily: DocumentFamilyType) => {
-    setIsLoading(true);
+    setIsSaving(true);
+
     const documentFamilyId = await addDocumentFamily(documentFamily);
-    saveInMultiselect(docDocumentForm, documentFamilyId);
+    saveInMultiselect(documentFamilyId);
 
     setOptions([...options, { value: documentFamilyId, label: documentFamily.name }]);
 
     documentFamilyForm.resetFields();
     closeModal();
-    setIsLoading(false);
+
+    setIsSaving(false);
   };
 
   const onCancel = () => {
@@ -121,14 +132,15 @@ export function AddDocumentFamily({
         layout="vertical"
         className="h-full"
         autoComplete="off"
+        disabled={isSaving}
       >
         <Name />
         <div className="flex space-x-8">
-          <DocumentType docDocumentForm={docDocumentForm} />
+          <DocumentType />
           <SiteName />
         </div>
-        <ThresholdFields docDocumentForm={docDocumentForm} />
-        <Footer onCancel={onCancel} isLoading={isLoading} />
+        <ThresholdFields />
+        <Footer onCancel={onCancel} isSaving={isSaving} />
       </Form>
     </Modal>
   );

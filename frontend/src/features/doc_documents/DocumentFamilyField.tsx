@@ -1,12 +1,12 @@
 import { Form, Select, Button } from 'antd';
 import { DocumentFamilyType, DocumentFamilyOption } from './types';
-import { useEffect, useState } from 'react';
+import { createContext, useEffect, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { AddDocumentFamily as AddDocumentFamilyModal } from './DocumentFamilyAddForm';
 import { useGetDocumentFamiliesQuery } from './documentFamilyApi';
 import { useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
-import { Rule } from 'antd/lib/form';
+import { FormInstance, Rule } from 'antd/lib/form';
 
 const { Option } = Select;
 
@@ -125,20 +125,25 @@ const useMustMatchThresholds = () => {
   return mustMatchThresholds;
 };
 
+export const DocDocumentFormContext = createContext<FormInstance>({} as FormInstance);
+
 export function DocumentFamily() {
   useSyncedValue();
+  const form = Form.useFormInstance();
   const [options, setOptions] = useSyncedOptions();
   const [isModalVisible, showModal, closeModal] = useModal();
   const mustMatchThresholds = useMustMatchThresholds();
 
   return (
     <div className="flex space-x-8">
-      <AddDocumentFamilyModal
-        closeModal={closeModal}
-        visible={isModalVisible}
-        options={options}
-        setOptions={setOptions}
-      />
+      <DocDocumentFormContext.Provider value={form}>
+        <AddDocumentFamilyModal
+          closeModal={closeModal}
+          visible={isModalVisible}
+          options={options}
+          setOptions={setOptions}
+        />
+      </DocDocumentFormContext.Provider>
       <Form.Item
         name="document_families"
         label="Document Family"
