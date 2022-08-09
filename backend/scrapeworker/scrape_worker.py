@@ -241,10 +241,7 @@ class ScrapeWorker:
                     pdf_bytes = await page.pdf(display_header_footer=False, print_background=True)
                     self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
 
-            document = await RetrievedDocument.find_one(
-                RetrievedDocument.checksum == checksum
-                or checksum in RetrievedDocument.file_checksum_aliases
-            )
+            document = await RetrievedDocument.find_one(RetrievedDocument.checksum == checksum)
 
             if document:
                 if document.text_checksum is None:  # Can be removed after text added to older docs
@@ -257,73 +254,57 @@ class ScrapeWorker:
                     parsed_content=parsed_content,
                 )
                 await self.update_doc_document(document)
+
             else:
-
-                text_checksum = await self.text_handler.save_text(parsed_content["text"])
-
-                document = await RetrievedDocument.find_one(
-                    RetrievedDocument.text_checksum == text_checksum
+                logging.debug("creating doc")
+                now = datetime.now(tz=timezone.utc)
+                name = (
+                    parsed_content["title"]
+                    or download.metadata.link_text
+                    or download.file_name
+                    or download.request.url
+                )
+                document = RetrievedDocument(
+                    base_url=download.metadata.base_url,
+                    checksum=checksum,
+                    text_checksum=text_checksum,
+                    context_metadata=download.metadata.dict(),
+                    doc_type_confidence=parsed_content["confidence"],
+                    document_type=parsed_content["document_type"],
+                    effective_date=parsed_content["effective_date"],
+                    end_date=parsed_content["end_date"],
+                    last_updated_date=parsed_content["last_updated_date"],
+                    last_reviewed_date=parsed_content["last_reviewed_date"],
+                    next_review_date=parsed_content["next_review_date"],
+                    next_update_date=parsed_content["next_update_date"],
+                    published_date=parsed_content["published_date"],
+                    file_extension=download.file_extension,
+                    content_type=download.content_type,
+                    first_collected_date=now,
+                    identified_dates=parsed_content["identified_dates"],
+                    lang_code=parsed_content["lang_code"],
+                    last_collected_date=now,
+                    metadata=parsed_content["metadata"],
+                    name=name,
+                    scrape_task_id=self.scrape_task.id,
+                    site_id=self.site.id,
+                    url=url,
+                    therapy_tags=parsed_content["therapy_tags"],
+                    indication_tags=parsed_content["indication_tags"],
+                    file_checksum_aliases=[checksum],
                 )
 
-                if document:
-                    logging.debug("updating doc w/alias")
-                    document.file_checksum_aliases.append(checksum)
-                    # unique, but cant use set in beanie as a type
-                    document.file_checksum_aliases = set(document.file_checksum_aliases)
-
-                    await self.update_retrieved_document(
-                        document=document,
-                        download=download,
-                        parsed_content=parsed_content,
-                    )
-                    await self.update_doc_document(document)
-                else:
-                    logging.debug("creating doc")
-                    now = datetime.now(tz=timezone.utc)
-                    name = (
-                        parsed_content["title"]
-                        or download.metadata.link_text
-                        or download.file_name
-                        or download.request.url
-                    )
-                    document = RetrievedDocument(
-                        base_url=download.metadata.base_url,
-                        checksum=checksum,
-                        text_checksum=text_checksum,
-                        context_metadata=download.metadata.dict(),
-                        doc_type_confidence=parsed_content["confidence"],
-                        document_type=parsed_content["document_type"],
-                        effective_date=parsed_content["effective_date"],
-                        end_date=parsed_content["end_date"],
-                        last_updated_date=parsed_content["last_updated_date"],
-                        last_reviewed_date=parsed_content["last_reviewed_date"],
-                        next_review_date=parsed_content["next_review_date"],
-                        next_update_date=parsed_content["next_update_date"],
-                        published_date=parsed_content["published_date"],
-                        file_extension=download.file_extension,
-                        content_type=download.content_type,
-                        first_collected_date=now,
-                        identified_dates=parsed_content["identified_dates"],
-                        lang_code=parsed_content["lang_code"],
-                        last_collected_date=now,
-                        metadata=parsed_content["metadata"],
-                        name=name,
-                        scrape_task_id=self.scrape_task.id,
-                        site_id=self.site.id,
-                        url=url,
-                        therapy_tags=parsed_content["therapy_tags"],
-                        indication_tags=parsed_content["indication_tags"],
-                        file_checksum_aliases=[checksum],
-                    )
-
-                    await create_and_log(self.logger, await self.get_user(), document)
-                    await self.create_doc_document(document)
+                await create_and_log(self.logger, await self.get_user(), document)
+                await self.create_doc_document(document)
 
             link_download_task.retrieved_document_id = document.id
 
             await self.scrape_task.update(
                 Inc({SiteScrapeTask.documents_found: 1}),
                 Push({SiteScrapeTask.retrieved_document_ids: document.id}),
+            )
+
+            await self.scrape_task.update(
                 Push({SiteScrapeTask.link_download_tasks: link_download_task}),
             )
 
