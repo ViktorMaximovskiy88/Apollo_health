@@ -32,7 +32,7 @@ export function DocDocumentInfoForm({
       <Hr />
       <ExtractionFields />
       <Hr />
-      <UrlFields doc={doc} />
+      <UrlFields />
     </>
   );
 }

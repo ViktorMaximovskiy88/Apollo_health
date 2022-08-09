@@ -1,32 +1,51 @@
 import { Form } from 'antd';
-import { DocDocument } from './types';
+import { useParams } from 'react-router-dom';
+import { useGetDocDocumentQuery } from './docDocumentApi';
 
-const BaseUrl = ({ doc }: { doc: DocDocument }) => (
-  <Form.Item label="Base URL">
-    {doc.base_url && (
-      <a target="_blank" href={doc.base_url} rel="noreferrer">
-        {doc.base_url}
-      </a>
-    )}
-  </Form.Item>
-);
-const LinkText = ({ doc }: { doc: DocDocument }) => (
-  <Form.Item label="Link Text">{doc.link_text}</Form.Item>
-);
-const LinkUrl = ({ doc }: { doc: DocDocument }) => (
-  <Form.Item className="grow" label="Link URL">
-    {doc.url && (
-      <a target="_blank" href={doc.url} rel="noreferrer">
-        {doc.url}
-      </a>
-    )}
-  </Form.Item>
-);
+const BaseUrl = () => {
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+  if (!doc) return null;
 
-export const UrlFields = ({ doc }: { doc: DocDocument }) => (
+  return (
+    <Form.Item label="Base URL">
+      {doc.base_url && (
+        <a target="_blank" href={doc.base_url} rel="noreferrer">
+          {doc.base_url}
+        </a>
+      )}
+    </Form.Item>
+  );
+};
+
+const LinkText = () => {
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+  if (!doc) return null;
+
+  return <Form.Item label="Link Text">{doc.link_text}</Form.Item>;
+};
+
+const LinkUrl = () => {
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+  if (!doc) return null;
+
+  return (
+    <Form.Item className="grow" label="Link URL">
+      {doc.url && (
+        <a target="_blank" href={doc.url} rel="noreferrer">
+          {doc.url}
+        </a>
+      )}
+    </Form.Item>
+  );
+};
+
+export const UrlFields = () => (
   <>
-    <BaseUrl doc={doc} />
-    <LinkText doc={doc} />
-    <LinkUrl doc={doc} />
+    <BaseUrl />
+    <LinkText />
+    <LinkUrl />
   </>
 );
