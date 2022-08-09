@@ -29,7 +29,7 @@ export function AddDocumentModal({
     });
     const [ addDoc ] = useAddDocumentMutation();
     const [ fileData, setFileData ] = useState<any>();
-    let initialValues: Partial<DocDocument> | undefined = {
+    let initialValues: any = {
          "lang_code":"en"
     };
     if (oldVersion) {
@@ -38,7 +38,7 @@ export function AddDocumentModal({
             "name":oldVersion.name,
             "document_type":oldVersion.document_type,
             "link_text":oldVersion.link_text,
-            "url":oldVersion.url
+            "url":oldVersion.url,
         }
     }
     const validateMessages = {
@@ -53,12 +53,17 @@ export function AddDocumentModal({
             if (scrapeTasks) {
                newDocument.scrape_task_id = scrapeTasks[0]._id
             }
+            // used to determine how we handle this request
+            if (oldVersion) {
+                newDocument._id = oldVersion._id
+            }
             fileData.metadata.link_text = newDocument.link_text;
             delete newDocument.link_text;
             delete newDocument.document_file;
+
             await addDoc({
                 ...newDocument,
-                ...fileData
+                ...fileData,
             });
             setVisible(false);
         }

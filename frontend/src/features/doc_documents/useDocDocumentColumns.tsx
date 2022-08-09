@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Button } from 'antd';
+import { LinkOutlined } from "@ant-design/icons"
 import { prettyDateTimeFromISO } from '../../common';
 import { ButtonLink } from '../../components/ButtonLink';
 import { DocDocument } from "./types";
@@ -91,7 +92,12 @@ export const createColumns = ({
       minWidth: 200,
       filterSearch: true,
       render: ({ data: doc }: { data: DocDocument }) => {
-        return <Link to={`${doc._id}/edit`}>{doc.url}</Link>;
+        return (
+          <>
+            <Link to={`/documents/${doc._id}`}>{doc.url}</Link>
+            <a className="mx-2" href={doc.url} target="_blank"><LinkOutlined /></a>
+          </>
+          )
       },
     },
     {

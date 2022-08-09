@@ -3,6 +3,8 @@ from datetime import datetime
 from datetime import datetime, timezone
 
 from beanie import PydanticObjectId, Indexed
+from beanie.odm.operators.update.general import Set
+
 from fastapi import APIRouter, Depends, HTTPException, Security, UploadFile, status
 from fastapi.responses import StreamingResponse
 
@@ -220,6 +222,7 @@ async def add_document(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
+    
     now = datetime.now()
     new_document = RetrievedDocument(
         base_url=document.base_url,
@@ -285,10 +288,30 @@ async def add_document(
     await create_and_log(logger, current_user, doc_document)
     
     scrape_task = await SiteScrapeTask.get(document.scrape_task_id)
-    await scrape_task.update({
-      '$inc': { 'documents_found': 1 },
-      '$push': { 'retrieved_document_ids': new_document.id }
-    })
+    if document.id:
+        # get retrieved_document from Doc Document
+        doc_document = await DocDocument.find_one(document.id)
+        if doc_document:
+            index = scrape_task.retrieved_document_ids.index(doc_document.retrieved_document_id)
+            if index >= 0:
+                new_retrieved_documents = scrape_task.retrieved_document_ids
+                new_retrieved_documents[index] = new_document.id
+                await scrape_task.update(Set({SiteScrapeTask.retrieved_document_ids: new_retrieved_documents}))
+
+                # set matching retrieved_document scrape task id to None
+                acquired = await RetrievedDocument.get_motor_collection().find_one_and_update(
+                    {"_id": doc_document.retrieved_document_id},
+                    {
+                        "$set": {
+                            "scrape_task_id": None
+                        }
+                    },
+                )
+    else:
+        await scrape_task.update({
+          '$inc': { 'documents_found': 1 },
+          '$push': { 'retrieved_document_ids': new_document.id }
+        })
 
     return {
         "success":True

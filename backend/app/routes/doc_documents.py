@@ -57,9 +57,6 @@ async def read_doc_documents(
     if site_id:
         query['site_id'] = site_id
 
-    if scrape_task_id:
-        query['scrape_task_id'] = scrape_task_id
-
     document_query = DocDocument.find(query).project(DocDocumentLimitTags)
     return await query_table(document_query, limit, skip, sorts, filters)
 
