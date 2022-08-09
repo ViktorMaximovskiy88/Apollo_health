@@ -1,4 +1,4 @@
-import { Form, Input, FormInstance } from 'antd';
+import { Form, Input } from 'antd';
 import { Hr } from '../../components';
 import { DocDocument } from './types';
 import { DateFields } from './DocDocumentDateFields';
@@ -13,21 +13,22 @@ const Name = () => (
   </Form.Item>
 );
 
-export function DocDocumentInfoForm(props: {
+export function DocDocumentInfoForm({
+  doc,
+  onFieldChange,
+}: {
   doc: DocDocument;
-  form: FormInstance;
   onFieldChange: Function;
 }) {
-  const { doc } = props;
   return (
     <>
       <Name />
       <Hr />
       <DocumentClassification doc={doc} />
       <Hr />
-      <DocumentFamily {...props} />
+      <DocumentFamily doc={doc} />
       <Hr />
-      <DateFields {...props} />
+      <DateFields doc={doc} onFieldChange={onFieldChange} />
       <Hr />
       <ExtractionFields doc={doc} />
       <Hr />

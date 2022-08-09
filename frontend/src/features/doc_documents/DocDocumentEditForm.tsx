@@ -90,7 +90,6 @@ export function DocDocumentEditForm({
           <Tabs.TabPane tab="Info" key="info" className="bg-white p-4 overflow-auto">
             <DocDocumentInfoForm
               doc={doc}
-              form={form}
               onFieldChange={() => {
                 setHasChanges(true);
                 calculateFinalEffectiveDate();
