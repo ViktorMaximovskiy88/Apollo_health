@@ -195,7 +195,6 @@ class ScrapeWorker:
         url = download.request.url
         proxies = await self.get_proxy_settings()
         link_download_task = link_retrieved_task_from_download(download)
-        await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
 
         async for (temp_path, checksum) in self.downloader.try_download_to_tempfile(
             download, proxies
@@ -225,6 +224,8 @@ class ScrapeWorker:
                 continue
 
             # good times
+            await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
+
             document = None
             dest_path = f"{checksum}.{download.file_extension}"
 
