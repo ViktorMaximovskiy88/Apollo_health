@@ -31,6 +31,7 @@ export const sitesSlice = createSlice({
   initialState,
   reducers: {
     setSiteTableFilter: (state, action: PayloadAction<any>) => {
+      console.log(state, initialState.table.filter);
       state.table.filter = action.payload;
     },
     setSiteTableSort: (state, action: PayloadAction<any>) => {

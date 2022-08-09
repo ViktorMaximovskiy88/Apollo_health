@@ -1,17 +1,10 @@
 from beanie import PydanticObjectId
-from beanie.odm.operators.find.evaluation import Text
-from fastapi import APIRouter, Depends, HTTPException, status, Security, Query
-from backend.app.utils.security import get_password_hash
-from backend.common.models.user import NewUser, User, UserPublic, UserUpdate
-from backend.app.utils.logger import (
-    Logger,
-    create_and_log,
-    get_logger,
-    update_and_log_diff,
-)
-import re
+from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
 
-from backend.app.utils.user import get_current_user, get_current_admin_user
+from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
+from backend.app.utils.security import get_password_hash
+from backend.app.utils.user import get_current_admin_user, get_current_user
+from backend.common.models.user import NewUser, User, UserPublic, UserUpdate
 
 router = APIRouter(
     prefix="/users",
@@ -22,9 +15,7 @@ router = APIRouter(
 async def get_target(id: PydanticObjectId):
     user = await User.get(id)
     if not user:
-        raise HTTPException(
-            detail=f"User {id} Not Found", status_code=status.HTTP_404_NOT_FOUND
-        )
+        raise HTTPException(detail=f"User {id} Not Found", status_code=status.HTTP_404_NOT_FOUND)
     return user
 
 
@@ -47,9 +38,7 @@ async def read_users(
     if name is None:
         users = await User.find_many().to_list()
     else:
-        users = await User.find_many(
-            {"full_name": {"$regex": name, "$options": "-i"}}
-        ).to_list()
+        users = await User.find_many({"full_name": {"$regex": name, "$options": "-i"}}).to_list()
     return users
 
 
