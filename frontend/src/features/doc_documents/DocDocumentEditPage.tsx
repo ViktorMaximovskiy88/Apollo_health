@@ -45,15 +45,15 @@ const useOnFinish = (
   const [isSaving, setIsSaving] = useState(false);
   const [updateDocDocument] = useUpdateDocDocumentMutation();
 
-  const onFinish = async (doc: Partial<DocDocument>): Promise<void> => {
-    if (!doc) return;
+  const onFinish = async (submittedDoc: Partial<DocDocument>): Promise<void> => {
+    if (!submittedDoc) return;
 
     setIsSaving(true);
 
     try {
       const tagsByType = groupBy(tags, '_type');
       await updateDocDocument({
-        ...doc,
+        ...submittedDoc,
         indication_tags: (tagsByType['indication'] ?? []) as IndicationTag[],
         therapy_tags: (tagsByType['therapy'] ?? []) as TherapyTag[],
         _id: docId,
