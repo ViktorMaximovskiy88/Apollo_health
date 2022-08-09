@@ -1,13 +1,13 @@
 import { Button, Form, Input, Modal, notification, Typography } from 'antd';
 import { LinkOutlined } from '@ant-design/icons';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { parseDiff, Diff, Hunk } from 'react-diff-view';
 import 'react-diff-view/style/index.css';
 
 import { isErrorWithData } from '../../common/helpers';
 import { Hr } from '../../components';
-import { useCreateDiffMutation } from './docDocumentApi';
+import { useCreateDiffMutation, useGetDocDocumentQuery } from './docDocumentApi';
 import { RetrievedDocument } from '../retrieved_documents/types';
 import { DocDocument } from './types';
 
@@ -60,7 +60,9 @@ function CompareModal(props: {
   );
 }
 
-export function DocCompare(props: { org_doc: DocDocument }) {
+export function DocCompare() {
+  const { docDocumentId: docId } = useParams();
+  const { data: org_doc } = useGetDocDocumentQuery(docId);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [compareId, setCompareId] = useState('');
   const [createDiff, { data: diffData, isLoading, isSuccess }] = useCreateDiffMutation();
@@ -82,7 +84,7 @@ export function DocCompare(props: { org_doc: DocDocument }) {
         });
         return;
       }
-      const compareInfo = { _id: props.org_doc._id, compareId: compareId };
+      const compareInfo = { _id: org_doc?._id ?? '', compareId: compareId };
       await createDiff(compareInfo).unwrap();
       setIsModalVisible(true);
     } catch (err) {
@@ -116,7 +118,7 @@ export function DocCompare(props: { org_doc: DocDocument }) {
         <CompareModal
           isModalVisible={isModalVisible}
           diff={diffData?.diff}
-          org_doc={props.org_doc}
+          org_doc={org_doc}
           new_doc={diffData?.new_doc}
           handleCloseModal={handleCloseModal}
         />

@@ -1,19 +1,27 @@
 import { Form, Modal, Spin, Button, FormInstance } from 'antd';
-import { DocDocument, DocumentFamilyType } from './types';
+import { DocumentFamilyType } from './types';
 import { useGetSiteQuery } from '../sites/sitesApi';
 import { Name } from './DocumentFamilyNameField';
 import { useAddDocumentFamilyMutation } from './documentFamilyApi';
 import { ThresholdFields, initialThresholdValues } from './DocumentFamilyThresholdFields';
+import { useParams } from 'react-router-dom';
+import { useGetDocDocumentQuery } from './docDocumentApi';
 
-const useAddDocumentFamily = (doc: DocDocument) => {
+const useAddDocumentFamily = () => {
+  const [addDocumentFamilyFn] = useAddDocumentFamilyMutation();
+
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+
   const form = Form.useFormInstance();
   const documentType = Form.useWatch('document_type', form);
 
-  const { data: site } = useGetSiteQuery(doc.site_id);
-  const [addDocumentFamilyFn] = useAddDocumentFamilyMutation();
-
   async function addDocumentFamily(documentFamily: DocumentFamilyType): Promise<string> {
-    documentFamily.sites = site?._id ? [site._id] : [];
+    if (!doc) {
+      throw new Error('DocDocument not found');
+    }
+
+    documentFamily.sites = [doc.site_id];
     documentFamily.document_type = documentType;
 
     const { _id } = await addDocumentFamilyFn(documentFamily).unwrap();
@@ -39,8 +47,13 @@ const DocumentType = () => {
     </Form.Item>
   );
 };
-const SiteName = ({ doc }: { doc: DocDocument }) => {
-  const { data: site } = useGetSiteQuery(doc.site_id);
+const SiteName = () => {
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+  const { data: site } = useGetSiteQuery(doc?.site_id);
+
+  if (!site) return null;
+
   return (
     <Form.Item label="Site Name" className="flex-1">
       {site?.name ? <b>{site.name}</b> : <Spin size="small" />}
@@ -60,17 +73,11 @@ const Footer = ({ onCancel }: { onCancel: () => void }) => (
 interface AddDocumentFamilyPropTypes {
   closeModal: () => void;
   visible: boolean;
-  doc: DocDocument;
-  docDocumentForm: FormInstance;
 }
-export function AddDocumentFamily({
-  doc,
-  closeModal,
-  visible,
-  docDocumentForm,
-}: AddDocumentFamilyPropTypes) {
+export function AddDocumentFamily({ closeModal, visible }: AddDocumentFamilyPropTypes) {
+  const docDocumentForm = Form.useFormInstance();
   const [documentFamilyForm] = Form.useForm();
-  const addDocumentFamily = useAddDocumentFamily(doc);
+  const addDocumentFamily = useAddDocumentFamily();
 
   const onFinish = async (documentFamily: DocumentFamilyType) => {
     const documentFamilyId = await addDocumentFamily(documentFamily);
@@ -108,7 +115,7 @@ export function AddDocumentFamily({
         </div>
         <div className="flex space-x-8">
           <DocumentType />
-          <SiteName doc={doc} />
+          <SiteName />
         </div>
         <ThresholdFields />
         <Footer onCancel={onCancel} />

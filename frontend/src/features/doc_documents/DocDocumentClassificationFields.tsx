@@ -1,7 +1,6 @@
 import { Form, Select, DatePicker } from 'antd';
 import { DocCompare } from './DocCompare';
 import { prettyDate } from '../../common';
-import { DocDocument } from './types';
 
 const documentTypes = [
   { value: 'Authorization Policy', label: 'Authorization Policy' },
@@ -43,7 +42,7 @@ const Lineage = () => (
   </Form.Item>
 );
 
-export function DocumentClassification({ doc }: { doc: DocDocument }) {
+export function DocumentClassification() {
   return (
     <>
       <div className="flex space-x-8">
@@ -56,7 +55,7 @@ export function DocumentClassification({ doc }: { doc: DocDocument }) {
         <Lineage />
       </div>
 
-      <DocCompare org_doc={doc} />
+      <DocCompare />
     </>
   );
 }

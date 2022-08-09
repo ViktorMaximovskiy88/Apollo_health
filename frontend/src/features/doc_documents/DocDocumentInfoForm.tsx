@@ -24,9 +24,9 @@ export function DocDocumentInfoForm({
     <>
       <Name />
       <Hr />
-      <DocumentClassification doc={doc} />
+      <DocumentClassification />
       <Hr />
-      <DocumentFamily doc={doc} />
+      <DocumentFamily />
       <Hr />
       <DateFields doc={doc} onFieldChange={onFieldChange} />
       <Hr />
