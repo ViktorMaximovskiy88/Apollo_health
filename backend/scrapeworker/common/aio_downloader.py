@@ -146,6 +146,9 @@ class AioDownloader:
 
         download.set_mimetype()
         download.set_extension_from_mimetype()
+        download.file_size = (
+            download.response.content_length
+        )  # temp, do actual file size (these should 99.9% match but arent the same)
         download.file_hash = hasher.hexdigest()
 
         return download.file_path, download.file_hash
