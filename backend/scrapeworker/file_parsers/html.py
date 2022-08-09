@@ -10,7 +10,7 @@ class HtmlParser(FileParser):
     # that SO answer was from a decade ago. BS has been updated since then..
     # docs say https://www.crummy.com/software/BeautifulSoup/bs4/doc/#get-text
     async def get_text(self) -> str:
-        document_bytes = await self.get_bytes()
+        document_bytes = await self.get_text_bytes(encoding="iso-8859-1")
         soup = bs4.BeautifulSoup(document_bytes, features="html.parser")
 
         title_element = soup.find("title")

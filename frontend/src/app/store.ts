@@ -14,6 +14,7 @@ import { rtkAuth } from '../common/auth-middleware';
 
 import navSlice from './navSlice';
 import sitesReducer from '../features/sites/sitesSlice';
+import userReducer from '../features/users/userSlice';
 import collectionsReducer from '../features/collections/collectionsSlice';
 import docDocumentsReducer from '../features/doc_documents/docDocumentsSlice';
 import documentsReducer from '../features/collections/documentsSlice';
@@ -35,6 +36,7 @@ export const store = configureStore({
     [docDocumentsApi.reducerPath]: docDocumentsApi.reducer,
     nav: navSlice.reducer,
     sites: sitesReducer,
+    users: userReducer,
     collections: collectionsReducer,
     docDocuments: docDocumentsReducer,
     documents: documentsReducer,
