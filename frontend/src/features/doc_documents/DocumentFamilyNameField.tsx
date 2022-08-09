@@ -1,11 +1,12 @@
 import { Form, Input } from 'antd';
+import { Rule } from 'antd/lib/form';
 import { useLazyGetDocumentFamilyByNameQuery } from './documentFamilyApi';
 
 export const Name = () => {
   const [getDocumentFamilyByName] = useLazyGetDocumentFamilyByNameQuery();
 
   const mustBeUnique = () => ({
-    async validator(_: any, name: string) {
+    async validator(_: Rule, name: string) {
       if (!name) return;
       const { data: documentFamily } = await getDocumentFamilyByName(name);
       if (documentFamily) {
