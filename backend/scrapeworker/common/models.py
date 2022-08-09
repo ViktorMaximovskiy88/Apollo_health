@@ -4,6 +4,7 @@ from typing import Any
 from aiohttp import ClientResponse
 from pydantic import BaseModel
 
+from backend.common.models.site_scrape_task import InvalidResponse, ValidResponse
 from backend.scrapeworker.common.utils import (
     get_extension_from_content_type,
     get_extension_from_file_mimetype,
@@ -87,7 +88,8 @@ class DownloadContext(BaseModel):
     content_type: str | None = None
     mimetype: str | None = None
 
-    proxy_responses: list[ProxyResponse] = []
+    valid_response: ValidResponse | None
+    invalid_responses: list[InvalidResponse] = []
 
     def guess_extension(self) -> str | None:
         guessed_ext = get_extension_from_path_like(self.request.url)

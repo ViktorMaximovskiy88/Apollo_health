@@ -6,14 +6,13 @@ from pydantic import BaseModel
 
 from backend.common.core.enums import CollectionMethod, TaskStatus
 from backend.common.models.base_document import BaseDocument
-from backend.scrapeworker.common.models import DownloadContext
 
 
 class FileMetadata(BaseModel):
     checksum: str
-    file_name: str
     file_size: int
     mimetype: str
+    file_extension: str
 
 
 class ValidResponse(BaseModel):
@@ -86,43 +85,11 @@ class UpdateSiteScrapeTask(BaseModel):
 
 
 #  temp until i cleanse the downloadcontext
-def link_task_from_download(download: DownloadContext):
+def link_retrieved_task_from_download(download):
     return LinkRetrievedTask(
         location=Location(
             url=download.metadata.href,
-            base_url=download.metadata.base_url,
-        ),
-    )
-
-
-def create_followed_link_task(
-    url: str,
-    base_url: str,
-    link_text: str,
-    content_length: str,
-    content_type: str,
-    status: int,
-    content_disposition: str = None,
-):
-    return LinkRetrievedTask(
-        location=Location(
-            url=url,
-            base_url=base_url,
-            link_text=link_text,
-        ),
-    )
-
-
-def create_scraped_link_task(
-    url: str,
-    base_url: str,
-    link_text: str,
-):
-    return LinkRetrievedTask(
-        location=Location(
-            url=url,
-            base_url=base_url,
-            link_text=link_text,
+            **download.metadata.dict(),
         ),
     )
 

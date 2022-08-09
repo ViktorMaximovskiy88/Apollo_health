@@ -24,11 +24,12 @@ from backend.common.models.document import RetrievedDocument, UpdateRetrievedDoc
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import (
+    FileMetadata,
     InvalidResponse,
     LinkBaseTask,
     SiteScrapeTask,
     ValidResponse,
-    link_task_from_download,
+    link_retrieved_task_from_download,
 )
 from backend.common.models.user import User
 from backend.common.storage.client import DocumentStorageClient
@@ -190,22 +191,37 @@ class ScrapeWorker:
         return updated_doc
 
     async def attempt_download(self, download: DownloadContext):
+
         url = download.request.url
         proxies = await self.get_proxy_settings()
-        link_task = link_task_from_download(download)
+        link_download_task = link_retrieved_task_from_download(download)
+        await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
+
         async for (temp_path, checksum) in self.downloader.try_download_to_tempfile(
             download, proxies
         ):
+            # TODO temp until we undo download context
+            link_download_task.valid_response = download.valid_response
+            link_download_task.invalid_responses = download.invalid_responses
 
             # log response error
             if not (temp_path and checksum):
-                await self.scrape_task.update(Push({SiteScrapeTask.link_tasks: link_task}))
+                await self.scrape_task.update(
+                    Push({SiteScrapeTask.link_download_tasks: link_download_task})
+                )
+                # prob not continue anymore...
                 continue
+
+            link_download_task.file_metadata = FileMetadata(checksum=checksum, **download.dict())
 
             # log no file parser found error
             parsed_content = await parse_by_type(temp_path, download, self.taggers)
             if parsed_content is None:
+                await self.scrape_task.update(
+                    Push({SiteScrapeTask.link_download_tasks: link_download_task})
+                )
                 logging.info(f"{download.request.url} {download.file_extension} cannot be parsed")
+                # prob not continue anymore...
                 continue
 
             # good times
@@ -303,9 +319,12 @@ class ScrapeWorker:
                     await create_and_log(self.logger, await self.get_user(), document)
                     await self.create_doc_document(document)
 
+            link_download_task.retrieved_document_id = document.id
+
             await self.scrape_task.update(
                 Inc({SiteScrapeTask.documents_found: 1}),
                 Push({SiteScrapeTask.retrieved_document_ids: document.id}),
+                Push({SiteScrapeTask.link_download_tasks: link_download_task}),
             )
 
     async def watch_for_cancel(self, tasks: list[asyncio.Task[None]]):
@@ -396,7 +415,6 @@ class ScrapeWorker:
                     )
 
                     link_source_task.invalid_responses.append(invalid_response)
-
                     logging.error(invalid_response)
                     raise Exception(f"Could not load {url} via {invalid_response.proxy_url}")
 
@@ -507,7 +525,6 @@ class ScrapeWorker:
         tasks = []
         for download in all_downloads:
             if self.should_process_download(download):
-                await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
                 tasks.append(self.attempt_download(download))
 
         await self.wait_for_completion_or_cancel(tasks)
