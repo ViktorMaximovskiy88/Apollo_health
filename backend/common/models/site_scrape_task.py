@@ -16,30 +16,38 @@ class FileMetadata(BaseModel):
     mimetype: str
 
 
-class HttpResponse(BaseModel):
-    content_disposition: str | None
-    content_length: int
-    content_type: str
+class ValidResponse(BaseModel):
+    proxy_url: str | None
+    content_length: int | None
+    content_type: str | None
     status: int
 
 
-class ProxyResponse(BaseModel):
-    proxy_url: str
-    response: HttpResponse
+class InvalidResponse(BaseModel):
+    proxy_url: str | None
+    status: int
+    message: str
 
 
 # plus ... whatever
 class Location(BaseModel):
     base_url: str
-    link_text: str | None
     url: str
+    link_text: str | None
+    closest_header: str | None
 
 
-class LinkTask(BaseModel):
+class LinkBaseTask(BaseModel):
+    base_url: str
+    valid_response: ValidResponse | None
+    invalid_responses: list[InvalidResponse] = []
+
+
+class LinkRetrievedTask(BaseModel):
     file_metadata: FileMetadata | None
     location: Location
-    proxy_respones: list[ProxyResponse] = []
-    response: HttpResponse | None
+    invalid_responses: list[InvalidResponse] = []
+    valid_response: ValidResponse | None
     retrieved_document_id: PydanticObjectId | None
 
 
@@ -59,7 +67,8 @@ class SiteScrapeTask(BaseDocument):
     links_found: int = 0
     retry_if_lost: bool = False
     collection_method: str | None = CollectionMethod.Automated
-    link_tasks: list[LinkTask] = []
+    link_source_tasks: list[LinkBaseTask] = []
+    link_download_tasks: list[LinkRetrievedTask] = []
 
 
 class UpdateSiteScrapeTask(BaseModel):
@@ -72,12 +81,13 @@ class UpdateSiteScrapeTask(BaseModel):
     new_documents_found: int | None = None
     error_message: str | None = None
     retry_if_lost: bool | None = False
-    link_tasks: list[LinkTask] = []
+    link_source_tasks: list[LinkBaseTask] = []
+    link_download_tasks: list[LinkRetrievedTask] = []
 
 
 #  temp until i cleanse the downloadcontext
 def link_task_from_download(download: DownloadContext):
-    return LinkTask(
+    return LinkRetrievedTask(
         location=Location(
             url=download.metadata.href,
             base_url=download.metadata.base_url,
@@ -94,17 +104,11 @@ def create_followed_link_task(
     status: int,
     content_disposition: str = None,
 ):
-    return LinkTask(
+    return LinkRetrievedTask(
         location=Location(
             url=url,
             base_url=base_url,
             link_text=link_text,
-        ),
-        http_response=HttpResponse(
-            content_length=content_length,
-            content_type=content_type,
-            status=status,
-            content_disposition=content_disposition,
         ),
     )
 
@@ -114,7 +118,7 @@ def create_scraped_link_task(
     base_url: str,
     link_text: str,
 ):
-    return LinkTask(
+    return LinkRetrievedTask(
         location=Location(
             url=url,
             base_url=base_url,

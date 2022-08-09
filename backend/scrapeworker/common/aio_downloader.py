@@ -13,7 +13,6 @@ from tenacity import AttemptManager
 
 from backend.common.core.config import config
 from backend.common.models.proxy import Proxy
-from backend.common.models.site_scrape_task import ProxyResponse
 from backend.common.storage.hash import DocStreamHasher
 from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.common.rate_limiter import RateLimiter
@@ -163,12 +162,12 @@ class AioDownloader:
                 response = await self.send_request(download, proxy)
 
                 download.response.from_aio_response(response)
-                download.proxy_responses.append(
-                    ProxyResponse(
-                        proxy_url=proxy.proxy,
-                        response=download.response,
-                    )
-                )
+                # download.proxy_responses.append(
+                #     ProxyResponse(
+                #         proxy_url=proxy.proxy,
+                #         response=download.response,
+                #     )
+                # )
 
                 # how to identity proxy error vs site error...
                 if not response.ok:

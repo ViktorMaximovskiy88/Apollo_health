@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 from async_lru import alru_cache
 from beanie.odm.operators.update.array import Push
 from beanie.odm.operators.update.general import Inc
-from playwright.async_api import BrowserContext, Page, ProxySettings
+from playwright.async_api import BrowserContext, Dialog, Page, ProxySettings
 from playwright.async_api import Response as PlaywrightResponse
 from playwright_stealth import stealth_async
 from tenacity._asyncio import AsyncRetrying
@@ -23,13 +23,19 @@ from backend.common.models.doc_document import DocDocument, calc_final_effective
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
-from backend.common.models.site_scrape_task import SiteScrapeTask, link_task_from_download
+from backend.common.models.site_scrape_task import (
+    InvalidResponse,
+    LinkBaseTask,
+    SiteScrapeTask,
+    ValidResponse,
+    link_task_from_download,
+)
 from backend.common.models.user import User
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.aio_downloader import AioDownloader
 from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocsCollectedException
-from backend.scrapeworker.common.models import DownloadContext, Request
+from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.scrapeworker.common.utils import get_extension_from_path_like
 from backend.scrapeworker.document_tagging.indication_tagging import IndicationTagger
@@ -39,6 +45,9 @@ from backend.scrapeworker.file_parsers import parse_by_type
 from backend.scrapeworker.playbook import ScrapePlaybook
 from backend.scrapeworker.scrapers import scrapers
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
+
+log_level = "DEBUG"
+logging.basicConfig(level=getattr(logging, log_level.upper()))
 
 
 def is_google(url):
@@ -357,15 +366,16 @@ class ScrapeWorker:
     @asynccontextmanager
     async def playwright_context(
         self, url: str
-    ) -> AsyncGenerator[tuple[Page, BrowserContext], None]:
+    ) -> AsyncGenerator[tuple[Page, BrowserContext, LinkBaseTask], None]:
         logging.info(f"Creating context for {url}")
         context: BrowserContext | None = None
         page: Page | None = None
         response: PlaywrightResponse | None = None
 
-        async def handle_dialog(dialog):
+        async def handle_dialog(dialog: Dialog):
             await dialog.accept()
 
+        link_source_task: LinkBaseTask = LinkBaseTask(base_url=url)
         async for attempt, proxy in self.try_each_proxy():
             with attempt:
                 context = await self.get_browser_context(proxy)
@@ -374,12 +384,34 @@ class ScrapeWorker:
                 await stealth_async(page)
                 page.on("dialog", handle_dialog)
 
-                logging.debug(f"Awating response for {url}")
-                response = await page.goto(url, timeout=60000, wait_until="domcontentloaded")
-                logging.debug(f"Received response for {url}")
+                logging.info(f"Awating response for {url}")
+                # TODO lets set this timeout lower generally and let exceptions set it higher
+                response = await page.goto(url, timeout=10000, wait_until="domcontentloaded")
+
+                if not response.ok:
+                    invalid_response = InvalidResponse(
+                        proxy_url=proxy["server"],
+                        status=response.status,
+                        message=response.status_text,
+                    )
+
+                    link_source_task.invalid_responses.append(invalid_response)
+
+                    logging.error(invalid_response)
+                    raise Exception(f"Could not load {url} via {invalid_response.proxy_url}")
+
+                headers = await response.all_headers()
+                link_source_task.valid_response = ValidResponse(
+                    proxy_url=proxy["server"],
+                    status=response.status,
+                    content_type=headers.get("content-type"),
+                    content_length=headers.get("content-length"),
+                )
 
         if not page or not context or not response:
             raise Exception(f"Could not load {url}")
+
+        await self.scrape_task.update(Push({SiteScrapeTask.link_source_tasks: link_source_task}))
 
         await self.wait_for_desired_content(page)
 
@@ -392,7 +424,7 @@ class ScrapeWorker:
     def active_base_urls(self):
         return [url for url in self.site.base_urls if url.status == "ACTIVE"]
 
-    async def preprocess_download(self, download: DownloadContext, base_url: str):
+    def preprocess_download(self, download: DownloadContext, base_url: str):
         download.metadata.base_url = base_url
         if is_google(download.request.url):
             google_id = get_google_id(download.request.url)
@@ -400,6 +432,7 @@ class ScrapeWorker:
 
     async def queue_downloads(self, url: str, base_url: str):
         all_downloads: list[DownloadContext] = []
+
         async with self.playwright_context(url) as (base_page, context):
             async for (page, playbook_context) in self.playbook.run_playbook(base_page):
                 for Scraper in scrapers:
@@ -460,13 +493,16 @@ class ScrapeWorker:
         for url in base_urls:
             # skip the parse step and download
             if self.is_artifact_file(url):
-                download = DownloadContext(request=Request(url=url))
+                download = DownloadContext(
+                    request=Request(url=url), metadata=Metadata(base_url=url)
+                )
                 all_downloads.append(download)
                 continue
 
             all_downloads += await self.queue_downloads(url, url)
-            for nested_url in await self.follow_links(url):
-                all_downloads += await self.queue_downloads(nested_url, base_url=url)
+            if self.site.scrape_method_configuration.follow_links:
+                for nested_url in await self.follow_links(url):
+                    all_downloads += await self.queue_downloads(nested_url, base_url=url)
 
         tasks = []
         for download in all_downloads:
