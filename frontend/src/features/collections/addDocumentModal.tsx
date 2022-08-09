@@ -39,6 +39,7 @@ export function AddDocumentModal({
             "document_type":oldVersion.document_type,
             "link_text":oldVersion.link_text,
             "url":oldVersion.url,
+            "base_url":oldVersion.base_url
         }
     }
     const validateMessages = {

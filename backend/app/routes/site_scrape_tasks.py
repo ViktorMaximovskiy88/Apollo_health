@@ -113,11 +113,6 @@ async def start_scrape_task(
                     "last_collected_date":datetime.now(tz=timezone.utc)
                 }},
             )
-
-            await previous_scrape_task.update(Set({
-                SiteScrapeTask.documents_found: 0,
-                SiteScrapeTask.retrieved_document_ids:[]
-            }))
         else:
             await create_and_log(logger, current_user, site_scrape_task)
 
