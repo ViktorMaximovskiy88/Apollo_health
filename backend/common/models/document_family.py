@@ -11,7 +11,7 @@ class NewDocumentFamily(BaseModel):
     sites: list[PydanticObjectId] = []
     um_package: str | None = None
     benefit_type: str | None = None
-    document_type_threshold: str | None = None
+    document_type_threshold: int | None = None
     therapy_tag_status_threshold: int | None = None
     lineage_threshold: int | None = None
     relevance: list[str] = []
