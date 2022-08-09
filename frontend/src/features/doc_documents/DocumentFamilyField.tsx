@@ -6,6 +6,7 @@ import { AddDocumentFamily as AddDocumentFamilyModal } from './DocumentFamilyAdd
 import { useGetDocumentFamiliesQuery } from './documentFamilyApi';
 import { useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
+import { Rule } from 'antd/lib/form';
 
 const { Option } = Select;
 
@@ -69,15 +70,57 @@ const useModal = (): [boolean, () => void, () => void] => {
   return [isVisible, showModal, closeModal];
 };
 
+const useMustMatchThresholds = () => {
+  const form = Form.useFormInstance();
+
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+
+  const documentType = Form.useWatch('document_type', form);
+
+  const { data: documentFamilies } = useGetDocumentFamiliesQuery({
+    siteId: doc?.site_id ?? '',
+    documentType,
+  });
+
+  const mustMatchThresholds = () => ({
+    async validator(_: Rule, selections: string[]) {
+      if (!documentFamilies) return;
+      if (selections.length === 0) return Promise.resolve();
+      const selectedDocumentFamilies = documentFamilies.filter((df) => df._id in selections);
+      const [firstDocumentFamily] = selectedDocumentFamilies;
+      for (const df of selectedDocumentFamilies) {
+        if (df.document_type_threshold !== firstDocumentFamily.document_type_threshold) {
+          return Promise.reject(`Document Type Thresholds different ${''}`);
+        }
+        if (false) {
+          // therapy tag
+        }
+        if (false) {
+          // lineage
+        }
+      }
+      return Promise.resolve();
+    },
+  });
+  return mustMatchThresholds;
+};
+
 export function DocumentFamily() {
   useSyncedValue();
   const [options] = useSyncedOptions();
   const [isModalVisible, showModal, closeModal] = useModal();
+  const mustMatchThresholds = useMustMatchThresholds();
 
   return (
     <div className="flex space-x-8">
       <AddDocumentFamilyModal closeModal={closeModal} visible={isModalVisible} />
-      <Form.Item name="document_families" label="Document Family" className="flex-1">
+      <Form.Item
+        name="document_families"
+        label="Document Family"
+        className="flex-1"
+        rules={[mustMatchThresholds]}
+      >
         <Select mode="multiple" allowClear placeholder="None selected">
           {options.map(({ label, value }) => (
             <Option key={value} value={value}>

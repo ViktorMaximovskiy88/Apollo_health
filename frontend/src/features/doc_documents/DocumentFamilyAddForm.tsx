@@ -38,9 +38,8 @@ const saveInMultiselect = (docDocumentForm: FormInstance, documentFamilyId: stri
   });
 };
 
-const DocumentType = () => {
-  const form = Form.useFormInstance();
-  const documentType = Form.useWatch('document_type', form);
+const DocumentType = ({ docDocumentForm }: { docDocumentForm: FormInstance }) => {
+  const documentType = docDocumentForm.getFieldValue('document_type');
   return (
     <Form.Item label="Document Type" className="flex-1">
       <b>{documentType}</b>
@@ -112,7 +111,7 @@ export function AddDocumentFamily({ closeModal, visible }: AddDocumentFamilyProp
       >
         <Name />
         <div className="flex space-x-8">
-          <DocumentType />
+          <DocumentType docDocumentForm={docDocumentForm} />
           <SiteName />
         </div>
         <ThresholdFields />
