@@ -35,7 +35,7 @@ export function RetrievedDocumentViewer({ docId, doc, onPageChange = () => {} }:
     <Worker workerUrl="/pdf.worker.min.js">
       <Tabs className="h-full">
         <Tabs.TabPane tab="Document" key="document" className="h-full overflow-auto">
-          {doc.file_extension === 'pdf' || !doc.file_extension ? (
+          {['pdf', 'html'].includes(doc.file_extension) ? (
             <Viewer
               withCredentials={true}
               fileUrl={`${baseApiUrl}/documents/${docId}.pdf`}
@@ -50,12 +50,10 @@ export function RetrievedDocumentViewer({ docId, doc, onPageChange = () => {} }:
                 Authorization: `Bearer ${token}`,
               }}
             />
-          ) : doc.file_extension.includes('xlsx', 'docx') ? (
+          ) : ['xlsx', 'docx'].includes(doc.file_extension) ? (
             <OfficeFileLoader docId={docId} />
-          ) : doc.file_extension.includes('csv') ? (
+          ) : doc.file_extension === 'csv' ? (
             <CsvFileLoader docId={docId} />
-          ) : doc.file_extension.includes('html') ? (
-            <HtmlFileLoader docId={docId} />
           ) : (
             <TextFileLoader docId={docId} />
           )}

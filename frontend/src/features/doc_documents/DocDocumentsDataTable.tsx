@@ -18,6 +18,7 @@ import { Site } from '../sites/types';
 import { useGetChangeLogQuery, useLazyGetDocDocumentsQuery } from './docDocumentApi';
 import { DocDocument } from './types';
 import { useInterval } from '../../common/hooks';
+import { DocumentTypes } from "../retrieved_documents/types"
 import {
   ApprovalStatus,
   approvalStatusDisplayName,
@@ -95,16 +96,7 @@ const columns = [
     filterEditor: SelectFilter,
     filterEditorProps: {
       placeholder: 'All',
-      dataSource: [
-        { id: 'Authorization Policy', label: 'Authorization Policy' },
-        { id: 'Provider Guide', label: 'Provider Guide' },
-        { id: 'Treatment Request Form', label: 'Treatment Request Form' },
-        { id: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
-        { id: 'Covered Treatment List', label: 'Covered Treatment List' },
-        { id: 'Regulatory Document', label: 'Regulatory Document' },
-        { id: 'Formulary', label: 'Formulary' },
-        { id: 'Internal Reference', label: 'Internal Reference' },
-      ],
+      dataSource: DocumentTypes,
     },
     render: ({ value: document_type }: { value: string }) => {
       return <>{document_type}</>;

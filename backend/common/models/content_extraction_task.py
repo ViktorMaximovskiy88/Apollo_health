@@ -1,13 +1,16 @@
 from datetime import datetime
 from uuid import UUID
+
 from beanie import Indexed, PydanticObjectId
 from pydantic import BaseModel
-from backend.common.models.base_document import BaseDocument
+
 from backend.common.core.enums import TaskStatus
+from backend.common.models.base_document import BaseDocument
 
 
 class ContentExtractionTask(BaseDocument):
     site_id: PydanticObjectId | None = None
+    initiator_id: PydanticObjectId | None = None
     retrieved_document_id: PydanticObjectId | None = None
     scrape_task_id: PydanticObjectId | None = None
 
@@ -32,6 +35,7 @@ class UpdateContentExtractionTask(BaseModel):
 
     extraction_count: int | None = None
 
+
 class FormularyDatum(BaseModel):
     score: float = 0
     code: str | None = None
@@ -41,6 +45,7 @@ class FormularyDatum(BaseModel):
     st: bool = False
     ql: bool = False
     sp: bool = False
+
 
 class ContentExtractionResult(BaseDocument):
     site_id: PydanticObjectId | None = None

@@ -14,6 +14,10 @@ export function SiteMenu() {
       key: 'extraction',
       label: <Link to={`/sites/${siteId}/extraction`}>Content Extraction</Link>
     },
+    {
+      key: 'edit',
+      label: <Link to={`/sites/${siteId}/edit`}>Edit Site</Link>,
+    },
   ];
 
   return (

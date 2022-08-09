@@ -4,6 +4,7 @@ import { ListDatePicker, Hr } from '../../components';
 import { DocCompare } from './DocCompare';
 import { prettyDate } from '../../common';
 import { DocDocument } from './types';
+import { DocumentTypes, LanguageCodes } from "../retrieved_documents/types"
 
 export function DocDocumentInfoForm(props: {
   doc: DocDocument;
@@ -13,23 +14,6 @@ export function DocDocumentInfoForm(props: {
   const { doc, form, onFieldChange } = props;
 
   const [automatedExtraction, setAutomatedExtraction] = useState(doc.automated_content_extraction);
-
-  const documentTypes = [
-    { value: 'Authorization Policy', label: 'Authorization Policy' },
-    { value: 'Provider Guide', label: 'Provider Guide' },
-    { value: 'Treatment Request Form', label: 'Treatment Request Form' },
-    { value: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
-    { value: 'Covered Treatment List', label: 'Covered Treatment List' },
-    { value: 'Regulatory Document', label: 'Regulatory Document' },
-    { value: 'Formulary', label: 'Formulary' },
-    { value: 'Internal Reference', label: 'Internal Reference' },
-  ];
-
-  const languageCodes = [
-    { value: 'en', label: 'English' },
-    { value: 'es', label: 'Spanish' },
-    { value: 'other', label: 'Other' },
-  ];
 
   const extractionOptions = [
     { value: 'BasicTableExtraction', label: 'Basic Table Extraction' },
@@ -47,7 +31,7 @@ export function DocDocumentInfoForm(props: {
 
       <div className="flex space-x-8">
         <Form.Item className="flex-1" name="document_type" label="Document Type" required={true}>
-          <Select options={documentTypes} />
+          <Select options={DocumentTypes} />
         </Form.Item>
         <Form.Item name={'final_effective_date'} label={'Final Effective Date'} className="flex-1">
           <DatePicker
@@ -148,22 +132,22 @@ export function DocDocumentInfoForm(props: {
         />
 
         <ListDatePicker
+          disabled={true}
           form={form}
           className="flex-1"
           name="first_collected_date"
           defaultValue={doc.first_collected_date}
           label={'First Collected Date'}
           dateList={doc.identified_dates}
-          onChange={onFieldChange}
         />
         <ListDatePicker
+          disabled={true}
           form={form}
           className="flex-1"
           name="last_collected_date"
           defaultValue={doc.last_collected_date}
           label={'Last Collected Date'}
           dateList={doc.identified_dates}
-          onChange={onFieldChange}
         />
       </div>
 
@@ -171,7 +155,7 @@ export function DocDocumentInfoForm(props: {
 
       <div className="flex space-x-8">
         <Form.Item name="lang_code" label="Language" className="flex-1">
-          <Select options={languageCodes} />
+          <Select options={LanguageCodes} />
         </Form.Item>
 
         <Form.Item
