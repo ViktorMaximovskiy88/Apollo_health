@@ -90,7 +90,7 @@ export interface DocumentFamilyType extends BaseDocument {
   sites: string[];
   um_package: string;
   benefit_type: string;
-  document_type_threshold: string;
+  document_type_threshold: number;
   therapy_tag_status_threshold: number;
   lineage_threshold: number;
   relevance: string[];

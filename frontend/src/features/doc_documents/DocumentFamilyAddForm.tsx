@@ -123,7 +123,7 @@ export function AddDocumentFamily({
           <DocumentType docDocumentForm={docDocumentForm} />
           <SiteName />
         </div>
-        <ThresholdFields />
+        <ThresholdFields docDocumentForm={docDocumentForm} />
         <Footer onCancel={onCancel} />
       </Form>
     </Modal>
