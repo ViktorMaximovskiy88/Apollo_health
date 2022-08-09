@@ -2,7 +2,7 @@ import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
 import { useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useInterval } from '../../common/hooks';
 import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
@@ -73,12 +73,16 @@ export function DocDocumentsTable({
   // Trigger update every 10 seconds by invalidating memoized callback
   const { isActive, setActive, watermark } = useInterval(10000);
   const params = useParams();
+  const [searchParams] = useSearchParams();
+  const scrapeTaskId = searchParams.get('scrape_task_id');
+
   const columns = useColumns({handleNewVersion});
   const [getDocDocumentsFn] = useLazyGetDocDocumentsQuery();
 
   const loadData = useCallback(
     async (tableInfo: any) => {
       tableInfo.site_id = params.siteId;
+      tableInfo.scrape_task_id = searchParams.get('scrape_task_id')
       const { data } = await getDocDocumentsFn(tableInfo);
       const sites = data?.data ?? [];
       const count = data?.total ?? 0;

@@ -254,7 +254,6 @@ async def add_document(
 
     doc_document = DocDocument(
         site_id=document.site_id,
-        scrape_task_id=document.scrape_task_id,
         retrieved_document_id=new_document.id,  # type: ignore
         name=document.name,
         checksum=document.checksum,

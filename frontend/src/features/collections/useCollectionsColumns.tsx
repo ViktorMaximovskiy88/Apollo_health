@@ -98,7 +98,7 @@ export const createColumns = ({
         const docsCount = `${task.documents_found} Documents ${showLinksFounds ? linksFound : ''}`;
 
         return (
-          <ButtonLink to={`/sites/${task.site_id}/documents?scrape_task_id=${task._id}`}>
+          <ButtonLink to={`/sites/${task.site_id}/doc-documents?scrape_task_id=${task._id}`}>
             {docsCount}
           </ButtonLink>
         );

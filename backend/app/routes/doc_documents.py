@@ -47,6 +47,7 @@ async def get_target(id: PydanticObjectId) -> DocDocument:
 )
 async def read_doc_documents(
     site_id: PydanticObjectId | None = None,
+    scrape_task_id: PydanticObjectId | None = None,
     limit: int | None = None,
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
@@ -56,7 +57,9 @@ async def read_doc_documents(
     if site_id:
         query['site_id'] = site_id
 
-    print(query)
+    if scrape_task_id:
+        query['scrape_task_id'] = scrape_task_id
+
     document_query = DocDocument.find(query).project(DocDocumentLimitTags)
     return await query_table(document_query, limit, skip, sorts, filters)
 

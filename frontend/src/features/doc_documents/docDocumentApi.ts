@@ -10,9 +10,9 @@ export const docDocumentsApi = createApi({
   endpoints: (builder) => ({
     getDocDocuments: builder.query<
       { data: DocDocument[]; total: number },
-      { limit: number; skip: number; sortInfo: TypeSortInfo; filterValue: TypeFilterValue; site_id: string; }
+      { limit: number; skip: number; sortInfo: TypeSortInfo; filterValue: TypeFilterValue; site_id: string; scrape_task_id: string; }
     >({
-      query: ({ limit, skip, sortInfo, filterValue, site_id }) => {
+      query: ({ limit, skip, sortInfo, filterValue, site_id, scrape_task_id }) => {
         const sorts = sortInfo ? [sortInfo] : [];
         const args = [
           `limit=${encodeURIComponent(limit)}`,
@@ -22,6 +22,9 @@ export const docDocumentsApi = createApi({
         ];
         if (site_id) {
           args.push(`site_id=${site_id}`)
+        }
+        if (scrape_task_id) {
+          args.push(`scrape_task_id=${scrape_task_id}`)
         }
         return `/doc-documents/?${args.join('&')}`;
       },
