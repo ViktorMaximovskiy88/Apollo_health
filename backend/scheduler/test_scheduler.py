@@ -45,10 +45,14 @@ async def test_find_sites_for_scraping():
 
     site.status = SiteStatus.NEW
     await site.save()
+
     crons = [cron]
     sites = await find_sites_eligible_for_scraping(crons).to_list()
     assert len(sites) == 1
 
+    # We included QUALITY_HOLD temporarily to keep running Sites
+    # that were automatically changed to QUALITY_HOLD status.
+    # When we remove QUALITY_HOLD status, this should change to 0.
     site.status = SiteStatus.QUALITY_HOLD
     await site.save()
     sites = await find_sites_eligible_for_scraping(crons).to_list()
