@@ -41,6 +41,7 @@ class PdfParse(FileParser):
         )
         process = await asyncio.create_subprocess_exec(
             "pdftotext",
+            "-raw",
             self.file_path,
             "-",
             stdout=asyncio.subprocess.PIPE,
