@@ -500,7 +500,7 @@ class ScrapeWorker:
 
         # lets log this at runtime for debuggability
         await self.scrape_task.update(
-            {SiteScrapeTask.scrape_method_configuration: self.site.scrape_method_configuration}
+            {"$set": {"scrape_method_configuration": self.site.scrape_method_configuration}}
         )
 
         for url in base_urls:
