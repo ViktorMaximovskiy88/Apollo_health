@@ -42,7 +42,7 @@ const useAlreadyAssignedModal = () => {
           updateSite(assignCurrentUser);
         },
         onCancel: () => {
-          navigate(-1);
+          navigate(`/sites/${site._id}/view`);
         },
       });
     }
