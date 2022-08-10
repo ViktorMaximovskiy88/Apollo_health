@@ -11,6 +11,7 @@ from beanie import PydanticObjectId
 
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 
+from backend.app.core.settings import settings
 from backend.app.utils.logger import Logger
 from backend.common.core.config import config, is_local
 from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
@@ -84,6 +85,10 @@ async def log_task_creation(logger, user, site_scrape_task: SiteScrapeTask):
 
 
 async def start_scheduler():
+    if settings.disable_scrape_scheduling:
+        typer.secho("Scrapes will not be automatically scheduled", fg=typer.colors.RED)
+        return
+
     await init_db()
     logger = Logger()
     user = await get_schedule_user()
