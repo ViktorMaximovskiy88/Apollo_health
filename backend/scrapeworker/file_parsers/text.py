@@ -4,7 +4,7 @@ from backend.scrapeworker.file_parsers.base import FileParser
 # handle csv or txt
 class TextParser(FileParser):
     async def get_text(self) -> str:
-        text = await self.get_text_bytes(encoding="iso-8859-1")
+        text = await self.read_text_file(encoding="iso-8859-1")
         return text.strip()
 
     async def get_info(self) -> dict[str, str]:
