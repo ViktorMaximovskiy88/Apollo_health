@@ -70,7 +70,7 @@ export const useBreadcrumbs = async () => {
       edit: 'Edit',
       scrapes: 'Collections',
       documents: 'Retrieved Documents',
-      "doc-documents":"Doc Documents",
+      "doc-documents":"Documents",
       extraction: 'Extracted Content',
       ...asyncResolvers,
     },

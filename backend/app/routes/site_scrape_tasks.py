@@ -106,13 +106,13 @@ async def start_scrape_task(
             await create_and_log(logger, current_user, site_scrape_task)
             await RetrievedDocument.get_motor_collection().update_many(
                 {
-                    "scrape_task_id": previous_scrape_task.id
+                    "_id": { '$in': site_scrape_task.retrieved_document_ids }
                 },
                 {"$set": {
-                    "scrape_task_id": site_scrape_task.id,
                     "last_collected_date":datetime.now(tz=timezone.utc)
-                }},
+                }}
             )
+
         else:
             await create_and_log(logger, current_user, site_scrape_task)
 

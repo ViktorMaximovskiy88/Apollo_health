@@ -227,6 +227,7 @@ async def add_document(
         base_url=document.base_url,
         uploader_id=current_user.id,
         name=document.name,
+        scrape_task_id=document.scrape_task_id,
         text_checksum=document.text_checksum,
         doc_type_confidence=document.doc_type_confidence,
         document_type=document.document_type,
@@ -246,7 +247,6 @@ async def add_document(
         last_collected_date=now,
         metadata=document.metadata,
         site_id=document.site_id,
-        scrape_task_id=document.scrape_task_id,
         url=document.url,
         therapy_tags=document.therapy_tags,
         indication_tags=document.indication_tags,
@@ -298,15 +298,6 @@ async def add_document(
                 new_retrieved_documents[index] = new_document.id
                 await scrape_task.update(Set({SiteScrapeTask.retrieved_document_ids: new_retrieved_documents}))
 
-                # set matching retrieved_document scrape task id to None
-                acquired = await RetrievedDocument.get_motor_collection().find_one_and_update(
-                    {"_id": doc_document.retrieved_document_id},
-                    {
-                        "$set": {
-                            "scrape_task_id": None
-                        }
-                    },
-                )
     else:
         await scrape_task.update({
           '$inc': { 'documents_found': 1 },

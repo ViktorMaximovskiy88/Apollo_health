@@ -26,7 +26,7 @@ export function DocDocumentsPage() {
   
   return (
     <MainLayout 
-      pageTitle={'Doc Documents'}
+      pageTitle={'Documents'}
       sidebar={<SiteMenu />}
       pageToolbar={
         <>
