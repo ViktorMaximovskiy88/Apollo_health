@@ -39,7 +39,7 @@ class Location(BaseModel):
 
 class LinkTask(BaseDocument):
     site_id: PydanticObjectId
-    site_scrape_task_id: PydanticObjectId
+    scrape_task_id: PydanticObjectId
 
 
 class LinkBaseTask(LinkTask):
@@ -58,8 +58,10 @@ class LinkRetrievedTask(LinkTask):
 
 
 #  temp until i cleanse the downloadcontext
-def link_retrieved_task_from_download(download):
+def link_retrieved_task_from_download(download, scrape_task):
     return LinkRetrievedTask(
+        scrape_task_id=scrape_task.id,
+        site_id=scrape_task.site_id,
         location=Location(
             url=download.metadata.href,
             **download.metadata.dict(),

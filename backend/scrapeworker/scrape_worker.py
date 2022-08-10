@@ -201,7 +201,9 @@ class ScrapeWorker:
 
         url = download.request.url
         proxies = await self.get_proxy_settings()
-        link_retrieved_task: LinkRetrievedTask = link_retrieved_task_from_download(download)
+        link_retrieved_task: LinkRetrievedTask = link_retrieved_task_from_download(
+            download, self.scrape_task
+        )
 
         async for (temp_path, checksum) in self.downloader.try_download_to_tempfile(
             download, proxies
@@ -378,7 +380,7 @@ class ScrapeWorker:
         link_base_task: LinkBaseTask = LinkBaseTask(
             base_url=url,
             site_id=self.scrape_task.site_id,
-            site_scrape_task_id=self.scrape_task.id,
+            scrape_task_id=self.scrape_task.id,
             scrape_method_configuration=self.site.scrape_method_configuration,
         )
 
