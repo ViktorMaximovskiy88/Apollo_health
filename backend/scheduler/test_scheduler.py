@@ -42,11 +42,23 @@ def simple_site(cron):
 async def test_find_sites_for_scraping():
     cron = "0 * * * *"
     site = simple_site(cron)
-    site.status = SiteStatus.ONLINE
+
+    site.status = SiteStatus.NEW
     await site.save()
     crons = [cron]
     sites = await find_sites_eligible_for_scraping(crons).to_list()
     assert len(sites) == 1
+
+    site.status = SiteStatus.QUALITY_HOLD
+    await site.save()
+    sites = await find_sites_eligible_for_scraping(crons).to_list()
+    assert len(sites) == 1
+
+    site.status = SiteStatus.ONLINE
+    await site.save()
+    sites = await find_sites_eligible_for_scraping(crons).to_list()
+    assert len(sites) == 1
+
     found_site = sites[0]
     assert found_site.cron in crons
     assert found_site.disabled is False
@@ -60,38 +72,21 @@ async def test_find_sites_for_scraping():
 
 
 @pytest.mark.asyncio
-async def test_not_finding_sites_not_on_cron():
-    site = simple_site("0 * * * *")
-    site = await site.save()
-    crons = ["15 * * * *"]
+async def test_not_finding_inactive_sites():
+    cron = "0 * * * *"
+    crons = [cron]
+    site = simple_site(cron)
+    site.status = SiteStatus.INACTIVE
+    await site.save()
     sites = await find_sites_eligible_for_scraping(crons).to_list()
     assert len(sites) == 0
 
 
 @pytest.mark.asyncio
-async def test_not_finding_sites_not_online():
-    cron = "0 * * * *"
-    crons = [cron]
-
-    sites = await find_sites_eligible_for_scraping(crons).to_list()
-    assert len(sites) == 0
-
-    site = simple_site(cron)  # default SiteStatus is SiteStatus.NEW
-    await site.save()
-    sites = await find_sites_eligible_for_scraping(crons).to_list()
-    assert len(sites) == 0
-
-    site = simple_site(cron)
-    site.status = SiteStatus.QUALITY_HOLD
-    await site.save()
-    sites = await find_sites_eligible_for_scraping(crons).to_list()
-    assert len(sites) == 1  # Temporaily scraping quality hold sites
-    site.status = SiteStatus.INACTIVE
-    await site.save()
-
-    site = simple_site(cron)
-    site.status = SiteStatus.INACTIVE
-    await site.save()
+async def test_not_finding_sites_not_on_cron():
+    site = simple_site("0 * * * *")
+    site = await site.save()
+    crons = ["15 * * * *"]
     sites = await find_sites_eligible_for_scraping(crons).to_list()
     assert len(sites) == 0
 

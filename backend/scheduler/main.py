@@ -50,7 +50,7 @@ def find_sites_eligible_for_scraping(crons, now=datetime.now(tz=timezone.utc)):
         {
             "cron": {"$in": crons},  # Should be run now
             "disabled": False,  # Is active
-            "status": {"$in": [SiteStatus.ONLINE, SiteStatus.QUALITY_HOLD]},  # Is online
+            "status": {"$in": [SiteStatus.NEW, SiteStatus.QUALITY_HOLD, SiteStatus.ONLINE]},
             "collection_method": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
             "base_urls.status": "ACTIVE",  # has at least one active url
             "$or": [
@@ -149,8 +149,8 @@ async def start_scaler():
     while True:
         queue_size = await SiteScrapeTask.find(
             {
-            "status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.QUEUED]},
-            "collection_method": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
+                "status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.QUEUED]},
+                "collection_method": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
             },
         ).count()
         active_workers = determine_current_instance_count()
