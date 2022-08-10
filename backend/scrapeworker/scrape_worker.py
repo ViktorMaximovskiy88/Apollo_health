@@ -118,8 +118,9 @@ class ScrapeWorker:
             DocDocument.retrieved_document_id == retrieved_document.id
         )
         if doc_document:
-            if doc_document.text_checksum is None:  # Can be removed after text added to older docs
-                doc_document.text_checksum = retrieved_document.text_checksum
+            doc_document.text_checksum = (
+                retrieved_document.text_checksum
+            )  # Can be removed after text added to older docs
             doc_document.last_collected_date = retrieved_document.last_collected_date
             await doc_document.save()
         else:
@@ -257,10 +258,12 @@ class ScrapeWorker:
             document = await RetrievedDocument.find_one(RetrievedDocument.checksum == checksum)
 
             if document:
+
                 if document.text_checksum is None:  # Can be removed after text added to older docs
                     text_checksum = await self.text_handler.save_text(parsed_content["text"])
                     document.text_checksum = text_checksum
                 log.debug("updating doc")
+
                 await self.update_retrieved_document(
                     document=document,
                     download=download,
