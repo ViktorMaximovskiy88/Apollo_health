@@ -47,6 +47,8 @@ class Settings(BaseSettings):
 
     disable_proxies: bool = False
 
+    disable_scrape_scheduling: bool = False
+
 
 settings = Settings()
 
