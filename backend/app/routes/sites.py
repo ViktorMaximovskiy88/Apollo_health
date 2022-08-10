@@ -173,7 +173,7 @@ def get_lines_from_xlsx(file: UploadFile):
     wb = load_workbook(io.BytesIO(file.file.read()))
     sheet = wb[wb.sheetnames[0]]
 
-    for i, line in enumerate(sheet.values):  # type: ignore
+    for i, line in enumerate(sheet.values):
         # Skip header.
         if i == 0:
             continue
