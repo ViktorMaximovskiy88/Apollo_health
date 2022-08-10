@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import re
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -19,6 +18,7 @@ from tenacity.wait import wait_random_exponential
 
 from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.core.enums import TaskStatus
+from backend.common.core.log import logging
 from backend.common.models.doc_document import DocDocument, calc_final_effective_date
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.proxy import Proxy
@@ -47,8 +47,7 @@ from backend.scrapeworker.playbook import ScrapePlaybook
 from backend.scrapeworker.scrapers import scrapers
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
 
-log_level = "DEBUG"
-logging.basicConfig(level=getattr(logging, log_level.upper()))
+log = logging.getLogger(__name__)
 
 
 def is_google(url):
@@ -110,7 +109,7 @@ class ScrapeWorker:
         key = f"{url}{filename}" if filename else url
         if key in self.seen_urls:
             return False
-        logging.info(f"unseen target -> {key}")
+        log.info(f"unseen target -> {key}")
         self.seen_urls.add(key)
         return True
 
@@ -184,7 +183,6 @@ class ScrapeWorker:
             metadata=parsed_content["metadata"],
             name=parsed_content["title"],
             scrape_task_id=self.scrape_task.id,
-            file_checksum_aliases=document.file_checksum_aliases,
             text_checksum=document.text_checksum,
         )
         await update_and_log_diff(self.logger, await self.get_user(), document, updated_doc)
@@ -219,7 +217,7 @@ class ScrapeWorker:
                 await self.scrape_task.update(
                     Push({SiteScrapeTask.link_download_tasks: link_download_task})
                 )
-                logging.info(f"{download.request.url} {download.file_extension} cannot be parsed")
+                log.info(f"{download.request.url} {download.file_extension} cannot be parsed")
                 # prob not continue anymore...
                 continue
 
@@ -229,7 +227,7 @@ class ScrapeWorker:
             document = None
             dest_path = f"{checksum}.{download.file_extension}"
 
-            logging.info(f"dest_path={dest_path} temp_path={temp_path}")
+            log.info(f"dest_path={dest_path} temp_path={temp_path}")
 
             if not self.doc_client.object_exists(dest_path):
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
@@ -248,7 +246,7 @@ class ScrapeWorker:
                 if document.text_checksum is None:  # Can be removed after text added to older docs
                     text_checksum = await self.text_handler.save_text(parsed_content["text"])
                     document.text_checksum = text_checksum
-                logging.debug("updating doc")
+                log.debug("updating doc")
                 await self.update_retrieved_document(
                     document=document,
                     download=download,
@@ -257,7 +255,7 @@ class ScrapeWorker:
                 await self.update_doc_document(document)
 
             else:
-                logging.debug("creating doc")
+                log.debug("creating doc")
                 now = datetime.now(tz=timezone.utc)
                 name = (
                     parsed_content["title"]
@@ -295,7 +293,6 @@ class ScrapeWorker:
                     url=url,
                     therapy_tags=parsed_content["therapy_tags"],
                     indication_tags=parsed_content["indication_tags"],
-                    file_checksum_aliases=[checksum],
                 )
 
                 await create_and_log(self.logger, await self.get_user(), document)
@@ -349,7 +346,7 @@ class ScrapeWorker:
         ):
             i = attempt.retry_state.attempt_number - 1
             proxy, proxy_setting = proxy_settings[i % n_proxies]
-            logging.info(
+            log.info(
                 f"{i} Trying proxy {proxy and proxy.name} - {proxy_setting and proxy_setting.get('server')}"  # noqa
             )
             yield attempt, proxy_setting
@@ -372,7 +369,7 @@ class ScrapeWorker:
     async def playwright_context(
         self, url: str
     ) -> AsyncGenerator[tuple[Page, BrowserContext, LinkBaseTask], None]:
-        logging.info(f"Creating context for {url}")
+        log.info(f"Creating context for {url}")
         context: BrowserContext | None = None
         page: Page | None = None
         response: PlaywrightResponse | None = None
@@ -389,7 +386,7 @@ class ScrapeWorker:
                 await stealth_async(page)
                 page.on("dialog", handle_dialog)
 
-                logging.info(f"Awating response for {url}")
+                log.info(f"Awating response for {url}")
                 # TODO lets set this timeout lower generally and let exceptions set it higher
                 response = await page.goto(url, timeout=10000, wait_until="domcontentloaded")
                 proxy_url = proxy.get("server") if proxy else None
@@ -492,7 +489,7 @@ class ScrapeWorker:
     async def run_scrape(self):
         all_downloads: list[DownloadContext] = []
         base_urls: list[str] = [base_url.url for base_url in self.active_base_urls()]
-        logging.info(f"base_urls={base_urls}")
+        log.info(f"base_urls={base_urls}")
 
         for url in base_urls:
             # skip the parse step and download
