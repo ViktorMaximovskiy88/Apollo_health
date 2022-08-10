@@ -155,6 +155,20 @@ class ScrapeWorker:
         doc_document.final_effective_date = calc_final_effective_date(doc_document)
         await create_and_log(self.logger, await self.get_user(), doc_document)
 
+    def set_doc_name(self, parsed_content: dict, download: DownloadContext):
+        print(
+            parsed_content["title"],
+            download.metadata.link_text,
+            download.file_name,
+            download.request.url,
+        )
+        return (
+            parsed_content["title"]
+            or download.metadata.link_text
+            or download.file_name
+            or download.request.url
+        )
+
     # TODO we temporarily update allthethings. as our code matures, this likely dies
     async def update_retrieved_document(
         self,
@@ -162,8 +176,8 @@ class ScrapeWorker:
         download: DownloadContext,
         parsed_content: dict(),
     ) -> UpdateRetrievedDocument:
-        # TODO needs to be utcnow
         now = datetime.now(tz=timezone.utc)
+        name = self.set_doc_name(parsed_content, download)
         updated_doc = UpdateRetrievedDocument(
             context_metadata=download.metadata.dict(),
             doc_type_confidence=parsed_content["confidence"],
@@ -181,7 +195,7 @@ class ScrapeWorker:
             therapy_tags=parsed_content["therapy_tags"],
             indication_tags=parsed_content["indication_tags"],
             metadata=parsed_content["metadata"],
-            name=parsed_content["title"],
+            name=name,
             scrape_task_id=self.scrape_task.id,
             text_checksum=document.text_checksum,
         )
@@ -257,13 +271,7 @@ class ScrapeWorker:
             else:
                 log.debug("creating doc")
                 now = datetime.now(tz=timezone.utc)
-                name = (
-                    parsed_content["title"]
-                    or download.metadata.link_text
-                    or download.file_name
-                    or download.request.url
-                )
-
+                name = self.set_doc_name(parsed_content, download)
                 text_checksum = await self.text_handler.save_text(parsed_content["text"])
 
                 document = RetrievedDocument(
