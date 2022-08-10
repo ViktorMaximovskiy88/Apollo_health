@@ -4,7 +4,7 @@ from typing import Any
 from aiohttp import ClientResponse
 from pydantic import BaseModel
 
-from backend.common.models.site_scrape_task import InvalidResponse, ValidResponse
+from backend.common.models.site_scrape_task_log import InvalidResponse, ValidResponse
 from backend.scrapeworker.common.utils import (
     get_extension_from_content_type,
     get_extension_from_file_mimetype,

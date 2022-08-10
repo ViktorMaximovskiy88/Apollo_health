@@ -16,6 +16,7 @@ from backend.common.models.indication import Indication
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.models.site_scrape_task_log import SiteScrapeTaskLog
 from backend.common.models.user import User
 from backend.common.models.work_queue import WorkQueue
 
@@ -57,5 +58,6 @@ async def init_db(mock=False, database_name=None):
             RetrievedDocument,
             ContentExtractionTask,
             ContentExtractionResult,
+            SiteScrapeTaskLog,
         ],
     )

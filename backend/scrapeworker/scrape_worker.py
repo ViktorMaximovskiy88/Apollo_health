@@ -7,7 +7,6 @@ from typing import Any, AsyncGenerator, Callable, Coroutine
 from urllib.parse import urlparse
 
 from async_lru import alru_cache
-from beanie.odm.operators.update.array import Push
 from beanie.odm.operators.update.general import Inc
 from playwright.async_api import BrowserContext, Dialog, Page, ProxySettings
 from playwright.async_api import Response as PlaywrightResponse
@@ -23,11 +22,12 @@ from backend.common.models.doc_document import DocDocument, calc_final_effective
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
-from backend.common.models.site_scrape_task import (
+from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.models.site_scrape_task_log import (
     FileMetadata,
     InvalidResponse,
     LinkBaseTask,
-    SiteScrapeTask,
+    LinkRetrievedTask,
     ValidResponse,
     link_retrieved_task_from_download,
 )
@@ -157,12 +157,6 @@ class ScrapeWorker:
         await create_and_log(self.logger, await self.get_user(), doc_document)
 
     def set_doc_name(self, parsed_content: dict, download: DownloadContext):
-        print(
-            parsed_content["title"],
-            download.metadata.link_text,
-            download.file_name,
-            download.request.url,
-        )
         return (
             parsed_content["title"]
             or download.metadata.link_text
@@ -207,37 +201,30 @@ class ScrapeWorker:
 
         url = download.request.url
         proxies = await self.get_proxy_settings()
-        link_download_task = link_retrieved_task_from_download(download)
+        link_retrieved_task: LinkRetrievedTask = link_retrieved_task_from_download(download)
 
         async for (temp_path, checksum) in self.downloader.try_download_to_tempfile(
             download, proxies
         ):
             # TODO temp until we undo download context
-            link_download_task.valid_response = download.valid_response
-            link_download_task.invalid_responses = download.invalid_responses
+            link_retrieved_task.valid_response = download.valid_response
+            link_retrieved_task.invalid_responses = download.invalid_responses
 
             # log response error
             if not (temp_path and checksum):
-                await self.scrape_task.update(
-                    Push({SiteScrapeTask.link_download_tasks: link_download_task})
-                )
+                await link_retrieved_task.save()
                 # prob not continue anymore...
                 continue
 
-            link_download_task.file_metadata = FileMetadata(checksum=checksum, **download.dict())
+            link_retrieved_task.file_metadata = FileMetadata(checksum=checksum, **download.dict())
 
             # log no file parser found error
             parsed_content = await parse_by_type(temp_path, download, self.taggers)
             if parsed_content is None:
-                await self.scrape_task.update(
-                    Push({SiteScrapeTask.link_download_tasks: link_download_task})
-                )
+                await link_retrieved_task.save()
                 log.info(f"{download.request.url} {download.file_extension} cannot be parsed")
                 # prob not continue anymore...
                 continue
-
-            # good times
-            await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
 
             document = None
             dest_path = f"{checksum}.{download.file_extension}"
@@ -309,16 +296,16 @@ class ScrapeWorker:
                 await create_and_log(self.logger, await self.get_user(), document)
                 await self.create_doc_document(document)
 
-            link_download_task.retrieved_document_id = document.id
+            link_retrieved_task.retrieved_document_id = document.id
 
-            await self.scrape_task.update(
-                {
-                    "$inc": {"documents_found": 1},
-                    "$push": {
-                        "retrieved_document_ids": document.id,
-                        "link_download_tasks": link_download_task,
-                    },
-                }
+            await asyncio.gather(
+                self.scrape_task.update(
+                    {
+                        "$inc": {"documents_found": 1},
+                        "$push": {"retrieved_document_ids": document.id},
+                    }
+                ),
+                link_retrieved_task.save(),
             )
 
     async def watch_for_cancel(self, tasks: list[asyncio.Task[None]]):
@@ -388,7 +375,13 @@ class ScrapeWorker:
         async def handle_dialog(dialog: Dialog):
             await dialog.accept()
 
-        link_source_task: LinkBaseTask = LinkBaseTask(base_url=url)
+        link_base_task: LinkBaseTask = LinkBaseTask(
+            base_url=url,
+            site_id=self.scrape_task.site_id,
+            site_scrape_task_id=self.scrape_task.id,
+            scrape_method_configuration=self.site.scrape_method_configuration,
+        )
+
         async for attempt, proxy in self.try_each_proxy():
             with attempt:
                 context = await self.get_browser_context(proxy)
@@ -408,12 +401,12 @@ class ScrapeWorker:
                         message=response.status_text,
                     )
 
-                    link_source_task.invalid_responses.append(invalid_response)
+                    link_base_task.invalid_responses.append(invalid_response)
                     logging.error(invalid_response)
                     continue
 
                 headers = await response.all_headers()
-                link_source_task.valid_response = ValidResponse(
+                link_base_task.valid_response = ValidResponse(
                     proxy_url=proxy_url,
                     status=response.status,
                     content_type=headers.get("content-type"),
@@ -423,8 +416,9 @@ class ScrapeWorker:
         if not page or not context or not response:
             raise Exception(f"Could not load {url}")
 
-        await self.scrape_task.update(Push({SiteScrapeTask.link_source_tasks: link_source_task}))
+        # this may move further down depending on the level of fail we record;
 
+        await link_base_task.save()
         await self.wait_for_desired_content(page)
 
         try:
@@ -519,6 +513,7 @@ class ScrapeWorker:
         tasks = []
         for download in all_downloads:
             if self.should_process_download(download):
+                await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
                 tasks.append(self.attempt_download(download))
 
         await self.wait_for_completion_or_cancel(tasks)
