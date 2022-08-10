@@ -50,7 +50,7 @@ def find_sites_eligible_for_scraping(crons, now=datetime.now(tz=timezone.utc)):
         {
             "cron": {"$in": crons},  # Should be run now
             "disabled": False,  # Is active
-            "status": {"$in": [SiteStatus.ONLINE, SiteStatus.QUALITY_HOLD]},  # Is online
+            "status": {"$in": [SiteStatus.NEW, SiteStatus.QUALITY_HOLD, SiteStatus.ONLINE]},
             "collection_method": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
             "base_urls.status": "ACTIVE",  # has at least one active url
             "$or": [
