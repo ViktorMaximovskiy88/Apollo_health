@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from backend.common.core.enums import CollectionMethod, TaskStatus
 from backend.common.models.base_document import BaseDocument
+from backend.common.models.site import ScrapeMethodConfiguration
 
 
 class SiteScrapeTask(BaseDocument):
@@ -24,6 +25,7 @@ class SiteScrapeTask(BaseDocument):
     links_found: int = 0
     retry_if_lost: bool = False
     collection_method: str | None = CollectionMethod.Automated
+    scrape_method_configuration: ScrapeMethodConfiguration | None
 
 
 class UpdateSiteScrapeTask(BaseModel):
@@ -36,6 +38,7 @@ class UpdateSiteScrapeTask(BaseModel):
     new_documents_found: int | None = None
     error_message: str | None = None
     retry_if_lost: bool | None = False
+    scrape_method_configuration: ScrapeMethodConfiguration | None
 
 
 # Deprecated

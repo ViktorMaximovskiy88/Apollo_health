@@ -12,8 +12,8 @@ from playwright.async_api import ProxySettings
 from tenacity import AttemptManager
 
 from backend.common.core.config import config
+from backend.common.models.link_task_log import InvalidResponse, ValidResponse
 from backend.common.models.proxy import Proxy
-from backend.common.models.site_scrape_task_log import InvalidResponse, ValidResponse
 from backend.common.storage.hash import DocStreamHasher
 from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.common.rate_limiter import RateLimiter

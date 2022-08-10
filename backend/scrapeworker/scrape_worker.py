@@ -20,10 +20,7 @@ from backend.common.core.enums import TaskStatus
 from backend.common.core.log import logging
 from backend.common.models.doc_document import DocDocument, calc_final_effective_date
 from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
-from backend.common.models.proxy import Proxy
-from backend.common.models.site import Site
-from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.common.models.site_scrape_task_log import (
+from backend.common.models.link_task_log import (
     FileMetadata,
     InvalidResponse,
     LinkBaseTask,
@@ -31,6 +28,9 @@ from backend.common.models.site_scrape_task_log import (
     ValidResponse,
     link_retrieved_task_from_download,
 )
+from backend.common.models.proxy import Proxy
+from backend.common.models.site import Site
+from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.text_handler import TextHandler
@@ -497,6 +497,11 @@ class ScrapeWorker:
         all_downloads: list[DownloadContext] = []
         base_urls: list[str] = [base_url.url for base_url in self.active_base_urls()]
         log.info(f"base_urls={base_urls}")
+
+        # lets log this at runtime for debuggability
+        await self.scrape_task.update(
+            {SiteScrapeTask.scrape_method_configuration: self.site.scrape_method_configuration}
+        )
 
         for url in base_urls:
             # skip the parse step and download
