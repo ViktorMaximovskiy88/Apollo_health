@@ -1,21 +1,11 @@
 import { Form, Select, DatePicker } from 'antd';
 import { DocCompare } from './DocCompare';
 import { prettyDate } from '../../common';
-
-const documentTypes = [
-  { value: 'Authorization Policy', label: 'Authorization Policy' },
-  { value: 'Provider Guide', label: 'Provider Guide' },
-  { value: 'Treatment Request Form', label: 'Treatment Request Form' },
-  { value: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
-  { value: 'Covered Treatment List', label: 'Covered Treatment List' },
-  { value: 'Regulatory Document', label: 'Regulatory Document' },
-  { value: 'Formulary', label: 'Formulary' },
-  { value: 'Internal Reference', label: 'Internal Reference' },
-];
+import { DocumentTypes } from '../retrieved_documents/types';
 
 const DocumentType = () => (
   <Form.Item className="flex-1" name="document_type" label="Document Type" required={true}>
-    <Select options={documentTypes} />
+    <Select options={DocumentTypes} />
   </Form.Item>
 );
 

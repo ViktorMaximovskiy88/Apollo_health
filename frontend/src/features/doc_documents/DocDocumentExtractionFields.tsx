@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Form, Select, Switch } from 'antd';
 import { useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
+import { LanguageCodes } from '../retrieved_documents/types';
 
 const useAutomatedExtractionState = (): [boolean, (automatedExtraction: boolean) => void] => {
   const { docDocumentId: docId } = useParams();
@@ -9,15 +10,9 @@ const useAutomatedExtractionState = (): [boolean, (automatedExtraction: boolean)
   return useState<boolean>(doc?.automated_content_extraction ?? false);
 };
 
-const languageCodes = [
-  { value: 'en', label: 'English' },
-  { value: 'es', label: 'Spanish' },
-  { value: 'other', label: 'Other' },
-];
-
 const Language = () => (
   <Form.Item name="lang_code" label="Language" className="flex-1">
-    <Select options={languageCodes} />
+    <Select options={LanguageCodes} />
   </Form.Item>
 );
 
