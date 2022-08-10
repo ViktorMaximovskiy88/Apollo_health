@@ -1,17 +1,20 @@
 from playwright.async_api import ProxySettings
 from pydantic import BaseSettings
-from backend.common.core.config import config
+
+from backend.common.core.config import config, env_type
 from backend.common.models.proxy import Proxy
-from backend.common.core.config import env_type
-from random import choice
+
 
 class Settings(BaseSettings):
-    disable_proxies: bool = config.get('DISABLE_PROXIES', False)
+    disable_proxies: bool = config.get("DISABLE_PROXIES", False)
+
 
 settings = Settings()
 
+
 class ProxyCredentailException(Exception):
     pass
+
 
 def extract_proxy_creds_from_env(proxy: Proxy) -> list[ProxySettings | None]:
     proxy_settings_list = []
@@ -21,9 +24,7 @@ def extract_proxy_creds_from_env(proxy: Proxy) -> list[ProxySettings | None]:
         if username and password:
             for endpoint in proxy.endpoints:
                 proxy_settings = ProxySettings(
-                    server=endpoint,
-                    username=username,
-                    password=password
+                    server=endpoint, username=username, password=password
                 )
                 proxy_settings_list.append(proxy_settings)
     else:
@@ -31,9 +32,12 @@ def extract_proxy_creds_from_env(proxy: Proxy) -> list[ProxySettings | None]:
             proxy_settings_list.append(ProxySettings(server=endpoint))
     return proxy_settings_list
 
-def proxy_settings_internal(proxies: list[Proxy]) -> list[tuple[Proxy | None, ProxySettings | None]]:
+
+def proxy_settings_internal(
+    proxies: list[Proxy],
+) -> list[tuple[Proxy | None, ProxySettings | None]]:
     if not proxies:
-        raise ProxyCredentailException(f"No proxies available for site")
+        raise ProxyCredentailException("No proxies available for site")
 
     proxy_settings = []
     for proxy in proxies:
@@ -42,17 +46,20 @@ def proxy_settings_internal(proxies: list[Proxy]) -> list[tuple[Proxy | None, Pr
                 proxy_settings.append((proxy, setting))
 
     if not proxy_settings:
-        raise ProxyCredentailException(f"No credentials for valid proxies of site")
+        raise ProxyCredentailException("No credentials for valid proxies of site")
 
     return proxy_settings
 
-def convert_proxies_to_proxy_settings(proxies: list[Proxy]) -> list[tuple[Proxy | None, ProxySettings | None]]:
+
+def convert_proxies_to_proxy_settings(
+    proxies: list[Proxy],
+) -> list[tuple[Proxy | None, ProxySettings | None]]:
     if settings.disable_proxies:
         return [(None, None)]
 
     try:
         return proxy_settings_internal(proxies)
     except ProxyCredentailException:
-        if env_type == 'local':
+        if env_type == "local":
             return [(None, None)]
         raise
