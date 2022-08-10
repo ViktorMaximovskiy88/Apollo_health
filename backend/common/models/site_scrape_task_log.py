@@ -5,9 +5,9 @@ from backend.common.models.base_document import BaseDocument
 from backend.common.models.site import ScrapeMethodConfiguration
 
 
-class SiteScrapeTaskLog(UnionDoc):
+class LinkScrapeTask(UnionDoc):
     class Settings:
-        name = "site_scrape_task_log"
+        name = "LinkScrapeTask"
 
 
 class FileMetadata(BaseModel):
@@ -48,6 +48,9 @@ class LinkBaseTask(LinkTask):
     valid_response: ValidResponse | None
     invalid_responses: list[InvalidResponse] = []
 
+    class Settings:
+        union_doc = LinkScrapeTask
+
 
 class LinkRetrievedTask(LinkTask):
     file_metadata: FileMetadata | None
@@ -55,6 +58,9 @@ class LinkRetrievedTask(LinkTask):
     invalid_responses: list[InvalidResponse] = []
     valid_response: ValidResponse | None
     retrieved_document_id: PydanticObjectId | None
+
+    class Settings:
+        union_doc = LinkScrapeTask
 
 
 #  temp until i cleanse the downloadcontext

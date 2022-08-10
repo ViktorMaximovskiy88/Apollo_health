@@ -180,7 +180,6 @@ class AioDownloader:
                     raise proxy_error
 
                 if not response.ok:
-                    print(" * **  * * * * * * *", response.ok)
                     invalid_response = InvalidResponse(
                         proxy_url=proxy_url, **download.response.dict()
                     )
