@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     redis_password: str
 
     disable_proxies: bool = False
+    log_level: str = "INFO"
 
     disable_scrape_scheduling: bool = False
 
