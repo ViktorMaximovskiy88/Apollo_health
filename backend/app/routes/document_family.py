@@ -100,12 +100,7 @@ async def update_document_family(
     return updated
 
 
-@router.delete(
-    "/{id}",
-    responses={
-        405: {"description": "Item can't be deleted because of associated collection records."},
-    },
-)
+@router.delete("/{id}")
 async def delete_document_family(
     id: PydanticObjectId,
     target: DocumentFamily = Depends(get_target),
