@@ -1,13 +1,11 @@
 import classNames from 'classnames';
-import { useDispatch } from 'react-redux';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import tempLogoBrand from '../assets/temp-logo-brand.png';
-import tempLogo from '../assets/temp-logo.png';
 import { useSelector } from 'react-redux';
 import { useBreadcrumbs } from './use-breadcrumbs';
 import { Tooltip } from 'antd';
-import { breadcrumbState, menuState, layoutState, toggleAppBarPosition } from './navSlice';
+import { breadcrumbState, menuState } from './navSlice';
 import {
   ProjectTwoTone,
   UserOutlined,
@@ -17,11 +15,8 @@ import {
 } from '@ant-design/icons';
 
 export function AppLayout() {
-  const layout: any = useSelector(layoutState);
-  const vertical: boolean = layout.appBarPosition == 'left';
-
   return (
-    <div className={classNames('flex h-screen', vertical ? 'flex-row' : 'flex-col')}>
+    <div className={classNames('flex h-screen flex-row')}>
       <AppBar />
       <Outlet />
     </div>
@@ -51,21 +46,13 @@ export function AppBreadcrumbs() {
 
 export function AppUser() {
   const { user, logout } = useAuth0();
-  const layout: any = useSelector(layoutState);
-  const vertical: boolean = layout.appBarPosition == 'left';
 
   return (
     <div
-      className={classNames(
-        'flex text-[24px] cursor-pointer rounded-full bg-sky-100 p-1',
-        vertical ? 'mb-2' : ''
-      )}
+      className={classNames('flex text-[24px] cursor-pointer rounded-full bg-sky-100 p-1 mb-2')}
       onClick={() => logout()}
     >
-      <Tooltip
-        title={`${user?.given_name} ${user?.family_name}`}
-        placement={vertical ? 'right' : 'bottom'}
-      >
+      <Tooltip title={`${user?.given_name} ${user?.family_name}`} placement={'right'}>
         <UserOutlined style={{ color: '#5a9bc9' }} />
       </Tooltip>
     </div>
@@ -73,34 +60,17 @@ export function AppUser() {
 }
 
 export function AppBar() {
-  const layout: any = useSelector(layoutState);
-  const vertical: boolean = layout.appBarPosition == 'left';
-  const dispatch = useDispatch();
-
   return (
     <div
       className={classNames(
-        'box-border flex p-1 items-center bg-blue-primary text-white',
-        vertical ? 'flex-col w-12' : 'flex-row h-12 px-2'
+        'box-border flex p-1 items-center bg-blue-primary text-white flex-col w-12'
       )}
     >
-      <Link
-        to="/sites"
-        onDoubleClick={() => {
-          dispatch(toggleAppBarPosition());
-        }}
-      >
-        {vertical ? (
-          <img src={tempLogoBrand} alt="SourceHub" className="w-8 h-8 mt-1" />
-        ) : (
-          <>
-            <img src={tempLogo} alt="SourceHub" className="h-8" />
-          </>
-        )}
+      <Link to="/sites">
+        <img src={tempLogoBrand} alt="SourceHub" className="w-8 h-8 mt-1" />
       </Link>
-      {!vertical && <div data-type="spacer" className="flex flex-1"></div>}
       <AppMenu />
-      {vertical && <div data-type="spacer" className="flex flex-1"></div>}
+      <div data-type="spacer" className="flex flex-1"></div>
       <AppUser />
     </div>
   );
@@ -115,8 +85,6 @@ function isCurrentClasses(path: string, key: string) {
 function AppMenu() {
   const location = useLocation();
   const menu: any = useSelector(menuState);
-  const layout: any = useSelector(layoutState);
-  const vertical: boolean = layout.appBarPosition == 'left';
 
   const icons: any = {
     '/sites': <ProjectTwoTone />,
@@ -126,23 +94,18 @@ function AppMenu() {
   };
 
   return (
-    <div
-      className={classNames(
-        'flex',
-        vertical ? 'flex-col items-center mt-4 space-y-4' : 'space-x-2 mr-2'
-      )}
-    >
-      {menu.items.map(({ url, label }: any) => (
-        <Tooltip key={url} placement={vertical ? 'right' : 'bottom'} title={label}>
+    <div className={classNames('flex flex-col items-center mt-4 space-y-4')}>
+      {menu.items.map(({ url, label, shortLabel }: any) => (
+        <Tooltip key={url} placement={'right'} title={label}>
           <Link
             className={classNames(
-              'cursor-pointer flex rounded-md select-none',
+              'cursor-pointer flex flex-col rounded-md select-none justify-center',
               isCurrentClasses(location.pathname, url),
-              vertical ? 'text-[18px] p-2' : 'px-2 py-1'
+              'text-[18px] p-2'
             )}
             to={url}
           >
-            {vertical ? icons[url] : label}
+            {icons[url]}
           </Link>
         </Tooltip>
       ))}
