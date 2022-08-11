@@ -10,6 +10,7 @@ interface Breadcrumb {
 interface MenuItem {
   url: string;
   label: string;
+  shortLabel: string;
 }
 
 export const navSlice = createSlice({
@@ -21,13 +22,14 @@ export const navSlice = createSlice({
     },
     menu: {
       items: [
-        { url: '/sites', label: 'Sites' },
-        { url: '/work-queues', label: 'Work Queues' },
+        { url: '/sites', label: 'Sites', shortLabel: 'Sites' },
+        { url: '/work-queues', label: 'Work Queues', shortLabel: 'Queues' },
         {
           url: '/documents',
           label: 'All Documents',
+          shortLabel: 'Docs',
         },
-        { url: '/users', label: 'Users' },
+        { url: '/users', label: 'Users', shortLabel: 'Users' },
       ] as MenuItem[],
       currentItem: {} as MenuItem,
     },

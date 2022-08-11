@@ -3,7 +3,7 @@ import { render, screen, act } from '../../test/test-utils';
 import { setupServer } from 'msw/node';
 import { CollectionsPage } from './CollectionsPage';
 import { handlers } from './mocks/collectionsPageHandlers';
-import { useParams, Params } from 'react-router-dom';
+import { useParams, Params, useLocation, Location } from 'react-router-dom';
 
 jest.mock('react-router-dom');
 
@@ -62,6 +62,15 @@ describe(`CollectionsPage`, () => {
     const mockedUseParams = useParams as jest.Mock<Params>;
     mockedUseParams.mockImplementation(() => ({
       siteId: 'site-id1',
+    }));
+
+    const mockedUseLocation = useLocation as jest.Mock<Location>;
+    mockedUseLocation.mockImplementation(() => ({
+      pathname: 'test',
+      key: 'asd',
+      state: '',
+      search: '',
+      hash: '',
     }));
 
     // fixes `act` warning

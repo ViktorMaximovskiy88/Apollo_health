@@ -95,11 +95,11 @@ function AppMenu() {
 
   return (
     <div className={classNames('flex flex-col items-center mt-4 space-y-4')}>
-      {menu.items.map(({ url, label }: any) => (
+      {menu.items.map(({ url, label, shortLabel }: any) => (
         <Tooltip key={url} placement={'right'} title={label}>
           <Link
             className={classNames(
-              'cursor-pointer flex rounded-md select-none',
+              'cursor-pointer flex flex-col rounded-md select-none justify-center',
               isCurrentClasses(location.pathname, url),
               'text-[18px] p-2'
             )}
