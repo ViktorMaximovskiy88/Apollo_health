@@ -221,7 +221,7 @@ async def add_document(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    now = datetime.now()
+    now = datetime.now(tz=timezone.utc)
     new_document = RetrievedDocument(
         base_url=document.base_url,
         uploader_id=current_user.id,
@@ -243,7 +243,7 @@ async def add_document(
         first_collected_date=now,
         identified_dates=document.identified_dates,
         lang_code=document.lang_code,
-        last_collected_date=document.last_collected_date,
+        last_collected_date=now,
         metadata=document.metadata,
         site_id=document.site_id,
         url=document.url,
@@ -271,7 +271,7 @@ async def add_document(
         published_date=document.published_date,
         lang_code=document.lang_code,
         first_collected_date=now,
-        last_collected_date=document.last_collected_date,
+        last_collected_date=now,
         url=document.url,
         base_url=document.base_url,
         therapy_tags=document.therapy_tags,
