@@ -18,7 +18,7 @@ class Metadata(BaseModel):
     link_text: str | None = None
     element_id: str | None = None
     closest_heading: str | None = None
-    href: str | None = None
+    resource_value: str | None = None
     base_url: str | None = None
     playbook_context: PlaybookContext | None = None
 
