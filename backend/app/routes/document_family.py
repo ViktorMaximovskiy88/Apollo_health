@@ -77,8 +77,6 @@ async def create_document_family(
         document_type=document_family.document_type,
         description=document_family.description,
         sites=document_family.sites,
-        um_package=document_family.um_package,
-        benefit_type=document_family.benefit_type,
         document_type_threshold=document_family.document_type_threshold,
         therapy_tag_status_threshold=document_family.therapy_tag_status_threshold,
         lineage_threshold=document_family.lineage_threshold,
