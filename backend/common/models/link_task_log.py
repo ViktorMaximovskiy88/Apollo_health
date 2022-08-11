@@ -67,7 +67,7 @@ def link_retrieved_task_from_download(download, scrape_task):
         scrape_task_id=scrape_task.id,
         site_id=scrape_task.site_id,
         location=Location(
-            url=download.metadata.href,
+            url=download.metadata.resource_value,
             **download.metadata.dict(),
         ),
     )
