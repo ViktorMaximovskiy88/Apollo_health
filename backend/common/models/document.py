@@ -8,21 +8,24 @@ from backend.common.models.base_document import BaseDocument
 from backend.common.models.doc_document import IndicationTag, TherapyTag
 
 
-class RetrievedDocument(BaseDocument):
-    site_id: PydanticObjectId | None = None
-    uploader_id: PydanticObjectId | None = None
-    scrape_task_id: Indexed(PydanticObjectId) | None = None  # type: ignore
-    logical_document_id: PydanticObjectId | None = None
-    logical_document_version: int | None = None
+class RetrievedDocumentLocation(BaseModel):
+    base_url: str | None = None
+    context_metadata: dict = {}
     first_collected_date: datetime | None = None
     last_collected_date: datetime | None = None
+    site_id: PydanticObjectId | None = None
     url: Indexed(str)  # type: ignore
+    previous_retrieved_doc_id: PydanticObjectId | None = None
+
+
+class RetrievedDocument(BaseDocument):
+    uploader_id: PydanticObjectId | None = None
+    scrape_task_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     checksum: Indexed(str)  # type: ignore
     text_checksum: str | None = None
     disabled: bool = False
     name: str
     metadata: dict = {}
-    context_metadata: dict = {}
     effective_date: datetime | None = None
     end_date: datetime | None = None
     last_updated_date: datetime | None = None
@@ -33,7 +36,6 @@ class RetrievedDocument(BaseDocument):
     document_type: str | None = None
     doc_type_confidence: float | None = None
     identified_dates: list[datetime] = []
-    base_url: str | None = None
     lang_code: LangCode | None = None
     file_extension: str | None = None
     content_type: str | None = None
