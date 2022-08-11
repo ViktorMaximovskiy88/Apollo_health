@@ -4,7 +4,6 @@ from random import random
 import pytest
 import pytest_asyncio
 import aiofiles
-import os
 from pydantic import HttpUrl
 from beanie import Document
 from fastapi import UploadFile
@@ -12,8 +11,6 @@ import requests
 import tempfile
 
 from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
-from backend.common.storage.hash import hash_bytes
-from backend.common.storage.text_handler import TextHandler
 from backend.common.db.init import init_db
 from backend.common.models.document import RetrievedDocument, RetrievedDocumentLimitTags
 from backend.common.models.site import BaseUrl, ScrapeMethodConfiguration, Site
@@ -24,9 +21,6 @@ from backend.app.routes.documents import (
     add_document,
     upload_document
 )
-
-from backend.scrapeworker.file_parsers import parse_by_type
-from backend.scrapeworker.common.models import DownloadContext, Request
 
 RetrievedDocumentLimitTags.Settings.projection = None  # type: ignore
 
@@ -212,7 +206,6 @@ class TestGetDocuments:
         second_ret_docs = await get_documents(scrape_task_id=scrapes[1].id, site_id=site.id)
         assert len(second_ret_docs) == 1
         assert second_ret_docs[0].id == docs[2].id
-
 
 
 class TestUploadFile:
