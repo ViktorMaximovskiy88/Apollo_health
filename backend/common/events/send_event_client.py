@@ -25,7 +25,7 @@ class SendEventClient:
     def send_event(self, detail_type, message_body):
         if settings.disable_sending_events:
             typer.secho(
-                "Due to dev.env DISABLE_SENDING_EVENTS, event will not be sent.",
+                "Due to local.env DISABLE_SENDING_EVENTS, event will not be sent.",
                 fg=typer.colors.RED,
             )
             return
