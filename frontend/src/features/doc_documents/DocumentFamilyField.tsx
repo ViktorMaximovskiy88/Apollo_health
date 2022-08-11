@@ -1,12 +1,11 @@
-import { Form, Select, Button } from 'antd';
+import { Form, Select } from 'antd';
 import { DocumentFamilyType, DocumentFamilyOption } from './types';
 import { createContext, useEffect, useState } from 'react';
-import { PlusOutlined } from '@ant-design/icons';
-import { AddDocumentFamily as AddDocumentFamilyModal } from './DocumentFamilyAddForm';
 import { useGetDocumentFamiliesQuery } from './documentFamilyApi';
 import { useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 import { FormInstance, Rule } from 'antd/lib/form';
+import { AddNewDocumentFamilyButton } from './DocumentFamilyAddNew';
 
 const { Option } = Select;
 
@@ -57,20 +56,6 @@ const useSyncedOptions = (): [
   }, [documentFamilies]);
 
   return [options, setOptions];
-};
-
-const useModal = (): [boolean, () => void, () => void] => {
-  const [isVisible, setIsVisible] = useState(false);
-
-  const showModal = () => {
-    setIsVisible(true);
-  };
-
-  const closeModal = () => {
-    setIsVisible(false);
-  };
-
-  return [isVisible, showModal, closeModal];
 };
 
 const useMustMatchThresholds = () => {
@@ -129,21 +114,11 @@ export const DocDocumentFormContext = createContext<FormInstance>({} as FormInst
 
 export function DocumentFamily() {
   useSyncedValue();
-  const form = Form.useFormInstance();
   const [options, setOptions] = useSyncedOptions();
-  const [isModalVisible, showModal, closeModal] = useModal();
   const mustMatchThresholds = useMustMatchThresholds();
 
   return (
     <div className="flex space-x-8">
-      <DocDocumentFormContext.Provider value={form}>
-        <AddDocumentFamilyModal
-          closeModal={closeModal}
-          visible={isModalVisible}
-          options={options}
-          setOptions={setOptions}
-        />
-      </DocDocumentFormContext.Provider>
       <Form.Item
         name="document_families"
         label="Document Family"
@@ -158,10 +133,7 @@ export function DocumentFamily() {
           ))}
         </Select>
       </Form.Item>
-      <Button className="flex-1 my-7" type="dashed" onClick={showModal}>
-        <PlusOutlined />
-        Add New Document Family
-      </Button>
+      <AddNewDocumentFamilyButton options={options} setOptions={setOptions} />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 import { useGetDocumentFamiliesQuery } from './documentFamilyApi';
-import { DocDocumentFormContext } from './DocumentFamilyField';
+import { DocDocumentFormContext } from './DocumentFamilyAddNew';
 
 const useMustMatchThreshold = ({
   thresholdType,
