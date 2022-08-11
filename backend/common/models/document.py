@@ -9,12 +9,15 @@ from backend.common.models.doc_document import IndicationTag, TherapyTag
 
 
 class RetrievedDocumentLocation(BaseModel):
+    url: Indexed(str)  # type: ignore
     base_url: str | None = None
-    context_metadata: dict = {}
+    link_text: str | None
+    closest_header: str | None
+
+    context_metadata: dict = {}  # just move the stuff up?
     first_collected_date: datetime | None = None
     last_collected_date: datetime | None = None
     site_id: PydanticObjectId | None = None
-    url: Indexed(str)  # type: ignore
     previous_retrieved_doc_id: PydanticObjectId | None = None
 
 
@@ -47,6 +50,7 @@ class RetrievedDocument(BaseDocument):
 
     automated_content_extraction: bool = False
     automated_content_extraction_class: str | None = None
+    locations: list[RetrievedDocumentLocation] = []
 
 
 class UpdateRetrievedDocument(BaseModel):

@@ -3,8 +3,22 @@ from datetime import datetime
 from beanie import Indexed, PydanticObjectId
 from pydantic import BaseModel
 
-from backend.common.core.enums import ApprovalStatus, LangCode, TaskStatus
+from backend.common.core.enums import ApprovalStatus, TaskStatus
 from backend.common.models.base_document import BaseDocument
+
+
+class DocDocumentLocation(BaseModel):
+    url: Indexed(str)  # type: ignore
+    base_url: str | None = None
+    link_text: str | None
+    closest_header: str | None
+
+    context_metadata: dict = {}  # just move the stuff up?
+
+    first_collected_date: datetime | None = None
+    last_collected_date: datetime | None = None
+    site_id: PydanticObjectId | None = None
+    previous_doc_doc_id: PydanticObjectId | None = None
 
 
 class TherapyTag(BaseModel):
@@ -39,7 +53,6 @@ class LockableDocument(BaseModel):
 
 
 class DocDocument(BaseDocument, LockableDocument):
-    site_id: Indexed(PydanticObjectId)  # type: ignore
     retrieved_document_id: Indexed(PydanticObjectId)  # type: ignore
     classification_status: Indexed(str) = ApprovalStatus.QUEUED  # type: ignore
     content_extraction_status: Indexed(str) = ApprovalStatus.QUEUED  # type: ignore
@@ -69,19 +82,9 @@ class DocDocument(BaseDocument, LockableDocument):
     final_effective_date: datetime | None = None
     end_date: datetime | None = None
 
-    first_collected_date: datetime | None = None
-    last_collected_date: datetime | None = None
-
     # Lineage
     lineage_id: PydanticObjectId | None = None
     version: str | None = None
-
-    # URLs
-    url: str | None
-    base_url: str | None
-    link_text: str | None
-
-    lang_code: LangCode | None
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
@@ -91,6 +94,7 @@ class DocDocument(BaseDocument, LockableDocument):
     content_extraction_task_id: PydanticObjectId | None = None
 
     tags: list[str] = []
+    locations: list[DocDocumentLocation] = []
 
 
 class DocDocumentLimitTags(DocDocument):
@@ -120,8 +124,6 @@ class UpdateDocDocument(BaseModel):
     classification_lock: TaskLock | None = None
     name: str | None = None
     document_type: str | None = None
-    checksum: str | None = None
-    text_checksum: str | None = None
 
     final_effective_date: datetime | None = None
     effective_date: datetime | None = None
@@ -132,20 +134,13 @@ class UpdateDocDocument(BaseModel):
     next_update_date: datetime | None = None
     first_created_date: datetime | None = None
     published_date: datetime | None = None
-
     end_date: datetime | None = None
-
-    first_collected_date: datetime | None = None
-    last_collected_date: datetime | None = None
 
     lineage_id: PydanticObjectId | None = None
     version: str | None = None
 
-    lang_code: LangCode | None = None
-
     therapy_tags: list[UpdateTherapyTag] | None = None
     indication_tags: list[UpdateIndicationTag] | None = None
-
     tags: list[str] | None = None
 
     automated_content_extraction: bool = False
