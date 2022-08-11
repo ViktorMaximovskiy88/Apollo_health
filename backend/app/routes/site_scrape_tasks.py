@@ -14,6 +14,7 @@ from backend.common.models.site_scrape_task import SiteScrapeTask, UpdateSiteScr
 from backend.common.models.user import User
 from backend.common.task_queues.unique_task_insert import try_queue_unique_task
 from backend.common.models.document import RetrievedDocument
+from backend.common.models.doc_document import DocDocument
 
 router = APIRouter(
     prefix="/site-scrape-tasks",
@@ -112,7 +113,14 @@ async def start_scrape_task(
                     "last_collected_date":datetime.now(tz=timezone.utc)
                 }}
             )
-
+            await DocDocument.get_motor_collection().update_many(
+                {
+                    "retrieved_document_id": { '$in': site_scrape_task.retrieved_document_ids }
+                },
+                {"$set": {
+                    "last_collected_date":datetime.now(tz=timezone.utc)
+                }}
+            )
         else:
             await create_and_log(logger, current_user, site_scrape_task)
 

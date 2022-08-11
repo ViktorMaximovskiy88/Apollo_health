@@ -57,6 +57,7 @@ export function AddDocumentModal({
             // used to determine how we handle this request if new_version or new document
             if (oldVersion) {
                 newDocument._id = oldVersion._id
+                newDocument.last_collected_date = oldVersion.last_collected_date
             }
             fileData.metadata.link_text = newDocument.link_text;
             delete newDocument.link_text;
