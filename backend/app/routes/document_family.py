@@ -45,10 +45,10 @@ async def read_document_families(
 
 
 @router.get(
-    "/search-name/{name}",
+    "/search",
 )
 async def read_document_family_by_name(
-    name: str,
+    name: str = "",
     current_user: User = Security(get_current_user),
 ):
     found = await DocumentFamily.find_one({"name": name})

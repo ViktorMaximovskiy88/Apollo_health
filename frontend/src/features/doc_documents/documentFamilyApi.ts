@@ -28,7 +28,7 @@ export const documentFamilyApi = createApi({
       providesTags: (_r, _e, id) => [{ type: 'DocumentFamily' as const, id }],
     }),
     getDocumentFamilyByName: builder.query<DocumentFamilyType, string>({
-      query: (name) => `/document-family/search-name/${name}`,
+      query: (name) => `/document-family/search?name=${name}`,
       providesTags: (_r, _e, name) => [{ type: 'DocumentFamily' as const, name }],
     }),
     addDocumentFamily: builder.mutation<DocumentFamilyType, Partial<DocumentFamilyType>>({
