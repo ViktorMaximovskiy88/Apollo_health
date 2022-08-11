@@ -12,7 +12,7 @@ from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask, UpdateSiteScrapeTask
 from backend.common.models.user import User
-from backend.common.task_queues.unique_task_insert import try_queue_unique_task
+from backend.common.services.site_scrape_task import try_queue_unique_task
 
 router = APIRouter(
     prefix="/site-scrape-tasks",

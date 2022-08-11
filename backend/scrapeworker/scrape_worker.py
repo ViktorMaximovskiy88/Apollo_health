@@ -157,6 +157,9 @@ class ScrapeWorker:
         await create_and_log(self.logger, await self.get_user(), doc_document)
 
     def set_doc_name(self, parsed_content: dict, download: DownloadContext):
+        log.info(
+            f"set_doc_name title='{parsed_content['title']}' link='{download.metadata.link_text}' file='{download.file_name}' url='{download.request.url}'"  # noqa
+        )
         return (
             parsed_content["title"]
             or download.metadata.link_text
