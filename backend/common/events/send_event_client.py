@@ -1,6 +1,7 @@
 import logging
 
 import boto3
+import typer
 
 from backend.common.core.config import config, is_local
 from backend.common.events.settings import settings
@@ -22,6 +23,13 @@ class SendEventClient:
             self.client = boto3.client("events")
 
     def send_event(self, detail_type, message_body):
+        if settings.disable_sending_events:
+            typer.secho(
+                "Due to dev.env DISABLE_SENDING_EVENTS, event will not be sent.",
+                fg=typer.colors.RED,
+            )
+            return
+
         logging.info(
             f"Will send {detail_type} event with {self.source} source to {self.event_bus_name} event bus"  # noqa
         )
