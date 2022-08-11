@@ -1,6 +1,6 @@
 import userEvent from '@testing-library/user-event';
 import { setupServer } from 'msw/node';
-import { useParams, Params, MemoryRouter } from 'react-router-dom';
+import { useParams, Params } from 'react-router-dom';
 
 import { DocumentEditPage } from './DocumentEditPage';
 import { handlers } from './mocks/documentEditPageHandlers';
@@ -11,6 +11,7 @@ jest.mock('react-router-dom');
 jest.mock('../../common/hooks');
 
 const server = setupServer(...handlers);
+
 
 beforeAll(() => {
   // fixes `window.matchMedia` is not a function error
@@ -55,9 +56,7 @@ describe('DocumentForm', () => {
 
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     render(
-      <MemoryRouter>
         <DocumentEditPage />
-      </MemoryRouter>
     );
     const effectiveDate = await screen.findByRole('textbox', {
       name: /Effective Date/i,

@@ -1,5 +1,4 @@
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
 import { setupServer } from 'msw/node';
 import { render, screen, act } from '../../test/test-utils';
 import { CollectionsPage } from './CollectionsPage';
@@ -7,6 +6,7 @@ import { handlers } from './mocks/collectionsPageHandlers';
 import { useParams, Params } from 'react-router-dom';
 
 jest.mock('react-router-dom');
+
 
 const server = setupServer(...handlers);
 
@@ -44,15 +44,14 @@ describe(`addDocumentModal`, () => {
     // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
     const dataGridDoneRendering = Promise.resolve();
     render(
-      <MemoryRouter>
         <CollectionsPage />
-      </MemoryRouter>
     );
 
     await act(async () => {
       await dataGridDoneRendering;
     });
 
+    screen.debug()
     expect(await screen.getByText('Run Collection')).toBeInTheDocument();
     
 

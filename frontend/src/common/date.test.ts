@@ -10,7 +10,7 @@ describe('can format UTC ISO date strings', () => {
   it('full format in local timezone', () => {
     const isoDateString = '2022-06-23T16:05:39.705000';
     const fullFormat = prettyFromISO(isoDateString);
-    expect(fullFormat).toBe('June 23, 2022 at 4:05:39 PM UTC');
+    expect(fullFormat).toBe('June 23, 2022, 4:05:39 PM UTC');
   });
 
   it('date format in local timezone', () => {
