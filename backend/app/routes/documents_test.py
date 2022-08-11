@@ -7,6 +7,9 @@ import aiofiles
 import os
 from pydantic import HttpUrl
 from beanie import Document
+from fastapi import UploadFile
+import requests
+import tempfile
 
 from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
 from backend.common.storage.hash import hash_bytes
@@ -18,7 +21,8 @@ from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.app.routes.documents import (
     get_documents,
-    add_document
+    add_document,
+    upload_document
 )
 
 from backend.scrapeworker.file_parsers import parse_by_type
@@ -214,43 +218,20 @@ class TestGetDocuments:
 class TestUploadFile:
     @pytest.mark.asyncio
     async def test_upload_file(self):
-        current_path = os.path.dirname(os.path.abspath('__file__'))
-        filename = "example-google-docs.docx"
-        file_path = os.path.join(current_path,'backend', 'common', 'storage','__fixtures__', filename)
-        file_extension = filename.split('.')[-1]
+        URL = "https://parprdusemmitst01.blob.core.windows.net/autohunteddocs/7c8418d4-054b-4fa4-9b97-d3f75c353dd1/7c8418d4-054b-4fa4-9b97-d3f75c353dd1.pdf"  # noqa
+        response = requests.get(URL)
+        with tempfile.NamedTemporaryFile() as temp:
+            async with aiofiles.open(temp.name, "wb") as fd:
+                await fd.write(response.content)
 
-        async with aiofiles.open(file_path, mode="r", encoding="ISO-8859-1") as f:
-            content = await f.read()
-            content = content.encode('utf-8')
+                upload_file = UploadFile(filename="test.pdf", file=temp, content_type="application/pdf")
+                uploaded_document = await upload_document(upload_file, User, MockLogger)
 
-            checksum = hash_bytes(content);
-            assert checksum != None
-
-            dest_path = f"{checksum}.{file_extension}"
-
-            document = await RetrievedDocument.find_one(
-                RetrievedDocument.checksum == checksum
-                or checksum in RetrievedDocument.file_checksum_aliases
-            )
-            assert document == None
-
-            download = DownloadContext(request=Request(url=file_path), file_extension=file_extension)
-            parsed_content = await parse_by_type(file_path,download,[])
-
-            assert parsed_content['text'] != None
-
-            text_handler = TextHandler()
-            text_checksum = await text_handler.save_text(parsed_content["text"])
-
-            assert text_checksum != None
-            text_checksum_document = await RetrievedDocument.find_one(
-                RetrievedDocument.text_checksum == text_checksum
-            )
-            assert text_checksum_document == None
-
-            assert parsed_content['metadata'] != None
-            assert parsed_content['confidence'] != None
-
+                assert uploaded_document['success'] == True
+                assert uploaded_document['data']['checksum'] != None
+                assert uploaded_document['data']['text_checksum'] != None
+                assert uploaded_document['data']['metadata'] != None
+                assert uploaded_document['data']['doc_type_confidence'] != None
 
 
 class TestCreateDocuments:
