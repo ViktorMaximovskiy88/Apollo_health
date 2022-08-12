@@ -1,6 +1,6 @@
 import userEvent from '@testing-library/user-event';
 import { setupServer } from 'msw/node';
-import { useParams, Params } from 'react-router-dom';
+import { useParams, Params, useLocation, Location } from 'react-router-dom';
 
 import { DocumentEditPage } from './DocumentEditPage';
 import { handlers } from './mocks/documentEditPageHandlers';
@@ -57,6 +57,15 @@ describe('DocumentForm', () => {
 
     const mockedUseAccessToken = useAccessToken as jest.Mock<string>;
     mockedUseAccessToken.mockReturnValue('123');
+
+    const mockedUseLocation = useLocation as jest.Mock<Location>;
+    mockedUseLocation.mockImplementation(() => ({
+      pathname: 'test',
+      key: 'asd',
+      state: '',
+      search: '',
+      hash: '',
+    }));
 
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     render(

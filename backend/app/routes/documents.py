@@ -91,7 +91,12 @@ async def download_document(
     target: RetrievedDocument = Depends(get_target),
 ):
     client = DocumentStorageClient()
-    stream = client.read_object_stream(f"{target.checksum}.pdf")
+    s3_key = (
+        f"{target.checksum}.{target.file_extension}.pdf"
+        if target.file_extension == "html"
+        else f"{target.checksum}.{target.file_extension}"
+    )
+    stream = client.read_object_stream(s3_key)
     return StreamingResponse(stream, media_type="application/pdf")
 
 
@@ -250,7 +255,7 @@ async def add_document(
         url=document.url,
         therapy_tags=document.therapy_tags,
         indication_tags=document.indication_tags,
-        file_checksum_aliases=set(document.checksum),
+        file_checksum_aliases=[document.checksum],
         checksum=document.checksum,
     )
     await create_and_log(logger, current_user, new_document)

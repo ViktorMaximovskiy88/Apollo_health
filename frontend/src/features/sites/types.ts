@@ -6,6 +6,13 @@ export interface BaseUrl {
   status: string;
 }
 
+export interface AttrSelector {
+  attr_name: string;
+  attr_value?: string;
+  has_text?: string;
+  resource_address: boolean;
+}
+
 export interface Site extends BaseDocument {
   name: string;
   base_urls: BaseUrl[];
@@ -19,6 +26,7 @@ export interface Site extends BaseDocument {
     follow_links: boolean;
     follow_link_keywords: string[];
     follow_link_url_keywords: string[];
+    attr_selectors: AttrSelector[];
   };
   tags: string[];
   disabled: boolean;

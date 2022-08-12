@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 import urllib.parse
 import zipfile
 
@@ -7,7 +8,8 @@ from beanie import PydanticObjectId
 from beanie.operators import ElemMatch
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, UploadFile, status
 from openpyxl import load_workbook
-from pydantic import BaseModel, HttpUrl
+from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
+from pydantic import BaseModel, ValidationError
 
 from backend.app.routes.table_query import (
     TableFilterInfo,
@@ -123,7 +125,7 @@ def parse_line(line):
     name, base_url_str, tag_str, doc_ext_str, url_keyw_str, collection_method = line  # type: ignore
 
     tags = tag_str.split(",") if tag_str else []
-    base_urls = base_url_str.split(",") if base_url_str else []
+    base_urls = base_url_str.split("|") if base_url_str else []
     doc_exts = doc_ext_str.split(",") if doc_ext_str else ["pdf"]
     url_keyws = url_keyw_str.split(",") if url_keyw_str else []
     collection_method = collection_method if collection_method else "AUTOMATED"
@@ -136,10 +138,18 @@ def parse_line(line):
         follow_link_keywords=[],
         follow_link_url_keywords=[],
     )
-    base_urls = list(map(lambda url: BaseUrl(url=HttpUrl(url, scheme="https")), base_urls))
+
+    clean_urls = []
+    for base_url in base_urls:
+        try:
+            parsed_url = BaseUrl(url=base_url)
+            clean_urls.append(parsed_url)
+        except ValidationError:
+            logging.error(f"site {name} has invalid url: {base_url}")
+
     return Site(
         name=name,
-        base_urls=base_urls,
+        base_urls=clean_urls,
         scrape_method=scrape_method,
         collection_method=collection_method,
         scrape_method_configuration=scrape_method_configuration,
@@ -162,10 +172,23 @@ def get_sites_from_json(file: UploadFile):
 def get_lines_from_xlsx(file: UploadFile):
     wb = load_workbook(io.BytesIO(file.file.read()))
     sheet = wb[wb.sheetnames[0]]
-    for i, line in enumerate(sheet.values):  # type: ignore
+
+    for i, line in enumerate(sheet.values):
+        # Skip header.
         if i == 0:
-            continue  # skip header
-        yield parse_line(line)
+            continue
+        # Skip blank site names. Happens with last line.
+        if not line[0]:
+            continue
+        # Remove illegal characters.
+        clean_line = []
+        for line_value in line:
+            if isinstance(line_value, str):
+                clean_line.append(ILLEGAL_CHARACTERS_RE.sub("", line_value))
+            else:
+                clean_line.append(line_value)
+        # Yield parsed site.
+        yield parse_line(clean_line)
 
 
 def get_lines_from_text_file(file: UploadFile):
@@ -193,8 +216,9 @@ async def upload_sites(
     for new_site in get_sites_from_upload(file):
         if await Site.find_one(Site.base_urls == new_site.base_urls):
             continue
-        new_sites.append(new_site)
-        await create_and_log(logger, current_user, new_site)
+        if new_site.base_urls:
+            new_sites.append(new_site)
+            await create_and_log(logger, current_user, new_site)
 
     return new_sites
 

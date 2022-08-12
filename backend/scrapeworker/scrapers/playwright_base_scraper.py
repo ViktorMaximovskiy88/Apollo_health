@@ -77,14 +77,16 @@ class PlaywrightBaseScraper(ABC):
         logging.info(f"{self.__class__.__name__} is_applicable -> {result}")
         return result
 
-    async def extract_metadata(self, element: ElementHandle) -> Metadata:
+    async def extract_metadata(
+        self, element: ElementHandle, resource_attr: str = "href"
+    ) -> Metadata:
 
         closest_heading: str | None
 
-        link_text, element_id, href, closest_heading = await asyncio.gather(
+        link_text, element_id, resource_value, closest_heading = await asyncio.gather(
             element.text_content(),
             element.get_attribute("id"),
-            element.get_attribute("href"),
+            element.get_attribute(resource_attr),
             element.evaluate(closest_heading_expression),
         )
 
@@ -97,7 +99,7 @@ class PlaywrightBaseScraper(ABC):
         return Metadata(
             link_text=link_text,
             element_id=element_id,
-            href=href,
+            resource_value=resource_value,
             closest_heading=closest_heading,
             playbook_context=self.playbook_context,
         )

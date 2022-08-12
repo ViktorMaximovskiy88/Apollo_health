@@ -11,7 +11,6 @@ import { SiteSubmitButton as Submit } from './SiteSubmitButton';
 import { ToggleReadOnly } from './ToggleReadOnly';
 import { SiteStatusSelect as Status } from './SiteStatusSelect';
 
-
 export function SiteForm(props: {
   onFinish: (update: Partial<Site>) => void;
   initialValues?: Site;
@@ -54,6 +53,7 @@ export function SiteForm(props: {
         follow_links: false,
         follow_link_keywords: [],
         follow_link_url_keywords: [],
+        attr_selectors: [],
       },
     };
   }

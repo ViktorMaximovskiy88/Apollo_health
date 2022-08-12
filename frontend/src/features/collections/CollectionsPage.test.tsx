@@ -1,9 +1,9 @@
 import userEvent from '@testing-library/user-event';
-import { render, screen, act, setMockLocation } from '../../test/test-utils';
+import { render, screen, act } from '../../test/test-utils';
 import { setupServer } from 'msw/node';
 import { CollectionsPage } from './CollectionsPage';
 import { handlers } from './mocks/collectionsPageHandlers';
-import { useParams, Params, useLocation, Location } from "react-router-dom"
+import { useParams, Params, useLocation, Location } from 'react-router-dom';
 
 jest.mock('react-router-dom');
 
@@ -38,21 +38,10 @@ describe(`CollectionsPage`, () => {
       siteId: 'site-id1',
     }));
 
-    const mockedUseLocation = useLocation as jest.Mock<Location>;
-    mockedUseLocation.mockImplementation(() => ({
-      pathname:"site-id1",
-      key:"site-id1",
-      state:"",
-      search:"",
-      hash:""
-    }))   
-
-   // fixes `act` warning
+    // fixes `act` warning
     // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
     const dataGridDoneRendering = Promise.resolve();
-    render(
-        <CollectionsPage />
-    );
+    render(<CollectionsPage />);
     await act(async () => {
       await dataGridDoneRendering;
     });
@@ -69,70 +58,45 @@ describe(`CollectionsPage`, () => {
     expect(screen.getByRole('button', { name: /ok/i })).toBeInTheDocument();
   });
 
-  // it(`should create scrape task and update status over time`, async () => {
-  //   const mockedUseParams = useParams as jest.Mock<Params>;
-  //   mockedUseParams.mockImplementation(() => ({
-  //     siteId: 'site-id1',
-  //   }));
-  //   setMockLocation();
+  it(`should create scrape task and update status over time`, async () => {
+    const mockedUseParams = useParams as jest.Mock<Params>;
+    mockedUseParams.mockImplementation(() => ({
+      siteId: 'site-id1',
+    }));
 
-  //   // fixes `act` warning
-  //   // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
-  //   const dataGridDoneRendering = Promise.resolve();
-  //   render(
-  //       <CollectionsPage />
-  //   );
-  //   await act(async () => {
-  //     await dataGridDoneRendering;
-  //   });
+    const mockedUseLocation = useLocation as jest.Mock<Location>;
+    mockedUseLocation.mockImplementation(() => ({
+      pathname: 'test',
+      key: 'asd',
+      state: '',
+      search: '',
+      hash: '',
+    }));
 
-  //   const runCollectionButton = await screen.findByRole('button', {
-  //     name: /run collection/i,
-  //   });
-  //   expect(runCollectionButton).toBeInTheDocument();
+    // fixes `act` warning
+    // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
+    const dataGridDoneRendering = Promise.resolve();
+    render(<CollectionsPage />);
+    await act(async () => {
+      await dataGridDoneRendering;
+    });
 
-  //   expect(screen.getByText(/Jun 20, 2022, 2:17 PM/i)).toBeInTheDocument();
-  //   expect(screen.getByText(/3 seconds/i)).toBeInTheDocument();
-  //   expect(screen.getByText(/failed/i)).toBeInTheDocument();
+    const runCollectionButton = await screen.findByRole('button', {
+      name: /run collection/i,
+    });
+    expect(runCollectionButton).toBeInTheDocument();
 
-  //   userEvent.click(runCollectionButton);
+    expect(screen.getByText(/Jun 20, 2022, 2:17 PM/i)).toBeInTheDocument();
+    expect(screen.getByText(/3 seconds/i)).toBeInTheDocument();
+    expect(screen.getByText(/failed/i)).toBeInTheDocument();
 
-  //   jest.advanceTimersByTime(2000);
-  //   expect(await screen.findByText(/queued/i)).toBeInTheDocument();
-  //   jest.advanceTimersByTime(3000);
-  //   expect(await screen.findByText(/in progress/i)).toBeInTheDocument();
-  //   jest.advanceTimersByTime(10000);
-  //   expect(await screen.findByText(/finished/i)).toBeInTheDocument();
-  // });
+    userEvent.click(runCollectionButton);
 
-  // it(`should open create document modal for manual collections when create document button clicked`, async () => {
-  //   const mockedUseParams = useParams as jest.Mock<Params>;
-  //   mockedUseParams.mockImplementation(() => ({
-  //     siteId: 'site-id1',
-  //   }));
-  //   setMockLocation()
-  //   // fixes `act` warning
-  //   // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
-  //   const dataGridDoneRendering = Promise.resolve();
-  //   render(
-  //       <CollectionsPage />
-  //   );
-  //   await act(async () => {
-  //     await dataGridDoneRendering;
-  //   });
-
-  //   expect(screen.getByText(/Manual/i)).toBeInTheDocument();
-
-  //   const createDocumentButton = await screen.findByRole('button', {
-  //     name: /Create Document/i,
-  //   });
-  //   expect(createDocumentButton).toBeInTheDocument();
-
-  //   userEvent.click(createDocumentButton);
-  //   expect(await screen.getByText(/Create Document/i)).toBeInTheDocument();
-  // });
+    jest.advanceTimersByTime(2000);
+    expect(await screen.findByText(/queued/i)).toBeInTheDocument();
+    jest.advanceTimersByTime(3000);
+    expect(await screen.findByText(/in progress/i)).toBeInTheDocument();
+    jest.advanceTimersByTime(10000);
+    expect(await screen.findByText(/finished/i)).toBeInTheDocument();
+  });
 });
-
-
-
-

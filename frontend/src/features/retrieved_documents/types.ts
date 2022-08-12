@@ -16,6 +16,7 @@ export interface RetrievedDocument extends BaseDocument {
   document_type?: string;
   doc_type_confidence?: number;
   first_collected_date: string;
+  last_collected_date: string;
   disabled: boolean;
   url: string;
   checksum: string;
@@ -36,3 +37,22 @@ export interface RetrievedDocument extends BaseDocument {
   automated_content_extraction: boolean;
   automated_content_extraction_class: string;
 }
+
+// id is added so that it can be used for both table filters and dropdown selections
+export const DocumentTypes = [
+  { id: 'Authorization Policy', value: 'Authorization Policy', label: 'Authorization Policy' },
+  { id: 'Provider Guide', value: 'Provider Guide', label: 'Provider Guide' },
+  { id: 'Treatment Request Form', value: 'Treatment Request Form', label: 'Treatment Request Form' },
+  { id: 'Payer Unlisted Policy', value: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
+  { id: 'Covered Treatment List', value: 'Covered Treatment List', label: 'Covered Treatment List' },
+  { id: 'Regulatory Document', value: 'Regulatory Document', label: 'Regulatory Document' },
+  { id: 'Formulary', value: 'Formulary', label: 'Formulary' },
+  { id: 'Internal Reference', value: 'Internal Reference', label: 'Internal Reference' },
+  { id: 'Not Applicable', value: 'Not Applicable', label: 'Not Applicable' },
+];
+
+export const LanguageCodes = [
+  { value: 'en', label: 'English' },
+  { value: 'es', label: 'Spanish' },
+  { value: 'other', label: 'Other' },
+];

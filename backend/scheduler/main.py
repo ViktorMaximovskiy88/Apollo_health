@@ -11,6 +11,7 @@ from beanie import PydanticObjectId
 
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 
+from backend.app.core.settings import settings
 from backend.app.utils.logger import Logger
 from backend.common.core.config import config, is_local
 from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
@@ -50,7 +51,7 @@ def find_sites_eligible_for_scraping(crons, now=datetime.now(tz=timezone.utc)):
         {
             "cron": {"$in": crons},  # Should be run now
             "disabled": False,  # Is active
-            "status": {"$in": [SiteStatus.ONLINE, SiteStatus.QUALITY_HOLD]},  # Is online
+            "status": {"$in": [SiteStatus.NEW, SiteStatus.QUALITY_HOLD, SiteStatus.ONLINE]},
             "collection_method": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
             "base_urls.status": "ACTIVE",  # has at least one active url
             "$or": [
@@ -84,6 +85,10 @@ async def log_task_creation(logger, user, site_scrape_task: SiteScrapeTask):
 
 
 async def start_scheduler():
+    if settings.disable_scrape_scheduling:
+        typer.secho("Scrapes will not be automatically scheduled", fg=typer.colors.RED)
+        return
+
     await init_db()
     logger = Logger()
     user = await get_schedule_user()
@@ -149,8 +154,8 @@ async def start_scaler():
     while True:
         queue_size = await SiteScrapeTask.find(
             {
-            "status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.QUEUED]},
-            "collection_method": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
+                "status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.QUEUED]},
+                "collection_method": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
             },
         ).count()
         active_workers = determine_current_instance_count()

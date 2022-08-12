@@ -1,4 +1,6 @@
-from backend.scrapeworker.common.selectors import filter_by_href, filter_by_hidden_value
+from backend.common.models.site import AttrSelector
+from backend.scrapeworker.common.selectors import filter_by_hidden_value, filter_by_href, to_xpath
+
 
 # filter_by_href
 def test_selector_href_javascript():
@@ -37,8 +39,6 @@ def test_selector_href_keywords():
 
 
 # filter_by_hidden_value
-
-
 def test_hidden_value_extension_keyword():
     selector = filter_by_hidden_value(extensions=["pdf"], url_keywords=["dog"])
     assert selector == [
@@ -61,3 +61,28 @@ def test_hidden_value_keywords():
         'input[type="hidden"][value*="dog"]',
         'input[type="hidden"][value*="cat"]',
     ]
+
+
+class TestToXpath:
+    def test_base_selector(self):
+        attr_selector = AttrSelector(attr_name="onclick")
+        selector = to_xpath(attr_selector)
+        assert selector == '//a[@*[contains(name(), "onclick")]]'
+
+    def test_value_selector(self):
+        attr_selector = AttrSelector(attr_name="onclick", attr_value="loadPdf")
+        selector = to_xpath(attr_selector)
+        assert selector == '//a[contains(@*[contains(name(), "onclick")], "loadPdf")]'
+
+    def test_text_selector(self):
+        attr_selector = AttrSelector(attr_name="onclick", has_text="Download")
+        selector = to_xpath(attr_selector)
+        assert selector == '//a[@*[contains(name(), "onclick")] and contains(text(), "Download")]'
+
+    def test_all_selector(self):
+        attr_selector = AttrSelector(attr_name="data-content", attr_value="/policy", has_text="Get")
+        selector = to_xpath(attr_selector)
+        assert (
+            selector
+            == '//a[contains(@*[contains(name(), "data-content")], "/policy") and contains(text(), "Get")]'  # noqa
+        )

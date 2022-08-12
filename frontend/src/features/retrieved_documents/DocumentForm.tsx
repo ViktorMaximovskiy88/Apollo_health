@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { prettyDate } from '../../common';
 import { useUpdateDocumentMutation } from './documentsApi';
-import { RetrievedDocument } from './types';
+import { RetrievedDocument, DocumentTypes, LanguageCodes } from './types';
 const { TextArea } = Input;
 
 export function DocumentForm(props: { doc: RetrievedDocument }) {
@@ -58,6 +58,8 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     lang_code: doc.lang_code,
     link_text: doc.context_metadata?.link_text,
     effective_date: convertDate(doc.effective_date),
+    first_collected_date: convertDate(doc.first_collected_date),
+    last_collected_date: convertDate(doc.last_collected_date),
     end_date: convertDate(doc.end_date),
     last_updated_date: convertDate(doc.last_updated_date),
     last_reviewed_date: convertDate(doc.last_reviewed_date),
@@ -65,23 +67,6 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     next_update_date: convertDate(doc.next_update_date),
     published_date: convertDate(doc.published_date),
   };
-
-  const documentTypes = [
-    { value: 'Authorization Policy', label: 'Authorization Policy' },
-    { value: 'Provider Guide', label: 'Provider Guide' },
-    { value: 'Treatment Request Form', label: 'Treatment Request Form' },
-    { value: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
-    { value: 'Covered Treatment List', label: 'Covered Treatment List' },
-    { value: 'Regulatory Document', label: 'Regulatory Document' },
-    { value: 'Formulary', label: 'Formulary' },
-    { value: 'Internal Reference', label: 'Internal Reference' },
-  ];
-
-  const languageCodes = [
-    { value: 'en', label: 'English' },
-    { value: 'es', label: 'Spanish' },
-    { value: 'other', label: 'Other' },
-  ];
 
   const confidencePercent = docTypeConfidence ? `${Math.floor(docTypeConfidence * 100)}%` : '-';
 
@@ -117,6 +102,14 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
       name: 'published_date',
       label: 'Published Date',
     },
+    {
+      name: 'first_collected_date',
+      label: 'First Collected Date',
+    },
+    {
+      name: 'last_collected_date',
+      label: 'Last Collected Date',
+    },
   ];
 
   return (
@@ -134,7 +127,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
 
       <div className="flex space-x-2">
         <Form.Item className="grow" name="document_type" label="Document Type">
-          <Select options={documentTypes} />
+          <Select options={DocumentTypes} />
         </Form.Item>
         <Form.Item label="Confidence">
           <div className="flex justify-center">{confidencePercent}</div>
@@ -152,7 +145,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
       </div>
 
       <Form.Item name="lang_code" label="Language">
-        <Select options={languageCodes} />
+        <Select options={LanguageCodes} />
       </Form.Item>
 
       <Form.Item

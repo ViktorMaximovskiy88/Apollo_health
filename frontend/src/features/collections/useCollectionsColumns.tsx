@@ -94,7 +94,7 @@ export const createColumns = ({
       minWidth: 300,
       render: ({ data: task }: { data: SiteScrapeTask }) => {
         const linksFound = `(${task.links_found} Links)`;
-        const showLinksFounds = task.links_found > 0 && task.documents_found !== task.links_found;
+        const showLinksFounds = task.links_found > 0;
         const docsCount = `${task.documents_found} Documents ${showLinksFounds ? linksFound : ''}`;
 
         return (
