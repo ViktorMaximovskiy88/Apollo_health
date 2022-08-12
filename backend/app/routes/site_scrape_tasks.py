@@ -233,7 +233,7 @@ async def cancel_all_site_scrape_task(
                     .to_list()
                 )
                 for r_doc in retrieved_documents:
-                    if datetime.date(r_doc.last_collected_date) == datetime.today().date():
+                    if datetime.date(r_doc.last_collected_date) < datetime.today().date():
                         await RetrievedDocument.get_motor_collection().find_one_and_update(
                             {"_id": r_doc.id},
                             {"$set": {"last_collected_date": datetime.now(tz=timezone.utc) }}
