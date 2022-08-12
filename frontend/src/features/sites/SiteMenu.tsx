@@ -8,10 +8,11 @@ export function SiteMenu() {
 
   const subpages = [
     { key: 'scrapes', label: <Link to={`/sites/${siteId}/scrapes`}>Collections</Link> },
-    { key: 'documents', label: <Link to={`/sites/${siteId}/documents`}>Documents</Link> },
+    { key: 'documents', label: <Link to={`/sites/${siteId}/documents`}>Retrieved Documents</Link> },
+    { key: 'doc-documents', label: <Link to={`/sites/${siteId}/doc-documents`}>Documents</Link> },
     {
       key: 'extraction',
-      label: <Link to={`/sites/${siteId}/extraction`}>Content Extraction</Link>,
+      label: <Link to={`/sites/${siteId}/extraction`}>Content Extraction</Link>
     },
     {
       key: 'edit',

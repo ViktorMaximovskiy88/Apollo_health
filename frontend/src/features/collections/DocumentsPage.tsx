@@ -17,7 +17,7 @@ export function DocumentsPage() {
   return (
     <MainLayout
       sidebar={<SiteMenu />}
-      pageTitle={'Documents'}
+      pageTitle={'Retrieved Documents'}
       pageToolbar={
         site && site.collection_method === CollectionMethod.Manual ? (
           <Button onClick={() => setNewDocumentModalVisible(true)} className="ml-auto">

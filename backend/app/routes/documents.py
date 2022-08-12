@@ -2,6 +2,8 @@ import tempfile
 from datetime import datetime, timezone
 
 from beanie import PydanticObjectId
+from beanie.odm.operators.update.general import Set
+
 from fastapi import APIRouter, Depends, HTTPException, Security, UploadFile, status
 from fastapi.responses import StreamingResponse
 
@@ -221,7 +223,7 @@ async def add_document(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    now = datetime.now()
+    now = datetime.now(tz=timezone.utc)
     user_id = None
 
     # test is failing because we are only giving fake mock data for User
@@ -232,6 +234,7 @@ async def add_document(
         base_url=document.base_url,
         uploader_id=user_id,
         name=document.name,
+        scrape_task_id=document.scrape_task_id,
         text_checksum=document.text_checksum,
         doc_type_confidence=document.doc_type_confidence,
         document_type=document.document_type,
@@ -251,7 +254,6 @@ async def add_document(
         last_collected_date=now,
         metadata=document.metadata,
         site_id=document.site_id,
-        scrape_task_id=document.scrape_task_id,
         url=document.url,
         therapy_tags=document.therapy_tags,
         indication_tags=document.indication_tags,
@@ -262,7 +264,6 @@ async def add_document(
 
     doc_document = DocDocument(
         site_id=document.site_id,
-        scrape_task_id=document.scrape_task_id,
         retrieved_document_id=new_document.id,  # type: ignore
         name=document.name,
         checksum=document.checksum,
@@ -292,10 +293,29 @@ async def add_document(
 
     doc_document.final_effective_date = calc_final_effective_date(doc_document)
     await create_and_log(logger, current_user, doc_document)
-
+    
     scrape_task = await SiteScrapeTask.get(document.scrape_task_id)
-    await scrape_task.update(
-        {"$inc": {"documents_found": 1}, "$push": {"retrieved_document_ids": new_document.id}}
-    )
+
+    if document.id:
+        # get retrieved_document from Doc Document
+        doc_document = await DocDocument.find_one({"_id":document.id})
+        if doc_document:
+            index = scrape_task.retrieved_document_ids.index(doc_document.retrieved_document_id)
+            if index >= 0:
+                new_retrieved_documents = scrape_task.retrieved_document_ids
+                new_retrieved_documents[index] = new_document.id
+                await scrape_task.update(Set({SiteScrapeTask.retrieved_document_ids: new_retrieved_documents}))
+
+    else:
+        await scrape_task.update({
+          '$inc': { 'documents_found': 1 },
+          '$push': { 'retrieved_document_ids': new_document.id }
+        })
 
     return {"success": True}
+
+
+
+
+
+
