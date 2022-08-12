@@ -58,7 +58,7 @@ class RetrievedDocumentLocation(BaseModel):
     previous_retrieved_doc_id: PydanticObjectId | None = None
 
 
-class RetrievedDocument(BaseDocument):
+class BaseRetrievedDocument(BaseModel):
     uploader_id: PydanticObjectId | None = None
     # scrape_task_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     checksum: Indexed(str)  # type: ignore
@@ -88,22 +88,30 @@ class RetrievedDocument(BaseDocument):
     automated_content_extraction: bool = False
     automated_content_extraction_class: str | None = None
 
+
+class RetrievedDocument(BaseDocument, BaseRetrievedDocument):
     locations: list[RetrievedDocumentLocation] = []
 
-    async def update_for_site(
-        self,
-        doc_id: PydanticObjectId,
-        site_id: PydanticObjectId,
-        update_model: UpdateRetrievedDocument,
-    ):
-        # location =
-        doc: RetrievedDocument = await self.get_motor_collection().update(
-            {"_id": doc_id, "locations.site_id": site_id}, {"$set": update_model.dict()}
-        )
-        return doc
+    def for_site(self, site_id: PydanticObjectId):
+        location = next((x for x in self.locations if x.site_id == site_id), None)
+        return SiteRetrievedDocument(**self.dict(), **location.dict())
+
+    # async def update_for_site(
+    #     self,
+    #     doc_id: PydanticObjectId,
+    #     site_id: PydanticObjectId,
+    #     update_model: UpdateRetrievedDocument,
+    # ):
+    #     # location =
+    #     doc: RetrievedDocument = await self.get_motor_collection().update(
+    #         {"_id": doc_id, "locations.site_id": site_id}, {"$set": update_model.dict()}
+    #     )
+    #     return doc
 
 
-class SiteRetrievedDocument(RetrievedDocument, RetrievedDocumentLocation):
+class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
+    id: PydanticObjectId
+
     async def get_for_site(self, doc_id: PydanticObjectId, site_id: PydanticObjectId):
         doc: SiteRetrievedDocument = await self.get(doc_id)
         return doc.for_site(site_id)

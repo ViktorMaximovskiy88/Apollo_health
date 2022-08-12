@@ -147,3 +147,8 @@ class CollectionTypeSite(SingleUrlSite):
 
     class Collection:
         name = "Site"
+
+
+class ActiveUrlResponse(BaseModel):
+    in_use: bool
+    site: Site | None = None
