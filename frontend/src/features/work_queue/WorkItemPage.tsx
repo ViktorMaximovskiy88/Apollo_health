@@ -168,19 +168,21 @@ export function WorkQueueWorkItem(props: { wq: WorkQueue; itemId: string; readon
   );
 
   return (
-    <div className="h-full p-4">
+    <>
       {workItemPage(props.wq, props.itemId, form, onSubmit)}
-      <WorkItemSubmitBar
-        itemId={props.itemId}
-        readonly={props.readonly}
-        wq={props.wq}
-        setAction={setAction}
-        takeNext={takeNext}
-        setTakeNext={setTakeNext}
-        setComment={setComment}
-        setReassignment={setReassignment}
-      />
-    </div>
+      {props.wq.frontend_component === 'DocDocumentClassificationPage' ? null : (
+        <WorkItemSubmitBar
+          itemId={props.itemId}
+          readonly={props.readonly}
+          wq={props.wq}
+          setAction={setAction}
+          takeNext={takeNext}
+          setTakeNext={setTakeNext}
+          setComment={setComment}
+          setReassignment={setReassignment}
+        />
+      )}
+    </>
   );
 }
 
