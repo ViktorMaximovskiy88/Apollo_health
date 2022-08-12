@@ -287,9 +287,10 @@ async def add_document(
     await create_and_log(logger, current_user, doc_document)
     
     scrape_task = await SiteScrapeTask.get(document.scrape_task_id)
+
     if document.id:
         # get retrieved_document from Doc Document
-        doc_document = await DocDocument.find_one(document.id)
+        doc_document = await DocDocument.find_one({"_id":document.id})
         if doc_document:
             index = scrape_task.retrieved_document_ids.index(doc_document.retrieved_document_id)
             if index >= 0:
