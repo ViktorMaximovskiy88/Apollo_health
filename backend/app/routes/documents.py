@@ -8,10 +8,16 @@ from fastapi.responses import StreamingResponse
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.models.content_extraction_task import ContentExtractionTask
-from backend.common.models.doc_document import DocDocument, calc_final_effective_date
+from backend.common.models.doc_document import (
+    DocDocument,
+    DocDocumentLocation,
+    calc_final_effective_date,
+)
 from backend.common.models.document import (
     RetrievedDocument,
     RetrievedDocumentLimitTags,
+    RetrievedDocumentLocation,
+    SiteRetrievedDocument,
     UpdateRetrievedDocument,
 )
 from backend.common.models.site_scrape_task import SiteScrapeTask
@@ -46,7 +52,6 @@ async def get_target(id: PydanticObjectId) -> RetrievedDocument:
 async def get_documents(
     scrape_task_id: PydanticObjectId | None = None,
     site_id: PydanticObjectId | None = None,
-    logical_document_id: PydanticObjectId | None = None,
     automated_content_extraction: bool | None = None,
 ):
     query = {}
@@ -61,8 +66,6 @@ async def get_documents(
         query["_id"] = {"$in": scrape_task.retrieved_document_ids}
     if site_id:
         query["site_id"] = site_id
-    if logical_document_id:
-        query["logical_document_id"] = logical_document_id
     if automated_content_extraction:
         query["automated_content_extraction"] = automated_content_extraction
 
@@ -120,11 +123,9 @@ async def read_document(
     return target
 
 
-@router.post("/upload")
+@router.post("/upload", dependencies=[Security(get_current_user)])
 async def upload_document(
     file: UploadFile,
-    current_user: User = Security(get_current_user),
-    logger: Logger = Depends(get_logger),
 ):
     text_handler = TextHandler()
 
@@ -184,6 +185,7 @@ async def update_document(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
+
     updated = await update_and_log_diff(logger, current_user, target, updates)
 
     ace_turned_on = updates.automated_content_extraction and not target.automated_content_extraction
@@ -215,46 +217,50 @@ async def delete_document(
 
 @router.put("/", status_code=status.HTTP_201_CREATED)
 async def add_document(
-    document: RetrievedDocument,
+    document: SiteRetrievedDocument | RetrievedDocument,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    now = datetime.now()
+    now = datetime.now(tz=timezone.utc)
+    link_text = document.metadata["link_text"] if "link_text" in document.metadata else None
+
     new_document = RetrievedDocument(
-        base_url=document.base_url,
-        uploader_id=current_user.id,
-        name=document.name,
-        text_checksum=document.text_checksum,
+        checksum=document.checksum,
+        content_type=document.content_type,
         doc_type_confidence=document.doc_type_confidence,
         document_type=document.document_type,
         effective_date=document.effective_date,
-        context_metadata=document.metadata,
         end_date=document.end_date,
-        last_updated_date=document.last_updated_date,
+        file_extension=document.file_extension,
+        identified_dates=document.identified_dates,
+        indication_tags=document.indication_tags,
+        lang_code=document.lang_code,
         last_reviewed_date=document.last_reviewed_date,
+        last_updated_date=document.last_updated_date,
+        metadata=document.metadata,
+        name=document.name,
         next_review_date=document.next_review_date,
         next_update_date=document.next_update_date,
         published_date=document.published_date,
-        file_extension=document.file_extension,
-        content_type=document.content_type,
-        first_collected_date=now,
-        identified_dates=document.identified_dates,
-        lang_code=document.lang_code,
-        last_collected_date=now,
-        metadata=document.metadata,
-        site_id=document.site_id,
-        scrape_task_id=document.scrape_task_id,
-        url=document.url,
+        text_checksum=document.text_checksum,
         therapy_tags=document.therapy_tags,
-        indication_tags=document.indication_tags,
-        file_checksum_aliases=[document.checksum],
-        checksum=document.checksum,
+        uploader_id=current_user.id,
+        locations=[
+            RetrievedDocumentLocation(
+                url=document.url,
+                base_url=document.base_url,
+                first_collected_date=now,
+                last_collected_date=now,
+                site_id=document.site_id,
+                link_text=link_text,
+                context_metadata=document.metadata,
+            )
+        ],
     )
+
     await create_and_log(logger, current_user, new_document)
 
     doc_document = DocDocument(
-        site_id=document.site_id,
-        scrape_task_id=document.scrape_task_id,
         retrieved_document_id=new_document.id,  # type: ignore
         name=document.name,
         checksum=document.checksum,
@@ -269,18 +275,22 @@ async def add_document(
         next_update_date=document.next_update_date,
         published_date=document.published_date,
         lang_code=document.lang_code,
-        first_collected_date=now,
-        last_collected_date=now,
-        url=document.url,
-        base_url=document.base_url,
         therapy_tags=document.therapy_tags,
         indication_tags=document.indication_tags,
         file_extension=document.file_extension,
         identified_dates=document.identified_dates,
+        locations=[
+            DocDocumentLocation(
+                site_id=document.site_id,
+                first_collected_date=now,
+                last_collected_date=now,
+                url=document.url,
+                base_url=document.base_url,
+                link_text=link_text,
+                context_metadata=document.metadata,
+            )
+        ],
     )
-
-    if "link_text" in document.metadata:
-        doc_document.link_text = document.metadata["link_text"]
 
     doc_document.final_effective_date = calc_final_effective_date(doc_document)
     await create_and_log(logger, current_user, doc_document)

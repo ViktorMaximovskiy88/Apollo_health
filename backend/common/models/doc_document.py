@@ -5,6 +5,14 @@ from pydantic import BaseModel
 
 from backend.common.core.enums import ApprovalStatus, TaskStatus
 from backend.common.models.base_document import BaseDocument
+from backend.common.models.shared import (
+    IndicationTag,
+    LockableDocument,
+    TaskLock,
+    TherapyTag,
+    UpdateIndicationTag,
+    UpdateTherapyTag,
+)
 
 
 class DocDocumentLocation(BaseModel):
@@ -17,39 +25,10 @@ class DocDocumentLocation(BaseModel):
 
     first_collected_date: datetime | None = None
     last_collected_date: datetime | None = None
+
+    # composite key used for 'lineage'
     site_id: PydanticObjectId | None = None
     previous_doc_doc_id: PydanticObjectId | None = None
-
-
-class TherapyTag(BaseModel):
-    text: str
-    page: int = 0
-    code: str
-    name: str
-    score: float = 0
-    relevancy: float = 0
-
-    def __hash__(self):
-        return hash(tuple(self.__dict__.values()))
-
-
-class IndicationTag(BaseModel):
-    text: str
-    code: int
-    page: int = 0
-
-    def __hash__(self):
-        return hash(tuple(self.__dict__.values()))
-
-
-class TaskLock(BaseModel):
-    work_queue_id: PydanticObjectId
-    user_id: PydanticObjectId
-    expires: datetime
-
-
-class LockableDocument(BaseModel):
-    locks: list[TaskLock] = []
 
 
 class DocDocument(BaseDocument, LockableDocument):
@@ -83,6 +62,7 @@ class DocDocument(BaseDocument, LockableDocument):
     end_date: datetime | None = None
 
     # Lineage
+    # TODO ask about these two ...
     lineage_id: PydanticObjectId | None = None
     version: str | None = None
 
@@ -94,29 +74,27 @@ class DocDocument(BaseDocument, LockableDocument):
     content_extraction_task_id: PydanticObjectId | None = None
 
     tags: list[str] = []
+
     locations: list[DocDocumentLocation] = []
+
+    async def update_for_site(self, doc_id: PydanticObjectId, site_id: PydanticObjectId):
+        pass
+
+
+class SiteDocDocument(DocDocument, DocDocumentLocation):
+    def get_for_site(self, doc_id: PydanticObjectId, site_id: PydanticObjectId):
+        doc: SiteDocDocument = self.get(doc_id)
+        return doc.for_site(site_id)
+
+    def for_site(site_id: PydanticObjectId, doc: DocDocument):
+        location = next((x for x in doc.locations if x.site_id == site_id), None)
+        # TODO handle none case
+        return SiteDocDocument(**doc.dict(), **location.dict())
 
 
 class DocDocumentLimitTags(DocDocument):
     class Settings:
         projection = {"therapy_tags": {"$slice": 10}, "indication_tags": {"$slice": 10}}
-
-
-class UpdateTherapyTag(BaseModel):
-    name: str | None = None
-    text: str | None = None
-    page: int | None = None
-    code: str | None = None
-    score: float | None = None
-    relevancy: float | None = None
-
-
-class UpdateIndicationTag(BaseModel):
-    text: str | None = None
-    page: int | None = None
-    code: str | None = None
-    score: float | None = None
-    relevancy: float | None = None
 
 
 class UpdateDocDocument(BaseModel):
