@@ -3,7 +3,6 @@ import { DocumentFamilyOption, DocumentFamilyType } from './types';
 import { useGetSiteQuery } from '../sites/sitesApi';
 import { Name } from './DocumentFamilyNameField';
 import { useAddDocumentFamilyMutation } from './documentFamilyApi';
-import { ThresholdFields, initialThresholdValues } from './DocumentFamilyThresholdFields';
 import { useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 import { useContext, useState } from 'react';
@@ -33,7 +32,7 @@ const useAddDocumentFamily = () => {
   return addDocumentFamily;
 };
 
-const useSaveInMultiselect = () => {
+const useSaveInMultiselect = (): ((documentFamilyId: string) => void) => {
   const docDocumentForm = useContext(DocDocumentFormContext);
 
   const saveInMultiselect = (documentFamilyId: string): void => {
@@ -126,7 +125,6 @@ export function AddDocumentFamily({
     >
       <Form
         onFinish={onFinish}
-        initialValues={initialThresholdValues}
         form={documentFamilyForm}
         name="add-document-family"
         layout="vertical"
@@ -139,7 +137,6 @@ export function AddDocumentFamily({
           <DocumentType />
           <SiteName />
         </div>
-        <ThresholdFields />
         <Footer onCancel={onCancel} isSaving={isSaving} />
       </Form>
     </Modal>
