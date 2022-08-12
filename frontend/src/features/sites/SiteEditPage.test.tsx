@@ -1,5 +1,5 @@
 import userEvent from '@testing-library/user-event';
-import { render, screen, setMockLocation } from '../../test/test-utils';
+import { render, screen } from '../../test/test-utils';
 import { setupServer } from 'msw/node';
 import { SiteEditPage } from './SiteEditPage';
 import { handlers } from './mocks/siteEditPageHandlers';
@@ -34,11 +34,8 @@ describe(`SiteEditPage`, () => {
     mockedUseParams.mockImplementation(() => ({
       siteId: 'site-id1',
     }));
-    setMockLocation()
 
-    render(
-        <SiteEditPage />
-    );
+    render(<SiteEditPage />);
 
     const elements = [];
     elements.push(await screen.findByDisplayValue('Test Site'));
@@ -55,13 +52,10 @@ describe(`SiteEditPage`, () => {
     mockedUseParams.mockImplementation(() => ({
       siteId: 'site-id1',
     }));
-    setMockLocation()
-    
+
     const user = userEvent.setup();
 
-    render(
-        <SiteEditPage />
-    );
+    render(<SiteEditPage />);
 
     const followLinksCheck = screen.getByRole('checkbox', {
       name: /follow links/i,
