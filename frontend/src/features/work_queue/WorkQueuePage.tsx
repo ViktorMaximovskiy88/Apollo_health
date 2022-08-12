@@ -101,7 +101,7 @@ export function WorkQueuePage() {
       header: 'Actions',
       render: ({ data: item }: { data: BaseDocument }) => {
         return (
-          <ButtonLink type="default" to={`../../../../documents/${item._id}`}>
+          <ButtonLink type="default" to={`${item._id}/process`}>
             Take
           </ButtonLink>
         );
