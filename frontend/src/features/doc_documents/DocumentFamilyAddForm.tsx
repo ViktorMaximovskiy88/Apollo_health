@@ -131,6 +131,7 @@ export function AddDocumentFamily({
         className="h-full"
         autoComplete="off"
         disabled={isSaving}
+        validateTrigger={['onBlur']}
       >
         <Name />
         <div className="flex space-x-8">
