@@ -231,8 +231,7 @@ class TestGetDocuments:
 class TestUploadFile:
     @pytest.mark.asyncio
     async def test_upload_file(self):
-        # URL = "https://parprdusemmitst01.blob.core.windows.net/autohunteddocs/7c8418d4-054b-4fa4-9b97-d3f75c353dd1/7c8418d4-054b-4fa4-9b97-d3f75c353dd1.pdf"  # noqa
-        URL = "https://www.orimi.com/pdf-test.pdf"
+        URL = "https://parprdusemmitst01.blob.core.windows.net/autohunteddocs/7c8418d4-054b-4fa4-9b97-d3f75c353dd1/7c8418d4-054b-4fa4-9b97-d3f75c353dd1.pdf"  # noqa
         response = requests.get(URL)
         with tempfile.NamedTemporaryFile() as temp:
             async with aiofiles.open(temp.name, "wb") as fd:
@@ -250,7 +249,7 @@ class TestUploadFile:
 
     @pytest.mark.asyncio
     async def test_upload_create_document(self):
-        URL = "https://www.orimi.com/pdf-test.pdf"
+        URL = "https://parprdusemmitst01.blob.core.windows.net/autohunteddocs/7c8418d4-054b-4fa4-9b97-d3f75c353dd1/7c8418d4-054b-4fa4-9b97-d3f75c353dd1.pdf"  # noqa
         response = requests.get(URL)
         with tempfile.NamedTemporaryFile() as temp:
             async with aiofiles.open(temp.name, "wb") as fd:
