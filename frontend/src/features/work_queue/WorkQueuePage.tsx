@@ -14,10 +14,8 @@ import {
   useGetWorkQueueQuery,
   useLazyGetWorkQueueItemsQuery,
   useTakeNextWorkItemMutation,
-  useTakeWorkItemMutation,
 } from './workQueuesApi';
 import { MainLayout } from '../../components';
-import { useCurrentUser } from '../../common/hooks/use-current-user';
 
 export function WorkQueuePage() {
   const queueId = useParams().queueId;
@@ -25,9 +23,7 @@ export function WorkQueuePage() {
   const [getWorkItemFn] = useLazyGetWorkQueueItemsQuery();
   const { data: wq } = useGetWorkQueueQuery(queueId);
   const [takeNextWorkItem] = useTakeNextWorkItemMutation();
-  const [takeWorkItem] = useTakeWorkItemMutation();
   const { data: users } = useGetUsersQuery();
-  const currentUser = useCurrentUser();
 
   const takeNext = useCallback(async () => {
     const response = await takeNextWorkItem(queueId);
@@ -39,24 +35,8 @@ export function WorkQueuePage() {
       });
       return;
     }
-    navigate(`/documents/${response.data.item_id}`);
+    navigate(`../../../../documents/${response.data.item_id}`);
   }, [takeNextWorkItem, navigate, queueId]);
-
-  const takeItem = useCallback(
-    async (itemId: string) => {
-      const response = await takeWorkItem({ workQueueId: queueId, itemId });
-      if (!('data' in response)) return;
-      if (!response.data.acquired_lock) {
-        notification.error({
-          message: 'Document already taken',
-          description: 'Please take a different document',
-        });
-        return;
-      }
-      navigate(`/documents/${itemId}`);
-    },
-    [navigate, queueId, takeWorkItem]
-  );
 
   const { isActive, setActive, watermark } = useInterval(10000);
   const loadData = useCallback(
@@ -119,24 +99,19 @@ export function WorkQueuePage() {
     },
     {
       header: 'Actions',
-      render: ({ data: item }: { data: BaseDocument & { locks: TaskLock[] } }) => {
-        let assignee = null;
-        const lock = item.locks.find((l) => l.work_queue_id === queueId);
-        if (lock) {
-          const tillExpiry = dateDuration(lock.expires).toMillis();
-          if (tillExpiry < 0) {
-            const u = users?.find((u) => u._id === lock.user_id);
-            if (u) {
-              assignee = u._id;
-            }
+      render: ({ data: item }: { data: BaseDocument & { locks: [] } }) => {
+        const handleClick = () => {
+          if (item.locks.length > 0) {
+            notification.error({
+              message: 'Document locked',
+              description: 'Someone else is working on that document right now.',
+            });
+            return;
           }
-        }
+          navigate(`../../../../documents/${item._id}`);
+        };
         return (
-          <ButtonLink
-            type="default"
-            onClick={() => takeItem(item._id)}
-            disabled={!!assignee && assignee !== currentUser?._id}
-          >
+          <ButtonLink type="default" onClick={handleClick}>
             Take
           </ButtonLink>
         );
