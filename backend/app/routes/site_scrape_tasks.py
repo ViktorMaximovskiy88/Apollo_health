@@ -140,8 +140,8 @@ async def run_bulk_by_type(
         "collection_method": {"$ne": CollectionMethod.Manual},
         "status": {"$ne": SiteStatus.INACTIVE},
     }
-    if bulk_type == "unrun":
-        query["last_run_status"] = None
+    if bulk_type == "new":
+        query["status"] = SiteStatus.NEW
     elif bulk_type == "failed":
         query["last_run_status"] = {"$in": [TaskStatus.FAILED, TaskStatus.CANCELED]}
     elif bulk_type == "canceled":

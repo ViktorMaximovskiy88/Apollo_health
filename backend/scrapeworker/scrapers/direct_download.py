@@ -2,10 +2,10 @@ import logging
 from functools import cached_property
 from urllib.parse import urljoin
 
-from playwright.async_api import ElementHandle
+from playwright.async_api import ElementHandle, Page
 
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
-from backend.scrapeworker.common.selectors import filter_by_hidden_value, filter_by_href
+from backend.scrapeworker.common.selectors import filter_by_hidden_value, filter_by_href, to_xpath
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 
 
@@ -29,34 +29,58 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
         logging.info(selector_string)
         return selector_string
 
+    @cached_property
+    def xpath_selector(self) -> str:
+        selectors = []
+        for attr_selector in self.config.attr_selectors:
+            if attr_selector.resource_address:
+                selectors.append(to_xpath(attr_selector))
+        selector_string = "|".join(selectors)
+        logging.info(selector_string)
+        return selector_string
+
+    def xpath_selectors(self):
+        for attr_selector in self.config.attr_selectors:
+            if attr_selector.resource_address:
+                yield to_xpath(attr_selector), attr_selector.attr_name
+
     async def queue_downloads(
-        self, downloads: list[DownloadContext], link_handles: list[ElementHandle], base_url: str
+        self,
+        downloads: list[DownloadContext],
+        link_handles: list[ElementHandle],
+        base_url: str,
+        resource_attr: str = "href",
     ) -> None:
         link_handle: ElementHandle
         for link_handle in link_handles:
-            metadata: Metadata = await self.extract_metadata(link_handle)
+            metadata: Metadata = await self.extract_metadata(link_handle, resource_attr)
             downloads.append(
                 DownloadContext(
                     metadata=metadata,
                     request=Request(
                         url=urljoin(
                             base_url,
-                            metadata.href,
+                            metadata.resource_value,
                         ),
                     ),
                 )
             )
 
+    async def scrape_and_queue(self, downloads: list[DownloadContext], page: Page) -> None:
+        link_handles = await page.query_selector_all(self.css_selector)
+        await self.queue_downloads(downloads, link_handles, self.page.url)
+
+        for selector, attr_name in self.xpath_selectors():
+            link_handles = await page.query_selector_all(selector)
+            await self.queue_downloads(downloads, link_handles, self.page.url, attr_name)
+
     async def execute(self) -> list[DownloadContext]:
         downloads: list[DownloadContext] = []
 
-        link_handles = await self.page.query_selector_all(self.css_selector)
-        await self.queue_downloads(downloads, link_handles, self.page.url)
-
+        await self.scrape_and_queue(downloads, page=self.page)
         # handle frame (not frames, although we could....)
         if len(self.page.main_frame.child_frames) > 0 and self.config.search_in_frames:
             child_frames = self.page.main_frame.child_frames
-            link_handles += await child_frames[0].query_selector_all(self.css_selector)
-            await self.queue_downloads(downloads, link_handles, child_frames[0].url)
+            await self.scrape_and_queue(downloads, page=child_frames[0])
 
         return downloads

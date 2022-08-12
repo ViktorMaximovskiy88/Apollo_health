@@ -48,8 +48,8 @@ function BulkActions() {
       onClick={({ key }) => onMenuSelect(key)}
       items={[
         {
-          key: 'unrun',
-          label: 'Run Unrun',
+          key: 'new',
+          label: 'Run New',
         },
         {
           key: 'failed',

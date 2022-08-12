@@ -2,6 +2,7 @@ import { Checkbox, Input, Form, FormInstance, Select, Radio, Tooltip, Switch } f
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { CollectionMethod } from './types';
 import { useGetProxiesQuery } from '../proxies/proxiesApi';
+import { AttrSelectors } from './AttrSelectorField';
 
 function CollectionMethodRadio() {
   const collections = [
@@ -149,6 +150,7 @@ function ScrapeMethodConfiguration() {
     <Form.Item name="scrape_method_configuration">
       <DocumentExtensions />
       <UrlKeywords />
+      <AttrSelectors />
       <ProxyExclusions />
       <WaitFor />
       <WaitForTimeout />

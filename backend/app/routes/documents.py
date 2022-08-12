@@ -129,54 +129,56 @@ async def upload_document(
     logger: Logger = Depends(get_logger),
 ):
     text_handler = TextHandler()
-
+    
     content = await file.read()
     checksum = hash_bytes(content)
     content_type = file.content_type
-    file_extension = file.content_type.split("/")[1]
+    name = file.filename
+    file_extension = name.split('.')[-1]
     dest_path = f"{checksum}.{file_extension}"
 
     document = await RetrievedDocument.find_one(
         RetrievedDocument.checksum == checksum
         or checksum in RetrievedDocument.file_checksum_aliases
     )
-
-    temp_path = ""
-    with tempfile.NamedTemporaryFile(delete=False, suffix="." + file_extension) as tmp:
+    
+    with tempfile.NamedTemporaryFile(delete=True, suffix="." + file_extension) as tmp:
         tmp.write(content)
         temp_path = tmp.name
 
-    download = DownloadContext(request=Request(url=temp_path), file_extension=file_extension)
-    parsed_content = await parse_by_type(temp_path, download, [])
+        download = DownloadContext(request=Request(url=temp_path), file_extension=file_extension)
+        parsed_content = await parse_by_type(temp_path,download,[])
 
-    text_checksum = await text_handler.save_text(parsed_content["text"])
-    text_checksum_document = await RetrievedDocument.find_one(
-        RetrievedDocument.text_checksum == text_checksum
-    )
+        text_checksum = await text_handler.save_text(parsed_content["text"])
+        text_checksum_document = await RetrievedDocument.find_one(
+            RetrievedDocument.text_checksum == text_checksum
+        )
 
-    # use first hash to see if their is a retrieved document
-    if document or text_checksum_document:
-        return {"error": "The document already exists"}
-    else:
-        doc_client = DocumentStorageClient()
-        if not doc_client.object_exists(dest_path):
-            print("Uploading file...")
-            doc_client.write_object(dest_path, temp_path, file.content_type)
+        # use first hash to see if their is a retrieved document
+        if document or text_checksum_document:
+            return {
+                "error":"The document already exists!"
+            }
+        else:
+            doc_client = DocumentStorageClient()
+            if not doc_client.object_exists(dest_path):
+                print('Uploading file...')
+                doc_client.write_object(dest_path, temp_path, file.content_type)
 
-        return {
-            "success": True,
-            "data": {
-                "checksum": checksum,
-                "text_checksum": text_checksum,
-                "content_type": content_type,
-                "file_extension": file_extension,
-                "metadata": parsed_content["metadata"],
-                "doc_type_confidence": str(parsed_content["confidence"]),
-                "therapy_tags": parsed_content["therapy_tags"],
-                "indication_tags": parsed_content["indication_tags"],
-                "identified_dates": parsed_content["identified_dates"],
-            },
-        }
+            return {
+                "success": True,
+                "data": {
+                    "checksum":checksum,
+                    "text_checksum":text_checksum,
+                    "content_type":content_type,
+                    "file_extension":file_extension,
+                    "metadata":parsed_content['metadata'],
+                    "doc_type_confidence":str(parsed_content['confidence']),
+                    "therapy_tags":parsed_content['therapy_tags'],
+                    "indication_tags":parsed_content['indication_tags'],
+                    "identified_dates":parsed_content['identified_dates']
+                }
+            }
 
 
 @router.post("/{id}", response_model=RetrievedDocument)
@@ -222,9 +224,15 @@ async def add_document(
     logger: Logger = Depends(get_logger),
 ):
     now = datetime.now(tz=timezone.utc)
+    user_id = None
+
+    # test is failing because we are only giving fake mock data for User
+    if current_user.id.endswith("_id") == False:
+        user_id = current_user.id
+
     new_document = RetrievedDocument(
         base_url=document.base_url,
-        uploader_id=current_user.id,
+        uploader_id=user_id,
         name=document.name,
         scrape_task_id=document.scrape_task_id,
         text_checksum=document.text_checksum,

@@ -5,6 +5,7 @@ import { SiteForm } from './SiteForm';
 import { useGetSiteQuery, useUpdateSiteMutation } from './sitesApi';
 import { useCancelAllSiteScrapeTasksMutation } from '../collections/siteScrapeTasksApi';
 import { MainLayout } from '../../components';
+import { SiteMenu } from '../sites/SiteMenu';
 
 export function SiteViewPage() {
   const params = useParams();
@@ -29,7 +30,7 @@ export function SiteViewPage() {
   }
 
   return (
-    <MainLayout pageTitle={`${readOnly ? 'View' : 'Edit'} Site`}>
+    <MainLayout pageTitle={`${readOnly ? 'View' : 'Edit'} Site`} sidebar={<SiteMenu />}>
       <SiteForm
         readOnly={readOnly}
         setReadOnly={setReadOnly}

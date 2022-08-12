@@ -7,11 +7,12 @@ from ssl import SSLContext
 from typing import AsyncGenerator
 
 import aiofiles
-from aiohttp import BasicAuth, ClientResponse, ClientSession, TCPConnector
+from aiohttp import BasicAuth, ClientHttpProxyError, ClientResponse, ClientSession, TCPConnector
 from playwright.async_api import ProxySettings
 from tenacity import AttemptManager
 
 from backend.common.core.config import config
+from backend.common.models.link_task_log import InvalidResponse, ValidResponse
 from backend.common.models.proxy import Proxy
 from backend.common.storage.hash import DocStreamHasher
 from backend.scrapeworker.common.models import DownloadContext
@@ -145,6 +146,9 @@ class AioDownloader:
 
         download.set_mimetype()
         download.set_extension_from_mimetype()
+        download.file_size = (
+            download.response.content_length
+        )  # temp, do actual file size (these should 99.9% match but arent the same)
         download.file_hash = hasher.hexdigest()
 
         return download.file_path, download.file_hash
@@ -156,16 +160,40 @@ class AioDownloader:
     ):
         url = download.request.url
         logging.info(f"Attempting download {url}")
+
         async for attempt, proxy in self.proxy_with_backoff(proxies):
             with attempt:
-                response = await self.send_request(download, proxy)
-
-                download.response.from_aio_response(response)
-                # We only need this now due to the xlsx lib needing an ext (derp)
-                download.guess_extension()
+                response: ClientResponse
+                proxy_url = proxy.proxy if proxy else None
+                try:
+                    response = await self.send_request(download, proxy)
+                    download.response.from_aio_response(response)
+                except ClientHttpProxyError as proxy_error:
+                    # we catch so we can 'log' on the task and reraise for retry
+                    download.invalid_responses.append(
+                        InvalidResponse(
+                            proxy_url=proxy_url,
+                            status=proxy_error.status,
+                            message=proxy_error.message,
+                        )
+                    )
+                    raise proxy_error
 
                 if not response.ok:
-                    continue
+                    invalid_response = InvalidResponse(
+                        proxy_url=proxy_url, **download.response.dict()
+                    )
+                    download.invalid_responses.append(invalid_response)
+                    logging.error(invalid_response)
+                    # if its 404 skip... maybe others we retry?
+                    yield (None, None)
+
+                download.valid_response = ValidResponse(
+                    proxy_url=proxy_url, **download.response.dict()
+                )
+                # We only need this now due to the xlsx lib needing an ext (derp)
+                # TODO see if we can unhave this; the excel lib is dumb
+                download.guess_extension()
 
                 with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
                     yield await self.write_response_to_file(download, response, temp)

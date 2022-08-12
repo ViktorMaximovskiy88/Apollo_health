@@ -26,6 +26,7 @@ from backend.scrapeworker.log import log_cancellation, log_failure, log_not_foun
 from backend.scrapeworker.scrape_worker import ScrapeWorker
 
 app = typer.Typer()
+log = logging.getLogger(__name__)
 
 accepting_tasks = True
 active_tasks: dict[PydanticObjectId | None, SiteScrapeTask] = {}
@@ -135,8 +136,8 @@ async def start_worker_async(worker_id):
                     ignore_https_errors=True,
                 )
             except Exception as ex:
-                logging.error("Lost Browser")
-                logging.error(ex)
+                log.error("Lost Browser")
+                log.error(ex)
                 traceback.print_exc()
                 browser = await playwright.chromium.launch()
                 return await browser.new_context(

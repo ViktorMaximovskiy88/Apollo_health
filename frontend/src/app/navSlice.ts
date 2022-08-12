@@ -10,6 +10,7 @@ interface Breadcrumb {
 interface MenuItem {
   url: string;
   label: string;
+  shortLabel: string;
 }
 
 export const navSlice = createSlice({
@@ -21,13 +22,14 @@ export const navSlice = createSlice({
     },
     menu: {
       items: [
-        { url: '/sites', label: 'Sites' },
-        { url: '/work-queues', label: 'Work Queues' },
+        { url: '/sites', label: 'Sites', shortLabel: 'Sites' },
+        { url: '/work-queues', label: 'Work Queues', shortLabel: 'Queues' },
         {
           url: '/documents',
           label: 'All Documents',
+          shortLabel: 'Docs',
         },
-        { url: '/users', label: 'Users' },
+        { url: '/users', label: 'Users', shortLabel: 'Users' },
       ] as MenuItem[],
       currentItem: {} as MenuItem,
     },
@@ -42,9 +44,6 @@ export const navSlice = createSlice({
     appendBreadcrumbs: (state, action: PayloadAction<Breadcrumb[]>) => {
       state.breadcrumbs = [...state.breadcrumbs, ...action.payload];
     },
-    toggleAppBarPosition: (state) => {
-      state.layout.appBarPosition = state.layout.appBarPosition == 'top' ? 'left' : 'top';
-    },
   },
 });
 
@@ -58,12 +57,6 @@ export const menuState = createSelector(
   (menuState) => menuState
 );
 
-export const layoutState = createSelector(
-  (state: RootState) => state.nav.layout,
-  (layout) => layout
-);
-
 export const { actions, reducer } = navSlice;
-export const { appendBreadcrumb, setBreadcrumbs, appendBreadcrumbs, toggleAppBarPosition } =
-  navSlice.actions;
+export const { appendBreadcrumb, setBreadcrumbs, appendBreadcrumbs } = navSlice.actions;
 export default navSlice;

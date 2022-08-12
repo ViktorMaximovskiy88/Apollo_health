@@ -7,6 +7,13 @@ from backend.common.core.enums import CollectionMethod, SiteStatus
 from backend.common.models.base_document import BaseDocument
 
 
+class AttrSelector(BaseModel):
+    attr_name: str
+    attr_value: str = None
+    has_text: str = None
+    resource_address: bool = False
+
+
 class ScrapeMethodConfiguration(BaseModel):
     document_extensions: list[str]
     url_keywords: list[str]
@@ -17,6 +24,7 @@ class ScrapeMethodConfiguration(BaseModel):
     follow_links: bool = False
     follow_link_keywords: list[str]
     follow_link_url_keywords: list[str]
+    attr_selectors: list[AttrSelector] = []
 
 
 class UpdateScrapeMethodConfiguration(BaseModel):
@@ -29,6 +37,7 @@ class UpdateScrapeMethodConfiguration(BaseModel):
     follow_link_url_keywords: list[str] | None = None
     wait_for_timeout_ms: int = 0
     search_in_frames: bool = False
+    attr_selectors: list[AttrSelector] | None = None
 
 
 class BaseUrl(BaseModel):
@@ -74,7 +83,18 @@ class Site(BaseDocument, NewSite):
 
 
 # Deprecated
-class NoAssigneeSite(Site):
+class NoAttrSelectorsScrapeConfig(ScrapeMethodConfiguration):
+    attr_selectors: list[AttrSelector] | None = None
+
+
+class NoAttrSelectorSite(Site):
+    scrape_method_configuration: NoAttrSelectorsScrapeConfig
+
+    class Collection:
+        name = "Site"
+
+
+class NoAssigneeSite(NoAttrSelectorSite):
     assignee: PydanticObjectId | None = None
 
     class Collection:

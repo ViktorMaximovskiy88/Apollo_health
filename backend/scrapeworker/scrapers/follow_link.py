@@ -39,7 +39,7 @@ class FollowLinkScraper(PlaywrightBaseScraper):
                     request=Request(
                         url=urljoin(
                             self.url,
-                            metadata.href,
+                            metadata.resource_value,
                         ),
                     ),
                 )
