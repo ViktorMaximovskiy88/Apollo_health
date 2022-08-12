@@ -6,15 +6,15 @@ load_dotenv(env_type)
 
 
 class ReactApp(BaseSettings):
-    auth0_domain: HttpUrl = Field(env="REACT_APP_AUTH0_DOMAIN")
-    auth0_client_id: str = Field(env="REACT_APP_AUTH0_CLIENT_ID")
-    auth0_audience: str = Field(env="REACT_APP_AUTH0_AUDIENCE")
+    auth0_domain: HttpUrl = Field(default=None, env="REACT_APP_AUTH0_DOMAIN")
+    auth0_client_id: str = Field(default=None, env="REACT_APP_AUTH0_CLIENT_ID")
+    auth0_audience: str = Field(default=None, env="REACT_APP_AUTH0_AUDIENCE")
 
 
 class Auth0Settings(BaseSettings):
-    wellknown_url: HttpUrl = Field(env="AUTH0_WELLKNOWN_URL")
-    audience: str = Field(env="AUTH0_AUDIENCE")
-    issuer: str = Field(env="AUTH0_ISSUER")
+    wellknown_url: HttpUrl = Field(default=None, env="AUTH0_WELLKNOWN_URL")
+    audience: str = Field(default=None, env="AUTH0_AUDIENCE")
+    issuer: str = Field(default=None, env="AUTH0_ISSUER")
     email_key: str = Field(default="https://mmit.com/email")
     grant_key: str = Field(default="gty")
     user_info_url: str = Field(default="https://mmit-test.auth0.com/userinfo")
