@@ -32,7 +32,6 @@ export function CollectionsPage() {
   const [runScrape] = useRunSiteScrapeTaskMutation();
   if (!siteId) return null;
 
-  console.log(siteId)
   async function handleRunScrape() {
     if (site?._id) {
       try {

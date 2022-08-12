@@ -5,7 +5,7 @@ import pytest
 import pytest_asyncio
 import aiofiles
 from pydantic import HttpUrl
-from beanie import Document
+from beanie import Document, PydanticObjectId
 from fastapi import UploadFile
 import requests
 import tempfile
@@ -211,7 +211,8 @@ class TestGetDocuments:
 class TestUploadFile:
     @pytest.mark.asyncio
     async def test_upload_file(self):
-        URL = "https://parprdusemmitst01.blob.core.windows.net/autohunteddocs/7c8418d4-054b-4fa4-9b97-d3f75c353dd1/7c8418d4-054b-4fa4-9b97-d3f75c353dd1.pdf"  # noqa
+        # URL = "https://parprdusemmitst01.blob.core.windows.net/autohunteddocs/7c8418d4-054b-4fa4-9b97-d3f75c353dd1/7c8418d4-054b-4fa4-9b97-d3f75c353dd1.pdf"  # noqa
+        URL = "https://www.orimi.com/pdf-test.pdf"
         response = requests.get(URL)
         with tempfile.NamedTemporaryFile() as temp:
             async with aiofiles.open(temp.name, "wb") as fd:
@@ -225,6 +226,7 @@ class TestUploadFile:
                 assert uploaded_document['data']['text_checksum'] != None
                 assert uploaded_document['data']['metadata'] != None
                 assert uploaded_document['data']['doc_type_confidence'] != None
+
 
 
 class TestCreateDocuments:

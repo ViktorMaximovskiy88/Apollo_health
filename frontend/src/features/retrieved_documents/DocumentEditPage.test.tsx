@@ -4,7 +4,7 @@ import { useParams, Params } from 'react-router-dom';
 
 import { DocumentEditPage } from './DocumentEditPage';
 import { handlers } from './mocks/documentEditPageHandlers';
-import { render, screen, act } from '../../test/test-utils';
+import { render, screen, act, setMockLocation } from '../../test/test-utils';
 import { useAccessToken } from '../../common/hooks';
 
 jest.mock('react-router-dom');
@@ -27,6 +27,7 @@ beforeAll(() => {
 
   jest.useFakeTimers();
 
+  console.log(server);
   server.listen();
 });
 beforeEach(() => {
@@ -51,6 +52,9 @@ describe('DocumentForm', () => {
     mockedUseParams.mockImplementation(() => ({
       docId: 'doc-id1',
     }));
+    setMockLocation()
+
+
     const mockedUseAccessToken = useAccessToken as jest.Mock<string>;
     mockedUseAccessToken.mockReturnValue('123');
 
