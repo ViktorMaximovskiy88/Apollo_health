@@ -4,11 +4,19 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 export function SiteMenu() {
   const { siteId } = useParams();
   const location = useLocation();
-  const current = location.pathname.split('/')[3];
+  const parts = location.pathname.split('/');
+  const current = parts.length > 4 ? `${parts.slice(3).join('-')}` : parts[3];
 
   const subpages = [
     { key: 'scrapes', label: <Link to={`/sites/${siteId}/scrapes`}>Collections</Link> },
-    { key: 'documents', label: <Link to={`/sites/${siteId}/documents`}>Documents</Link> },
+    {
+      key: 'documents-retrieved',
+      label: <Link to={`/sites/${siteId}/documents/retrieved`}>Retreived Docs</Link>,
+    },
+    {
+      key: 'documents-classified',
+      label: <Link to={`/sites/${siteId}/documents/classified`}>Classified Docs</Link>,
+    },
     {
       key: 'extraction',
       label: <Link to={`/sites/${siteId}/extraction`}>Content Extraction</Link>,

@@ -19,7 +19,11 @@ from backend.app.utils.logger import Logger, create_and_log, update_and_log_diff
 from backend.common.core.enums import TaskStatus
 from backend.common.core.log import logging
 from backend.common.models.doc_document import DocDocument, calc_final_effective_date
-from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
+from backend.common.models.document import (
+    RetrievedDocument,
+    RetrievedDocumentLocation,
+    UpdateRetrievedDocument,
+)
 from backend.common.models.link_task_log import (
     FileMetadata,
     InvalidResponse,
@@ -118,17 +122,22 @@ class ScrapeWorker:
             DocDocument.retrieved_document_id == retrieved_document.id
         )
         if doc_document:
-            doc_document.text_checksum = (
-                retrieved_document.text_checksum
-            )  # Can be removed after text added to older docs
-            doc_document.last_collected_date = retrieved_document.last_collected_date
+
+            index = self.find_site_index(self.site.id, retrieved_document)
+            last_collected_date = doc_document.locations[index].last_collected_date
+
+            doc_location_index = self.find_site_index(self.site.id, doc_document)
+            doc_document.locations[doc_location_index].last_collected_date = last_collected_date
+
+            # Can be removed after text added to older docs
+            doc_document.text_checksum = retrieved_document.text_checksum
+
             await doc_document.save()
         else:
             await self.create_doc_document(retrieved_document)
 
     async def create_doc_document(self, retrieved_document: RetrievedDocument):
         doc_document = DocDocument(
-            site_id=retrieved_document.site_id,
             retrieved_document_id=retrieved_document.id,  # type: ignore
             name=retrieved_document.name,
             checksum=retrieved_document.checksum,
@@ -143,15 +152,11 @@ class ScrapeWorker:
             next_update_date=retrieved_document.next_update_date,
             published_date=retrieved_document.published_date,
             lang_code=retrieved_document.lang_code,
-            first_collected_date=retrieved_document.first_collected_date,
-            last_collected_date=retrieved_document.last_collected_date,
-            link_text=retrieved_document.context_metadata["link_text"],
-            url=retrieved_document.url,
-            base_url=retrieved_document.base_url,
             therapy_tags=retrieved_document.therapy_tags,
             indication_tags=retrieved_document.indication_tags,
             file_extension=retrieved_document.file_extension,
             identified_dates=retrieved_document.identified_dates,
+            locations=retrieved_document.locations,
         )
         doc_document.final_effective_date = calc_final_effective_date(doc_document)
         await create_and_log(self.logger, await self.get_user(), doc_document)
@@ -167,6 +172,9 @@ class ScrapeWorker:
             or download.request.url
         )
 
+    def find_site_index(self, site_id, document: RetrievedDocument | DocDocument):
+        return next((i for i, item in enumerate(document.locations) if item.site_id == site_id), -1)
+
     # TODO we temporarily update allthethings. as our code matures, this likely dies
     async def update_retrieved_document(
         self,
@@ -176,8 +184,13 @@ class ScrapeWorker:
     ) -> UpdateRetrievedDocument:
         now = datetime.now(tz=timezone.utc)
         name = self.set_doc_name(parsed_content, download)
+
+        # TODO at all for now ... need to look at update and log diff (this is very naive right now)
+        location_index = self.find_site_index(self.site.id, document)
+        document.locations[location_index].context_metadata = download.metadata.dict()
+        document.locations[location_index].last_collected_date = now
+
         updated_doc = UpdateRetrievedDocument(
-            context_metadata=download.metadata.dict(),
             doc_type_confidence=parsed_content["confidence"],
             document_type=parsed_content["document_type"],
             effective_date=parsed_content["effective_date"],
@@ -189,13 +202,12 @@ class ScrapeWorker:
             published_date=parsed_content["published_date"],
             identified_dates=parsed_content["identified_dates"],
             lang_code=parsed_content["lang_code"],
-            last_collected_date=now,
             therapy_tags=parsed_content["therapy_tags"],
             indication_tags=parsed_content["indication_tags"],
             metadata=parsed_content["metadata"],
             name=name,
-            scrape_task_id=self.scrape_task.id,
             text_checksum=document.text_checksum,
+            locaations=document.locations,
         )
         await update_and_log_diff(self.logger, await self.get_user(), document, updated_doc)
         return updated_doc
@@ -270,10 +282,8 @@ class ScrapeWorker:
                 text_checksum = await self.text_handler.save_text(parsed_content["text"])
 
                 document = RetrievedDocument(
-                    base_url=download.metadata.base_url,
                     checksum=checksum,
                     text_checksum=text_checksum,
-                    context_metadata=download.metadata.dict(),
                     doc_type_confidence=parsed_content["confidence"],
                     document_type=parsed_content["document_type"],
                     effective_date=parsed_content["effective_date"],
@@ -285,17 +295,23 @@ class ScrapeWorker:
                     published_date=parsed_content["published_date"],
                     file_extension=download.file_extension,
                     content_type=download.content_type,
-                    first_collected_date=now,
                     identified_dates=parsed_content["identified_dates"],
                     lang_code=parsed_content["lang_code"],
-                    last_collected_date=now,
                     metadata=parsed_content["metadata"],
                     name=name,
-                    scrape_task_id=self.scrape_task.id,
-                    site_id=self.site.id,
-                    url=url,
                     therapy_tags=parsed_content["therapy_tags"],
                     indication_tags=parsed_content["indication_tags"],
+                    locations=[
+                        RetrievedDocumentLocation(
+                            base_url=download.metadata.base_url,
+                            first_collected_date=now,
+                            last_collected_date=now,
+                            site_id=self.site.id,
+                            url=url,
+                            context_metadata=download.metadata.dict(),
+                            link_text=download.metadata.link_text,
+                        )
+                    ],
                 )
 
                 await create_and_log(self.logger, await self.get_user(), document)

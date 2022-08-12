@@ -10,7 +10,7 @@ import { SitesHomePage } from './features/sites/SitesHomePage';
 import { UserCreatePage } from './features/users/UserCreatePage';
 import { UserEditPage } from './features/users/UserEditPage';
 import { UsersHomePage } from './features/users/UserHomePage';
-import { DocumentsPage } from './features/collections/DocumentsPage';
+import { SiteRetreivedDocumentsPage } from './features/sites/SiteRetreivedDocumentsPage';
 import { ExtractionsPage } from './features/extractions/ExtractionsPage';
 import { DocExtractionPage } from './features/extractions/DocExtractionPage';
 import { ExtractionEditPage } from './features/extractions/ExtractionEditPage';
@@ -71,7 +71,7 @@ function App() {
             <Route path="edit" element={<SiteEditPage />} />
             <Route path="scrapes" element={<CollectionsPage />} />
             <Route path="documents">
-              <Route index element={<DocumentsPage />} />
+              <Route path="retrieved" element={<SiteRetreivedDocumentsPage />} />
               <Route path=":docId">
                 <Route path="edit" element={<DocumentEditPage />} />
               </Route>

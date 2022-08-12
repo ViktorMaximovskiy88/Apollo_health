@@ -4,13 +4,6 @@ from beanie import PydanticObjectId
 from pydantic import BaseModel
 
 
-class FileMetadata(BaseModel):
-    checksum: str
-    file_size: int
-    mimetype: str
-    file_extension: str
-
-
 class Location(BaseModel):
     base_url: str
     url: str
@@ -20,6 +13,17 @@ class Location(BaseModel):
 
 class SiteLocation(Location):
     site_id: PydanticObjectId
+    context_metadata: dict = {}  # TODO, un have this and just move the stuff up?
+    first_collected_date: datetime | None = None
+    last_collected_date: datetime | None = None
+
+
+class RetrievedDocumentLocation(SiteLocation):
+    previous_retrieved_doc_id: PydanticObjectId | None = None
+
+
+class DocDocumentLocation(SiteLocation):
+    previous_doc_doc_id: PydanticObjectId | None = None
 
 
 class TherapyTag(BaseModel):
@@ -32,6 +36,13 @@ class TherapyTag(BaseModel):
 
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))
+
+
+class FileMetadata(BaseModel):
+    checksum: str
+    file_size: int
+    mimetype: str
+    file_extension: str
 
 
 class IndicationTag(BaseModel):

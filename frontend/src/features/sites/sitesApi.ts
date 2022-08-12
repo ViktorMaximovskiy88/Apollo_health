@@ -2,6 +2,7 @@ import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/t
 import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
 import { Site } from './types';
+import { RetrievedDocument } from '../retrieved_documents/types';
 
 export const sitesApi = createApi({
   reducerPath: 'sitesApi',
@@ -32,6 +33,11 @@ export const sitesApi = createApi({
       query: (id) => `/sites/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
     }),
+    getSiteRetrievedDocuments: builder.query<RetrievedDocument[], string | undefined>({
+      query: (id) => `/sites/${id}/documents`,
+      providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
+    }),
+
     addSite: builder.mutation<Site, Partial<Site>>({
       query: (body) => ({ url: '/sites/', method: 'PUT', body }),
       invalidatesTags: [{ type: 'Site', id: 'LIST' }],
@@ -68,4 +74,5 @@ export const {
   useUpdateSiteMutation,
   useDeleteSiteMutation,
   useGetChangeLogQuery,
+  useGetSiteRetrievedDocumentsQuery,
 } = sitesApi;

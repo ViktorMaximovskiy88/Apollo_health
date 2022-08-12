@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from backend.common.core.enums import ApprovalStatus, TaskStatus
 from backend.common.models.base_document import BaseDocument
 from backend.common.models.shared import (
+    DocDocumentLocation,
     IndicationTag,
     LockableDocument,
     TaskLock,
@@ -13,22 +14,6 @@ from backend.common.models.shared import (
     UpdateIndicationTag,
     UpdateTherapyTag,
 )
-
-
-class DocDocumentLocation(BaseModel):
-    url: Indexed(str)  # type: ignore
-    base_url: str | None = None
-    link_text: str | None
-    closest_header: str | None
-
-    context_metadata: dict = {}  # just move the stuff up?
-
-    first_collected_date: datetime | None = None
-    last_collected_date: datetime | None = None
-
-    # composite key used for 'lineage'
-    site_id: PydanticObjectId | None = None
-    previous_doc_doc_id: PydanticObjectId | None = None
 
 
 class DocDocument(BaseDocument, LockableDocument):

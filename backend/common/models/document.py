@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from backend.common.core.enums import LangCode
 from backend.common.models.base_document import BaseDocument
-from backend.common.models.shared import IndicationTag, TherapyTag
+from backend.common.models.shared import IndicationTag, RetrievedDocumentLocation, TherapyTag
 
 
 class UpdateRetrievedDocument(BaseModel):
@@ -40,22 +40,6 @@ class UpdateRetrievedDocument(BaseModel):
 
     automated_content_extraction: bool | None = None
     automated_content_extraction_class: str | None = None
-
-
-class RetrievedDocumentLocation(BaseModel):
-    url: Indexed(str)  # type: ignore
-    base_url: str | None = None
-    link_text: str | None
-    closest_header: str | None
-
-    context_metadata: dict = {}  # TODO, un have this and just move the stuff up?
-
-    first_collected_date: datetime | None = None
-    last_collected_date: datetime | None = None
-
-    # composite key used for 'lineage'
-    site_id: PydanticObjectId | None = None
-    previous_retrieved_doc_id: PydanticObjectId | None = None
 
 
 class BaseRetrievedDocument(BaseModel):
