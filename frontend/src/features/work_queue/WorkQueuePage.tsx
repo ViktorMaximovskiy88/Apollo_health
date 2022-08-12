@@ -99,19 +99,9 @@ export function WorkQueuePage() {
     },
     {
       header: 'Actions',
-      render: ({ data: item }: { data: BaseDocument & { locks: [] } }) => {
-        const handleClick = () => {
-          if (item.locks.length > 0) {
-            notification.error({
-              message: 'Document locked',
-              description: 'Someone else is working on that document right now.',
-            });
-            return;
-          }
-          navigate(`../../../../documents/${item._id}`);
-        };
+      render: ({ data: item }: { data: BaseDocument }) => {
         return (
-          <ButtonLink type="default" onClick={handleClick}>
+          <ButtonLink type="default" to={`../../../../documents/${item._id}`}>
             Take
           </ButtonLink>
         );
