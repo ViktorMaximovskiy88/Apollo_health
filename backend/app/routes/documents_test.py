@@ -31,7 +31,6 @@ async def before_each_test():
 
 class MockLogger:
     async def background_log_change(current_user: User, site_scrape_task: Document, action: str):
-        assert type(current_user) == type(User)
         assert type(action) == str
         return None
 
@@ -236,7 +235,7 @@ class TestUploadFile:
         with tempfile.NamedTemporaryFile() as temp:
             async with aiofiles.open(temp.name, "wb") as fd:
                 await fd.write(response.content)
-
+                
                 upload_file = UploadFile(filename="test.pdf", file=temp, content_type="application/pdf")
                 uploaded_document = await upload_document(upload_file, User, MockLogger)
 
@@ -274,7 +273,14 @@ class TestUploadFile:
                     indication_tags=uploaded_document['data']['indication_tags'],
                     identified_dates=uploaded_document['data']['identified_dates'],
                 )
-                doc_data = await add_document(doc, User, MockLogger)
+                user = User(
+                    email="example@me.com",
+                    full_name="John Doe",
+                    hashed_password="example"
+                )
+                await user.save()
+                
+                doc_data = await add_document(doc, user, MockLogger)
                 assert doc_data['success'] == True
                 uploaded_document_2 = await upload_document(upload_file, User, MockLogger)
 
@@ -288,8 +294,15 @@ class TestCreateDocuments:
         site_one = await simple_site(collection_method=CollectionMethod.Manual).save()
         scrape_one = await simple_scrape(site_one, status=TaskStatus.IN_PROGRESS).save()
         doc = simple_manual_retrieved_document(site_one, scrape_one)
-        doc_data = await add_document(doc, User, MockLogger)
+        
+        user = User(
+            email="example@me.com",
+            full_name="John Doe",
+            hashed_password="example"
+        )
+        await user.save()
 
+        doc_data = await add_document(doc, user, MockLogger)
         assert doc_data == {"success": True}
 
         first_ret_docs = await get_documents(scrape_task_id=scrape_one.id)
