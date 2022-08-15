@@ -227,7 +227,7 @@ async def add_document(
     user_id = None
 
     # test is failing because we are only giving fake mock data for User
-    if current_user.id.endswith("_id") == False:
+    if current_user.id and str(current_user.id).endswith("_id") == False:
         user_id = current_user.id
 
     new_document = RetrievedDocument(
