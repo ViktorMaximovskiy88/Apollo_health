@@ -24,11 +24,32 @@ async def before_each_test():
     await init_db(mock=True, database_name=random_name)
 
 
+@pytest_asyncio.fixture()
+@pytest.mark.asyncio()
+async def user():
+    user = User(
+        id="62e7c6647e2a94f469d57f34",
+        email="example@me.com",
+        full_name="John Doe",
+        hashed_password="example",
+    )
+    await user.save()
+
+    return user
+
+
 class MockLogger:
-    async def background_log_change(current_user: User, site_scrape_task: Document, action: str):
-        assert type(current_user) == type(User)
+    async def background_log_change(
+        self, current_user: User, site_scrape_task: Document, action: str
+    ):
+        assert current_user.id is not None
         assert type(action) == str
         return None
+
+
+@pytest_asyncio.fixture()
+async def logger():
+    return MockLogger()
 
 
 def simple_site(
@@ -68,19 +89,19 @@ def simple_scrape(site: Site, status=TaskStatus.QUEUED) -> SiteScrapeTask:
 
 class TestStartScrapeTask:
     @pytest.mark.asyncio
-    async def test_run_collection(self):
+    async def test_run_collection(self, user, logger):
         site_one = await simple_site().save()
 
-        res = await start_scrape_task(site_one.id, User, MockLogger)
+        res = await start_scrape_task(site_one.id, user, logger)
         assert res.site_id == site_one.id
         scrapes = await SiteScrapeTask.find({}).to_list()
         assert len(scrapes) == 1
         update_site = await Site.find_one({})
         assert update_site.last_run_status == res.status == TaskStatus.QUEUED
 
-    async def test_no_site_found(self):
+    async def test_no_site_found(self, user, logger):
         with pytest.raises(HTTPException) as e:
-            await start_scrape_task("62e823397ab9edcd2557612d", User, MockLogger)
+            await start_scrape_task("62e823397ab9edcd2557612d", user, logger)
         assert isinstance(e.value, HTTPException)
         assert e.value.status_code == 404
         assert e.value.detail == "Site 62e823397ab9edcd2557612d Not Found"
@@ -95,7 +116,7 @@ class TestStartScrapeTask:
         scrape_two = await simple_scrape(site_two, TaskStatus.IN_PROGRESS).save()
 
         with pytest.raises(HTTPException) as e:
-            await start_scrape_task(site_one.id, User, MockLogger)
+            await start_scrape_task(site_one.id, user, logger)
         assert isinstance(e.value, HTTPException)
         assert e.value.status_code == 406
         assert e.value.detail == f"Scrapetask {scrape_one.id} is already queued or in progress."
@@ -103,7 +124,7 @@ class TestStartScrapeTask:
         assert len(scrapes) == 2
 
         with pytest.raises(HTTPException) as e:
-            await start_scrape_task(site_two.id, User, MockLogger)
+            await start_scrape_task(site_two.id, user, logger)
         assert isinstance(e.value, HTTPException)
         assert e.value.status_code == 406
         assert e.value.detail == f"Scrapetask {scrape_two.id} is already queued or in progress."
@@ -113,22 +134,22 @@ class TestStartScrapeTask:
 
 class TestRunBulk:
     @pytest.mark.asyncio
-    async def test_run_unrun(self):
-        site_one = await simple_site().save()
+    async def test_run_unrun(self, user, logger):
+        site_one = await simple_site(status=SiteStatus.NEW).save()
         await simple_site(last_run_status=TaskStatus.FAILED).save()
 
-        res = await run_bulk_by_type("unrun", MockLogger, User)
+        res = await run_bulk_by_type("new", logger=logger, current_user=user)
         assert res == {"status": True, "scrapes_launched": 1}
         scrape = await SiteScrapeTask.find({"site_id": site_one.id}).to_list()
         assert len(scrape) == 1
 
     @pytest.mark.asyncio
-    async def test_run_failed(self):
+    async def test_run_failed(self, user, logger):
         site_one = await simple_site(last_run_status=TaskStatus.FAILED).save()
         site_two = await simple_site(last_run_status=TaskStatus.CANCELED).save()
         await simple_site().save()
 
-        res = await run_bulk_by_type("failed", MockLogger, User)
+        res = await run_bulk_by_type("failed", logger=logger, current_user=user)
         assert res == {"status": True, "scrapes_launched": 2}
         scrapes = await SiteScrapeTask.find(
             {"site_id": {"$in": [site_one.id, site_two.id]}}
@@ -136,28 +157,28 @@ class TestRunBulk:
         assert len(scrapes) == 2
 
     @pytest.mark.asyncio
-    async def test_run_canceled(self):
+    async def test_run_canceled(self, user, logger):
         site_one = await simple_site(last_run_status=TaskStatus.CANCELED).save()
         await simple_site().save()
 
-        res = await run_bulk_by_type("failed", MockLogger, User)
+        res = await run_bulk_by_type("failed", logger=logger, current_user=user)
         assert res == {"status": True, "scrapes_launched": 1}
         scrapes = await SiteScrapeTask.find({"site_id": site_one.id}).to_list()
         assert len(scrapes) == 1
 
     @pytest.mark.asyncio
-    async def test_run_all(self):
+    async def test_run_all(self, user, logger):
         site_one = await simple_site().save()
         await simple_site(last_run_status=TaskStatus.QUEUED).save()
         await simple_site(last_run_status=TaskStatus.IN_PROGRESS).save()
 
-        res = await run_bulk_by_type("all", MockLogger, User)
+        res = await run_bulk_by_type("all", logger=logger, current_user=user)
         assert res == {"status": True, "scrapes_launched": 1}
         scrapes = await SiteScrapeTask.find({"site_id": site_one.id}).to_list()
         assert len(scrapes) == 1
 
     @pytest.mark.asyncio
-    async def test_run_no_scrapes(self):
+    async def test_run_no_scrapes(self, user, logger):
         sites: list[Site] = []
         sites.append(simple_site(disabled=True))
         sites.append(simple_site(base_urls=[]))
@@ -167,14 +188,14 @@ class TestRunBulk:
 
         bulk_types = ["unrun", "failed", "canceled", "all"]
         for bulk_type in bulk_types:
-            res = await run_bulk_by_type(bulk_type, MockLogger, User)
+            res = await run_bulk_by_type(bulk_type, logger=logger, current_user=user)
             assert res == {"status": True, "scrapes_launched": 0}
 
         scrapes = await SiteScrapeTask.find({}).to_list()
         assert len(scrapes) == 0
 
     @pytest.mark.asyncio
-    async def test_cancel_active(self):
+    async def test_cancel_active(self, user, logger):
         site_one = await simple_site(
             status=SiteStatus.INACTIVE, last_run_status=TaskStatus.QUEUED
         ).save()
@@ -184,7 +205,7 @@ class TestRunBulk:
         await simple_scrape(site_two).save()
         scrape_one = await simple_scrape(site_three).save()
 
-        res = await run_bulk_by_type("cancel-active", MockLogger, User)
+        res = await run_bulk_by_type("cancel-active", logger=logger, current_user=user)
         assert res == {"status": True, "canceled_scrapes": 2}
         canceled_scrapes = await SiteScrapeTask.find({"status": TaskStatus.CANCELING}).to_list()
         assert len(canceled_scrapes) == 2
@@ -193,11 +214,11 @@ class TestRunBulk:
         assert active_scrapes[0].id == scrape_one.id
 
     @pytest.mark.asyncio
-    async def test_cancel_no_scrapes(self):
+    async def test_cancel_no_scrapes(self, user, logger):
         site_one = await simple_site().save()
         await simple_scrape(site_one).save()
 
-        res = await run_bulk_by_type("cancel-active", MockLogger, User)
+        res = await run_bulk_by_type("cancel-active", logger=logger, current_user=user)
         assert res == {"status": True, "canceled_scrapes": 0}
         scrapes = await SiteScrapeTask.find({"status": TaskStatus.CANCELED}).to_list()
         assert len(scrapes) == 0

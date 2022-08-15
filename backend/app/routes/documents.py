@@ -224,15 +224,10 @@ async def add_document(
     logger: Logger = Depends(get_logger),
 ):
     now = datetime.now(tz=timezone.utc)
-    user_id = None
-
-    # test is failing because we are only giving fake mock data for User
-    if current_user.id.endswith("_id") == False:
-        user_id = current_user.id
 
     new_document = RetrievedDocument(
         base_url=document.base_url,
-        uploader_id=user_id,
+        uploader_id=current_user.id,
         name=document.name,
         scrape_task_id=document.scrape_task_id,
         text_checksum=document.text_checksum,
