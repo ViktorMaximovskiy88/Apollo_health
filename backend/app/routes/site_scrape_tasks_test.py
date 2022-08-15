@@ -135,10 +135,10 @@ class TestStartScrapeTask:
 class TestRunBulk:
     @pytest.mark.asyncio
     async def test_run_unrun(self, user, logger):
-        site_one = await simple_site().save()
+        site_one = await simple_site(status=SiteStatus.NEW).save()
         await simple_site(last_run_status=TaskStatus.FAILED).save()
 
-        res = await run_bulk_by_type("unrun", logger=logger, current_user=user)
+        res = await run_bulk_by_type("new", logger=logger, current_user=user)
         assert res == {"status": True, "scrapes_launched": 1}
         scrape = await SiteScrapeTask.find({"site_id": site_one.id}).to_list()
         assert len(scrape) == 1
