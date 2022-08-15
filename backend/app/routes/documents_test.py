@@ -37,14 +37,21 @@ async def user():
         hashed_password="example",
     )
     await user.save()
-
     return user
 
 
 class MockLogger:
-    async def background_log_change(current_user: User, site_scrape_task: Document, action: str):
+    async def background_log_change(
+        self, current_user: User, site_scrape_task: Document, action: str
+    ):
+        assert current_user.id is not None
         assert type(action) == str
         return None
+
+
+@pytest_asyncio.fixture()
+async def logger():
+    return MockLogger()
 
 
 def simple_scrape(site: Site, status=TaskStatus.QUEUED) -> SiteScrapeTask:
@@ -244,7 +251,7 @@ class TestGetDocuments:
 
 class TestUploadFile:
     @pytest.mark.asyncio
-    async def test_upload_file(self, user):
+    async def test_upload_file(self, user, logger):
         URL = "https://parprdusemmitst01.blob.core.windows.net/autohunteddocs/7c8418d4-054b-4fa4-9b97-d3f75c353dd1/7c8418d4-054b-4fa4-9b97-d3f75c353dd1.pdf"  # noqa
         response = requests.get(URL)
         with tempfile.NamedTemporaryFile() as temp:
@@ -254,7 +261,7 @@ class TestUploadFile:
                 upload_file = UploadFile(
                     filename="test.pdf", file=temp, content_type="application/pdf"
                 )
-                uploaded_document = await upload_document(upload_file, user, MockLogger)
+                uploaded_document = await upload_document(upload_file, user, logger)
 
                 assert uploaded_document["success"] is True
                 assert uploaded_document["data"]["checksum"] is not None
@@ -263,7 +270,7 @@ class TestUploadFile:
                 assert uploaded_document["data"]["doc_type_confidence"] is not None
 
     @pytest.mark.asyncio
-    async def test_upload_create_document(self, user):
+    async def test_upload_create_document(self, user, logger):
         URL = "https://parprdusemmitst01.blob.core.windows.net/autohunteddocs/7c8418d4-054b-4fa4-9b97-d3f75c353dd1/7c8418d4-054b-4fa4-9b97-d3f75c353dd1.pdf"  # noqa
         response = requests.get(URL)
         with tempfile.NamedTemporaryFile() as temp:
@@ -273,7 +280,7 @@ class TestUploadFile:
                 upload_file = UploadFile(
                     filename="test.pdf", file=temp, content_type="application/pdf"
                 )
-                uploaded_document = await upload_document(upload_file, user, MockLogger)
+                uploaded_document = await upload_document(upload_file, user, logger)
 
                 assert uploaded_document["success"] is True
                 site_one = await simple_site(collection_method=CollectionMethod.Manual).save()
@@ -292,21 +299,21 @@ class TestUploadFile:
                     identified_dates=uploaded_document["data"]["identified_dates"],
                 )
 
-                doc_data = await add_document(doc, user, MockLogger)
+                doc_data = await add_document(doc, user, logger)
                 assert doc_data["success"] is True
-                uploaded_document_2 = await upload_document(upload_file, user, MockLogger)
+                uploaded_document_2 = await upload_document(upload_file, user, logger)
 
                 assert uploaded_document_2["error"] == "The document already exists!"
 
 
 class TestCreateDocuments:
     @pytest.mark.asyncio
-    async def test_create_document(self, user):
+    async def test_create_document(self, user, logger):
         site_one = await simple_site(collection_method=CollectionMethod.Manual).save()
         scrape_one = await simple_scrape(site_one, status=TaskStatus.IN_PROGRESS).save()
         doc = simple_manual_retrieved_document(site_one, scrape_one)
 
-        doc_data = await add_document(doc, user, MockLogger)
+        doc_data = await add_document(doc, user, logger)
         assert doc_data == {"success": True}
 
         first_ret_docs = await get_documents(scrape_task_id=scrape_one.id)
