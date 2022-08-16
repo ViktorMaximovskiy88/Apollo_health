@@ -177,7 +177,6 @@ export function DocDocumentEditPage({ docId }: { docId: string }) {
             doc={doc}
             docId={doc.retrieved_document_id}
             onPageChange={(page: number) => {
-              console.log('page', page, 'pageNumber', pageNumber);
               setPageNumber(page);
             }}
           />
