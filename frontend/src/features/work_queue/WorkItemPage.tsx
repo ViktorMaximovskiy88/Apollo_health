@@ -3,6 +3,7 @@ import { FormInstance, useForm } from 'antd/lib/form/Form';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useInterval } from '../../common/hooks';
+import { MainLayout } from '../../components';
 import { DocDocumentClassificationPage } from '../doc_documents/DocDocumentClassificationPage';
 import { ContentExtractionApprovalPage } from '../extractions/ContentExtractionApprovalPage';
 import { useGetUsersQuery } from '../users/usersApi';
@@ -168,9 +169,8 @@ export function WorkQueueWorkItem(props: { wq: WorkQueue; itemId: string; readon
   );
 
   return (
-    <>
-      {workItemPage(props.wq, props.itemId, form, onSubmit)}
-      {props.wq.frontend_component === 'DocDocumentClassificationPage' ? null : (
+    <MainLayout
+      sectionToolbar={
         <WorkItemSubmitBar
           itemId={props.itemId}
           readonly={props.readonly}
@@ -181,8 +181,10 @@ export function WorkQueueWorkItem(props: { wq: WorkQueue; itemId: string; readon
           setComment={setComment}
           setReassignment={setReassignment}
         />
-      )}
-    </>
+      }
+    >
+      {workItemPage(props.wq, props.itemId, form, onSubmit)}
+    </MainLayout>
   );
 }
 
