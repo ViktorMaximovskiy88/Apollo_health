@@ -5,7 +5,6 @@ import { DocDocumentTagForm } from './DocDocumentTagForm';
 import { RetrievedDocumentViewer } from '../retrieved_documents/RetrievedDocumentViewer';
 import { MainLayout } from '../../components';
 import { Tabs } from 'antd';
-import { useForm } from 'antd/lib/form/Form';
 import { dateToMoment } from '../../common/date';
 import { useUpdateDocDocumentMutation } from './docDocumentApi';
 import { DocDocument, TherapyTag, IndicationTag } from './types';
@@ -14,10 +13,13 @@ import { useEffect, useState } from 'react';
 import { maxBy, compact, groupBy } from 'lodash';
 import { WarningFilled } from '@ant-design/icons';
 
-export function DocDocumentEditPage({ docId }: { docId: string }) {
+export function DocDocumentClassificationPage(props: {
+  docId: string;
+  form: FormInstance;
+  onSubmit: (u: any) => void;
+}) {
   const navigate = useNavigate();
-  const { data: doc } = useGetDocDocumentQuery(docId);
-  const [form] = useForm();
+  const { data: doc } = useGetDocDocumentQuery(props.docId);
   const [updateDocDocument] = useUpdateDocDocumentMutation();
   const [tags, setTags] = useState([] as Array<TherapyTag | IndicationTag>);
   const [hasChanges, setHasChanges] = useState(false);
@@ -61,13 +63,14 @@ export function DocDocumentEditPage({ docId }: { docId: string }) {
 
   async function onFinish(doc: Partial<DocDocument>) {
     setIsSaving(true);
+    props.onSubmit(doc);
     try {
       const tagsByType = groupBy(tags, '_type');
       await updateDocDocument({
         ...doc,
         indication_tags: (tagsByType['indication'] ?? []) as IndicationTag[],
         therapy_tags: (tagsByType['therapy'] ?? []) as TherapyTag[],
-        _id: docId,
+        _id: props.docId,
       });
       navigate(-1);
     } catch (error) {
@@ -78,7 +81,7 @@ export function DocDocumentEditPage({ docId }: { docId: string }) {
   }
 
   function finalEffectiveDate() {
-    const values = form.getFieldsValue(true);
+    const values = props.form.getFieldsValue(true);
     const computeFromFields = compact([
       dateToMoment(values.effective_date),
       dateToMoment(values.last_reviewed_date),
@@ -90,7 +93,7 @@ export function DocDocumentEditPage({ docId }: { docId: string }) {
         ? maxBy(computeFromFields, (date) => date.unix())
         : values.first_collected_date;
 
-    form.setFieldsValue({
+    props.form.setFieldsValue({
       final_effective_date: finalEffectiveDate.startOf('day'),
     });
   }
@@ -117,7 +120,7 @@ export function DocDocumentEditPage({ docId }: { docId: string }) {
             loading={isSaving}
             type="primary"
             onClick={() => {
-              form.submit();
+              props.form.submit();
             }}
           >
             Submit
@@ -135,7 +138,7 @@ export function DocDocumentEditPage({ docId }: { docId: string }) {
             }}
             className="h-full"
             layout="vertical"
-            form={form}
+            form={props.form}
             requiredMark={false}
             initialValues={initialValues}
             onFinish={onFinish}
@@ -144,7 +147,7 @@ export function DocDocumentEditPage({ docId }: { docId: string }) {
               <Tabs.TabPane tab="Info" key="info" className="bg-white p-4 overflow-auto">
                 <DocDocumentInfoForm
                   doc={doc}
-                  form={form}
+                  form={props.form}
                   onFieldChange={() => {
                     setHasChanges(true);
                     finalEffectiveDate();
@@ -184,15 +187,4 @@ export function DocDocumentEditPage({ docId }: { docId: string }) {
       </div>
     </MainLayout>
   );
-}
-
-export function DocDocumentClassificationPage(props: {
-  docId: string;
-  form: FormInstance;
-  onSubmit: (u: any) => void;
-}) {
-  const { data: doc } = useGetDocDocumentQuery(props.docId);
-  if (!doc) return null;
-
-  return <DocDocumentEditPage docId={props.docId} />;
 }
