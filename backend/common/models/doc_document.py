@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from beanie import Indexed, PydanticObjectId
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from backend.common.core.enums import ApprovalStatus, TaskStatus
 from backend.common.models.base_document import BaseDocument
@@ -70,7 +70,7 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument):
 
 
 class SiteDocDocument(BaseDocDocument, DocDocumentLocation):
-    id: PydanticObjectId
+    id: PydanticObjectId = Field(None, alias="_id")
 
     async def get_for_site(self, doc_id: PydanticObjectId, site_id: PydanticObjectId):
         doc: SiteDocDocument = await self.get(doc_id)

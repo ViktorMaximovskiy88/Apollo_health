@@ -123,13 +123,16 @@ class ScrapeWorker:
         doc_document = await DocDocument.find_one(
             DocDocument.retrieved_document_id == retrieved_document.id
         )
-
+        print(retrieved_document.id, "retrieved_document.id")
         if doc_document:
-
+            log.debug(f"doc doc update -> {doc_document.id}")
             rt_doc_location = self.get_site_location(self.site.id, retrieved_document)
-            doc_doc_location = self.get_site_location(self.site.id, doc_document)
+            location = self.get_site_location(self.site.id, doc_document)
 
-            doc_doc_location.last_collected_date = rt_doc_location.last_collected_date
+            if location:
+                location.last_collected_date = rt_doc_location.last_collected_date
+            else:
+                doc_document.locations.append(DocDocumentLocation(**rt_doc_location.dict()))
 
             # Can be removed after text added to older docs
             doc_document.text_checksum = retrieved_document.text_checksum
@@ -183,7 +186,7 @@ class ScrapeWorker:
         self, site_id, document: RetrievedDocument | DocDocument
     ) -> RetrievedDocumentLocation | DocDocumentLocation:
         location_index = self.find_site_index(site_id, document)
-        return document.locations[location_index]
+        return document.locations[location_index] if location_index > -1 else None
 
     # TODO we temporarily update allthethings. as our code matures, this likely dies
     async def update_retrieved_document(
@@ -195,10 +198,26 @@ class ScrapeWorker:
         now = datetime.now(tz=timezone.utc)
         name = self.set_doc_name(parsed_content, download)
 
-        # TODO at all for now ... need to look at update and log diff (this is very naive right now)
         location = self.get_site_location(self.site.id, document)
-        location.context_metadata = download.metadata.dict()
-        location.last_collected_date = now
+
+        if location:
+            print("updating location")
+            location.context_metadata = download.metadata.dict()
+            location.last_collected_date = now
+        else:
+            print("appending location", len(document.locations))
+            document.locations.append(
+                RetrievedDocumentLocation(
+                    base_url=download.metadata.base_url,
+                    first_collected_date=now,
+                    last_collected_date=now,
+                    site_id=self.site.id,
+                    url=download.request.url,
+                    context_metadata=download.metadata.dict(),
+                    link_text=download.metadata.link_text,
+                )
+            )
+            print("appending location", len(document.locations))
 
         updated_doc = UpdateRetrievedDocument(
             doc_type_confidence=parsed_content["confidence"],
@@ -276,6 +295,7 @@ class ScrapeWorker:
                 if document.text_checksum is None:  # Can be removed after text added to older docs
                     text_checksum = await self.text_handler.save_text(parsed_content["text"])
                     document.text_checksum = text_checksum
+
                 log.debug("updating doc")
 
                 await self.update_retrieved_document(
@@ -283,6 +303,7 @@ class ScrapeWorker:
                     download=download,
                     parsed_content=parsed_content,
                 )
+
                 await self.update_doc_document(document)
 
             else:

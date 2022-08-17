@@ -79,7 +79,7 @@ export function DocDocumentsTable({ handleNewVersion }: DataTablePropTypes) {
   const loadData = useCallback(
     async (tableInfo: any) => {
       tableInfo.site_id = siteId;
-      tableInfo.scrape_task_id = scrapeTaskId;
+      tableInfo.scrape_task_id = searchParams.get('scrape_task_id');
       const { data } = await getDocDocumentsFn(tableInfo);
       const sites = data?.data ?? [];
       const count = data?.total ?? 0;

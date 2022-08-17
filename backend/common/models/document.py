@@ -1,45 +1,11 @@
 from datetime import datetime
 
 from beanie import Indexed, PydanticObjectId
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from backend.common.core.enums import LangCode
 from backend.common.models.base_document import BaseDocument
 from backend.common.models.shared import IndicationTag, RetrievedDocumentLocation, TherapyTag
-
-
-class UpdateRetrievedDocument(BaseModel):
-    site_id: PydanticObjectId | None = None
-    effective_date: datetime | None = None
-    end_date: datetime | None = None
-    last_updated_date: datetime | None = None
-    last_reviewed_date: datetime | None = None
-    next_review_date: datetime | None = None
-    next_update_date: datetime | None = None
-    published_date: datetime | None = None
-    identified_dates: list[datetime] | None = None
-    scrape_task_id: PydanticObjectId | None = None
-    logical_document_id: PydanticObjectId | None = None
-    logical_document_version: int | None = None
-    first_collected_date: datetime | None = None
-    last_collected_date: datetime | None = None
-    url: str | None = None
-    checksum: str | None = None
-    text_checksum: str | None = None
-    disabled: bool | None = None
-    name: str | None = None
-    document_type: str | None = None
-    doc_type_confidence: float | None = None
-    metadata: dict | None = None
-    context_metadata: dict | None = None
-    lang_code: LangCode | None = None
-    file_checksum_aliases: set[str] = set()
-
-    therapy_tags: list[TherapyTag] | None = None
-    indication_tags: list[IndicationTag] | None = None
-
-    automated_content_extraction: bool | None = None
-    automated_content_extraction_class: str | None = None
 
 
 class BaseRetrievedDocument(BaseModel):
@@ -80,21 +46,9 @@ class RetrievedDocument(BaseDocument, BaseRetrievedDocument):
         location = next((x for x in self.locations if x.site_id == site_id), None)
         return SiteRetrievedDocument(**self.dict(), **location.dict())
 
-    # async def update_for_site(
-    #     self,
-    #     doc_id: PydanticObjectId,
-    #     site_id: PydanticObjectId,
-    #     update_model: UpdateRetrievedDocument,
-    # ):
-    #     # location =
-    #     doc: RetrievedDocument = await self.get_motor_collection().update(
-    #         {"_id": doc_id, "locations.site_id": site_id}, {"$set": update_model.dict()}
-    #     )
-    #     return doc
-
 
 class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
-    id: PydanticObjectId
+    id: PydanticObjectId = Field(None, alias="_id")
 
     async def get_for_site(self, doc_id: PydanticObjectId, site_id: PydanticObjectId):
         doc: SiteRetrievedDocument = await self.get(doc_id)
@@ -111,6 +65,40 @@ class RetrievedDocumentLimitTags(RetrievedDocument):
 
     class Settings:
         projection = {"therapy_tags": {"$slice": 10}, "indication_tags": {"$slice": 10}}
+
+
+class UpdateRetrievedDocument(BaseModel):
+    id: PydanticObjectId = Field(None, alias="_id")
+    effective_date: datetime | None = None
+    end_date: datetime | None = None
+    last_updated_date: datetime | None = None
+    last_reviewed_date: datetime | None = None
+    next_review_date: datetime | None = None
+    next_update_date: datetime | None = None
+    published_date: datetime | None = None
+    identified_dates: list[datetime] | None = None
+
+    checksum: str | None = None
+    text_checksum: str | None = None
+    disabled: bool | None = None
+    name: str | None = None
+    document_type: str | None = None
+    doc_type_confidence: float | None = None
+    metadata: dict | None = None
+
+    lang_code: LangCode | None = None
+    file_extension: str | None = None
+    content_type: str | None = None
+
+    file_checksum_aliases: set[str] = set()
+
+    therapy_tags: list[TherapyTag] | None = None
+    indication_tags: list[IndicationTag] | None = None
+
+    automated_content_extraction: bool | None = None
+    automated_content_extraction_class: str | None = None
+
+    locations: list[RetrievedDocumentLocation] = []
 
 
 # Deprecated
