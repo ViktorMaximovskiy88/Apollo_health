@@ -10,16 +10,18 @@ import { DocDocument, TherapyTag, IndicationTag } from './types';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { maxBy, compact, groupBy } from 'lodash';
+import { WarningFilled } from '@ant-design/icons';
 
 export function DocDocumentClassificationPage(props: {
   docId: string;
   form: FormInstance;
-  onSubmit: (u: any) => void;
+  onSubmit: (doc: Partial<DocDocument>) => void;
 }) {
   const navigate = useNavigate();
   const { data: doc } = useGetDocDocumentQuery(props.docId);
   const [updateDocDocument] = useUpdateDocDocumentMutation();
   const [tags, setTags] = useState([] as Array<TherapyTag | IndicationTag>);
+  const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [pageNumber, setPageNumber] = useState(0);
 
@@ -60,7 +62,6 @@ export function DocDocumentClassificationPage(props: {
 
   async function onFinish(doc: Partial<DocDocument>) {
     setIsSaving(true);
-    props.onSubmit(doc);
     try {
       const tagsByType = groupBy(tags, '_type');
       await updateDocDocument({
@@ -96,58 +97,76 @@ export function DocDocumentClassificationPage(props: {
   }
 
   return (
-    <div className="flex space-x-4 overflow-hidden h-full">
-      <div className="flex-1 h-full overflow-hidden">
-        <Form
-          disabled={isSaving}
-          onFieldsChange={() => {
-            finalEffectiveDate();
-          }}
-          className="h-full"
-          layout="vertical"
-          form={props.form}
-          requiredMark={false}
-          initialValues={initialValues}
-          onFinish={onFinish}
-        >
-          <Tabs className="h-full ant-tabs-h-full">
-            <Tabs.TabPane tab="Info" key="info" className="bg-white p-4 overflow-auto">
-              <DocDocumentInfoForm
-                doc={doc}
-                form={props.form}
-                onFieldChange={() => {
-                  finalEffectiveDate();
-                }}
-              />
-            </Tabs.TabPane>
-            <Tabs.TabPane tab="Tags" key="tags" className="bg-white p-4 h-full">
-              <DocDocumentTagForm
-                tags={tags}
-                onAddTag={(tag: TherapyTag | IndicationTag) => {
-                  tags.unshift(tag);
-                  setTags([...tags]);
-                }}
-                onDeleteTag={(tag: any) => {
-                  const index = tags.findIndex((t) => t.code === tag.code);
-                  tags.splice(index, 1);
-                  setTags([...tags]);
-                }}
-                onEditTag={(tag: TherapyTag | IndicationTag) => {}}
-                currentPage={pageNumber}
-              />
-            </Tabs.TabPane>
-          </Tabs>
-        </Form>
+    <>
+      <div className="box-border h-12 flex items-center p-2 justify-end">
+        <div className="flex items-center space-x-4">
+          {hasChanges && !isSaving && (
+            <div className="text-orange-400">
+              <WarningFilled /> You have unsaved changes
+            </div>
+          )}
+        </div>
       </div>
-      <div className="flex-1 h-full overflow-hidden ant-tabs-h-full">
-        <RetrievedDocumentViewer
-          doc={doc}
-          docId={doc.retrieved_document_id}
-          onPageChange={(page: number) => {
-            setPageNumber(page);
-          }}
-        />
+      <div className="flex space-x-4 overflow-hidden h-full">
+        <div className="flex-1 h-full overflow-hidden">
+          <Form
+            disabled={isSaving}
+            onFieldsChange={() => {
+              setHasChanges(true);
+              finalEffectiveDate();
+            }}
+            className="h-full"
+            layout="vertical"
+            form={props.form}
+            requiredMark={false}
+            initialValues={initialValues}
+            onFinish={(doc: Partial<DocDocument>) => {
+              props.onSubmit(doc);
+              onFinish(doc);
+            }}
+          >
+            <Tabs className="h-full ant-tabs-h-full">
+              <Tabs.TabPane tab="Info" key="info" className="bg-white p-4 overflow-auto">
+                <DocDocumentInfoForm
+                  doc={doc}
+                  form={props.form}
+                  onFieldChange={() => {
+                    setHasChanges(true);
+                    finalEffectiveDate();
+                  }}
+                />
+              </Tabs.TabPane>
+              <Tabs.TabPane tab="Tags" key="tags" className="bg-white p-4 h-full">
+                <DocDocumentTagForm
+                  tags={tags}
+                  onAddTag={(tag: TherapyTag | IndicationTag) => {
+                    tags.unshift(tag);
+                    setTags([...tags]);
+                    setHasChanges(true);
+                  }}
+                  onDeleteTag={(tag: any) => {
+                    const index = tags.findIndex((t) => t.code === tag.code);
+                    tags.splice(index, 1);
+                    setTags([...tags]);
+                    setHasChanges(true);
+                  }}
+                  onEditTag={(tag: TherapyTag | IndicationTag) => {}}
+                  currentPage={pageNumber}
+                />
+              </Tabs.TabPane>
+            </Tabs>
+          </Form>
+        </div>
+        <div className="flex-1 h-full overflow-hidden ant-tabs-h-full">
+          <RetrievedDocumentViewer
+            doc={doc}
+            docId={doc.retrieved_document_id}
+            onPageChange={(page: number) => {
+              setPageNumber(page);
+            }}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
