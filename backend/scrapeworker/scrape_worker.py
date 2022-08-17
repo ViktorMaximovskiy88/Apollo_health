@@ -123,7 +123,6 @@ class ScrapeWorker:
         doc_document = await DocDocument.find_one(
             DocDocument.retrieved_document_id == retrieved_document.id
         )
-        print(retrieved_document.id, "retrieved_document.id")
         if doc_document:
             log.debug(f"doc doc update -> {doc_document.id}")
             rt_doc_location = self.get_site_location(self.site.id, retrieved_document)
@@ -201,11 +200,9 @@ class ScrapeWorker:
         location = self.get_site_location(self.site.id, document)
 
         if location:
-            print("updating location")
             location.context_metadata = download.metadata.dict()
             location.last_collected_date = now
         else:
-            print("appending location", len(document.locations))
             document.locations.append(
                 RetrievedDocumentLocation(
                     base_url=download.metadata.base_url,
@@ -217,7 +214,6 @@ class ScrapeWorker:
                     link_text=download.metadata.link_text,
                 )
             )
-            print("appending location", len(document.locations))
 
         updated_doc = UpdateRetrievedDocument(
             doc_type_confidence=parsed_content["confidence"],
