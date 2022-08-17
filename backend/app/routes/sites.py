@@ -178,6 +178,22 @@ async def get_site_docs(
 
 
 @router.get(
+    "/{site_id}/documents/{doc_id}",
+    response_model=SiteRetrievedDocument,
+    dependencies=[Security(get_current_user)],
+)
+async def get_site_doc_by_id(
+    site_id: PydanticObjectId,
+    doc_id: PydanticObjectId,
+):
+    doc = await RetrievedDocument.find_one({"_id": doc_id, "locations.site_id": site_id})
+    if not doc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    return doc.for_site(site_id)
+
+
+@router.get(
     "/{site_id}/doc-documents",
     response_model=list[SiteDocDocument],
     dependencies=[Security(get_current_user)],
@@ -194,17 +210,15 @@ async def get_site_doc_docs(
 
 
 @router.get(
-    "/{site_id}/documents/{doc_id}",
-    response_model=SiteRetrievedDocument,
+    "/{site_id}/doc-documents/{doc_id}",
+    response_model=SiteDocDocument,
     dependencies=[Security(get_current_user)],
 )
-async def get_site_doc_by_id(
+async def get_site_doc_doc_by_id(
     site_id: PydanticObjectId,
     doc_id: PydanticObjectId,
 ):
-    doc = await RetrievedDocument.find_one({"_id": doc_id, "locations.site_id": site_id}).project(
-        RetrievedDocumentLimitTags
-    )
+    doc = await DocDocument.find_one({"_id": doc_id, "locations.site_id": site_id})
     if not doc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
