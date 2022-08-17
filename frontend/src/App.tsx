@@ -72,7 +72,7 @@ function App() {
             <Route path="edit" element={<SiteEditPage />} />
             <Route path="scrapes" element={<CollectionsPage />} />
             <Route path="documents">
-              <Route path="retrieved" element={<SiteRetreivedDocumentsPage />} />
+              <Route index element={<SiteRetreivedDocumentsPage />} />
               <Route path=":docId">
                 <Route path="edit" element={<DocumentEditPage />} />
               </Route>

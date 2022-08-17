@@ -23,6 +23,8 @@ from backend.common.models.document import (
 from backend.common.models.site import ActiveUrlResponse, NewSite, Site, UpdateSite
 from backend.common.models.user import User
 
+from ...common.models.doc_document import DocDocument, DocDocumentLimitTags, SiteDocDocument
+
 router = APIRouter(
     prefix="/sites",
     tags=["Sites"],
@@ -170,6 +172,22 @@ async def get_site_docs(
     docs = (
         await RetrievedDocument.find({"locations.site_id": site_id})
         .project(RetrievedDocumentLimitTags)
+        .to_list()
+    )
+    return [doc.for_site(site_id) for doc in docs]
+
+
+@router.get(
+    "/{site_id}/doc-documents",
+    response_model=list[SiteDocDocument],
+    dependencies=[Security(get_current_user)],
+)
+async def get_site_doc_docs(
+    site_id: PydanticObjectId,
+):
+    docs = (
+        await DocDocument.find({"locations.site_id": site_id})
+        .project(DocDocumentLimitTags)
         .to_list()
     )
     return [doc.for_site(site_id) for doc in docs]

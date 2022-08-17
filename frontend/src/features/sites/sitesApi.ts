@@ -3,6 +3,7 @@ import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
 import { Site } from './types';
 import { RetrievedDocument } from '../retrieved_documents/types';
+import { DocDocument } from '../doc_documents/types';
 
 export const sitesApi = createApi({
   reducerPath: 'sitesApi',
@@ -35,6 +36,10 @@ export const sitesApi = createApi({
     }),
     getSiteRetrievedDocuments: builder.query<RetrievedDocument[], string | undefined>({
       query: (id) => `/sites/${id}/documents`,
+      providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
+    }),
+    getSiteDocDocuments: builder.query<DocDocument[], string | undefined>({
+      query: (id) => `/sites/${id}/doc-documents`,
       providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
     }),
 
@@ -75,4 +80,6 @@ export const {
   useDeleteSiteMutation,
   useGetChangeLogQuery,
   useGetSiteRetrievedDocumentsQuery,
+  useGetSiteDocDocumentsQuery,
+  useLazyGetSiteDocDocumentsQuery,
 } = sitesApi;

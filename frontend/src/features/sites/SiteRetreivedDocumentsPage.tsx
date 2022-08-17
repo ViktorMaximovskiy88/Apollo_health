@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Button } from 'antd';
 import { MainLayout } from '../../components';
 import { SiteDocumentsTable } from '../collections/SiteDocumentsTable';
@@ -27,9 +27,9 @@ export function SiteRetreivedDocumentsPage() {
       }
     >
       <SiteDocumentsTable />
-      {newDocumentModalVisible ? (
+      {newDocumentModalVisible && (
         <AddDocumentModal setVisible={setNewDocumentModalVisible} siteId={params.siteId} />
-      ) : null}
+      )}
     </MainLayout>
   );
 }

@@ -51,6 +51,8 @@ from backend.scrapeworker.playbook import ScrapePlaybook
 from backend.scrapeworker.scrapers import scrapers
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
 
+from ..common.models.shared import DocDocumentLocation
+
 log = logging.getLogger(__name__)
 
 
@@ -121,13 +123,13 @@ class ScrapeWorker:
         doc_document = await DocDocument.find_one(
             DocDocument.retrieved_document_id == retrieved_document.id
         )
+
         if doc_document:
 
-            index = self.find_site_index(self.site.id, retrieved_document)
-            last_collected_date = doc_document.locations[index].last_collected_date
+            rt_doc_location = self.get_site_location(self.site.id, retrieved_document)
+            doc_doc_location = self.get_site_location(self.site.id, doc_document)
 
-            doc_location_index = self.find_site_index(self.site.id, doc_document)
-            doc_document.locations[doc_location_index].last_collected_date = last_collected_date
+            doc_doc_location.last_collected_date = rt_doc_location.last_collected_date
 
             # Can be removed after text added to older docs
             doc_document.text_checksum = retrieved_document.text_checksum
@@ -158,7 +160,9 @@ class ScrapeWorker:
             identified_dates=retrieved_document.identified_dates,
             locations=retrieved_document.locations,
         )
-        doc_document.final_effective_date = calc_final_effective_date(doc_document)
+
+        rt_doc_location = self.get_site_location(self.site.id, retrieved_document)
+        doc_document.final_effective_date = calc_final_effective_date(doc_document, rt_doc_location)
         await create_and_log(self.logger, await self.get_user(), doc_document)
 
     def set_doc_name(self, parsed_content: dict, download: DownloadContext):
@@ -175,6 +179,12 @@ class ScrapeWorker:
     def find_site_index(self, site_id, document: RetrievedDocument | DocDocument):
         return next((i for i, item in enumerate(document.locations) if item.site_id == site_id), -1)
 
+    def get_site_location(
+        self, site_id, document: RetrievedDocument | DocDocument
+    ) -> RetrievedDocumentLocation | DocDocumentLocation:
+        location_index = self.find_site_index(site_id, document)
+        return document.locations[location_index]
+
     # TODO we temporarily update allthethings. as our code matures, this likely dies
     async def update_retrieved_document(
         self,
@@ -186,9 +196,9 @@ class ScrapeWorker:
         name = self.set_doc_name(parsed_content, download)
 
         # TODO at all for now ... need to look at update and log diff (this is very naive right now)
-        location_index = self.find_site_index(self.site.id, document)
-        document.locations[location_index].context_metadata = download.metadata.dict()
-        document.locations[location_index].last_collected_date = now
+        location = self.get_site_location(self.site.id, document)
+        location.context_metadata = download.metadata.dict()
+        location.last_collected_date = now
 
         updated_doc = UpdateRetrievedDocument(
             doc_type_confidence=parsed_content["confidence"],
@@ -207,7 +217,7 @@ class ScrapeWorker:
             metadata=parsed_content["metadata"],
             name=name,
             text_checksum=document.text_checksum,
-            locaations=document.locations,
+            locations=document.locations,
         )
         await update_and_log_diff(self.logger, await self.get_user(), document, updated_doc)
         return updated_doc

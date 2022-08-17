@@ -66,7 +66,7 @@ async def get_documents(
 
         query["_id"] = {"$in": scrape_task.retrieved_document_ids}
     if site_id:
-        query["site_id"] = site_id
+        query["locations.site_id"] = site_id
     if automated_content_extraction:
         query["automated_content_extraction"] = automated_content_extraction
 

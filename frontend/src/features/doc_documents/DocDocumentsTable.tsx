@@ -8,7 +8,7 @@ import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 import { GridPaginationToolbar } from '../../components';
 import { useDocumentColumns as useColumns } from './useDocDocumentColumns';
-import { DocDocument } from "./types";
+import { DocDocument } from './types';
 
 import {
   docDocumentTableState,
@@ -17,8 +17,7 @@ import {
   setDocDocumentTableSkip,
   setDocDocumentTableSort,
 } from './docDocumentsSlice';
-import { useGetChangeLogQuery, useLazyGetDocDocumentsQuery } from './docDocumentApi';
-
+import { useLazyGetDocDocumentsQuery } from './docDocumentApi';
 
 const useControlledPagination = ({
   isActive,
@@ -67,28 +66,26 @@ interface DataTablePropTypes {
   handleNewVersion: (data: DocDocument) => void;
 }
 
-export function DocDocumentsTable({
-  handleNewVersion,
-}: DataTablePropTypes) {
+export function DocDocumentsTable({ handleNewVersion }: DataTablePropTypes) {
   // Trigger update every 10 seconds by invalidating memoized callback
   const { isActive, setActive, watermark } = useInterval(10000);
-  const params = useParams();
+  const { siteId } = useParams();
   const [searchParams] = useSearchParams();
   const scrapeTaskId = searchParams.get('scrape_task_id');
 
-  const columns = useColumns({handleNewVersion});
+  const columns = useColumns({ handleNewVersion });
   const [getDocDocumentsFn] = useLazyGetDocDocumentsQuery();
 
   const loadData = useCallback(
     async (tableInfo: any) => {
-      tableInfo.site_id = params.siteId;
-      tableInfo.scrape_task_id = searchParams.get('scrape_task_id')
+      tableInfo.site_id = siteId;
+      tableInfo.scrape_task_id = scrapeTaskId;
       const { data } = await getDocDocumentsFn(tableInfo);
       const sites = data?.data ?? [];
       const count = data?.total ?? 0;
       return { data: sites, count };
     },
-    [getDocDocumentsFn, watermark] // eslint-disable-line react-hooks/exhaustive-deps
+    [getDocDocumentsFn, siteId, scrapeTaskId, watermark] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const filterProps = useDataTableFilter(docDocumentTableState, setDocDocumentTableFilter);
@@ -108,4 +105,3 @@ export function DocDocumentsTable({
     />
   );
 }
-
