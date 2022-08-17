@@ -100,7 +100,7 @@ function ManualCollectionButton(props: any) {
     let response: any = await runScrape(site!._id);
     if (response) {
       refetch();
-      navigate(`../documents?scrape_task_id=${response.data._id}`);
+      navigate(`../doc-documents?scrape_task_id=${response.data._id}`);
     }
   }
   async function handleCancelScrape() {
@@ -108,7 +108,7 @@ function ManualCollectionButton(props: any) {
     refetch();
   }
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
-
+  
   if (activeStatuses.includes(site.last_run_status)) {
     return (
       <Button className="ml-auto" onClick={handleCancelScrape}>

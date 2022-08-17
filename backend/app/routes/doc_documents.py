@@ -21,6 +21,7 @@ from backend.common.models.doc_document import (
     calc_final_effective_date,
 )
 from backend.common.models.document import RetrievedDocument
+from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.storage.text_handler import TextHandler
 
@@ -46,13 +47,24 @@ async def get_target(id: PydanticObjectId) -> DocDocument:
     dependencies=[Security(get_current_user)],
 )
 async def read_doc_documents(
+    site_id: PydanticObjectId | None = None,
+    scrape_task_id: PydanticObjectId | None = None,
     limit: int | None = None,
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
-    query = DocDocument.find({}).project(DocDocumentLimitTags)
-    return await query_table(query, limit, skip, sorts, filters)
+    query = {}
+    if site_id:
+        query['site_id'] = site_id
+
+    if scrape_task_id:
+        task = await SiteScrapeTask.get(scrape_task_id)
+        if task:
+            query['retrieved_document_id'] = { '$in': task.retrieved_document_ids }
+
+    document_query = DocDocument.find(query).project(DocDocumentLimitTags)
+    return await query_table(document_query, limit, skip, sorts, filters)
 
 
 @router.get(

@@ -9,6 +9,8 @@ from pymongo import ReturnDocument
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
+from backend.common.models.doc_document import DocDocument
+from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask, UpdateSiteScrapeTask
 from backend.common.models.user import User
@@ -91,13 +93,27 @@ async def start_scrape_task(
             status=TaskStatus.IN_PROGRESS,
             collection_method=CollectionMethod.Manual,
         )
+
+        # get the latest active site_scrape_task id
+        previous_scrape_task = await SiteScrapeTask.find_one(
+            {"site_id": site_id}, sort=[("start_time", -1)]
+        )
+        if previous_scrape_task:
+            site_scrape_task.documents_found = previous_scrape_task.documents_found
+            site_scrape_task.retrieved_document_ids = previous_scrape_task.retrieved_document_ids
+
+            await create_and_log(logger, current_user, site_scrape_task)
+        else:
+            await create_and_log(logger, current_user, site_scrape_task)
+
     else:
         site_scrape_task = SiteScrapeTask(
             site_id=site_id, queued_time=datetime.now(tz=timezone.utc)
         )
 
-    # NOTE: Could use a transaction here
-    await create_and_log(logger, current_user, site_scrape_task)
+        # NOTE: Could use a transaction here
+        await create_and_log(logger, current_user, site_scrape_task)
+
     await site.update(
         Set(
             {
@@ -185,14 +201,12 @@ async def cancel_all_site_scrape_task(
     )
     if site:
         if site.collection_method == CollectionMethod.Manual:
-
             last_site_task = await SiteScrapeTask.find_one(
                 {
                     "site_id": site_id,
                     "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]},
                 }
             )
-
             if last_site_task and last_site_task.documents_found == 0:
                 await SiteScrapeTask.get_motor_collection().update_many(
                     {"site_id": site_id, "status": {"$in": [TaskStatus.IN_PROGRESS]}},
@@ -207,6 +221,26 @@ async def cancel_all_site_scrape_task(
                     },
                     {"$set": {"status": TaskStatus.FINISHED}},
                 )
+
+                # change retrieve document if last_collected_date < today
+                retrieved_documents: list[RetrievedDocument] = (
+                    await RetrievedDocument.find_many(
+                        {"_id": {"$in": last_site_task.retrieved_document_ids}}
+                    )
+                    .sort("-first_collected_date")
+                    .to_list()
+                )
+                for r_doc in retrieved_documents:
+                    if datetime.date(r_doc.last_collected_date) < datetime.today().date():
+                        await RetrievedDocument.get_motor_collection().find_one_and_update(
+                            {"_id": r_doc.id},
+                            {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
+                        )
+                        await DocDocument.get_motor_collection().find_one_and_update(
+                            {"retrieved_document_id": r_doc.id},
+                            {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
+                        )
+
                 await site.update(Set({Site.last_run_status: TaskStatus.FINISHED}))
         else:
             # If the site is found, fetch all tasks and cancel all queued or in progress tasks

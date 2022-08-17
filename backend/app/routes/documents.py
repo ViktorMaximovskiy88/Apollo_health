@@ -2,6 +2,7 @@ import tempfile
 from datetime import datetime, timezone
 
 from beanie import PydanticObjectId
+from beanie.odm.operators.update.general import Set
 from fastapi import APIRouter, Depends, HTTPException, Security, UploadFile, status
 from fastapi.responses import StreamingResponse
 
@@ -132,7 +133,8 @@ async def upload_document(
     content = await file.read()
     checksum = hash_bytes(content)
     content_type = file.content_type
-    file_extension = file.content_type.split("/")[1]
+    name = file.filename
+    file_extension = name.split(".")[-1]
     dest_path = f"{checksum}.{file_extension}"
 
     document = await RetrievedDocument.find_one(
@@ -140,42 +142,41 @@ async def upload_document(
         or checksum in RetrievedDocument.file_checksum_aliases
     )
 
-    temp_path = ""
-    with tempfile.NamedTemporaryFile(delete=False, suffix="." + file_extension) as tmp:
+    with tempfile.NamedTemporaryFile(delete=True, suffix="." + file_extension) as tmp:
         tmp.write(content)
         temp_path = tmp.name
 
-    download = DownloadContext(request=Request(url=temp_path), file_extension=file_extension)
-    parsed_content = await parse_by_type(temp_path, download, [])
+        download = DownloadContext(request=Request(url=temp_path), file_extension=file_extension)
+        parsed_content = await parse_by_type(temp_path, download, [])
 
-    text_checksum = await text_handler.save_text(parsed_content["text"])
-    text_checksum_document = await RetrievedDocument.find_one(
-        RetrievedDocument.text_checksum == text_checksum
-    )
+        text_checksum = await text_handler.save_text(parsed_content["text"])
+        text_checksum_document = await RetrievedDocument.find_one(
+            RetrievedDocument.text_checksum == text_checksum
+        )
 
-    # use first hash to see if their is a retrieved document
-    if document or text_checksum_document:
-        return {"error": "The document already exists"}
-    else:
-        doc_client = DocumentStorageClient()
-        if not doc_client.object_exists(dest_path):
-            print("Uploading file...")
-            doc_client.write_object(dest_path, temp_path, file.content_type)
+        # use first hash to see if their is a retrieved document
+        if document or text_checksum_document:
+            return {"error": "The document already exists!"}
+        else:
+            doc_client = DocumentStorageClient()
+            if not doc_client.object_exists(dest_path):
+                print("Uploading file...")
+                doc_client.write_object(dest_path, temp_path, file.content_type)
 
-        return {
-            "success": True,
-            "data": {
-                "checksum": checksum,
-                "text_checksum": text_checksum,
-                "content_type": content_type,
-                "file_extension": file_extension,
-                "metadata": parsed_content["metadata"],
-                "doc_type_confidence": str(parsed_content["confidence"]),
-                "therapy_tags": parsed_content["therapy_tags"],
-                "indication_tags": parsed_content["indication_tags"],
-                "identified_dates": parsed_content["identified_dates"],
-            },
-        }
+            return {
+                "success": True,
+                "data": {
+                    "checksum": checksum,
+                    "text_checksum": text_checksum,
+                    "content_type": content_type,
+                    "file_extension": file_extension,
+                    "metadata": parsed_content["metadata"],
+                    "doc_type_confidence": str(parsed_content["confidence"]),
+                    "therapy_tags": parsed_content["therapy_tags"],
+                    "indication_tags": parsed_content["indication_tags"],
+                    "identified_dates": parsed_content["identified_dates"],
+                },
+            }
 
 
 @router.post("/{id}", response_model=RetrievedDocument)
@@ -222,6 +223,7 @@ async def add_document(
     logger: Logger = Depends(get_logger),
 ):
     now = datetime.now(tz=timezone.utc)
+
     link_text = document.metadata["link_text"] if "link_text" in document.metadata else None
 
     new_document = RetrievedDocument(
@@ -296,8 +298,22 @@ async def add_document(
     await create_and_log(logger, current_user, doc_document)
 
     scrape_task = await SiteScrapeTask.get(document.scrape_task_id)
-    await scrape_task.update(
-        {"$inc": {"documents_found": 1}, "$push": {"retrieved_document_ids": new_document.id}}
-    )
+
+    if document.id:
+        # get retrieved_document from Doc Document
+        doc_document = await DocDocument.find_one({"_id": document.id})
+        if doc_document:
+            index = scrape_task.retrieved_document_ids.index(doc_document.retrieved_document_id)
+            if index >= 0:
+                new_retrieved_documents = scrape_task.retrieved_document_ids
+                new_retrieved_documents[index] = new_document.id
+                await scrape_task.update(
+                    Set({SiteScrapeTask.retrieved_document_ids: new_retrieved_documents})
+                )
+
+    else:
+        await scrape_task.update(
+            {"$inc": {"documents_found": 1}, "$push": {"retrieved_document_ids": new_document.id}}
+        )
 
     return {"success": True}
