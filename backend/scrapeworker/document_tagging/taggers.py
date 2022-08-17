@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
-from backend.scrapeworker.document_tagging.indication_tagging import IndicationTagger
-from backend.scrapeworker.document_tagging.therapy_tagging import TherapyTagger
+from backend.scrapeworker.document_tagging.indication_tagging import IndicationInstance
+from backend.scrapeworker.document_tagging.therapy_tagging import TherapyInstance
 
 
 @dataclass
 class Taggers:
-    indication: IndicationTagger
-    therapy: TherapyTagger
+    indication: IndicationInstance
+    therapy: TherapyInstance

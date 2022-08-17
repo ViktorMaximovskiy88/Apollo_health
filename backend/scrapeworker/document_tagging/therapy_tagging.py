@@ -41,3 +41,6 @@ class TherapyTagger:
                 tags.add(tag)
 
         return list(tags)
+
+
+TherapyInstance = TherapyTagger()
