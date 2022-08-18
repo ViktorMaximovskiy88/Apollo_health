@@ -117,6 +117,7 @@ export const useBreadcrumbs = async () => {
         }
         i++;
       }
+      break;
     }
 
     Promise.all(promises).then((results) => dispatch(setBreadcrumbs(results)));
