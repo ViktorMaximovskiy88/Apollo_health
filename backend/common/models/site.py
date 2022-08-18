@@ -14,6 +14,13 @@ class AttrSelector(BaseModel):
     resource_address: bool = False
 
 
+class FocusTherapyConfig(BaseModel):
+    doc_type: str
+    start_separator: str | None = None
+    end_separator: str | None = None
+    all_focus: bool = False
+
+
 class ScrapeMethodConfiguration(BaseModel):
     document_extensions: list[str]
     url_keywords: list[str]
@@ -25,6 +32,7 @@ class ScrapeMethodConfiguration(BaseModel):
     follow_link_keywords: list[str]
     follow_link_url_keywords: list[str]
     attr_selectors: list[AttrSelector] = []
+    focus_therapy_configs: list[FocusTherapyConfig] = []
 
 
 class UpdateScrapeMethodConfiguration(BaseModel):
@@ -38,6 +46,7 @@ class UpdateScrapeMethodConfiguration(BaseModel):
     wait_for_timeout_ms: int = 0
     search_in_frames: bool = False
     attr_selectors: list[AttrSelector] | None = None
+    focus_therapy_configs: list[FocusTherapyConfig] | None = None
 
 
 class BaseUrl(BaseModel):
@@ -83,11 +92,22 @@ class Site(BaseDocument, NewSite):
 
 
 # Deprecated
+class NoFocusConfigsScrapeConfig(ScrapeMethodConfiguration):
+    focus_therapy_configs: list[FocusTherapyConfig] | None = None
+
+
+class NoFocusConfigsSite(Site):
+    scrape_method_configuration: NoFocusConfigsScrapeConfig
+
+    class Collection:
+        name = "Site"
+
+
 class NoAttrSelectorsScrapeConfig(ScrapeMethodConfiguration):
     attr_selectors: list[AttrSelector] | None = None
 
 
-class NoAttrSelectorSite(Site):
+class NoAttrSelectorSite(NoFocusConfigsSite):
     scrape_method_configuration: NoAttrSelectorsScrapeConfig
 
     class Collection:

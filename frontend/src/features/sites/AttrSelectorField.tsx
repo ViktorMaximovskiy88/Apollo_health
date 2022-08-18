@@ -3,6 +3,8 @@ import { MinusCircleOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-
 import { FormListFieldData } from 'antd/lib/form/FormList';
 import { useState } from 'react';
 
+import { Hr } from '../../components';
+
 interface InputPropTypes {
   name: number;
   field: { fieldKey?: number };
@@ -19,7 +21,7 @@ function FieldHeaders({ fields }: HeaderPropTypes) {
     <div className="grid grid-cols-8 space-x-1 whitespace-nowrap">
       <div className="flex items-center col-span-2">
         <h4 className="mr-1">Attribute Name</h4>
-        <Tooltip className="mb-2 ml-px" title="Name of attribute to search for">
+        <Tooltip className="mb-2 ml-px" title="Text in name of attribute to search for">
           <QuestionCircleOutlined />
         </Tooltip>
       </div>
@@ -39,7 +41,7 @@ function FieldHeaders({ fields }: HeaderPropTypes) {
         <h4 className="mr-1">Is Resource</h4>
         <Tooltip
           className="mb-2 ml-px"
-          title="Check if attribute with matching Attribute Name contains a direct
+          title="Attribute with matching Attribute Name contains a direct
       link to the document"
         >
           <QuestionCircleOutlined />
@@ -51,19 +53,32 @@ function FieldHeaders({ fields }: HeaderPropTypes) {
 
 function Header() {
   const { Text } = Typography;
-  const contentItems = (
+  const contentItems = [
     <div>
       <p>
-        <Text strong>Example:</Text> The following configuration would match the element below
+        <Text strong>Examples:</Text> The following configurations will match the elements below
       </p>
+    </div>,
+    <Hr />,
+    <div>
       <p>
         <Text strong>Attribute Name:</Text> onclick <br />
         <Text strong>Attribute Value:</Text> /policy/ <br />
         <Text strong>Contains Text:</Text> Download
       </p>
       <Text code>&lt;a onclick="/documents/policy/file.pdf"&gt;Download File&lt;/a&gt;</Text>
-    </div>
-  );
+    </div>,
+    <Hr />,
+    <div>
+      <p>
+        <Text strong>Attribute Name:</Text> data- <br />
+        <Text strong>Attribute Value:</Text>
+        <br />
+        <Text strong>Contains Text:</Text>
+      </p>
+      <Text code>&lt;a data-v-abc123="getDocument"&gt;Download File&lt;/a&gt;</Text>
+    </div>,
+  ];
 
   const title = (
     <Text strong>Custom Selectors to Search Specific Attributes on &lt;a/&gt; Tags</Text>

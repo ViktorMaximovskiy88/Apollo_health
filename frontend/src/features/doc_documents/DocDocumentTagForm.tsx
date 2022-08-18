@@ -1,18 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
-import { Button, Radio, Tag, Checkbox, Input } from 'antd';
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { Button, Radio, Checkbox, Input } from 'antd';
 import { debounce, orderBy } from 'lodash';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { TherapyTag, IndicationTag } from './types';
 
-function labelColorMap(type: string) {
-  const colorMap: any = {
-    indication: 'blue',
-    therapy: 'green',
-    'therapy-group': 'purple',
-  };
-  return colorMap[type];
-}
+import { EditTag, ReadTag } from './TagRow';
 
 export function DocDocumentTagForm(props: {
   tags: Array<TherapyTag | IndicationTag>;
@@ -25,10 +17,11 @@ export function DocDocumentTagForm(props: {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredList, setFilteredList] = useState(tags);
   const [tagTypeFilter, setTagTypeFilter] = useState(['indication', 'therapy', 'therapy-group']);
+  const [editTags, setEditTags] = useState<{ [index: string]: TherapyTag | IndicationTag }>({});
   const [pageFilter, setPageFilter] = useState('page');
 
   const hasActiveFilters = () => {
-    return pageFilter == 'page' || tagTypeFilter.length > 0 || searchTerm;
+    return pageFilter === 'page' || tagTypeFilter.length > 0 || searchTerm;
   };
 
   const sortOrder = (tags: any[], pageFilter: string) => {
@@ -53,8 +46,8 @@ export function DocDocumentTagForm(props: {
   }, [searchTerm, tagTypeFilter, pageFilter, tags, currentPage]);
 
   const applyFilter = (tag: TherapyTag | IndicationTag) => {
-    const validPage = pageFilter == 'doc' ? true : currentPage == tag.page;
-    console.debug(currentPage == tag.page, 'currentPage', currentPage, 'tag.page', tag.page);
+    const validPage = pageFilter === 'doc' ? true : currentPage === tag.page;
+    console.debug(currentPage === tag.page, 'currentPage', currentPage, 'tag.page', tag.page);
     return tagTypeFilter.includes(tag._type) && validPage;
   };
 
@@ -86,6 +79,40 @@ export function DocDocumentTagForm(props: {
     estimateSize: () => 72,
     overscan: 10,
   });
+
+  const handleToggleEdit = (
+    tag: IndicationTag | TherapyTag,
+    editState: boolean,
+    cancel: boolean = false
+  ) => {
+    if (!editState && !cancel) {
+      onEditTag(editTags[tag.id]);
+    }
+    setEditTags((prevState) => {
+      const update = { ...prevState };
+      if (editState === true) {
+        update[tag.id] = { ...tag };
+      } else {
+        delete update[tag.id];
+      }
+      return update;
+    });
+  };
+
+  const handleEditTag = (id: string, field: string, value: any) => {
+    setEditTags((prevState) => {
+      const update = { ...prevState };
+      const target = update[id];
+      if (field === 'name' || field === 'text') {
+        target[field] = value;
+      } else if (field === 'page' && value != null) {
+        target[field] = value - 1;
+      } else if (field === 'focus') {
+        (target as TherapyTag)[field] = value;
+      }
+      return update;
+    });
+  };
 
   return (
     <>
@@ -128,55 +155,27 @@ export function DocDocumentTagForm(props: {
         >
           {rowVirtualizer.getVirtualItems().map((virtualRow) => {
             const tag = filteredList[virtualRow.index];
-            return (
-              <div
-                className="flex flex-col py-2 justify-center"
-                style={{
-                  borderTop: '1px solid #ccc',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: `${virtualRow.size}px`,
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
-                key={virtualRow.index}
-                ref={virtualRow.measureElement}
-              >
-                <div className="flex">
-                  <div className="flex flex-1 font-bold">{tag.name}</div>
-                </div>
-                <div className="flex">
-                  <div className="flex items-center flex-1">{tag.text}</div>
-                  <div className="flex items-center px-2">{tag.page + 1}</div>
-                  <div className="flex items-center w-32 justify-center">
-                    <Tag
-                      color={labelColorMap(tag._type)}
-                      className="capitalize select-none cursor-default"
-                    >
-                      {tag._type}
-                    </Tag>
-                  </div>
-                  <div className="flex justify-center space-x-2">
-                    <Button
-                      onClick={() => {
-                        onEditTag(tag);
-                      }}
-                    >
-                      <EditOutlined className="cursor-pointer" />
-                    </Button>
-
-                    <Button
-                      onClick={() => {
-                        onDeleteTag(tag);
-                      }}
-                    >
-                      <DeleteOutlined className="cursor-pointer" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            );
+            const readOnly = !editTags[tag.id];
+            if (readOnly) {
+              return (
+                <ReadTag
+                  onDeleteTag={onDeleteTag}
+                  onToggleEdit={handleToggleEdit}
+                  tag={tag}
+                  virtualRow={virtualRow}
+                />
+              );
+            } else {
+              return (
+                <EditTag
+                  onDeleteTag={onDeleteTag}
+                  onEditTag={handleEditTag}
+                  onToggleEdit={handleToggleEdit}
+                  tag={tag}
+                  virtualRow={virtualRow}
+                />
+              );
+            }
           })}
         </div>
       </div>
