@@ -19,9 +19,9 @@ const useSyncedValue = () => {
     if (!doc) return;
 
     if (documentType === doc.document_type) {
-      form.resetFields(['document_families']);
+      form.resetFields(['document_family']);
     } else {
-      form.setFieldsValue({ document_families: [] });
+      form.setFieldsValue({ document_family: null });
     }
   }, [doc, documentType, form]);
 };
@@ -52,7 +52,7 @@ const useSyncedOptions = (): [
         value: df._id,
       };
     });
-    setOptions(newOptions);
+    setOptions([{ label: 'None', value: null }, ...newOptions]);
   }, [documentFamilies]);
 
   return [options, setOptions];
@@ -66,8 +66,8 @@ export function DocumentFamily() {
 
   return (
     <div className="flex space-x-8">
-      <Form.Item name="document_families" label="Document Family" className="flex-1">
-        <Select mode="multiple" allowClear placeholder="None selected">
+      <Form.Item name="document_family" label="Document Family" className="flex-1">
+        <Select allowClear placeholder="Options loading...">
           {options.map(({ label, value }) => (
             <Option key={value} value={value}>
               {label}

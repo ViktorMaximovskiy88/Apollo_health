@@ -50,6 +50,8 @@ export interface DocDocument extends BaseDocument {
   document_type: string;
   doc_type_confidence: number;
 
+  document_family: string | null;
+
   effective_date: string;
   last_reviewed_date: string;
   last_updated_date: string;
@@ -95,6 +97,6 @@ export interface DocumentFamilyType extends BaseDocument {
 }
 
 export interface DocumentFamilyOption {
-  label?: string;
-  value?: string;
+  label: string;
+  value: string | null;
 }

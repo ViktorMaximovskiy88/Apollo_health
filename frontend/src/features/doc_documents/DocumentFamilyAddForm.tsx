@@ -32,17 +32,16 @@ const useAddDocumentFamily = () => {
   return addDocumentFamily;
 };
 
-const useSaveInMultiselect = (): ((documentFamilyId: string) => void) => {
+const useSaveInSelect = (): ((documentFamilyId: string) => void) => {
   const docDocumentForm = useContext(DocDocumentFormContext);
 
-  const saveInMultiselect = (documentFamilyId: string): void => {
-    const selected = docDocumentForm.getFieldValue('document_families');
+  const saveInSelect = (documentFamilyId: string): void => {
     docDocumentForm.setFieldsValue({
-      document_families: [...selected, documentFamilyId],
+      document_family: documentFamilyId,
     });
   };
 
-  return saveInMultiselect;
+  return saveInSelect;
 };
 
 const DocumentType = () => {
@@ -59,8 +58,6 @@ const SiteName = () => {
   const { docDocumentId: docId } = useParams();
   const { data: doc } = useGetDocDocumentQuery(docId);
   const { data: site } = useGetSiteQuery(doc?.site_id);
-
-  if (!site) return null;
 
   return (
     <Form.Item label="Site Name" className="flex-1">
@@ -93,13 +90,13 @@ export function AddDocumentFamily({
   const [isSaving, setIsSaving] = useState(false);
   const [documentFamilyForm] = Form.useForm();
   const addDocumentFamily = useAddDocumentFamily();
-  const saveInMultiselect = useSaveInMultiselect();
+  const saveInSelect = useSaveInSelect();
 
   const onFinish = async (documentFamily: DocumentFamilyType) => {
     setIsSaving(true);
 
     const documentFamilyId = await addDocumentFamily(documentFamily);
-    saveInMultiselect(documentFamilyId);
+    saveInSelect(documentFamilyId);
 
     setOptions([...options, { value: documentFamilyId, label: documentFamily.name }]);
 
