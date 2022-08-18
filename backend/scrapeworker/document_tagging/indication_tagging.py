@@ -57,3 +57,6 @@ class IndicationTagger:
                     )
                 )
         return list(tags)
+
+
+indication_tagger = IndicationTagger()
