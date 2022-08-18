@@ -14,4 +14,16 @@ export const handlers = [
   rest.post('http://localhost/api/v1/sites/site-id1', async (req, res, ctx) => {
     return res(ctx.json({}));
   }),
+  // to silence error
+  rest.get('http://localhost/api/v1/sites/62bc78771c5e93fce7d5c0cf', async (req, res, ctx) => {
+    return res(ctx.json(null));
+  }),
+  // to silence error
+  rest.post('http://localhost/api/v1/sites/62bc78771c5e93fce7d5c0cf', async (req, res, ctx) => {
+    return res(ctx.json(null));
+  }),
+  // to silence error
+  rest.get('http://localhost/api/v1/users/', async (req, res, ctx) => {
+    return res(ctx.json([]));
+  }),
 ];
