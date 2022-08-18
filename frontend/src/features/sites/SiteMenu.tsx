@@ -14,7 +14,9 @@ export function SiteMenu() {
       key: 'documents',
       label: (
         <Link
-          to={`/sites/${siteId}/documents${scrapeTaskId ? `?scrape_task_id=${scrapeTaskId}` : ''}`}
+          to={`/sites/${siteId}/documents${
+            scrapeTaskId ? `?scrape_task_id=${scrapeTaskId}` : null
+          }`}
         >
           Retrieved Documents
         </Link>
@@ -25,7 +27,7 @@ export function SiteMenu() {
       label: (
         <Link
           to={`/sites/${siteId}/doc-documents${
-            scrapeTaskId ? `?scrape_task_id=${scrapeTaskId}` : ''
+            scrapeTaskId ? `?scrape_task_id=${scrapeTaskId}` : null
           }`}
         >
           Documents
