@@ -6,6 +6,7 @@ export function SiteMenu() {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const current = location.pathname.split('/')[3];
+  const scrapeTaskId = searchParams.get('scrape_task_id');
 
   const subpages = [
     { key: 'scrapes', label: <Link to={`/sites/${siteId}/scrapes`}>Collections</Link> },
