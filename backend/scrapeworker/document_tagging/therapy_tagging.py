@@ -43,4 +43,4 @@ class TherapyTagger:
         return list(tags)
 
 
-TherapyInstance = TherapyTagger()
+therapy_tagger = TherapyTagger()

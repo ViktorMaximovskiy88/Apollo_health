@@ -59,4 +59,4 @@ class IndicationTagger:
         return list(tags)
 
 
-IndicationInstance = IndicationTagger()
+indication_tagger = IndicationTagger()
