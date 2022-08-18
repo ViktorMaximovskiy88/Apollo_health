@@ -1,8 +1,9 @@
 import { Layout, Menu } from 'antd';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 
 export function SiteMenu() {
   const { siteId } = useParams();
+  const [searchParams] = useSearchParams();
   const location = useLocation();
   const current = location.pathname.split('/')[3];
 
@@ -12,7 +13,7 @@ export function SiteMenu() {
     { key: 'doc-documents', label: <Link to={`/sites/${siteId}/doc-documents`}>Documents</Link> },
     {
       key: 'extraction',
-      label: <Link to={`/sites/${siteId}/extraction`}>Content Extraction</Link>
+      label: <Link to={`/sites/${siteId}/extraction`}>Content Extraction</Link>,
     },
     {
       key: 'edit',
