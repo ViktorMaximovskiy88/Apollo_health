@@ -37,6 +37,14 @@ describe(`CollectionsPage`, () => {
     mockedUseParams.mockImplementation(() => ({
       siteId: 'site-id1',
     }));
+    const mockedUseLocation = useLocation as jest.Mock<Location>;
+    mockedUseLocation.mockImplementation(() => ({
+      pathname: 'site-id1',
+      key: 'site-id1',
+      state: '',
+      search: '',
+      hash: '',
+    }));
 
     // fixes `act` warning
     // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
