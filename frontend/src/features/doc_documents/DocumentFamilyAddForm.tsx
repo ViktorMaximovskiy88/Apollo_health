@@ -1,60 +1,62 @@
-import { Form, Modal, Spin, Button } from 'antd';
-import { DocumentFamilyOption, DocumentFamilyType } from './types';
+import { Form, FormInstance, Input, Spin } from 'antd';
 import { useGetSiteQuery } from '../sites/sitesApi';
-import { Name } from './DocumentFamilyNameField';
-import { useAddDocumentFamilyMutation } from './documentFamilyApi';
 import { useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
-import { useContext, useState } from 'react';
-import { DocDocumentFormContext } from './DocumentFamilyAddNew';
+import { ReactNode } from 'react';
+import { DocumentFamilyType } from './types';
+import { useLazyGetDocumentFamilyByNameQuery } from './documentFamilyApi';
+import { Rule } from 'antd/lib/form';
 
-const useAddDocumentFamily = () => {
-  const [addDocumentFamilyFn] = useAddDocumentFamilyMutation();
-
+export const Name = () => {
+  const [getDocumentFamilyByName] = useLazyGetDocumentFamilyByNameQuery();
   const { docDocumentId: docId } = useParams();
   const { data: doc } = useGetDocDocumentQuery(docId);
+  const siteId = doc?.site_id;
 
+  const mustBeUniqueToSite = () => ({
+    async validator(_: Rule, name: string) {
+      if (!name) return;
+      if (!siteId) return Promise.reject(new Error(`Site ID not found. Please try again.`));
+      const { data: documentFamily } = await getDocumentFamilyByName({ name, siteId });
+      if (documentFamily) {
+        return Promise.reject(
+          new Error(`Document Family Name "${documentFamily.name}" already exists on this site!`)
+        );
+      }
+      return Promise.resolve();
+    },
+  });
+
+  return (
+    <div className="flex space-x-8">
+      <Form.Item
+        name="name"
+        label="Document Family Name"
+        className="flex-1"
+        rules={[
+          mustBeUniqueToSite,
+          { required: true, message: 'Please input a Document Family Name!' },
+        ]}
+        required
+      >
+        <Input />
+      </Form.Item>
+    </div>
+  );
+};
+
+const ReadonlyDocumentType = () => {
   const form = Form.useFormInstance();
-  const documentType = Form.useWatch('document_type', form);
-
-  async function addDocumentFamily(documentFamily: DocumentFamilyType): Promise<string> {
-    if (!doc) {
-      throw new Error('DocDocument not found');
-    }
-
-    documentFamily.site_id = doc.site_id;
-    documentFamily.document_type = documentType;
-
-    const { _id } = await addDocumentFamilyFn(documentFamily).unwrap();
-    return _id;
-  }
-
-  return addDocumentFamily;
-};
-
-const useSaveInSelect = (): ((documentFamilyId: string) => void) => {
-  const docDocumentForm = useContext(DocDocumentFormContext);
-
-  const saveInSelect = (documentFamilyId: string): void => {
-    docDocumentForm.setFieldsValue({
-      document_family: documentFamilyId,
-    });
-  };
-
-  return saveInSelect;
-};
-
-const DocumentType = () => {
-  const docDocumentForm = useContext(DocDocumentFormContext);
-  const documentType = docDocumentForm.getFieldValue('document_type');
+  const documentType = form.getFieldValue('document_type');
   return (
     <Form.Item label="Document Type" className="flex-1">
       <b>{documentType}</b>
     </Form.Item>
   );
 };
+const DocumentTypePicker = () => null; // TODO
 
-const SiteName = () => {
+const ReadonlySite = () => {
   const { docDocumentId: docId } = useParams();
   const { data: doc } = useGetDocDocumentQuery(docId);
   const { data: site } = useGetSiteQuery(doc?.site_id);
@@ -65,78 +67,42 @@ const SiteName = () => {
     </Form.Item>
   );
 };
-
-const Footer = ({ onCancel, isSaving }: { onCancel: () => void; isSaving: boolean }) => (
-  <div className="ant-modal-footer mt-3">
-    <Button onClick={onCancel}>Cancel</Button>
-    <Button type="primary" htmlType="submit" loading={isSaving}>
-      Submit
-    </Button>
-  </div>
-);
+const SitePicker = () => null; // TODO
 
 interface AddDocumentFamilyPropTypes {
-  options: DocumentFamilyOption[];
-  setOptions: (options: DocumentFamilyOption[]) => void;
-  closeModal: () => void;
-  visible: boolean;
+  initialValues: Partial<DocumentFamilyType>;
+  onFinish: (documentFamily: DocumentFamilyType) => Promise<void>;
+  form: FormInstance;
+  isSaving: boolean;
+  lockSiteDocType: boolean;
+  children: ReactNode;
 }
 export function AddDocumentFamily({
-  options,
-  setOptions,
-  closeModal,
-  visible,
+  initialValues,
+  onFinish,
+  form,
+  isSaving,
+  lockSiteDocType,
+  children,
 }: AddDocumentFamilyPropTypes) {
-  const [isSaving, setIsSaving] = useState(false);
-  const [documentFamilyForm] = Form.useForm();
-  const addDocumentFamily = useAddDocumentFamily();
-  const saveInSelect = useSaveInSelect();
-
-  const onFinish = async (documentFamily: DocumentFamilyType) => {
-    setIsSaving(true);
-
-    const documentFamilyId = await addDocumentFamily(documentFamily);
-    saveInSelect(documentFamilyId);
-
-    setOptions([...options, { value: documentFamilyId, label: documentFamily.name }]);
-
-    documentFamilyForm.resetFields();
-    closeModal();
-
-    setIsSaving(false);
-  };
-
-  const onCancel = () => {
-    documentFamilyForm.resetFields();
-    closeModal();
-  };
-
   return (
-    <Modal
-      visible={visible}
-      onCancel={closeModal}
-      title="Add Document Family"
-      width="50%"
-      okText="Submit"
-      footer={null}
+    <Form
+      initialValues={initialValues}
+      onFinish={onFinish}
+      form={form}
+      disabled={isSaving}
+      name="add-document-family"
+      layout="vertical"
+      className="h-full"
+      autoComplete="off"
+      validateTrigger={['onBlur']}
     >
-      <Form
-        onFinish={onFinish}
-        form={documentFamilyForm}
-        name="add-document-family"
-        layout="vertical"
-        className="h-full"
-        autoComplete="off"
-        disabled={isSaving}
-        validateTrigger={['onBlur']}
-      >
-        <Name />
-        <div className="flex space-x-8">
-          <DocumentType />
-          <SiteName />
-        </div>
-        <Footer onCancel={onCancel} isSaving={isSaving} />
-      </Form>
-    </Modal>
+      <Name />
+      <div className="flex space-x-8">
+        {lockSiteDocType ? <ReadonlyDocumentType /> : <DocumentTypePicker />}
+        {lockSiteDocType ? <ReadonlySite /> : <SitePicker />}
+      </div>
+      {children}
+    </Form>
   );
 }

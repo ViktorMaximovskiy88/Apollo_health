@@ -17,9 +17,9 @@ const useSyncedValue = () => {
     if (!doc) return;
 
     if (documentType === doc.document_type) {
-      form.resetFields(['document_family']);
+      form.resetFields(['document_family_id']);
     } else {
-      form.setFieldsValue({ document_family: null });
+      form.setFieldsValue({ document_family_id: null });
     }
   }, [doc, documentType, form]);
 };
@@ -64,7 +64,7 @@ export function DocumentFamily() {
 
   return (
     <div className="flex space-x-8">
-      <Form.Item name="document_family" label="Document Family" className="flex-1">
+      <Form.Item name="document_family_id" label="Document Family" className="flex-1">
         <Select allowClear options={options} placeholder="Options loading..." />
       </Form.Item>
       <AddNewDocumentFamilyButton options={options} setOptions={setOptions} />
