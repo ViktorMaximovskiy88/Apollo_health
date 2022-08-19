@@ -173,7 +173,6 @@ class AioDownloader:
                     download.response.from_aio_response(response)
                     self.log.info(f"Attempting download {url} response")
                 except ClientHttpProxyError as proxy_error:
-                    self.log.info(f"Attempting download {url} response")
                     self.log.error(f"Client Proxy Error AIO {url}")
                     # we catch so we can 'log' on the task and reraise for retry
                     download.invalid_responses.append(
