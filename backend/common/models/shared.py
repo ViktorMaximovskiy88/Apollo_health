@@ -32,7 +32,7 @@ class TherapyTag(BaseModel):
     code: str
     name: str
     score: float = 0
-    relevancy: float = 0
+    focus: bool = False
 
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))
