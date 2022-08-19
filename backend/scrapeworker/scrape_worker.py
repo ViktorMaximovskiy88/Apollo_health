@@ -160,7 +160,7 @@ class ScrapeWorker:
 
     def set_doc_name(self, parsed_content: dict, download: DownloadContext):
         self.log.info(
-            f"title={parsed_content['title']} link_text={download.metadata.link_text} file_name={download.file_name} request_url={download.request.url}"  # noqa
+            f"title='{parsed_content['title']}' link_text='{download.metadata.link_text}' file_name='{download.file_name}' request_url='{download.request.url}'"  # noqa
         )
         return (
             parsed_content["title"]
