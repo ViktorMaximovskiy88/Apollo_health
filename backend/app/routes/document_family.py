@@ -37,7 +37,7 @@ async def read_document_families(
         }
     )
     if site_id:
-        query = query.find({"sites": PydanticObjectId(site_id)})
+        query = query.find({"site_id": PydanticObjectId(site_id)})
     if document_type:
         query = query.find({"document_type": document_type})
 
@@ -48,10 +48,18 @@ async def read_document_families(
     "/search",
 )
 async def read_document_family_by_name(
-    name: str = "",
+    name: str,
+    site_id: str,
     current_user: User = Security(get_current_user),
 ):
-    found = await DocumentFamily.find_one({"name": name})
+    if not site_id:
+        raise HTTPException(
+            detail=f"site_id was not given, instead recieved: {site_id}",
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+        )
+    if not name:
+        return None
+    found = await DocumentFamily.find_one({"name": name, "site_id": PydanticObjectId(site_id)})
     return found
 
 
@@ -76,10 +84,7 @@ async def create_document_family(
         name=document_family.name,
         document_type=document_family.document_type,
         description=document_family.description,
-        sites=document_family.sites,
-        document_type_threshold=document_family.document_type_threshold,
-        therapy_tag_status_threshold=document_family.therapy_tag_status_threshold,
-        lineage_threshold=document_family.lineage_threshold,
+        site_id=document_family.site_id,
         relevance=document_family.relevance,
         disabled=False,
     )

@@ -89,10 +89,7 @@ export interface DocumentFamilyType extends BaseDocument {
   name: string;
   document_type: string;
   description: string;
-  sites: string[];
-  document_type_threshold: number;
-  therapy_tag_status_threshold: number;
-  lineage_threshold: number;
+  site_id: string;
   relevance: string[];
 }
 

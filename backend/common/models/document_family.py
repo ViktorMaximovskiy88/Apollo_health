@@ -6,12 +6,9 @@ from backend.common.models.base_document import BaseDocument
 
 class NewDocumentFamily(BaseModel):
     name: str
-    document_type: str | None = None
+    document_type: str
     description: str | None = None
-    sites: list[PydanticObjectId] = []
-    document_type_threshold: int | None = None
-    therapy_tag_status_threshold: int | None = None
-    lineage_threshold: int | None = None
+    site_id: PydanticObjectId
     relevance: list[str] = []
 
 
@@ -19,10 +16,7 @@ class UpdateDocumentFamily(BaseModel):
     name: str | None = None
     document_type: str | None = None
     description: str | None = None
-    sites: list[PydanticObjectId] = []
-    document_type_threshold: int | None = None
-    therapy_tag_status_threshold: int | None = None
-    lineage_threshold: int | None = None
+    site_id: PydanticObjectId | None = None
     relevance: list[str] = []
     disabled: bool | None = None
 

@@ -22,7 +22,7 @@ const useAddDocumentFamily = () => {
       throw new Error('DocDocument not found');
     }
 
-    documentFamily.sites = [doc.site_id];
+    documentFamily.site_id = doc.site_id;
     documentFamily.document_type = documentType;
 
     const { _id } = await addDocumentFamilyFn(documentFamily).unwrap();
