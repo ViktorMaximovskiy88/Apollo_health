@@ -372,12 +372,13 @@ class ScrapeWorker:
             yield attempt, proxy_setting
 
     async def wait_for_desired_content(self, page: Page):
-        if len(self.site.scrape_method_configuration.wait_for) > 0:
+        if len(self.site.scrape_method_configuration.wait_for) == 0:
             return
 
         selector = ", ".join(
             f":text('{wf}')" for wf in self.site.scrape_method_configuration.wait_for
         )
+
         await page.locator(selector).first.wait_for(selector)
 
     @asynccontextmanager
