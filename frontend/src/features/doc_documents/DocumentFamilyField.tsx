@@ -7,8 +7,6 @@ import { useGetDocDocumentQuery } from './docDocumentApi';
 import { FormInstance } from 'antd/lib/form';
 import { AddNewDocumentFamilyButton } from './DocumentFamilyAddNew';
 
-const { Option } = Select;
-
 const useSyncedValue = () => {
   const { docDocumentId: docId } = useParams();
   const { data: doc } = useGetDocDocumentQuery(docId);
@@ -67,13 +65,7 @@ export function DocumentFamily() {
   return (
     <div className="flex space-x-8">
       <Form.Item name="document_family" label="Document Family" className="flex-1">
-        <Select allowClear placeholder="Options loading...">
-          {options.map(({ label, value }) => (
-            <Option key={value} value={value}>
-              {label}
-            </Option>
-          ))}
-        </Select>
+        <Select allowClear options={options} placeholder="Options loading..." />
       </Form.Item>
       <AddNewDocumentFamilyButton options={options} setOptions={setOptions} />
     </div>
