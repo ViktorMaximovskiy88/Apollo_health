@@ -43,9 +43,9 @@ from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocs
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.scrapeworker.common.utils import get_extension_from_path_like
-from backend.scrapeworker.document_tagging.indication_tagging import IndicationTagger
+from backend.scrapeworker.document_tagging.indication_tagging import indication_tagger
 from backend.scrapeworker.document_tagging.taggers import Taggers
-from backend.scrapeworker.document_tagging.therapy_tagging import TherapyTagger
+from backend.scrapeworker.document_tagging.therapy_tagging import therapy_tagger
 from backend.scrapeworker.file_parsers import parse_by_type
 from backend.scrapeworker.playbook import ScrapePlaybook
 from backend.scrapeworker.scrapers import scrapers
@@ -76,6 +76,7 @@ class ScrapeWorker:
         scrape_task: SiteScrapeTask,
         site: Site,
     ) -> None:
+        _log = logging.getLogger(str(scrape_task.id)[:8])
         self.playwright = playwright
         self.get_browser_context = get_browser_context
         self.scrape_task = scrape_task
@@ -83,10 +84,11 @@ class ScrapeWorker:
         self.seen_urls = set()
         self.doc_client = DocumentStorageClient()
         self.text_handler = TextHandler()
-        self.downloader = AioDownloader()
+        self.downloader = AioDownloader(_log)
         self.playbook = ScrapePlaybook(self.site.playbook)
         self.logger = Logger()
-        self.taggers = Taggers(indication=IndicationTagger(), therapy=TherapyTagger())
+        self.log = _log
+        self.taggers = Taggers(indication=indication_tagger, therapy=therapy_tagger)
 
     @alru_cache
     async def get_user(self) -> User:
@@ -115,7 +117,7 @@ class ScrapeWorker:
         key = f"{url}{filename}" if filename else url
         if key in self.seen_urls:
             return False
-        log.info(f"unseen target -> {key}")
+        self.log.info(f"unseen target -> {key}")
         self.seen_urls.add(key)
         return True
 
@@ -168,8 +170,8 @@ class ScrapeWorker:
         await create_and_log(self.logger, await self.get_user(), doc_document)
 
     def set_doc_name(self, parsed_content: dict, download: DownloadContext):
-        log.info(
-            f"set_doc_name title='{parsed_content['title']}' link='{download.metadata.link_text}' file='{download.file_name}' url='{download.request.url}'"  # noqa
+        self.log.info(
+            f"title='{parsed_content['title']}' link_text='{download.metadata.link_text}' file_name='{download.file_name}' request_url='{download.request.url}'"  # noqa
         )
         return (
             parsed_content["title"]
@@ -254,8 +256,18 @@ class ScrapeWorker:
 
             # log response error
             if not (temp_path and checksum):
+                self.log.warn("Received an unexpected html response")
                 await link_retrieved_task.save()
-                # prob not continue anymore...
+                continue
+
+            # TODO can we separate the concept of extensions to scrape on
+            # and ext we expect to download? for now just html
+            if (
+                download.file_extension == "html"
+                and "html" not in self.scrape_task.scrape_method_configuration.document_extensions
+            ):
+                self.log.warn("Received an unexpected html response")
+                await link_retrieved_task.save()
                 continue
 
             link_retrieved_task.file_metadata = FileMetadata(checksum=checksum, **download.dict())
@@ -264,20 +276,25 @@ class ScrapeWorker:
             parsed_content = await parse_by_type(temp_path, download, self.taggers)
             if parsed_content is None:
                 await link_retrieved_task.save()
-                log.info(f"{download.request.url} {download.file_extension} cannot be parsed")
+                self.log.info(f"{download.request.url} {download.file_extension} cannot be parsed")
                 # prob not continue anymore...
                 continue
 
             document = None
             dest_path = f"{checksum}.{download.file_extension}"
 
-            log.info(f"dest_path={dest_path} temp_path={temp_path}")
+            self.log.info(f"dest_path={dest_path} temp_path={temp_path}")
 
             if not self.doc_client.object_exists(dest_path):
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
                 await self.scrape_task.update(Inc({SiteScrapeTask.new_documents_found: 1}))
 
-            if download.file_extension == "html":
+            # TODO i think this needs to not live here... a lambda to do the 'preview' thing
+            # right now opt-in to it
+            if (
+                download.file_extension == "html"
+                and "html" in self.scrape_task.scrape_method_configuration.document_extensions
+            ):
                 async with self.playwright_context(url) as (page, _context):
                     dest_path = f"{checksum}.{download.file_extension}.pdf"
                     await page.goto(download.request.url, wait_until="domcontentloaded")
@@ -287,12 +304,11 @@ class ScrapeWorker:
             document = await RetrievedDocument.find_one(RetrievedDocument.checksum == checksum)
 
             if document:
+                self.log.info("updating doc")
 
                 if document.text_checksum is None:  # Can be removed after text added to older docs
                     text_checksum = await self.text_handler.save_text(parsed_content["text"])
                     document.text_checksum = text_checksum
-
-                log.debug("updating doc")
 
                 await self.update_retrieved_document(
                     document=document,
@@ -303,7 +319,7 @@ class ScrapeWorker:
                 await self.update_doc_document(document)
 
             else:
-                log.debug("creating doc")
+                self.log.info("creating doc")
                 now = datetime.now(tz=timezone.utc)
                 name = self.set_doc_name(parsed_content, download)
                 text_checksum = await self.text_handler.save_text(parsed_content["text"])
@@ -392,30 +408,26 @@ class ScrapeWorker:
         ):
             i = attempt.retry_state.attempt_number - 1
             proxy, proxy_setting = proxy_settings[i % n_proxies]
-            log.info(
+            self.log.info(
                 f"{i} Trying proxy {proxy and proxy.name} - {proxy_setting and proxy_setting.get('server')}"  # noqa
             )
             yield attempt, proxy_setting
 
     async def wait_for_desired_content(self, page: Page):
-        try:
-            if len(self.site.scrape_method_configuration.wait_for) > 0:
-                await page.locator(
-                    ", ".join(
-                        f":text('{wf}')" for wf in self.site.scrape_method_configuration.wait_for
-                    )
-                ).first.wait_for()
-        except Exception as ex:
-            logging.error(ex)
-            raise Exception(
-                f"Wait for dom elements {self.site.scrape_method_configuration.wait_for} have timed out"  # noqa
-            )
+        if len(self.site.scrape_method_configuration.wait_for) == 0:
+            return
+
+        selector = ", ".join(
+            f":text('{wf}')" for wf in self.site.scrape_method_configuration.wait_for
+        )
+
+        await page.locator(selector).first.wait_for(selector)
 
     @asynccontextmanager
     async def playwright_context(
         self, url: str
     ) -> AsyncGenerator[tuple[Page, BrowserContext, LinkBaseTask], None]:
-        log.info(f"Creating context for {url}")
+        self.log.info(f"Creating context for {url}")
         context: BrowserContext | None = None
         page: Page | None = None
         response: PlaywrightResponse | None = None
@@ -438,11 +450,14 @@ class ScrapeWorker:
                 await stealth_async(page)
                 page.on("dialog", handle_dialog)
 
-                log.info(f"Awating response for {url}")
+                self.log.info(f"Awating response for {url}")
                 # TODO lets set this timeout lower generally and let exceptions set it higher
-                response = await page.goto(url, timeout=10000, wait_until="domcontentloaded")
+                response = await page.goto(url, timeout=15000, wait_until="domcontentloaded")
+                self.log.info(f"Received response for {url}")
+
                 proxy_url = proxy.get("server") if proxy else None
                 if not response.ok:
+                    self.log.info(f"Received invalid response for {url}")
                     invalid_response = InvalidResponse(
                         proxy_url=proxy_url,
                         status=response.status,
@@ -450,7 +465,7 @@ class ScrapeWorker:
                     )
 
                     link_base_task.invalid_responses.append(invalid_response)
-                    logging.error(invalid_response)
+                    self.log.error(invalid_response)
                     continue
 
                 headers = await response.all_headers()
@@ -471,6 +486,9 @@ class ScrapeWorker:
 
         try:
             yield page, context
+        except Exception as ex:
+            # NOTE this is a big change in our error handling
+            self.log.error(ex)
         finally:
             if context:
                 await context.close()
@@ -542,7 +560,6 @@ class ScrapeWorker:
     async def run_scrape(self):
         all_downloads: list[DownloadContext] = []
         base_urls: list[str] = [base_url.url for base_url in self.active_base_urls()]
-        log.info(f"base_urls={base_urls}")
 
         # lets log this at runtime for debuggability
         await self.scrape_task.update(
@@ -551,7 +568,10 @@ class ScrapeWorker:
 
         for url in base_urls:
             # skip the parse step and download
+            self.log.info(f"Run scrape for {url}")
+
             if self.is_artifact_file(url):
+                self.log.info(f"Skip scrape & queue download for {url}")
                 download = DownloadContext(
                     request=Request(url=url), metadata=Metadata(base_url=url)
                 )
@@ -560,6 +580,7 @@ class ScrapeWorker:
 
             all_downloads += await self.queue_downloads(url, url)
             if self.site.scrape_method_configuration.follow_links:
+                self.log.info(f"Follow links for {url}")
                 for nested_url in await self.follow_links(url):
                     all_downloads += await self.queue_downloads(nested_url, base_url=url)
 
@@ -568,6 +589,8 @@ class ScrapeWorker:
             if self.should_process_download(download):
                 await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
                 tasks.append(self.attempt_download(download))
+            else:
+                self.log.info(f"Skip download {url}")
 
         await self.wait_for_completion_or_cancel(tasks)
         await self.downloader.close()

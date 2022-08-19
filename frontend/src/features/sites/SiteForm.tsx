@@ -54,6 +54,7 @@ export function SiteForm(props: {
         follow_link_keywords: [],
         follow_link_url_keywords: [],
         attr_selectors: [],
+        focus_therapy_configs: [],
       },
     };
   }
@@ -84,7 +85,11 @@ export function SiteForm(props: {
       <Form.Item name="playbook" label="Playbook">
         <Input.TextArea />
       </Form.Item>
-      <CollectionMethodComponent followLinks={followLinks} form={form} />
+      <CollectionMethodComponent
+        followLinks={followLinks}
+        form={form}
+        initialValues={initialValues}
+      />
       <Form.Item name="tags" label="Tags">
         <Select mode="tags" />
       </Form.Item>

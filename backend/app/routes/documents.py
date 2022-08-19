@@ -27,6 +27,9 @@ from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.models import DownloadContext, Request
+from backend.scrapeworker.document_tagging.indication_tagging import indication_tagger
+from backend.scrapeworker.document_tagging.taggers import Taggers
+from backend.scrapeworker.document_tagging.therapy_tagging import therapy_tagger
 from backend.scrapeworker.file_parsers import parse_by_type
 
 router = APIRouter(
@@ -147,7 +150,8 @@ async def upload_document(
         temp_path = tmp.name
 
         download = DownloadContext(request=Request(url=temp_path), file_extension=file_extension)
-        parsed_content = await parse_by_type(temp_path, download, [])
+        taggers = Taggers(indication=indication_tagger, therapy=therapy_tagger)
+        parsed_content = await parse_by_type(temp_path, download, taggers)
 
         text_checksum = await text_handler.save_text(parsed_content["text"])
         text_checksum_document = await RetrievedDocument.find_one(

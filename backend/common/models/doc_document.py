@@ -135,3 +135,16 @@ def calc_final_effective_date(doc: DocDocument, location: DocDocumentLocation) -
     )
 
     return final_effective_date
+
+
+# Deprecated
+class NoFocusTherapyTag(TherapyTag):
+    relevancy: float | None = None
+    focus: bool | None = None
+
+
+class NoFocusTherapyTagDocDocument(DocDocument):
+    therapy_tags: list[NoFocusTherapyTag] = []
+
+    class Collection:
+        name = "DocDocument"

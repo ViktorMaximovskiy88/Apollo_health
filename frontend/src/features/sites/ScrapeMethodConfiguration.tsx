@@ -6,6 +6,7 @@ function DocumentExtensions() {
     { value: 'pdf', label: 'PDF (.pdf)' },
     { value: 'xlsx', label: 'Excel (.xlsx)' },
     { value: 'docx', label: 'Word (.docx)' },
+    { value: 'html', label: 'HTML (.html)' },
   ];
 
   return (

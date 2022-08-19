@@ -60,7 +60,7 @@ class UpdateTherapyTag(BaseModel):
     page: int | None = None
     code: str | None = None
     score: float | None = None
-    relevancy: float | None = None
+    focus: bool | None = None
 
 
 class UpdateIndicationTag(BaseModel):

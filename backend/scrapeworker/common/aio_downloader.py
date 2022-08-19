@@ -1,4 +1,3 @@
-import logging
 import ssl
 import tempfile
 from dataclasses import dataclass
@@ -35,7 +34,8 @@ class AioDownloader:
 
     session: ClientSession
 
-    def __init__(self):
+    def __init__(self, log):
+        self.log = log
         self.session = ClientSession(connector=TCPConnector(ssl=self.permissive_ssl_context()))
         self.rate_limiter = RateLimiter()
 
@@ -75,7 +75,7 @@ class AioDownloader:
             )
 
         download.response.status = response.status
-        logging.info(f"Downloaded {download.request.url}, got {response.status}")
+        self.log.info(f"Downloaded {download.request.url}, got {response.status}")
         return response
 
     # just return the aio useable proxy list
@@ -124,7 +124,7 @@ class AioDownloader:
             proxy, proxy_settings = (
                 aio_proxies[i % proxy_count] if proxy_count > 0 else (None, None)
             )
-            logging.info(
+            self.log.info(
                 f"{i} Using proxy {proxy and proxy.name} ({proxy_settings and proxy_settings.proxy})"  # noqa E501
             )
             yield attempt, proxy_settings
@@ -150,7 +150,9 @@ class AioDownloader:
             download.response.content_length
         )  # temp, do actual file size (these should 99.9% match but arent the same)
         download.file_hash = hasher.hexdigest()
-
+        self.log.info(
+            f"content_type={download.content_type} mimetype={download.mimetype} file_hash={download.file_hash}"  # noqa
+        )
         return download.file_path, download.file_hash
 
     async def try_download_to_tempfile(
@@ -159,16 +161,19 @@ class AioDownloader:
         proxies: list[tuple[Proxy | None, ProxySettings | None]] = [],
     ):
         url = download.request.url
-        logging.info(f"Attempting download {url}")
+        self.log.info(f"Before attempting download {url}")
 
         async for attempt, proxy in self.proxy_with_backoff(proxies):
             with attempt:
+                self.log.info(f"Attempting download {url}")
                 response: ClientResponse
                 proxy_url = proxy.proxy if proxy else None
                 try:
                     response = await self.send_request(download, proxy)
                     download.response.from_aio_response(response)
+                    self.log.info(f"Attempting download {url} response")
                 except ClientHttpProxyError as proxy_error:
+                    self.log.error(f"Client Proxy Error AIO {url}")
                     # we catch so we can 'log' on the task and reraise for retry
                     download.invalid_responses.append(
                         InvalidResponse(
@@ -179,18 +184,21 @@ class AioDownloader:
                     )
                     raise proxy_error
 
+                self.log.info(f"Before link log {url} response")
+
                 if not response.ok:
                     invalid_response = InvalidResponse(
                         proxy_url=proxy_url, **download.response.dict()
                     )
                     download.invalid_responses.append(invalid_response)
-                    logging.error(invalid_response)
+                    self.log.error(invalid_response)
                     # if its 404 skip... maybe others we retry?
                     yield (None, None)
 
                 download.valid_response = ValidResponse(
                     proxy_url=proxy_url, **download.response.dict()
                 )
+
                 # We only need this now due to the xlsx lib needing an ext (derp)
                 # TODO see if we can unhave this; the excel lib is dumb
                 download.guess_extension()

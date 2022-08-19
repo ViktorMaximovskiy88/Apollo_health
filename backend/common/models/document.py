@@ -102,7 +102,19 @@ class UpdateRetrievedDocument(BaseModel):
 
 
 # Deprecated
-class CollectionTimeRetrievedDocument(RetrievedDocument):
+class NoFocusTherapyTag(TherapyTag):
+    relevancy: float | None = None
+    focus: bool | None = None
+
+
+class NoFocusTherapyTagRetDocument(RetrievedDocument):
+    therapy_tags: list[NoFocusTherapyTag] = []
+
+    class Collection:
+        name = "RetrievedDocument"
+
+
+class CollectionTimeRetrievedDocument(NoFocusTherapyTagRetDocument):
     collection_time: datetime | None = None
 
     class Collection:
