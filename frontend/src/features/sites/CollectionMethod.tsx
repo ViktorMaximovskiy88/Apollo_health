@@ -1,8 +1,9 @@
 import { Checkbox, Input, Form, FormInstance, Select, Radio, Tooltip, Switch } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
-import { CollectionMethod } from './types';
+import { CollectionMethod, Site } from './types';
 import { useGetProxiesQuery } from '../proxies/proxiesApi';
 import { AttrSelectors } from './AttrSelectorField';
+import { FocusTherapyConfig } from './FocusTherapyConfig';
 
 function CollectionMethodRadio() {
   const collections = [
@@ -145,7 +146,7 @@ function SearchInFrames() {
     </Form.Item>
   );
 }
-function ScrapeMethodConfiguration() {
+function ScrapeMethodConfiguration({ initialValues }: { initialValues: Partial<Site> }) {
   return (
     <Form.Item name="scrape_method_configuration">
       <DocumentExtensions />
@@ -155,6 +156,7 @@ function ScrapeMethodConfiguration() {
       <WaitFor />
       <WaitForTimeout />
       <SearchInFrames />
+      <FocusTherapyConfig initialValues={initialValues} />
     </Form.Item>
   );
 }
@@ -242,8 +244,13 @@ function FollowLinks(props: { followLinks: boolean; form: FormInstance }) {
 interface CollectionMethodPropTypes {
   followLinks: boolean;
   form: FormInstance;
+  initialValues: Partial<Site>;
 }
-export function CollectionMethodComponent({ followLinks, form }: CollectionMethodPropTypes) {
+export function CollectionMethodComponent({
+  followLinks,
+  form,
+  initialValues,
+}: CollectionMethodPropTypes) {
   return (
     <>
       <CollectionMethodRadio />
@@ -257,7 +264,7 @@ export function CollectionMethodComponent({ followLinks, form }: CollectionMetho
           getFieldValue('collection_method') === CollectionMethod.Automated ? (
             <>
               <ScrapeMethod />
-              <ScrapeMethodConfiguration />
+              <ScrapeMethodConfiguration initialValues={initialValues} />
               <Schedule />
               <FollowLinks followLinks={followLinks} form={form} />
             </>

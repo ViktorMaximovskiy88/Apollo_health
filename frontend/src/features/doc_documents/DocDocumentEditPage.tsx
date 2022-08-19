@@ -11,7 +11,7 @@ import { useUpdateDocDocumentMutation } from './docDocumentApi';
 import { DocDocument, TherapyTag, IndicationTag } from './types';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { maxBy, compact, groupBy } from 'lodash';
+import { compact, isEqual, groupBy, maxBy } from 'lodash';
 import { WarningFilled } from '@ant-design/icons';
 
 export function DocDocumentEditPage() {
@@ -27,13 +27,15 @@ export function DocDocumentEditPage() {
 
   useEffect(() => {
     if (doc) {
-      const therapyTags = doc.therapy_tags.map((tag) => ({
+      const therapyTags = doc.therapy_tags.map((tag, i) => ({
         ...tag,
+        id: `${i}-therapy`,
         _type: 'therapy',
         _normalized: `${tag.name.toLowerCase()}|${tag.text.toLowerCase()}`,
       }));
-      const indicationTags = doc.indication_tags.map((tag) => ({
+      const indicationTags = doc.indication_tags.map((tag, i) => ({
         ...tag,
+        id: `${i}-indication`,
         _type: 'indication',
         _normalized: tag.text.toLowerCase(),
       }));
@@ -59,6 +61,20 @@ export function DocDocumentEditPage() {
     first_collected_date: dateToMoment(doc.first_collected_date),
     last_collected_date: dateToMoment(doc.last_collected_date),
   };
+
+  function handleTagEdit(newTag: TherapyTag | IndicationTag) {
+    setTags((prevState) => {
+      const update = [...prevState];
+      const index = update.findIndex((tag) => {
+        return tag.id === newTag.id;
+      });
+      if (index > -1) {
+        if (!isEqual(newTag, update[index])) setHasChanges(true);
+        update[index] = newTag;
+      }
+      return update;
+    });
+  }
 
   async function onFinish(doc: Partial<DocDocument>) {
     setIsSaving(true);
@@ -161,12 +177,12 @@ export function DocDocumentEditPage() {
                     setHasChanges(true);
                   }}
                   onDeleteTag={(tag: any) => {
-                    const index = tags.findIndex((t) => t.code === tag.code);
+                    const index = tags.findIndex((t) => t.id === tag.id);
                     tags.splice(index, 1);
                     setTags([...tags]);
                     setHasChanges(true);
                   }}
-                  onEditTag={(tag: TherapyTag | IndicationTag) => {}}
+                  onEditTag={handleTagEdit}
                   currentPage={pageNumber}
                 />
               </Tabs.TabPane>
@@ -178,7 +194,6 @@ export function DocDocumentEditPage() {
             doc={doc}
             docId={doc.retrieved_document_id}
             onPageChange={(page: number) => {
-              console.log('page', page, 'pageNumber', pageNumber);
               setPageNumber(page);
             }}
           />

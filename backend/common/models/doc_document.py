@@ -13,7 +13,7 @@ class TherapyTag(BaseModel):
     code: str
     name: str
     score: float = 0
-    relevancy: float = 0
+    focus: bool = False
 
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))
@@ -104,7 +104,7 @@ class UpdateTherapyTag(BaseModel):
     page: int | None = None
     code: str | None = None
     score: float | None = None
-    relevancy: float | None = None
+    focus: bool | None = None
 
 
 class UpdateIndicationTag(BaseModel):
@@ -169,3 +169,16 @@ def calc_final_effective_date(doc: DocDocument) -> datetime:
     )
 
     return final_effective_date
+
+
+# Deprecated
+class NoFocusTherapyTag(TherapyTag):
+    relevancy: float | None = None
+    focus: bool | None = None
+
+
+class NoFocusTherapyTagDocDocument(DocDocument):
+    therapy_tags: list[NoFocusTherapyTag] = []
+
+    class Collection:
+        name = "DocDocument"

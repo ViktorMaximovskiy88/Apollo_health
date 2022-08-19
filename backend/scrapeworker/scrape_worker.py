@@ -39,9 +39,9 @@ from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocs
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.scrapeworker.common.utils import get_extension_from_path_like
-from backend.scrapeworker.document_tagging.indication_tagging import IndicationTagger
+from backend.scrapeworker.document_tagging.indication_tagging import indication_tagger
 from backend.scrapeworker.document_tagging.taggers import Taggers
-from backend.scrapeworker.document_tagging.therapy_tagging import TherapyTagger
+from backend.scrapeworker.document_tagging.therapy_tagging import therapy_tagger
 from backend.scrapeworker.file_parsers import parse_by_type
 from backend.scrapeworker.playbook import ScrapePlaybook
 from backend.scrapeworker.scrapers import scrapers
@@ -81,8 +81,8 @@ class ScrapeWorker:
         self.downloader = AioDownloader(_log)
         self.playbook = ScrapePlaybook(self.site.playbook)
         self.logger = Logger()
-        self.taggers = Taggers(indication=IndicationTagger(), therapy=TherapyTagger())
         self.log = _log
+        self.taggers = Taggers(indication=indication_tagger, therapy=therapy_tagger)
 
     @alru_cache
     async def get_user(self) -> User:

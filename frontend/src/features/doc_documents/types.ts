@@ -3,6 +3,7 @@ import { ApprovalStatus } from '../../common/approvalStatus';
 import { RetrievedDocument } from '../retrieved_documents/types';
 
 export interface BaseDocTag {
+  id: string;
   _type: string;
   _normalized: string;
 }
@@ -13,10 +14,11 @@ export interface TherapyTag extends BaseDocTag {
   page: number;
   code: string;
   score: number;
-  relevancy: number;
+  focus: boolean;
 }
 
 export interface IndicationTag extends BaseDocTag {
+  id: string;
   name?: string;
   text: string;
   page: number;

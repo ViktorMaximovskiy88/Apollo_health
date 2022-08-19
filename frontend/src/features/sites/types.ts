@@ -13,6 +13,13 @@ export interface AttrSelector {
   resource_address: boolean;
 }
 
+export interface FocusTherapyConfig {
+  doc_type: string;
+  start_separator: string;
+  end_separator: string;
+  all_focus: boolean;
+}
+
 export interface Site extends BaseDocument {
   name: string;
   base_urls: BaseUrl[];
@@ -27,6 +34,7 @@ export interface Site extends BaseDocument {
     follow_link_keywords: string[];
     follow_link_url_keywords: string[];
     attr_selectors: AttrSelector[];
+    focus_therapy_configs: FocusTherapyConfig[];
   };
   tags: string[];
   disabled: boolean;
