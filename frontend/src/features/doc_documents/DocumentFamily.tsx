@@ -7,7 +7,7 @@ import { useGetDocDocumentQuery } from './docDocumentApi';
 import { FormInstance } from 'antd/lib/form';
 import { AddNewDocumentFamilyButton } from './DocumentFamilyAddNew';
 
-const useSyncedValue = () => {
+const useSyncValueWithDocumentType = () => {
   const { docDocumentId: docId } = useParams();
   const { data: doc } = useGetDocDocumentQuery(docId);
   const form = Form.useFormInstance();
@@ -24,7 +24,7 @@ const useSyncedValue = () => {
   }, [doc, documentType, form]);
 };
 
-const useSyncedOptions = (): [
+const useSyncOptionsWithDocumentType = (): [
   DocumentFamilyOption[],
   (options: DocumentFamilyOption[]) => void
 ] => {
@@ -59,8 +59,8 @@ const useSyncedOptions = (): [
 export const DocDocumentFormContext = createContext<FormInstance>({} as FormInstance);
 
 export function DocumentFamily() {
-  useSyncedValue();
-  const [options, setOptions] = useSyncedOptions();
+  useSyncValueWithDocumentType();
+  const [options, setOptions] = useSyncOptionsWithDocumentType();
 
   return (
     <div className="flex space-x-8">
