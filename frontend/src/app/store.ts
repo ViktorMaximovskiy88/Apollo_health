@@ -19,6 +19,7 @@ import collectionsReducer from '../features/collections/collectionsSlice';
 import docDocumentsReducer from '../features/doc_documents/docDocumentsSlice';
 import documentsReducer from '../features/collections/documentsSlice';
 import extractionsReducer from '../features/extractions/extractionsSlice';
+import { documentFamilyApi } from '../features/doc_documents/documentFamilyApi';
 
 const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
   history: createBrowserHistory(),
@@ -34,6 +35,7 @@ export const store = configureStore({
     [workQueuesApi.reducerPath]: workQueuesApi.reducer,
     [proxiesApi.reducerPath]: proxiesApi.reducer,
     [docDocumentsApi.reducerPath]: docDocumentsApi.reducer,
+    [documentFamilyApi.reducerPath]: documentFamilyApi.reducer,
     nav: navSlice.reducer,
     sites: sitesReducer,
     users: userReducer,
@@ -53,6 +55,7 @@ export const store = configureStore({
       workQueuesApi.middleware,
       proxiesApi.middleware,
       docDocumentsApi.middleware,
+      documentFamilyApi.middleware,
       routerMiddleware,
       rtkAuth
     ),

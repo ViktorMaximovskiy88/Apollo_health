@@ -92,6 +92,8 @@ class DocDocument(BaseDocument, LockableDocument):
 
     tags: list[str] = []
 
+    document_family_id: PydanticObjectId | None = None
+
 
 class DocDocumentLimitTags(DocDocument):
     class Settings:
@@ -153,6 +155,8 @@ class UpdateDocDocument(BaseModel):
     content_extraction_task_id: PydanticObjectId | None = None
     content_extraction_status: ApprovalStatus = ApprovalStatus.QUEUED
     content_extraction_lock: TaskLock | None = None
+
+    document_family_id: PydanticObjectId | None = None
 
 
 def calc_final_effective_date(doc: DocDocument) -> datetime:

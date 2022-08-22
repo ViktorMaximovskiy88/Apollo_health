@@ -18,7 +18,6 @@ export interface TherapyTag extends BaseDocTag {
 }
 
 export interface IndicationTag extends BaseDocTag {
-  id: string;
   name?: string;
   text: string;
   page: number;
@@ -51,6 +50,8 @@ export interface DocDocument extends BaseDocument {
   document_type: string;
   doc_type_confidence: number;
 
+  document_family_id?: string;
+
   effective_date: string;
   last_reviewed_date: string;
   last_updated_date: string;
@@ -82,4 +83,17 @@ export interface DocDocument extends BaseDocument {
   automated_content_extraction_class: string;
 
   tags: string[];
+}
+
+export interface DocumentFamilyType extends BaseDocument {
+  name: string;
+  document_type: string;
+  description: string;
+  site_id: string;
+  relevance: string[];
+}
+
+export interface DocumentFamilyOption {
+  label: string;
+  value: string | null;
 }
