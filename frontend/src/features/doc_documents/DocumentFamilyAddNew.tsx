@@ -45,7 +45,7 @@ const useAddDocumentFamily = () => {
   return addDocumentFamily;
 };
 
-const useSaveInSelect = (): ((documentFamilyId: string) => void) => {
+const useSaveInSelect = () => {
   const docDocumentForm = Form.useFormInstance();
 
   const saveInSelect = (documentFamilyId: string): void => {
