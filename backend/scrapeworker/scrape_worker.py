@@ -39,9 +39,6 @@ from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocs
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.scrapeworker.common.utils import get_extension_from_path_like
-from backend.scrapeworker.document_tagging.indication_tagging import indication_tagger
-from backend.scrapeworker.document_tagging.taggers import Taggers
-from backend.scrapeworker.document_tagging.therapy_tagging import therapy_tagger
 from backend.scrapeworker.file_parsers import parse_by_type
 from backend.scrapeworker.playbook import ScrapePlaybook
 from backend.scrapeworker.scrapers import scrapers
@@ -82,7 +79,6 @@ class ScrapeWorker:
         self.playbook = ScrapePlaybook(self.site.playbook)
         self.logger = Logger()
         self.log = _log
-        self.taggers = Taggers(indication=indication_tagger, therapy=therapy_tagger)
 
     @alru_cache
     async def get_user(self) -> User:
@@ -236,7 +232,11 @@ class ScrapeWorker:
             link_retrieved_task.file_metadata = FileMetadata(checksum=checksum, **download.dict())
 
             # log no file parser found error
-            parsed_content = await parse_by_type(temp_path, download, self.taggers)
+            parsed_content = await parse_by_type(
+                temp_path,
+                download,
+                self.site.scrape_method_configuration.focus_therapy_configs,
+            )
             if parsed_content is None:
                 await link_retrieved_task.save()
                 self.log.info(f"{download.request.url} {download.file_extension} cannot be parsed")

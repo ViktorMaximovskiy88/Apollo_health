@@ -5,11 +5,14 @@ from typing import Any
 
 import aiofiles
 
+from backend.common.models.site import FocusTherapyConfig
 from backend.scrapeworker.common.date_parser import DateParser
 from backend.scrapeworker.common.detect_lang import detect_lang
 from backend.scrapeworker.common.utils import date_rgxs, label_rgxs
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
+from backend.scrapeworker.document_tagging.indication_tagging import indication_tagger
 from backend.scrapeworker.document_tagging.taggers import Taggers
+from backend.scrapeworker.document_tagging.therapy_tagging import therapy_tagger
 
 
 class FileParser(ABC):
@@ -22,11 +25,15 @@ class FileParser(ABC):
         self,
         file_path: str,
         url: str,
-        taggers: Taggers | None = None,
+        link_text: str | None = None,
+        focus_config: list[FocusTherapyConfig] | None = None,
+        taggers: Taggers | None = Taggers(indication=indication_tagger, therapy=therapy_tagger),
     ):
         self.file_path = file_path
         self.url = url
+        self.link_text = link_text
         self.taggers = taggers
+        self.focus_config = focus_config if focus_config else []
         file_name = self.url.removesuffix("/")
         self.filename_no_ext = str(pathlib.Path(os.path.basename(file_name)).with_suffix(""))
 
@@ -61,7 +68,9 @@ class FileParser(ABC):
 
         therapy_tags, indication_tags = [], []
         if self.taggers:
-            therapy_tags = await self.taggers.therapy.tag_document(self.text)
+            therapy_tags = await self.taggers.therapy.tag_document(
+                self.text, document_type, self.url, self.link_text, self.focus_config
+            )
             indication_tags = await self.taggers.indication.tag_document(self.text)
 
         self.result = {
