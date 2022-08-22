@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from beanie import Indexed, PydanticObjectId
+from beanie import Indexed, PydanticObjectId, View
 from pydantic import BaseModel, Field
 
 from backend.common.core.enums import ApprovalStatus, TaskStatus
@@ -68,8 +68,26 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument):
         location = next((x for x in self.locations if x.site_id == site_id), None)
         return SiteDocDocument(_id=self.id, **self.dict(), **location.dict())
 
+    def as_rollup(self):
 
-class SiteDocDocument(BaseDocDocument, DocDocumentLocation):
+        first_collected_date = min(
+            self.locations, key=lambda location: location.first_collected_date
+        )
+        last_collected_date = min(self.locations, key=lambda location: location.last_collected_date)
+
+        return DocDocumentRollup(
+            **self.dict(),
+            first_collected_date=first_collected_date,
+            last_collected_date=last_collected_date,
+        )
+
+
+class DocDocumentRollup(View):
+    first_collected_date: datetime | None = None
+    last_collected_date: datetime | None = None
+
+
+class SiteDocDocument(View):
     id: PydanticObjectId = Field(None, alias="_id")
 
 
@@ -111,22 +129,6 @@ class UpdateDocDocument(BaseModel):
     content_extraction_task_id: PydanticObjectId | None = None
     content_extraction_status: ApprovalStatus = ApprovalStatus.QUEUED
     content_extraction_lock: TaskLock | None = None
-
-
-def calc_final_effective_date(doc: DocDocument, location: DocDocumentLocation) -> datetime:
-    computeFromFields = []
-    if doc.effective_date:
-        computeFromFields.append(doc.effective_date)
-    if doc.last_reviewed_date:
-        computeFromFields.append(doc.last_reviewed_date)
-    if doc.last_updated_date:
-        computeFromFields.append(doc.last_updated_date)
-
-    final_effective_date = (
-        max(computeFromFields) if len(computeFromFields) > 0 else location.last_collected_date
-    )
-
-    return final_effective_date
 
 
 # Deprecated

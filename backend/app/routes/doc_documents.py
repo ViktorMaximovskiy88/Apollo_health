@@ -14,15 +14,11 @@ from backend.app.utils.logger import Logger, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.events.event_convert import EventConvert
 from backend.common.events.send_event_client import SendEventClient
-from backend.common.models.doc_document import (
-    DocDocument,
-    DocDocumentLimitTags,
-    UpdateDocDocument,
-    calc_final_effective_date,
-)
+from backend.common.models.doc_document import DocDocument, DocDocumentLimitTags, UpdateDocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
+from backend.common.services.doc_document import calc_final_effective_date
 from backend.common.storage.text_handler import TextHandler
 
 router = APIRouter(

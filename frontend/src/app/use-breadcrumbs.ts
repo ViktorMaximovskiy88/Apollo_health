@@ -18,6 +18,7 @@ const routes = [
   '/sites/:siteId/scrapes',
   '/sites/:siteId/documents',
   '/sites/:siteId/doc-documents',
+  '/sites/:siteId/documents/:docId',
   '/sites/:siteId/documents/:docId/edit',
   '/sites/:siteId/extraction',
   '/documents',

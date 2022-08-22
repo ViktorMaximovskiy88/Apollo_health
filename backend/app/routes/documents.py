@@ -9,11 +9,7 @@ from fastapi.responses import StreamingResponse
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.models.content_extraction_task import ContentExtractionTask
-from backend.common.models.doc_document import (
-    DocDocument,
-    DocDocumentLocation,
-    calc_final_effective_date,
-)
+from backend.common.models.doc_document import DocDocument, DocDocumentLocation
 from backend.common.models.document import (
     RetrievedDocument,
     RetrievedDocumentLimitTags,
@@ -23,6 +19,7 @@ from backend.common.models.document import (
 )
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
+from backend.common.services.doc_document import calc_final_effective_date
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_handler import TextHandler
