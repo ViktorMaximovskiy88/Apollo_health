@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useInterval } from '../../common/hooks';
 import { MainLayout } from '../../components';
-import { DocDocumentClassificationPage } from '../doc_documents/DocDocumentClassificationPage';
+import { DocDocumentClassificationPage } from './DocDocumentClassificationPage';
 import { ContentExtractionApprovalPage } from '../extractions/ContentExtractionApprovalPage';
 import { useGetUsersQuery } from '../users/usersApi';
 import { SubmitAction, WorkQueue } from './types';
