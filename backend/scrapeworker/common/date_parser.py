@@ -34,6 +34,7 @@ class DateParser:
         self.date_rgxs = date_rgxs
         self.label_rgxs = label_rgxs
         self.whitespace_rgx = re.compile(r"\S")
+        self.hyphen_rgx = re.compile(r"[\u2010-\u2015]|-")  # unicode hyphens
         self.effective_date = DateMatch()
         self.end_date = DateMatch()
         self.last_updated_date = DateMatch()
@@ -111,15 +112,18 @@ class DateParser:
         Return date found in text if date is preceded by dash
         and no other nonwhitespace character.
         """
-        dash = text.find("-", start)
-        if dash != -1 and not self.whitespace_rgx.search(text, start, dash):
+        separator_match = self.hyphen_rgx.search(text, start)
+        if separator_match:
+            dash_index = separator_match.start()
+            if self.whitespace_rgx.search(text, start, dash_index):
+                return None
             closest_match: DateMatch = None
-            for m in self.get_dates(text[dash:]):
+            for m in self.get_dates(text[dash_index:]):
                 if not closest_match or m.start < closest_match.start:
                     closest_match = m
             if closest_match:
-                second_date = dash + closest_match.start
-                if not self.whitespace_rgx.search(text, dash + 1, second_date):
+                second_date = dash_index + closest_match.start
+                if not self.whitespace_rgx.search(text, dash_index + 1, second_date):
                     return closest_match
         return None
 
