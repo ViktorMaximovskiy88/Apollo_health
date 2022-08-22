@@ -63,11 +63,16 @@ class LinkRetrievedTask(LinkTask):
 
 #  temp until i cleanse the downloadcontext
 def link_retrieved_task_from_download(download, scrape_task):
+    url = (
+        download.metadata.resource_value
+        if download.metadata.resource_value
+        else download.request.url
+    )
     return LinkRetrievedTask(
         scrape_task_id=scrape_task.id,
         site_id=scrape_task.site_id,
         location=Location(
-            url=download.request.url,
+            url=url,
             **download.metadata.dict(),
         ),
     )
