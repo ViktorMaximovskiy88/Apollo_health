@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from beanie import Indexed, PydanticObjectId, View
+from beanie import Indexed, PydanticObjectId
 from pydantic import BaseModel, Field
 
 from backend.common.core.enums import ApprovalStatus, TaskStatus
@@ -68,7 +68,7 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument):
         location = next((x for x in self.locations if x.site_id == site_id), None)
         return SiteDocDocument(_id=self.id, **self.dict(), **location.dict())
 
-    def as_rollup(self):
+    def for_rollup(self):
 
         first_collected_date = min(
             self.locations, key=lambda location: location.first_collected_date
@@ -82,12 +82,12 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument):
         )
 
 
-class DocDocumentRollup(View):
+class DocDocumentRollup(BaseDocDocument):
     first_collected_date: datetime | None = None
     last_collected_date: datetime | None = None
 
 
-class SiteDocDocument(View):
+class SiteDocDocument(BaseDocDocument, DocDocumentLocation):
     id: PydanticObjectId = Field(None, alias="_id")
 
 
