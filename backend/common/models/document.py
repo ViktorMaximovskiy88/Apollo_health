@@ -44,19 +44,11 @@ class RetrievedDocument(BaseDocument, BaseRetrievedDocument):
 
     def for_site(self, site_id: PydanticObjectId):
         location = next((x for x in self.locations if x.site_id == site_id), None)
-        return SiteRetrievedDocument(**self.dict(), **location.dict())
+        return SiteRetrievedDocument(_id=self.id, **self.dict(), **location.dict())
 
 
 class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
     id: PydanticObjectId = Field(None, alias="_id")
-
-    async def get_for_site(self, doc_id: PydanticObjectId, site_id: PydanticObjectId):
-        doc: SiteRetrievedDocument = await self.get(doc_id)
-        return doc.for_site(site_id)
-
-    def for_site(self, site_id: PydanticObjectId):
-        location = next((x for x in self.locations if x.site_id == site_id), None)
-        return SiteRetrievedDocument(**self.dict(), **location.dict())
 
 
 class RetrievedDocumentLimitTags(RetrievedDocument):
