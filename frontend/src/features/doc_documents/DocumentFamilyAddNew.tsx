@@ -87,6 +87,7 @@ export function AddNewDocumentFamilyButton({
     const documentFamilyId = await addDocumentFamily(documentFamily);
     saveInSelect(documentFamilyId);
 
+    // so the document family name shows up in the Select immediately
     setOptions([...options, { value: documentFamilyId, label: documentFamily.name }]);
 
     documentFamilyForm.resetFields();
