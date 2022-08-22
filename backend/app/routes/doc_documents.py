@@ -14,11 +14,16 @@ from backend.app.utils.logger import Logger, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.events.event_convert import EventConvert
 from backend.common.events.send_event_client import SendEventClient
-from backend.common.models.doc_document import DocDocument, DocDocumentLimitTags, UpdateDocDocument
+from backend.common.services.doc_document import calc_final_effective_date
+from backend.common.models.doc_document import (
+    DocDocument,
+    DocDocumentLimitTags,
+    SiteDocDocument,
+    UpdateDocDocument,
+)
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
-from backend.common.services.doc_document import calc_final_effective_date
 from backend.common.storage.text_handler import TextHandler
 
 router = APIRouter(
@@ -39,7 +44,7 @@ async def get_target(id: PydanticObjectId) -> DocDocument:
 
 @router.get(
     "/",
-    response_model=TableQueryResponse,
+    # response_model=TableQueryResponse,
     dependencies=[Security(get_current_user)],
 )
 async def read_doc_documents(
@@ -50,17 +55,33 @@ async def read_doc_documents(
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
-    query = {}
+    match = {}
     if site_id:
-        query["site_id"] = site_id
+        match["locations.site_id"] = site_id
 
     if scrape_task_id:
         task = await SiteScrapeTask.get(scrape_task_id)
         if task:
-            query["retrieved_document_id"] = {"$in": task.retrieved_document_ids}
+            match["retrieved_document_id"] = {"$in": task.retrieved_document_ids}
 
-    document_query = DocDocument.find(query).project(DocDocumentLimitTags)
-    return await query_table(document_query, limit, skip, sorts, filters)
+    count = await DocDocument.find(match).count()
+    data = await DocDocument.aggregate(
+        aggregation_pipeline=[
+            {"$match": match},
+            {"$unwind": {"path": "$locations"}},
+            # site_id filtering ... only matchsite
+            {"$match": match},
+            # {"$setWindowFields": {"output": {"total": {"$count": {}}}}},
+            {"$replaceWith": {"$mergeObjects": ["$$ROOT", "$locations"]}},
+            {"$skip": 0},
+            {"$limit": 10},
+        ],
+        projection_model=SiteDocDocument,
+    ).to_list()
+
+    # await query_table(document_query, limit, skip, sorts, filters)
+
+    return {"data": data, "total": count}
 
 
 @router.get(
