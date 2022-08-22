@@ -95,6 +95,7 @@ const useOnFinish = (
 
 const buildInitialValues = (doc: DocDocument) => ({
   ...doc,
+  docId: doc._id,
   final_effective_date: dateToMoment(doc.final_effective_date),
   effective_date: dateToMoment(doc.effective_date),
   end_date: dateToMoment(doc.end_date),

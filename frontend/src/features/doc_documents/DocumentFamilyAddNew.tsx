@@ -3,8 +3,6 @@ import { useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { AddDocumentFamily } from './DocumentFamilyAddForm';
 import { DocumentFamilyOption, DocumentFamilyType } from './types';
-import { useGetDocDocumentQuery } from './docDocumentApi';
-import { useParams } from 'react-router-dom';
 import { useAddDocumentFamilyMutation } from './documentFamilyApi';
 
 const useModal = (): [boolean, () => void, () => void] => {
@@ -24,22 +22,20 @@ const useModal = (): [boolean, () => void, () => void] => {
 const useAddDocumentFamily = () => {
   const [addDocumentFamilyFn] = useAddDocumentFamilyMutation();
 
-  const { docDocumentId: docId } = useParams();
-  const { data: doc } = useGetDocDocumentQuery(docId);
-
   const docDocumentForm = Form.useFormInstance();
+  const site_id = docDocumentForm.getFieldValue('site_id');
+
   const documentType = Form.useWatch('document_type', docDocumentForm);
 
   async function addDocumentFamily(documentFamily: DocumentFamilyType): Promise<string> {
-    if (!doc) {
-      throw new Error('DocDocument not found');
-    }
+    if (!documentType) throw new Error('Document Type not found');
+    if (!site_id) throw new Error('Site Id not found');
 
-    documentFamily.site_id = doc.site_id;
     documentFamily.document_type = documentType;
+    documentFamily.site_id = site_id;
 
-    const { _id } = await addDocumentFamilyFn(documentFamily).unwrap();
-    return _id;
+    const { _id: documentFamilyId } = await addDocumentFamilyFn(documentFamily).unwrap();
+    return documentFamilyId;
   }
 
   return addDocumentFamily;
@@ -74,7 +70,10 @@ export function AddNewDocumentFamilyButton({
   setOptions: (options: DocumentFamilyOption[]) => void;
 }) {
   const docDocumentForm = Form.useFormInstance();
-  const { document_type, site_id } = docDocumentForm.getFieldsValue();
+  const document_type = docDocumentForm.getFieldValue('document_type');
+  const site_id = docDocumentForm.getFieldValue('site_id');
+  const docId = docDocumentForm.getFieldValue('docId');
+
   const [isSaving, setIsSaving] = useState(false);
   const [isModalVisible, showModal, closeModal] = useModal();
   const addDocumentFamily = useAddDocumentFamily();
@@ -112,7 +111,7 @@ export function AddNewDocumentFamilyButton({
         footer={null}
       >
         <AddDocumentFamily
-          initialValues={{ document_type, site_id }}
+          initialValues={{ document_type, site_id, docId }}
           onFinish={onFinish}
           form={documentFamilyForm}
           isSaving={isSaving}
