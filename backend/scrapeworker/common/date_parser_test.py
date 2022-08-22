@@ -225,12 +225,12 @@ def test_extract_date_span():
     assert parser.end_date.date == datetime(2031, 1, 5)
     assert parser.published_date.date == datetime(2010, 10, 31)
 
-    text = "date span with only 1 year January 1 - December 1, 2022"
+    text = "date span with only 1 year and unicode separator January 1 – December 31, 2022"
     parser = DateParser(text, date_rgxs, label_rgxs)
     parser.extract_dates()
     assert len(parser.unclassified_dates) == 2
     assert parser.effective_date.date == datetime(2022, 1, 1)
-    assert parser.end_date.date == datetime(2022, 12, 1)
+    assert parser.end_date.date == datetime(2022, 12, 31)
 
 
 def test_exclusions():

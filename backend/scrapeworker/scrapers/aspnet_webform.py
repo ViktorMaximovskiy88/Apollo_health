@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from functools import cached_property
 
@@ -81,6 +82,7 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
             logging.debug(f"{index} of {len(self.metadatas)} count of metadata")
             if not metadata.element_id:
                 continue
+            await asyncio.sleep(0.75)
             locator: Locator = self.page.locator(f"#{metadata.element_id}")
             await locator.click()
 
