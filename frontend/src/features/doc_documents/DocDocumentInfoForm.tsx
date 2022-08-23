@@ -5,6 +5,7 @@ import { DocumentClassification } from './DocDocumentClassificationFields';
 import { ExtractionFields } from './DocDocumentExtractionFields';
 import { UrlFields } from './DocDocumentUrlFields';
 import { DocumentFamily } from './DocumentFamily';
+import { Translation } from './TranslationSelector';
 
 const Name = () => (
   <Form.Item name="name" label="Name" required={true}>
@@ -18,6 +19,7 @@ export function DocDocumentInfoForm({ onFieldChange }: { onFieldChange: Function
       <Name />
       <Hr />
       <DocumentClassification />
+      <Translation />
       <Hr />
       <DocumentFamily />
       <Hr />

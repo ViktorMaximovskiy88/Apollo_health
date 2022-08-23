@@ -1,4 +1,4 @@
-import { Viewer, Worker, PageChangeEvent } from '@react-pdf-viewer/core';
+import { Viewer, PageChangeEvent } from '@react-pdf-viewer/core';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 import { OfficeFileLoader, TextFileLoader, CsvFileLoader, HtmlFileLoader } from '../../components';
 
@@ -17,10 +17,16 @@ const columns = [
 interface PropTypes {
   doc: any;
   docId: any;
+  showMetadata?: boolean;
   onPageChange?: Function;
 }
 
-export function RetrievedDocumentViewer({ docId, doc, onPageChange = () => {} }: PropTypes) {
+export function RetrievedDocumentViewer({
+  docId,
+  doc,
+  showMetadata,
+  onPageChange = () => {},
+}: PropTypes) {
   const token = useAccessToken();
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
 
@@ -31,37 +37,43 @@ export function RetrievedDocumentViewer({ docId, doc, onPageChange = () => {} }:
     value,
   }));
 
-  return (
-    <Worker workerUrl="/pdf.worker.min.js">
+  const viewer = ['pdf', 'html'].includes(doc.file_extension) ? (
+    <Viewer
+      withCredentials={true}
+      fileUrl={`${baseApiUrl}/documents/${docId}.pdf`}
+      plugins={[defaultLayoutPluginInstance]}
+      onPageChange={(e: PageChangeEvent) => {
+        // BUG: we dont get a page 0 event from the viewer ???
+        // JumpToDestination maybe invert this...
+        console.log('currentPage', e.currentPage);
+        onPageChange(e.currentPage);
+      }}
+      httpHeaders={{
+        Authorization: `Bearer ${token}`,
+      }}
+    />
+  ) : ['xlsx', 'docx'].includes(doc.file_extension) ? (
+    <OfficeFileLoader docId={docId} />
+  ) : doc.file_extension === 'csv' ? (
+    <CsvFileLoader docId={docId} />
+  ) : doc.file_extension === 'html' ? (
+    <HtmlFileLoader docId={docId} />
+  ) : (
+    <TextFileLoader docId={docId} />
+  );
+
+  if (showMetadata) {
+    return (
       <Tabs className="h-full">
         <Tabs.TabPane tab="Document" key="document" className="h-full overflow-auto">
-          {['pdf', 'html'].includes(doc.file_extension) ? (
-            <Viewer
-              withCredentials={true}
-              fileUrl={`${baseApiUrl}/documents/${docId}.pdf`}
-              plugins={[defaultLayoutPluginInstance]}
-              onPageChange={(e: PageChangeEvent) => {
-                // BUG: we dont get a page 0 event from the viewer ???
-                // JumpToDestination maybe invert this...
-                console.log('currentPage', e.currentPage);
-                onPageChange(e.currentPage);
-              }}
-              httpHeaders={{
-                Authorization: `Bearer ${token}`,
-              }}
-            />
-          ) : ['xlsx', 'docx'].includes(doc.file_extension) ? (
-            <OfficeFileLoader docId={docId} />
-          ) : doc.file_extension === 'csv' ? (
-            <CsvFileLoader docId={docId} />
-          ) : (
-            <TextFileLoader docId={docId} />
-          )}
+          {viewer}
         </Tabs.TabPane>
         <Tabs.TabPane tab="Metadata" key="properties">
           <Table dataSource={dataSource} columns={columns} pagination={false} />
         </Tabs.TabPane>
       </Tabs>
-    </Worker>
-  );
+    );
+  } else {
+    return viewer;
+  }
 }

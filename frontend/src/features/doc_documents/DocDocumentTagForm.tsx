@@ -1,10 +1,24 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Button, Radio, Checkbox, Input } from 'antd';
 import { debounce, orderBy } from 'lodash';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { TherapyTag, IndicationTag } from './types';
 
 import { EditTag, ReadTag } from './TagRow';
+
+function sortOrder(tags: any[], pageFilter: string) {
+  if (pageFilter === 'page') {
+    return orderBy(tags, ['page', '_normalized', '_type']);
+  } else if (pageFilter === 'doc') {
+    return orderBy(tags, ['_normalized', '_type', 'page']);
+  } else {
+    throw Error('what type though');
+  }
+}
+
+function textFilter(tag: any, field: string, searchRegex: RegExp) {
+  return tag[field] ? `${tag[field]}`.match(searchRegex) : false;
+}
 
 export function DocDocumentTagForm(props: {
   tags: Array<TherapyTag | IndicationTag>;
@@ -13,49 +27,25 @@ export function DocDocumentTagForm(props: {
   onAddTag: Function;
   currentPage: number;
 }) {
-  const { tags, onEditTag, onAddTag, onDeleteTag, currentPage } = props;
+  const { tags, onEditTag, onDeleteTag, currentPage } = props;
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredList, setFilteredList] = useState(tags);
-  const [tagTypeFilter, setTagTypeFilter] = useState(['indication', 'therapy', 'therapy-group']);
+  const [tagTypeFilter, setTagTypeFilter] = useState<
+    ('indication' | 'therapy' | 'therapy-group')[]
+  >(['indication', 'therapy', 'therapy-group']);
   const [editTags, setEditTags] = useState<{ [index: string]: TherapyTag | IndicationTag }>({});
   const [pageFilter, setPageFilter] = useState('page');
 
-  const hasActiveFilters = () => {
-    return pageFilter === 'page' || tagTypeFilter.length > 0 || searchTerm;
-  };
+  const applyFilter = useCallback(
+    (tag: TherapyTag | IndicationTag) => {
+      const validPage = pageFilter === 'doc' ? true : currentPage === tag.page;
+      console.debug(currentPage === tag.page, 'currentPage', currentPage, 'tag.page', tag.page);
+      return tagTypeFilter.includes(tag._type) && validPage;
+    },
+    [pageFilter, currentPage, tagTypeFilter]
+  );
 
-  const sortOrder = (tags: any[], pageFilter: string) => {
-    if (pageFilter === 'page') {
-      return orderBy(tags, ['page', '_normalized', '_type']);
-    } else if (pageFilter === 'doc') {
-      return orderBy(tags, ['_normalized', '_type', 'page']);
-    } else {
-      throw Error('what type though');
-    }
-  };
-
-  useEffect(() => {
-    let _tags = tags;
-
-    if (hasActiveFilters()) {
-      _tags = applyFilters();
-    }
-
-    _tags = sortOrder(_tags, pageFilter);
-    setFilteredList(_tags);
-  }, [searchTerm, tagTypeFilter, pageFilter, tags, currentPage]);
-
-  const applyFilter = (tag: TherapyTag | IndicationTag) => {
-    const validPage = pageFilter === 'doc' ? true : currentPage === tag.page;
-    console.debug(currentPage === tag.page, 'currentPage', currentPage, 'tag.page', tag.page);
-    return tagTypeFilter.includes(tag._type) && validPage;
-  };
-
-  const textFilter = (tag: any, field: string, searchRegex: RegExp) => {
-    return tag[field] ? `${tag[field]}`.match(searchRegex) : false;
-  };
-
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     const regex = new RegExp(searchTerm, 'i');
     return tags.filter(
       (tag: any) =>
@@ -64,7 +54,19 @@ export function DocDocumentTagForm(props: {
           textFilter(tag, 'name', regex)) &&
         applyFilter(tag)
     );
-  };
+  }, [searchTerm, tags, applyFilter]);
+
+  useEffect(() => {
+    const hasActiveFilters = pageFilter === 'page' || tagTypeFilter.length > 0 || searchTerm;
+    let _tags = tags;
+
+    if (hasActiveFilters) {
+      _tags = applyFilters();
+    }
+
+    _tags = sortOrder(_tags, pageFilter);
+    setFilteredList(_tags);
+  }, [pageFilter, tagTypeFilter, searchTerm, applyFilters, tags]);
 
   const onSearch = (e: any) => {
     const search = e.target.value;

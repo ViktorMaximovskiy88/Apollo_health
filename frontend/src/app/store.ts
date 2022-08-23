@@ -10,6 +10,8 @@ import { extractionTasksApi } from '../features/extractions/extractionsApi';
 import { workQueuesApi } from '../features/work_queue/workQueuesApi';
 import { proxiesApi } from '../features/proxies/proxiesApi';
 import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
+import { translationsApi } from '../features/translations/translationApi';
+import { documentFamilyApi } from '../features/doc_documents/documentFamilyApi';
 import { rtkAuth } from '../common/auth-middleware';
 
 import navSlice from './navSlice';
@@ -19,7 +21,7 @@ import collectionsReducer from '../features/collections/collectionsSlice';
 import docDocumentsReducer from '../features/doc_documents/docDocumentsSlice';
 import documentsReducer from '../features/collections/documentsSlice';
 import extractionsReducer from '../features/extractions/extractionsSlice';
-import { documentFamilyApi } from '../features/doc_documents/documentFamilyApi';
+import translationsReducer from '../features/translations/translationSlice';
 
 const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
   history: createBrowserHistory(),
@@ -35,6 +37,7 @@ export const store = configureStore({
     [workQueuesApi.reducerPath]: workQueuesApi.reducer,
     [proxiesApi.reducerPath]: proxiesApi.reducer,
     [docDocumentsApi.reducerPath]: docDocumentsApi.reducer,
+    [translationsApi.reducerPath]: translationsApi.reducer,
     [documentFamilyApi.reducerPath]: documentFamilyApi.reducer,
     nav: navSlice.reducer,
     sites: sitesReducer,
@@ -43,6 +46,7 @@ export const store = configureStore({
     docDocuments: docDocumentsReducer,
     documents: documentsReducer,
     extractions: extractionsReducer,
+    translations: translationsReducer,
     router: routerReducer,
   },
   middleware: (getDefaultMiddleware) =>
@@ -55,6 +59,7 @@ export const store = configureStore({
       workQueuesApi.middleware,
       proxiesApi.middleware,
       docDocumentsApi.middleware,
+      translationsApi.middleware,
       documentFamilyApi.middleware,
       routerMiddleware,
       rtkAuth

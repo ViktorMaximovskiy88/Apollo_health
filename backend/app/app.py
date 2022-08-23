@@ -18,6 +18,7 @@ from backend.app.routes import (
     proxies,
     site_scrape_tasks,
     sites,
+    translations,
     users,
     work_queues,
 )
@@ -78,6 +79,7 @@ app.include_router(content_extraction_tasks.router, prefix=prefix)
 app.include_router(proxies.router, prefix=prefix)
 app.include_router(doc_documents.router, prefix=prefix)
 app.include_router(work_queues.router, prefix=prefix)
+app.include_router(translations.router, prefix=prefix)
 app.include_router(document_family.router, prefix=prefix)
 
 

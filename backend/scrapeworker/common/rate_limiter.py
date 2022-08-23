@@ -6,7 +6,7 @@ from tenacity.stop import stop_after_attempt
 
 
 class RateLimiter:
-    def __init__(self, wait_between_requests=1) -> None:
+    def __init__(self, wait_between_requests: float = 1) -> None:
         self.last_request_time = datetime.now(tz=timezone.utc)
         self.wait_between_requests = wait_between_requests
         pass

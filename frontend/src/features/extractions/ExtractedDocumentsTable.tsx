@@ -12,12 +12,10 @@ import {
   setExtractedDocumentTableSort,
 } from './extractionsSlice';
 import { prettyDateFromISO, prettyDateTimeFromISO } from '../../common';
-import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { useGetDocumentsQuery } from '../retrieved_documents/documentsApi';
 import { RetrievedDocument, DocumentTypes } from '../retrieved_documents/types';
-import { useGetChangeLogQuery } from './extractionsApi';
 import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
+import { useGetDocDocumentsQuery } from '../doc_documents/docDocumentApi';
 
 const columns = [
   {
@@ -65,17 +63,6 @@ const columns = [
       return prettyDateFromISO(effective_date);
     },
   },
-  {
-    header: 'Actions',
-    name: 'action',
-    render: ({ data: doc }: { data: RetrievedDocument }) => {
-      return (
-        <>
-          <ChangeLogModal target={doc} useChangeLogQuery={useGetChangeLogQuery} />
-        </>
-      );
-    },
-  },
 ];
 
 const useControlledPagination = () => {
@@ -103,16 +90,20 @@ const useControlledPagination = () => {
 export function ExtractedDocumentsTable() {
   const [searchParams] = useSearchParams();
   const params = useParams();
-  const scrapeTaskId = searchParams.get('scrape_task_id');
   const siteId = params.siteId;
-  const { data: documents } = useGetDocumentsQuery(
+  const { data } = useGetDocDocumentsQuery(
     {
-      scrape_task_id: scrapeTaskId,
-      site_id: siteId,
-      automated_content_extraction: true,
+      limit: 5000,
+      skip: 0,
+      sortInfo: { name: 'name', dir: 1 },
+      filterValue: [
+        { name: 'site_id', operator: 'eq', type: 'string', value: siteId },
+        { name: 'translation_id', operator: 'notEmpty', type: 'string', value: null },
+      ],
     },
     { pollingInterval: 5000 }
   );
+  const documents = data ? data.data : [];
 
   const filterProps = useDataTableFilter(
     extractedDocumentTableState,

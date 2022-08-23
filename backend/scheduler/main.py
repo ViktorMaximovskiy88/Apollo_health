@@ -89,7 +89,6 @@ async def start_scheduler():
         typer.secho("Scrapes will not be automatically scheduled", fg=typer.colors.RED)
         return
 
-    await init_db()
     logger = Logger()
     user = await get_schedule_user()
     while True:
@@ -168,7 +167,12 @@ async def start_scaler():
 async def requeue_lost_task(task: SiteScrapeTask, now):
     message = f"Requeuing task {task.id} from worker {task.worker_id}, likely lost to killed worker"
     typer.secho(message, fg=typer.colors.RED)
-    new_task = SiteScrapeTask(id=task.id, site_id=task.site_id, queued_time=now)
+    new_task = SiteScrapeTask(
+        id=task.id,
+        site_id=task.site_id,
+        queued_time=now,
+        scrape_method_configuration=task.scrape_method_configuration,
+    )
     await new_task.save()
     await Site.find_one(Site.id == task.site_id).update({"$set": {"last_run_status": task.status}})
 

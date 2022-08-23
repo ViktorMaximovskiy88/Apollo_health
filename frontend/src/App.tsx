@@ -16,11 +16,14 @@ import { DocExtractionPage } from './features/extractions/DocExtractionPage';
 import { ExtractionEditPage } from './features/extractions/ExtractionEditPage';
 import { WorkQueueHomePage } from './features/work_queue/WorkQueueHomePage';
 import { WorkQueuePage } from './features/work_queue/WorkQueuePage';
-import { DocDocumentsPage } from "./features/doc_documents/DocDocumentPage"
+import { DocDocumentsPage } from './features/doc_documents/DocDocumentPage';
 import { DocDocumentEditPage } from './features/doc_documents/DocDocumentEditPage';
 import { ProcessWorkItemPage, ReadonlyWorkItemPage } from './features/work_queue/WorkItemPage';
 import { AppLayout } from './app/AppLayout';
 import { SiteViewPage } from './features/sites/SiteViewPage';
+import { TranslationsHomePage } from './features/translations/TranslationsHomePage';
+import { TranslationsNewPage } from './features/translations/TranslationsNewPage';
+import { TranslationsEditPage } from './features/translations/TranslationsEditPage';
 
 function AppHomePage() {
   return <>{'Home'}</>;
@@ -43,6 +46,16 @@ function DocumentRoutes() {
     <Routes>
       <Route index element={<DocDocumentsHomePage />} />
       <Route path=":docDocumentId" element={<DocDocumentEditPage />} />
+    </Routes>
+  );
+}
+
+function TranslationRoutes() {
+  return (
+    <Routes>
+      <Route index element={<TranslationsHomePage />} />
+      <Route path="/new" element={<TranslationsNewPage />} />
+      <Route path=":translationId" element={<TranslationsEditPage />} />
     </Routes>
   );
 }
@@ -81,7 +94,7 @@ function App() {
               <Route index element={<ExtractionsPage />} />
               <Route path="document/:docId">
                 <Route index element={<DocExtractionPage />} />
-                <Route path=":extractionId" element={<ExtractionEditPage />} />
+                <Route path=":extractionId/results" element={<ExtractionEditPage />} />
               </Route>
             </Route>
             <Route path="doc-documents">
@@ -90,12 +103,11 @@ function App() {
                 <Route path="edit" element={<DocDocumentEditPage />} />
               </Route>
             </Route>
-
-
           </Route>
         </Route>
         <Route path="/users/*" element={<UserRoutes />} />
         <Route path="/documents/*" element={<DocumentRoutes />} />
+        <Route path="/translations/*" element={<TranslationRoutes />} />
         <Route path="/" element={<Navigate replace to="/sites" />} />
       </Route>
     </Routes>

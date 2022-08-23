@@ -65,6 +65,7 @@ export function DocDocumentEditPage() {
             onPageChange={(page: number) => {
               setPageNumber(page);
             }}
+            showMetadata
           />
         </div>
       </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Worker } from '@react-pdf-viewer/core';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import '@inovua/reactdatagrid-community/index.css';
@@ -18,13 +19,15 @@ function onRedirectCallback(appState: any) {
 }
 
 const app = (
-  <Auth0Provider {...settings.auth0} onRedirectCallback={onRedirectCallback}>
-    <Provider store={store}>
-      <Router history={history}>
-        <App />
-      </Router>
-    </Provider>
-  </Auth0Provider>
+  <Worker workerUrl="/pdf.worker.min.js">
+    <Auth0Provider {...settings.auth0} onRedirectCallback={onRedirectCallback}>
+      <Provider store={store}>
+        <Router history={history}>
+          <App />
+        </Router>
+      </Provider>
+    </Auth0Provider>
+  </Worker>
 );
 
 const container = document.getElementById('root');

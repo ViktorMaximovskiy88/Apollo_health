@@ -35,7 +35,6 @@ class JavascriptClick(PlaywrightBaseScraper):
         return selector_string
 
     async def handle_json(self, response: PageResponse) -> DownloadContext | None:
-        parsed: dict = None
         try:
             parsed = await response.json()
         except Exception:
@@ -65,7 +64,7 @@ class JavascriptClick(PlaywrightBaseScraper):
 
     async def execute(self) -> list[DownloadContext]:
         downloads: list[DownloadContext] = []
-        link_handle: ElementHandle | None = None
+        link_handle: ElementHandle
 
         async def postprocess(response: PageResponse) -> None:
             accepted_types = [
@@ -96,7 +95,7 @@ class JavascriptClick(PlaywrightBaseScraper):
                     logging.debug(f"unknown format {content_type}")
 
             except Exception:
-                logging.error("exception", exc_info=1)
+                logging.error("exception", exc_info=True)
 
         xpath_locator = self.page.locator(self.xpath_selector)
         xpath_locator_count = await xpath_locator.count()
@@ -109,7 +108,7 @@ class JavascriptClick(PlaywrightBaseScraper):
                 await link_handle.click()
                 await asyncio.sleep(0.25)
             except Exception:
-                logging.error("exception", exc_info=1)
+                logging.error("exception", exc_info=True)
                 await self.page.goto(self.url)
 
         return downloads

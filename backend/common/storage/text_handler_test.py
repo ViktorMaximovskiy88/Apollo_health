@@ -26,7 +26,7 @@ async def test_create_no_diff(mock_s3_client, monkeypatch: pytest.MonkeyPatch): 
         assert type(relative_key) == str
         return True
 
-    def read_object(self, relative_key) -> bool:
+    def read_object(self, relative_key) -> bytes:
         assert type(relative_key) == str
         return bytes("content as bytes", "utf-8")
 

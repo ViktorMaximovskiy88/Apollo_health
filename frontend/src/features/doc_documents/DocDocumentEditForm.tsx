@@ -42,12 +42,12 @@ const useTagsState = (): [
   useEffect(() => {
     if (!doc) return;
 
-    const therapyTags = doc.therapy_tags.map((tag) => ({
+    const therapyTags: TherapyTag[] = doc.therapy_tags.map((tag) => ({
       ...tag,
       _type: 'therapy',
       _normalized: `${tag.name.toLowerCase()}|${tag.text.toLowerCase()}`,
     }));
-    const indicationTags = doc.indication_tags.map((tag) => ({
+    const indicationTags: IndicationTag[] = doc.indication_tags.map((tag) => ({
       ...tag,
       _type: 'indication',
       _normalized: tag.text.toLowerCase(),

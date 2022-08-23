@@ -4,7 +4,7 @@ import { RetrievedDocument } from '../retrieved_documents/types';
 
 export interface BaseDocTag {
   id: string;
-  _type: string;
+  _type: 'indication' | 'therapy' | 'therapy-group';
   _normalized: string;
 }
 
@@ -79,8 +79,7 @@ export interface DocDocument extends BaseDocument {
   therapy_tags: TherapyTag[];
   indication_tags: IndicationTag[];
 
-  automated_content_extraction: boolean;
-  automated_content_extraction_class: string;
+  translation_id?: string;
 
   tags: string[];
 }

@@ -43,9 +43,6 @@ class RetrievedDocument(BaseDocument):
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
 
-    automated_content_extraction: bool = False
-    automated_content_extraction_class: str | None = None
-
 
 class UpdateRetrievedDocument(BaseModel):
     site_id: PydanticObjectId | None = None
@@ -76,9 +73,6 @@ class UpdateRetrievedDocument(BaseModel):
 
     therapy_tags: list[TherapyTag] | None = None
     indication_tags: list[IndicationTag] | None = None
-
-    automated_content_extraction: bool | None = None
-    automated_content_extraction_class: str | None = None
 
 
 class RetrievedDocumentLimitTags(RetrievedDocument):

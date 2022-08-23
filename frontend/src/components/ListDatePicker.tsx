@@ -57,7 +57,7 @@ export function ListDatePicker(props: {
   );
 
   return (
-    <Form.Item name={name} className={classNames(className)} label={label} style={style}>
+    <Form.Item className={classNames(className)} label={label} style={style}>
       <DatePicker
         disabled={disabled}
         style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0 }}

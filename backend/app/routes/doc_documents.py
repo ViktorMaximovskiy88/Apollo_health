@@ -56,12 +56,12 @@ async def read_doc_documents(
 ):
     query = {}
     if site_id:
-        query['site_id'] = site_id
+        query["site_id"] = site_id
 
     if scrape_task_id:
         task = await SiteScrapeTask.get(scrape_task_id)
         if task:
-            query['retrieved_document_id'] = { '$in': task.retrieved_document_ids }
+            query["retrieved_document_id"] = {"$in": task.retrieved_document_ids}
 
     document_query = DocDocument.find(query).project(DocDocumentLimitTags)
     return await query_table(document_query, limit, skip, sorts, filters)
@@ -105,7 +105,7 @@ async def create_diff(
 
 
 @router.post("/{id}", response_model=DocDocument)
-async def update_extraction_task(
+async def update_doc_document(
     updates: UpdateDocDocument,
     target: DocDocument = Depends(get_target),
     current_user: User = Security(get_current_user),
