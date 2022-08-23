@@ -25,19 +25,23 @@ class RxNormEntityLinkerModel:
             print("RxNorm model not found and therefore not loaded")
             return
 
-        DEFAULT_PATHS[f"RxNorm_{version}"] = LinkerPaths(
-            ann_index=f"{dirname}/nmslib_index.bin",
-            tfidf_vectorizer=f"{dirname}/tfidf_vectorizer.joblib",
-            tfidf_vectors=f"{dirname}/tfidf_vectors_sparse.npz",
-            concept_aliases_list=f"{dirname}/concept_aliases.json",
-        )
+        try:
+            DEFAULT_PATHS[f"RxNorm_{version}"] = LinkerPaths(
+                ann_index=f"{dirname}/nmslib_index.bin",
+                tfidf_vectorizer=f"{dirname}/tfidf_vectorizer.joblib",
+                tfidf_vectors=f"{dirname}/tfidf_vectors_sparse.npz",
+                concept_aliases_list=f"{dirname}/concept_aliases.json",
+            )
 
-        class RxNormKnowledgeBase(KnowledgeBase):
-            def __init__(self):
-                super().__init__(f"{dirname}/rxnorm.jsonl")
+            class RxNormKnowledgeBase(KnowledgeBase):
+                def __init__(self):
+                    super().__init__(f"{dirname}/rxnorm.jsonl")
 
-        DEFAULT_KNOWLEDGE_BASES[f"RxNorm_{version}"] = RxNormKnowledgeBase
-        self.linker = CandidateGenerator(name=f"RxNorm_{version}")  # type: ignore
+            DEFAULT_KNOWLEDGE_BASES[f"RxNorm_{version}"] = RxNormKnowledgeBase
+            self.linker = CandidateGenerator(name=f"RxNorm_{version}")  # type: ignore
+        except Exception:
+            print("RxNorm Entity Linker Model Not Found")
+            return
 
     form_abbr = [
         (r"\btabs?\b", "tablet"),
