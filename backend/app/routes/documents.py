@@ -19,7 +19,6 @@ from backend.common.models.document import (
 )
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
-from backend.common.services.doc_document import calc_final_effective_date
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_handler import TextHandler
@@ -294,7 +293,7 @@ async def add_document(
         ],
     )
 
-    doc_document.final_effective_date = calc_final_effective_date(doc_document)
+    doc_document.set_computed_values()
     await create_and_log(logger, current_user, doc_document)
 
     scrape_task = await SiteScrapeTask.get(document.scrape_task_id)

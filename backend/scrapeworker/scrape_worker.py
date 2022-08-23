@@ -143,6 +143,7 @@ class ScrapeWorker:
             await self.create_doc_document(retrieved_document)
 
     async def create_doc_document(self, retrieved_document: RetrievedDocument):
+
         doc_document = DocDocument(
             retrieved_document_id=retrieved_document.id,  # type: ignore
             name=retrieved_document.name,
@@ -165,8 +166,8 @@ class ScrapeWorker:
             locations=retrieved_document.locations,
         )
 
-        rt_doc_location = self.get_site_location(self.site.id, retrieved_document)
-        doc_document.final_effective_date = calc_final_effective_date(doc_document, rt_doc_location)
+        doc_document.set_computed_values()
+
         await create_and_log(self.logger, await self.get_user(), doc_document)
 
     def set_doc_name(self, parsed_content: dict, download: DownloadContext):

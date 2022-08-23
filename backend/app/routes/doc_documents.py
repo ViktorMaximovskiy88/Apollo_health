@@ -19,13 +19,11 @@ from backend.common.events.send_event_client import SendEventClient
 from backend.common.models.doc_document import (
     DocDocument,
     DocDocumentLimitTags,
-    SiteDocDocument,
     UpdateDocDocument,
 )
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
-from backend.common.services.doc_document import calc_final_effective_date
 from backend.common.storage.text_handler import TextHandler
 
 router = APIRouter(
@@ -72,59 +70,6 @@ async def read_doc_documents(
 
 
 @router.get(
-    "/jal",
-    response_model=TableQueryResponse,
-    dependencies=[Security(get_current_user)],
-)
-async def get_doc_documents(
-    site_id: PydanticObjectId | None = None,
-    scrape_task_id: PydanticObjectId | None = None,
-    limit: int | None = None,
-    skip: int | None = None,
-    sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
-    filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
-):
-
-    match = build_match(filters)
-    sort = build_sort(sorts)
-
-    if scrape_task_id:
-        task = await SiteScrapeTask.get(scrape_task_id)
-        if task:
-            match["retrieved_document_id"] = {"$in": task.retrieved_document_ids}
-
-    pipeline.append({"$unwind": {"path": "$locations"}})
-
-    if match:
-        pipeline.append({"$match": match})
-
-    if site_id:
-        pipeline.append({"$match": {"locations.site_id": site_id}})
-
-    pipeline.append({"$replaceWith": {"$mergeObjects": ["$$ROOT", "$locations"]}})
-
-    total_query = await DocDocument.aggregate(
-        aggregation_pipeline=[*pipeline, {"$count": "total"}],
-    ).to_list()
-
-    if sort:
-        pipeline.append({"$sort": sort})
-
-    if skip:
-        pipeline.append({"$skip": skip})
-
-    if limit:
-        pipeline.append({"$limit": limit})
-
-    data = await DocDocument.aggregate(
-        aggregation_pipeline=pipeline,
-        projection_model=SiteDocDocument,
-    ).to_list()
-
-    return TableQueryResponse(data=data, total=total_query[0]["total"])
-
-
-@router.get(
     "/{id}",
     response_model=DocDocument,
     dependencies=[Security(get_current_user)],
@@ -168,7 +113,7 @@ async def update_extraction_task(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    updates.final_effective_date = calc_final_effective_date(updates)
+    updates.set_computed_values()
     updated = await update_and_log_diff(logger, current_user, target, updates)
 
     # Sending Event Bridge Event.  Need to add condition when to send.

@@ -16,6 +16,22 @@ from backend.common.models.shared import (
 )
 
 
+class DocDocumentMixins:
+    def set_computed_values(self):
+        self.set_first_collected()
+        self.set_last_collected()
+        self.set_final_effective_date()
+
+    def set_first_collected(self):
+        self.first_collected_date = get_first_collected(self)
+
+    def set_last_collected(self):
+        self.last_collected_date = get_last_collected(self)
+
+    def set_final_effective_date(self):
+        self.final_effective_date = calc_final_effective_date(self)
+
+
 class BaseDocDocument(BaseModel):
     retrieved_document_id: Indexed(PydanticObjectId)  # type: ignore
     classification_status: Indexed(str) = ApprovalStatus.QUEUED  # type: ignore
@@ -41,6 +57,8 @@ class BaseDocDocument(BaseModel):
     first_created_date: datetime | None = None
     published_date: datetime | None = None
     identified_dates: list[datetime] | None = None
+    first_collected_date: datetime | None = None
+    last_collected_date: datetime | None = None
 
     # Manual/Calculated Dates
     final_effective_date: datetime | None = None
@@ -61,30 +79,12 @@ class BaseDocDocument(BaseModel):
     tags: list[str] = []
 
 
-class DocDocument(BaseDocument, BaseDocDocument, LockableDocument):
+class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocDocumentMixins):
     locations: list[DocDocumentLocation] = []
 
     def for_site(self, site_id: PydanticObjectId):
         location = next((x for x in self.locations if x.site_id == site_id), None)
         return SiteDocDocument(_id=self.id, **self.dict(), **location.dict())
-
-    def for_rollup(self):
-
-        first_collected_date = min(
-            self.locations, key=lambda location: location.first_collected_date
-        )
-        last_collected_date = min(self.locations, key=lambda location: location.last_collected_date)
-
-        return DocDocumentRollup(
-            **self.dict(),
-            first_collected_date=first_collected_date,
-            last_collected_date=last_collected_date,
-        )
-
-
-class DocDocumentRollup(BaseDocDocument):
-    first_collected_date: datetime | None = None
-    last_collected_date: datetime | None = None
 
 
 class SiteDocDocument(BaseDocDocument, DocDocumentLocation):
@@ -99,7 +99,7 @@ class DocDocumentLimitTags(DocDocument):
         projection = {"therapy_tags": {"$slice": 10}, "indication_tags": {"$slice": 10}}
 
 
-class UpdateDocDocument(BaseModel):
+class UpdateDocDocument(BaseModel, DocDocumentMixins):
     site_id: PydanticObjectId | None = None
     classification_status: TaskStatus = TaskStatus.QUEUED
     classification_lock: TaskLock | None = None
@@ -129,6 +129,30 @@ class UpdateDocDocument(BaseModel):
     content_extraction_task_id: PydanticObjectId | None = None
     content_extraction_status: ApprovalStatus = ApprovalStatus.QUEUED
     content_extraction_lock: TaskLock | None = None
+
+
+def get_first_collected(doc: DocDocument):
+    return min(doc.locations, key=lambda location: location.first_collected_date)
+
+
+def get_last_collected(doc: DocDocument):
+    return max(doc.locations, key=lambda location: location.last_collected_date)
+
+
+def calc_final_effective_date(doc: DocDocument) -> datetime:
+    computeFromFields = []
+    if doc.effective_date:
+        computeFromFields.append(doc.effective_date)
+    if doc.last_reviewed_date:
+        computeFromFields.append(doc.last_reviewed_date)
+    if doc.last_updated_date:
+        computeFromFields.append(doc.last_updated_date)
+
+    final_effective_date = (
+        max(computeFromFields) if len(computeFromFields) > 0 else doc.last_collected_date
+    )
+
+    return final_effective_date
 
 
 # Deprecated
