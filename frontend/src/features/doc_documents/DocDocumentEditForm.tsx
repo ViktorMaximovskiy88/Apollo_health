@@ -3,7 +3,7 @@ import { DocDocument, IndicationTag, TherapyTag } from './types';
 import { DocDocumentTagForm } from './DocDocumentTagForm';
 import { dateToMoment } from '../../common';
 import { useCallback, useEffect, useState } from 'react';
-import { compact, groupBy, maxBy } from 'lodash';
+import { compact, groupBy, isEqual, maxBy } from 'lodash';
 import { DocDocumentInfoForm } from './DocDocumentInfoForm';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery, useUpdateDocDocumentMutation } from './docDocumentApi';
@@ -42,13 +42,15 @@ const useTagsState = (): [
   useEffect(() => {
     if (!doc) return;
 
-    const therapyTags: TherapyTag[] = doc.therapy_tags.map((tag) => ({
+    const therapyTags: TherapyTag[] = doc.therapy_tags.map((tag, i) => ({
       ...tag,
+      id: `${i}-therapy`,
       _type: 'therapy',
       _normalized: `${tag.name.toLowerCase()}|${tag.text.toLowerCase()}`,
     }));
-    const indicationTags: IndicationTag[] = doc.indication_tags.map((tag) => ({
+    const indicationTags: IndicationTag[] = doc.indication_tags.map((tag, i) => ({
       ...tag,
+      id: `${i}-indication`,
       _type: 'indication',
       _normalized: tag.text.toLowerCase(),
     }));
@@ -131,6 +133,18 @@ export function DocDocumentEditForm({
   const [tags, setTags] = useTagsState();
   const onFinish = useOnFinish(tags, setIsSaving);
 
+  function handleTagEdit(newTag: TherapyTag | IndicationTag) {
+    const update = [...tags];
+    const index = update.findIndex((tag) => {
+      return tag.id === newTag.id;
+    });
+    if (index > -1) {
+      if (!isEqual(newTag, update[index])) setHasChanges(true);
+      update[index] = newTag;
+    }
+    setTags(update);
+  }
+
   if (!doc) return null;
   const initialValues = buildInitialValues(doc);
 
@@ -166,10 +180,10 @@ export function DocDocumentEditForm({
                 setHasChanges(true);
               }}
               onDeleteTag={(tag: any) => {
-                setTags(tags.filter((t) => t.code !== tag.code));
+                setTags(tags.filter((t) => t.id !== tag.id));
                 setHasChanges(true);
               }}
-              onEditTag={(tag: TherapyTag | IndicationTag) => {}} // TODO: finish onEditTag
+              onEditTag={handleTagEdit}
               currentPage={pageNumber}
             />
           </Tabs.TabPane>
