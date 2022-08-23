@@ -188,7 +188,7 @@ async def start_hung_task_checker():
                 "status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.CANCELING]},
                 "collection_method": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
                 "$or": [
-                    {"last_active": {"$lt": now - timedelta(minutes=1)}},
+                    {"last_active": {"$lt": now - timedelta(minutes=5)}},
                     {"last_active": None},
                 ],
             }
