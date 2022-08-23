@@ -3,7 +3,7 @@ import { render, screen, act } from '../../test/test-utils';
 import { setupServer } from 'msw/node';
 import { CollectionsPage } from './CollectionsPage';
 import { handlers } from './mocks/collectionsPageHandlers';
-import { useParams, Params, useLocation, Location } from 'react-router-dom';
+import { useParams, Params, useLocation, Location, useSearchParams } from 'react-router-dom';
 
 jest.mock('react-router-dom');
 
@@ -25,6 +25,24 @@ beforeAll(() => {
 
   server.listen({ onUnhandledRequest: 'error' });
 });
+beforeEach(() => {
+  const mockedUseParams = useParams as jest.Mock<Params>;
+  mockedUseParams.mockImplementation(() => ({
+    siteId: 'site-id1',
+  }));
+  const mockedUseSearchParams = useSearchParams as jest.Mock<any>;
+  mockedUseSearchParams.mockImplementation(() => [
+    new URLSearchParams('scrape_task_id=scrape-task-id1'),
+  ]);
+  const mockedUseLocation = useLocation as jest.Mock<Location>;
+  mockedUseLocation.mockImplementation(() => ({
+    pathname: 'site-id1',
+    key: 'site-id1',
+    state: '',
+    search: '',
+    hash: '',
+  }));
+});
 afterAll(() => {
   jest.useRealTimers();
   server.close();
@@ -33,19 +51,6 @@ afterEach(() => server.resetHandlers());
 
 describe(`CollectionsPage`, () => {
   it(`should open error log modal when button clicked`, async () => {
-    const mockedUseParams = useParams as jest.Mock<Params>;
-    mockedUseParams.mockImplementation(() => ({
-      siteId: 'site-id1',
-    }));
-    const mockedUseLocation = useLocation as jest.Mock<Location>;
-    mockedUseLocation.mockImplementation(() => ({
-      pathname: 'site-id1',
-      key: 'site-id1',
-      state: '',
-      search: '',
-      hash: '',
-    }));
-
     // fixes `act` warning
     // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
     const dataGridDoneRendering = Promise.resolve();
@@ -71,7 +76,10 @@ describe(`CollectionsPage`, () => {
     mockedUseParams.mockImplementation(() => ({
       siteId: 'site-id1',
     }));
-
+    const mockedUseSearchParams = useSearchParams as jest.Mock<any>;
+    mockedUseSearchParams.mockImplementation(() => [
+      new URLSearchParams('scrape_task_id=scrape-task-id1'),
+    ]);
     const mockedUseLocation = useLocation as jest.Mock<Location>;
     mockedUseLocation.mockImplementation(() => ({
       pathname: 'test',
