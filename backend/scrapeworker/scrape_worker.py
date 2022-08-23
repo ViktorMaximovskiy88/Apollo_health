@@ -176,15 +176,6 @@ class ScrapeWorker:
             or download.request.url
         )
 
-    def find_site_index(self, site_id, document: RetrievedDocument | DocDocument):
-        return next((i for i, item in enumerate(document.locations) if item.site_id == site_id), -1)
-
-    def get_site_location(
-        self, site_id, document: RetrievedDocument | DocDocument
-    ) -> RetrievedDocumentLocation | DocDocumentLocation:
-        location_index = self.find_site_index(site_id, document)
-        return document.locations[location_index] if location_index > -1 else None
-
     # TODO we temporarily update allthethings. as our code matures, this likely dies
     async def update_retrieved_document(
         self,
@@ -195,7 +186,7 @@ class ScrapeWorker:
         now = datetime.now(tz=timezone.utc)
         name = self.set_doc_name(parsed_content, download)
 
-        location = self.get_site_location(self.site.id, document)
+        location = document.get_site_location(self.site.id)
 
         if location:
             location.context_metadata = download.metadata.dict()
@@ -232,6 +223,7 @@ class ScrapeWorker:
             text_checksum=document.text_checksum,
             locations=document.locations,
         )
+
         await document.update(Set(updated_doc.dict(exclude_unset=True)))
         return updated_doc
 

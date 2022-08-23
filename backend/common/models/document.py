@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from backend.common.core.enums import LangCode
 from backend.common.models.base_document import BaseDocument
+from backend.common.models.document_mixins import DocumentMixins
 from backend.common.models.shared import IndicationTag, RetrievedDocumentLocation, TherapyTag
 
 
@@ -36,11 +37,11 @@ class BaseRetrievedDocument(BaseModel):
     indication_tags: list[IndicationTag] = []
 
 
-class RetrievedDocument(BaseDocument, BaseRetrievedDocument):
+class RetrievedDocument(BaseDocument, BaseRetrievedDocument, DocumentMixins):
     locations: list[RetrievedDocumentLocation] = []
 
     def for_site(self, site_id: PydanticObjectId):
-        location = next((x for x in self.locations if x.site_id == site_id), None)
+        location = self.get_site_location(site_id)
         return SiteRetrievedDocument(_id=self.id, **self.dict(), **location.dict())
 
 
@@ -48,7 +49,7 @@ class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
     id: PydanticObjectId = Field(None, alias="_id")
 
 
-class UpdateRetrievedDocument(BaseModel):
+class UpdateRetrievedDocument(BaseModel, DocumentMixins):
     id: PydanticObjectId = Field(None, alias="_id")
     effective_date: datetime | None = None
     end_date: datetime | None = None
