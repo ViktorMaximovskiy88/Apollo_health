@@ -24,14 +24,15 @@ class BaseRetrievedDocument(BaseModel):
     next_review_date: datetime | None = None
     next_update_date: datetime | None = None
     published_date: datetime | None = None
+    first_collected_date: datetime | None = None
+    last_collected_date: datetime | None = None
+
     document_type: str | None = None
     doc_type_confidence: float | None = None
     identified_dates: list[datetime] = []
     lang_code: LangCode | None = None
     file_extension: str | None = None
     content_type: str | None = None
-    # full text is the same for checksums in the below set
-    file_checksum_aliases: list[str] = list()
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
@@ -71,8 +72,6 @@ class UpdateRetrievedDocument(BaseModel, DocumentMixins):
     lang_code: LangCode | None = None
     file_extension: str | None = None
     content_type: str | None = None
-
-    file_checksum_aliases: set[str] = set()
 
     therapy_tags: list[TherapyTag] | None = None
     indication_tags: list[IndicationTag] | None = None

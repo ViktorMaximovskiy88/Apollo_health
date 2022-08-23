@@ -134,10 +134,7 @@ async def upload_document(
     file_extension = name.split(".")[-1]
     dest_path = f"{checksum}.{file_extension}"
 
-    document = await RetrievedDocument.find_one(
-        RetrievedDocument.checksum == checksum
-        or checksum in RetrievedDocument.file_checksum_aliases
-    )
+    document = await RetrievedDocument.find_one(RetrievedDocument.checksum == checksum)
 
     with tempfile.NamedTemporaryFile(delete=True, suffix="." + file_extension) as tmp:
         tmp.write(content)
