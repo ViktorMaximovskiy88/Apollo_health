@@ -21,7 +21,11 @@ class RxNormEntityLinkerModel:
             self.tempdir = tempfile.TemporaryDirectory()
             dirname = self.tempdir.name
             self.client.download_directory(f"rxnorm/{version}", dirname)
+        except Exception:
+            print("RxNorm model not found and therefore not loaded")
+            return
 
+        try:
             DEFAULT_PATHS[f"RxNorm_{version}"] = LinkerPaths(
                 ann_index=f"{dirname}/nmslib_index.bin",
                 tfidf_vectorizer=f"{dirname}/tfidf_vectorizer.joblib",
@@ -35,9 +39,8 @@ class RxNormEntityLinkerModel:
 
             DEFAULT_KNOWLEDGE_BASES[f"RxNorm_{version}"] = RxNormKnowledgeBase
             self.linker = CandidateGenerator(name=f"RxNorm_{version}")  # type: ignore
-
         except Exception:
-            print("RxNorm model not found and therefore not loaded")
+            print("RxNorm Entity Linker Model Not Found")
             return
 
     form_abbr = [
