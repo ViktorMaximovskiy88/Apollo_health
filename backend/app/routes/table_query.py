@@ -41,13 +41,11 @@ def get_query_json_list(arg: str, type):
     return func
 
 
-async def query_table(
-    query: FindMany[T],  # type: ignore
-    limit: int | None = None,
-    skip: int | None = None,
-    sorts: list[TableSortInfo] = [],
+#  reuse for aggregates and find
+def build_match(
     filters: list[TableFilterInfo] = [],
-) -> TableQueryResponse[T]:
+):
+    match = {}
     for filter in filters:
         if not filter.value and filter.operator not in ["empty", "notEmpty"]:
             continue
@@ -68,40 +66,81 @@ async def query_table(
             pass
 
         if filter.operator == "contains":
-            query = query.find({filter.name: {"$regex": value, "$options": "i"}})
+            match[filter.name] = {"$regex": value, "$options": "i"}
         if filter.operator == "notContains":
-            query = query.find({filter.name: {"$not": {"$regex": value, "$options": "i"}}})
+            match[filter.name] = {"$not": {"$regex": value, "$options": "i"}}
         if filter.operator == "startsWith":
-            query = query.find({filter.name: {"$regex": f"^{value}", "$options": "i"}})
+            match[filter.name] = {"$regex": f"^{value}", "$options": "i"}
         if filter.operator == "endsWith":
-            query = query.find({filter.name: {"$regex": f"{value}$", "$options": "i"}})
+            match[filter.name] = {"$regex": f"{value}$", "$options": "i"}
         if filter.operator == "eq":
-            query = query.find({filter.name: value})
+            match[filter.name] = value
         if filter.operator == "neq":
-            query = query.find({filter.name: {"$ne": value}})
+            match[filter.name] = {"$ne": value}
         if filter.operator == "empty":
-            query = query.find({filter.name: None})
+            match[filter.name] = None
         if filter.operator == "notEmpty":
-            query = query.find({filter.name: {"$not": None}})
+            match[filter.name] = {"$not": None}
         if filter.operator in ["gt", "gte", "lt", "lte"]:
-            query = query.find({filter.name: {f"${filter.operator}": value}})
+            match[filter.name] = {f"${filter.operator}": value}
         if filter.operator == "after":
-            query = query.find({filter.name: {"$gt": value}})
+            match[filter.name] = {"$gt": value}
         if filter.operator == "afterOrOn":
-            query = query.find({filter.name: {"$gte": value}})
+            match[filter.name] = {"$gte": value}
         if filter.operator == "before":
-            query = query.find({filter.name: {"$lt": value}})
+            match[filter.name] = {"$lt": value}
         if filter.operator == "beforeOrOn":
-            query = query.find({filter.name: {"$lte": value}})
+            match[filter.name] = {"$lte": value}
+
+    return match if len(match) > 0 else None
+
+
+#  reuse for aggregates and find
+def build_sort(
+    sorts: list[TableSortInfo] = [],
+):
+    sorted = {}
+    for sort in sorts:
+        # dir could be 0, in which case do not add sort
+        if sort.dir != 0:
+            sorted[sort.name] = sort.dir
+
+    return sorted if len(sorted) > 0 else None
+
+
+#  helper for the query
+def query_match(query: FindMany[T], match):
+    for item in match:
+        query = query.find(item)
+    return query
+
+
+#  helper for the sort
+def query_order(query: FindMany[T], sort):
+    for item in sort:
+        query = query.sort(item)
+    return query
+
+
+async def query_table(
+    query: FindMany[T],  # type: ignore
+    limit: int | None = None,
+    skip: int | None = None,
+    sorts: list[TableSortInfo] = [],
+    filters: list[TableFilterInfo] = [],
+) -> TableQueryResponse[T]:
+
+    match = build_match(filters)
+
+    if match:
+        query = query_match(query, match)
 
     total = await query.count()
+    sort = build_sort(sorts)
 
-    for sort in sorts:
-        if sort.dir == -1:
-            query = query.sort(f"-{sort.name}")
-        elif sort.dir == 1:
-            query = query.sort(sort.name)
-        # dir could be 0, in which case do not add sort
+    if sort:
+        query = query_order(query, sort)
+
     if limit:
         query = query.limit(limit)
     if skip:

@@ -63,7 +63,6 @@ async def get_documents(
                 status.HTTP_406_NOT_ACCEPTABLE,
                 f"Scrape Task {scrape_task_id} does not exist",
             )
-
         query["_id"] = {"$in": scrape_task.retrieved_document_ids}
     if site_id:
         query["locations.site_id"] = site_id
