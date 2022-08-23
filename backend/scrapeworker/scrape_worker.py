@@ -33,6 +33,7 @@ from backend.common.models.link_task_log import (
     link_retrieved_task_from_download,
 )
 from backend.common.models.proxy import Proxy
+from backend.common.models.shared import DocDocumentLocation
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
@@ -47,8 +48,6 @@ from backend.scrapeworker.file_parsers import parse_by_type
 from backend.scrapeworker.playbook import ScrapePlaybook
 from backend.scrapeworker.scrapers import scrapers
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
-
-from ..common.models.shared import DocDocumentLocation
 
 log = logging.getLogger(__name__)
 
