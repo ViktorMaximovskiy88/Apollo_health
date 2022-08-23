@@ -6,6 +6,7 @@ from playwright._impl._api_structures import SetCookieParam
 from playwright.async_api import APIResponse, ElementHandle, Locator
 from playwright.async_api import Request as RouteRequest
 from playwright.async_api import Route
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.selectors import filter_by_href
@@ -75,6 +76,22 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
             else:
                 await route.abort()
 
+        async def click_with_backoff(locator: Locator, max_retries: int = 2) -> None:
+            for retry in range(0, max_retries + 1):
+                try:
+                    timeout = 30000
+                    if retry > 0:
+                        wait = (retry + 1) ** 3
+                        timeout *= retry
+                        await asyncio.sleep(wait)
+                    await locator.click(timeout=timeout)
+                    return
+                except PlaywrightTimeoutError:
+                    if retry == max_retries:
+                        logging.debug("Max retries reached")
+                    continue
+            return
+
         await self.page.route("**/*", intercept)
 
         metadata: Metadata
@@ -82,9 +99,8 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
             logging.debug(f"{index} of {len(self.metadatas)} count of metadata")
             if not metadata.element_id:
                 continue
-            await asyncio.sleep(0.75)
             locator: Locator = self.page.locator(f"#{metadata.element_id}")
-            await locator.click()
+            await click_with_backoff(locator)
 
         await self.page.unroute("**/*", intercept)
 
