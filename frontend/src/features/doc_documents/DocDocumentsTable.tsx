@@ -70,6 +70,7 @@ export function DocDocumentsTable({ handleNewVersion }: DataTablePropTypes) {
   // Trigger update every 10 seconds by invalidating memoized callback
   const { isActive, setActive, watermark } = useInterval(10000);
   const { siteId } = useParams();
+
   const [searchParams] = useSearchParams();
   const scrapeTaskId = searchParams.get('scrape_task_id');
 
@@ -79,7 +80,7 @@ export function DocDocumentsTable({ handleNewVersion }: DataTablePropTypes) {
   const loadData = useCallback(
     async (tableInfo: any) => {
       tableInfo.site_id = siteId;
-      tableInfo.scrape_task_id = searchParams.get('scrape_task_id');
+      tableInfo.scrape_task_id = scrapeTaskId;
       const { data } = await getDocDocumentsFn(tableInfo);
       const sites = data?.data ?? [];
       const count = data?.total ?? 0;

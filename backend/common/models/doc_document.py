@@ -72,11 +72,12 @@ class BaseDocDocument(BaseModel):
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
 
-    automated_content_extraction: bool = False
-    automated_content_extraction_class: str | None = None
+    translation_id: PydanticObjectId | None = None
     content_extraction_task_id: PydanticObjectId | None = None
 
     tags: list[str] = []
+
+    document_family_id: PydanticObjectId | None = None
 
 
 class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocDocumentMixins):
@@ -124,23 +125,24 @@ class UpdateDocDocument(BaseModel, DocDocumentMixins):
     indication_tags: list[UpdateIndicationTag] | None = None
     tags: list[str] | None = None
 
-    automated_content_extraction: bool = False
-    automated_content_extraction_class: str | None = None
+    translation_id: PydanticObjectId | None = None
     content_extraction_task_id: PydanticObjectId | None = None
     content_extraction_status: ApprovalStatus = ApprovalStatus.QUEUED
     content_extraction_lock: TaskLock | None = None
 
+    document_family_id: PydanticObjectId | None = None
 
-def get_first_collected(doc: DocDocument):
+
+def get_first_collected(doc: DocDocument | UpdateDocDocument):
     return min(doc.locations, key=lambda location: location.first_collected_date)
 
 
-def get_last_collected(doc: DocDocument):
+def get_last_collected(doc: DocDocument | UpdateDocDocument):
     return max(doc.locations, key=lambda location: location.last_collected_date)
 
 
-def calc_final_effective_date(doc: DocDocument) -> datetime:
-    computeFromFields = []
+def calc_final_effective_date(doc: DocDocument | UpdateDocDocument) -> datetime | None:
+    computeFromFields: list[datetime] = []
     if doc.effective_date:
         computeFromFields.append(doc.effective_date)
     if doc.last_reviewed_date:

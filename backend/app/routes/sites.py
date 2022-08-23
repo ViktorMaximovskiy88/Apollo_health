@@ -15,6 +15,7 @@ from backend.app.utils.logger import Logger, create_and_log, get_logger, update_
 from backend.app.utils.uploads import get_sites_from_upload
 from backend.app.utils.user import get_current_user
 from backend.common.core.enums import SiteStatus
+from backend.common.models.doc_document import DocDocument, DocDocumentLimitTags, SiteDocDocument
 from backend.common.models.document import (
     RetrievedDocument,
     RetrievedDocumentLimitTags,
@@ -22,8 +23,6 @@ from backend.common.models.document import (
 )
 from backend.common.models.site import ActiveUrlResponse, NewSite, Site, UpdateSite
 from backend.common.models.user import User
-
-from ...common.models.doc_document import DocDocument, DocDocumentLimitTags, SiteDocDocument
 
 router = APIRouter(
     prefix="/sites",

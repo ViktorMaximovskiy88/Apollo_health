@@ -80,7 +80,7 @@ def build_match(
         if filter.operator == "empty":
             match[filter.name] = None
         if filter.operator == "notEmpty":
-            match[filter.name] = {"$not": None}
+            match[filter.name] = {"$exists": True, "$ne": None}
         if filter.operator in ["gt", "gte", "lt", "lte"]:
             match[filter.name] = {f"${filter.operator}": value}
         if filter.operator == "after":

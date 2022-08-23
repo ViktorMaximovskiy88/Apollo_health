@@ -4,7 +4,7 @@ export interface DocumentQuery {
   scrape_task_id?: string | null;
   site_id?: string | null;
   logical_document_id?: string | null;
-  automated_content_extraction?: boolean | null;
+  translation_id?: boolean;
 }
 
 export interface RetrievedDocument extends BaseDocument {
@@ -34,17 +34,23 @@ export interface RetrievedDocument extends BaseDocument {
   base_url: string;
   lang_code: string;
   file_extension: string;
-  automated_content_extraction: boolean;
-  automated_content_extraction_class: string;
 }
 
 // id is added so that it can be used for both table filters and dropdown selections
 export const DocumentTypes = [
   { id: 'Authorization Policy', value: 'Authorization Policy', label: 'Authorization Policy' },
   { id: 'Provider Guide', value: 'Provider Guide', label: 'Provider Guide' },
-  { id: 'Treatment Request Form', value: 'Treatment Request Form', label: 'Treatment Request Form' },
+  {
+    id: 'Treatment Request Form',
+    value: 'Treatment Request Form',
+    label: 'Treatment Request Form',
+  },
   { id: 'Payer Unlisted Policy', value: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
-  { id: 'Covered Treatment List', value: 'Covered Treatment List', label: 'Covered Treatment List' },
+  {
+    id: 'Covered Treatment List',
+    value: 'Covered Treatment List',
+    label: 'Covered Treatment List',
+  },
   { id: 'Regulatory Document', value: 'Regulatory Document', label: 'Regulatory Document' },
   { id: 'Formulary', value: 'Formulary', label: 'Formulary' },
   { id: 'Internal Reference', value: 'Internal Reference', label: 'Internal Reference' },

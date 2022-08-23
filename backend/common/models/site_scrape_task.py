@@ -25,7 +25,7 @@ class SiteScrapeTask(BaseDocument):
     links_found: int = 0
     retry_if_lost: bool = False
     collection_method: str | None = CollectionMethod.Automated
-    scrape_method_configuration: ScrapeMethodConfiguration | None
+    scrape_method_configuration: ScrapeMethodConfiguration | None = None
 
 
 class UpdateSiteScrapeTask(BaseModel):

@@ -14,7 +14,7 @@ from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask, UpdateSiteScrapeTask
 from backend.common.models.user import User
-from backend.common.services.site_scrape_task import try_queue_unique_task
+from backend.common.task_queues.unique_task_insert import try_queue_unique_task
 
 router = APIRouter(
     prefix="/site-scrape-tasks",
@@ -290,7 +290,7 @@ async def cancel_scrape_task(
         scrape_task = SiteScrapeTask.parse_obj(canceled_queued_task)
         typer.secho(f"Canceled Task {scrape_task.id} ", fg=typer.colors.BLUE)
         if site:
-            await site.set({Site.last_run_status: TaskStatus.CANCELED})
+            await site.update(Set({Site.last_run_status: TaskStatus.CANCELED}))
         return scrape_task
 
     acquired = await SiteScrapeTask.get_motor_collection().find_one_and_update(
@@ -306,7 +306,7 @@ async def cancel_scrape_task(
         scrape_task = SiteScrapeTask.parse_obj(acquired)
         typer.secho(f"Set Task {scrape_task.id} 'Canceling'", fg=typer.colors.BLUE)
         if site:
-            await site.set({Site.last_run_status: TaskStatus.CANCELING})
+            await site.update(Set({Site.last_run_status: TaskStatus.CANCELING}))
         return scrape_task
 
     raise HTTPException(

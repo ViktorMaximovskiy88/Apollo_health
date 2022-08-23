@@ -147,7 +147,7 @@ class AioDownloader:
         download.set_mimetype()
         download.set_extension_from_mimetype()
         download.file_size = (
-            download.response.content_length
+            download.response.content_length or 0
         )  # temp, do actual file size (these should 99.9% match but arent the same)
         download.file_hash = hasher.hexdigest()
         self.log.info(
@@ -159,7 +159,7 @@ class AioDownloader:
         self,
         download: DownloadContext,
         proxies: list[tuple[Proxy | None, ProxySettings | None]] = [],
-    ):
+    ) -> AsyncGenerator[tuple[str | None, str | None], None]:
         url = download.request.url
         self.log.info(f"Before attempting download {url}")
 

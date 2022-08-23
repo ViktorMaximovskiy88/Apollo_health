@@ -18,13 +18,13 @@ class TextHandler:
         self.text_client.write_object_mem(dest_path, bytes_obj)
         return hash
 
-    def save_diff(self, diff: str, a_name: str, b_name: str) -> str:
+    def save_diff(self, diff: str | bytes, a_name: str, b_name: str) -> str:
         diff_name = f"{a_name}-{b_name}"
         dest_path = f"{diff_name}.diff"
         self.diff_client.write_object_mem(dest_path, diff)
         return diff_name
 
-    async def create_diff(self, a_name: str, b_name: str) -> tuple[str, bytes] | None:
+    async def create_diff(self, a_name: str, b_name: str) -> tuple[str, bytes]:
         diff_name = f"{a_name}-{b_name}"
         dest_path = f"{diff_name}.diff"
         if self.diff_client.object_exists(dest_path):

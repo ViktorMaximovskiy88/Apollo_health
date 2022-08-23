@@ -35,9 +35,6 @@ class BaseRetrievedDocument(BaseModel):
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
 
-    automated_content_extraction: bool = False
-    automated_content_extraction_class: str | None = None
-
 
 class RetrievedDocument(BaseDocument, BaseRetrievedDocument):
     locations: list[RetrievedDocumentLocation] = []
@@ -49,14 +46,6 @@ class RetrievedDocument(BaseDocument, BaseRetrievedDocument):
 
 class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
     id: PydanticObjectId = Field(None, alias="_id")
-
-
-class RetrievedDocumentLimitTags(RetrievedDocument):
-    class Collection:
-        name = "RetrievedDocument"
-
-    class Settings:
-        projection = {"therapy_tags": {"$slice": 10}, "indication_tags": {"$slice": 10}}
 
 
 class UpdateRetrievedDocument(BaseModel):
@@ -91,6 +80,14 @@ class UpdateRetrievedDocument(BaseModel):
     automated_content_extraction_class: str | None = None
 
     locations: list[RetrievedDocumentLocation] = []
+
+
+class RetrievedDocumentLimitTags(RetrievedDocument):
+    class Collection:
+        name = "RetrievedDocument"
+
+    class Settings:
+        projection = {"therapy_tags": {"$slice": 10}, "indication_tags": {"$slice": 10}}
 
 
 # Deprecated

@@ -12,6 +12,7 @@ import {
   IdcardOutlined,
   InboxOutlined,
   FileTextTwoTone,
+  MergeCellsOutlined,
 } from '@ant-design/icons';
 
 export function AppLayout() {
@@ -32,7 +33,7 @@ export function AppBreadcrumbs() {
         <div
           className={classNames(
             'text-[16px]',
-            i == breadcrumbs.length - 1 ? 'text-gray-900' : 'text-gray-500'
+            i === breadcrumbs.length - 1 ? 'text-gray-900' : 'text-gray-500'
           )}
           key={`${crumb.label}`}
         >
@@ -90,6 +91,7 @@ function AppMenu() {
     '/sites': <ProjectTwoTone />,
     '/work-queues': <InboxOutlined />,
     '/documents': <FileTextTwoTone />,
+    '/translations': <MergeCellsOutlined />,
     '/users': <IdcardOutlined />,
   };
 

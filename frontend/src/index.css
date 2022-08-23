@@ -48,7 +48,7 @@ h1.ant-typography {
 
 .ant-input,
 .ant-picker,
-.ant-btn:not(.ant-input-search-button):not(.ant-btn-link) {
+.ant-btn:not(.ant-input-search-button):not(.ant-btn-link):not(.ant-btn-dashed) {
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
   border: 1px solid #d9d9d9;
@@ -119,4 +119,14 @@ a {
 }
 .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
   color: white;
+}
+
+.ant-collapse-header-text {
+  width: 100%;
+}
+
+.ant-modal-full-screen .ant-modal-content {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
 }

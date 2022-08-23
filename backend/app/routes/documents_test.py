@@ -6,12 +6,12 @@ import aiofiles
 import pytest
 import pytest_asyncio
 import requests
-from beanie import Document
+from beanie import Document, PydanticObjectId
 from fastapi import UploadFile
 from pydantic import HttpUrl
 
 from backend.app.routes.documents import add_document, get_documents, upload_document
-from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
+from backend.common.core.enums import CollectionMethod, LangCode, SiteStatus, TaskStatus
 from backend.common.db.init import init_db
 from backend.common.models.document import RetrievedDocument, RetrievedDocumentLimitTags
 from backend.common.models.site import BaseUrl, ScrapeMethodConfiguration, Site
@@ -31,7 +31,7 @@ async def before_each_test():
 @pytest.mark.asyncio()
 async def user():
     user = User(
-        id="62e7c6647e2a94f469d57f34",
+        id=PydanticObjectId("62e7c6647e2a94f469d57f34"),
         email="example@me.com",
         full_name="John Doe",
         hashed_password="example",
@@ -105,7 +105,7 @@ def simple_manual_retrieved_document(
     return RetrievedDocument(
         name="test",
         url="https://www.example.com",
-        lang_code="en",
+        lang_code=LangCode.English,
         document_type="Authorization Policy",
         checksum=checksum,
         text_checksum=text_checksum,
@@ -163,8 +163,8 @@ class TestGetDocuments:
     async def test_get_one_document_by_scrape(self):
         [docs, scrapes, site] = await self.populate_db()
 
-        scrapes[0].retrieved_document_ids = [docs[0].id]
-        scrapes[1].retrieved_document_ids = [docs[1].id, docs[2].id]
+        scrapes[0].retrieved_document_ids = [docs[0].id]  # type: ignore
+        scrapes[1].retrieved_document_ids = [docs[1].id, docs[2].id]  # type: ignore
         for scrape in scrapes:
             await scrape.save()
 
@@ -179,8 +179,8 @@ class TestGetDocuments:
     async def test_get_two_documents_by_scrape(self):
         [docs, scrapes, site] = await self.populate_db()
 
-        scrapes[0].retrieved_document_ids = [docs[0].id]
-        scrapes[1].retrieved_document_ids = [docs[2].id, docs[1].id]
+        scrapes[0].retrieved_document_ids = [docs[0].id]  # type: ignore
+        scrapes[1].retrieved_document_ids = [docs[2].id, docs[1].id]  # type: ignore
         for scrape in scrapes:
             await scrape.save()
 
@@ -192,13 +192,13 @@ class TestGetDocuments:
         found_site_two = second_ret_docs[1]
         assert found_site_one.id == docs[2].id
         assert found_site_two.id == docs[1].id
-        assert found_site_one.first_collected_date > found_site_two.first_collected_date
+        assert found_site_one.first_collected_date > found_site_two.first_collected_date  # type: ignore # noqa: E501
 
     @pytest.mark.asyncio
     async def test_get_no_documents_by_scrape(self):
         [docs, scrapes, site] = await self.populate_db()
 
-        scrapes[1].retrieved_document_ids = [docs[2].id, docs[1].id]
+        scrapes[1].retrieved_document_ids = [docs[2].id, docs[1].id]  # type: ignore
         for scrape in scrapes:
             await scrape.save()
 
@@ -215,25 +215,20 @@ class TestGetDocuments:
     async def test_get_documents_by_content_extraction(self):
         [docs, scrapes, site] = await self.populate_db()
 
-        scrapes[0].retrieved_document_ids = [docs[0].id]
-        scrapes[1].retrieved_document_ids = [docs[2].id, docs[1].id]
+        scrapes[0].retrieved_document_ids = [docs[0].id]  # type: ignore
+        scrapes[1].retrieved_document_ids = [docs[2].id, docs[1].id]  # type: ignore
         for scrape in scrapes:
             await scrape.save()
 
-        ret_docs = await get_documents(automated_content_extraction=True)
-        assert len(ret_docs) == 0
-
-        second_ret_docs = await get_documents(
-            scrape_task_id=scrapes[1].id, automated_content_extraction=False
-        )
+        second_ret_docs = await get_documents(scrape_task_id=scrapes[1].id)
         assert len(second_ret_docs) == 2
 
     @pytest.mark.asyncio
     async def test_get_documents_by_site(self):
         [docs, scrapes, site] = await self.populate_db()
 
-        scrapes[0].retrieved_document_ids = [docs[0].id]
-        scrapes[1].retrieved_document_ids = [docs[2].id, docs[1].id]
+        scrapes[0].retrieved_document_ids = [docs[0].id]  # type: ignore
+        scrapes[1].retrieved_document_ids = [docs[2].id, docs[1].id]  # type: ignore
         for scrape in scrapes:
             await scrape.save()
 
@@ -264,10 +259,10 @@ class TestUploadFile:
                 uploaded_document = await upload_document(upload_file, user, logger)
 
                 assert uploaded_document["success"] is True
-                assert uploaded_document["data"]["checksum"] is not None
-                assert uploaded_document["data"]["text_checksum"] is not None
-                assert uploaded_document["data"]["metadata"] is not None
-                assert uploaded_document["data"]["doc_type_confidence"] is not None
+                assert uploaded_document["data"]["checksum"] is not None  # type: ignore
+                assert uploaded_document["data"]["text_checksum"] is not None  # type: ignore
+                assert uploaded_document["data"]["metadata"] is not None  # type: ignore
+                assert uploaded_document["data"]["doc_type_confidence"] is not None  # type: ignore
 
     @pytest.mark.asyncio
     async def test_upload_create_document(self, user, logger):
@@ -288,15 +283,15 @@ class TestUploadFile:
                 doc = simple_manual_retrieved_document(
                     site_one,
                     scrape_one,
-                    checksum=uploaded_document["data"]["checksum"],
-                    text_checksum=uploaded_document["data"]["text_checksum"],
-                    content_type=uploaded_document["data"]["content_type"],
-                    file_extension=uploaded_document["data"]["file_extension"],
-                    metadata=uploaded_document["data"]["metadata"],
-                    doc_type_confidence=uploaded_document["data"]["doc_type_confidence"],
-                    therapy_tags=uploaded_document["data"]["therapy_tags"],
-                    indication_tags=uploaded_document["data"]["indication_tags"],
-                    identified_dates=uploaded_document["data"]["identified_dates"],
+                    checksum=uploaded_document["data"]["checksum"],  # type: ignore
+                    text_checksum=uploaded_document["data"]["text_checksum"],  # type: ignore
+                    content_type=uploaded_document["data"]["content_type"],  # type: ignore
+                    file_extension=uploaded_document["data"]["file_extension"],  # type: ignore
+                    metadata=uploaded_document["data"]["metadata"],  # type: ignore
+                    doc_type_confidence=uploaded_document["data"]["doc_type_confidence"],  # type: ignore # noqa: E501
+                    therapy_tags=uploaded_document["data"]["therapy_tags"],  # type: ignore
+                    indication_tags=uploaded_document["data"]["indication_tags"],  # type: ignore
+                    identified_dates=uploaded_document["data"]["identified_dates"],  # type: ignore
                 )
 
                 doc_data = await add_document(doc, user, logger)

@@ -9,7 +9,7 @@ export const extractionTasksApi = createApi({
   tagTypes: ['ExtractionTask', 'ExtractionTaskResult', 'ChangeLog'],
   endpoints: (builder) => ({
     getExtractionTasksForDoc: builder.query<ExtractionTask[], string | undefined>({
-      query: (docId) => `/extraction-tasks/?retrieved_document_id=${docId}`,
+      query: (docId) => `/extraction-tasks/?doc_document_id=${docId}`,
       providesTags: (_r, _e, id) => [{ type: 'ExtractionTask' as const, id }],
     }),
     getExtractionTaskResults: builder.query<
@@ -36,7 +36,7 @@ export const extractionTasksApi = createApi({
     }),
     runExtractionTask: builder.mutation<ExtractionTask, string>({
       query: (docId) => ({
-        url: `/extraction-tasks/?retrieved_document_id=${docId}`,
+        url: `/extraction-tasks/?doc_document_id=${docId}`,
         method: 'PUT',
       }),
       invalidatesTags: (_r, _e, id) => [{ type: 'ExtractionTask', id }],

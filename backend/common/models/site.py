@@ -9,8 +9,8 @@ from backend.common.models.base_document import BaseDocument
 
 class AttrSelector(BaseModel):
     attr_name: str
-    attr_value: str = None
-    has_text: str = None
+    attr_value: str | None = None
+    has_text: str | None = None
     resource_address: bool = False
 
 
@@ -61,7 +61,7 @@ class NewSite(BaseModel):
     base_urls: list[BaseUrl] = []
     collection_method: str | None = CollectionMethod.Automated
     scrape_method: str | None = ""
-    scrape_method_configuration: ScrapeMethodConfiguration | None = None
+    scrape_method_configuration: ScrapeMethodConfiguration
     tags: list[str] = []
     playbook: str | None = None
     cron: str | None = ""

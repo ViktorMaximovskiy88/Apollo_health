@@ -44,7 +44,7 @@ class Response(BaseModel):
         self.status = response.status
         self.content_type = self.get_content_type(headers)
         self.content_disposition_filename = self.get_content_disposition_filename(headers)
-        self.content_length = headers.get("content-length") or 0
+        self.content_length = int(headers.get("content-length", 0))
 
     def get_content_disposition_filename(self, headers) -> str | None:
         matched = None
@@ -88,7 +88,7 @@ class DownloadContext(BaseModel):
     content_type: str | None = None
     mimetype: str | None = None
 
-    valid_response: ValidResponse | None
+    valid_response: ValidResponse | None = None
     invalid_responses: list[InvalidResponse] = []
 
     def guess_extension(self) -> str | None:
@@ -103,7 +103,7 @@ class DownloadContext(BaseModel):
         self.file_extension = guessed_ext
         return self.file_extension
 
-    def set_extension_from_mimetype(self) -> None:
+    def set_extension_from_mimetype(self) -> str | None:
         self.file_extension = get_extension_from_file_mimetype(self.file_path)
         return self.file_extension
 

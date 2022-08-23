@@ -29,6 +29,11 @@ export const navSlice = createSlice({
           label: 'All Documents',
           shortLabel: 'Docs',
         },
+        {
+          url: '/translations',
+          label: 'Translations',
+          shortLabel: 'Translations',
+        },
         { url: '/users', label: 'Users', shortLabel: 'Users' },
       ] as MenuItem[],
       currentItem: {} as MenuItem,

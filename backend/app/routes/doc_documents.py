@@ -7,8 +7,6 @@ from backend.app.routes.table_query import (
     TableFilterInfo,
     TableQueryResponse,
     TableSortInfo,
-    build_match,
-    build_sort,
     get_query_json_list,
     query_table,
 )
@@ -16,11 +14,7 @@ from backend.app.utils.logger import Logger, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.events.event_convert import EventConvert
 from backend.common.events.send_event_client import SendEventClient
-from backend.common.models.doc_document import (
-    DocDocument,
-    DocDocumentLimitTags,
-    UpdateDocDocument,
-)
+from backend.common.models.doc_document import DocDocument, DocDocumentLimitTags, UpdateDocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
@@ -107,7 +101,7 @@ async def create_diff(
 
 
 @router.post("/{id}", response_model=DocDocument)
-async def update_extraction_task(
+async def update_doc_document(
     updates: UpdateDocDocument,
     target: DocDocument = Depends(get_target),
     current_user: User = Security(get_current_user),

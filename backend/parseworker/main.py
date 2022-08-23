@@ -12,16 +12,14 @@ from beanie.odm.operators.update.general import Set
 from pymongo import ReturnDocument
 
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
-import backend.parseworker.extractors as extractor_classes
-from backend.app.utils.logger import Logger, update_and_log_diff
 from backend.common.core.enums import TaskStatus
 from backend.common.db.init import init_db
 from backend.common.models.content_extraction_task import ContentExtractionTask
-from backend.common.models.doc_document import DocDocument, UpdateDocDocument
-from backend.common.models.document import RetrievedDocument
+from backend.common.models.doc_document import DocDocument
 from backend.common.models.site import Site
+from backend.common.models.translation_config import TranslationConfig
 from backend.common.models.user import User
-from backend.parseworker.rxnorm_entity_linker_model import RxNormEntityLinkerModel
+from backend.parseworker.extractor import TableContentExtractor
 
 app = typer.Typer()
 
@@ -29,9 +27,7 @@ app = typer.Typer()
 async def start_worker_async():
     await init_db()
     worker_id = uuid4()
-    rxnorm_model = RxNormEntityLinkerModel()
     user = await User.by_email("admin@mmitnetwork.com")
-    logger = Logger()
     if not user:
         raise Exception("No admin user found")
 
@@ -51,34 +47,37 @@ async def start_worker_async():
         if acquired:
             extract_task = ContentExtractionTask.parse_obj(acquired)
             site = await Site.find_one(Site.id == extract_task.site_id)
-            doc = await RetrievedDocument.find_one(
-                RetrievedDocument.id == extract_task.retrieved_document_id
+            doc_document = await DocDocument.find_one(
+                DocDocument.id == extract_task.doc_document_id
             )
-            if not site or not doc:
+            if not site:
                 raise Exception("Site not found")
-            doc_document = await DocDocument.find_one(DocDocument.retrieved_document_id == doc.id)
             if not doc_document:
                 raise Exception("DocDocument not found")
+            if not doc_document.translation_id:
+                raise Exception("DocDocument does not have translation_id")
+
+            config = await TranslationConfig.get(doc_document.translation_id)
+            if not config:
+                raise Exception("TranslationConfig not found")
 
             typer.secho(f"Acquired Task {extract_task.id}", fg=typer.colors.BLUE)
 
-            extraction_class = doc.automated_content_extraction_class or "BasicTableExtraction"
-            ExtractWorker = getattr(extractor_classes, extraction_class)
-
-            worker = ExtractWorker(extract_task, doc, site, rxnorm_model)
+            worker = TableContentExtractor(doc_document, config)
             try:
-                await worker.run_extraction()
+                await worker.run_extraction(extract_task)
                 typer.secho(f"Finished Task {extract_task.id}", fg=typer.colors.BLUE)
                 now = datetime.now(tz=timezone.utc)
-                update = UpdateDocDocument(content_extraction_task_id=extract_task.id)
-                await update_and_log_diff(logger, user, doc_document, update)
-                await extract_task.update(
-                    Set(
-                        {
-                            ContentExtractionTask.status: TaskStatus.FINISHED,
-                            ContentExtractionTask.end_time: now,
-                        }
-                    )
+                await asyncio.gather(
+                    doc_document.update(Set({"content_extraction_task_id": extract_task.id})),
+                    extract_task.update(
+                        Set(
+                            {
+                                ContentExtractionTask.status: TaskStatus.FINISHED,
+                                ContentExtractionTask.end_time: now,
+                            }
+                        )
+                    ),
                 )
             except Exception as ex:
                 logging.error(ex)

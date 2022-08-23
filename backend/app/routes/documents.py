@@ -8,7 +8,8 @@ from fastapi.responses import StreamingResponse
 
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
-from backend.common.models.content_extraction_task import ContentExtractionTask
+from backend.common.events.event_convert import EventConvert
+from backend.common.events.send_event_client import SendEventClient
 from backend.common.models.doc_document import DocDocument, DocDocumentLocation
 from backend.common.models.document import (
     RetrievedDocument,
@@ -23,9 +24,6 @@ from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.models import DownloadContext, Request
-from backend.scrapeworker.document_tagging.indication_tagging import indication_tagger
-from backend.scrapeworker.document_tagging.taggers import Taggers
-from backend.scrapeworker.document_tagging.therapy_tagging import therapy_tagger
 from backend.scrapeworker.file_parsers import parse_by_type
 
 router = APIRouter(
@@ -52,7 +50,6 @@ async def get_target(id: PydanticObjectId) -> RetrievedDocument:
 async def get_documents(
     scrape_task_id: PydanticObjectId | None = None,
     site_id: PydanticObjectId | None = None,
-    automated_content_extraction: bool | None = None,
 ):
     query = {}
     if scrape_task_id:
@@ -63,10 +60,9 @@ async def get_documents(
                 f"Scrape Task {scrape_task_id} does not exist",
             )
         query["_id"] = {"$in": scrape_task.retrieved_document_ids}
+
     if site_id:
         query["locations.site_id"] = site_id
-    if automated_content_extraction:
-        query["automated_content_extraction"] = automated_content_extraction
 
     documents: list[RetrievedDocumentLimitTags] = (
         await RetrievedDocument.find_many(query)
@@ -129,6 +125,9 @@ async def upload_document(
     text_handler = TextHandler()
 
     content = await file.read()
+    if isinstance(content, str):
+        raise Exception("Invalid File Type")
+
     checksum = hash_bytes(content)
     content_type = file.content_type
     name = file.filename
@@ -145,8 +144,9 @@ async def upload_document(
         temp_path = tmp.name
 
         download = DownloadContext(request=Request(url=temp_path), file_extension=file_extension)
-        taggers = Taggers(indication=indication_tagger, therapy=therapy_tagger)
-        parsed_content = await parse_by_type(temp_path, download, taggers)
+        parsed_content = await parse_by_type(temp_path, download)
+        if not parsed_content:
+            raise Exception("Count not extract file contents")
 
         text_checksum = await text_handler.save_text(parsed_content["text"])
         text_checksum_document = await RetrievedDocument.find_one(
@@ -188,19 +188,10 @@ async def update_document(
 
     updated = await update_and_log_diff(logger, current_user, target, updates)
 
-    ace_turned_on = updates.automated_content_extraction and not target.automated_content_extraction
-    ace_class_changed = (
-        target.automated_content_extraction_class != updates.automated_content_extraction_class
-    )
-
-    if ace_turned_on or ace_class_changed:
-        task = ContentExtractionTask(
-            site_id=target.site_id,
-            scrape_task_id=target.scrape_task_id,
-            retrieved_document_id=target.id,
-            queued_time=datetime.now(tz=timezone.utc),
-        )
-        await task.save()
+    # Sending Event Bridge Event.  Need to add condition when to send.
+    document_json = EventConvert(document=updated).convert()
+    send_evnt_client = SendEventClient()
+    response = send_evnt_client.send_event("document-details", document_json)  # noqa: F841
 
     return updated
 
@@ -296,7 +287,13 @@ async def add_document(
     doc_document.set_computed_values()
     await create_and_log(logger, current_user, doc_document)
 
+    if not document.scrape_task_id:
+        raise Exception(f"Document {document.id} does not have scrape_task_id")
+
     scrape_task = await SiteScrapeTask.get(document.scrape_task_id)
+
+    if not scrape_task:
+        raise Exception(f"Scrape Task Not found for {document.scrape_task_id}")
 
     if document.id:
         # get retrieved_document from Doc Document
@@ -304,11 +301,7 @@ async def add_document(
         if doc_document:
             index = scrape_task.retrieved_document_ids.index(doc_document.retrieved_document_id)
             if index >= 0:
-                new_retrieved_documents = scrape_task.retrieved_document_ids
-                new_retrieved_documents[index] = new_document.id
-                await scrape_task.update(
-                    Set({SiteScrapeTask.retrieved_document_ids: new_retrieved_documents})
-                )
+                await scrape_task.update(Set({f"retrieved_document_ids.{index}": new_document.id}))
 
     else:
         await scrape_task.update(

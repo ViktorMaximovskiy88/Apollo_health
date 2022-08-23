@@ -30,7 +30,7 @@ class LinkTask(BaseDocument):
 
 class LinkBaseTask(LinkTask):
     base_url: str
-    valid_response: ValidResponse | None
+    valid_response: ValidResponse | None = None
     invalid_responses: list[InvalidResponse] = []
 
     class Settings:
@@ -38,11 +38,11 @@ class LinkBaseTask(LinkTask):
 
 
 class LinkRetrievedTask(LinkTask):
-    file_metadata: FileMetadata | None
+    file_metadata: FileMetadata | None = None
     location: Location
     invalid_responses: list[InvalidResponse] = []
-    valid_response: ValidResponse | None
-    retrieved_document_id: PydanticObjectId | None
+    valid_response: ValidResponse | None = None
+    retrieved_document_id: PydanticObjectId | None = None
 
     class Settings:
         union_doc = LinkTaskLog

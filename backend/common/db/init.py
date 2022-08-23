@@ -12,11 +12,13 @@ from backend.common.models.content_extraction_task import (
 )
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
+from backend.common.models.document_family import DocumentFamily
 from backend.common.models.indication import Indication
 from backend.common.models.link_task_log import LinkBaseTask, LinkRetrievedTask, LinkTaskLog
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.models.translation_config import TranslationConfig
 from backend.common.models.user import User
 from backend.common.models.work_queue import WorkQueue
 
@@ -55,11 +57,13 @@ async def init_db(mock=False, database_name=None):
             Indication,
             DocDocument,
             SiteScrapeTask,
+            TranslationConfig,
             RetrievedDocument,
             ContentExtractionTask,
             ContentExtractionResult,
             LinkTaskLog,
             LinkBaseTask,
             LinkRetrievedTask,
+            DocumentFamily,
         ],
     )
