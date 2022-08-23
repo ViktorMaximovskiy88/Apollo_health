@@ -16,6 +16,7 @@ from backend.common.events.event_convert import EventConvert
 from backend.common.events.send_event_client import SendEventClient
 from backend.common.models.doc_document import DocDocument, DocDocumentLimitTags, UpdateDocDocument
 from backend.common.models.document import RetrievedDocument
+from backend.common.models.document_mixins import calc_final_effective_date
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.storage.text_handler import TextHandler
@@ -107,7 +108,8 @@ async def update_doc_document(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    updates.set_computed_values()
+
+    updates.final_effective_date = calc_final_effective_date(target)
     updated = await update_and_log_diff(logger, current_user, target, updates)
 
     # Sending Event Bridge Event.  Need to add condition when to send.

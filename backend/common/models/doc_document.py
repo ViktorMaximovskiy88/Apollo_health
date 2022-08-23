@@ -3,7 +3,7 @@ from datetime import datetime
 from beanie import Indexed, PydanticObjectId
 from pydantic import BaseModel, Field
 
-from backend.common.core.enums import ApprovalStatus, TaskStatus
+from backend.common.core.enums import ApprovalStatus, LangCode, TaskStatus
 from backend.common.models.base_document import BaseDocument
 from backend.common.models.document_mixins import DocumentMixins
 from backend.common.models.shared import (
@@ -27,6 +27,7 @@ class BaseDocDocument(BaseModel):
     checksum: str
     file_extension: str | None = None
     text_checksum: str | None = None
+    lang_code: LangCode | None = None
 
     # Document Type
     document_type: str | None = None
@@ -70,7 +71,15 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
 
     def for_site(self, site_id: PydanticObjectId):
         location = self.get_site_location(site_id)
-        return SiteDocDocument(_id=self.id, **self.dict(), **location.dict())
+        copy = self.dict()
+        copy.pop("first_collected_date")
+        copy.pop("last_collected_date")
+        return SiteDocDocument(_id=self.id, **copy, **location.dict())
+
+    def set_computed_values(self):
+        self.set_first_collected()
+        self.set_last_collected()
+        self.set_final_effective_date()
 
 
 class SiteDocDocument(BaseDocDocument, DocDocumentLocation):
@@ -86,11 +95,11 @@ class DocDocumentLimitTags(DocDocument):
 
 
 class UpdateDocDocument(BaseModel, DocumentMixins):
-    site_id: PydanticObjectId | None = None
     classification_status: TaskStatus = TaskStatus.QUEUED
     classification_lock: TaskLock | None = None
     name: str | None = None
     document_type: str | None = None
+    lang_code: LangCode | None = None
 
     final_effective_date: datetime | None = None
     effective_date: datetime | None = None

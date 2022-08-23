@@ -121,9 +121,9 @@ class ScrapeWorker:
             DocDocument.retrieved_document_id == retrieved_document.id
         )
         if doc_document:
-            log.debug(f"doc doc update -> {doc_document.id}")
-            rt_doc_location = self.get_site_location(self.site.id, retrieved_document)
-            location = self.get_site_location(self.site.id, doc_document)
+            self.log.debug(f"doc doc update -> {doc_document.id}")
+            rt_doc_location = retrieved_document.get_site_location(self.site.id)
+            location: DocDocumentLocation = doc_document.get_site_location(self.site.id)
 
             if location:
                 location.last_collected_date = rt_doc_location.last_collected_date
@@ -132,6 +132,7 @@ class ScrapeWorker:
 
             # Can be removed after text added to older docs
             doc_document.text_checksum = retrieved_document.text_checksum
+            doc_document.set_computed_values()
 
             await doc_document.save()
         else:
@@ -186,7 +187,7 @@ class ScrapeWorker:
         now = datetime.now(tz=timezone.utc)
         name = self.set_doc_name(parsed_content, download)
 
-        location = document.get_site_location(self.site.id)
+        location: RetrievedDocumentLocation = document.get_site_location(self.site.id)
 
         if location:
             location.context_metadata = download.metadata.dict()
@@ -224,6 +225,7 @@ class ScrapeWorker:
             locations=document.locations,
         )
 
+        updated_doc.set_computed_values()
         await document.update(Set(updated_doc.dict(exclude_unset=True)))
         return updated_doc
 
@@ -349,7 +351,10 @@ class ScrapeWorker:
                     ],
                 )
 
+                document.set_computed_values()
+                print(document, "doc")
                 await create_and_log(self.logger, await self.get_user(), document)
+
                 await self.create_doc_document(document)
 
             link_retrieved_task.retrieved_document_id = document.id

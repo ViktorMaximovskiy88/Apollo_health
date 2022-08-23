@@ -43,7 +43,14 @@ class RetrievedDocument(BaseDocument, BaseRetrievedDocument, DocumentMixins):
 
     def for_site(self, site_id: PydanticObjectId):
         location = self.get_site_location(site_id)
-        return SiteRetrievedDocument(_id=self.id, **self.dict(), **location.dict())
+        copy = self.dict()
+        copy.pop("first_collected_date")
+        copy.pop("last_collected_date")
+        return SiteRetrievedDocument(_id=self.id, **copy, **location.dict())
+
+    def set_computed_values(self):
+        self.set_first_collected()
+        self.set_last_collected()
 
 
 class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
@@ -60,6 +67,8 @@ class UpdateRetrievedDocument(BaseModel, DocumentMixins):
     next_update_date: datetime | None = None
     published_date: datetime | None = None
     identified_dates: list[datetime] | None = None
+    first_collected_date: datetime | None = None
+    last_collected_date: datetime | None = None
 
     checksum: str | None = None
     text_checksum: str | None = None
@@ -80,6 +89,10 @@ class UpdateRetrievedDocument(BaseModel, DocumentMixins):
     automated_content_extraction_class: str | None = None
 
     locations: list[RetrievedDocumentLocation] = []
+
+    def set_computed_values(self):
+        self.set_first_collected()
+        self.set_last_collected()
 
 
 class RetrievedDocumentLimitTags(RetrievedDocument):

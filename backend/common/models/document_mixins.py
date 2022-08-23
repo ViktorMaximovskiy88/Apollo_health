@@ -4,16 +4,13 @@ from beanie import PydanticObjectId
 
 
 class DocumentMixins:
-    def set_computed_values(self):
-        self.set_first_collected()
-        self.set_last_collected()
-        self.set_final_effective_date()
-
     def set_first_collected(self):
-        self.first_collected_date = get_first_collected(self)
+        location = get_first_collected(self)
+        self.first_collected_date = location.first_collected_date
 
     def set_last_collected(self):
-        self.last_collected_date = get_last_collected(self)
+        location = get_last_collected(self)
+        self.last_collected_date = location.last_collected_date
 
     def set_final_effective_date(self):
         self.final_effective_date = calc_final_effective_date(self)
@@ -22,13 +19,11 @@ class DocumentMixins:
         return next((i for i, item in enumerate(self.locations) if item.site_id == site_id), -1)
 
     def get_site_location(self, site_id):
-        location_index = find_site_index(site_id, self)
+        location_index = find_site_index(self, site_id)
         return self.locations[location_index] if location_index > -1 else None
 
 
 # TODO maybe remove these... they had need maybe now they dont...
-
-
 def get_first_collected(doc):
     return min(doc.locations, key=lambda location: location.first_collected_date)
 
@@ -57,5 +52,5 @@ def find_site_index(document, site_id: PydanticObjectId):
 
 
 def get_site_location(document, site_id: PydanticObjectId):
-    location_index = find_site_index(site_id, document)
+    location_index = find_site_index(document, site_id)
     return document.locations[location_index] if location_index > -1 else None
