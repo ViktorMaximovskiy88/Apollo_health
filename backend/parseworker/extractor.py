@@ -211,6 +211,9 @@ class TableContentExtractor:
             return False
 
         end_text = self.config.detection.end_text.lower()
+        if not end_text:
+            return False
+
         text = page.extract_text().lower()
         if end_text in text:
             return True
