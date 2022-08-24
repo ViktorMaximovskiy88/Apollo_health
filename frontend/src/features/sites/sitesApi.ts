@@ -44,6 +44,11 @@ export const sitesApi = createApi({
         { type: 'ChangeLog', id },
       ],
     }),
+    updateMultipleSites: builder.mutation<Site[], any>({
+      query: (body) => {
+        return { url: `/sites/bulk-assign`, method: 'POST', body };
+      },
+    }),
     deleteSite: builder.mutation<void, Pick<Site, '_id'> & Partial<Site>>({
       query: ({ _id: id }) => ({ url: `/sites/${id}`, method: 'DELETE' }),
       invalidatesTags: (_r, _e, { _id: id }) => [
@@ -66,6 +71,7 @@ export const {
   useLazyGetSitesQuery,
   useAddSiteMutation,
   useUpdateSiteMutation,
+  useUpdateMultipleSitesMutation,
   useDeleteSiteMutation,
   useGetChangeLogQuery,
 } = sitesApi;
