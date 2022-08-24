@@ -246,7 +246,7 @@ class ScrapeWorker:
             document = None
             dest_path = f"{checksum}.{download.file_extension}"
 
-            self.log.info(f"dest_path={dest_path} temp_path={temp_path}")
+            self.log.info(f"dest_path={dest_path}")
 
             if not self.doc_client.object_exists(dest_path):
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
