@@ -1,6 +1,5 @@
 import asyncio
 import re
-import uuid
 from functools import cached_property
 
 from playwright._impl._api_structures import SetCookieParam
@@ -62,7 +61,7 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
                         method=request.method,
                         headers=request.headers,
                         data=request.post_data,
-                        filename=str(uuid.uuid4()),
+                        filename=element_id,
                     )
                 )
                 await route.continue_()
