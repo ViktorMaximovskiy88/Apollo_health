@@ -1,30 +1,29 @@
-resource "aws_cloudwatch_log_group" "scrapeworker" {
-  name = format("/%s/%s-%s-scrapeworker", local.app_name, var.environment, local.service_name)
+resource "aws_cloudwatch_log_group" "dbmigrations" {
+  name = format("/%s/%s-%s-dbmigrations", local.app_name, var.environment, local.service_name)
   # TODO: Make this a variable and determine appropriate threshold
   retention_in_days = 30
   
   tags = merge(local.effective_tags, {
-    component = "${local.service_name}-scrapeworker"
+    component = "${local.service_name}-dbmigrations"
   })
 }
 
-resource "aws_ecs_task_definition" "scrapeworker" {
-  family                   = "${local.service_name}-scrapeworker"
+resource "aws_ecs_task_definition" "dbmigrations" {
+  family                   = "${local.service_name}-dbmigrations"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  # TODO: Make cpu, memory a variable and determine appropriate thresholds
-  cpu                      = 2048
-  memory                   = 4096
+  cpu                      = 512 # 0.5 vCPU
+  memory                   = 1024
   
 
   container_definitions = jsonencode([
     {
       name  = "${local.service_name}-app"
-      image = "${data.aws_ecr_repository.sourcehub-app.repository_url}:${var.sourcehub-scrapeworker-version}"
+      image = "${data.aws_ecr_repository.sourcehub-app.repository_url}:${var.sourcehub-dbmigrations-version}"
       command = [
         "/bin/bash",
         "-lc",
-        ". ./venv/bin/activate && exec python scrapeworker/main.py"
+        ". ./venv/bin/activate && exec python common/db/migrations.py"
       ]
       environment = [
         {
@@ -65,17 +64,12 @@ resource "aws_ecs_task_definition" "scrapeworker" {
         }
       ]
       essential = true
-      portMappings = [
-        {
-          containerPort = 8000
-        }
-      ]
 
       LogConfiguration = {
         LogDriver = "awslogs"
         Options = {
           awslogs-region = var.region
-          awslogs-group = aws_cloudwatch_log_group.scrapeworker.name
+          awslogs-group = aws_cloudwatch_log_group.dbmigrations.name
           awslogs-stream-prefix = local.service_name
         }
       }
@@ -104,15 +98,15 @@ resource "aws_ecs_task_definition" "scrapeworker" {
   }
 
   execution_role_arn = data.aws_iam_role.ecs-execution.arn
-  task_role_arn      = aws_iam_role.scrapeworker-task.arn
+  task_role_arn      = aws_iam_role.dbmigrations-task.arn
 
   tags = merge(local.effective_tags, {
-    component = "${local.service_name}-scrapeworker"
+    component = "${local.service_name}-dbmigrations"
   })
 }
 
-resource "aws_iam_role" "scrapeworker-task" {
-  name = format("%s-%s-%s-scrapeworker-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
+resource "aws_iam_role" "dbmigrations-task" {
+  name = format("%s-%s-%s-dbmigrations-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
 
   assume_role_policy = jsonencode({
     Version = "2008-10-17"
@@ -162,19 +156,18 @@ resource "aws_iam_role" "scrapeworker-task" {
   }
 
   managed_policy_arns = [
-    data.aws_iam_policy.docrepo-contributor.arn
   ]
 
   tags = merge(local.effective_tags, {
-    Name = format("%s-%s-%s-scrapeworker-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
-    component = "${local.service_name}-scrapeworker"
+    Name = format("%s-%s-%s-dbmigrations-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
+    component = "${local.service_name}-dbmigrations"
   })
 
 }
 
-resource "aws_security_group" "scrapeworker" {
-  name        = format("%s-%s-%s-scrapeworker-%s-mmit-sg-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
-  description = "${title(local.app_name)} Scrape Worker Security Group"
+resource "aws_security_group" "dbmigrations" {
+  name        = format("%s-%s-%s-dbmigrations-%s-mmit-sg-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
+  description = "${title(local.app_name)} DB Migrations Security Group"
   vpc_id      = data.aws_subnet.first-app-subnet.vpc_id
   
   ingress = [
@@ -197,44 +190,66 @@ resource "aws_security_group" "scrapeworker" {
   ]
 
   tags = merge(local.effective_tags, {
-    Name = format("%s-%s-%s-scrapeworker-%s-mmit-sg-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
-    component = "${local.service_name}-scrapeworker"
+    Name = format("%s-%s-%s-dbmigrations-%s-mmit-sg-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
+    component = "${local.service_name}-dbmigrations"
   })
 }
 
-resource "aws_ecs_service" "scrapeworker" {
-  name             = "${local.service_name}-scrapeworker"
-  platform_version = "LATEST"
-  cluster          = data.aws_ecs_cluster.ecs-cluster.id
-  task_definition  = aws_ecs_task_definition.scrapeworker.arn
-  desired_count    = 1
-  deployment_circuit_breaker {
-    enable   = true
-    rollback = true
+locals {
+  network_configuration = {
+    awsvpcConfiguration = {
+      assignPublicIp = "DISABLED"
+      subnets          = data.aws_subnets.app-subnet-ids.ids
+      securityGroups = [
+        aws_security_group.dbmigrations.id
+      ]
+    }
   }
-  deployment_maximum_percent         = 200
-  deployment_minimum_healthy_percent = 100
-  propagate_tags                     = "SERVICE"
-  enable_execute_command             = true
-  launch_type                        = "FARGATE"
-  network_configuration {
-    assign_public_ip = false
-    subnets          = data.aws_subnets.app-subnet-ids.ids
-    security_groups = [
-      aws_security_group.scrapeworker.id
-    ]
-  }
-  force_new_deployment = true
 
+}
+
+resource "null_resource" "exec-dbmigrations" {
   depends_on = [
-    null_resource.exec-dbmigrations
+    aws_ecs_task_definition.dbmigrations
   ]
-  lifecycle {
-    ignore_changes = [
-      desired_count
-    ]
+  triggers = {
+    task_definition_arn = aws_ecs_task_definition.dbmigrations.arn
   }
-  tags = merge(local.effective_tags, {
-    component = "${local.service_name}-scrapeworker"
-  })
+  provisioner "local-exec" {
+    interpreter = [
+      "/bin/bash", "-c"
+    ]
+    command = <<EOF
+set -e
+
+# Initialize variables used in script
+CLUSTER=${data.aws_ecs_cluster.ecs-cluster.id}
+TASK_DEF=${aws_ecs_task_definition.dbmigrations.family}:${aws_ecs_task_definition.dbmigrations.revision}
+NETWORK_CONFIG='${jsonencode(local.network_configuration)}'
+
+# Run DB Migration Task
+TASK_ARN=$(aws ecs run-task \
+  --cluster $CLUSTER \
+  --task-definition $TASK_DEF \
+  --launch-type FARGATE \
+  --network-configuration $NETWORK_CONFIG \
+  --query '(tasks[].taskArn)[0]' \
+  --output text)
+
+
+# Wait until Task moves to Stopped state, checking every 6 seconds
+aws ecs wait tasks-stopped \
+  --cluster $CLUSTER \
+  --tasks $TASK_ARN
+
+# Get Exit Code
+TASK_EXIT_CODE=$(aws ecs describe-tasks \
+  --cluster $CLUSTER \
+  --tasks $TASK_ARN \
+  --query "tasks[0].containers[0].exitCode" \
+  --output text)
+
+exit $TASK_EXIT_CODE
+EOF
+  }
 }
