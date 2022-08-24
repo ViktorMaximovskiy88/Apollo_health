@@ -30,11 +30,11 @@ interface AssignTypes {
 function Assign({ selected, setSelected }: AssignTypes) {
   const [updateMultipleSites] = useUpdateMultipleSitesMutation();
 
-  const assign = async () => {
-    let temp = values(selected);
-    let g = await updateMultipleSites(temp);
+  const assignSites = async () => {
+    const sites = values(selected);
+    const resp = await updateMultipleSites(sites);
   };
-  return <Button onClick={assign}>Assign to me</Button>;
+  return <Button onClick={assignSites}>Assign to me</Button>;
 }
 
 function BulkActions() {
