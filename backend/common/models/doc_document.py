@@ -76,11 +76,6 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
         copy.pop("last_collected_date")
         return SiteDocDocument(_id=self.id, **copy, **location.dict())
 
-    def set_computed_values(self):
-        self.set_first_collected()
-        self.set_last_collected()
-        self.set_final_effective_date()
-
 
 class SiteDocDocument(BaseDocDocument, DocDocumentLocation):
     id: PydanticObjectId = Field(None, alias="_id")

@@ -281,7 +281,7 @@ async def add_document(
         ],
     )
 
-    doc_document.set_computed_values()
+    doc_document.set_final_effective_date()
     await create_and_log(logger, current_user, doc_document)
 
     if not document.scrape_task_id:

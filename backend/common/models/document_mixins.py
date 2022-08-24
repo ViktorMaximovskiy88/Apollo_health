@@ -25,6 +25,7 @@ class DocumentMixins:
 
 # TODO maybe remove these... they had need maybe now they dont...
 def get_first_collected(doc):
+    print(doc.locations, "*** * * *  *")
     return min(doc.locations, key=lambda location: location.first_collected_date)
 
 

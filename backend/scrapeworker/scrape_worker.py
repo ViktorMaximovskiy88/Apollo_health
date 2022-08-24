@@ -132,7 +132,7 @@ class ScrapeWorker:
 
             # Can be removed after text added to older docs
             doc_document.text_checksum = retrieved_document.text_checksum
-            doc_document.set_computed_values()
+            doc_document.last_collected_date = retrieved_document.last_collected_date
 
             await doc_document.save()
         else:
@@ -159,10 +159,12 @@ class ScrapeWorker:
             indication_tags=retrieved_document.indication_tags,
             file_extension=retrieved_document.file_extension,
             identified_dates=retrieved_document.identified_dates,
+            last_collected_date=retrieved_document.last_collected_date,
+            first_collected_date=retrieved_document.first_collected_date,
             locations=retrieved_document.locations,
         )
 
-        doc_document.set_computed_values()
+        doc_document.set_final_effective_date()
 
         await create_and_log(self.logger, await self.get_user(), doc_document)
 
@@ -223,9 +225,9 @@ class ScrapeWorker:
             name=name,
             text_checksum=document.text_checksum,
             locations=document.locations,
+            last_collected_date=now,
         )
 
-        updated_doc.set_computed_values()
         await document.update(Set(updated_doc.dict(exclude_unset=True)))
         return updated_doc
 
@@ -338,6 +340,8 @@ class ScrapeWorker:
                     name=name,
                     therapy_tags=parsed_content["therapy_tags"],
                     indication_tags=parsed_content["indication_tags"],
+                    first_collected_date=now,
+                    last_collected_date=now,
                     locations=[
                         RetrievedDocumentLocation(
                             base_url=download.metadata.base_url,
@@ -351,10 +355,7 @@ class ScrapeWorker:
                     ],
                 )
 
-                document.set_computed_values()
-                print(document, "doc")
                 await create_and_log(self.logger, await self.get_user(), document)
-
                 await self.create_doc_document(document)
 
             link_retrieved_task.retrieved_document_id = document.id
