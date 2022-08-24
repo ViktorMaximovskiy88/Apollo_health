@@ -55,6 +55,40 @@ async def create_and_log(
     return response
 
 
+def get_diff_patch(
+    original: dict[str, Any],
+    updated: dict[str, Any],
+):
+    patch = JsonPatch.from_diff(original, updated, dumps=json_util.dumps).patch
+    for op in patch:
+        if op["op"] == "remove" or op["op"] == "replace":
+            pointer = JsonPointer(op["path"])
+            try:
+                op["prev"] = pointer.resolve(original)
+            except Exception as ex:
+                logging.debug(ex)
+                pass
+    return patch
+
+
+async def update_and_log_diff_forground(
+    logger: Logger,
+    current_user: User,
+    target: Document,
+    updates: BaseModel | dict[str, Any],
+    session: AsyncIOMotorClientSession | None = None,
+):
+    original = target.dict()
+    if isinstance(updates, BaseModel):
+        updates = updates.dict(exclude_unset=True)
+
+    await target.update(Set(updates), session=session)
+    updated = target.dict()
+    patch = get_diff_patch(original, updated)
+    await logger.log_change(current_user, target, "UPDATE", patch)
+    return updated
+
+
 async def update_and_log_diff(
     logger: Logger,
     current_user: User,
@@ -68,14 +102,6 @@ async def update_and_log_diff(
 
     await target.update(Set(updates), session=session)
     updated = target.dict()
-    patch = JsonPatch.from_diff(original, updated, dumps=json_util.dumps).patch
-    for op in patch:
-        if op["op"] == "remove" or op["op"] == "replace":
-            pointer = JsonPointer(op["path"])
-            try:
-                op["prev"] = pointer.resolve(original)
-            except Exception as ex:
-                logging.debug(ex)
-                pass
+    patch = get_diff_patch(original, updated)
     await logger.background_log_change(current_user, target, "UPDATE", patch)
     return updated

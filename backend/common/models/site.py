@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from beanie import PydanticObjectId
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl
 
 from backend.common.core.enums import CollectionMethod, SiteStatus
 from backend.common.models.base_document import BaseDocument
@@ -72,6 +72,10 @@ class UpdateSite(BaseModel):
     playbook: str | None = None
     status: str | None = None
     assignee: PydanticObjectId | None = None
+
+
+class UpdateSiteAssigne(BaseModel):
+    id: PydanticObjectId = Field(alias="_id")
 
 
 class Site(BaseDocument, NewSite):

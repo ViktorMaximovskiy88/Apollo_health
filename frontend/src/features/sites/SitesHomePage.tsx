@@ -1,3 +1,4 @@
+import values from 'lodash/values';
 import { Button, Upload, Dropdown, Space, Menu, notification } from 'antd';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -10,12 +11,31 @@ import { QuickFilter } from './QuickFilter';
 import { baseApiUrl, client, fetchWithAuth } from '../../app/base-api';
 import { MainLayout } from '../../components';
 
+import { useUpdateMultipleSitesMutation } from './sitesApi';
+import { Site } from './types';
+
 function CreateSite() {
   return (
     <Link to="new">
       <Button>Create Site</Button>
     </Link>
   );
+}
+
+interface AssignTypes {
+  selected: Object;
+  setSelected: any;
+}
+
+function Assign({ selected, setSelected }: AssignTypes) {
+  const [updateMultipleSites] = useUpdateMultipleSitesMutation();
+
+  const assign = async () => {
+    let temp = values(selected);
+    let g = await updateMultipleSites(temp);
+    console.log(g);
+  };
+  return <Button onClick={assign}>Assign to me</Button>;
 }
 
 function BulkActions() {
@@ -141,11 +161,13 @@ function BulkDownload() {
 
 export function SitesHomePage() {
   const [isLoading, setLoading] = useState(false);
+  const [selected, setSelected] = useState<{ [id: string]: Site }>({});
   return (
     <MainLayout
       pageToolbar={
         <>
           <QuickFilter isLoading={isLoading} />
+          <Assign selected={selected} setSelected={setSelected} />
           <CreateSite />
           <BulkActions />
           <BulkUpload />
@@ -153,7 +175,7 @@ export function SitesHomePage() {
         </>
       }
     >
-      <SiteDataTable setLoading={setLoading} />
+      <SiteDataTable setLoading={setLoading} selected={selected} setSelected={setSelected} />
     </MainLayout>
   );
 }
