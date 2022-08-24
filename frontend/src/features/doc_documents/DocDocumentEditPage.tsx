@@ -1,5 +1,5 @@
 import { Button } from 'antd';
-import { useGetDocDocumentQuery } from './docDocumentApi';
+import { useGetDocDocumentQuery, useUpdateDocDocumentMutation } from './docDocumentApi';
 import { DocDocumentEditForm } from './DocDocumentEditForm';
 import { RetrievedDocumentViewer } from '../retrieved_documents/RetrievedDocumentViewer';
 import { MainLayout } from '../../components';
@@ -17,7 +17,9 @@ export function DocDocumentEditPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [pageNumber, setPageNumber] = useState(0);
+  const [updateDocDocument] = useUpdateDocDocumentMutation();
 
+  if (!docId) return null;
   if (!doc) return null;
 
   return (
@@ -57,6 +59,8 @@ export function DocDocumentEditPage() {
           setHasChanges={setHasChanges}
           form={form}
           pageNumber={pageNumber}
+          onSubmit={updateDocDocument}
+          docId={docId}
         />
         <div className="flex-1 h-full overflow-hidden ant-tabs-h-full">
           <RetrievedDocumentViewer

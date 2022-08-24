@@ -5,8 +5,8 @@ import { dateToMoment } from '../../common';
 import { useCallback, useEffect, useState } from 'react';
 import { compact, groupBy, isEqual, maxBy } from 'lodash';
 import { DocDocumentInfoForm } from './DocDocumentInfoForm';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useGetDocDocumentQuery, useUpdateDocDocumentMutation } from './docDocumentApi';
+import { useNavigate } from 'react-router-dom';
+import { useGetDocDocumentQuery } from './docDocumentApi';
 
 const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   const calculateFinalEffectiveDate = useCallback(() => {
@@ -17,7 +17,7 @@ const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
       dateToMoment(values.last_updated_date),
     ]);
 
-    const finalEffectiveDate =
+    const finalEffectiveDate: moment.Moment =
       computeFromFields.length > 0
         ? maxBy(computeFromFields, (date) => date.unix())
         : values.first_collected_date;
@@ -30,11 +30,9 @@ const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   return calculateFinalEffectiveDate;
 };
 
-const useTagsState = (): [
-  Array<TherapyTag | IndicationTag>,
-  (tags: Array<TherapyTag | IndicationTag>) => void
-] => {
-  const { docDocumentId: docId } = useParams();
+const useTagsState = (
+  docId: string
+): [Array<TherapyTag | IndicationTag>, (tags: Array<TherapyTag | IndicationTag>) => void] => {
   const { data: doc } = useGetDocDocumentQuery(docId);
 
   const [tags, setTags] = useState<Array<TherapyTag | IndicationTag>>([]);
@@ -60,23 +58,29 @@ const useTagsState = (): [
   return [tags, setTags];
 };
 
-const useOnFinish = (
-  tags: Array<TherapyTag | IndicationTag>,
-  setIsSaving: (isSaving: boolean) => void
-): ((doc: Partial<DocDocument>) => Promise<void>) => {
+interface UseOnFinishType {
+  onSubmit: (doc: Partial<DocDocument>) => void;
+  tags: Array<TherapyTag | IndicationTag>;
+  setIsSaving: (isSaving: boolean) => void;
+  docId: string;
+}
+const useOnFinish = ({
+  onSubmit,
+  tags,
+  setIsSaving,
+  docId,
+}: UseOnFinishType): ((doc: Partial<DocDocument>) => void) => {
   const navigate = useNavigate();
-  const { docDocumentId: docId } = useParams();
 
-  const [updateDocDocument] = useUpdateDocDocumentMutation();
-
-  const onFinish = async (submittedDoc: Partial<DocDocument>): Promise<void> => {
+  const onFinish = (submittedDoc: Partial<DocDocument>): void => {
     if (!submittedDoc) return;
 
     setIsSaving(true);
 
     try {
       const tagsByType = groupBy(tags, '_type');
-      await updateDocDocument({
+
+      onSubmit({
         ...submittedDoc,
         indication_tags: (tagsByType['indication'] ?? []) as IndicationTag[],
         therapy_tags: (tagsByType['therapy'] ?? []) as TherapyTag[],
@@ -114,8 +118,8 @@ interface EditFormPropTypes {
   setHasChanges: (hasChanges: boolean) => void;
   form: FormInstance;
   pageNumber: number;
-  onSubmit?: (doc: Partial<DocDocument>) => void;
-  docId?: string;
+  onSubmit: (doc: Partial<DocDocument>) => void;
+  docId: string;
 }
 export function DocDocumentEditForm({
   isSaving,
@@ -126,9 +130,6 @@ export function DocDocumentEditForm({
   onSubmit,
   docId,
 }: EditFormPropTypes) {
-  const { docDocumentId } = useParams();
-  docId = docId ?? docDocumentId;
-
   const { data: doc } = useGetDocDocumentQuery(docId);
 
   const calculateFinalEffectiveDate = useCalculateFinalEffectiveDate(form);
@@ -137,8 +138,8 @@ export function DocDocumentEditForm({
     calculateFinalEffectiveDate();
   }, [doc, calculateFinalEffectiveDate]);
 
-  const [tags, setTags] = useTagsState();
-  const onFinish = useOnFinish(tags, setIsSaving);
+  const [tags, setTags] = useTagsState(docId);
+  const onFinish = useOnFinish({ onSubmit, tags, setIsSaving, docId });
 
   function handleTagEdit(newTag: TherapyTag | IndicationTag) {
     const update = [...tags];
