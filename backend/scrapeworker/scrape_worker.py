@@ -67,7 +67,7 @@ class ScrapeWorker:
         scrape_task: SiteScrapeTask,
         site: Site,
     ) -> None:
-        _log = logging.getLogger(str(scrape_task.id)[:8])
+        _log = logging.getLogger(str(scrape_task.id))
         self.playwright = playwright
         self.get_browser_context = get_browser_context
         self.scrape_task = scrape_task
@@ -246,7 +246,7 @@ class ScrapeWorker:
             document = None
             dest_path = f"{checksum}.{download.file_extension}"
 
-            self.log.info(f"dest_path={dest_path} temp_path={temp_path}")
+            self.log.info(f"dest_path={dest_path}")
 
             if not self.doc_client.object_exists(dest_path):
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
@@ -474,6 +474,7 @@ class ScrapeWorker:
                         config=self.site.scrape_method_configuration,
                         playbook_context=playbook_context,
                         url=url,
+                        log=self.log,
                     )
 
                     if not await scraper.is_applicable():

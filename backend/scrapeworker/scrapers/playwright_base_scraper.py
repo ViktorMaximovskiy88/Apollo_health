@@ -31,6 +31,7 @@ class PlaywrightBaseScraper(ABC):
         page: Page,
         url: str,
         config: ScrapeMethodConfiguration,
+        log: logging.Logger = logging.getLogger(__name__),
         playbook_context: PlaybookContext = [],
     ):
         self.context = context
@@ -40,6 +41,7 @@ class PlaywrightBaseScraper(ABC):
         self.playbook_context = playbook_context
         self.parsed_url = urlparse(self.url)
         self.selectors = []
+        self.log = log
 
     @cached_property
     def css_selector(self) -> str | None:
@@ -74,7 +76,7 @@ class PlaywrightBaseScraper(ABC):
             in_child_frame = await self.find_in_page(child_frames[0].page)
 
         result = in_parent_frame or in_child_frame
-        logging.info(f"{self.__class__.__name__} is_applicable -> {result}")
+        self.log.info(f"{self.__class__.__name__} is_applicable -> {result}")
         return result
 
     async def extract_metadata(

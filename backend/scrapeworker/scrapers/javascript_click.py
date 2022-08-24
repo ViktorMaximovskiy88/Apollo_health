@@ -31,18 +31,18 @@ class JavascriptClick(PlaywrightBaseScraper):
             if not attr_selector.resource_address:
                 selectors.append(to_xpath(attr_selector))
         selector_string = "|".join(selectors)
-        logging.info(selector_string)
+        self.log.info(selector_string)
         return selector_string
 
     async def handle_json(self, response: PageResponse) -> DownloadContext | None:
         try:
             parsed = await response.json()
         except Exception:
-            logging.debug("no json response")
+            self.log.debug("no json response")
             return None
         content_type = response.headers["content-type"]
         if content_type == "application/vnd.contentful.delivery.v1+json":  # Contentful
-            logging.debug(f"follow json {content_type}")
+            self.log.debug(f"follow json {content_type}")
             file_field = parsed["fields"]["file"]
             return DownloadContext(
                 content_type=file_field["contentType"],
@@ -82,7 +82,7 @@ class JavascriptClick(PlaywrightBaseScraper):
                     download.metadata = await self.extract_metadata(link_handle)
                     downloads.append(download)
                 elif content_type in accepted_types:
-                    logging.debug(f"direct download {content_type}")
+                    self.log.debug(f"direct download {content_type}")
                     download = DownloadContext(
                         response=Response(content_type=content_type, status=response.status),
                         request=Request(
@@ -92,7 +92,7 @@ class JavascriptClick(PlaywrightBaseScraper):
                     download.metadata = await self.extract_metadata(link_handle)
                     downloads.append(download)
                 else:
-                    logging.debug(f"unknown format {content_type}")
+                    self.log.debug(f"unknown format {content_type}")
 
             except Exception:
                 logging.error("exception", exc_info=True)

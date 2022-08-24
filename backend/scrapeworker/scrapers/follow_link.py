@@ -1,4 +1,3 @@
-import logging
 from functools import cached_property
 from urllib.parse import urljoin
 
@@ -22,7 +21,7 @@ class FollowLinkScraper(PlaywrightBaseScraper):
             url_keywords=self.config.follow_link_url_keywords,
         )
         self.selectors = self.selectors + href_selectors
-        logging.debug(self.selectors)
+        self.log.debug(self.selectors)
         return ", ".join(self.selectors)
 
     async def execute(self) -> list[DownloadContext]:
