@@ -18,7 +18,7 @@ from backend.common.models.content_extraction_task import (
     ContentExtractionTask,
     UpdateContentExtractionTask,
 )
-from backend.common.models.document import RetrievedDocument
+from backend.common.models.doc_document import DocDocument
 from backend.common.models.site import Site
 from backend.common.models.user import User
 
@@ -60,11 +60,11 @@ async def read_extraction_results(
     dependencies=[Security(get_current_user)],
 )
 async def read_extraction_tasks_for_doc(
-    retrieved_document_id: PydanticObjectId,
+    doc_document_id: PydanticObjectId,
 ):
     extraction_tasks: list[ContentExtractionTask] = (
         await ContentExtractionTask.find_many(
-            ContentExtractionTask.retrieved_document_id == retrieved_document_id
+            ContentExtractionTask.doc_document_id == doc_document_id
         )
         .sort("-queued_time")
         .to_list()
@@ -83,8 +83,8 @@ async def read_extraction_task(
     return target
 
 
-async def get_doc(retrieved_document_id: PydanticObjectId):
-    return await RetrievedDocument.get(retrieved_document_id)
+async def get_doc(doc_document_id: PydanticObjectId):
+    return await DocDocument.get(doc_document_id)
 
 
 @router.put(
@@ -93,15 +93,14 @@ async def get_doc(retrieved_document_id: PydanticObjectId):
     status_code=status.HTTP_201_CREATED,
 )
 async def start_extraction_task(
-    doc: RetrievedDocument = Depends(get_doc),
+    doc: DocDocument = Depends(get_doc),
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     extraction_task = ContentExtractionTask(
         site_id=doc.site_id,
         initiator_id=current_user.id,
-        scrape_task_id=doc.scrape_task_id,
-        retrieved_document_id=doc.id,
+        doc_document_id=doc.id,
         queued_time=datetime.now(tz=timezone.utc),
     )
 

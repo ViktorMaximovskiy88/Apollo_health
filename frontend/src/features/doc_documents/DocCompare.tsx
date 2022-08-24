@@ -1,20 +1,20 @@
 import { Button, Form, Input, Modal, notification, Typography } from 'antd';
 import { LinkOutlined } from '@ant-design/icons';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { parseDiff, Diff, Hunk } from 'react-diff-view';
 import 'react-diff-view/style/index.css';
 
 import { isErrorWithData } from '../../common/helpers';
 import { Hr } from '../../components';
-import { useCreateDiffMutation } from './docDocumentApi';
+import { useCreateDiffMutation, useGetDocDocumentQuery } from './docDocumentApi';
 import { RetrievedDocument } from '../retrieved_documents/types';
 import { DocDocument } from './types';
 
 function CompareModal(props: {
   diff?: string;
-  org_doc?: DocDocument;
-  new_doc?: RetrievedDocument;
+  orgDoc?: DocDocument;
+  newDoc?: RetrievedDocument;
   isModalVisible: boolean;
   handleCloseModal: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void;
 }) {
@@ -44,7 +44,7 @@ function CompareModal(props: {
         <div className="text-lg font-semibold">Current File</div>
         <Link
           className="text-lg font-semibold"
-          to={`/sites/${props.new_doc?.site_id}/documents/${props.new_doc?._id}/edit`}
+          to={`/sites/${props.newDoc?.site_id}/documents/${props.newDoc?._id}/edit`}
           target="_blank"
           rel="noopener"
         >
@@ -60,7 +60,9 @@ function CompareModal(props: {
   );
 }
 
-export function DocCompare(props: { org_doc: DocDocument }) {
+export function DocCompare() {
+  const { docDocumentId: docId } = useParams();
+  const { data: orgDoc } = useGetDocDocumentQuery(docId);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [compareId, setCompareId] = useState('');
   const [createDiff, { data: diffData, isLoading, isSuccess }] = useCreateDiffMutation();
@@ -82,7 +84,7 @@ export function DocCompare(props: { org_doc: DocDocument }) {
         });
         return;
       }
-      const compareInfo = { _id: props.org_doc._id, compareId: compareId };
+      const compareInfo = { _id: orgDoc?._id ?? '', compareId: compareId };
       await createDiff(compareInfo).unwrap();
       setIsModalVisible(true);
     } catch (err) {
@@ -116,8 +118,8 @@ export function DocCompare(props: { org_doc: DocDocument }) {
         <CompareModal
           isModalVisible={isModalVisible}
           diff={diffData?.diff}
-          org_doc={props.org_doc}
-          new_doc={diffData?.new_doc}
+          orgDoc={orgDoc}
+          newDoc={diffData?.new_doc}
           handleCloseModal={handleCloseModal}
         />
       )}

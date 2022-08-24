@@ -24,9 +24,9 @@ class IndicationTagger:
                 )
                 async for indication in Indication.find():
                     for term in indication.terms:
-                        ruler.add_patterns(
+                        ruler.add_patterns(  # type: ignore
                             [
-                                {  # type: ignore
+                                {
                                     "label": f"{term}|{indication.indication_number}",
                                     "pattern": term,
                                 }
@@ -57,3 +57,6 @@ class IndicationTagger:
                     )
                 )
         return list(tags)
+
+
+indication_tagger = IndicationTagger()

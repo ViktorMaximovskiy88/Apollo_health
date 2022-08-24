@@ -2,18 +2,16 @@ import { useMemo } from 'react';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Button } from 'antd';
-import { LinkOutlined } from "@ant-design/icons"
+import { LinkOutlined } from '@ant-design/icons';
 import { prettyDateTimeFromISO } from '../../common';
-import { ButtonLink } from '../../components/ButtonLink';
-import { DocDocument } from "./types";
+import { DocDocument } from './types';
 import { Link } from 'react-router-dom';
+import { DocumentTypes } from '../retrieved_documents/types';
 
 interface CreateColumnsType {
   handleNewVersion: (data: DocDocument) => void;
 }
-export const createColumns = ({
-  handleNewVersion
-}: CreateColumnsType) => {
+export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
   return [
     {
       header: 'Last Collected Date',
@@ -48,16 +46,7 @@ export const createColumns = ({
       filterEditor: SelectFilter,
       filterEditorProps: {
         placeholder: 'All',
-        dataSource: [
-          { id: 'Authorization Policy', label: 'Authorization Policy' },
-          { id: 'Provider Guide', label: 'Provider Guide' },
-          { id: 'Treatment Request Form', label: 'Treatment Request Form' },
-          { id: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
-          { id: 'Covered Treatment List', label: 'Covered Treatment List' },
-          { id: 'Regulatory Document', label: 'Regulatory Document' },
-          { id: 'Formulary', label: 'Formulary' },
-          { id: 'Internal Reference', label: 'Internal Reference' },
-        ],
+        dataSource: DocumentTypes,
       },
       render: ({ value: document_type }: { value: string }) => {
         return <>{document_type}</>;
@@ -95,9 +84,11 @@ export const createColumns = ({
         return (
           <>
             <Link to={`/documents/${doc._id}`}>{doc.url}</Link>
-            <a className="mx-2" href={doc.url} target="_blank"><LinkOutlined /></a>
+            <a className="mx-2" href={doc.url} target="_blank" rel="noreferrer">
+              <LinkOutlined />
+            </a>
           </>
-          )
+        );
       },
     },
     {
@@ -109,20 +100,13 @@ export const createColumns = ({
           <>
             <Button size="small" onClick={() => handleNewVersion(doc)}>
               Upload new version
-            </Button>            
+            </Button>
           </>
         );
       },
     },
-  ]
+  ];
 };
 
-
-export const useDocumentColumns = ({
-  handleNewVersion,
-}: CreateColumnsType) =>
-  useMemo(
-    () => createColumns({ handleNewVersion }),
-    [handleNewVersion]
-  );
-
+export const useDocumentColumns = ({ handleNewVersion }: CreateColumnsType) =>
+  useMemo(() => createColumns({ handleNewVersion }), [handleNewVersion]);

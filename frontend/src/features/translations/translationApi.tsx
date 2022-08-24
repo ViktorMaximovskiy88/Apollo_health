@@ -1,0 +1,75 @@
+import { createApi, fetchBaseQuery } from '../../app/base-api';
+import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
+import { ChangeLog } from '../change-log/types';
+import { TranslationConfig } from './types';
+
+export const translationsApi = createApi({
+  reducerPath: 'translationsApi',
+  baseQuery: fetchBaseQuery(),
+  tagTypes: ['Translation', 'ChangeLog'],
+  endpoints: (builder) => ({
+    getTranslationConfig: builder.query<TranslationConfig, string | undefined>({
+      query: (id) => `/translations/${id}`,
+      providesTags: (_r, _e, id) => [{ type: 'Translation', id }],
+    }),
+    getTranslationConfigs: builder.query<
+      { data: TranslationConfig[]; total: number },
+      {
+        limit: number;
+        skip: number;
+        sortInfo: TypeSortInfo;
+        filterValue: TypeFilterValue;
+      }
+    >({
+      query: ({ limit, skip, sortInfo, filterValue }) => {
+        const sorts = sortInfo ? [sortInfo] : [];
+        const args = [
+          `limit=${encodeURIComponent(limit)}`,
+          `skip=${encodeURIComponent(skip)}`,
+          `sorts=${encodeURIComponent(JSON.stringify(sorts))}`,
+          `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
+        ].join('&');
+        return `/translations/?${args}`;
+      },
+    }),
+    addTranslationConfig: builder.mutation<TranslationConfig, Partial<TranslationConfig>>({
+      query: (body) => ({ url: '/translations/', method: 'PUT', body }),
+      invalidatesTags: [{ type: 'Translation', id: 'LIST' }],
+    }),
+    updateTranslationConfig: builder.mutation<TranslationConfig, Partial<TranslationConfig>>({
+      query: (body) => ({ url: `/translations/${body._id}`, method: 'POST', body }),
+      invalidatesTags: (_r, _e, { _id: id }) => [
+        { type: 'Translation', id },
+        { type: 'Translation', id: 'LIST' },
+        { type: 'ChangeLog', id },
+      ],
+    }),
+    extractSampleDocumentTables: builder.query<any[][][], TranslationConfig>({
+      query: (config) => {
+        const configStr = encodeURIComponent(JSON.stringify(config));
+        return `/translations/sample-doc/${config.sample.doc_id}/extract?config=${configStr}`;
+      },
+    }),
+    translateSampleDocumentTables: builder.query<any[], TranslationConfig>({
+      query: (config) => {
+        const configStr = encodeURIComponent(JSON.stringify(config));
+        return `/translations/sample-doc/${config.sample.doc_id}/translate?config=${configStr}`;
+      },
+    }),
+    getChangeLog: builder.query<ChangeLog[], string>({
+      query: (id) => `/change-log/${id}`,
+      providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
+    }),
+  }),
+});
+
+export const {
+  useLazyGetTranslationConfigsQuery,
+  useTranslateSampleDocumentTablesQuery,
+  useExtractSampleDocumentTablesQuery,
+  useAddTranslationConfigMutation,
+  useUpdateTranslationConfigMutation,
+  useGetTranslationConfigsQuery,
+  useGetTranslationConfigQuery,
+  useGetChangeLogQuery,
+} = translationsApi;

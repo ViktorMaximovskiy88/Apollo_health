@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setBreadcrumbs } from './navSlice';
@@ -8,6 +8,7 @@ import { sitesApi } from '../features/sites/sitesApi';
 import { documentsApi } from '../features/retrieved_documents/documentsApi';
 import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { workQueuesApi } from '../features/work_queue/workQueuesApi';
+import { translationsApi } from '../features/translations/translationApi';
 
 const routes = [
   '/sites',
@@ -20,6 +21,9 @@ const routes = [
   '/sites/:siteId/doc-documents',
   '/sites/:siteId/documents/:docId/edit',
   '/sites/:siteId/extraction',
+  '/sites/:siteId/extraction/document/:docDocId/edit',
+  '/sites/:siteId/extraction/document/:docDocId',
+  '/sites/:siteId/extraction/document/:docDocId/:extractionId/results',
   '/documents',
   '/documents/:docDocId',
   '/users',
@@ -28,68 +32,85 @@ const routes = [
   '/work-queues',
   '/work-queues/new',
   '/work-queues/:workQueueId',
+  '/translations',
+  '/translations/new',
+  '/translations/:translationId',
 ];
 
 export const useBreadcrumbs = async () => {
   const dispatch = useDispatch();
   const location = useLocation();
 
-  // async resolvers that get cached and more or less act like prefetch
-  const asyncResolvers = {
-    ':siteId': async (siteId: string, url: string) => {
-      const result: any = await dispatch(sitesApi.endpoints.getSite.initiate(siteId));
-      return { url, label: result.data.name };
-    },
-    ':docId': async (docId: string, url: string) => {
-      const result: any = await dispatch(documentsApi.endpoints.getDocument.initiate(docId));
-      return { url, label: result.data.name } as any;
-    },
-    ':docDocId': async (docDocId: string, url: string) => {
-      const result: any = await dispatch(
-        docDocumentsApi.endpoints.getDocDocument.initiate(docDocId)
-      );
-      return { url, label: result.data.name } as any;
-    },
-    ':userId': async (userId: string, url: string) => {
-      const result: any = await dispatch(usersApi.endpoints.getUser.initiate(userId));
-      return { url, label: result.data.full_name } as any;
-    },
-    ':workQueueId': async (userId: string, url: string) => {
-      const result: any = await dispatch(workQueuesApi.endpoints.getWorkQueue.initiate(userId));
-      return { url, label: result.data.name } as any;
-    },
-  };
+  const matched: any = useMemo(() => {
+    // async resolvers that get cached and more or less act like prefetch
+    const asyncResolvers = {
+      ':siteId': async (siteId: string, url: string) => {
+        const result: any = await dispatch(sitesApi.endpoints.getSite.initiate(siteId));
+        return { url, label: result.data.name };
+      },
+      ':docId': async (docId: string, url: string) => {
+        const result: any = await dispatch(documentsApi.endpoints.getDocument.initiate(docId));
+        return { url, label: result.data.name } as any;
+      },
+      ':docDocId': async (docDocId: string, url: string) => {
+        const result: any = await dispatch(
+          docDocumentsApi.endpoints.getDocDocument.initiate(docDocId)
+        );
+        return { url, label: result.data.name } as any;
+      },
+      ':userId': async (userId: string, url: string) => {
+        const result: any = await dispatch(usersApi.endpoints.getUser.initiate(userId));
+        return { url, label: result.data.full_name } as any;
+      },
+      ':workQueueId': async (userId: string, url: string) => {
+        const result: any = await dispatch(workQueuesApi.endpoints.getWorkQueue.initiate(userId));
+        return { url, label: result.data.name } as any;
+      },
+      ':translationId': async (userId: string, url: string) => {
+        const result: any = await dispatch(
+          translationsApi.endpoints.getTranslationConfig.initiate(userId)
+        );
+        return { url, label: result.data.name } as any;
+      },
+    };
 
-  // Mapping paths to display labels based on the root menu item; many are shared...
-  // will move as needed
-  const matched: any = {
-    '/sites': {
-      new: 'Create',
-      sites: 'Sites',
-      view: 'View',
-      edit: 'Edit',
-      scrapes: 'Collections',
-      documents: 'Retrieved Documents',
-      "doc-documents":"Documents",
-      extraction: 'Extracted Content',
-      ...asyncResolvers,
-    },
-    '/documents': {
-      documents: 'All Documents',
-      ...asyncResolvers,
-    },
-    '/users': {
-      users: 'Users',
-      new: 'Create',
-      edit: 'Edit',
-      ...asyncResolvers,
-    },
-    '/work-queues': {
-      'work-queues': 'Work Queues',
-      new: 'Create',
-      ...asyncResolvers,
-    },
-  };
+    // Mapping paths to display labels based on the root menu item; many are shared...
+    // will move as needed
+    return {
+      '/sites': {
+        new: 'Create',
+        sites: 'Sites',
+        view: 'View',
+        edit: 'Edit',
+        scrapes: 'Collections',
+        documents: 'Documents',
+        'doc-documents': 'Documents',
+        extraction: 'Extracted Content',
+        results: 'Results',
+        ...asyncResolvers,
+      },
+      '/documents': {
+        documents: 'All Documents',
+        ...asyncResolvers,
+      },
+      '/users': {
+        users: 'Users',
+        new: 'Create',
+        edit: 'Edit',
+        ...asyncResolvers,
+      },
+      '/work-queues': {
+        'work-queues': 'Work Queues',
+        new: 'Create',
+        ...asyncResolvers,
+      },
+      '/translations': {
+        translations: 'Translations',
+        new: 'New',
+        ...asyncResolvers,
+      },
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     const promises: any[] = [];
@@ -120,5 +141,5 @@ export const useBreadcrumbs = async () => {
     }
 
     Promise.all(promises).then((results) => dispatch(setBreadcrumbs(results)));
-  }, [location]);
+  }, [location, dispatch, matched]);
 };

@@ -3,7 +3,8 @@ import { ApprovalStatus } from '../../common/approvalStatus';
 import { RetrievedDocument } from '../retrieved_documents/types';
 
 export interface BaseDocTag {
-  _type: string;
+  id: string;
+  _type: 'indication' | 'therapy' | 'therapy-group';
   _normalized: string;
 }
 
@@ -13,7 +14,7 @@ export interface TherapyTag extends BaseDocTag {
   page: number;
   code: string;
   score: number;
-  relevancy: number;
+  focus: boolean;
 }
 
 export interface IndicationTag extends BaseDocTag {
@@ -49,6 +50,8 @@ export interface DocDocument extends BaseDocument {
   document_type: string;
   doc_type_confidence: number;
 
+  document_family_id?: string;
+
   effective_date: string;
   last_reviewed_date: string;
   last_updated_date: string;
@@ -76,8 +79,20 @@ export interface DocDocument extends BaseDocument {
   therapy_tags: TherapyTag[];
   indication_tags: IndicationTag[];
 
-  automated_content_extraction: boolean;
-  automated_content_extraction_class: string;
+  translation_id?: string;
 
   tags: string[];
+}
+
+export interface DocumentFamilyType extends BaseDocument {
+  name: string;
+  document_type: string;
+  description: string;
+  site_id: string;
+  relevance: string[];
+}
+
+export interface DocumentFamilyOption {
+  label: string;
+  value: string | null;
 }

@@ -3,7 +3,7 @@ import { render, screen } from '../../test/test-utils';
 import { setupServer } from 'msw/node';
 import { SiteEditPage } from './SiteEditPage';
 import { handlers } from './mocks/siteEditPageHandlers';
-import { useParams, Params } from 'react-router-dom';
+import { useParams, Params, useLocation, Location } from 'react-router-dom';
 
 jest.mock('react-router-dom');
 
@@ -34,6 +34,14 @@ describe(`SiteEditPage`, () => {
     mockedUseParams.mockImplementation(() => ({
       siteId: 'site-id1',
     }));
+    const mockedUseLocation = useLocation as jest.Mock<Location>;
+    mockedUseLocation.mockImplementation(() => ({
+      pathname: 'site-id1',
+      key: 'site-id1',
+      state: '',
+      search: '',
+      hash: '',
+    }));
 
     render(<SiteEditPage />);
 
@@ -51,6 +59,14 @@ describe(`SiteEditPage`, () => {
     const mockedUseParams = useParams as jest.Mock<Params>;
     mockedUseParams.mockImplementation(() => ({
       siteId: 'site-id1',
+    }));
+    const mockedUseLocation = useLocation as jest.Mock<Location>;
+    mockedUseLocation.mockImplementation(() => ({
+      pathname: 'site-id1',
+      key: 'site-id1',
+      state: '',
+      search: '',
+      hash: '',
     }));
 
     const user = userEvent.setup();

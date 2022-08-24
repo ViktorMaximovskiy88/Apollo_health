@@ -29,6 +29,7 @@ const fetchWithAuth = async (resource: any, init: any = {}) => {
     return fetch(resource, {
       ...init,
       headers: {
+        ...init.headers,
         Authorization: `Bearer ${token}`,
       },
     });
@@ -36,6 +37,7 @@ const fetchWithAuth = async (resource: any, init: any = {}) => {
     return fetch({
       ...resource,
       headers: {
+        ...init.headers,
         Authorization: `Bearer ${token}`,
       },
     });

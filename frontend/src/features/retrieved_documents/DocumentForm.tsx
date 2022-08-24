@@ -1,4 +1,4 @@
-import { Button, Form, Select, Space, Switch, Input, DatePicker } from 'antd';
+import { Button, Form, Select, Space, Input, DatePicker } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import moment from 'moment';
 import React, { useState } from 'react';
@@ -15,13 +15,10 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
   const [form] = useForm();
   const doc = props.doc;
 
-  const [automatedExtraction, setAutomatedExtraction] = useState(doc.automated_content_extraction);
   const [docTypeConfidence, setDocTypeConfidence] = useState(doc.doc_type_confidence);
 
   function setFormState(modified: Partial<RetrievedDocument>) {
-    if (modified.automated_content_extraction !== undefined) {
-      setAutomatedExtraction(modified.automated_content_extraction);
-    } else if (modified.document_type !== undefined) {
+    if (modified.document_type !== undefined) {
       if (modified.document_type === doc.document_type) {
         setDocTypeConfidence(doc.doc_type_confidence);
       } else {
@@ -51,8 +48,6 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
   const initialValues = {
     name: doc.name,
     document_type: doc.document_type,
-    automated_content_extraction: doc.automated_content_extraction,
-    automated_content_extraction_class: doc.automated_content_extraction_class,
     url: doc.url,
     base_url: doc.base_url,
     lang_code: doc.lang_code,
@@ -69,12 +64,6 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
   };
 
   const confidencePercent = docTypeConfidence ? `${Math.floor(docTypeConfidence * 100)}%` : '-';
-
-  const extractionOptions = [
-    { value: 'BasicTableExtraction', label: 'Basic Table Extraction' },
-    { value: 'UHCFormularyExtraction', label: 'UHC Formulary Extraction' },
-    { value: 'MedigoldFormularyExtraction', label: 'Medigold Formulary Extraction' },
-  ];
 
   const dateFields = [
     {
@@ -147,19 +136,6 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
       <Form.Item name="lang_code" label="Language">
         <Select options={LanguageCodes} />
       </Form.Item>
-
-      <Form.Item
-        name="automated_content_extraction"
-        label="Automated Content Extraction"
-        valuePropName="checked"
-      >
-        <Switch />
-      </Form.Item>
-      {automatedExtraction && (
-        <Form.Item name="automated_content_extraction_class" label="Extraction Strategy">
-          <Select options={extractionOptions} />
-        </Form.Item>
-      )}
       <Form.Item name="base_url" label="Base URL">
         <Input disabled />
       </Form.Item>

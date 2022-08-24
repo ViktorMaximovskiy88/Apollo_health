@@ -11,8 +11,7 @@ from backend.common.models.base_document import BaseDocument
 class ContentExtractionTask(BaseDocument):
     site_id: PydanticObjectId | None = None
     initiator_id: PydanticObjectId | None = None
-    retrieved_document_id: PydanticObjectId | None = None
-    scrape_task_id: PydanticObjectId | None = None
+    doc_document_id: PydanticObjectId | None = None
 
     worker_id: UUID | None = None
     queued_time: datetime
@@ -22,7 +21,6 @@ class ContentExtractionTask(BaseDocument):
     status: str = TaskStatus.QUEUED
 
     extraction_count: int = 0
-    code_column: str | None = None
     header: list[str] | None = None
 
 
@@ -41,16 +39,20 @@ class FormularyDatum(BaseModel):
     code: str | None = None
     name: str | None = None
     tier: int = 0
+
     pa: bool = False
+    pan: str | None = None
+
     st: bool = False
+    stn: str | None = None
+
     ql: bool = False
+    qln: str | None = None
+
     sp: bool = False
 
 
 class ContentExtractionResult(BaseDocument):
-    site_id: PydanticObjectId | None = None
-    retrieved_document_id: PydanticObjectId | None = None
-    scrape_task_id: PydanticObjectId | None = None
     content_extraction_task_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     page: int
     row: int

@@ -43,7 +43,7 @@ class LinkTask(BaseDocument):
 
 class LinkBaseTask(LinkTask):
     base_url: str
-    valid_response: ValidResponse | None
+    valid_response: ValidResponse | None = None
     invalid_responses: list[InvalidResponse] = []
 
     class Settings:
@@ -51,11 +51,11 @@ class LinkBaseTask(LinkTask):
 
 
 class LinkRetrievedTask(LinkTask):
-    file_metadata: FileMetadata | None
+    file_metadata: FileMetadata | None = None
     location: Location
     invalid_responses: list[InvalidResponse] = []
-    valid_response: ValidResponse | None
-    retrieved_document_id: PydanticObjectId | None
+    valid_response: ValidResponse | None = None
+    retrieved_document_id: PydanticObjectId | None = None
 
     class Settings:
         union_doc = LinkTaskLog
@@ -63,11 +63,16 @@ class LinkRetrievedTask(LinkTask):
 
 #  temp until i cleanse the downloadcontext
 def link_retrieved_task_from_download(download, scrape_task):
+    url = (
+        download.metadata.resource_value
+        if download.metadata.resource_value
+        else download.request.url
+    )
     return LinkRetrievedTask(
         scrape_task_id=scrape_task.id,
         site_id=scrape_task.site_id,
         location=Location(
-            url=download.metadata.resource_value,
+            url=url,
             **download.metadata.dict(),
         ),
     )

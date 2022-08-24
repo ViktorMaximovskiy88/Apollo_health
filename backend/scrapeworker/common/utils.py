@@ -100,9 +100,12 @@ def get_mimetype(file_path: str | None):
     return mime.from_file(file_path)
 
 
-def get_extension_from_file_mimetype(file_path: str | None):
+def get_extension_from_file_mimetype(file_path: str | None) -> str | None:
     if file_path is None:
         return None
 
     mimetype = get_mimetype(file_path)
+    if not mimetype:
+        return None
+
     return mimetype_to_extension_map.get(mimetype)

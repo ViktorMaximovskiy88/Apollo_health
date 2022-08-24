@@ -5,6 +5,7 @@ import { useGetExtractionTaskQuery, useLazyGetExtractionTaskResultsQuery } from 
 import { useCallback } from 'react';
 import { TypeSingleSortInfo, TypeSingleFilterValue } from '@inovua/reactdatagrid-community/types';
 import { MainLayout } from '../../components';
+import { SiteMenu } from '../sites/SiteMenu';
 
 export function ExtractionEditPage() {
   const { extractionId } = useParams();
@@ -90,18 +91,30 @@ export function ExtractionEditPage() {
     {
       header: 'PA',
       name: 't_pa',
+      render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
     },
     {
       header: 'QL',
       name: 't_ql',
+      render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
+    },
+    {
+      header: 'QL Note',
+      name: 't_qln',
     },
     {
       header: 'ST',
       name: 't_st',
+      render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
+    },
+    {
+      header: 'ST Note',
+      name: 't_stn',
     },
     {
       header: 'SP',
       name: 't_sp',
+      render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
     },
   ];
   const columns: any[] = [
@@ -155,7 +168,7 @@ export function ExtractionEditPage() {
   ];
 
   return (
-    <MainLayout pageTitle="Extraction Results">
+    <MainLayout sidebar={<SiteMenu />} pageTitle="Extraction Results">
       <ReactDataGrid
         dataSource={loadData}
         columns={columns}

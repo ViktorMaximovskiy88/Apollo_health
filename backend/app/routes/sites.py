@@ -9,7 +9,7 @@ from beanie.operators import ElemMatch
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, UploadFile, status
 from openpyxl import load_workbook
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, HttpUrl, ValidationError
 
 from backend.app.routes.table_query import (
     TableFilterInfo,
@@ -149,7 +149,7 @@ def parse_line(line):
     clean_urls = []
     for base_url in base_urls:
         try:
-            parsed_url = BaseUrl(url=base_url)
+            parsed_url = BaseUrl(url=HttpUrl(url=base_url, scheme="http"))
             clean_urls.append(parsed_url)
         except ValidationError:
             logging.error(f"site {name} has invalid url: {base_url}")
@@ -180,7 +180,7 @@ def get_lines_from_xlsx(file: UploadFile):
     wb = load_workbook(io.BytesIO(file.file.read()))
     sheet = wb[wb.sheetnames[0]]
 
-    for i, line in enumerate(sheet.values):
+    for i, line in enumerate(sheet.values):  # type: ignore
         # Skip header.
         if i == 0:
             continue

@@ -76,11 +76,6 @@ export function DocumentsHomePage() {
         return (
           <>
             <ButtonLink to={`${doc._id}/edit`}>Edit</ButtonLink>
-            {doc.automated_content_extraction && (
-              <ButtonLink to={`/extractions/?retrieved_document_id=${doc._id}`}>
-                Extraction
-              </ButtonLink>
-            )}
             <ChangeLogModal target={doc} useChangeLogQuery={useGetChangeLogQuery} />
             <Popconfirm
               title={`Are you sure you want to delete '${doc.name}'?`}

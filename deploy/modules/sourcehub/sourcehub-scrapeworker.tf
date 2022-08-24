@@ -226,6 +226,9 @@ resource "aws_ecs_service" "scrapeworker" {
   }
   force_new_deployment = true
 
+  depends_on = [
+    null_resource.exec-dbmigrations
+  ]
   lifecycle {
     ignore_changes = [
       desired_count

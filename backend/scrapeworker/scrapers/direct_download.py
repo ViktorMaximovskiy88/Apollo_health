@@ -81,6 +81,6 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
         # handle frame (not frames, although we could....)
         if len(self.page.main_frame.child_frames) > 0 and self.config.search_in_frames:
             child_frames = self.page.main_frame.child_frames
-            await self.scrape_and_queue(downloads, page=child_frames[0])
+            await self.scrape_and_queue(downloads, page=child_frames[0].page)
 
         return downloads

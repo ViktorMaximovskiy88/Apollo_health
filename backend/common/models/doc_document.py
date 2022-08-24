@@ -13,7 +13,7 @@ class TherapyTag(BaseModel):
     code: str
     name: str
     score: float = 0
-    relevancy: float = 0
+    focus: bool = False
 
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))
@@ -86,11 +86,12 @@ class DocDocument(BaseDocument, LockableDocument):
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
 
-    automated_content_extraction: bool = False
-    automated_content_extraction_class: str | None = None
+    translation_id: PydanticObjectId | None = None
     content_extraction_task_id: PydanticObjectId | None = None
 
     tags: list[str] = []
+
+    document_family_id: PydanticObjectId | None = None
 
 
 class DocDocumentLimitTags(DocDocument):
@@ -104,7 +105,7 @@ class UpdateTherapyTag(BaseModel):
     page: int | None = None
     code: str | None = None
     score: float | None = None
-    relevancy: float | None = None
+    focus: bool | None = None
 
 
 class UpdateIndicationTag(BaseModel):
@@ -148,15 +149,16 @@ class UpdateDocDocument(BaseModel):
 
     tags: list[str] | None = None
 
-    automated_content_extraction: bool = False
-    automated_content_extraction_class: str | None = None
+    translation_id: PydanticObjectId | None = None
     content_extraction_task_id: PydanticObjectId | None = None
     content_extraction_status: ApprovalStatus = ApprovalStatus.QUEUED
     content_extraction_lock: TaskLock | None = None
 
+    document_family_id: PydanticObjectId | None = None
 
-def calc_final_effective_date(doc: DocDocument) -> datetime:
-    computeFromFields = []
+
+def calc_final_effective_date(doc: DocDocument | UpdateDocDocument) -> datetime | None:
+    computeFromFields: list[datetime] = []
     if doc.effective_date:
         computeFromFields.append(doc.effective_date)
     if doc.last_reviewed_date:
@@ -169,3 +171,16 @@ def calc_final_effective_date(doc: DocDocument) -> datetime:
     )
 
     return final_effective_date
+
+
+# Deprecated
+class NoFocusTherapyTag(TherapyTag):
+    relevancy: float | None = None
+    focus: bool | None = None
+
+
+class NoFocusTherapyTagDocDocument(DocDocument):
+    therapy_tags: list[NoFocusTherapyTag] = []
+
+    class Collection:
+        name = "DocDocument"

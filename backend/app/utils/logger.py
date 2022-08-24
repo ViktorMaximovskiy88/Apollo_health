@@ -71,6 +71,17 @@ def get_diff_patch(
     return patch
 
 
+async def delete_and_log(
+    logger: Logger,
+    current_user: User,
+    target: Document,
+    session: AsyncIOMotorClientSession | None = None,
+):
+    response = await target.delete(session=session)
+    await logger.background_log_change(current_user, target, "DELETE")
+    return response
+
+
 async def update_and_log_diff(
     logger: Logger,
     current_user: User,

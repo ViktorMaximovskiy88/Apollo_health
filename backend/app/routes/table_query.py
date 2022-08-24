@@ -82,7 +82,7 @@ async def query_table(
         if filter.operator == "empty":
             query = query.find({filter.name: None})
         if filter.operator == "notEmpty":
-            query = query.find({filter.name: {"$not": None}})
+            query = query.find({filter.name: {"$exists": True, "$ne": None}})
         if filter.operator in ["gt", "gte", "lt", "lte"]:
             query = query.find({filter.name: {f"${filter.operator}": value}})
         if filter.operator == "after":

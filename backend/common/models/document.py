@@ -43,9 +43,6 @@ class RetrievedDocument(BaseDocument):
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
 
-    automated_content_extraction: bool = False
-    automated_content_extraction_class: str | None = None
-
 
 class UpdateRetrievedDocument(BaseModel):
     site_id: PydanticObjectId | None = None
@@ -77,9 +74,6 @@ class UpdateRetrievedDocument(BaseModel):
     therapy_tags: list[TherapyTag] | None = None
     indication_tags: list[IndicationTag] | None = None
 
-    automated_content_extraction: bool | None = None
-    automated_content_extraction_class: str | None = None
-
 
 class RetrievedDocumentLimitTags(RetrievedDocument):
     class Collection:
@@ -90,7 +84,19 @@ class RetrievedDocumentLimitTags(RetrievedDocument):
 
 
 # Deprecated
-class CollectionTimeRetrievedDocument(RetrievedDocument):
+class NoFocusTherapyTag(TherapyTag):
+    relevancy: float | None = None
+    focus: bool | None = None
+
+
+class NoFocusTherapyTagRetDocument(RetrievedDocument):
+    therapy_tags: list[NoFocusTherapyTag] = []
+
+    class Collection:
+        name = "RetrievedDocument"
+
+
+class CollectionTimeRetrievedDocument(NoFocusTherapyTagRetDocument):
     collection_time: datetime | None = None
 
     class Collection:

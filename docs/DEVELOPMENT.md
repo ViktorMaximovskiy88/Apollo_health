@@ -62,7 +62,7 @@ xcode-select --install
 # brew is apt more or less
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-brew install gnupg coreutils awscli protobuf libmagic swig xpdf
+brew install gnupg coreutils awscli protobuf libmagic swig xpdf imagemagick
 
 # Install Docker
 brew install docker
@@ -146,6 +146,20 @@ poetry run pre-commit install
 playwright install chromium
 playwright install-deps
 
+```
+
+### RxNorm Therapy Tagging Setup
+
+To run therapy tagging locally, you must populate S3 with the rxNorm files
+
+Download https://www.dropbox.com/s/ufk4zrxbc82z1wd/RxNorm_full_06062022.zip?dl=1 and unzip somewhere on computer.
+
+This will take a few minutes to run.
+
+```bash
+python backend/parseworker/scripts/upload_rxnorm_files.py path/to/folder
+python backend/parseworker/scripts/build_rxnorm_linker.py
+python backend/parseworker/scripts/build_rxnorm_span_ruler.py
 ```
 
 ## Running the services

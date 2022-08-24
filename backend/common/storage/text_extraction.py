@@ -1,12 +1,7 @@
 import logging
 
-from typing import TextIO
-import pathlib
-
 import bs4
 import magic
-from backend.app.utils.logger import Logger
-import os
 
 from backend.scrapeworker.common.xpdf_wrapper import pdfinfo, pdftotext
 
@@ -58,7 +53,7 @@ class TextExtractor:
         return self.full_text
 
 
-async def extract_pdf_text(temp_path) -> str:
+async def extract_pdf_text(temp_path) -> tuple[str, dict[str, str]]:
     pdf = await pdftotext(temp_path)
     metadata = await pdfinfo(temp_path)
     return pdf, metadata
