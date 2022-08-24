@@ -4,6 +4,7 @@ import { CollectionMethod } from '../../sites/types';
 import { faker } from '@faker-js/faker';
 
 import { factory, primaryKey } from '@mswjs/data';
+import { SiteStatus } from '../../sites/siteStatus';
 
 const db = factory({
   scrapeTask: {
@@ -67,7 +68,9 @@ const processScrape = async (scrapeTaskId: string): Promise<void> => {
 
 export const handlers = [
   rest.get('http://localhost/api/v1/sites/site-id1', async (req, res, ctx) => {
-    return res(ctx.json({ collection_method: CollectionMethod.Automated }));
+    return res(
+      ctx.json({ collection_method: CollectionMethod.Automated, status: SiteStatus.Online })
+    );
   }),
   rest.get('http://localhost/api/v1/site-scrape-tasks/', async (req, res, ctx) => {
     return res(ctx.json(db.scrapeTask.getAll().reverse()));

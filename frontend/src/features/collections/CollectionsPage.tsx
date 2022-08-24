@@ -30,7 +30,9 @@ export function CollectionsPage() {
   const siteId = params.siteId;
   const { data: site, refetch } = useGetSiteQuery(siteId);
   const [runScrape] = useRunSiteScrapeTaskMutation();
+
   if (!siteId) return null;
+  if (!site) return null;
 
   async function handleRunScrape() {
     if (site?._id) {
@@ -67,14 +69,12 @@ export function CollectionsPage() {
         pageTitle={'Collections'}
         pageToolbar={
           <>
-            {site &&
-            site.collection_method === CollectionMethod.Automated &&
+            {site.collection_method === CollectionMethod.Automated &&
             site.status !== SiteStatus.Inactive ? (
               <Button onClick={() => handleRunScrape()} className="ml-auto">
                 Run Collection
               </Button>
-            ) : site &&
-              site.collection_method === CollectionMethod.Manual &&
+            ) : site.collection_method === CollectionMethod.Manual &&
               site.status !== SiteStatus.Inactive ? (
               <ManualCollectionButton site={site} refetch={refetch} runScrape={runScrape} />
             ) : null}
@@ -108,7 +108,7 @@ function ManualCollectionButton(props: any) {
     refetch();
   }
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
-  
+
   if (activeStatuses.includes(site.last_run_status)) {
     return (
       <Button className="ml-auto" onClick={handleCancelScrape}>
