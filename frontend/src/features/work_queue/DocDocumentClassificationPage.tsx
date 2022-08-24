@@ -4,7 +4,7 @@ import { RetrievedDocumentViewer } from '../retrieved_documents/RetrievedDocumen
 import { DocDocument } from '../doc_documents/types';
 import { useState } from 'react';
 import { WarningFilled } from '@ant-design/icons';
-import { DocDocumentEditForm } from './DocDocumentEditForm';
+import { DocDocumentEditForm } from '../doc_documents/DocDocumentEditForm';
 
 interface DocDocumentClassificationPagePropTypes {
   docId: string;

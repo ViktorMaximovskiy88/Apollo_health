@@ -114,6 +114,8 @@ interface EditFormPropTypes {
   setHasChanges: (hasChanges: boolean) => void;
   form: FormInstance;
   pageNumber: number;
+  onSubmit?: (doc: Partial<DocDocument>) => void;
+  docId?: string;
 }
 export function DocDocumentEditForm({
   isSaving,
@@ -121,8 +123,12 @@ export function DocDocumentEditForm({
   setHasChanges,
   form,
   pageNumber,
+  onSubmit,
+  docId,
 }: EditFormPropTypes) {
-  const { docDocumentId: docId } = useParams();
+  const { docDocumentId } = useParams();
+  docId = docId ?? docDocumentId;
+
   const { data: doc } = useGetDocDocumentQuery(docId);
 
   const calculateFinalEffectiveDate = useCalculateFinalEffectiveDate(form);
@@ -162,7 +168,12 @@ export function DocDocumentEditForm({
         form={form}
         requiredMark={false}
         initialValues={initialValues}
-        onFinish={onFinish}
+        onFinish={(doc) => {
+          onFinish(doc);
+          if (onSubmit) {
+            onSubmit(doc);
+          }
+        }}
       >
         <Tabs className="h-full ant-tabs-h-full">
           <Tabs.TabPane tab="Info" key="info" className="bg-white p-4 overflow-auto">
