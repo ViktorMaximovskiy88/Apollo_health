@@ -38,12 +38,13 @@ class Forward:
                             {
                                 "base_url": "$base_url",
                                 "url": "$url",
-                                "site_id": "$site_id",
-                                "first_collected_date": "$first_collected_date",
-                                "last_collected_date": "$last_collected_date",
-                                "context_metadata": "$context_metadata",
                                 "link_text": "$context_metadata.link_text",
                                 "closest_heading": "$context_metadata.closest_heading",
+                                "site_id": "$site_id",
+                                "context_metadata": "$context_metadata",
+                                "first_collected_date": "$first_collected_date",
+                                "last_collected_date": "$last_collected_date",
+                                "previous_retrieved_doc_id": None,
                             }
                         ]
                     },
@@ -66,27 +67,6 @@ class Forward:
         logging.info(
             f"updating RetrievedDocument locations -> acknowledged={result.acknowledged} matched_count={result.matched_count} modified_count={result.modified_count}"  # noqa
         )
-
-        # site_id
-        # base_url
-        # url
-        # link_text
-        # first_collected_date
-        # last_collected_date
-        # for every doc_doc
-
-        # move all above to location
-        # unset site_id, url, base_url, link_text
-
-        # recall that old rt_ids live on doc doc and site_scrape_tasks
-        # query for all dupe checksums (20!)
-        # loop through pick one as the winner.
-        # merge the location of the other into the winner.
-        # delete the loser doc doc (by related rt id) and the loser rt itself;
-        # maybe remove the rt from whatever scrape task it was in? decrement it?
-
-        # where else might doc docs or rt docs refs live?
-        # remove all change logs related to the loser rt and doc docs
 
         checksums = []
         async for doc in DocDocument.get_motor_collection().aggregate(
@@ -114,10 +94,12 @@ class Forward:
                             {
                                 "base_url": "$base_url",
                                 "url": "$url",
+                                "link_text": "$link_text",
+                                "closest_heading": None,
                                 "site_id": "$site_id",
-                                "link_text": "$context_metadata.link_text",
                                 "first_collected_date": "$first_collected_date",
                                 "last_collected_date": "$last_collected_date",
+                                "previous_doc_doc_id": None,
                             }
                         ]
                     },

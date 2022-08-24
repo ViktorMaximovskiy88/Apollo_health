@@ -8,7 +8,7 @@ class Location(BaseModel):
     base_url: str
     url: str
     link_text: str | None
-    closest_header: str | None
+    closest_heading: str | None
 
 
 class SiteLocation(Location):
