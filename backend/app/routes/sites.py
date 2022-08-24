@@ -242,7 +242,6 @@ async def update_multiple_sites(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    # site_ids = map(lambda update: update.id, updates)
     site_ids = [update.id for update in updates]
     targets: list[Site] = await Site.find_many({"_id": {"$in": site_ids}}).to_list()
 
