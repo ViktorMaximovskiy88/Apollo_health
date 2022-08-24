@@ -1,9 +1,10 @@
 import asyncio
-import logging
+import re
+import uuid
 from functools import cached_property
 
 from playwright._impl._api_structures import SetCookieParam
-from playwright.async_api import APIResponse, ElementHandle, Locator
+from playwright.async_api import ElementHandle, Locator
 from playwright.async_api import Request as RouteRequest
 from playwright.async_api import Route
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
@@ -49,29 +50,21 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
             self.metadatas.append(metadata)
 
     async def __interact(self) -> None:
+        element_id: str
+        self.log.info(f"interacting {self.url}")
+
         async def intercept(route: Route, request: RouteRequest):
             if self.url in request.url and request.method == "POST":
-                response: APIResponse = await self.page.request.fetch(
-                    request.url,
-                    headers=request.headers,
-                    data=request.post_data,
-                    method=request.method,
-                )
-
-                if filename := response.headers.get("content-disposition"):
-                    logging.info(f"filename={filename}")
-                    self.requests.append(
-                        Request(
-                            url=request.url,
-                            method=request.method,
-                            headers=request.headers,
-                            data=request.post_data,
-                            filename=filename,
-                        )
+                self.log.info(f"queueing {element_id}")
+                self.requests.append(
+                    Request(
+                        url=request.url,
+                        method=request.method,
+                        headers=request.headers,
+                        data=request.post_data,
+                        filename=str(uuid.uuid4()),
                     )
-                else:
-                    self.requests.append(None)
-
+                )
                 await route.continue_()
             else:
                 await route.abort()
@@ -88,7 +81,7 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
                     return
                 except PlaywrightTimeoutError:
                     if retry == max_retries:
-                        logging.debug("Max retries reached")
+                        self.log.info(f"Max retries reached {element_id}")
                     continue
             return
 
@@ -96,9 +89,9 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
 
         metadata: Metadata
         for index, metadata in enumerate(self.metadatas):
-            logging.debug(f"{index} of {len(self.metadatas)} count of metadata")
             if not metadata.element_id:
                 continue
+            element_id = re.sub(r"(?u)[^-\w.]", "_", metadata.element_id)
             locator: Locator = self.page.locator(f"#{metadata.element_id}")
             await click_with_backoff(locator)
 
@@ -107,7 +100,6 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
     async def __process(self):
         for index, request in enumerate(self.requests):
             if request:
-                logging.info(f"#{index} downloading filename={request.filename}")
                 self.downloads.append(
                     DownloadContext(
                         metadata=self.metadatas[index],

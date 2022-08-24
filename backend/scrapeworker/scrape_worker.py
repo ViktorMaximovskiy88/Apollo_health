@@ -67,7 +67,7 @@ class ScrapeWorker:
         scrape_task: SiteScrapeTask,
         site: Site,
     ) -> None:
-        _log = logging.getLogger(str(scrape_task.id)[:8])
+        _log = logging.getLogger(str(scrape_task.id))
         self.playwright = playwright
         self.get_browser_context = get_browser_context
         self.scrape_task = scrape_task
@@ -474,6 +474,7 @@ class ScrapeWorker:
                         config=self.site.scrape_method_configuration,
                         playbook_context=playbook_context,
                         url=url,
+                        log=self.log,
                     )
 
                     if not await scraper.is_applicable():
