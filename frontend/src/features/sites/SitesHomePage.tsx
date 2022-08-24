@@ -33,7 +33,6 @@ function Assign({ selected, setSelected }: AssignTypes) {
   const assign = async () => {
     let temp = values(selected);
     let g = await updateMultipleSites(temp);
-    console.log(g);
   };
   return <Button onClick={assign}>Assign to me</Button>;
 }

@@ -18,13 +18,7 @@ from backend.app.routes.table_query import (
     get_query_json_list,
     query_table,
 )
-from backend.app.utils.logger import (
-    Logger,
-    create_and_log,
-    get_logger,
-    update_and_log_diff,
-    update_and_log_diff_forground,
-)
+from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.core.enums import SiteStatus
 from backend.common.models.site import (
@@ -247,7 +241,7 @@ async def update_multiple_sites(
 
     result = []
     for target in targets:
-        updated = await update_and_log_diff_forground(
+        updated = await update_and_log_diff(
             logger, current_user, target, UpdateSite(assignee=current_user.id)
         )
         result.append(updated)

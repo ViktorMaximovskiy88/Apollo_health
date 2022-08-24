@@ -71,24 +71,6 @@ def get_diff_patch(
     return patch
 
 
-async def update_and_log_diff_forground(
-    logger: Logger,
-    current_user: User,
-    target: Document,
-    updates: BaseModel | dict[str, Any],
-    session: AsyncIOMotorClientSession | None = None,
-):
-    original = target.dict()
-    if isinstance(updates, BaseModel):
-        updates = updates.dict(exclude_unset=True)
-
-    await target.update(Set(updates), session=session)
-    updated = target.dict()
-    patch = get_diff_patch(original, updated)
-    await logger.log_change(current_user, target, "UPDATE", patch)
-    return updated
-
-
 async def update_and_log_diff(
     logger: Logger,
     current_user: User,
@@ -103,5 +85,5 @@ async def update_and_log_diff(
     await target.update(Set(updates), session=session)
     updated = target.dict()
     patch = get_diff_patch(original, updated)
-    await logger.background_log_change(current_user, target, "UPDATE", patch)
+    await logger.log_change(current_user, target, "UPDATE", patch)
     return updated
