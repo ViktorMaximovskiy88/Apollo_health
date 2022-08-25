@@ -72,23 +72,6 @@ describe(`CollectionsPage`, () => {
   });
 
   it(`should create scrape task and update status over time`, async () => {
-    const mockedUseParams = useParams as jest.Mock<Params>;
-    mockedUseParams.mockImplementation(() => ({
-      siteId: 'site-id1',
-    }));
-    const mockedUseSearchParams = useSearchParams as jest.Mock<any>;
-    mockedUseSearchParams.mockImplementation(() => [
-      new URLSearchParams('scrape_task_id=scrape-task-id1'),
-    ]);
-    const mockedUseLocation = useLocation as jest.Mock<Location>;
-    mockedUseLocation.mockImplementation(() => ({
-      pathname: 'test',
-      key: 'asd',
-      state: '',
-      search: '',
-      hash: '',
-    }));
-
     // fixes `act` warning
     // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
     const dataGridDoneRendering = Promise.resolve();
