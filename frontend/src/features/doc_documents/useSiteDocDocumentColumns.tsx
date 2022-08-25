@@ -4,12 +4,12 @@ import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Button } from 'antd';
 import { LinkOutlined } from '@ant-design/icons';
 import { prettyDateTimeFromISO } from '../../common';
-import { DocDocument } from './types';
+import { SiteDocDocument } from './types';
 import { Link } from 'react-router-dom';
 import { DocumentTypes } from '../retrieved_documents/types';
 
 interface CreateColumnsType {
-  handleNewVersion?: (data: DocDocument) => void;
+  handleNewVersion?: (data: SiteDocDocument) => void;
 }
 
 export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
@@ -26,7 +26,7 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
           placeholder: 'Select Date',
         };
       },
-      render: ({ data: doc }: { data: DocDocument }) => {
+      render: ({ data: doc }: { data: SiteDocDocument }) => {
         if (!doc.last_collected_date) return null;
         return prettyDateTimeFromISO(doc.last_collected_date);
       },
@@ -36,7 +36,7 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
       key: 'name',
       defaultFlex: 1,
       filterSearch: true,
-      render: ({ data: doc }: { data: DocDocument }) => {
+      render: ({ data: doc }: { data: SiteDocDocument }) => {
         return <Link to={`/documents/${doc._id}`}>{doc.name}</Link>;
       },
     },
@@ -71,16 +71,32 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
           placeholder: 'Select Date',
         };
       },
-      render: ({ data: doc }: { data: DocDocument }) => {
+      render: ({ data: doc }: { data: SiteDocDocument }) => {
         if (!doc.effective_date) return null;
         return prettyDateTimeFromISO(doc.effective_date);
+      },
+    },
+    {
+      header: 'Url',
+      key: 'url',
+      minWidth: 200,
+      filterSearch: true,
+      render: ({ data: doc }: { data: SiteDocDocument }) => {
+        return (
+          <>
+            <Link to={`/documents/${doc._id}`}>{doc.url}</Link>
+            <a className="mx-2" href={doc.url} target="_blank" rel="noreferrer">
+              <LinkOutlined />
+            </a>
+          </>
+        );
       },
     },
     {
       header: 'Actions',
       name: 'action',
       minWidth: 200,
-      render: ({ data: doc }: { data: DocDocument }) => {
+      render: ({ data: doc }: { data: SiteDocDocument }) => {
         return (
           <>
             {handleNewVersion && (
@@ -95,5 +111,5 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
   ];
 };
 
-export const useDocDocumentColumns = ({ handleNewVersion }: CreateColumnsType) =>
+export const useSiteDocDocumentColumns = ({ handleNewVersion }: CreateColumnsType) =>
   useMemo(() => createColumns({ handleNewVersion }), [handleNewVersion]);

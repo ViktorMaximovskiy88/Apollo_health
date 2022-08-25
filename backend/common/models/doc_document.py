@@ -8,6 +8,7 @@ from backend.common.models.base_document import BaseDocument
 from backend.common.models.document_mixins import DocumentMixins
 from backend.common.models.shared import (
     DocDocumentLocation,
+    DocDocumentLocationView,
     IndicationTag,
     LockableDocument,
     TaskLock,
@@ -75,6 +76,10 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
         copy.pop("first_collected_date")
         copy.pop("last_collected_date")
         return SiteDocDocument(_id=self.id, **copy, **location.dict())
+
+
+class DocDocumentView(DocDocument):
+    locations: list[DocDocumentLocationView] = []
 
 
 class SiteDocDocument(BaseDocDocument, DocDocumentLocation):

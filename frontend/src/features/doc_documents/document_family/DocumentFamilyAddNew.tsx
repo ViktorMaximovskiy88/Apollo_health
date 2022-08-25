@@ -2,8 +2,8 @@ import { Form, Button, Modal } from 'antd';
 import { useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { AddDocumentFamily } from './DocumentFamilyAddForm';
-import { DocumentFamilyOption, DocumentFamilyType } from './types';
-import { useGetDocDocumentQuery } from './docDocumentApi';
+import { DocumentFamilyOption, DocumentFamilyType } from '../types';
+import { useGetDocDocumentQuery } from '../docDocumentApi';
 import { useParams } from 'react-router-dom';
 import { useAddDocumentFamilyMutation } from './documentFamilyApi';
 
@@ -21,29 +21,29 @@ const useModal = (): [boolean, () => void, () => void] => {
   return [isVisible, showModal, closeModal];
 };
 
-const useAddDocumentFamily = () => {
-  const [addDocumentFamilyFn] = useAddDocumentFamilyMutation();
+// const useAddDocumentFamily = () => {
+//   const [addDocumentFamilyFn] = useAddDocumentFamilyMutation();
 
-  const { docDocumentId: docId } = useParams();
-  const { data: doc } = useGetDocDocumentQuery(docId);
+//   const { docDocumentId: docId } = useParams();
+//   const { data: doc } = useGetDocDocumentQuery(docId);
 
-  const docDocumentForm = Form.useFormInstance();
-  const documentType = Form.useWatch('document_type', docDocumentForm);
+//   const docDocumentForm = Form.useFormInstance();
+//   const documentType = Form.useWatch('document_type', docDocumentForm);
 
-  async function addDocumentFamily(documentFamily: DocumentFamilyType): Promise<string> {
-    if (!doc) {
-      throw new Error('DocDocument not found');
-    }
+//   async function addDocumentFamily(documentFamily: DocumentFamilyType): Promise<string> {
+//     if (!doc) {
+//       throw new Error('DocDocument not found');
+//     }
 
-    documentFamily.site_id = doc.site_id;
-    documentFamily.document_type = documentType;
+//     documentFamily.site_id = doc.site_id;
+//     documentFamily.document_type = documentType;
 
-    const { _id } = await addDocumentFamilyFn(documentFamily).unwrap();
-    return _id;
-  }
+//     const { _id } = await addDocumentFamilyFn(documentFamily).unwrap();
+//     return _id;
+//   }
 
-  return addDocumentFamily;
-};
+//   return addDocumentFamily;
+// };
 
 const useSaveInSelect = () => {
   const docDocumentForm = Form.useFormInstance();
@@ -77,29 +77,29 @@ export function AddNewDocumentFamilyButton({
   const { document_type, site_id } = docDocumentForm.getFieldsValue();
   const [isSaving, setIsSaving] = useState(false);
   const [isModalVisible, showModal, closeModal] = useModal();
-  const addDocumentFamily = useAddDocumentFamily();
+  // const addDocumentFamily = useAddDocumentFamily();
   const saveInSelect = useSaveInSelect();
   const [documentFamilyForm] = Form.useForm();
 
-  const onFinish = async (documentFamily: DocumentFamilyType) => {
-    setIsSaving(true);
+  // const onFinish = async (documentFamily: DocumentFamilyType) => {
+  //   setIsSaving(true);
 
-    const documentFamilyId = await addDocumentFamily(documentFamily);
-    saveInSelect(documentFamilyId);
+  //   const documentFamilyId = await addDocumentFamily(documentFamily);
+  //   saveInSelect(documentFamilyId);
 
-    // so the document family name shows up in the Select immediately
-    setOptions([...options, { value: documentFamilyId, label: documentFamily.name }]);
+  //   // so the document family name shows up in the Select immediately
+  //   setOptions([...options, { value: documentFamilyId, label: documentFamily.name }]);
 
-    documentFamilyForm.resetFields();
-    closeModal();
+  //   documentFamilyForm.resetFields();
+  //   closeModal();
 
-    setIsSaving(false);
-  };
+  //   setIsSaving(false);
+  // };
 
-  const onCancel = () => {
-    documentFamilyForm.resetFields();
-    closeModal();
-  };
+  // const onCancel = () => {
+  //   documentFamilyForm.resetFields();
+  //   closeModal();
+  // };
 
   return (
     <>
@@ -111,7 +111,7 @@ export function AddNewDocumentFamilyButton({
         okText="Submit"
         footer={null}
       >
-        <AddDocumentFamily
+        {/* <AddDocumentFamily
           initialValues={{ document_type, site_id }}
           onFinish={onFinish}
           form={documentFamilyForm}
@@ -119,7 +119,7 @@ export function AddNewDocumentFamilyButton({
           lockSiteDocType
         >
           <Footer onCancel={onCancel} isSaving={isSaving} />
-        </AddDocumentFamily>
+        </AddDocumentFamily> */}
       </Modal>
 
       <Button className="flex-1 my-7" type="dashed" onClick={showModal}>

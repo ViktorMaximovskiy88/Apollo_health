@@ -49,9 +49,9 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
       lang_code: oldVersion.lang_code,
       name: oldVersion.name,
       document_type: oldVersion.document_type,
-      link_text: oldVersion.link_text,
-      url: oldVersion.url,
-      base_url: oldVersion.base_url,
+      // link_text: oldVersion.link_text,
+      // url: oldVersion.url,
+      // base_url: oldVersion.base_url,
     };
   }
 

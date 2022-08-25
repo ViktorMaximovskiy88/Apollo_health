@@ -26,6 +26,10 @@ class DocDocumentLocation(SiteLocation):
     previous_doc_doc_id: PydanticObjectId | None = None
 
 
+class DocDocumentLocationView(DocDocumentLocation):
+    site_name: str | None = None
+
+
 class TherapyTag(BaseModel):
     text: str
     page: int = 0

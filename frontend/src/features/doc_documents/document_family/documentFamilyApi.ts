@@ -1,18 +1,15 @@
-import { createApi, fetchBaseQuery } from '../../app/base-api';
-import { DocumentFamilyType } from './types';
+import { createApi, fetchBaseQuery } from '../../../app/base-api';
+import { DocumentFamilyType } from '../types';
 
 export const documentFamilyApi = createApi({
   reducerPath: 'documentFamilyApi',
   baseQuery: fetchBaseQuery(),
   tagTypes: ['DocumentFamily', 'ChangeLog'],
   endpoints: (builder) => ({
-    getDocumentFamilies: builder.query<
-      DocumentFamilyType[],
-      { siteId: string; documentType: string }
-    >({
-      query: ({ siteId, documentType }) => {
+    getDocumentFamilies: builder.query<DocumentFamilyType[], { documentType: string }>({
+      query: ({ documentType }) => {
         const args = [
-          `site_id=${encodeURIComponent(siteId)}`,
+          // `site_id=${encodeURIComponent(siteId)}`,
           `document_type=${encodeURIComponent(documentType)}`,
         ].join('&');
         return `/document-family/?${args}`;

@@ -20,9 +20,7 @@ export function SiteRetreivedDocumentsPage() {
       pageToolbar={
         site &&
         site.collection_method === CollectionMethod.Manual && (
-          <Button onClick={() => setNewDocumentModalVisible(true)} className="ml-auto">
-            Create Document
-          </Button>
+          <Button onClick={() => setNewDocumentModalVisible(true)}>Create Document</Button>
         )
       }
     >

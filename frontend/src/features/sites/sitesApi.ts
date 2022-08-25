@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
 import { Site } from './types';
 import { RetrievedDocument } from '../retrieved_documents/types';
-import { DocDocument } from '../doc_documents/types';
+import { SiteDocDocument } from '../doc_documents/types';
 
 export const sitesApi = createApi({
   reducerPath: 'sitesApi',
@@ -38,11 +38,14 @@ export const sitesApi = createApi({
       query: (id) => `/sites/${id}/documents`,
       providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
     }),
-    getSiteDocDocuments: builder.query<DocDocument[], string | undefined>({
+    getSiteDocDocument: builder.query<SiteDocDocument, any>({
+      query: ({ siteId, docId }) => `/sites/${siteId}/doc-documents/${docId}`,
+      providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
+    }),
+    getSiteDocDocuments: builder.query<SiteDocDocument[], string | undefined>({
       query: (id) => `/sites/${id}/doc-documents`,
       providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
     }),
-
     addSite: builder.mutation<Site, Partial<Site>>({
       query: (body) => ({ url: '/sites/', method: 'PUT', body }),
       invalidatesTags: [{ type: 'Site', id: 'LIST' }],
@@ -81,5 +84,6 @@ export const {
   useGetChangeLogQuery,
   useGetSiteRetrievedDocumentsQuery,
   useGetSiteDocDocumentsQuery,
+  useGetSiteDocDocumentQuery,
   useLazyGetSiteDocDocumentsQuery,
 } = sitesApi;

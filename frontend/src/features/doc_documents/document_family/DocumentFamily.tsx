@@ -1,11 +1,11 @@
 import { Form, Select } from 'antd';
-import { DocumentFamilyType, DocumentFamilyOption } from './types';
+import { DocumentFamilyType, DocumentFamilyOption } from '../types';
 import { createContext, useEffect, useState } from 'react';
 import { useGetDocumentFamiliesQuery } from './documentFamilyApi';
 import { useParams } from 'react-router-dom';
-import { useGetDocDocumentQuery } from './docDocumentApi';
+import { useGetDocDocumentQuery } from '../docDocumentApi';
 import { FormInstance } from 'antd/lib/form';
-import { AddNewDocumentFamilyButton } from './DocumentFamilyAddNew';
+// import { AddNewDocumentFamilyButton } from './DocumentFamilyAddNew';
 
 const useSyncValueWithDocumentType = () => {
   const { docDocumentId: docId } = useParams();
@@ -35,7 +35,6 @@ const useSyncOptionsWithDocumentType = (): [
 
   const documentType = Form.useWatch('document_type', form);
   const { data: documentFamilies } = useGetDocumentFamiliesQuery({
-    siteId: doc?.site_id ?? '',
     documentType,
   });
 
@@ -67,7 +66,7 @@ export function DocumentFamily() {
       <Form.Item name="document_family_id" label="Document Family" className="flex-1">
         <Select allowClear options={options} placeholder="Options loading..." />
       </Form.Item>
-      <AddNewDocumentFamilyButton options={options} setOptions={setOptions} />
+      {/* <AddNewDocumentFamilyButton options={options} setOptions={setOptions} /> */}
     </div>
   );
 }

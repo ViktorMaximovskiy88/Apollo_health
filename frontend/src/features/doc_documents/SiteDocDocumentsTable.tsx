@@ -12,8 +12,8 @@ import {
 } from './docDocumentsSlice';
 import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
-import { useDocumentColumns } from './useDocDocumentColumns';
-import { DocDocument } from './types';
+import { useSiteDocDocumentColumns } from './useSiteDocDocumentColumns';
+import { SiteDocDocument } from './types';
 
 const useControlledPagination = () => {
   const tableState = useSelector(docDocumentTableState);
@@ -38,7 +38,7 @@ const useControlledPagination = () => {
   return controlledPaginationProps;
 };
 
-const useDocuments = (): DocDocument[] => {
+const useDocuments = (): SiteDocDocument[] => {
   const params = useParams();
   const siteId = params.siteId;
   const { data } = useGetSiteDocDocumentsQuery(siteId, { pollingInterval: 5000 });
@@ -46,12 +46,12 @@ const useDocuments = (): DocDocument[] => {
 };
 
 interface DataTablePropTypes {
-  handleNewVersion: (data: DocDocument) => void;
+  handleNewVersion: (data: SiteDocDocument) => void;
 }
 
 export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) {
   const documents = useDocuments();
-  const columns = useDocumentColumns({ handleNewVersion });
+  const columns = useSiteDocDocumentColumns({ handleNewVersion });
 
   const filterProps = useDataTableFilter(docDocumentTableState, setDocDocumentTableFilter);
   const sortProps = useDataTableSort(docDocumentTableState, setDocDocumentTableSort);

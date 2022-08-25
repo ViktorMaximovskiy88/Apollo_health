@@ -16,7 +16,7 @@ import { DocExtractionPage } from './features/extractions/DocExtractionPage';
 import { ExtractionEditPage } from './features/extractions/ExtractionEditPage';
 import { WorkQueueHomePage } from './features/work_queue/WorkQueueHomePage';
 import { WorkQueuePage } from './features/work_queue/WorkQueuePage';
-import { DocDocumentsPage } from './features/doc_documents/DocDocumentPage';
+import { SiteDocDocumentsPage } from './features/doc_documents/SiteDocDocumentPage';
 import { DocDocumentEditPage } from './features/doc_documents/DocDocumentEditPage';
 import { ProcessWorkItemPage, ReadonlyWorkItemPage } from './features/work_queue/WorkItemPage';
 import { AppLayout } from './app/AppLayout';
@@ -98,7 +98,7 @@ function App() {
               </Route>
             </Route>
             <Route path="doc-documents">
-              <Route index element={<DocDocumentsPage />} />
+              <Route index element={<SiteDocDocumentsPage />} />
               <Route path=":docId">
                 <Route path="edit" element={<DocDocumentEditPage />} />
               </Route>

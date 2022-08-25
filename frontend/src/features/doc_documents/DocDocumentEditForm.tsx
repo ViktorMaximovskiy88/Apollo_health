@@ -187,6 +187,14 @@ export function DocDocumentEditForm({
               currentPage={pageNumber}
             />
           </Tabs.TabPane>
+          <Tabs.TabPane tab="Sites" key="sutes" className="bg-white p-4 overflow-auto">
+            <DocDocumentInfoForm
+              onFieldChange={() => {
+                setHasChanges(true);
+                calculateFinalEffectiveDate();
+              }}
+            />
+          </Tabs.TabPane>
         </Tabs>
       </Form>
     </div>

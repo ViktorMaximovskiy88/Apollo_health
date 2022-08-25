@@ -7,7 +7,7 @@ import { useInterval } from '../../common/hooks';
 import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 import { GridPaginationToolbar } from '../../components';
-import { useDocumentColumns as useColumns } from './useDocDocumentColumns';
+import { useDocDocumentColumns as useColumns } from './useDocDocumentColumns';
 import { DocDocument } from './types';
 
 import {

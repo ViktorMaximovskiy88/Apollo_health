@@ -59,9 +59,9 @@ export function CollectionsPage() {
         setVisible={setModalVisible}
         errorTraceback={errorTraceback}
       />
-      {newDocumentModalVisible ? (
+      {newDocumentModalVisible && (
         <AddDocumentModal setVisible={setNewDocumentModalVisible} siteId={siteId} />
-      ) : null}
+      )}
       <MainLayout
         sidebar={<SiteMenu />}
         pageTitle={'Collections'}
@@ -70,9 +70,7 @@ export function CollectionsPage() {
             {site &&
             site.collection_method === CollectionMethod.Automated &&
             site.status !== SiteStatus.Inactive ? (
-              <Button onClick={() => handleRunScrape()} className="ml-auto">
-                Run Collection
-              </Button>
+              <Button onClick={() => handleRunScrape()}>Run Collection</Button>
             ) : site &&
               site.collection_method === CollectionMethod.Manual &&
               site.status !== SiteStatus.Inactive ? (
@@ -108,7 +106,7 @@ function ManualCollectionButton(props: any) {
     refetch();
   }
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
-  
+
   if (activeStatuses.includes(site.last_run_status)) {
     return (
       <Button className="ml-auto" onClick={handleCancelScrape}>

@@ -5,16 +5,16 @@ import { useParams } from 'react-router-dom';
 import { MainLayout } from '../../components';
 import { SiteMenu } from '../sites/SiteMenu';
 
-import { DocDocumentsTable } from './DocDocumentsTable';
+import { SiteDocDocumentsTable } from './SiteDocDocumentsTable';
 import { AddDocumentModal } from '../collections/addDocumentModal';
-import { DocDocument } from './types';
+import { SiteDocDocument } from './types';
 
-export function DocDocumentsPage() {
+export function SiteDocDocumentsPage() {
   const [newDocumentModalVisible, setNewDocumentModalVisible] = useState(false);
   const [oldVersion, setOldVersion] = useState<any>();
   const params = useParams();
 
-  function handleNewVersion(data: DocDocument) {
+  function handleNewVersion(data: SiteDocDocument) {
     setOldVersion(data);
     setNewDocumentModalVisible(true);
   }
@@ -43,7 +43,7 @@ export function DocDocumentsPage() {
           siteId={params.siteId}
         />
       )}
-      <DocDocumentsTable handleNewVersion={handleNewVersion} />
+      <SiteDocDocumentsTable handleNewVersion={handleNewVersion} />
     </MainLayout>
   );
 }

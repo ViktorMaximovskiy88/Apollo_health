@@ -51,10 +51,12 @@ export function Translation() {
 
   if (!doc) return null;
 
+  const siteId = doc.locations[0].site_id;
+
   return (
     <div className="flex">
       <TranslationSelector translation={translation} />
-      <TranslationModal translation={translation} siteId={doc.site_id} docId={doc._id} />
+      <TranslationModal translation={translation} siteId={siteId} docId={doc._id} />
     </div>
   );
 }

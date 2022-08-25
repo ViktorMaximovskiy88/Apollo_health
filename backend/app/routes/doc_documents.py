@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Security, status
 from pydantic import BaseModel
 
 from backend.app.routes.documents import get_target as get_retrieved_doc
+from backend.app.routes.sites import Site
 from backend.app.routes.table_query import (
     TableFilterInfo,
     TableQueryResponse,
@@ -14,9 +15,15 @@ from backend.app.utils.logger import Logger, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.events.event_convert import EventConvert
 from backend.common.events.send_event_client import SendEventClient
-from backend.common.models.doc_document import DocDocument, DocDocumentLimitTags, UpdateDocDocument
+from backend.common.models.doc_document import (
+    DocDocument,
+    DocDocumentLimitTags,
+    DocDocumentView,
+    UpdateDocDocument,
+)
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.document_mixins import calc_final_effective_date
+from backend.common.models.shared import DocDocumentLocationView
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.storage.text_handler import TextHandler
@@ -66,13 +73,25 @@ async def read_doc_documents(
 
 @router.get(
     "/{id}",
-    response_model=DocDocument,
+    response_model=DocDocumentView,
     dependencies=[Security(get_current_user)],
 )
 async def read_extraction_task(
     target: DocDocument = Depends(get_target),
 ):
-    return target
+    # https://roman-right.github.io/beanie/tutorial/relations/
+    # Only top-level fields are fully supported for now
+    # cant use relations... yet...
+
+    site_ids = [location.site_id for location in target.locations]
+    sites = await Site.find({"_id": {"$in": site_ids}}).to_list()
+    doc = DocDocumentView(**target.dict())
+
+    for site in sites:
+        location: DocDocumentLocationView = doc.get_site_location(site.id)
+        location.site_name = site.name
+
+    return doc
 
 
 class CompareResponse(BaseModel):
