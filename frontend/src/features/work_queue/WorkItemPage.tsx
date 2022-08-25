@@ -27,7 +27,7 @@ function workItemPage(
   wq: WorkQueue,
   itemId: string,
   form: FormInstance,
-  onSubmit: (u: any) => void
+  onSubmit: (u: any) => Promise<void>
 ) {
   switch (wq.frontend_component) {
     case 'DocDocumentClassificationPage':

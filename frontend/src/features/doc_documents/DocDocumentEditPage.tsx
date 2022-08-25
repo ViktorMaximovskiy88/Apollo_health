@@ -7,6 +7,7 @@ import { useForm } from 'antd/lib/form/Form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { WarningFilled } from '@ant-design/icons';
+import { DocDocument } from './types';
 
 export function DocDocumentEditPage() {
   const navigate = useNavigate();
@@ -17,10 +18,12 @@ export function DocDocumentEditPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [pageNumber, setPageNumber] = useState(0);
-  const [updateDocDocument] = useUpdateDocDocumentMutation();
+  const [updateDocDocumentMutation] = useUpdateDocDocumentMutation();
+  const updateDocDocument = async (doc: Partial<DocDocument>): Promise<void> => {
+    await updateDocDocumentMutation(doc);
+  };
 
-  if (!docId) return null;
-  if (!doc) return null;
+  if (!doc || !docId) return null;
 
   return (
     <MainLayout

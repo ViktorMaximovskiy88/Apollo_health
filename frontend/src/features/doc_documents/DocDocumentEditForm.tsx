@@ -59,7 +59,7 @@ const useTagsState = (
 };
 
 interface UseOnFinishType {
-  onSubmit: (doc: Partial<DocDocument>) => void;
+  onSubmit: (doc: Partial<DocDocument>) => Promise<void>;
   tags: Array<TherapyTag | IndicationTag>;
   setIsSaving: (isSaving: boolean) => void;
   docId: string;
@@ -72,7 +72,7 @@ const useOnFinish = ({
 }: UseOnFinishType): ((doc: Partial<DocDocument>) => void) => {
   const navigate = useNavigate();
 
-  const onFinish = (submittedDoc: Partial<DocDocument>): void => {
+  const onFinish = async (submittedDoc: Partial<DocDocument>): Promise<void> => {
     if (!submittedDoc) return;
 
     setIsSaving(true);
@@ -80,7 +80,7 @@ const useOnFinish = ({
     try {
       const tagsByType = groupBy(tags, '_type');
 
-      onSubmit({
+      await onSubmit({
         ...submittedDoc,
         indication_tags: (tagsByType['indication'] ?? []) as IndicationTag[],
         therapy_tags: (tagsByType['therapy'] ?? []) as TherapyTag[],
@@ -118,7 +118,7 @@ interface EditFormPropTypes {
   setHasChanges: (hasChanges: boolean) => void;
   form: FormInstance;
   pageNumber: number;
-  onSubmit: (doc: Partial<DocDocument>) => void;
+  onSubmit: (doc: Partial<DocDocument>) => Promise<void>;
   docId: string;
 }
 export function DocDocumentEditForm({
@@ -169,12 +169,7 @@ export function DocDocumentEditForm({
         form={form}
         requiredMark={false}
         initialValues={initialValues}
-        onFinish={(doc) => {
-          onFinish(doc);
-          if (onSubmit) {
-            onSubmit(doc);
-          }
-        }}
+        onFinish={onFinish}
       >
         <Tabs className="h-full ant-tabs-h-full">
           <Tabs.TabPane tab="Info" key="info" className="bg-white p-4 overflow-auto">

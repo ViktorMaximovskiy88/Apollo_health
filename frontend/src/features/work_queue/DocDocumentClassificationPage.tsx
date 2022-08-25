@@ -9,7 +9,7 @@ import { DocDocumentEditForm } from '../doc_documents/DocDocumentEditForm';
 interface DocDocumentClassificationPagePropTypes {
   docId: string;
   form: FormInstance;
-  onSubmit: (doc: Partial<DocDocument>) => void;
+  onSubmit: (doc: Partial<DocDocument>) => Promise<void>;
 }
 export function DocDocumentClassificationPage({
   docId,
