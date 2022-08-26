@@ -79,6 +79,7 @@ async def create_work_queue(
         name=work_queue.name,
         frontend_component=work_queue.frontend_component,
         collection_name=work_queue.collection_name,
+        update_model_name=work_queue.update_model_name,
         document_query=work_queue.document_query,
         user_query=work_queue.user_query,
         submit_actions=work_queue.submit_actions,
@@ -286,6 +287,7 @@ async def submit_work_item(
     current_user: User = Security(get_current_user),
 ):
     Collection: Type[BaseDocument] = getattr(collection_classes, work_queue.collection_name)
+    UpdateModel: Type[BaseDocument] = getattr(collection_classes, work_queue.update_model_name)
 
     lock = await attempt_lock_acquire(work_queue, item_id, current_user)
     if not lock.acquired_lock:
@@ -309,7 +311,8 @@ async def submit_work_item(
         )
         await comment.save()
 
-    await update_and_log_diff(logger, current_user, item, body.updates)
+    updates = UpdateModel.parse_obj(body.updates)
+    await update_and_log_diff(logger, current_user, item, updates)
     await Collection.find_one({"_id": item_id}).update(
         {"$pull": {"locks": {"work_queue_id": work_queue.id}}}
     )

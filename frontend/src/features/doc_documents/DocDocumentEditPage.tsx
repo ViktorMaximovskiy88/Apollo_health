@@ -21,6 +21,7 @@ export function DocDocumentEditPage() {
   const [updateDocDocumentMutation] = useUpdateDocDocumentMutation();
   const updateDocDocument = async (doc: Partial<DocDocument>): Promise<void> => {
     await updateDocDocumentMutation(doc);
+    navigate(-1);
   };
 
   if (!doc || !docId) return null;

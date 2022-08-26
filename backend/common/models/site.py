@@ -29,8 +29,8 @@ class ScrapeMethodConfiguration(BaseModel):
     wait_for_timeout_ms: int = 0
     search_in_frames: bool = False
     follow_links: bool = False
-    follow_link_keywords: list[str]
-    follow_link_url_keywords: list[str]
+    follow_link_keywords: list[str] = []
+    follow_link_url_keywords: list[str] = []
     attr_selectors: list[AttrSelector] = []
     focus_therapy_configs: list[FocusTherapyConfig] = []
 

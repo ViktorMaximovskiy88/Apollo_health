@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Form, FormInstance, Tabs } from 'antd';
 import { DocDocument, IndicationTag, TherapyTag } from './types';
 import { DocDocumentTagForm } from './DocDocumentTagForm';
@@ -5,7 +6,6 @@ import { dateToMoment } from '../../common';
 import { useCallback, useEffect, useState } from 'react';
 import { compact, groupBy, isEqual, maxBy } from 'lodash';
 import { DocDocumentInfoForm } from './DocDocumentInfoForm';
-import { useNavigate } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 
 const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
@@ -70,8 +70,6 @@ const useOnFinish = ({
   setIsSaving,
   docId,
 }: UseOnFinishType): ((doc: Partial<DocDocument>) => void) => {
-  const navigate = useNavigate();
-
   const onFinish = async (submittedDoc: Partial<DocDocument>): Promise<void> => {
     if (!submittedDoc) return;
 
@@ -86,12 +84,11 @@ const useOnFinish = ({
         therapy_tags: (tagsByType['therapy'] ?? []) as TherapyTag[],
         _id: docId,
       });
-      navigate(-1);
     } catch (error) {
       //  TODO real errors please
       console.error(error);
-      setIsSaving(false);
     }
+    setIsSaving(false);
   };
 
   return onFinish;
@@ -153,8 +150,14 @@ export function DocDocumentEditForm({
     setTags(update);
   }
 
+  const initialValues = useMemo(() => (doc ? buildInitialValues(doc) : {}), [doc]);
+  useEffect(() => {
+    setHasChanges(false);
+    form.setFieldsValue(initialValues);
+    form.resetFields();
+  }, [initialValues]);
+
   if (!doc) return null;
-  const initialValues = buildInitialValues(doc);
 
   return (
     <div className="flex-1 h-full overflow-hidden">
