@@ -1,10 +1,9 @@
 import { rest } from 'msw';
 import { TaskStatus } from '../../../common';
-import { CollectionMethod } from '../../sites/types';
 import { faker } from '@faker-js/faker';
+import site from '../../sites/mocks/site.fixture.json';
 
 import { factory, primaryKey } from '@mswjs/data';
-import { SiteStatus } from '../../sites/siteStatus';
 
 const db = factory({
   scrapeTask: {
@@ -68,9 +67,7 @@ const processScrape = async (scrapeTaskId: string): Promise<void> => {
 
 export const handlers = [
   rest.get('http://localhost/api/v1/sites/site-id1', async (req, res, ctx) => {
-    return res(
-      ctx.json({ collection_method: CollectionMethod.Automated, status: SiteStatus.Online })
-    );
+    return res(ctx.json(site));
   }),
   rest.get('http://localhost/api/v1/site-scrape-tasks/', async (req, res, ctx) => {
     return res(ctx.json(db.scrapeTask.getAll().reverse()));
@@ -91,6 +88,6 @@ export const handlers = [
       links_found: 0,
     });
     processScrape(newScrape._id);
-    return res(ctx.json({}));
+    return res(ctx.json(newScrape));
   }),
 ];

@@ -4,7 +4,7 @@ import { useParams, Params, useLocation, Location, useSearchParams } from 'react
 
 import { DocumentEditPage } from './DocumentEditPage';
 import { handlers } from './mocks/documentEditPageHandlers';
-import { render, screen } from '../../test/test-utils';
+import { mockUrl, render, screen } from '../../test/test-utils';
 import { useAccessToken } from '../../common/hooks';
 
 jest.mock('react-router-dom');
@@ -29,27 +29,7 @@ beforeAll(() => {
   server.listen();
 });
 beforeEach(() => {
-  const mockedUseParams = useParams as jest.Mock<Params>;
-  mockedUseParams.mockImplementation(() => ({
-    docId: 'doc-id1',
-  }));
-
-  const mockedUseSearchParams = useSearchParams as jest.Mock<any>;
-  mockedUseSearchParams.mockImplementation(() => [
-    new URLSearchParams('scrape_task_id=scrape-task-id1'),
-  ]);
-
-  const mockedUseAccessToken = useAccessToken as jest.Mock<string>;
-  mockedUseAccessToken.mockReturnValue('123');
-
-  const mockedUseLocation = useLocation as jest.Mock<Location>;
-  mockedUseLocation.mockImplementation(() => ({
-    pathname: 'test',
-    key: 'asd',
-    state: '',
-    search: '',
-    hash: '',
-  }));
+  mockUrl({ params: { docId: 'doc-id1' } });
 
   // Mocks intersection observer used by Viewer component
   const mockIntersectionObserver = jest.fn();
@@ -67,10 +47,7 @@ afterAll(() => {
 afterEach(() => server.resetHandlers());
 
 describe('DocumentForm', () => {
-  it.skip('displays uneditable dates', async () => {
-    // TODO: fix `thrown: "Exceeded timeout of 5000 ms for a test. `
-    //   increasing jest.setTimeout() does not resolve the error
-    //   context: this did not happen 2 weeks to a month ago as of this writing
+  it('displays uneditable dates', async () => {
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
 
     render(<DocumentEditPage />);

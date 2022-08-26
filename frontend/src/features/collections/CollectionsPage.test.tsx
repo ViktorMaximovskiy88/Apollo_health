@@ -1,9 +1,8 @@
 import userEvent from '@testing-library/user-event';
-import { render, screen, act } from '../../test/test-utils';
+import { render, screen, act, mockUrl } from '../../test/test-utils';
 import { setupServer } from 'msw/node';
 import { CollectionsPage } from './CollectionsPage';
 import { handlers } from './mocks/collectionsPageHandlers';
-import { useParams, Params, useLocation, Location, useSearchParams } from 'react-router-dom';
 
 jest.mock('react-router-dom');
 
@@ -26,22 +25,7 @@ beforeAll(() => {
   server.listen({ onUnhandledRequest: 'error' });
 });
 beforeEach(() => {
-  const mockedUseParams = useParams as jest.Mock<Params>;
-  mockedUseParams.mockImplementation(() => ({
-    siteId: 'site-id1',
-  }));
-  const mockedUseSearchParams = useSearchParams as jest.Mock<any>;
-  mockedUseSearchParams.mockImplementation(() => [
-    new URLSearchParams('scrape_task_id=scrape-task-id1'),
-  ]);
-  const mockedUseLocation = useLocation as jest.Mock<Location>;
-  mockedUseLocation.mockImplementation(() => ({
-    pathname: 'site-id1',
-    key: 'site-id1',
-    state: '',
-    search: '',
-    hash: '',
-  }));
+  mockUrl({ location: { pathname: '/sites/site-id1/scrapes' }, params: { siteId: 'site-id1' } });
 });
 afterAll(() => {
   jest.useRealTimers();
@@ -50,11 +34,7 @@ afterAll(() => {
 afterEach(() => server.resetHandlers());
 
 describe(`CollectionsPage`, () => {
-  it.skip(`should open error log modal when button clicked`, async () => {
-    // TODO: fix `thrown: "Exceeded timeout of 5000 ms for a test. `
-    //   increasing jest.setTimeout() does not resolve the error
-    //   context: this did not happen 2 weeks to a month ago as of this writing
-
+  it(`should open error log modal when button clicked`, async () => {
     // fixes `act` warning
     // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
     const dataGridDoneRendering = Promise.resolve();
@@ -75,11 +55,7 @@ describe(`CollectionsPage`, () => {
     expect(screen.getByRole('button', { name: /ok/i })).toBeInTheDocument();
   });
 
-  it.skip(`should create scrape task and update status over time`, async () => {
-    // TODO: fix `thrown: "Exceeded timeout of 5000 ms for a test. `
-    //   increasing jest.setTimeout() does not resolve the error
-    //   context: this did not happen 2 weeks to a month ago as of this writing
-
+  it(`should create scrape task and update status over time`, async () => {
     // fixes `act` warning
     // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
     const dataGridDoneRendering = Promise.resolve();

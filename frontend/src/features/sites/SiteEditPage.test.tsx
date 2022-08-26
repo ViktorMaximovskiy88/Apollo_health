@@ -1,5 +1,5 @@
 import userEvent from '@testing-library/user-event';
-import { render, screen } from '../../test/test-utils';
+import { mockUrl, render, screen } from '../../test/test-utils';
 import { setupServer } from 'msw/node';
 import { SiteEditPage } from './SiteEditPage';
 import { handlers } from './mocks/siteEditPageHandlers';
@@ -24,22 +24,7 @@ beforeAll(() => {
   server.listen();
 });
 beforeEach(() => {
-  const mockedUseParams = useParams as jest.Mock<Params>;
-  mockedUseParams.mockImplementation(() => ({
-    siteId: 'site-id1',
-  }));
-  const mockedUseSearchParams = useSearchParams as jest.Mock<any>;
-  mockedUseSearchParams.mockImplementation(() => [
-    new URLSearchParams('scrape_task_id=scrape-task-id1'),
-  ]);
-  const mockedUseLocation = useLocation as jest.Mock<Location>;
-  mockedUseLocation.mockImplementation(() => ({
-    pathname: 'site-id1',
-    key: 'site-id1',
-    state: '',
-    search: '',
-    hash: '',
-  }));
+  mockUrl({ params: { siteId: 'site-id1' } });
 });
 afterAll(() => {
   server.close();
