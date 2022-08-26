@@ -1,11 +1,10 @@
 import { Form } from 'antd';
-import { useParams } from 'react-router-dom';
 import { ListDatePicker } from '../../components';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 
-const EffectiveDate = ({ onFieldChange }: { onFieldChange: Function }) => {
+const EffectiveDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
   const form = Form.useFormInstance();
-  const { docDocumentId: docId } = useParams();
+  const docId = form.getFieldValue('docId');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
   return (
@@ -20,9 +19,9 @@ const EffectiveDate = ({ onFieldChange }: { onFieldChange: Function }) => {
     />
   );
 };
-const EndDate = ({ onFieldChange }: { onFieldChange: Function }) => {
+const EndDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
   const form = Form.useFormInstance();
-  const { docDocumentId: docId } = useParams();
+  const docId = form.getFieldValue('docId');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
   return (
@@ -37,9 +36,9 @@ const EndDate = ({ onFieldChange }: { onFieldChange: Function }) => {
     />
   );
 };
-const LastUpdatedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
+const LastUpdatedDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
   const form = Form.useFormInstance();
-  const { docDocumentId: docId } = useParams();
+  const docId = form.getFieldValue('docId');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
   return (
@@ -54,9 +53,9 @@ const LastUpdatedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
     />
   );
 };
-const LastReviewedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
+const LastReviewedDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
   const form = Form.useFormInstance();
-  const { docDocumentId: docId } = useParams();
+  const docId = form.getFieldValue('docId');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
   return (
@@ -71,9 +70,9 @@ const LastReviewedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
     />
   );
 };
-const NextReviewedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
+const NextReviewedDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
   const form = Form.useFormInstance();
-  const { docDocumentId: docId } = useParams();
+  const docId = form.getFieldValue('docId');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
   return (
@@ -88,9 +87,9 @@ const NextReviewedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
     />
   );
 };
-const NextUpdateDate = ({ onFieldChange }: { onFieldChange: Function }) => {
+const NextUpdateDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
   const form = Form.useFormInstance();
-  const { docDocumentId: docId } = useParams();
+  const docId = form.getFieldValue('docId');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
   return (
@@ -105,9 +104,9 @@ const NextUpdateDate = ({ onFieldChange }: { onFieldChange: Function }) => {
     />
   );
 };
-const PublishedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
+const PublishedDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
   const form = Form.useFormInstance();
-  const { docDocumentId: docId } = useParams();
+  const docId = form.getFieldValue('docId');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
   return (
@@ -122,9 +121,9 @@ const PublishedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
     />
   );
 };
-const FirstCollectedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
+const FirstCollectedDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
   const form = Form.useFormInstance();
-  const { docDocumentId: docId } = useParams();
+  const docId = form.getFieldValue('docId');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
   return (
@@ -140,9 +139,9 @@ const FirstCollectedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
     />
   );
 };
-const LastCollectedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
+const LastCollectedDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
   const form = Form.useFormInstance();
-  const { docDocumentId: docId } = useParams();
+  const docId = form.getFieldValue('docId');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
   return (
@@ -159,7 +158,7 @@ const LastCollectedDate = ({ onFieldChange }: { onFieldChange: Function }) => {
   );
 };
 
-export function DateFields(props: { onFieldChange: Function }) {
+export function DateFields(props: { onFieldChange: () => void }) {
   return (
     <>
       <div className="flex flex-1 space-x-8">

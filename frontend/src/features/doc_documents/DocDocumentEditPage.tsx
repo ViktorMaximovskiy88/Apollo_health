@@ -1,5 +1,5 @@
 import { Button } from 'antd';
-import { useGetDocDocumentQuery } from './docDocumentApi';
+import { useGetDocDocumentQuery, useUpdateDocDocumentMutation } from './docDocumentApi';
 import { DocDocumentEditForm } from './DocDocumentEditForm';
 import { RetrievedDocumentViewer } from '../retrieved_documents/RetrievedDocumentViewer';
 import { MainLayout } from '../../components';
@@ -7,6 +7,7 @@ import { useForm } from 'antd/lib/form/Form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { WarningFilled } from '@ant-design/icons';
+import { DocDocument } from './types';
 
 export function DocDocumentEditPage() {
   const navigate = useNavigate();
@@ -17,8 +18,12 @@ export function DocDocumentEditPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [pageNumber, setPageNumber] = useState(0);
+  const [updateDocDocumentMutation] = useUpdateDocDocumentMutation();
+  const updateDocDocument = async (doc: Partial<DocDocument>): Promise<void> => {
+    await updateDocDocumentMutation(doc);
+  };
 
-  if (!doc) return null;
+  if (!doc || !docId) return null;
 
   return (
     <MainLayout
@@ -57,6 +62,8 @@ export function DocDocumentEditPage() {
           setHasChanges={setHasChanges}
           form={form}
           pageNumber={pageNumber}
+          onSubmit={updateDocDocument}
+          docId={docId}
         />
         <div className="flex-1 h-full overflow-hidden ant-tabs-h-full">
           <RetrievedDocumentViewer

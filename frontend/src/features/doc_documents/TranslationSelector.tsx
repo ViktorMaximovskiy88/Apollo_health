@@ -1,6 +1,5 @@
 import { Form, Button, ModalProps, Modal } from 'antd';
 import { useCallback, useState, useMemo, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
 import tw from 'twin.macro';
 import { RemoteSelect } from '../translations/RemoteSelect';
 import {
@@ -41,7 +40,8 @@ function TranslationSelector({ translation }: { translation?: TranslationConfig 
 }
 
 export function Translation() {
-  const { docDocumentId: docId } = useParams();
+  const form = Form.useFormInstance();
+  const docId = form.getFieldValue('docId');
   const { data: doc } = useGetDocDocumentQuery(docId);
 
   const translationId = Form.useWatch('translation_id');

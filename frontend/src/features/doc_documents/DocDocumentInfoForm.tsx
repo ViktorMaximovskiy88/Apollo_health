@@ -13,7 +13,7 @@ const Name = () => (
   </Form.Item>
 );
 
-export function DocDocumentInfoForm({ onFieldChange }: { onFieldChange: Function }) {
+export function DocDocumentInfoForm({ onFieldChange }: { onFieldChange: () => void }) {
   return (
     <>
       <Name />

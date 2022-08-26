@@ -1,9 +1,9 @@
 import { Form } from 'antd';
-import { useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 
 const BaseUrl = () => {
-  const { docDocumentId: docId } = useParams();
+  const form = Form.useFormInstance();
+  const docId = form.getFieldValue('docId');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
 
@@ -19,7 +19,8 @@ const BaseUrl = () => {
 };
 
 const LinkText = () => {
-  const { docDocumentId: docId } = useParams();
+  const form = Form.useFormInstance();
+  const docId = form.getFieldValue('docId');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
 
@@ -27,7 +28,8 @@ const LinkText = () => {
 };
 
 const LinkUrl = () => {
-  const { docDocumentId: docId } = useParams();
+  const form = Form.useFormInstance();
+  const docId = form.getFieldValue('docId');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
 

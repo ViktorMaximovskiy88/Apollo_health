@@ -2,15 +2,14 @@ import { Form, Select } from 'antd';
 import { DocumentFamilyType, DocumentFamilyOption } from './types';
 import { createContext, useEffect, useState } from 'react';
 import { useGetDocumentFamiliesQuery } from './documentFamilyApi';
-import { useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 import { FormInstance } from 'antd/lib/form';
 import { AddNewDocumentFamilyButton } from './DocumentFamilyAddNew';
 
 const useSyncValueWithDocumentType = () => {
-  const { docDocumentId: docId } = useParams();
-  const { data: doc } = useGetDocDocumentQuery(docId);
   const form = Form.useFormInstance();
+  const docId = form.getFieldValue('docId');
+  const { data: doc } = useGetDocDocumentQuery(docId);
   const documentType = Form.useWatch('document_type', form);
 
   useEffect(() => {
@@ -30,7 +29,7 @@ const useSyncOptionsWithDocumentType = (): [
 ] => {
   const form = Form.useFormInstance();
 
-  const { docDocumentId: docId } = useParams();
+  const docId = form.getFieldValue('docId');
   const { data: doc } = useGetDocDocumentQuery(docId);
 
   const documentType = Form.useWatch('document_type', form);

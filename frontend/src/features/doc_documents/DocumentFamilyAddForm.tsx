@@ -1,6 +1,5 @@
 import { Form, FormInstance, Input, Spin } from 'antd';
 import { useGetSiteQuery } from '../sites/sitesApi';
-import { useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 import { ReactNode } from 'react';
 import { DocumentFamilyType } from './types';
@@ -9,7 +8,8 @@ import { Rule } from 'antd/lib/form';
 
 export const Name = () => {
   const [getDocumentFamilyByName] = useLazyGetDocumentFamilyByNameQuery();
-  const { docDocumentId: docId } = useParams();
+  const form = Form.useFormInstance();
+  const docId = form.getFieldValue('docId');
   const { data: doc } = useGetDocDocumentQuery(docId);
   const siteId = doc?.site_id;
 
@@ -57,9 +57,9 @@ const ReadonlyDocumentType = () => {
 const DocumentTypePicker = () => null; // TODO
 
 const ReadonlySite = () => {
-  const { docDocumentId: docId } = useParams();
-  const { data: doc } = useGetDocDocumentQuery(docId);
-  const { data: site } = useGetSiteQuery(doc?.site_id);
+  const form = Form.useFormInstance();
+  const site_id = form.getFieldValue('site_id');
+  const { data: site } = useGetSiteQuery(site_id);
 
   return (
     <Form.Item label="Site Name" className="flex-1">
@@ -70,7 +70,7 @@ const ReadonlySite = () => {
 const SitePicker = () => null; // TODO
 
 interface AddDocumentFamilyPropTypes {
-  initialValues: Partial<DocumentFamilyType>;
+  initialValues: { document_type: string; site_id: string; docId: string };
   onFinish: (documentFamily: DocumentFamilyType) => Promise<void>;
   form: FormInstance;
   isSaving: boolean;
