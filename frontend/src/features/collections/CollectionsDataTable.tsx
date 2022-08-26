@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -8,13 +8,12 @@ import {
   setCollectionTableSkip,
   setCollectionTableSort,
 } from './collectionsSlice';
-import {
-  useCancelSiteScrapeTaskMutation,
-  useGetScrapeTasksForSiteQuery,
-} from './siteScrapeTasksApi';
+import { useCancelSiteScrapeTaskMutation } from './siteScrapeTasksApi';
 import { useCollectionsColumns as useColumns } from './useCollectionsColumns';
 import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
+import { ErrorLogModal } from './ErrorLogModal';
+import { SiteScrapeTask } from './types';
 
 const useControlledPagination = () => {
   const tableState = useSelector(collectionTableState);
@@ -40,36 +39,42 @@ const useControlledPagination = () => {
 
 interface DataTablePropTypes {
   siteId: string;
-  openErrorModal: (errorTraceback: string) => void;
+  scrapeTasks?: SiteScrapeTask[];
   openNewDocumentModal: () => void;
 }
 
-export function CollectionsDataTable({
-  siteId,
-  openErrorModal,
-  openNewDocumentModal,
-}: DataTablePropTypes) {
-  const { data: scrapeTasks } = useGetScrapeTasksForSiteQuery(siteId, {
-    pollingInterval: 3000,
-    skip: !siteId,
-  });
-
+export function CollectionsDataTable({ scrapeTasks, openNewDocumentModal }: DataTablePropTypes) {
   const filterProps = useDataTableFilter(collectionTableState, setCollectionTableFilter);
   const sortProps = useDataTableSort(collectionTableState, setCollectionTableSort);
   const controlledPagination = useControlledPagination();
 
   const [cancelScrape, { isLoading: isCanceling }] = useCancelSiteScrapeTaskMutation();
 
+  const openErrorModal = (errorTraceback: string): void => {
+    setErrorTraceback(errorTraceback);
+    setModalVisible(true);
+  };
+
   const columns = useColumns({ cancelScrape, isCanceling, openErrorModal, openNewDocumentModal });
 
+  const [modalVisible, setModalVisible] = useState(false);
+  const [errorTraceback, setErrorTraceback] = useState('');
+
   return (
-    <ReactDataGrid
-      dataSource={scrapeTasks ?? []}
-      {...filterProps}
-      {...sortProps}
-      {...controlledPagination}
-      columns={columns}
-      rowHeight={50}
-    />
+    <>
+      <ErrorLogModal
+        visible={modalVisible}
+        setVisible={setModalVisible}
+        errorTraceback={errorTraceback}
+      />
+      <ReactDataGrid
+        dataSource={scrapeTasks ?? []}
+        {...filterProps}
+        {...sortProps}
+        {...controlledPagination}
+        columns={columns}
+        rowHeight={50}
+      />
+    </>
   );
 }

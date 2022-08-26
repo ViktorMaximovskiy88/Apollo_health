@@ -54,13 +54,13 @@ function FieldHeaders({ fields }: HeaderPropTypes) {
 function Header() {
   const { Text } = Typography;
   const contentItems = [
-    <div>
+    <div key="1">
       <p>
         <Text strong>Examples:</Text> The following configurations will match the elements below
       </p>
     </div>,
-    <Hr />,
-    <div>
+    <Hr key="2" />,
+    <div key="3">
       <p>
         <Text strong>Attribute Name:</Text> onclick <br />
         <Text strong>Attribute Value:</Text> /policy/ <br />
@@ -68,8 +68,8 @@ function Header() {
       </p>
       <Text code>&lt;a onclick="/documents/policy/file.pdf"&gt;Download File&lt;/a&gt;</Text>
     </div>,
-    <Hr />,
-    <div>
+    <Hr key="4" />,
+    <div key="5">
       <p>
         <Text strong>Attribute Name:</Text> data- <br />
         <Text strong>Attribute Value:</Text>
