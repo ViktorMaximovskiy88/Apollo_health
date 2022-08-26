@@ -149,7 +149,7 @@ function SearchInFrames() {
 }
 function ScrapeMethodConfiguration({ initialValues }: { initialValues: Partial<Site> }) {
   return (
-    <>
+    <Form.Item name="scrape_method_configuration">
       <DocumentExtensions />
       <UrlKeywords />
       <AttrSelectors />
@@ -158,7 +158,7 @@ function ScrapeMethodConfiguration({ initialValues }: { initialValues: Partial<S
       <WaitForTimeout />
       <SearchInFrames />
       <FocusTherapyConfig initialValues={initialValues} />
-    </>
+    </Form.Item>
   );
 }
 
