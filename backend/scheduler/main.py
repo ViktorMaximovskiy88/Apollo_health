@@ -158,7 +158,7 @@ async def start_scaler():
             },
         ).count()
         active_workers = determine_current_instance_count()
-        tasks_per_worker = 2  # some setting
+        tasks_per_worker = 1  # some setting
         new_cluster_size = get_new_cluster_size(queue_size, active_workers, tasks_per_worker)
         update_cluster_size(new_cluster_size)
         await asyncio.sleep(30)
