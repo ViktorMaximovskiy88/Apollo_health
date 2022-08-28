@@ -25,7 +25,7 @@ import { prettyDate } from '../../common';
 import { useAddDocumentMutation } from '../retrieved_documents/documentsApi';
 import { useGetScrapeTasksForSiteQuery } from './siteScrapeTasksApi';
 import { baseApiUrl, client } from '../../app/base-api';
-import { DocumentTypes, LanguageCodes } from '../retrieved_documents/types';
+import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
 import { DocDocument } from '../doc_documents/types';
 
 interface AddDocumentModalPropTypes {
@@ -227,7 +227,7 @@ function DocumentTypeItem() {
 function LanguageItem() {
   return (
     <Form.Item className="grow" name="lang_code" label="Language" rules={[{ required: true }]}>
-      <Select options={LanguageCodes} />
+      <Select options={languageCodes} />
     </Form.Item>
   );
 }

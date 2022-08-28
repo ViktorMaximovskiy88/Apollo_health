@@ -57,7 +57,7 @@ export const DocumentTypes = [
   { id: 'Not Applicable', value: 'Not Applicable', label: 'Not Applicable' },
 ];
 
-export const LanguageCodes = [
+export const languageCodes = [
   { value: 'en', label: 'English' },
   { value: 'es', label: 'Spanish' },
   { value: 'other', label: 'Other' },

@@ -114,6 +114,7 @@ interface EditFormPropTypes {
   form: FormInstance;
   pageNumber: number;
 }
+
 export function DocDocumentEditForm({
   isSaving,
   setIsSaving,
@@ -187,13 +188,8 @@ export function DocDocumentEditForm({
               currentPage={pageNumber}
             />
           </Tabs.TabPane>
-          <Tabs.TabPane tab="Sites" key="sutes" className="bg-white p-4 overflow-auto">
-            <DocDocumentInfoForm
-              onFieldChange={() => {
-                setHasChanges(true);
-                calculateFinalEffectiveDate();
-              }}
-            />
+          <Tabs.TabPane tab="Sites" key="sites" className="bg-white p-4 overflow-auto">
+            <div className="bg-white p-4 overflow-auto"></div>
           </Tabs.TabPane>
         </Tabs>
       </Form>
