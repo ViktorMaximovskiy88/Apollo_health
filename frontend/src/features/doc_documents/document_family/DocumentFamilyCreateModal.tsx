@@ -8,7 +8,6 @@ import { Rule } from 'antd/lib/form';
 import { useEffect } from 'react';
 
 interface DocumentFamilyCreateModalPropTypes {
-  selectedIndex: number;
   documentType: string;
   location: DocDocumentLocation | undefined;
   visible?: boolean;
@@ -16,21 +15,8 @@ interface DocumentFamilyCreateModalPropTypes {
   onSave: (documentFamilyId: string) => void;
 }
 
-// asyncValidator because rkt query makes this tough without hooks/dispatch
-const mustBeUniqueToSite = (siteId: string, asyncValidator: Function) => ({
-  async validator(_rule: Rule, value: string) {
-    const { data: documentFamily } = await asyncValidator({ name: value, siteId });
-    if (documentFamily) {
-      return Promise.reject(
-        `Document family name "${documentFamily.name}" already exists on this site`
-      );
-    }
-    return Promise.resolve();
-  },
-});
-
 export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTypes) => {
-  const { selectedIndex, documentType, location, visible, onClose, onSave } = props;
+  const { documentType, location, visible, onClose, onSave } = props;
   const [form] = useForm();
   const [getDocumentFamilyByName] = useLazyGetDocumentFamilyByNameQuery();
   const [addDocumentFamily, { isLoading, data, isSuccess }] = useAddDocumentFamilyMutation();
@@ -104,3 +90,18 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
     </>
   );
 };
+
+// asyncValidator because rkt query makes this tough without hooks/dispatch
+function mustBeUniqueToSite(siteId: string, asyncValidator: Function) {
+  return {
+    async validator(_rule: Rule, value: string) {
+      const { data: documentFamily } = await asyncValidator({ name: value, siteId });
+      if (documentFamily) {
+        return Promise.reject(
+          `Document family name "${documentFamily.name}" already exists on this site`
+        );
+      }
+      return Promise.resolve();
+    },
+  };
+}
