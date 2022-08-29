@@ -36,7 +36,6 @@ export const DocDocumentLocationForm = ({
       ))}
 
       <DocumentFamilyCreateModal
-        selectedIndex={selectedIndex}
         location={locations[selectedIndex]}
         documentType={docDocument.document_type}
         visible={isVisible}
