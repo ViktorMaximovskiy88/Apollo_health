@@ -5,7 +5,7 @@ import { useGetDocumentFamiliesQuery, documentFamilyApi } from './documentFamily
 import { useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 import { FormInstance } from 'antd/lib/form';
-// import { AddNewDocumentFamilyButton } from './DocumentFamilyAddNew';
+import { AddNewDocumentFamilyButton } from './DocumentFamilyAddNew';
 
 const useSyncValueWithDocumentType = () => {
   const { docDocumentId: docId } = useParams();
@@ -65,7 +65,7 @@ export function DocumentFamily() {
       <Form.Item name="document_family_id" label="Document Family" className="flex-1">
         <Select allowClear options={options} placeholder="Options loading..." />
       </Form.Item>
-      {/* <AddNewDocumentFamilyButton options={options} setOptions={setOptions} /> */}
+      <AddNewDocumentFamilyButton options={options} setOptions={setOptions} />
     </div>
   );
 }
