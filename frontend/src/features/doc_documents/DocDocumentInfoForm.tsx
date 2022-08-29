@@ -7,7 +7,7 @@ import { DateFields } from './DocDocumentDateFields';
 import { DocumentClassification } from './DocDocumentClassificationFields';
 import { ExtractionFields } from './DocDocumentExtractionFields';
 import { DocDocumentLocations } from './DocDocumentLocations';
-import { DocumentFamily } from './document_family/DocumentFamily';
+import { DocumentFamily } from './DocumentFamily';
 import { Translation } from './TranslationSelector';
 
 export function DocDocumentInfoForm({ onFieldChange }: { onFieldChange: Function }) {

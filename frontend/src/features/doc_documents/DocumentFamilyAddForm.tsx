@@ -11,7 +11,9 @@ export const Name = () => {
   const [getDocumentFamilyByName] = useLazyGetDocumentFamilyByNameQuery();
   const { docDocumentId: docId } = useParams();
   const { data: doc } = useGetDocDocumentQuery(docId);
-  const siteId = 1; //doc?.site_id;
+  console.log(doc);
+  debugger;
+  const siteId = '1'; //doc?.site_id;
 
   const mustBeUniqueToSite = () => ({
     async validator(_: Rule, name: string) {
@@ -59,11 +61,13 @@ const DocumentTypePicker = () => null; // TODO
 const ReadonlySite = () => {
   const { docDocumentId: docId } = useParams();
   const { data: doc } = useGetDocDocumentQuery(docId);
-  const { data: site } = useGetSiteQuery(doc?.site_id);
+  debugger;
+  console.log(doc);
+  // const { data: site } = useGetSiteQuery(doc?.site_id);
 
   return (
     <Form.Item label="Site Name" className="flex-1">
-      {site?.name ? <b>{site.name}</b> : <Spin size="small" />}
+      {/* {site?.name ? <b>{site.name}</b> : <Spin size="small" />} */}
     </Form.Item>
   );
 };

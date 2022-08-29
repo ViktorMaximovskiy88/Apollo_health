@@ -60,7 +60,6 @@ export const DocDocumentFormContext = createContext<FormInstance>({} as FormInst
 export function DocumentFamily() {
   useSyncValueWithDocumentType();
   const [options, setOptions] = useSyncOptionsWithDocumentType();
-  console.log(documentFamilyApi, 'documentFamilyApi');
   return (
     <div className="flex space-x-8">
       <Form.Item name="document_family_id" label="Document Family" className="flex-1">
