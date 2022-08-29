@@ -48,6 +48,12 @@ variable "sourcehub-scheduler-version" {
   default = "latest"
 }
 
+variable "sourcehub-dbmigrations-version" {
+  type = string
+  description = "Version tag of the SourceHub db migrations container"
+  default = "latest"
+}
+
 variable "auth0-config" {
   type = object({
     domain = string,

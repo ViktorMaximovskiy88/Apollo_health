@@ -21,7 +21,13 @@ from backend.common.models.document import (
     RetrievedDocumentLimitTags,
     SiteRetrievedDocument,
 )
-from backend.common.models.site import ActiveUrlResponse, NewSite, Site, UpdateSite
+from backend.common.models.site import (
+    ActiveUrlResponse,
+    NewSite,
+    Site,
+    UpdateSite,
+    UpdateSiteAssigne,
+)
 from backend.common.models.user import User
 
 router = APIRouter(
@@ -121,6 +127,24 @@ async def upload_sites(
             await create_and_log(logger, current_user, new_site)
 
     return new_sites
+
+
+@router.post("/bulk-assign")
+async def update_multiple_sites(
+    updates: list[UpdateSiteAssigne],
+    current_user: User = Security(get_current_user),
+    logger: Logger = Depends(get_logger),
+):
+    site_ids = [update.id for update in updates]
+    targets: list[Site] = await Site.find_many({"_id": {"$in": site_ids}}).to_list()
+
+    result = []
+    for target in targets:
+        updated = await update_and_log_diff(
+            logger, current_user, target, UpdateSite(assignee=current_user.id)
+        )
+        result.append(updated)
+    return result
 
 
 @router.post("/{id}", response_model=Site)

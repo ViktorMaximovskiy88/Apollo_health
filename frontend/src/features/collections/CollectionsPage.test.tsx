@@ -1,9 +1,8 @@
 import userEvent from '@testing-library/user-event';
-import { render, screen, act } from '../../test/test-utils';
+import { render, screen, act, mockUrl } from '../../test/test-utils';
 import { setupServer } from 'msw/node';
 import { CollectionsPage } from './CollectionsPage';
 import { handlers } from './mocks/collectionsPageHandlers';
-import { useParams, Params, useLocation, Location } from 'react-router-dom';
 
 jest.mock('react-router-dom');
 
@@ -25,6 +24,9 @@ beforeAll(() => {
 
   server.listen({ onUnhandledRequest: 'error' });
 });
+beforeEach(() => {
+  mockUrl({ location: { pathname: '/sites/site-id1/scrapes' }, params: { siteId: 'site-id1' } });
+});
 afterAll(() => {
   jest.useRealTimers();
   server.close();
@@ -33,19 +35,6 @@ afterEach(() => server.resetHandlers());
 
 describe(`CollectionsPage`, () => {
   it(`should open error log modal when button clicked`, async () => {
-    const mockedUseParams = useParams as jest.Mock<Params>;
-    mockedUseParams.mockImplementation(() => ({
-      siteId: 'site-id1',
-    }));
-    const mockedUseLocation = useLocation as jest.Mock<Location>;
-    mockedUseLocation.mockImplementation(() => ({
-      pathname: 'site-id1',
-      key: 'site-id1',
-      state: '',
-      search: '',
-      hash: '',
-    }));
-
     // fixes `act` warning
     // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
     const dataGridDoneRendering = Promise.resolve();
@@ -67,20 +56,6 @@ describe(`CollectionsPage`, () => {
   });
 
   it(`should create scrape task and update status over time`, async () => {
-    const mockedUseParams = useParams as jest.Mock<Params>;
-    mockedUseParams.mockImplementation(() => ({
-      siteId: 'site-id1',
-    }));
-
-    const mockedUseLocation = useLocation as jest.Mock<Location>;
-    mockedUseLocation.mockImplementation(() => ({
-      pathname: 'test',
-      key: 'asd',
-      state: '',
-      search: '',
-      hash: '',
-    }));
-
     // fixes `act` warning
     // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
     const dataGridDoneRendering = Promise.resolve();

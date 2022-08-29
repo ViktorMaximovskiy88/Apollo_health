@@ -18,6 +18,8 @@ import {
 } from '@inovua/reactdatagrid-community/types';
 import { useColumns } from './useSiteColumns';
 import { useGetUsersQuery } from '../users/usersApi';
+import { Site } from './types';
+import { TypeOnSelectionChangeArg } from '@inovua/reactdatagrid-community/types/TypeDataGridProps';
 
 function disableLoadingMask(data: {
   visible: boolean;
@@ -100,8 +102,10 @@ export const useSiteSort = () => {
 
 interface SiteDataTablePropTypes {
   setLoading: (loading: boolean) => void;
+  selected: { [id: string]: Site };
+  setSelected: (selected: { [id: string]: Site }) => void;
 }
-export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
+export function SiteDataTable({ setLoading, selected, setSelected }: SiteDataTablePropTypes) {
   // Trigger update every 10 seconds by invalidating memoized callback
   const { isActive, setActive, watermark } = useInterval(10000);
 
@@ -135,8 +139,23 @@ export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
   const sortProps = useSiteSort();
   const controlledPagination = useControlledPagination({ isActive, setActive });
 
+  const onSelectionChange = useCallback(
+    (config: TypeOnSelectionChangeArg): void => {
+      if (!config.selected) {
+        setSelected({});
+      } else {
+        setSelected(config.selected as { [id: string]: Site });
+      }
+    },
+    [setSelected]
+  );
+
   return (
     <ReactDataGrid
+      idProperty="_id"
+      checkboxColumn
+      selected={selected}
+      onSelectionChange={onSelectionChange}
       dataSource={loadData}
       {...filterProps}
       {...sortProps}

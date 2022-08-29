@@ -16,6 +16,7 @@ export function RemoteSelect<
   fetchOptions,
   initialOptions = [],
   debounceTimeout = 300,
+  notFoundContent = null,
   ...props
 }: RemoteSelectProps<ValueType>) {
   const [fetching, setFetching] = useState(false);
@@ -53,7 +54,7 @@ export function RemoteSelect<
       filterOption={false}
       onSearch={debounceFetcher}
       onFocus={onBlur}
-      notFoundContent={fetching ? <Spin size="small" /> : null}
+      notFoundContent={fetching ? <Spin size="small" /> : notFoundContent}
       loading={fetching}
       {...props}
       options={options || initialOptions}

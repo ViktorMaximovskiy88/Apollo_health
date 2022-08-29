@@ -1,22 +1,12 @@
 import { BaseDocument } from '../../common';
 import { ApprovalStatus } from '../../common/approvalStatus';
 import { RetrievedDocument } from '../retrieved_documents/types';
+import { DocDocumentLocation } from './locations/types';
 
 export interface BaseDocTag {
   id: string;
   _type: 'indication' | 'therapy' | 'therapy-group';
   _normalized: string;
-}
-
-export interface DocDocumentLocation {
-  base_url: string;
-  url: string;
-  link_text: string;
-  closest_heading: string;
-  site_id: string;
-  first_collected_date: string;
-  last_collected_date: string;
-  previous_doc_doc_id: string;
 }
 
 export interface TherapyTag extends BaseDocTag {
@@ -99,16 +89,3 @@ export type SiteDocDocument = Omit<
   'locations' | 'first_collected_date' | 'last_collected_date'
 > &
   DocDocumentLocation;
-
-export interface DocumentFamilyType extends BaseDocument {
-  name: string;
-  document_type: string;
-  description: string;
-  site_id: string;
-  relevance: string[];
-}
-
-export interface DocumentFamilyOption {
-  label: string;
-  value: string | null;
-}

@@ -23,6 +23,7 @@ class RetrievedDocumentLocation(SiteLocation):
 
 
 class DocDocumentLocation(SiteLocation):
+    document_family_id: PydanticObjectId | None = None
     previous_doc_doc_id: PydanticObjectId | None = None
 
 

@@ -3,7 +3,8 @@ import { FormInstance, useForm } from 'antd/lib/form/Form';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useInterval } from '../../common/hooks';
-import { DocDocumentClassificationPage } from '../doc_documents/DocDocumentClassificationPage';
+import { MainLayout } from '../../components';
+import { DocDocumentClassificationPage } from './DocDocumentClassificationPage';
 import { ContentExtractionApprovalPage } from '../extractions/ContentExtractionApprovalPage';
 import { useGetUsersQuery } from '../users/usersApi';
 import { SubmitAction, WorkQueue } from './types';
@@ -26,7 +27,7 @@ function workItemPage(
   wq: WorkQueue,
   itemId: string,
   form: FormInstance,
-  onSubmit: (u: any) => void
+  onSubmit: (u: any) => Promise<void>
 ) {
   switch (wq.frontend_component) {
     case 'DocDocumentClassificationPage':
@@ -168,19 +169,22 @@ export function WorkQueueWorkItem(props: { wq: WorkQueue; itemId: string; readon
   );
 
   return (
-    <div className="h-full p-4">
+    <MainLayout
+      sectionToolbar={
+        <WorkItemSubmitBar
+          itemId={props.itemId}
+          readonly={props.readonly}
+          wq={props.wq}
+          setAction={setAction}
+          takeNext={takeNext}
+          setTakeNext={setTakeNext}
+          setComment={setComment}
+          setReassignment={setReassignment}
+        />
+      }
+    >
       {workItemPage(props.wq, props.itemId, form, onSubmit)}
-      <WorkItemSubmitBar
-        itemId={props.itemId}
-        readonly={props.readonly}
-        wq={props.wq}
-        setAction={setAction}
-        takeNext={takeNext}
-        setTakeNext={setTakeNext}
-        setComment={setComment}
-        setReassignment={setReassignment}
-      />
-    </div>
+    </MainLayout>
   );
 }
 

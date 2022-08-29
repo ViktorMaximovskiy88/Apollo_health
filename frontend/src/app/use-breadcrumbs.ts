@@ -36,6 +36,7 @@ const routes = [
   '/translations',
   '/translations/new',
   '/translations/:translationId',
+  '/work-queues/:workQueueId/:docDocumentId/process',
 ];
 
 export const useBreadcrumbs = async () => {
@@ -103,6 +104,7 @@ export const useBreadcrumbs = async () => {
       '/work-queues': {
         'work-queues': 'Work Queues',
         new: 'Create',
+        process: 'Process',
         ...asyncResolvers,
       },
       '/translations': {

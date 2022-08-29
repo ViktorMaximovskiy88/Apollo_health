@@ -1,8 +1,7 @@
 import { Form, Button, ModalProps, Modal } from 'antd';
 import { useCallback, useState, useMemo, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
 import tw from 'twin.macro';
-import { RemoteSelect } from '../translations/RemoteSelect';
+import { RemoteSelect } from '../../components/RemoteSelect';
 import {
   useLazyGetTranslationConfigsQuery,
   useGetTranslationConfigQuery,
@@ -41,7 +40,8 @@ function TranslationSelector({ translation }: { translation?: TranslationConfig 
 }
 
 export function Translation() {
-  const { docDocumentId: docId } = useParams();
+  const form = Form.useFormInstance();
+  const docId = form.getFieldValue('docId');
   const { data: doc } = useGetDocDocumentQuery(docId);
 
   const translationId = Form.useWatch('translation_id');
@@ -51,6 +51,7 @@ export function Translation() {
 
   if (!doc) return null;
 
+  // need any siteId for 'testing', grab the first (every doc has one at least)
   const siteId = doc.locations[0].site_id;
 
   return (

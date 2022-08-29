@@ -147,7 +147,7 @@ async def start_worker_async(worker_id):
                 )
 
         workers = []
-        for _ in range(2):
+        for _ in range(1):
             workers.append(worker_fn(worker_id, playwright, get_browser_context))
         await asyncio.gather(*workers)
     typer.secho("Shutdown Complete", fg=typer.colors.BLUE)

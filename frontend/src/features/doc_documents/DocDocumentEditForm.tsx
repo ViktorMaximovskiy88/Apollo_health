@@ -5,8 +5,9 @@ import { dateToMoment } from '../../common';
 import { useCallback, useEffect, useState } from 'react';
 import { compact, groupBy, isEqual, maxBy } from 'lodash';
 import { DocDocumentInfoForm } from './DocDocumentInfoForm';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useGetDocDocumentQuery, useUpdateDocDocumentMutation } from './docDocumentApi';
+import { DocDocumentLocationForm } from './locations/DocDocumentLocationForm';
+import { useNavigate } from 'react-router-dom';
+import { useGetDocDocumentQuery } from './docDocumentApi';
 
 const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   const calculateFinalEffectiveDate = useCallback(() => {
@@ -17,7 +18,7 @@ const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
       dateToMoment(values.last_updated_date),
     ]);
 
-    const finalEffectiveDate =
+    const finalEffectiveDate: moment.Moment =
       computeFromFields.length > 0
         ? maxBy(computeFromFields, (date) => date.unix())
         : values.first_collected_date;
@@ -30,11 +31,9 @@ const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   return calculateFinalEffectiveDate;
 };
 
-const useTagsState = (): [
-  Array<TherapyTag | IndicationTag>,
-  (tags: Array<TherapyTag | IndicationTag>) => void
-] => {
-  const { docDocumentId: docId } = useParams();
+const useTagsState = (
+  docId: string
+): [Array<TherapyTag | IndicationTag>, (tags: Array<TherapyTag | IndicationTag>) => void] => {
   const { data: doc } = useGetDocDocumentQuery(docId);
 
   const [tags, setTags] = useState<Array<TherapyTag | IndicationTag>>([]);
@@ -60,14 +59,19 @@ const useTagsState = (): [
   return [tags, setTags];
 };
 
-const useOnFinish = (
-  tags: Array<TherapyTag | IndicationTag>,
-  setIsSaving: (isSaving: boolean) => void
-): ((doc: Partial<DocDocument>) => Promise<void>) => {
+interface UseOnFinishType {
+  onSubmit: (doc: Partial<DocDocument>) => Promise<void>;
+  tags: Array<TherapyTag | IndicationTag>;
+  setIsSaving: (isSaving: boolean) => void;
+  docId: string;
+}
+const useOnFinish = ({
+  onSubmit,
+  tags,
+  setIsSaving,
+  docId,
+}: UseOnFinishType): ((doc: Partial<DocDocument>) => void) => {
   const navigate = useNavigate();
-  const { docDocumentId: docId } = useParams();
-
-  const [updateDocDocument] = useUpdateDocDocumentMutation();
 
   const onFinish = async (submittedDoc: Partial<DocDocument>): Promise<void> => {
     if (!submittedDoc) return;
@@ -76,7 +80,8 @@ const useOnFinish = (
 
     try {
       const tagsByType = groupBy(tags, '_type');
-      await updateDocDocument({
+
+      await onSubmit({
         ...submittedDoc,
         indication_tags: (tagsByType['indication'] ?? []) as IndicationTag[],
         therapy_tags: (tagsByType['therapy'] ?? []) as TherapyTag[],
@@ -95,6 +100,7 @@ const useOnFinish = (
 
 const buildInitialValues = (doc: DocDocument) => ({
   ...doc,
+  docId: doc._id,
   final_effective_date: dateToMoment(doc.final_effective_date),
   effective_date: dateToMoment(doc.effective_date),
   end_date: dateToMoment(doc.end_date),
@@ -113,6 +119,8 @@ interface EditFormPropTypes {
   setHasChanges: (hasChanges: boolean) => void;
   form: FormInstance;
   pageNumber: number;
+  onSubmit: (doc: Partial<DocDocument>) => Promise<void>;
+  docId: string;
 }
 
 export function DocDocumentEditForm({
@@ -121,8 +129,9 @@ export function DocDocumentEditForm({
   setHasChanges,
   form,
   pageNumber,
+  onSubmit,
+  docId,
 }: EditFormPropTypes) {
-  const { docDocumentId: docId } = useParams();
   const { data: doc } = useGetDocDocumentQuery(docId);
 
   const calculateFinalEffectiveDate = useCalculateFinalEffectiveDate(form);
@@ -131,8 +140,8 @@ export function DocDocumentEditForm({
     calculateFinalEffectiveDate();
   }, [doc, calculateFinalEffectiveDate]);
 
-  const [tags, setTags] = useTagsState();
-  const onFinish = useOnFinish(tags, setIsSaving);
+  const [tags, setTags] = useTagsState(docId);
+  const onFinish = useOnFinish({ onSubmit, tags, setIsSaving, docId });
 
   function handleTagEdit(newTag: TherapyTag | IndicationTag) {
     const update = [...tags];
@@ -189,7 +198,7 @@ export function DocDocumentEditForm({
             />
           </Tabs.TabPane>
           <Tabs.TabPane tab="Sites" key="sites" className="bg-white p-4 overflow-auto">
-            <div className="bg-white p-4 overflow-auto"></div>
+            <DocDocumentLocationForm locations={doc.locations} docDocument={doc} />
           </Tabs.TabPane>
         </Tabs>
       </Form>

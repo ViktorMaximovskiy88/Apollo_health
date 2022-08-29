@@ -117,7 +117,7 @@ export function ScrapeMethodConfiguration({
   form,
 }: ScrapeMethodConfigurationPropTypes) {
   return (
-    <Form.Item name="scrape_method_configuration">
+    <Form.Item>
       <DocumentExtensions />
       <UrlKeywords />
       <ProxyExclusions />

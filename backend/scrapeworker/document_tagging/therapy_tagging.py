@@ -69,11 +69,11 @@ class FocusChecker:
 
 class TherapyTagger:
     def __init__(self) -> None:
+        self.nlp = None
         try:
             self.client = ModelStorageClient()
             self.tempdir = tempfile.TemporaryDirectory()
             dirname = self.tempdir.name
-            self.nlp = None
             self.client.download_directory("rxnorm-span/latest", dirname)
             self.nlp = spacy.load(dirname)
             # This limit assumes the default large NER model is being used

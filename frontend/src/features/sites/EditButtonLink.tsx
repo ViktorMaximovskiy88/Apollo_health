@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUpdateSiteMutation } from './sitesApi';
 import { SiteStatus } from './siteStatus';
-import { useCurrentUser } from './useCurrentUser';
+import { useCurrentUser } from '../../common/hooks/use-current-user';
 
 export const EditButtonLink = ({ site }: { site: Site }): JSX.Element => {
   const navigate = useNavigate();

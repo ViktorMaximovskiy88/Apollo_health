@@ -1,7 +1,7 @@
 import { Button, Form, Input, Modal, notification, Typography } from 'antd';
 import { LinkOutlined } from '@ant-design/icons';
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { parseDiff, Diff, Hunk } from 'react-diff-view';
 import 'react-diff-view/style/index.css';
 
@@ -61,7 +61,8 @@ function CompareModal(props: {
 }
 
 export function DocCompare() {
-  const { docDocumentId: docId } = useParams();
+  const form = Form.useFormInstance();
+  const docId = form.getFieldValue('docId');
   const { data: orgDoc } = useGetDocDocumentQuery(docId);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [compareId, setCompareId] = useState('');

@@ -1,11 +1,12 @@
 import asyncio
-import logging
+import re
 from functools import cached_property
 
 from playwright._impl._api_structures import SetCookieParam
-from playwright.async_api import APIResponse, ElementHandle, Locator
+from playwright.async_api import ElementHandle, Locator
 from playwright.async_api import Request as RouteRequest
 from playwright.async_api import Route
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.selectors import filter_by_href
@@ -48,50 +49,56 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
             self.metadatas.append(metadata)
 
     async def __interact(self) -> None:
+        element_id: str
+        self.log.info(f"interacting {self.url}")
+
         async def intercept(route: Route, request: RouteRequest):
             if self.url in request.url and request.method == "POST":
-                response: APIResponse = await self.page.request.fetch(
-                    request.url,
-                    headers=request.headers,
-                    data=request.post_data,
-                    method=request.method,
-                )
-
-                if filename := response.headers.get("content-disposition"):
-                    logging.info(f"filename={filename}")
-                    self.requests.append(
-                        Request(
-                            url=request.url,
-                            method=request.method,
-                            headers=request.headers,
-                            data=request.post_data,
-                            filename=filename,
-                        )
+                self.log.info(f"queueing {element_id}")
+                self.requests.append(
+                    Request(
+                        url=request.url,
+                        method=request.method,
+                        headers=request.headers,
+                        data=request.post_data,
+                        filename=element_id,
                     )
-                else:
-                    self.requests.append(None)
-
+                )
                 await route.continue_()
             else:
                 await route.abort()
+
+        async def click_with_backoff(locator: Locator, max_retries: int = 2) -> None:
+            for retry in range(0, max_retries + 1):
+                try:
+                    timeout = 30000
+                    if retry > 0:
+                        wait = (retry + 1) ** 3
+                        timeout *= retry
+                        await asyncio.sleep(wait)
+                    await locator.click(timeout=timeout)
+                    return
+                except PlaywrightTimeoutError:
+                    if retry == max_retries:
+                        self.log.info(f"Max retries reached {element_id}")
+                    continue
+            return
 
         await self.page.route("**/*", intercept)
 
         metadata: Metadata
         for index, metadata in enumerate(self.metadatas):
-            logging.debug(f"{index} of {len(self.metadatas)} count of metadata")
             if not metadata.element_id:
                 continue
-            await asyncio.sleep(0.75)
+            element_id = re.sub(r"(?u)[^-\w.]", "_", metadata.element_id)
             locator: Locator = self.page.locator(f"#{metadata.element_id}")
-            await locator.click()
+            await click_with_backoff(locator)
 
         await self.page.unroute("**/*", intercept)
 
     async def __process(self):
         for index, request in enumerate(self.requests):
             if request:
-                logging.info(f"#{index} downloading filename={request.filename}")
                 self.downloads.append(
                     DownloadContext(
                         metadata=self.metadatas[index],

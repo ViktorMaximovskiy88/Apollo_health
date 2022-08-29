@@ -16,16 +16,12 @@ from backend.common.storage.client import ModelStorageClient
 
 class RxNormEntityLinkerModel:
     def __init__(self, version="latest"):
+        self.linker = None
         try:
             self.client = ModelStorageClient()
             self.tempdir = tempfile.TemporaryDirectory()
             dirname = self.tempdir.name
             self.client.download_directory(f"rxnorm/{version}", dirname)
-        except Exception:
-            print("RxNorm model not found and therefore not loaded")
-            return
-
-        try:
             DEFAULT_PATHS[f"RxNorm_{version}"] = LinkerPaths(
                 ann_index=f"{dirname}/nmslib_index.bin",
                 tfidf_vectorizer=f"{dirname}/tfidf_vectorizer.joblib",
@@ -39,6 +35,7 @@ class RxNormEntityLinkerModel:
 
             DEFAULT_KNOWLEDGE_BASES[f"RxNorm_{version}"] = RxNormKnowledgeBase
             self.linker = CandidateGenerator(name=f"RxNorm_{version}")  # type: ignore
+
         except Exception:
             print("RxNorm Entity Linker Model Not Found")
             return

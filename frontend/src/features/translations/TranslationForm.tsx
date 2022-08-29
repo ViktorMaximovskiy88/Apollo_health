@@ -7,7 +7,7 @@ import {
   useLazyGetDocDocumentsQuery,
 } from '../doc_documents/docDocumentApi';
 import { useGetSiteQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
-import { RemoteSelect } from './RemoteSelect';
+import { RemoteSelect } from '../../components/RemoteSelect';
 import { TranslationConfig } from './types';
 
 function TranslationFormContainer(props: { children: ReactNode }) {

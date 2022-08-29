@@ -1,10 +1,10 @@
 import userEvent from '@testing-library/user-event';
 import { setupServer } from 'msw/node';
-import { useParams, Params, useLocation, Location } from 'react-router-dom';
+import { useParams, Params, useLocation, Location, useSearchParams } from 'react-router-dom';
 
 import { DocumentEditPage } from './DocumentEditPage';
 import { handlers } from './mocks/documentEditPageHandlers';
-import { render, screen, act } from '../../test/test-utils';
+import { mockUrl, render, screen } from '../../test/test-utils';
 import { useAccessToken } from '../../common/hooks';
 
 jest.mock('react-router-dom');
@@ -29,6 +29,8 @@ beforeAll(() => {
   server.listen();
 });
 beforeEach(() => {
+  mockUrl({ params: { docId: 'doc-id1' } });
+
   // Mocks intersection observer used by Viewer component
   const mockIntersectionObserver = jest.fn();
   mockIntersectionObserver.mockReturnValue({
@@ -46,22 +48,6 @@ afterEach(() => server.resetHandlers());
 
 describe('DocumentForm', () => {
   it('displays uneditable dates', async () => {
-    const mockedUseParams = useParams as jest.Mock<Params>;
-    mockedUseParams.mockImplementation(() => ({
-      docId: 'doc-id1',
-    }));
-    const mockedUseAccessToken = useAccessToken as jest.Mock<string>;
-    mockedUseAccessToken.mockReturnValue('123');
-
-    const mockedUseLocation = useLocation as jest.Mock<Location>;
-    mockedUseLocation.mockImplementation(() => ({
-      pathname: 'test',
-      key: 'asd',
-      state: '',
-      search: '',
-      hash: '',
-    }));
-
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
 
     render(<DocumentEditPage />);
@@ -78,7 +64,7 @@ describe('DocumentForm', () => {
 
     // check that date picker doesn't open
     await user.click(effectiveDate);
-    const datePicker = screen.queryByRole('cell', { name: /2000\-07\-31/i });
+    const datePicker = screen.queryByRole('cell', { name: /2000-07-31/i });
     expect(datePicker).not.toBeInTheDocument();
   });
 });

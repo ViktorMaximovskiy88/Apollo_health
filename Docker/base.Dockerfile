@@ -13,6 +13,8 @@ RUN apt-get update && \
     g++ protobuf-compiler libprotobuf-dev libmagic1 \
     libmagickwand-dev
 
+RUN sed -i 's/rights="none" pattern="PDF"/rights="read | write" pattern="PDF"/g' /etc/ImageMagick-6/policy.xml
+
 ARG UNAME=user
 ARG HOME_DIR=/home/${UNAME}/
 

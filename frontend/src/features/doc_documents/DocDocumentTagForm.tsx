@@ -161,6 +161,7 @@ export function DocDocumentTagForm(props: {
             if (readOnly) {
               return (
                 <ReadTag
+                  key={tag.id}
                   onDeleteTag={onDeleteTag}
                   onToggleEdit={handleToggleEdit}
                   tag={tag}
@@ -170,6 +171,7 @@ export function DocDocumentTagForm(props: {
             } else {
               return (
                 <EditTag
+                  key={tag.id}
                   onDeleteTag={onDeleteTag}
                   onEditTag={handleEditTag}
                   onToggleEdit={handleToggleEdit}
