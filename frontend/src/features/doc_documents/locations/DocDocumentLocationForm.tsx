@@ -17,6 +17,7 @@ export const DocDocumentLocationForm = ({
   const form = Form.useFormInstance();
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [selectedIndex, setSelectedLocationIndex] = useState<number>(-1);
+
   return (
     <div>
       {locations.map((location, index) => (
@@ -42,12 +43,6 @@ export const DocDocumentLocationForm = ({
         onSave={(documentFamilyId: string) => {
           const locations = form.getFieldValue('locations');
           locations[selectedIndex].document_family_id = documentFamilyId;
-          console.log(
-            locations,
-            'edited',
-            locations[selectedIndex].document_family_id,
-            documentFamilyId
-          );
           form.setFieldsValue({ locations });
           setIsVisible(false);
           setSelectedLocationIndex(-1);
