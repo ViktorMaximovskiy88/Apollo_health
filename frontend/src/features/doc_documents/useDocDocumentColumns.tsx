@@ -3,7 +3,7 @@ import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Button } from 'antd';
 import { LinkOutlined } from '@ant-design/icons';
-import { prettyDateTimeFromISO } from '../../common';
+import { prettyDateTimeFromISO, prettyDateFromISO } from '../../common';
 import { DocDocument } from './types';
 import { Link } from 'react-router-dom';
 import { DocumentTypes } from '../retrieved_documents/types';
@@ -14,9 +14,9 @@ interface CreateColumnsType {
 export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
   return [
     {
-      header: 'Last Collected Date',
+      header: 'Last Collected',
       name: 'last_collected_date',
-      minWidth: 200,
+      minWidth: 100,
       filterEditor: DateFilter,
       filterEditorProps: () => {
         return {
@@ -25,15 +25,20 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
           placeholder: 'Select Date',
         };
       },
-      render: ({ data: doc }: { data: DocDocument }) => {
-        if (!doc.last_collected_date) return null;
-        return prettyDateTimeFromISO(doc.last_collected_date);
+      render: ({ value: last_collected_date }: { value: string }) => {
+        return prettyDateFromISO(last_collected_date);
       },
     },
     {
+      header: 'Link Text',
+      name: 'link_text',
+      minWidth: 200,
+      render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
+    },
+    {
       header: 'Document Name',
-      key: 'name',
-      defaultFlex: 1,
+      name: 'name',
+      minWidth: 200,
       filterSearch: true,
       render: ({ data: doc }: { data: DocDocument }) => {
         return <Link to={`/documents/${doc._id}`}>{doc.name}</Link>;
@@ -51,12 +56,6 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
       render: ({ value: document_type }: { value: string }) => {
         return <>{document_type}</>;
       },
-    },
-    {
-      header: 'Link Text',
-      name: 'link_text',
-      minWidth: 200,
-      render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
     },
     {
       header: 'Effective Date',
@@ -77,8 +76,8 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
     },
     {
       header: 'Url',
-      key: 'url',
-      minWidth: 200,
+      name: 'url',
+      minWidth: 100,
       filterSearch: true,
       render: ({ data: doc }: { data: DocDocument }) => {
         return (
