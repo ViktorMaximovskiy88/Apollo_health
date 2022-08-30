@@ -35,6 +35,7 @@ export interface Site extends BaseDocument {
     follow_link_url_keywords: string[];
     attr_selectors: AttrSelector[];
     focus_therapy_configs: FocusTherapyConfig[];
+    allow_docdoc_updates: boolean;
   };
   tags: string[];
   disabled: boolean;

@@ -35,7 +35,7 @@ class TestFocusChecker:
         url = "www.test.com"
         link_text = "test"
         config = simple_focus_config()
-        focus_checker = FocusChecker(test_text, config, url, link_text)
+        focus_checker = FocusChecker(test_text, [config], url, link_text)
 
         focus_spans = [MockSpan("ACITRETIN", 30, 38), MockSpan("ADAPALENE", 236, 245)]
         for span in focus_spans:
@@ -49,7 +49,7 @@ class TestFocusChecker:
         url = "www.test.com"
         link_text = "Download Acitretin Approval"
         config = simple_focus_config()
-        focus_checker = FocusChecker(test_text, config, url, link_text)
+        focus_checker = FocusChecker(test_text, [config], url, link_text)
 
         span = MockSpan("ACITRETIN", 330, 340)
         focus = focus_checker.check_focus(span, 0)
@@ -62,7 +62,7 @@ class TestFocusChecker:
         url = "www.test.com/approval/acitretin-form-download"
         link_text = None
         config = simple_focus_config()
-        focus_checker = FocusChecker(test_text, config, url, link_text)
+        focus_checker = FocusChecker(test_text, [config], url, link_text)
 
         span = MockSpan("ACITRETIN", 330, 340)
         focus = focus_checker.check_focus(span, 0)
@@ -76,7 +76,7 @@ class TestFocusChecker:
         link_text = "Download"
         config = simple_focus_config()
         config.all_focus = True
-        focus_checker = FocusChecker(test_text, config, url, link_text)
+        focus_checker = FocusChecker(test_text, [config], url, link_text)
 
         spans = [MockSpan("ACITRETIN", 330, 340), MockSpan("AUSTEDO", 1000, 2000)]
         for span in spans:
@@ -88,7 +88,7 @@ class TestFocusChecker:
         link_text = "Download Austedo"
         config = simple_focus_config()
         config.start_separator = None
-        focus_checker = FocusChecker(test_text, config, url, link_text)
+        focus_checker = FocusChecker(test_text, [config], url, link_text)
 
         span = MockSpan("AUSTEDO", 1000, 2000)
         focus = focus_checker.check_focus(span, 0)
@@ -102,7 +102,7 @@ class TestFocusChecker:
         link_text = "Download"
         config = simple_focus_config()
         config.end_separator = None
-        focus_checker = FocusChecker(test_text, config, url, link_text)
+        focus_checker = FocusChecker(test_text, [config], url, link_text)
 
         spans = [MockSpan("AUSTEDO", 330, 340), MockSpan("ACITRETIN", 30, 38)]
         for span in spans:
@@ -112,12 +112,29 @@ class TestFocusChecker:
         non_focus_span = MockSpan("ACITRETIN", 1, 10)
         focus = focus_checker.check_focus(non_focus_span, 0)
 
+    def test_multiple_configs(self):
+        url = "www.test.com"
+        link_text = "Download"
+        config = simple_focus_config()
+        config.start_separator = "Restrictions"
+        config.end_separator = "Group"
+        config_two = simple_focus_config()
+        focus_checker = FocusChecker(test_text, [config, config_two], url, link_text)
+
+        spans = [
+            MockSpan("ACITRETIN", 30, 38),
+            MockSpan("Authorization", 190, 200),
+        ]
+        for span in spans:
+            focus = focus_checker.check_focus(span, 0)
+            assert focus is True
+
     def test_get_no_focus_areas(self):
         url = "www.test.com"
         link_text = "Download"
         config = simple_focus_config()
         config.start_separator = "No Match"
-        focus_checker = FocusChecker(test_text, config, url, link_text)
+        focus_checker = FocusChecker(test_text, [config], url, link_text)
 
         spans = [
             MockSpan("AUSTEDO", 330, 340),
@@ -131,7 +148,7 @@ class TestFocusChecker:
     def test_no_config(self):
         url = "www.test.com"
         link_text = "Download Austedo"
-        focus_checker = FocusChecker(test_text, None, url, link_text)
+        focus_checker = FocusChecker(test_text, [], url, link_text)
 
         span = MockSpan("AUSTEDO", 1000, 2000)
         focus = focus_checker.check_focus(span, 0)
@@ -145,7 +162,7 @@ class TestFocusChecker:
         url = "www.test.com"
         link_text = "test"
         config = simple_focus_config()
-        focus_checker = FocusChecker(test_text, config, url, link_text)
+        focus_checker = FocusChecker(test_text, [config], url, link_text)
 
         focus_spans = [MockSpan("ACITRETIN", 20, 28), MockSpan("ADAPALENE", 226, 235)]
         for span in focus_spans:

@@ -54,11 +54,21 @@ def find_sites_eligible_for_scraping(crons, now=datetime.now(tz=timezone.utc)):
             "status": {"$in": [SiteStatus.NEW, SiteStatus.QUALITY_HOLD, SiteStatus.ONLINE]},
             "collection_method": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
             "base_urls.status": "ACTIVE",  # has at least one active url
-            "$or": [
-                {"last_run_time": None},  # has never been run
+            "$and": [
                 {
-                    "last_run_time": {"$lt": now - timedelta(minutes=1)}
-                },  # hasn't been run in the last minute
+                    "$or": [
+                        {"last_run_time": None},  # has never been run
+                        {
+                            "last_run_time": {"$lt": now - timedelta(minutes=1)}
+                        },  # hasn't been run in the last minute
+                    ]
+                },
+                {
+                    "$or": [
+                        {"collection_hold": None},  # has no hold
+                        {"collection_hold": {"$lt": now}},  # hold has expired
+                    ]
+                },
             ],
             "last_run_status": {
                 "$nin": [

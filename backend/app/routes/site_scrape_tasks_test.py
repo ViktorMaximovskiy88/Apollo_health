@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from random import random
 
 import pytest
@@ -7,11 +7,12 @@ from beanie import Document
 from fastapi import HTTPException
 
 from backend.app.routes.site_scrape_tasks import (
+    BulkRunResponse,
     cancel_scrape_task,
     run_bulk_by_type,
     start_scrape_task,
 )
-from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
+from backend.common.core.enums import BulkScrapeActions, CollectionMethod, SiteStatus, TaskStatus
 from backend.common.db.init import init_db
 from backend.common.models.site import BaseUrl, HttpUrl, ScrapeMethodConfiguration, Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
@@ -56,12 +57,14 @@ def simple_site(
     disabled=False,
     base_urls=[BaseUrl(url=HttpUrl("https://www.example.com/", scheme="https"), status="ACTIVE")],
     collection_method=CollectionMethod.Automated,
+    collection_hold=None,
     status=SiteStatus.ONLINE,
     last_run_status=None,
 ) -> Site:
     return Site(
         name="Test",
         collection_method=collection_method,
+        collection_hold=collection_hold,
         scrape_method="",
         scrape_method_configuration=ScrapeMethodConfiguration(
             document_extensions=[],
@@ -139,9 +142,9 @@ class TestRunBulk:
         await simple_site(last_run_status=TaskStatus.FAILED).save()
 
         res = await run_bulk_by_type("new", logger=logger, current_user=user)
-        assert res == {"status": True, "scrapes_launched": 1}
-        scrape = await SiteScrapeTask.find({"site_id": site_one.id}).to_list()
-        assert len(scrape) == 1
+        assert res == BulkRunResponse(type=BulkScrapeActions.RUN, scrapes=1, sites=1)
+        scrape = await SiteScrapeTask.find({"site_id": site_one.id}).count()
+        assert scrape == 1
 
     @pytest.mark.asyncio
     async def test_run_failed(self, user, logger):
@@ -150,11 +153,11 @@ class TestRunBulk:
         await simple_site().save()
 
         res = await run_bulk_by_type("failed", logger=logger, current_user=user)
-        assert res == {"status": True, "scrapes_launched": 2}
+        assert res == BulkRunResponse(type=BulkScrapeActions.RUN, scrapes=2, sites=2)
         scrapes = await SiteScrapeTask.find(
             {"site_id": {"$in": [site_one.id, site_two.id]}}
-        ).to_list()
-        assert len(scrapes) == 2
+        ).count()
+        assert scrapes == 2
 
     @pytest.mark.asyncio
     async def test_run_canceled(self, user, logger):
@@ -162,9 +165,9 @@ class TestRunBulk:
         await simple_site().save()
 
         res = await run_bulk_by_type("failed", logger=logger, current_user=user)
-        assert res == {"status": True, "scrapes_launched": 1}
-        scrapes = await SiteScrapeTask.find({"site_id": site_one.id}).to_list()
-        assert len(scrapes) == 1
+        assert res == BulkRunResponse(type=BulkScrapeActions.RUN, scrapes=1, sites=1)
+        scrapes = await SiteScrapeTask.find({"site_id": site_one.id}).count()
+        assert scrapes == 1
 
     @pytest.mark.asyncio
     async def test_run_all(self, user, logger):
@@ -173,9 +176,9 @@ class TestRunBulk:
         await simple_site(last_run_status=TaskStatus.IN_PROGRESS).save()
 
         res = await run_bulk_by_type("all", logger=logger, current_user=user)
-        assert res == {"status": True, "scrapes_launched": 1}
-        scrapes = await SiteScrapeTask.find({"site_id": site_one.id}).to_list()
-        assert len(scrapes) == 1
+        assert res == BulkRunResponse(type=BulkScrapeActions.RUN, scrapes=1, sites=1)
+        scrapes = await SiteScrapeTask.find({"site_id": site_one.id}).count()
+        assert scrapes == 1
 
     @pytest.mark.asyncio
     async def test_run_no_scrapes(self, user, logger):
@@ -189,10 +192,10 @@ class TestRunBulk:
         bulk_types = ["unrun", "failed", "canceled", "all"]
         for bulk_type in bulk_types:
             res = await run_bulk_by_type(bulk_type, logger=logger, current_user=user)
-            assert res == {"status": True, "scrapes_launched": 0}
+            assert res == BulkRunResponse(type=BulkScrapeActions.RUN, scrapes=0, sites=0)
 
-        scrapes = await SiteScrapeTask.find({}).to_list()
-        assert len(scrapes) == 0
+        scrapes = await SiteScrapeTask.find({}).count()
+        assert scrapes == 0
 
     @pytest.mark.asyncio
     async def test_cancel_active(self, user, logger):
@@ -206,9 +209,9 @@ class TestRunBulk:
         scrape_one = await simple_scrape(site_three).save()
 
         res = await run_bulk_by_type("cancel-active", logger=logger, current_user=user)
-        assert res == {"status": True, "canceled_scrapes": 2}
-        canceled_scrapes = await SiteScrapeTask.find({"status": TaskStatus.CANCELING}).to_list()
-        assert len(canceled_scrapes) == 2
+        assert res == BulkRunResponse(type=BulkScrapeActions.CANCEL, sites=2, scrapes=2)
+        canceled_scrapes = await SiteScrapeTask.find({"status": TaskStatus.CANCELING}).count()
+        assert canceled_scrapes == 2
         active_scrapes = await SiteScrapeTask.find({"status": TaskStatus.QUEUED}).to_list()
         assert len(active_scrapes) == 1
         assert active_scrapes[0].id == scrape_one.id
@@ -219,9 +222,41 @@ class TestRunBulk:
         await simple_scrape(site_one).save()
 
         res = await run_bulk_by_type("cancel-active", logger=logger, current_user=user)
-        assert res == {"status": True, "canceled_scrapes": 0}
-        scrapes = await SiteScrapeTask.find({"status": TaskStatus.CANCELED}).to_list()
-        assert len(scrapes) == 0
+        assert res == BulkRunResponse(type=BulkScrapeActions.CANCEL, sites=0, scrapes=0)
+        scrapes = await SiteScrapeTask.find({"status": TaskStatus.CANCELED}).count()
+        assert scrapes == 0
+
+    @pytest.mark.asyncio
+    async def test_hold_all(self, user, logger):
+        site_one = await simple_site(last_run_status=TaskStatus.QUEUED).save()
+        await simple_scrape(site_one).save()
+        await simple_site().save()
+        tomorrow = datetime.now() + timedelta(days=1)
+
+        res = await run_bulk_by_type("hold-all", logger=logger, current_user=user)
+        assert res == BulkRunResponse(type=BulkScrapeActions.HOLD, sites=2, scrapes=1)
+        scrapes = await SiteScrapeTask.find(
+            {"status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}}
+        ).count()
+        assert scrapes == 0
+        sites = await Site.find_all().to_list()
+        for site in sites:
+            assert site.collection_hold is not None
+            assert site.collection_hold >= tomorrow
+
+    @pytest.mark.asyncio
+    async def test_cancel_hold_all(self, user, logger):
+        now = datetime.now(tz=timezone.utc)
+        for i in range(0, 2):
+            site = simple_site(collection_hold=now)
+            await site.save()
+        await simple_site().save()
+
+        res = await run_bulk_by_type("cancel-hold-all", logger=logger, current_user=user)
+        assert res.type == BulkScrapeActions.CANCEL_HOLD
+        assert res.sites == 2
+        sites = await Site.find({"collection_hold": None}).count()
+        assert sites == 3
 
 
 class TestCancel:

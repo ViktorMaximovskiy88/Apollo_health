@@ -1,6 +1,12 @@
 import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
-import { SiteScrapeTask } from './types';
+import { BulkActionTypes, SiteScrapeTask } from './types';
+
+interface BulkRunResponse {
+  type: BulkActionTypes;
+  scrapes: number;
+  sites: number;
+}
 
 export const siteScrapeTasksApi = createApi({
   reducerPath: 'siteScrapeTasksApi',
@@ -63,7 +69,7 @@ export const siteScrapeTasksApi = createApi({
       query: (id) => `/change-log/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
     }),
-    runBulk: builder.mutation<SiteScrapeTask, string>({
+    runBulk: builder.mutation<BulkRunResponse, string>({
       query: (type) => ({
         url: `/site-scrape-tasks/bulk-run?type=${type}`,
         method: 'POST',

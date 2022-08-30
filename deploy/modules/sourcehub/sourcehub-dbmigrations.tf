@@ -40,15 +40,11 @@ resource "aws_ecs_task_definition" "dbmigrations" {
         },
         {
           name = "MONGO_URL"
-          value = data.aws_ssm_parameter.mongodb-url.value
+          value = local.mongodb_url
         },
         {
           name = "MONGO_DB"
-          value = data.aws_ssm_parameter.mongodb-db.value
-        },
-        {
-          name = "MONGO_USER"
-          value = data.aws_ssm_parameter.mongodb-user.value
+          value = local.mongodb_db
         },
          {
           name = "REDIS_URL"
@@ -76,10 +72,6 @@ resource "aws_ecs_task_definition" "dbmigrations" {
 
       secrets = [
         {
-          name = "MONGO_PASSWORD"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/mongodb_password"
-        },
-        {
           name = "REDIS_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_auth_password"
         },
@@ -98,7 +90,7 @@ resource "aws_ecs_task_definition" "dbmigrations" {
   }
 
   execution_role_arn = data.aws_iam_role.ecs-execution.arn
-  task_role_arn      = aws_iam_role.dbmigrations-task.arn
+  task_role_arn      = aws_iam_role.sourcehub.arn
 
   tags = merge(local.effective_tags, {
     component = "${local.service_name}-dbmigrations"

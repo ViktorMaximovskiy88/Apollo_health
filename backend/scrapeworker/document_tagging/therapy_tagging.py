@@ -20,38 +20,48 @@ class FocusChecker:
     def __init__(
         self,
         full_text: str,
-        focus_config: FocusTherapyConfig | None,
+        focus_configs: list[FocusTherapyConfig],
         url: str,
         link_text: str | None,
     ) -> None:
         self.full_text = full_text
-        self.focus_config = focus_config
+        self.focus_configs = focus_configs
         self.url = url
         self.link_text = link_text
+        self.all_focus = self.check_all_focus()
         self.focus_areas = self.get_focus_areas()
+
+    def check_all_focus(self):
+        for config in self.focus_configs:
+            if config.all_focus is True:
+                return True
+
+        return False
 
     def get_focus_areas(self) -> list[FocusArea]:
         text_lower = self.full_text.lower()
-        last_match = 0
         focus_areas = []
-        if not self.focus_config or not self.focus_config.start_separator:
-            return focus_areas
-        while True:
-            match = text_lower.find(self.focus_config.start_separator.lower(), last_match)
-            if match > -1:
-                start = match + len(self.focus_config.start_separator)
-                end = len(self.full_text) - 1
-                if self.focus_config.end_separator:
-                    end_match = text_lower.find(self.focus_config.end_separator.lower(), start)
-                    end = end_match if end_match > -1 else end
-                focus_areas.append(FocusArea(start=start, end=end))
-                last_match = end
-            else:
-                return focus_areas
+        for config in self.focus_configs:
+            last_match = 0
+            if not config.start_separator:
+                continue
+            while True:
+                match = text_lower.find(config.start_separator.lower(), last_match)
+                if match > -1:
+                    start = match + len(config.start_separator)
+                    end = len(self.full_text) - 1
+                    if config.end_separator:
+                        end_match = text_lower.find(config.end_separator.lower(), start)
+                        end = end_match if end_match > -1 else end
+                    focus_areas.append(FocusArea(start=start, end=end))
+                    last_match = end
+                else:
+                    break
+        return focus_areas
 
     def check_focus(self, span: Span, offset: int) -> bool:
         text = span.text.lower()
-        if self.focus_config and self.focus_config.all_focus:
+        if self.all_focus:
             return True
         if self.link_text:
             if text in self.link_text.lower():
@@ -95,10 +105,8 @@ class TherapyTagger:
             return []
 
         tags: set[TherapyTag] = set()
-        focus_config = next(
-            (config for config in focus_configs if config.doc_type == doc_type), None
-        )
-        focus_checker = FocusChecker(full_text, focus_config, url, link_text)
+        focus_configs = [config for config in focus_configs if config.doc_type == doc_type]
+        focus_checker = FocusChecker(full_text, focus_configs, url, link_text)
         pages = full_text.split("\f")
         loop = asyncio.get_running_loop()
         char_offset = 0

@@ -100,14 +100,6 @@ data "aws_ssm_parameter" "mongodb-url" {
   name = "/apollo/mongodb_url"
 }
 
-data "aws_ssm_parameter" "mongodb-db" {
-  name = "/apollo/mongodb_db"
-}
-
-data "aws_ssm_parameter" "mongodb-user" {
-  name = "/apollo/mongodb_user"
-}
-
 data "aws_ssm_parameter" "redis-url" {
   name = "/apollo/redis_url"
 }

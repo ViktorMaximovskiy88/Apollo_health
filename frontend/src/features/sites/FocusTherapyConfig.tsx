@@ -67,11 +67,9 @@ function Header() {
 interface TypeInputPropTypes {
   name: number;
   field: { fieldKey?: number };
-  itemKey: number;
-  handleSelect: (value: string, key: number) => void;
   options: { label: string }[];
 }
-function TypeInput({ name, itemKey, field, handleSelect, options }: TypeInputPropTypes) {
+function TypeInput({ name, field, options }: TypeInputPropTypes) {
   return (
     <Form.Item
       {...field}
@@ -83,7 +81,6 @@ function TypeInput({ name, itemKey, field, handleSelect, options }: TypeInputPro
         filterOption={(input, option) =>
           (option?.label as string).toLowerCase().includes(input.toLowerCase())
         }
-        onChange={(value, option) => handleSelect(value, itemKey)}
         options={options}
         showSearch
       />
@@ -139,20 +136,13 @@ function AllFocusSwitch({ onAllFocusToggle, itemKey, name, field }: AllFocusProp
 
 interface RemoveButtonPropTypes {
   fields: FormListFieldData[];
-  itemKey: number;
   remove: (index: number | number[]) => void;
-  updateTypes: (value: string | null, key: number) => void;
   name: number;
 }
-function RemoveButton({ itemKey, remove, updateTypes, name }: RemoveButtonPropTypes) {
-  const handleRemove = () => {
-    updateTypes(null, itemKey);
-    remove(name);
-  };
-
+function RemoveButton({ remove, name }: RemoveButtonPropTypes) {
   return (
     <Form.Item className="mb-0">
-      <MinusCircleOutlined className="text-gray-500" onClick={handleRemove} />
+      <MinusCircleOutlined className="text-gray-500" onClick={() => remove(name)} />
     </Form.Item>
   );
 }
@@ -170,25 +160,9 @@ export function FocusTherapyConfig({ initialValues }: { initialValues: Partial<S
     return { selectedOptions, focusStatus };
   };
 
-  const [selectedOptions, setCurrentOptions] = useState<{ [key: string]: string | null }>(
-    initialState().selectedOptions
-  );
   const [allFocus, setAllFocus] = useState<{ [key: string]: boolean | undefined }>(
     initialState().focusStatus
   );
-  const typeOptions = useMemo(() => {
-    const currentOptions = Object.keys(selectedOptions).map((key) => selectedOptions[key]);
-    const options = DocumentTypes.filter((option) => !currentOptions.includes(option.value));
-    return options;
-  }, [selectedOptions]);
-
-  const handleTypeSelect = (value: string | null, key: number) => {
-    setCurrentOptions((prevState) => {
-      const update = { ...prevState };
-      update[key] = value;
-      return update;
-    });
-  };
 
   const handleAllFocusToggle = (checked: boolean, key: number) => {
     setAllFocus((prevState) => {
@@ -207,13 +181,7 @@ export function FocusTherapyConfig({ initialValues }: { initialValues: Partial<S
           {fields.map(({ key, name, ...field }) => (
             <Form.Item key={key} className="mb-2 whitespace-nowrap" {...field}>
               <Input.Group className="grid grid-cols-9 space-x-1">
-                <TypeInput
-                  itemKey={key}
-                  name={name}
-                  field={field}
-                  options={typeOptions}
-                  handleSelect={handleTypeSelect}
-                />
+                <TypeInput name={name} field={field} options={DocumentTypes} />
                 <StartSeparatorInput name={name} field={field} disabled={allFocus[key]} />
                 <EndSeparatorInput name={name} field={field} disabled={allFocus[key]} />
                 <AllFocusSwitch
@@ -222,34 +190,26 @@ export function FocusTherapyConfig({ initialValues }: { initialValues: Partial<S
                   name={name}
                   field={field}
                 />
-                <RemoveButton
-                  fields={fields}
-                  itemKey={key}
-                  remove={remove}
-                  updateTypes={handleTypeSelect}
-                  name={name}
-                />
+                <RemoveButton fields={fields} remove={remove} name={name} />
               </Input.Group>
             </Form.Item>
           ))}
-          {typeOptions.length > 0 && (
-            <Form.Item>
-              <Button
-                type="dashed"
-                onClick={() =>
-                  add({
-                    doc_type: '',
-                    start_separator: '',
-                    end_separator: '',
-                  })
-                }
-                icon={<PlusOutlined />}
-              >
-                Add Separator
-              </Button>
-              <Form.ErrorList errors={errors} />
-            </Form.Item>
-          )}
+          <Form.Item>
+            <Button
+              type="dashed"
+              onClick={() =>
+                add({
+                  doc_type: '',
+                  start_separator: '',
+                  end_separator: '',
+                })
+              }
+              icon={<PlusOutlined />}
+            >
+              Add Separator
+            </Button>
+            <Form.ErrorList errors={errors} />
+          </Form.Item>
         </>
       )}
     </Form.List>
