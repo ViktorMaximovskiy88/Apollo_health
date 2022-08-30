@@ -6,7 +6,7 @@ import { DocumentFamily } from '../document_family/types';
 import { useGetDocumentFamiliesQuery } from '../document_family/documentFamilyApi';
 import { TextEllipsis } from '../../../components';
 
-interface DocDocumentLocationRowFormTypes {
+interface DocDocumentLocationFormTypes {
   documentType: string;
   location: DocDocumentLocation;
   index: number;
@@ -18,7 +18,7 @@ export const DocDocumentLocationForm = ({
   location,
   index,
   onShowDocumentFamilyCreate,
-}: DocDocumentLocationRowFormTypes) => {
+}: DocDocumentLocationFormTypes) => {
   const form = Form.useFormInstance();
   const { data = [] } = useGetDocumentFamiliesQuery({
     siteId: location.site_id,

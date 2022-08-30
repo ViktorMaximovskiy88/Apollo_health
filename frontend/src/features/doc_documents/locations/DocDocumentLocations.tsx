@@ -5,15 +5,12 @@ import { DocDocumentLocation } from './types';
 import { DocDocumentLocationForm } from './DocDocumentLocationForm';
 import { DocumentFamilyCreateModal } from '../document_family/LocationDocumentFamilyCreateModal';
 
-interface DocDocumentLocationFormPropTypes {
+interface DocDocumentLocationsPropTypes {
   docDocument: DocDocument;
   locations: DocDocumentLocation[];
 }
 
-export const DocDocumentLocations = ({
-  docDocument,
-  locations,
-}: DocDocumentLocationFormPropTypes) => {
+export const DocDocumentLocations = ({ docDocument, locations }: DocDocumentLocationsPropTypes) => {
   const form = Form.useFormInstance();
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [selectedIndex, setSelectedLocationIndex] = useState<number>(-1);
