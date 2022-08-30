@@ -122,7 +122,7 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     content_extraction_status: ApprovalStatus = ApprovalStatus.QUEUED
     content_extraction_lock: TaskLock | None = None
 
-    document_family_id: PydanticObjectId | None = None
+    locations: list[DocDocumentLocation] | None
 
 
 # Deprecated

@@ -34,7 +34,6 @@ async def read_document_families(
     site_id: PydanticObjectId | None = None,
     document_type: str | None = None,
 ):
-    print(site_id, document_type)
     query = DocumentFamily.find({"disabled": False})
 
     if site_id:
