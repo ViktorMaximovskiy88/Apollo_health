@@ -63,12 +63,12 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
   /* eslint-enable no-template-curly-in-string */
 
   async function saveDocument(newDocument: any) {
-    debugger;
     try {
       newDocument.site_id = siteId;
-      if (scrapeTasks) {
-        newDocument.scrape_task_id = scrapeTasks[0]._id;
-      }
+      //  we nuked this relationship
+      // if (scrapeTasks) {
+      //   newDocument.scrape_task_id = scrapeTasks[0]._id;
+      // }
       // used to determine how we handle this request if new_version or new document
       if (oldVersion) {
         newDocument._id = oldVersion._id;

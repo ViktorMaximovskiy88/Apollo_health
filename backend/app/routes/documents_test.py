@@ -13,7 +13,12 @@ from pydantic import HttpUrl
 from backend.app.routes.documents import add_document, get_documents, upload_document
 from backend.common.core.enums import CollectionMethod, LangCode, SiteStatus, TaskStatus
 from backend.common.db.init import init_db
-from backend.common.models.document import RetrievedDocument, RetrievedDocumentLimitTags
+from backend.common.models.document import (
+    RetrievedDocument,
+    RetrievedDocumentLimitTags,
+    SiteRetrievedDocument,
+)
+from backend.common.models.shared import RetrievedDocumentLocation
 from backend.common.models.site import BaseUrl, ScrapeMethodConfiguration, Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
@@ -102,15 +107,13 @@ def simple_manual_retrieved_document(
     indication_tags=[],
     identified_dates=[],
 ) -> RetrievedDocument:
-    return RetrievedDocument(
+    now = datetime.now(tz=timezone.utc)
+    return SiteRetrievedDocument(
         name="test",
-        url="https://www.example.com",
         lang_code=LangCode.English,
         document_type="Authorization Policy",
         checksum=checksum,
         text_checksum=text_checksum,
-        site_id=site.id,
-        scrape_task_id=scrape_task.id,
         content_type=content_type,
         file_extension=file_extension,
         metadata=metadata,
@@ -118,6 +121,11 @@ def simple_manual_retrieved_document(
         therapy_tags=therapy_tags,
         indication_tags=indication_tags,
         identified_dates=identified_dates,
+        site_id=site.id,
+        first_collected_date=now,
+        last_collected_date=now,
+        url="https://www.example.com/doc",
+        base_url="https://www.example.com/",
     )
 
 
@@ -130,12 +138,19 @@ class TestGetDocuments:
     ) -> RetrievedDocument:
         doc = RetrievedDocument(
             name="test",
-            url="https://www.example.com/",
             checksum="test",
             text_checksum="test",
-            site_id=site.id,
-            scrape_task_id=scrape_task.id,
             first_collected_date=first_collected_date,
+            last_collected_date=first_collected_date,
+            locations=[
+                RetrievedDocumentLocation(
+                    site_id=site.id,
+                    first_collected_date=first_collected_date,
+                    last_collected_date=first_collected_date,
+                    url="https://www.example.com/doc",
+                    base_url="https://www.example.com/",
+                )
+            ],
         )
         return doc
 
@@ -161,7 +176,7 @@ class TestGetDocuments:
 
     @pytest.mark.asyncio
     async def test_get_one_document_by_scrape(self):
-        [docs, scrapes, site] = await self.populate_db()
+        [docs, scrapes, _] = await self.populate_db()
 
         scrapes[0].retrieved_document_ids = [docs[0].id]  # type: ignore
         scrapes[1].retrieved_document_ids = [docs[1].id, docs[2].id]  # type: ignore
@@ -232,7 +247,7 @@ class TestGetDocuments:
         for scrape in scrapes:
             await scrape.save()
 
-        docs[1].site_id = None
+        docs[1].locations[0].site_id = None
         await docs[1].save()
 
         ret_docs = await get_documents(site_id=site.id)
@@ -256,7 +271,7 @@ class TestUploadFile:
                 upload_file = UploadFile(
                     filename="test.pdf", file=temp, content_type="application/pdf"
                 )
-                uploaded_document = await upload_document(upload_file, user, logger)
+                uploaded_document = await upload_document(upload_file)
 
                 assert uploaded_document["success"] is True
                 assert uploaded_document["data"]["checksum"] is not None  # type: ignore
@@ -275,7 +290,7 @@ class TestUploadFile:
                 upload_file = UploadFile(
                     filename="test.pdf", file=temp, content_type="application/pdf"
                 )
-                uploaded_document = await upload_document(upload_file, user, logger)
+                uploaded_document = await upload_document(upload_file)
 
                 assert uploaded_document["success"] is True
                 site_one = await simple_site(collection_method=CollectionMethod.Manual).save()

@@ -2,7 +2,6 @@ import tempfile
 from datetime import datetime, timezone
 
 from beanie import PydanticObjectId
-from beanie.odm.operators.update.general import Set
 from fastapi import APIRouter, Depends, HTTPException, Security, UploadFile, status
 from fastapi.responses import StreamingResponse
 
@@ -18,7 +17,7 @@ from backend.common.models.document import (
     SiteRetrievedDocument,
     UpdateRetrievedDocument,
 )
-from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.models.site_scrape_task import SiteScrapeTask, TaskStatus
 from backend.common.models.user import User
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_bytes
@@ -205,6 +204,7 @@ async def delete_document(
 
 @router.put("/", status_code=status.HTTP_201_CREATED)
 async def add_document(
+    # verify we only want SiteRetrievedDocument
     document: SiteRetrievedDocument | RetrievedDocument,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
@@ -283,25 +283,15 @@ async def add_document(
     doc_document.set_final_effective_date()
     await create_and_log(logger, current_user, doc_document)
 
-    if not document.scrape_task_id:
-        raise Exception(f"Document {document.id} does not have scrape_task_id")
-
-    scrape_task = await SiteScrapeTask.get(document.scrape_task_id)
-
-    if not scrape_task:
-        raise Exception(f"Scrape Task Not found for {document.scrape_task_id}")
-
-    if document.id:
-        # get retrieved_document from Doc Document
-        doc_document = await DocDocument.find_one({"_id": document.id})
-        if doc_document:
-            index = scrape_task.retrieved_document_ids.index(doc_document.retrieved_document_id)
-            if index >= 0:
-                await scrape_task.update(Set({f"retrieved_document_ids.{index}": new_document.id}))
-
-    else:
-        await scrape_task.update(
-            {"$inc": {"documents_found": 1}, "$push": {"retrieved_document_ids": new_document.id}}
-        )
+    scrape_task = SiteScrapeTask(
+        site_id=document.site_id,
+        retrieved_document_ids=[new_document.id],
+        status=TaskStatus.FINISHED,
+        queued_time=now,
+        start_time=now,
+        end_time=now,
+        documents_found=1,
+    )
+    await scrape_task.save()
 
     return {"success": True}
