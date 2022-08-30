@@ -13,12 +13,12 @@ class Location(BaseModel):
 
 class SiteLocation(Location):
     site_id: PydanticObjectId
-    context_metadata: dict = {}  # TODO, un have this and just move the stuff up?
     first_collected_date: datetime | None = None
     last_collected_date: datetime | None = None
 
 
 class RetrievedDocumentLocation(SiteLocation):
+    context_metadata: dict = {}  # TODO, un have this and just move the stuff up?
     previous_retrieved_doc_id: PydanticObjectId | None = None
 
 

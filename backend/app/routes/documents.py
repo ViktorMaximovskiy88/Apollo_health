@@ -276,7 +276,6 @@ async def add_document(
                 url=document.url,
                 base_url=document.base_url,
                 link_text=link_text,
-                context_metadata=document.metadata,
             )
         ],
     )
