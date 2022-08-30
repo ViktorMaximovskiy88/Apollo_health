@@ -23,6 +23,8 @@ export function DocDocumentClassificationPage({
   const [pageNumber, setPageNumber] = useState(0);
 
   if (!doc) return null;
+  debugger;
+  console.log('whyyyyy');
 
   return (
     <>
