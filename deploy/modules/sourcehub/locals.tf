@@ -33,4 +33,9 @@ locals {
   }
 
   event_source = "com.mmitnetwork.sourcehub"
+
+  # Will leave the base mongodb-url unchanged in case other apps need a different auth mechanism 
+  # For SourceHub, add the authMechanism
+  mongodb_url = "${data.aws_ssm_parameter.mongodb-url.value}&authMechanism=MONGODB-AWS&authSource=$external"
+  mongodb_db = "source-hub"
 }

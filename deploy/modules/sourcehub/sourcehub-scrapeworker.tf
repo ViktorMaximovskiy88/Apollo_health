@@ -2,7 +2,7 @@ resource "aws_cloudwatch_log_group" "scrapeworker" {
   name = format("/%s/%s-%s-scrapeworker", local.app_name, var.environment, local.service_name)
   # TODO: Make this a variable and determine appropriate threshold
   retention_in_days = 30
-  
+
   tags = merge(local.effective_tags, {
     component = "${local.service_name}-scrapeworker"
   })
@@ -13,9 +13,9 @@ resource "aws_ecs_task_definition" "scrapeworker" {
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   # TODO: Make cpu, memory a variable and determine appropriate thresholds
-  cpu                      = 2048
-  memory                   = 4096
-  
+  cpu    = 2048
+  memory = 4096
+
 
   container_definitions = jsonencode([
     {
@@ -28,39 +28,35 @@ resource "aws_ecs_task_definition" "scrapeworker" {
       ]
       environment = [
         {
-          name = "ENV_TYPE"
+          name  = "ENV_TYPE"
           value = var.environment
         },
         {
-          name = "PYTHONUNBUFFERED"
+          name  = "PYTHONUNBUFFERED"
           value = "1"
         },
         {
-          name = "S3_ENDPOINT_URL"
+          name  = "S3_ENDPOINT_URL"
           value = data.aws_service.s3.dns_name
         },
         {
-          name = "MONGO_URL"
-          value = data.aws_ssm_parameter.mongodb-url.value
+          name  = "MONGO_URL"
+          value = local.mongodb_url
         },
         {
-          name = "MONGO_DB"
-          value = data.aws_ssm_parameter.mongodb-db.value
+          name  = "MONGO_DB"
+          value = local.mongodb_db
         },
         {
-          name = "MONGO_USER"
-          value = data.aws_ssm_parameter.mongodb-user.value
-        },
-         {
-          name = "REDIS_URL"
+          name  = "REDIS_URL"
           value = data.aws_ssm_parameter.redis-url.value
         },
         {
-          name = "S3_DOCUMENT_BUCKET"
+          name  = "S3_DOCUMENT_BUCKET"
           value = data.aws_ssm_parameter.docrepo-bucket-name.value
         },
         {
-          name = "SMARTPROXY_USERNAME"
+          name  = "SMARTPROXY_USERNAME"
           value = data.aws_ssm_parameter.smartproxy-username.value
         }
       ]
@@ -74,23 +70,19 @@ resource "aws_ecs_task_definition" "scrapeworker" {
       LogConfiguration = {
         LogDriver = "awslogs"
         Options = {
-          awslogs-region = var.region
-          awslogs-group = aws_cloudwatch_log_group.scrapeworker.name
+          awslogs-region        = var.region
+          awslogs-group         = aws_cloudwatch_log_group.scrapeworker.name
           awslogs-stream-prefix = local.service_name
         }
       }
 
       secrets = [
         {
-          name = "MONGO_PASSWORD"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/mongodb_password"
-        },
-        {
-          name = "REDIS_PASSWORD"
+          name      = "REDIS_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_auth_password"
         },
         {
-          name = "SMARTPROXY_PASSWORD"
+          name      = "SMARTPROXY_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/smartproxy_password"
         }
       ]
@@ -104,7 +96,7 @@ resource "aws_ecs_task_definition" "scrapeworker" {
   }
 
   execution_role_arn = data.aws_iam_role.ecs-execution.arn
-  task_role_arn      = aws_iam_role.scrapeworker-task.arn
+  task_role_arn      = aws_iam_role.sourcehub.arn
 
   tags = merge(local.effective_tags, {
     component = "${local.service_name}-scrapeworker"
@@ -166,7 +158,7 @@ resource "aws_iam_role" "scrapeworker-task" {
   ]
 
   tags = merge(local.effective_tags, {
-    Name = format("%s-%s-%s-scrapeworker-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
+    Name      = format("%s-%s-%s-scrapeworker-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
     component = "${local.service_name}-scrapeworker"
   })
 
@@ -176,9 +168,9 @@ resource "aws_security_group" "scrapeworker" {
   name        = format("%s-%s-%s-scrapeworker-%s-mmit-sg-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
   description = "${title(local.app_name)} Scrape Worker Security Group"
   vpc_id      = data.aws_subnet.first-app-subnet.vpc_id
-  
+
   ingress = [
-    
+
   ]
   egress = [
     {
@@ -197,7 +189,7 @@ resource "aws_security_group" "scrapeworker" {
   ]
 
   tags = merge(local.effective_tags, {
-    Name = format("%s-%s-%s-scrapeworker-%s-mmit-sg-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
+    Name      = format("%s-%s-%s-scrapeworker-%s-mmit-sg-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
     component = "${local.service_name}-scrapeworker"
   })
 }
