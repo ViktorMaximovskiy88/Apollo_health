@@ -1,5 +1,5 @@
 import { Form, Input } from 'antd';
-import { useLazyGetDocumentFamilyByNameQuery } from '../document_family/documentFamilyApi';
+import { useLazyGetDocumentFamilyByNameQuery } from './documentFamilyApi';
 import { DocDocumentLocation } from '../locations/types';
 import { useAddDocumentFamilyMutation } from './documentFamilyApi';
 import { Button, Modal } from 'antd';
