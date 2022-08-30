@@ -24,6 +24,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
   useEffect(() => {
     if (isSuccess && data) {
       onSave(data._id);
+      form.resetFields();
     }
   }, [isSuccess, data]);
 
@@ -32,62 +33,60 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
   }
 
   return (
-    <>
-      <Modal
-        visible={visible}
-        title={<>Add Document Family for {location.site_name}</>}
-        width="50%"
-        onCancel={() => {
-          onClose();
+    <Modal
+      visible={visible}
+      title={<>Add Document Family for {location.site_name}</>}
+      width="50%"
+      onCancel={() => {
+        onClose();
+      }}
+      footer={[
+        <Button onClick={onClose}>cancel</Button>,
+        <Button type="primary" htmlType="submit" onClick={() => form.submit()}>
+          Save
+        </Button>,
+      ]}
+    >
+      <Form
+        form={form}
+        layout="vertical"
+        disabled={isLoading}
+        autoComplete="off"
+        requiredMark={false}
+        validateTrigger={['onBlur']}
+        onFinish={(values: any) => {
+          addDocumentFamily({
+            ...values,
+            site_id: location.site_id,
+            document_type: documentType,
+          });
         }}
-        footer={[
-          <Button onClick={onClose}>cancel</Button>,
-          <Button type="primary" htmlType="submit" onClick={() => form.submit()}>
-            Save
-          </Button>,
-        ]}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          disabled={isLoading}
-          autoComplete="off"
-          requiredMark={false}
-          validateTrigger={['onBlur']}
-          onFinish={(values: any) => {
-            addDocumentFamily({
-              ...values,
-              site_id: location.site_id,
-              document_type: documentType,
-            });
-          }}
-        >
-          <div className="flex">
-            <div className="flex-1 mt-2 mb-4">
-              <label>Site Name</label>
-              <div>{location.site_name}</div>
-            </div>
-
-            <div className=" flex-1 mt-2 mb-4">
-              <label>Document Type</label>
-              <div>{documentType}</div>
-            </div>
+        <div className="flex">
+          <div className="flex-1 mt-2 mb-4">
+            <label>Site Name</label>
+            <div>{location.site_name}</div>
           </div>
 
-          <h4>Document Family</h4>
-          <Form.Item
-            label="Name"
-            name="name"
-            rules={[
-              { required: true, message: 'Please input a document family name' },
-              mustBeUniqueToSite(location.site_id, getDocumentFamilyByName),
-            ]}
-          >
-            <Input />
-          </Form.Item>
-        </Form>
-      </Modal>
-    </>
+          <div className=" flex-1 mt-2 mb-4">
+            <label>Document Type</label>
+            <div>{documentType}</div>
+          </div>
+        </div>
+
+        <h4>Document Family</h4>
+        <Form.Item
+          label="Name"
+          name="name"
+          rules={[
+            { required: true, message: 'Please input a document family name' },
+            mustBeUniqueToSite(location.site_id, getDocumentFamilyByName),
+          ]}
+        >
+          <Input />
+        </Form.Item>
+      </Form>
+    </Modal>
   );
 };
 
