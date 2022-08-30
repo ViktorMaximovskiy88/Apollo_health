@@ -33,7 +33,7 @@ class ScrapeMethodConfiguration(BaseModel):
     follow_link_url_keywords: list[str]
     attr_selectors: list[AttrSelector] = []
     focus_therapy_configs: list[FocusTherapyConfig] = []
-    allow_docdoc_updates: bool = True
+    allow_docdoc_updates: bool = False
 
 
 class UpdateScrapeMethodConfiguration(BaseModel):
