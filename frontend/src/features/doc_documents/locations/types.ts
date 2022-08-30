@@ -1,5 +1,3 @@
-import { DocumentFamily } from '../document_family/types';
-
 export interface DocDocumentLocation {
   base_url: string;
   url: string;
