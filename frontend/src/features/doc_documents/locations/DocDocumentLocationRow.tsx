@@ -26,9 +26,7 @@ export const DocDocumentLocationRow = ({
   });
 
   const options = data.map((item: DocumentFamily) => ({ value: item._id, label: item.name }));
-
   const updatedLocation = Form.useWatch(['locations', index]);
-  console.log(updatedLocation, 'updatedLocation');
 
   return (
     <div>
