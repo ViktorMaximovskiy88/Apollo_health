@@ -9,7 +9,9 @@ import { ExtractionFields } from './DocDocumentExtractionFields';
 import { Translation } from './TranslationSelector';
 
 export function DocDocumentInfoForm({ onFieldChange }: { onFieldChange: () => void }) {
-  const { docDocumentId: docId } = useParams();
+  // bandaid fix; painted into a corner
+  const { docDocumentId, itemId } = useParams();
+  const docId = docDocumentId ?? itemId;
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
   return (
