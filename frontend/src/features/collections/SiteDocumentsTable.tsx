@@ -9,7 +9,7 @@ import {
   setDocumentTableSort,
 } from './documentsSlice';
 import { useDataTableSort, useDataTableFilter, useDataTablePagination } from '../../common/hooks';
-import { useDocumentColumns as useColumns } from './useDocumentColumns';
+import { useDocumentColumns } from './useDocumentColumns';
 
 export function SiteDocumentsTable() {
   const { siteId } = useParams();
@@ -21,7 +21,7 @@ export function SiteDocumentsTable() {
       link_text: document?.context_metadata?.link_text, // makes datatable filterable by link_text
     })) ?? [];
 
-  const columns = useColumns();
+  const columns = useDocumentColumns();
   const filterProps = useDataTableFilter(documentTableState, setDocumentTableFilter);
   const sortProps = useDataTableSort(documentTableState, setDocumentTableSort);
   const controlledPagination = useDataTablePagination(
