@@ -55,6 +55,7 @@ export function SiteForm(props: {
         follow_link_url_keywords: [],
         attr_selectors: [],
         focus_therapy_configs: [],
+        allow_docdoc_updates: true,
       },
     };
   }

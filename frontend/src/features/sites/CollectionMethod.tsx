@@ -147,6 +147,29 @@ function SearchInFrames() {
     </Form.Item>
   );
 }
+
+function AllowDocDocUpdate() {
+  return (
+    <Form.Item
+      name={['scrape_method_configuration', 'allow_docdoc_updates']}
+      valuePropName="checked"
+      label={
+        <>
+          <span style={{ marginRight: '5px' }}>Allow Doc Document Updates</span>
+          <Tooltip
+            placement="right"
+            title="Overwrite existing Therapy and Indication Tags on Doc Document during collection"
+          >
+            <QuestionCircleOutlined />
+          </Tooltip>
+        </>
+      }
+    >
+      <Switch />
+    </Form.Item>
+  );
+}
+
 function ScrapeMethodConfiguration({ initialValues }: { initialValues: Partial<Site> }) {
   return (
     <Form.Item name="scrape_method_configuration">
@@ -158,6 +181,7 @@ function ScrapeMethodConfiguration({ initialValues }: { initialValues: Partial<S
       <WaitForTimeout />
       <SearchInFrames />
       <FocusTherapyConfig initialValues={initialValues} />
+      <AllowDocDocUpdate />
     </Form.Item>
   );
 }
