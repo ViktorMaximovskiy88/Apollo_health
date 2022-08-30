@@ -5,7 +5,7 @@ import { dateToMoment } from '../../common';
 import { useCallback, useEffect, useState } from 'react';
 import { compact, groupBy, isEqual, maxBy } from 'lodash';
 import { DocDocumentInfoForm } from './DocDocumentInfoForm';
-import { DocDocumentLocationForm } from './locations/DocDocumentLocationForm';
+import { DocDocumentLocations } from './locations/DocDocumentLocations';
 import { useNavigate } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 
@@ -198,7 +198,7 @@ export function DocDocumentEditForm({
             />
           </Tabs.TabPane>
           <Tabs.TabPane tab="Sites" key="sites" className="bg-white p-4 overflow-auto">
-            <DocDocumentLocationForm locations={doc.locations} docDocument={doc} />
+            <DocDocumentLocations locations={doc.locations} docDocument={doc} />
           </Tabs.TabPane>
         </Tabs>
       </Form>

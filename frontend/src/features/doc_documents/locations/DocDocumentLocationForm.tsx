@@ -1,56 +1,98 @@
-import { useState } from 'react';
-import { Form } from 'antd';
-import { DocDocument } from '../types';
-import { DocDocumentLocation } from '../locations/types';
-import { DocDocumentLocationRow } from './DocDocumentLocationRow';
-import { DocumentFamilyCreateModal } from '../document_family/DocumentFamilyCreateModal';
+import { Form, Select, Button, Input } from 'antd';
+import { Link } from 'react-router-dom';
+import { PlusOutlined } from '@ant-design/icons';
+import { DocDocumentLocation } from './types';
+import { DocumentFamily } from '../document_family/types';
+import { useGetDocumentFamiliesQuery } from '../document_family/documentFamilyApi';
+import { TextEllipsis } from '../../../components';
 
-interface DocDocumentLocationFormPropTypes {
-  docDocument: DocDocument;
-  locations: DocDocumentLocation[];
+interface DocDocumentLocationRowFormTypes {
+  documentType: string;
+  location: DocDocumentLocation;
+  index: number;
+  onShowDocumentFamilyCreate: (location: DocDocumentLocation) => void;
 }
 
 export const DocDocumentLocationForm = ({
-  docDocument,
-  locations,
-}: DocDocumentLocationFormPropTypes) => {
+  documentType,
+  location,
+  index,
+  onShowDocumentFamilyCreate,
+}: DocDocumentLocationRowFormTypes) => {
   const form = Form.useFormInstance();
-  const [isVisible, setIsVisible] = useState<boolean>(false);
-  const [selectedIndex, setSelectedLocationIndex] = useState<number>(-1);
+  const { data = [] } = useGetDocumentFamiliesQuery({
+    siteId: location.site_id,
+    documentType,
+  });
+
+  const options = data.map((item: DocumentFamily) => ({ value: item._id, label: item.name }));
+  const updatedLocation = Form.useWatch(['locations', index]);
 
   return (
-    <div>
-      {locations.map((location, index) => (
-        <>
-          <DocDocumentLocationRow
-            key={location.site_id}
-            index={index}
-            documentType={docDocument.document_type}
-            location={location}
-            onShowDocumentFamilyCreate={() => {
-              setSelectedLocationIndex(index);
-              setIsVisible(true);
-            }}
-          />
-        </>
-      ))}
+    <div className="property-grid mb-4">
+      {/* Our header is separate due to styles */}
+      <div className="p-2 bg-slate-50">
+        <Link className="text-lg" target="_blank" to={`/sites/${location.site_id}/view`}>
+          <TextEllipsis text={location.site_name ?? ''} />
+        </Link>
+      </div>
 
-      <DocumentFamilyCreateModal
-        location={locations[selectedIndex]}
-        documentType={docDocument.document_type}
-        visible={isVisible}
-        onSave={(documentFamilyId: string) => {
-          const locations = form.getFieldValue('locations');
-          locations[selectedIndex].document_family_id = documentFamilyId;
-          form.setFieldsValue({ locations });
-          setIsVisible(false);
-          setSelectedLocationIndex(-1);
-        }}
-        onClose={() => {
-          setIsVisible(false);
-          setSelectedLocationIndex(-1);
-        }}
-      />
+      {/* Our body */}
+      <div className="pl-2 mt-2">
+        <Form.Item name={['locations', index, 'site_id']} noStyle={true}>
+          <Input type={'hidden'} />
+        </Form.Item>
+
+        <Form.Item name={['locations', index, 'closest_heading']} noStyle={true}>
+          <Input type={'hidden'} />
+        </Form.Item>
+
+        <Form.Item name={['locations', index, 'first_collected_date']} noStyle={true}>
+          <Input type={'hidden'} />
+        </Form.Item>
+
+        <Form.Item name={['locations', index, 'last_collected_date']} noStyle={true}>
+          <Input type={'hidden'} />
+        </Form.Item>
+
+        <Form.Item name={['locations', index, 'previous_doc_doc_id']} noStyle={true}>
+          <Input type={'hidden'} />
+        </Form.Item>
+
+        <Form.Item label="Base URL" name={['locations', index, 'base_url']}>
+          <Input readOnly={true} />
+        </Form.Item>
+
+        <Form.Item label="URL" name={['locations', index, 'url']}>
+          <Input readOnly={true} />
+        </Form.Item>
+
+        <Form.Item label="Link Text" name={['locations', index, 'link_text']}>
+          <Input readOnly={true} />
+        </Form.Item>
+
+        <Form.Item label="Document Family" name={['locations', index, 'document_family_id']}>
+          <Select
+            value={updatedLocation?.document_family_id}
+            onSelect={(documentFamilyId: string) => {
+              const locations = form.getFieldValue('locations');
+              locations[index].document_family_id = documentFamilyId;
+              form.setFieldsValue({ locations });
+            }}
+            options={options}
+            style={{ width: 'calc(100% - 96px', marginRight: '8px' }}
+          />
+          <Button
+            type="dashed"
+            onClick={() => {
+              onShowDocumentFamilyCreate(location);
+            }}
+          >
+            <PlusOutlined />
+            New
+          </Button>
+        </Form.Item>
+      </div>
     </div>
   );
 };
