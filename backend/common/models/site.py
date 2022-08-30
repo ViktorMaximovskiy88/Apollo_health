@@ -73,6 +73,7 @@ class UpdateSite(BaseModel):
     base_urls: list[BaseUrl] | None = None
     scrape_method: str | None = None
     collection_method: str | None = None
+    collection_hold: datetime | None = None
     tags: list[str] | None = None
     cron: str | None = None
     disabled: bool | None = None
@@ -91,6 +92,7 @@ class Site(BaseDocument, NewSite):
     disabled: bool
     last_run_status: str | None = None
     collection_method: str | None = CollectionMethod.Automated
+    collection_hold: datetime | None = None
     last_run_time: datetime | None = None
     assignee: PydanticObjectId | None = None
 

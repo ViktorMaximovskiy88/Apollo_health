@@ -23,6 +23,13 @@ class TaskStatus(str, Enum):
     FAILED = "FAILED"
 
 
+class BulkScrapeActions(str, Enum):
+    CANCEL = "CANCEL"
+    CANCEL_HOLD = "CANCEL-HOLD"
+    HOLD = "HOLD"
+    RUN = "RUN"
+
+
 class ApprovalStatus(str, Enum):
     QUEUED = "QUEUED"
     APPROVED = "APPROVED"

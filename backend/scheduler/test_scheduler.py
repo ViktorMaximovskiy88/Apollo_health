@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from random import random
 
 import pytest
@@ -126,6 +127,22 @@ async def test_not_finding_sites_no_active_urls():
     crons = ["0 * * * *"]
     sites = await find_sites_eligible_for_scraping(crons).to_list()
     assert len(sites) == 0
+
+
+@pytest.mark.asyncio
+async def test_collection_hold():
+    site = simple_site("0 * * * *")
+    site.collection_hold = datetime.now(tz=timezone.utc) + timedelta(days=1)
+    site = await site.save()
+
+    site = simple_site("0 * * * *")
+    site = await site.save()
+
+    site = simple_site("0 * * * *")
+    site = await site.save()
+    crons = ["0 * * * *"]
+    sites = await find_sites_eligible_for_scraping(crons).count()
+    assert sites == 2
 
 
 @pytest.mark.asyncio
