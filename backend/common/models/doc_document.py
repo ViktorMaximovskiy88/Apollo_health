@@ -64,8 +64,6 @@ class BaseDocDocument(BaseModel):
 
     tags: list[str] = []
 
-    document_family_id: PydanticObjectId | None = None
-
 
 class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixins):
     locations: list[DocDocumentLocation] = []
