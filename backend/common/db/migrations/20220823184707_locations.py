@@ -101,7 +101,6 @@ class Forward:
                                 "last_collected_date": "$last_collected_date",
                                 "previous_doc_doc_id": None,
                                 "document_family_id": None,
-                                "context_metadata": None,
                             }
                         ]
                     },

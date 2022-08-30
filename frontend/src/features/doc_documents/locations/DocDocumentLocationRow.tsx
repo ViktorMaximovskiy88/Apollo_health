@@ -1,10 +1,10 @@
-import { Form, Select, Button } from 'antd';
+import { Form, Select, Button, Input } from 'antd';
 import { Link } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { DocDocumentLocation } from './types';
 import { DocumentFamily } from '../document_family/types';
 import { useGetDocumentFamiliesQuery } from '../document_family/documentFamilyApi';
-import { TextEllipsis, ListViewItem } from '../../../components';
+import { TextEllipsis } from '../../../components';
 
 interface DocDocumentLocationRowPropTypes {
   documentType: string;
@@ -29,7 +29,7 @@ export const DocDocumentLocationRow = ({
   const updatedLocation = Form.useWatch(['locations', index]);
 
   return (
-    <div>
+    <div className="property-grid mb-4">
       {/* Our header is separate due to styles */}
       <div className="p-2 bg-slate-50">
         <Link className="text-lg" target="_blank" to={`/sites/${location.site_id}/view`}>
@@ -38,20 +38,38 @@ export const DocDocumentLocationRow = ({
       </div>
 
       {/* Our body */}
-      <div className="pl-2">
-        <ListViewItem label="Base URL">
-          <Link target="_blank" to={location.base_url}>
-            <TextEllipsis text={location.base_url} />
-          </Link>
-        </ListViewItem>
+      <div className="pl-2 mt-2">
+        <Form.Item name={['locations', index, 'site_id']} noStyle={true}>
+          <Input type={'hidden'} />
+        </Form.Item>
 
-        <ListViewItem label="URL">
-          <Link target="_blank" to={location.url}>
-            <TextEllipsis text={location.url} rtl={true} />
-          </Link>
-        </ListViewItem>
+        <Form.Item name={['locations', index, 'closest_heading']} noStyle={true}>
+          <Input type={'hidden'} />
+        </Form.Item>
 
-        <ListViewItem label="Link Text">{location.link_text || 'N/A'}</ListViewItem>
+        <Form.Item name={['locations', index, 'first_collected_date']} noStyle={true}>
+          <Input type={'hidden'} />
+        </Form.Item>
+
+        <Form.Item name={['locations', index, 'last_collected_date']} noStyle={true}>
+          <Input type={'hidden'} />
+        </Form.Item>
+
+        <Form.Item name={['locations', index, 'previous_doc_doc_id']} noStyle={true}>
+          <Input type={'hidden'} />
+        </Form.Item>
+
+        <Form.Item label="Base URL" name={['locations', index, 'base_url']}>
+          <Input readOnly={true} />
+        </Form.Item>
+
+        <Form.Item label="URL" name={['locations', index, 'url']}>
+          <Input readOnly={true} />
+        </Form.Item>
+
+        <Form.Item label="Link Text" name={['locations', index, 'link_text']}>
+          <Input readOnly={true} />
+        </Form.Item>
 
         <Form.Item label="Document Family" name={['locations', index, 'document_family_id']}>
           <Select

@@ -130,3 +130,16 @@ a {
   height: 100%;
   flex-direction: column;
 }
+
+.property-grid input[readonly] {
+  border: none;
+  padding: 0;
+  background-color: #fcfcfc;
+}
+
+.property-grid .ant-form-item-label {
+  padding: 0;
+}
+.property-grid .ant-form-item {
+  margin-bottom: 12px;
+}
