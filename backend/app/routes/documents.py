@@ -211,7 +211,7 @@ async def add_document(
 ):
     now = datetime.now(tz=timezone.utc)
 
-    link_text = document.metadata["link_text"] if "link_text" in document.metadata else None
+    link_text = document.metadata.get("link_text", None)
 
     new_document = RetrievedDocument(
         checksum=document.checksum,

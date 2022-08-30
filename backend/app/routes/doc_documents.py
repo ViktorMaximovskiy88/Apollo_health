@@ -128,7 +128,7 @@ async def update_doc_document(
     logger: Logger = Depends(get_logger),
 ):
 
-    updates.final_effective_date = calc_final_effective_date(target)
+    updates.final_effective_date = calc_final_effective_date(updates)
     updated = await update_and_log_diff(logger, current_user, target, updates)
 
     # Sending Event Bridge Event.  Need to add condition when to send.
