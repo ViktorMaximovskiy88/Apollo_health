@@ -19,12 +19,16 @@ export const DocDocumentLocationRow = ({
   index,
   onShowDocumentFamilyCreate,
 }: DocDocumentLocationRowPropTypes) => {
+  const form = Form.useFormInstance();
   const { data = [] } = useGetDocumentFamiliesQuery({
     siteId: location.site_id,
     documentType,
   });
 
   const options = data.map((item: DocumentFamily) => ({ value: item._id, label: item.name }));
+
+  const updatedLocation = Form.useWatch(['locations', index]);
+  console.log(updatedLocation, 'updatedLocation');
 
   return (
     <div>
@@ -52,7 +56,16 @@ export const DocDocumentLocationRow = ({
         <ListViewItem label="Link Text">{location.link_text || 'N/A'}</ListViewItem>
 
         <Form.Item label="Document Family" name={['locations', index, 'document_family_id']}>
-          <Select options={options} style={{ width: 'calc(100% - 96px', marginRight: '8px' }} />
+          <Select
+            value={updatedLocation?.document_family_id}
+            onSelect={(documentFamilyId: string) => {
+              const locations = form.getFieldValue('locations');
+              locations[index].document_family_id = documentFamilyId;
+              form.setFieldsValue({ locations });
+            }}
+            options={options}
+            style={{ width: 'calc(100% - 96px', marginRight: '8px' }}
+          />
           <Button
             type="dashed"
             onClick={() => {
