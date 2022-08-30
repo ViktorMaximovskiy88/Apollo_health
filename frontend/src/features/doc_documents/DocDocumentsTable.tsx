@@ -1,5 +1,5 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
-import { TypePaginationProps, TypeFilterValue } from '@inovua/reactdatagrid-community/types';
+import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
 import { useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useParams, useSearchParams } from 'react-router-dom';

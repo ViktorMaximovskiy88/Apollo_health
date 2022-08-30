@@ -45,6 +45,7 @@ export const createColumns = ({
     },
     {
       header: 'Elapsed',
+      name: 'elapsed',
       minWidth: 300,
       defaultFlex: 1,
       render: ({ data: task }: { data: SiteScrapeTask }) => {
@@ -118,6 +119,7 @@ export const createColumns = ({
       },
     },
     {
+      name: 'action',
       header: 'Actions',
       render: ({ data: task }: { data: SiteScrapeTask }) => {
         switch (task.status) {

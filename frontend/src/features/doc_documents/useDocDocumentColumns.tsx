@@ -16,7 +16,7 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
     {
       header: 'Last Collected',
       name: 'last_collected_date',
-      minWidth: 100,
+      minWidth: 200,
       filterEditor: DateFilter,
       filterEditorProps: () => {
         return {
@@ -25,13 +25,15 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
           placeholder: 'Select Date',
         };
       },
-      render: ({ value: last_collected_date }: { value: string }) => {
-        return prettyDateFromISO(last_collected_date);
+      render: ({ data: doc }: { data: DocDocument }) => {
+        if (!doc.last_collected_date) return null;
+        return prettyDateTimeFromISO(doc.last_collected_date);
       },
     },
     {
       header: 'Link Text',
       name: 'link_text',
+      defaultFlex: 1,
       minWidth: 200,
       render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
     },
@@ -69,9 +71,8 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
           placeholder: 'Select Date',
         };
       },
-      render: ({ data: doc }: { data: DocDocument }) => {
-        if (!doc.effective_date) return null;
-        return prettyDateTimeFromISO(doc.effective_date);
+      render: ({ value: effective_date }: { value: string }) => {
+        return prettyDateFromISO(effective_date);
       },
     },
     {
