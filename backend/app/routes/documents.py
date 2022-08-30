@@ -202,7 +202,7 @@ async def delete_document(
     return {"success": True}
 
 
-@router.put("/", status_code=status.HTTP_201_CREATED)
+@router.put("/", status_code=status.HTTP_201_CREATED, response_model=SiteScrapeTask)
 async def add_document(
     # verify we only want SiteRetrievedDocument
     document: SiteRetrievedDocument | RetrievedDocument,
@@ -294,4 +294,4 @@ async def add_document(
     )
     await scrape_task.save()
 
-    return {"success": True}
+    return scrape_task

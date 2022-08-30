@@ -96,7 +96,6 @@ def simple_site(
 
 def simple_manual_retrieved_document(
     site: Site,
-    scrape_task: SiteScrapeTask,
     checksum="test",
     text_checksum="test",
     content_type=None,
@@ -294,10 +293,8 @@ class TestUploadFile:
 
                 assert uploaded_document["success"] is True
                 site_one = await simple_site(collection_method=CollectionMethod.Manual).save()
-                scrape_one = await simple_scrape(site_one, status=TaskStatus.IN_PROGRESS).save()
                 doc = simple_manual_retrieved_document(
                     site_one,
-                    scrape_one,
                     checksum=uploaded_document["data"]["checksum"],  # type: ignore
                     text_checksum=uploaded_document["data"]["text_checksum"],  # type: ignore
                     content_type=uploaded_document["data"]["content_type"],  # type: ignore
@@ -309,9 +306,9 @@ class TestUploadFile:
                     identified_dates=uploaded_document["data"]["identified_dates"],  # type: ignore
                 )
 
-                doc_data = await add_document(doc, user, logger)
-                assert doc_data["success"] is True
-                uploaded_document_2 = await upload_document(upload_file, user, logger)
+                result = await add_document(doc, user, logger)
+                assert result.id is not None
+                uploaded_document_2 = await upload_document(upload_file)
 
                 assert uploaded_document_2["error"] == "The document already exists!"
 
@@ -320,11 +317,10 @@ class TestCreateDocuments:
     @pytest.mark.asyncio
     async def test_create_document(self, user, logger):
         site_one = await simple_site(collection_method=CollectionMethod.Manual).save()
-        scrape_one = await simple_scrape(site_one, status=TaskStatus.IN_PROGRESS).save()
-        doc = simple_manual_retrieved_document(site_one, scrape_one)
+        doc = simple_manual_retrieved_document(site_one)
 
-        doc_data = await add_document(doc, user, logger)
-        assert doc_data == {"success": True}
+        result = await add_document(doc, user, logger)
+        assert result.id is not None
 
-        first_ret_docs = await get_documents(scrape_task_id=scrape_one.id)
+        first_ret_docs = await get_documents(scrape_task_id=result.id)
         assert len(first_ret_docs) == 1
