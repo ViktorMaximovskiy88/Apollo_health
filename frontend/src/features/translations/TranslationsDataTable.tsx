@@ -11,10 +11,8 @@ import { ButtonLink } from '../../components';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { Site } from '../sites/types';
 import { useGetChangeLogQuery, useLazyGetTranslationConfigsQuery } from './translationApi';
-import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
-import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
+import { useDataTableSort, useDataTableFilter, useDataTablePagination } from '../../common/hooks';
 import { TranslationConfig } from './types';
-import { useDataTablePagination } from '../../common/hooks/use-data-table-pagination';
 
 const columns = [
   {

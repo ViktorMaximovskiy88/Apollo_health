@@ -1,4 +1,4 @@
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useGetSiteRetrievedDocumentsQuery } from '../sites/sitesApi';
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import {
