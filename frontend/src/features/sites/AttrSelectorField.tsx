@@ -1,4 +1,14 @@
-import { AutoComplete, Button, Checkbox, Form, Input, Popover, Tooltip, Typography } from 'antd';
+import {
+  AutoComplete,
+  Button,
+  Select,
+  Checkbox,
+  Form,
+  Input,
+  Popover,
+  Tooltip,
+  Typography,
+} from 'antd';
 import { MinusCircleOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { FormListFieldData } from 'antd/lib/form/FormList';
 import { useState } from 'react';
@@ -18,15 +28,24 @@ function FieldHeaders({ fields }: HeaderPropTypes) {
     return null;
   }
   return (
-    <div className="grid grid-cols-8 space-x-1 whitespace-nowrap">
+    <div className="grid grid-cols-10 space-x-1 whitespace-nowrap">
       <div className="flex items-center col-span-2">
-        <h4 className="mr-1">Attribute Name</h4>
+        <h4 className="mr-1">Attr Element</h4>
+        <Tooltip
+          className="mb-2 ml-px"
+          title="Attribute element to search against. Example: <a> or <li>"
+        >
+          <QuestionCircleOutlined />
+        </Tooltip>
+      </div>
+      <div className="flex items-center col-span-2">
+        <h4 className="mr-1">Attr Name</h4>
         <Tooltip className="mb-2 ml-px" title="Text in name of attribute to search for">
           <QuestionCircleOutlined />
         </Tooltip>
       </div>
       <div className="flex items-center col-span-2 ">
-        <h4 className="mr-1">Attribute Value</h4>
+        <h4 className="mr-1">Attr Value</h4>
         <Tooltip className="mb-2 ml-px" title="Attributes whose value contain the search term">
           <QuestionCircleOutlined />
         </Tooltip>
@@ -62,8 +81,9 @@ function Header() {
     <Hr key="2" />,
     <div key="3">
       <p>
-        <Text strong>Attribute Name:</Text> onclick <br />
-        <Text strong>Attribute Value:</Text> /policy/ <br />
+        <Text strong>Attr Element:</Text> element <br />
+        <Text strong>Attr Name:</Text> onclick <br />
+        <Text strong>Attr Value:</Text> /policy/ <br />
         <Text strong>Contains Text:</Text> Download
       </p>
       <Text code>&lt;a onclick="/documents/policy/file.pdf"&gt;Download File&lt;/a&gt;</Text>
@@ -71,8 +91,9 @@ function Header() {
     <Hr key="4" />,
     <div key="5">
       <p>
-        <Text strong>Attribute Name:</Text> data- <br />
-        <Text strong>Attribute Value:</Text>
+        <Text strong>Attr Element:</Text> element <br />
+        <Text strong>Attr Name:</Text> data- <br />
+        <Text strong>Attr Value:</Text>
         <br />
         <Text strong>Contains Text:</Text>
       </p>
@@ -90,6 +111,21 @@ function Header() {
         <QuestionCircleOutlined />
       </Popover>
     </div>
+  );
+}
+
+function ElementSelect({ name, field }: InputPropTypes) {
+  const elements = [
+    { value: 'a', label: 'a' },
+    { value: 'li', label: 'li' },
+    { value: 'span', label: 'span' },
+    { value: 'p', label: 'p' },
+  ];
+
+  return (
+    <Form.Item {...field} name={[name, 'attr_element']}>
+      <Select defaultValue={{ label: 'a', value: 'a' }} options={elements} />
+    </Form.Item>
   );
 }
 
@@ -183,7 +219,8 @@ export function AttrSelectors() {
           <FieldHeaders fields={fields} />
           {fields.map(({ key, name, ...field }) => (
             <Form.Item key={key} className="mb-2 whitespace-nowrap" {...field}>
-              <Input.Group className="grid grid-cols-8 space-x-1">
+              <Input.Group className="grid grid-cols-10 space-x-1">
+                <ElementSelect name={name} field={field} />
                 <NameInput name={name} field={field} />
                 <ValueInput name={name} field={field} />
                 <ContainsTextInput name={name} field={field} />
