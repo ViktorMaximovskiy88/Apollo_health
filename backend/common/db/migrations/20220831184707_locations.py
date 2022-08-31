@@ -30,7 +30,7 @@ class Forward:
         )
 
         result = await RetrievedDocument.get_motor_collection().update_many(
-            {},
+            {"locations": {"$exists": False}},
             [
                 {
                     "$set": {
