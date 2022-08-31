@@ -1,11 +1,10 @@
-import { prettyDateFromISO, prettyDateUTCFromISO } from '../../common';
+import { prettyDateUTCFromISO, prettyDateTimeFromISO } from '../../common';
 import { Link } from 'react-router-dom';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { RetrievedDocument, DocumentTypes } from '../retrieved_documents/types';
 import { useGetChangeLogQuery } from '../sites/sitesApi';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
-
 
 export const useDocumentColumns = () => [
   {
@@ -21,7 +20,7 @@ export const useDocumentColumns = () => [
       };
     },
     render: ({ value: first_collected_date }: { value: string }) => {
-      return prettyDateFromISO(first_collected_date);
+      return prettyDateTimeFromISO(first_collected_date);
     },
   },
   {
@@ -37,7 +36,7 @@ export const useDocumentColumns = () => [
       };
     },
     render: ({ value: last_collected_date }: { value: string }) => {
-      return prettyDateFromISO(last_collected_date);
+      return prettyDateTimeFromISO(last_collected_date);
     },
   },
   {
