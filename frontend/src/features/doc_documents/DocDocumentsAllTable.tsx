@@ -1,23 +1,20 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
-import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
 import { useCallback } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  setDocDocumentTableFilter,
+  setDocDocumentTableSort,
+  docDocumentTableState,
+  setDocDocumentTableLimit,
+  setDocDocumentTableSkip,
+} from './docDocumentsSlice';
+import { useLazyGetDocDocumentsQuery } from './docDocumentApi';
 import { useInterval } from '../../common/hooks';
+import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
 import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 import { GridPaginationToolbar } from '../../components';
-import { useDocDocumentColumns as useColumns } from './useDocDocumentColumns';
-import { DocDocument } from './types';
-
-import {
-  docDocumentTableState,
-  setDocDocumentTableFilter,
-  setDocDocumentTableLimit,
-  setDocDocumentTableSkip,
-  setDocDocumentTableSort,
-} from './docDocumentsSlice';
-import { useLazyGetDocDocumentsQuery } from './docDocumentApi';
+import { useDocDocumentAllColumns as useColumns } from './useDocDocumentAllColumns';
 
 const useControlledPagination = ({
   isActive,
@@ -62,31 +59,22 @@ const useControlledPagination = ({
   return controlledPaginationProps;
 };
 
-interface DataTablePropTypes {
-  handleNewVersion: (data: DocDocument) => void;
-}
-
-export function DocDocumentsTable({ handleNewVersion }: DataTablePropTypes) {
+export function DocDocumentsDataTable() {
   // Trigger update every 10 seconds by invalidating memoized callback
   const { isActive, setActive, watermark } = useInterval(10000);
-  const { siteId } = useParams();
 
-  const [searchParams] = useSearchParams();
-  const scrapeTaskId = searchParams.get('scrape_task_id');
-
-  const columns = useColumns({ handleNewVersion });
   const [getDocDocumentsFn] = useLazyGetDocDocumentsQuery();
+
+  const columns = useColumns();
 
   const loadData = useCallback(
     async (tableInfo: any) => {
-      tableInfo.site_id = siteId;
-      tableInfo.scrape_task_id = scrapeTaskId;
       const { data } = await getDocDocumentsFn(tableInfo);
       const sites = data?.data ?? [];
       const count = data?.total ?? 0;
       return { data: sites, count };
     },
-    [getDocDocumentsFn, siteId, scrapeTaskId, watermark] // eslint-disable-line react-hooks/exhaustive-deps
+    [getDocDocumentsFn, watermark] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const filterProps = useDataTableFilter(docDocumentTableState, setDocDocumentTableFilter);

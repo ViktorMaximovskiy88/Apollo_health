@@ -4,8 +4,7 @@ import { useParams } from 'react-router-dom';
 
 import { MainLayout } from '../../components';
 import { SiteMenu } from '../sites/SiteMenu';
-
-import { DocDocumentsTable } from './DocDocumentsTable';
+import { DocDocumentsTable } from './DocDocumentsSiteTable';
 import { AddDocumentModal } from '../collections/addDocumentModal';
 import { DocDocument } from './types';
 

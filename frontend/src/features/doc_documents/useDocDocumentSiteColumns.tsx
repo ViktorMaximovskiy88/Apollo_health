@@ -94,5 +94,5 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
   ];
 };
 
-export const useDocDocumentColumns = ({ handleNewVersion }: CreateColumnsType) =>
+export const useDocDocumentSiteColumns = ({ handleNewVersion }: CreateColumnsType) =>
   useMemo(() => createColumns({ handleNewVersion }), [handleNewVersion]);
