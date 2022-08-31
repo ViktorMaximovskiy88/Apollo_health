@@ -176,6 +176,8 @@ class DocumentUpdater:
         return document
 
     async def create_doc_document(self, retrieved_document: RetrievedDocument):
+        # we always have one initially
+        rt_doc_location = retrieved_document.locations[0]
         doc_document = DocDocument(
             retrieved_document_id=retrieved_document.id,  # type: ignore
             name=retrieved_document.name,
@@ -197,7 +199,7 @@ class DocumentUpdater:
             identified_dates=retrieved_document.identified_dates,
             last_collected_date=retrieved_document.last_collected_date,
             first_collected_date=retrieved_document.first_collected_date,
-            locations=retrieved_document.locations,
+            locations=[DocDocumentLocation(**rt_doc_location.dict())],
         )
 
         doc_document.set_final_effective_date()
