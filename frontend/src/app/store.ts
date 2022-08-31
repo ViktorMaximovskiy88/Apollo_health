@@ -11,7 +11,7 @@ import { workQueuesApi } from '../features/work_queue/workQueuesApi';
 import { proxiesApi } from '../features/proxies/proxiesApi';
 import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { translationsApi } from '../features/translations/translationApi';
-import { documentFamilyApi } from '../features/doc_documents/documentFamilyApi';
+import { documentFamilyApi } from '../features/doc_documents/document_family/documentFamilyApi';
 import { rtkAuth } from '../common/auth-middleware';
 
 import navSlice from './navSlice';

@@ -29,7 +29,6 @@ from backend.common.models.link_task_log import (
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.common.models.user import User
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.aio_downloader import AioDownloader
@@ -78,13 +77,6 @@ class ScrapeWorker:
         self.playbook = ScrapePlaybook(self.site.playbook)
         self.log = _log
         self.doc_updater = DocumentUpdater(_log, scrape_task, site)
-
-    @alru_cache
-    async def get_user(self) -> User:
-        user = await User.by_email("admin@mmitnetwork.com")
-        if not user:
-            raise Exception("No user found")
-        return user
 
     @alru_cache
     async def get_proxy_settings(

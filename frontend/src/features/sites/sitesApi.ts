@@ -2,6 +2,8 @@ import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/t
 import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
 import { Site } from './types';
+import { RetrievedDocument } from '../retrieved_documents/types';
+import { SiteDocDocument } from '../doc_documents/types';
 
 export const sitesApi = createApi({
   reducerPath: 'sitesApi',
@@ -30,6 +32,18 @@ export const sitesApi = createApi({
     }),
     getSite: builder.query<Site, string | undefined>({
       query: (id) => `/sites/${id}`,
+      providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
+    }),
+    getSiteRetrievedDocuments: builder.query<RetrievedDocument[], string | undefined>({
+      query: (id) => `/sites/${id}/documents`,
+      providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
+    }),
+    getSiteDocDocument: builder.query<SiteDocDocument, any>({
+      query: ({ siteId, docId }) => `/sites/${siteId}/doc-documents/${docId}`,
+      providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
+    }),
+    getSiteDocDocuments: builder.query<SiteDocDocument[], string | undefined>({
+      query: (id) => `/sites/${id}/doc-documents`,
       providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
     }),
     addSite: builder.mutation<Site, Partial<Site>>({
@@ -74,4 +88,8 @@ export const {
   useUpdateMultipleSitesMutation,
   useDeleteSiteMutation,
   useGetChangeLogQuery,
+  useGetSiteRetrievedDocumentsQuery,
+  useGetSiteDocDocumentsQuery,
+  useGetSiteDocDocumentQuery,
+  useLazyGetSiteDocDocumentsQuery,
 } = sitesApi;

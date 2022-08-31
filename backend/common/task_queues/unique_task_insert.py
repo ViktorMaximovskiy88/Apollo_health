@@ -1,6 +1,9 @@
 from typing import TypeVar
-from backend.common.models.base_document import BaseDocument
+
+from beanie import PydanticObjectId
+
 from backend.common.core.enums import TaskStatus
+from backend.common.models.base_document import BaseDocument
 
 T = TypeVar("T", bound=BaseDocument)
 

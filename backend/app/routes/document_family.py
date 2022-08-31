@@ -25,19 +25,20 @@ async def get_target(id: PydanticObjectId) -> DocumentFamily:
     return document_family
 
 
-@router.get("/", response_model=list[DocumentFamily])
+@router.get(
+    "/",
+    dependencies=[Security(get_current_user)],
+    response_model=list[DocumentFamily],
+)
 async def read_document_families(
-    current_user: User = Security(get_current_user),
-    site_id: str | None = None,
+    site_id: PydanticObjectId | None = None,
     document_type: str | None = None,
 ):
-    query = DocumentFamily.find(
-        {
-            "disabled": False,
-        }
-    )
+    query = DocumentFamily.find({"disabled": False})
+
     if site_id:
-        query = query.find({"site_id": PydanticObjectId(site_id)})
+        query = query.find({"site_id": site_id})
+
     if document_type:
         query = query.find({"document_type": document_type})
 
@@ -46,30 +47,24 @@ async def read_document_families(
 
 @router.get(
     "/search",
+    dependencies=[Security(get_current_user)],
+    response_model=DocumentFamily,
 )
 async def read_document_family_by_name(
+    site_id: PydanticObjectId,
     name: str,
-    site_id: str,
-    current_user: User = Security(get_current_user),
 ):
-    if not site_id:
-        raise HTTPException(
-            detail=f"site_id was not given, instead recieved: {site_id}",
-            status_code=status.HTTP_406_NOT_ACCEPTABLE,
-        )
-    if not name:
-        return None
-    found = await DocumentFamily.find_one({"name": name, "site_id": PydanticObjectId(site_id)})
-    return found
+    document_families = await DocumentFamily.find_one({"name": name, "site_id": site_id})
+    return document_families
 
 
 @router.get(
     "/{id}",
     response_model=DocumentFamily,
+    dependencies=[Security(get_current_user)],
 )
 async def read_document_family(
     target: DocumentFamily = Depends(get_target),
-    current_user: User = Security(get_current_user),
 ):
     return target
 

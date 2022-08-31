@@ -2,15 +2,15 @@ import { useMemo } from 'react';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Button } from 'antd';
-import { LinkOutlined } from '@ant-design/icons';
 import { prettyDateTimeFromISO, prettyDateFromISO } from '../../common';
 import { DocDocument } from './types';
 import { Link } from 'react-router-dom';
 import { DocumentTypes } from '../retrieved_documents/types';
 
 interface CreateColumnsType {
-  handleNewVersion: (data: DocDocument) => void;
+  handleNewVersion?: (data: DocDocument) => void;
 }
+
 export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
   return [
     {
@@ -76,31 +76,17 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
       },
     },
     {
-      header: 'Url',
-      name: 'url',
-      minWidth: 100,
-      filterSearch: true,
-      render: ({ data: doc }: { data: DocDocument }) => {
-        return (
-          <>
-            <Link to={`/documents/${doc._id}`}>{doc.url}</Link>
-            <a className="mx-2" href={doc.url} target="_blank" rel="noreferrer">
-              <LinkOutlined />
-            </a>
-          </>
-        );
-      },
-    },
-    {
       header: 'Actions',
       name: 'action',
       minWidth: 200,
       render: ({ data: doc }: { data: DocDocument }) => {
         return (
           <>
-            <Button size="small" onClick={() => handleNewVersion(doc)}>
-              Upload new version
-            </Button>
+            {handleNewVersion && (
+              <Button size="small" onClick={() => handleNewVersion(doc)}>
+                Upload new version
+              </Button>
+            )}
           </>
         );
       },
@@ -108,5 +94,5 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
   ];
 };
 
-export const useDocumentColumns = ({ handleNewVersion }: CreateColumnsType) =>
+export const useDocDocumentColumns = ({ handleNewVersion }: CreateColumnsType) =>
   useMemo(() => createColumns({ handleNewVersion }), [handleNewVersion]);

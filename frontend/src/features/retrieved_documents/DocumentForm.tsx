@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { prettyDate } from '../../common';
 import { useUpdateDocumentMutation } from './documentsApi';
-import { RetrievedDocument, DocumentTypes, LanguageCodes } from './types';
+import { RetrievedDocument, DocumentTypes, languageCodes } from './types';
 const { TextArea } = Input;
 
 export function DocumentForm(props: { doc: RetrievedDocument }) {
@@ -134,7 +134,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
       </div>
 
       <Form.Item name="lang_code" label="Language">
-        <Select options={LanguageCodes} />
+        <Select options={languageCodes} />
       </Form.Item>
       <Form.Item name="base_url" label="Base URL">
         <Input disabled />
