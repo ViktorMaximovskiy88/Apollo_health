@@ -85,6 +85,7 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
             return
 
         await self.page.route("**/*", intercept)
+        self.page.on("download", lambda download: download.cancel())
 
         metadata: Metadata
         for index, metadata in enumerate(self.metadatas):

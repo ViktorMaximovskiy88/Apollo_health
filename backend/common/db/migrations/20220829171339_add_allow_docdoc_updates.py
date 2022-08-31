@@ -10,7 +10,7 @@ class Forward:
         input_document: NoDocDocUpdatesSite,
         output_document: Site,
     ):
-        output_document.scrape_method_configuration.allow_docdoc_updates = True
+        output_document.scrape_method_configuration.allow_docdoc_updates = False
 
 
 class Backward:
