@@ -15,6 +15,7 @@ from backend.app.routes import (
     doc_documents,
     document_family,
     documents,
+    payer_backbone,
     proxies,
     site_scrape_tasks,
     sites,
@@ -81,6 +82,7 @@ app.include_router(doc_documents.router, prefix=prefix)
 app.include_router(work_queues.router, prefix=prefix)
 app.include_router(translations.router, prefix=prefix)
 app.include_router(document_family.router, prefix=prefix)
+app.include_router(payer_backbone.router, prefix=prefix)
 
 
 @app.middleware("http")
