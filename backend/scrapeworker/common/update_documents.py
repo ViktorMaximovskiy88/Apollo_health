@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from logging import Logger as PyLogger
 from typing import Any
 
 from async_lru import alru_cache
@@ -20,7 +21,7 @@ from backend.scrapeworker.common.models import DownloadContext
 
 
 class DocumentUpdater:
-    def __init__(self, log: Logger, scrape_task: SiteScrapeTask, site: Site) -> None:
+    def __init__(self, log: PyLogger, scrape_task: SiteScrapeTask, site: Site) -> None:
         self.log = log
         self.logger = Logger()
         self.text_handler = TextHandler()

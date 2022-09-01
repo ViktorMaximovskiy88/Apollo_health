@@ -112,8 +112,8 @@ class ScrapeWorker:
         # Return lists of new therapy and indication tags compared against existing tags
         # Checks tag code and tag page for equality, ignoring changes in other attributes
         ###
-        therapy_tags_hash: dict[str, list[TherapyTag]] = {}
-        indicate_tags_hash: dict[str, list[IndicationTag]] = {}
+        therapy_tags_hash: dict[str, list[int]] = {}
+        indicate_tags_hash: dict[int, list[int]] = {}
         for tag in existing_doc.therapy_tags:
             if tag.code in therapy_tags_hash:
                 therapy_tags_hash[tag.code].append(tag.page)
