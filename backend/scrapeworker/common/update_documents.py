@@ -1,17 +1,18 @@
 from datetime import datetime, timezone
+from logging import Logger as PyLogger
 from typing import Any
 
 from async_lru import alru_cache
 from beanie.odm.operators.update.general import Set
 
 from backend.app.utils.logger import Logger, create_and_log
-from backend.common.models.doc_document import (
-    DocDocument,
-    IndicationTag,
-    TherapyTag,
-    calc_final_effective_date,
+from backend.common.models.doc_document import DocDocument, IndicationTag, TherapyTag
+from backend.common.models.document import (
+    RetrievedDocument,
+    RetrievedDocumentLocation,
+    UpdateRetrievedDocument,
 )
-from backend.common.models.document import RetrievedDocument, UpdateRetrievedDocument
+from backend.common.models.shared import DocDocumentLocation
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
@@ -20,7 +21,7 @@ from backend.scrapeworker.common.models import DownloadContext
 
 
 class DocumentUpdater:
-    def __init__(self, log: Logger, scrape_task: SiteScrapeTask, site: Site) -> None:
+    def __init__(self, log: PyLogger, scrape_task: SiteScrapeTask, site: Site) -> None:
         self.log = log
         self.logger = Logger()
         self.text_handler = TextHandler()
@@ -54,8 +55,26 @@ class DocumentUpdater:
     ) -> UpdateRetrievedDocument:
         now = datetime.now(tz=timezone.utc)
         name = self.set_doc_name(parsed_content, download)
+
+        location: RetrievedDocumentLocation = document.get_site_location(self.site.id)
+
+        if location:
+            location.context_metadata = download.metadata.dict()
+            location.last_collected_date = now
+        else:
+            document.locations.append(
+                RetrievedDocumentLocation(
+                    base_url=download.metadata.base_url,
+                    first_collected_date=now,
+                    last_collected_date=now,
+                    site_id=self.site.id,
+                    url=download.request.url,
+                    context_metadata=download.metadata.dict(),
+                    link_text=download.metadata.link_text,
+                )
+            )
+
         updated_doc = UpdateRetrievedDocument(
-            context_metadata=download.metadata.dict(),
             doc_type_confidence=parsed_content["confidence"],
             document_type=parsed_content["document_type"],
             effective_date=parsed_content["effective_date"],
@@ -67,14 +86,15 @@ class DocumentUpdater:
             published_date=parsed_content["published_date"],
             identified_dates=parsed_content["identified_dates"],
             lang_code=parsed_content["lang_code"],
-            last_collected_date=now,
             therapy_tags=parsed_content["therapy_tags"],
             indication_tags=parsed_content["indication_tags"],
             metadata=parsed_content["metadata"],
             name=name,
-            scrape_task_id=self.scrape_task.id,
             text_checksum=document.text_checksum,
+            locations=document.locations,
+            last_collected_date=now,
         )
+
         await document.update(Set(updated_doc.dict(exclude_unset=True)))
         return updated_doc
 
@@ -88,6 +108,15 @@ class DocumentUpdater:
             DocDocument.retrieved_document_id == retrieved_document.id
         )
         if doc_document:
+            self.log.debug(f"doc doc update -> {doc_document.id}")
+            rt_doc_location = retrieved_document.get_site_location(self.site.id)
+            location: DocDocumentLocation = doc_document.get_site_location(self.site.id)
+
+            if location:
+                location.last_collected_date = rt_doc_location.last_collected_date
+            else:
+                doc_document.locations.append(DocDocumentLocation(**rt_doc_location.dict()))
+
             if self.site.scrape_method_configuration.allow_docdoc_updates is True:
                 doc_document.therapy_tags = retrieved_document.therapy_tags
                 doc_document.indication_tags = retrieved_document.indication_tags
@@ -95,10 +124,10 @@ class DocumentUpdater:
                 doc_document.therapy_tags = doc_document.therapy_tags + new_therapy_tags
                 doc_document.indication_tags = doc_document.indication_tags + new_indicate_tags
 
-            doc_document.text_checksum = (
-                retrieved_document.text_checksum
-            )  # Can be removed after text added to older docs
+            # Can be removed after text added to older docs
+            doc_document.text_checksum = retrieved_document.text_checksum
             doc_document.last_collected_date = retrieved_document.last_collected_date
+
             await doc_document.save()
         else:
             await self.create_doc_document(retrieved_document)
@@ -111,10 +140,8 @@ class DocumentUpdater:
         name = self.set_doc_name(parsed_content, download)
         text_checksum = await self.text_handler.save_text(parsed_content["text"])
         document = RetrievedDocument(
-            base_url=download.metadata.base_url,
             checksum=checksum,
             text_checksum=text_checksum,
-            context_metadata=download.metadata.dict(),
             doc_type_confidence=parsed_content["confidence"],
             document_type=parsed_content["document_type"],
             effective_date=parsed_content["effective_date"],
@@ -126,24 +153,33 @@ class DocumentUpdater:
             published_date=parsed_content["published_date"],
             file_extension=download.file_extension,
             content_type=download.content_type,
-            first_collected_date=now,
             identified_dates=parsed_content["identified_dates"],
             lang_code=parsed_content["lang_code"],
-            last_collected_date=now,
             metadata=parsed_content["metadata"],
             name=name,
-            scrape_task_id=self.scrape_task.id,
-            site_id=self.site.id,
-            url=url,
             therapy_tags=parsed_content["therapy_tags"],
             indication_tags=parsed_content["indication_tags"],
+            first_collected_date=now,
+            last_collected_date=now,
+            locations=[
+                RetrievedDocumentLocation(
+                    base_url=download.metadata.base_url,
+                    first_collected_date=now,
+                    last_collected_date=now,
+                    site_id=self.site.id,
+                    url=url,
+                    context_metadata=download.metadata.dict(),
+                    link_text=download.metadata.link_text,
+                )
+            ],
         )
         await create_and_log(self.logger, await self.get_user(), document)
         return document
 
     async def create_doc_document(self, retrieved_document: RetrievedDocument):
+        # we always have one initially
+        rt_doc_location = retrieved_document.locations[0]
         doc_document = DocDocument(
-            site_id=retrieved_document.site_id,
             retrieved_document_id=retrieved_document.id,  # type: ignore
             name=retrieved_document.name,
             checksum=retrieved_document.checksum,
@@ -158,15 +194,15 @@ class DocumentUpdater:
             next_update_date=retrieved_document.next_update_date,
             published_date=retrieved_document.published_date,
             lang_code=retrieved_document.lang_code,
-            first_collected_date=retrieved_document.first_collected_date,
-            last_collected_date=retrieved_document.last_collected_date,
-            link_text=retrieved_document.context_metadata["link_text"],
-            url=retrieved_document.url,
-            base_url=retrieved_document.base_url,
             therapy_tags=retrieved_document.therapy_tags,
             indication_tags=retrieved_document.indication_tags,
             file_extension=retrieved_document.file_extension,
             identified_dates=retrieved_document.identified_dates,
+            last_collected_date=retrieved_document.last_collected_date,
+            first_collected_date=retrieved_document.first_collected_date,
+            locations=[DocDocumentLocation(**rt_doc_location.dict())],
         )
-        doc_document.final_effective_date = calc_final_effective_date(doc_document)
+
+        doc_document.set_final_effective_date()
+
         await create_and_log(self.logger, await self.get_user(), doc_document)

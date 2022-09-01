@@ -1,15 +1,8 @@
-import io
-import json
-import logging
 import urllib.parse
-import zipfile
 
 from beanie import PydanticObjectId
 from beanie.operators import ElemMatch
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, UploadFile, status
-from openpyxl import load_workbook
-from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
-from pydantic import BaseModel, HttpUrl, ValidationError
 
 from backend.app.routes.table_query import (
     TableFilterInfo,
@@ -19,17 +12,22 @@ from backend.app.routes.table_query import (
     query_table,
 )
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
+from backend.app.utils.uploads import get_sites_from_upload
 from backend.app.utils.user import get_current_user
 from backend.common.core.enums import SiteStatus
+from backend.common.models.doc_document import DocDocument, DocDocumentLimitTags, SiteDocDocument
+from backend.common.models.document import (
+    RetrievedDocument,
+    RetrievedDocumentLimitTags,
+    SiteRetrievedDocument,
+)
 from backend.common.models.site import (
-    BaseUrl,
+    ActiveUrlResponse,
     NewSite,
-    ScrapeMethodConfiguration,
     Site,
     UpdateSite,
     UpdateSiteAssigne,
 )
-from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 
 router = APIRouter(
@@ -45,9 +43,8 @@ async def get_target(id: PydanticObjectId) -> Site:
     return site
 
 
-@router.get("/", response_model=TableQueryResponse)
+@router.get("/", response_model=TableQueryResponse, dependencies=[Security(get_current_user)])
 async def read_sites(
-    current_user: User = Depends(get_current_user),
     limit: int | None = None,
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
@@ -64,11 +61,6 @@ async def download_sites():
         .project(NewSite)
         .to_list()
     )
-
-
-class ActiveUrlResponse(BaseModel):
-    in_use: bool
-    site: Site | None = None
 
 
 @router.get(
@@ -120,99 +112,6 @@ async def create_site(
     return new_site
 
 
-def parse_line(line):
-    name: str
-    base_url_str: str
-    tag_str: str
-    doc_ext_str: str
-    url_keyw_str: str
-    collection_method: str
-    scrape_method = "SimpleDocumentScrape"
-    cron = "0 16 * * *"
-    name, base_url_str, tag_str, doc_ext_str, url_keyw_str, collection_method = line  # type: ignore
-
-    tags = tag_str.split(",") if tag_str else []
-    base_urls = base_url_str.split("|") if base_url_str else []
-    doc_exts = doc_ext_str.split(",") if doc_ext_str else ["pdf"]
-    url_keyws = url_keyw_str.split(",") if url_keyw_str else []
-    collection_method = collection_method if collection_method else "AUTOMATED"
-    scrape_method_configuration = ScrapeMethodConfiguration(
-        document_extensions=doc_exts,
-        url_keywords=url_keyws,
-        proxy_exclusions=[],
-        wait_for=[],
-        follow_links=False,
-        follow_link_keywords=[],
-        follow_link_url_keywords=[],
-    )
-
-    clean_urls = []
-    for base_url in base_urls:
-        try:
-            parsed_url = BaseUrl(url=HttpUrl(url=base_url, scheme="http"))
-            clean_urls.append(parsed_url)
-        except ValidationError:
-            logging.error(f"site {name} has invalid url: {base_url}")
-
-    return Site(
-        name=name,
-        base_urls=clean_urls,
-        scrape_method=scrape_method,
-        collection_method=collection_method,
-        scrape_method_configuration=scrape_method_configuration,
-        tags=tags,
-        disabled=False,
-        cron=cron,
-    )
-
-
-def get_sites_from_json(file: UploadFile):
-    content = file.file.read()
-    content_obj = json.loads(content)
-    for site in content_obj:
-        site["disabled"] = False
-        site["status"] = SiteStatus.NEW
-        new_site = Site.parse_obj(site)
-        yield new_site
-
-
-def get_lines_from_xlsx(file: UploadFile):
-    wb = load_workbook(io.BytesIO(file.file.read()))
-    sheet = wb[wb.sheetnames[0]]
-
-    for i, line in enumerate(sheet.values):  # type: ignore
-        # Skip header.
-        if i == 0:
-            continue
-        # Skip blank site names. Happens with last line.
-        if not line[0]:
-            continue
-        # Remove illegal characters.
-        clean_line = []
-        for line_value in line:
-            if isinstance(line_value, str):
-                clean_line.append(ILLEGAL_CHARACTERS_RE.sub("", line_value))
-            else:
-                clean_line.append(line_value)
-        # Yield parsed site.
-        yield parse_line(clean_line)
-
-
-def get_lines_from_text_file(file: UploadFile):
-    for line in file.file:
-        line = line.decode("utf-8").strip()
-        yield parse_line(line.split("\t"))
-
-
-def get_sites_from_upload(file: UploadFile):
-    if file.content_type == "application/json":
-        return get_sites_from_json(file)
-    try:
-        return get_lines_from_xlsx(file)
-    except zipfile.BadZipFile:
-        return get_lines_from_text_file(file)
-
-
 @router.post("/upload", response_model=list[Site])
 async def upload_sites(
     file: UploadFile,
@@ -259,11 +158,6 @@ async def update_site(
     return updated
 
 
-async def check_for_scrapetask(site_id: PydanticObjectId) -> list[SiteScrapeTask]:
-    scrape_task = await SiteScrapeTask.find_many({"site_id": site_id}).to_list()
-    return scrape_task
-
-
 @router.delete(
     "/{id}",
     responses={
@@ -277,7 +171,9 @@ async def delete_site(
     logger: Logger = Depends(get_logger),
 ):
     # check for associated collection records, return error if present
-    scrape_task = False  # await check_for_scrapetask(id) - reimplement check at later date.
+    # - reimplement check at later date.
+    # scrape_task = await SiteScrapeTask.find_many({"site_id": site_id}).to_list()
+    scrape_task = False
     if scrape_task:
         raise HTTPException(
             status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
@@ -286,3 +182,67 @@ async def delete_site(
 
     await update_and_log_diff(logger, current_user, target, UpdateSite(disabled=True))
     return {"success": True}
+
+
+@router.get(
+    "/{site_id}/documents",
+    response_model=list[SiteRetrievedDocument],
+    dependencies=[Security(get_current_user)],
+)
+async def get_site_docs(
+    site_id: PydanticObjectId,
+):
+    docs = (
+        await RetrievedDocument.find({"locations.site_id": site_id})
+        .project(RetrievedDocumentLimitTags)
+        .to_list()
+    )
+    return [doc.for_site(site_id) for doc in docs]
+
+
+@router.get(
+    "/{site_id}/documents/{doc_id}",
+    response_model=SiteRetrievedDocument,
+    dependencies=[Security(get_current_user)],
+)
+async def get_site_doc_by_id(
+    site_id: PydanticObjectId,
+    doc_id: PydanticObjectId,
+):
+    doc = await RetrievedDocument.find_one({"_id": doc_id, "locations.site_id": site_id})
+    if not doc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    return doc.for_site(site_id)
+
+
+@router.get(
+    "/{site_id}/doc-documents",
+    response_model=list[SiteDocDocument],
+    dependencies=[Security(get_current_user)],
+)
+async def get_site_doc_docs(
+    site_id: PydanticObjectId,
+):
+    docs = (
+        await DocDocument.find({"locations.site_id": site_id})
+        .project(DocDocumentLimitTags)
+        .to_list()
+    )
+    return [doc.for_site(site_id) for doc in docs]
+
+
+@router.get(
+    "/{site_id}/doc-documents/{doc_id}",
+    response_model=SiteDocDocument,
+    dependencies=[Security(get_current_user)],
+)
+async def get_site_doc_doc_by_id(
+    site_id: PydanticObjectId,
+    doc_id: PydanticObjectId,
+):
+    doc = await DocDocument.find_one({"_id": doc_id, "locations.site_id": site_id})
+    if not doc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    return doc.for_site(site_id)

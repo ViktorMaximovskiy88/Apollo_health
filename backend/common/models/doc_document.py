@@ -1,45 +1,24 @@
 from datetime import datetime
 
 from beanie import Indexed, PydanticObjectId
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from backend.common.core.enums import ApprovalStatus, LangCode, TaskStatus
 from backend.common.models.base_document import BaseDocument
+from backend.common.models.document_mixins import DocumentMixins
+from backend.common.models.shared import (
+    DocDocumentLocation,
+    DocDocumentLocationView,
+    IndicationTag,
+    LockableDocument,
+    TaskLock,
+    TherapyTag,
+    UpdateIndicationTag,
+    UpdateTherapyTag,
+)
 
 
-class TherapyTag(BaseModel):
-    text: str
-    page: int = 0
-    code: str
-    name: str
-    score: float = 0
-    focus: bool = False
-
-    def __hash__(self):
-        return hash(tuple(self.__dict__.values()))
-
-
-class IndicationTag(BaseModel):
-    text: str
-    code: int
-    page: int = 0
-
-    def __hash__(self):
-        return hash(tuple(self.__dict__.values()))
-
-
-class TaskLock(BaseModel):
-    work_queue_id: PydanticObjectId
-    user_id: PydanticObjectId
-    expires: datetime
-
-
-class LockableDocument(BaseModel):
-    locks: list[TaskLock] = []
-
-
-class DocDocument(BaseDocument, LockableDocument):
-    site_id: Indexed(PydanticObjectId)  # type: ignore
+class BaseDocDocument(BaseModel):
     retrieved_document_id: Indexed(PydanticObjectId)  # type: ignore
     classification_status: Indexed(str) = ApprovalStatus.QUEUED  # type: ignore
     content_extraction_status: Indexed(str) = ApprovalStatus.QUEUED  # type: ignore
@@ -49,6 +28,7 @@ class DocDocument(BaseDocument, LockableDocument):
     checksum: str
     file_extension: str | None = None
     text_checksum: str | None = None
+    lang_code: LangCode | None = None
 
     # Document Type
     document_type: str | None = None
@@ -64,24 +44,17 @@ class DocDocument(BaseDocument, LockableDocument):
     first_created_date: datetime | None = None
     published_date: datetime | None = None
     identified_dates: list[datetime] | None = None
+    first_collected_date: datetime | None = None
+    last_collected_date: datetime | None = None
 
     # Manual/Calculated Dates
     final_effective_date: datetime | None = None
     end_date: datetime | None = None
 
-    first_collected_date: datetime | None = None
-    last_collected_date: datetime | None = None
-
     # Lineage
+    # TODO ask about these two ...
     lineage_id: PydanticObjectId | None = None
     version: str | None = None
-
-    # URLs
-    url: str | None
-    base_url: str | None
-    link_text: str | None
-
-    lang_code: LangCode | None
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
@@ -91,38 +64,40 @@ class DocDocument(BaseDocument, LockableDocument):
 
     tags: list[str] = []
 
-    document_family_id: PydanticObjectId | None = None
+
+class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixins):
+    locations: list[DocDocumentLocation] = []
+
+    def for_site(self, site_id: PydanticObjectId):
+        location = self.get_site_location(site_id)
+        copy = self.dict()
+        copy.pop("first_collected_date")
+        copy.pop("last_collected_date")
+        return SiteDocDocument(_id=self.id, **copy, **location.dict())
+
+
+class DocDocumentView(DocDocument):
+    locations: list[DocDocumentLocationView] = []
+
+
+class SiteDocDocument(BaseDocDocument, DocDocumentLocation):
+    id: PydanticObjectId = Field(None, alias="_id")
 
 
 class DocDocumentLimitTags(DocDocument):
+    class Collection:
+        name = "DocDocument"
+
     class Settings:
         projection = {"therapy_tags": {"$slice": 10}, "indication_tags": {"$slice": 10}}
 
 
-class UpdateTherapyTag(BaseModel):
-    name: str | None = None
-    text: str | None = None
-    page: int | None = None
-    code: str | None = None
-    score: float | None = None
-    focus: bool | None = None
-
-
-class UpdateIndicationTag(BaseModel):
-    text: str | None = None
-    page: int | None = None
-    code: str | None = None
-    score: float | None = None
-    relevancy: float | None = None
-
-
-class UpdateDocDocument(BaseModel):
+class UpdateDocDocument(BaseModel, DocumentMixins):
     classification_status: TaskStatus = TaskStatus.QUEUED
     classification_lock: TaskLock | None = None
     name: str | None = None
     document_type: str | None = None
-    checksum: str | None = None
-    text_checksum: str | None = None
+    lang_code: LangCode | None = None
 
     final_effective_date: datetime | None = None
     effective_date: datetime | None = None
@@ -133,20 +108,13 @@ class UpdateDocDocument(BaseModel):
     next_update_date: datetime | None = None
     first_created_date: datetime | None = None
     published_date: datetime | None = None
-
     end_date: datetime | None = None
-
-    first_collected_date: datetime | None = None
-    last_collected_date: datetime | None = None
 
     lineage_id: PydanticObjectId | None = None
     version: str | None = None
 
-    lang_code: LangCode | None = None
-
     therapy_tags: list[UpdateTherapyTag] | None = None
     indication_tags: list[UpdateIndicationTag] | None = None
-
     tags: list[str] | None = None
 
     translation_id: PydanticObjectId | None = None
@@ -154,23 +122,7 @@ class UpdateDocDocument(BaseModel):
     content_extraction_status: ApprovalStatus = ApprovalStatus.QUEUED
     content_extraction_lock: TaskLock | None = None
 
-    document_family_id: PydanticObjectId | None = None
-
-
-def calc_final_effective_date(doc: DocDocument | UpdateDocDocument) -> datetime | None:
-    computeFromFields: list[datetime] = []
-    if doc.effective_date:
-        computeFromFields.append(doc.effective_date)
-    if doc.last_reviewed_date:
-        computeFromFields.append(doc.last_reviewed_date)
-    if doc.last_updated_date:
-        computeFromFields.append(doc.last_updated_date)
-
-    final_effective_date = (
-        max(computeFromFields) if len(computeFromFields) > 0 else doc.last_collected_date
-    )
-
-    return final_effective_date
+    locations: list[DocDocumentLocation] | None
 
 
 # Deprecated

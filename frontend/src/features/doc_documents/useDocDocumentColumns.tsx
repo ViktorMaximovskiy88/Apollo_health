@@ -2,19 +2,19 @@ import { useMemo } from 'react';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Button } from 'antd';
-import { LinkOutlined } from '@ant-design/icons';
-import { prettyDateTimeFromISO } from '../../common';
+import { prettyDateTimeFromISO, prettyDateFromISO } from '../../common';
 import { DocDocument } from './types';
 import { Link } from 'react-router-dom';
 import { DocumentTypes } from '../retrieved_documents/types';
 
 interface CreateColumnsType {
-  handleNewVersion: (data: DocDocument) => void;
+  handleNewVersion?: (data: DocDocument) => void;
 }
+
 export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
   return [
     {
-      header: 'Last Collected Date',
+      header: 'Last Collected',
       name: 'last_collected_date',
       minWidth: 200,
       filterEditor: DateFilter,
@@ -31,9 +31,16 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
       },
     },
     {
-      header: 'Document Name',
-      key: 'name',
+      header: 'Link Text',
+      name: 'link_text',
       defaultFlex: 1,
+      minWidth: 200,
+      render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
+    },
+    {
+      header: 'Document Name',
+      name: 'name',
+      minWidth: 200,
       filterSearch: true,
       render: ({ data: doc }: { data: DocDocument }) => {
         return <Link to={`/documents/${doc._id}`}>{doc.name}</Link>;
@@ -53,12 +60,6 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
       },
     },
     {
-      header: 'Link Text',
-      name: 'link_text',
-      minWidth: 200,
-      render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
-    },
-    {
       header: 'Effective Date',
       name: 'effective_date',
       minWidth: 200,
@@ -70,25 +71,8 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
           placeholder: 'Select Date',
         };
       },
-      render: ({ data: doc }: { data: DocDocument }) => {
-        if (!doc.effective_date) return null;
-        return prettyDateTimeFromISO(doc.effective_date);
-      },
-    },
-    {
-      header: 'Url',
-      key: 'url',
-      minWidth: 200,
-      filterSearch: true,
-      render: ({ data: doc }: { data: DocDocument }) => {
-        return (
-          <>
-            <Link to={`/documents/${doc._id}`}>{doc.url}</Link>
-            <a className="mx-2" href={doc.url} target="_blank" rel="noreferrer">
-              <LinkOutlined />
-            </a>
-          </>
-        );
+      render: ({ value: effective_date }: { value: string }) => {
+        return prettyDateFromISO(effective_date);
       },
     },
     {
@@ -98,9 +82,11 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
       render: ({ data: doc }: { data: DocDocument }) => {
         return (
           <>
-            <Button size="small" onClick={() => handleNewVersion(doc)}>
-              Upload new version
-            </Button>
+            {handleNewVersion && (
+              <Button size="small" onClick={() => handleNewVersion(doc)}>
+                Upload new version
+              </Button>
+            )}
           </>
         );
       },
@@ -108,5 +94,5 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
   ];
 };
 
-export const useDocumentColumns = ({ handleNewVersion }: CreateColumnsType) =>
+export const useDocDocumentColumns = ({ handleNewVersion }: CreateColumnsType) =>
   useMemo(() => createColumns({ handleNewVersion }), [handleNewVersion]);
