@@ -1,5 +1,4 @@
 import asyncio
-import re
 from contextlib import asynccontextmanager
 from random import shuffle
 from typing import Any, AsyncGenerator, Callable, Coroutine
@@ -39,22 +38,11 @@ from backend.scrapeworker.common.update_documents import DocumentUpdater
 from backend.scrapeworker.common.utils import get_extension_from_path_like
 from backend.scrapeworker.file_parsers import parse_by_type
 from backend.scrapeworker.playbook import ScrapePlaybook
-from backend.scrapeworker.scrapers import scrapers
+from backend.scrapeworker.scrapers import ScrapeHandler
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
+from backend.scrapeworker.searcher import Searchable
 
 log = logging.getLogger(__name__)
-
-
-def is_google(url):
-    parsed = urlparse(url)
-    return parsed.hostname in ["drive.google.com", "docs.google.com"]
-
-
-def get_google_id(url: str) -> str:
-    matched = re.search(r"/d/(.*)/", url)
-    if not matched:
-        raise Exception(f"{url} is not a valid google doc/drive url")
-    return matched.group(1)
 
 
 class ScrapeWorker:
@@ -75,8 +63,9 @@ class ScrapeWorker:
         self.text_handler = TextHandler()
         self.downloader = AioDownloader(_log)
         self.playbook = ScrapePlaybook(self.site.playbook)
-        self.log = _log
+        self.searchable = Searchable(config=self.site.scrape_method_configuration)
         self.doc_updater = DocumentUpdater(_log, scrape_task, site)
+        self.log = _log
 
     @alru_cache
     async def get_proxy_settings(
@@ -373,33 +362,23 @@ class ScrapeWorker:
     def active_base_urls(self):
         return [url for url in self.site.base_urls if url.status == "ACTIVE"]
 
-    def preprocess_download(self, download: DownloadContext, base_url: str):
-        download.metadata.base_url = base_url
-        if is_google(download.request.url):
-            google_id = get_google_id(download.request.url)
-            download.request.url = f"https://drive.google.com/u/0/uc?id={google_id}&export=download"
-
     async def queue_downloads(self, url: str, base_url: str):
         all_downloads: list[DownloadContext] = []
 
         async with self.playwright_context(url) as (base_page, context):
             async for (page, playbook_context) in self.playbook.run_playbook(base_page):
-                for Scraper in scrapers:
-                    scraper = Scraper(
-                        page=page,
-                        context=context,
-                        config=self.site.scrape_method_configuration,
-                        playbook_context=playbook_context,
-                        url=url,
-                        log=self.log,
-                    )
+                scrape_handler = ScrapeHandler(
+                    context=context,
+                    page=page,
+                    playbook_context=playbook_context,
+                    log=self.log,
+                    config=self.site.scrape_method_configuration,
+                )
 
-                    if not await scraper.is_applicable():
-                        continue
-
-                    for download in await scraper.execute():
-                        self.preprocess_download(download, base_url)
-                        all_downloads.append(download)
+                await scrape_handler.run_scrapers(url, base_url, all_downloads)
+                if await self.searchable.is_searchable(page):
+                    async for code in self.searchable.run_searchable(page):
+                        await scrape_handler.run_scrapers(url, base_url, all_downloads)
 
         return all_downloads
 

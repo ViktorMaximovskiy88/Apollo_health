@@ -32,6 +32,10 @@ class ScrapeMethodConfiguration(BaseModel):
     follow_links: bool = False
     follow_link_keywords: list[str]
     follow_link_url_keywords: list[str]
+    searchable: bool = False
+    searchable_type: str | None = None
+    searchable_input: AttrSelector | None = None
+    searchable_submit: AttrSelector | None = None
     attr_selectors: list[AttrSelector] = []
     focus_therapy_configs: list[FocusTherapyConfig] = []
     allow_docdoc_updates: bool = False
@@ -45,6 +49,10 @@ class UpdateScrapeMethodConfiguration(BaseModel):
     follow_links: bool | None = None
     follow_link_keywords: list[str] | None = None
     follow_link_url_keywords: list[str] | None = None
+    searchable: bool | None = None
+    searchable_type: str | None = None
+    searchable_input: AttrSelector | None = None
+    searchable_submit: AttrSelector | None = None
     wait_for_timeout_ms: int = 0
     search_in_frames: bool = False
     attr_selectors: list[AttrSelector] | None = None
