@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from random import random
 
 import pytest
@@ -231,7 +231,7 @@ class TestRunBulk:
         site_one = await simple_site(last_run_status=TaskStatus.QUEUED).save()
         await simple_scrape(site_one).save()
         await simple_site().save()
-        tomorrow = datetime.now() + timedelta(days=1)
+        now = datetime.now(tz=timezone.utc)
 
         res = await run_bulk_by_type("hold-all", logger=logger, current_user=user)
         assert res == BulkRunResponse(type=BulkScrapeActions.HOLD, sites=2, scrapes=1)
@@ -242,7 +242,7 @@ class TestRunBulk:
         sites = await Site.find_all().to_list()
         for site in sites:
             assert site.collection_hold is not None
-            assert site.collection_hold >= tomorrow
+            assert site.collection_hold.replace(tzinfo=timezone.utc) >= now
 
     @pytest.mark.asyncio
     async def test_cancel_hold_all(self, user, logger):
