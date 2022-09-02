@@ -1,5 +1,18 @@
 import { BaseDocument, TaskStatus } from '../../common';
 
+export enum WorkItemOption {
+  Found = 'FOUND',
+  NewDocument = 'NEW_DOCUMENT',
+  NotFound = 'NOT_FOUND',
+  Unhandled = 'UNHANDLED',
+}
+export interface WorkItem {
+  document_id: string;
+  selected: WorkItemOption;
+  new_doc?: string;
+  prev_doc?: string;
+  last_collected_date?: string;
+}
 export interface SiteScrapeTask extends BaseDocument {
   site_id: string;
   queued_time: string;
@@ -11,6 +24,7 @@ export interface SiteScrapeTask extends BaseDocument {
   documents_found: number;
   new_documents_found: number;
   collection_method: string;
+  work_list: WorkItem[];
 }
 
 export enum BulkActionTypes {

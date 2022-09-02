@@ -14,7 +14,7 @@ import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
 import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 import { GridPaginationToolbar } from '../../components';
-import { useDocDocumentAllColumns as useColumns } from './useDocDocumentAllColumns';
+import { useAllDocDocumentColumns as useColumns } from './useAllDocDocumentColumns';
 
 const useControlledPagination = ({
   isActive,

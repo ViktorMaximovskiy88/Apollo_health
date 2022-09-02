@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from uuid import UUID
 
 from beanie import Indexed, PydanticObjectId
@@ -7,6 +8,22 @@ from pydantic import BaseModel
 from backend.common.core.enums import CollectionMethod, TaskStatus
 from backend.common.models.base_document import BaseDocument
 from backend.common.models.site import ScrapeMethodConfiguration
+
+
+class WorkItemOption(Enum):
+    FOUND = "FOUND"
+    NEW_DOCUMENT = "NEW_DOCUMENT"
+    NOT_FOUND = "NOT_FOUND"
+    UNHANDLED = "UNHANDLED"
+
+
+class WorkItem(BaseModel):
+    document_id: PydanticObjectId
+    retrieved_document_id: PydanticObjectId
+    selected: str = WorkItemOption.UNHANDLED
+    new_doc: PydanticObjectId | None = None
+    prev_doc: PydanticObjectId | None = None
+    last_collected_date: datetime | None = None
 
 
 class SiteScrapeTask(BaseDocument):
@@ -26,6 +43,7 @@ class SiteScrapeTask(BaseDocument):
     retry_if_lost: bool = False
     collection_method: str | None = CollectionMethod.Automated
     scrape_method_configuration: ScrapeMethodConfiguration | None = None
+    work_list: list[WorkItem] = []
 
 
 class UpdateSiteScrapeTask(BaseModel):
@@ -39,6 +57,7 @@ class UpdateSiteScrapeTask(BaseModel):
     error_message: str | None = None
     retry_if_lost: bool | None = False
     scrape_method_configuration: ScrapeMethodConfiguration | None
+    work_list: list[WorkItem] = []
 
 
 # Deprecated

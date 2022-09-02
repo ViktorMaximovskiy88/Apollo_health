@@ -20,7 +20,7 @@ from backend.common.core.enums import BulkScrapeActions, CollectionMethod, SiteS
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import Site
-from backend.common.models.site_scrape_task import SiteScrapeTask, UpdateSiteScrapeTask
+from backend.common.models.site_scrape_task import SiteScrapeTask, UpdateSiteScrapeTask, WorkItem
 from backend.common.models.user import User
 from backend.common.task_queues.unique_task_insert import try_queue_unique_task
 
@@ -109,6 +109,16 @@ async def start_scrape_task(
         if previous_scrape_task:
             site_scrape_task.documents_found = previous_scrape_task.documents_found
             site_scrape_task.retrieved_document_ids = previous_scrape_task.retrieved_document_ids
+            doc_documents = await DocDocument.find(
+                {"retrieved_document_id": {"$in": site_scrape_task.retrieved_document_ids}}
+            ).to_list()
+            site_scrape_task.work_list = [
+                WorkItem(
+                    document_id=doc_document.id,
+                    retrieved_document_id=doc_document.retrieved_document_id,
+                )
+                for doc_document in doc_documents
+            ]
 
             await create_and_log(logger, current_user, site_scrape_task)
         else:

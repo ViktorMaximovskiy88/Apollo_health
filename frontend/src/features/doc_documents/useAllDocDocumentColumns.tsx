@@ -16,7 +16,7 @@ import {
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
-export const useDocDocumentAllColumns = () => [
+export const useAllDocDocumentColumns = () => [
   {
     header: 'Name',
     name: 'name',
