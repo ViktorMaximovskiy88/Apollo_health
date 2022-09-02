@@ -8,7 +8,7 @@ import { SiteDocDocument } from '../doc_documents/types';
 export const sitesApi = createApi({
   reducerPath: 'sitesApi',
   baseQuery: fetchBaseQuery(),
-  tagTypes: ['Site', 'ChangeLog'],
+  tagTypes: ['Site', 'ChangeLog', 'SiteDocDocument', 'RetrievedDocument'],
   endpoints: (builder) => ({
     getSites: builder.query<
       { data: Site[]; total: number },
@@ -34,17 +34,49 @@ export const sitesApi = createApi({
       query: (id) => `/sites/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
     }),
-    getSiteRetrievedDocuments: builder.query<RetrievedDocument[], string | undefined>({
-      query: (id) => `/sites/${id}/documents`,
-      providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
+    getSiteRetrievedDocuments: builder.query<
+      RetrievedDocument[],
+      {
+        siteId: String | undefined;
+        scrapeTaskId: String | null;
+      }
+    >({
+      query: ({ siteId, scrapeTaskId }) => {
+        let url = `/sites/${siteId}/documents`;
+        if (scrapeTaskId) {
+          url += `?scrape_task_id=${scrapeTaskId}`;
+        }
+        return url;
+      },
+      providesTags: (results) => {
+        const tags = [{ type: 'RetrievedDocument' as const, id: 'LIST' }];
+        results?.forEach(({ _id: id }) => tags.push({ type: 'RetrievedDocument', id }));
+        return tags;
+      },
     }),
     getSiteDocDocument: builder.query<SiteDocDocument, any>({
       query: ({ siteId, docId }) => `/sites/${siteId}/doc-documents/${docId}`,
       providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
     }),
-    getSiteDocDocuments: builder.query<SiteDocDocument[], string | undefined>({
-      query: (id) => `/sites/${id}/doc-documents`,
-      providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
+    getSiteDocDocuments: builder.query<
+      SiteDocDocument[],
+      {
+        siteId: String | undefined;
+        scrapeTaskId: String | null;
+      }
+    >({
+      query: ({ siteId, scrapeTaskId }) => {
+        let url = `/sites/${siteId}/doc-documents`;
+        if (scrapeTaskId) {
+          url += `?scrape_task_id=${scrapeTaskId}`;
+        }
+        return url;
+      },
+      providesTags: (results) => {
+        const tags = [{ type: 'SiteDocDocument' as const, id: 'LIST' }];
+        results?.forEach(({ _id: id }) => tags.push({ type: 'SiteDocDocument', id }));
+        return tags;
+      },
     }),
     addSite: builder.mutation<Site, Partial<Site>>({
       query: (body) => ({ url: '/sites/', method: 'PUT', body }),
@@ -90,6 +122,5 @@ export const {
   useGetChangeLogQuery,
   useGetSiteRetrievedDocumentsQuery,
   useGetSiteDocDocumentsQuery,
-  useGetSiteDocDocumentQuery,
   useLazyGetSiteDocDocumentsQuery,
 } = sitesApi;
