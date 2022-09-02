@@ -15,6 +15,7 @@ class PlaybookStep(BaseModel):
     action: PlaybookAction
     target: str = ""
     choice: str = ""
+    continue_steps: bool = False
 
 
 PlaybookContext = list[PlaybookStep]
@@ -42,6 +43,9 @@ class ScrapePlaybook:
                 continue  # skip setup code
 
             lines = step_block.split("\n")
+            if step_block.startswith("continue"):
+                steps[-1].continue_steps = True
+                continue
             if step_block.startswith("await navigationPromise"):
                 step = PlaybookStep(action=PlaybookAction.WAIT_FOR_NAV)
                 steps.append(step)
@@ -85,7 +89,8 @@ class ScrapePlaybook:
                 new_context = context + [
                     PlaybookStep(action=step.action, target=step.target, choice=option_label)
                 ]
-                yield page, new_context
+                if not step.continue_steps:
+                    yield page, new_context
                 async for page, result_context in self.playbook_step(
                     page, remaining_steps, new_context
                 ):
@@ -100,7 +105,8 @@ class ScrapePlaybook:
             new_context = context + [
                 PlaybookStep(action=step.action, target=step.target, choice=option_label)
             ]
-            yield page, new_context
+            if not step.continue_steps:
+                yield page, new_context
             async for page, result_context in self.playbook_step(
                 page, remaining_steps, new_context
             ):
@@ -116,7 +122,8 @@ class ScrapePlaybook:
         await page.wait_for_selector(step.target)
         await page.click(step.target)
         new_context = context + [step]
-        yield page, new_context
+        if not step.continue_steps:
+            yield page, new_context
         async for page, result_context in self.playbook_step(page, remaining_steps, new_context):
             yield page, result_context
 
@@ -129,7 +136,8 @@ class ScrapePlaybook:
     ) -> AsyncGenerator[tuple[Page, PlaybookContext], None]:
         await page.wait_for_load_state()
         new_context = context + [step]
-        yield page, new_context
+        if not step.continue_steps:
+            yield page, new_context
         async for page, result_context in self.playbook_step(page, remaining_steps, new_context):
             yield page, result_context
         await page.go_back()
