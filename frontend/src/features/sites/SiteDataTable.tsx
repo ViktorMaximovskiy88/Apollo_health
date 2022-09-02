@@ -19,8 +19,7 @@ import {
 import { useColumns } from './useSiteColumns';
 import { useGetUsersQuery } from '../users/usersApi';
 import { TableInfoType } from '../../common/types';
-import { TypeOnSelectionChangeArg } from '@inovua/reactdatagrid-community/types/TypeDataGridProps';
-import { Site } from './types';
+
 function disableLoadingMask(data: {
   visible: boolean;
   livePagination: boolean;
