@@ -6,15 +6,22 @@ from beanie.odm.operators.update.general import Set
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from pymongo import ReturnDocument
 
+from backend.app.routes.table_query import (
+    TableFilterInfo,
+    TableQueryResponse,
+    TableSortInfo,
+    get_query_json_list,
+    query_table,
+)
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
+from backend.common.models.doc_document import DocDocument
+from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask, UpdateSiteScrapeTask
 from backend.common.models.user import User
 from backend.common.task_queues.unique_task_insert import try_queue_unique_task
-from backend.common.models.document import RetrievedDocument
-from backend.common.models.doc_document import DocDocument
 
 router = APIRouter(
     prefix="/site-scrape-tasks",
@@ -34,18 +41,19 @@ async def get_target(id: PydanticObjectId):
 
 @router.get(
     "/",
-    response_model=list[SiteScrapeTask],
+    response_model=TableQueryResponse,
     dependencies=[Security(get_current_user)],
 )
 async def read_scrape_tasks_for_site(
     site_id: PydanticObjectId,
+    limit: int | None = None,
+    skip: int | None = None,
+    sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
+    filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
-    scrape_tasks: list[SiteScrapeTask] = (
-        await SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id)
-        .sort("-queued_time")
-        .to_list()
-    )
-    return scrape_tasks
+    print(site_id)
+    query = SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id)
+    return await query_table(query, limit, skip, sorts, filters)
 
 
 @router.get(
@@ -95,13 +103,11 @@ async def start_scrape_task(
         )
 
         # get the latest active site_scrape_task id
-        previous_scrape_task = await SiteScrapeTask.find_one({
-                "site_id": site_id
-            },
-            sort=[('start_time', -1)]
+        previous_scrape_task = await SiteScrapeTask.find_one(
+            {"site_id": site_id}, sort=[("start_time", -1)]
         )
         if previous_scrape_task:
-            site_scrape_task.documents_found = previous_scrape_task.documents_found;
+            site_scrape_task.documents_found = previous_scrape_task.documents_found
             site_scrape_task.retrieved_document_ids = previous_scrape_task.retrieved_document_ids
 
             await create_and_log(logger, current_user, site_scrape_task)
@@ -115,7 +121,7 @@ async def start_scrape_task(
 
         # NOTE: Could use a transaction here
         await create_and_log(logger, current_user, site_scrape_task)
-    
+
     await site.update(
         Set(
             {
@@ -226,9 +232,9 @@ async def cancel_all_site_scrape_task(
 
                 # change retrieve document if last_collected_date < today
                 retrieved_documents: list[RetrievedDocument] = (
-                    await RetrievedDocument.find_many({
-                        "_id": { "$in":  last_site_task.retrieved_document_ids }
-                    })
+                    await RetrievedDocument.find_many(
+                        {"_id": {"$in": last_site_task.retrieved_document_ids}}
+                    )
                     .sort("-first_collected_date")
                     .to_list()
                 )
@@ -236,11 +242,11 @@ async def cancel_all_site_scrape_task(
                     if datetime.date(r_doc.last_collected_date) < datetime.today().date():
                         await RetrievedDocument.get_motor_collection().find_one_and_update(
                             {"_id": r_doc.id},
-                            {"$set": {"last_collected_date": datetime.now(tz=timezone.utc) }}
+                            {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
                         )
                         await DocDocument.get_motor_collection().find_one_and_update(
-                            {"retrieved_document_id": r_doc.id },
-                            {"$set": {"last_collected_date": datetime.now(tz=timezone.utc) }}
+                            {"retrieved_document_id": r_doc.id},
+                            {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
                         )
 
                 await site.update(Set({Site.last_run_status: TaskStatus.FINISHED}))

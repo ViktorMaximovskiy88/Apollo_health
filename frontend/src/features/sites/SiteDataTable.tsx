@@ -18,6 +18,7 @@ import {
 } from '@inovua/reactdatagrid-community/types';
 import { useColumns } from './useSiteColumns';
 import { useGetUsersQuery } from '../users/usersApi';
+import { TableInfoType } from '../../common/types';
 
 function disableLoadingMask(data: {
   visible: boolean;
@@ -108,12 +109,7 @@ export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
   const [getSitesFn] = useLazyGetSitesQuery();
 
   const [deletedSite, setDeletedSite] = useState('');
-  interface TableInfoType {
-    limit: number;
-    skip: number;
-    sortInfo: TypeSortInfo;
-    filterValue: TypeFilterValue;
-  }
+
   const loadData = useCallback(
     async (tableInfo: TableInfoType) => {
       setLoading(true);
