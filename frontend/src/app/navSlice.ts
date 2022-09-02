@@ -34,6 +34,12 @@ export const navSlice = createSlice({
           label: 'Translations',
           shortLabel: 'Translations',
         },
+        {
+          url: '/payer-backbone',
+          defaultSearchParams: '?type=plan',
+          label: 'Payers',
+          shortLabel: 'Payers',
+        },
         { url: '/users', label: 'Users', shortLabel: 'Users' },
       ] as MenuItem[],
       currentItem: {} as MenuItem,

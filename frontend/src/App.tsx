@@ -24,6 +24,9 @@ import { SiteViewPage } from './features/sites/SiteViewPage';
 import { TranslationsHomePage } from './features/translations/TranslationsHomePage';
 import { TranslationsNewPage } from './features/translations/TranslationsNewPage';
 import { TranslationsEditPage } from './features/translations/TranslationsEditPage';
+import { PayerBackbomeHomePage } from './features/payer-backbone/PayerBackboneHomePage';
+import { PayerBackboneNewPage } from './features/payer-backbone/PayerBackboneNewPage';
+import { PayerBackboneEditPage } from './features/payer-backbone/PayerBackboneEditPage';
 
 function AppHomePage() {
   return <>{'Home'}</>;
@@ -56,6 +59,17 @@ function TranslationRoutes() {
       <Route index element={<TranslationsHomePage />} />
       <Route path="/new" element={<TranslationsNewPage />} />
       <Route path=":translationId" element={<TranslationsEditPage />} />
+    </Routes>
+  );
+}
+
+function PayerBackboneRoutes() {
+  return (
+    <Routes>
+      <Route path=":type" element={<PayerBackbomeHomePage />} />
+      <Route path=":type/new" element={<PayerBackboneNewPage />} />
+      <Route path=":type/:payerId" element={<PayerBackboneEditPage />} />
+      <Route path="/" element={<Navigate replace to="./plan" />} />
     </Routes>
   );
 }
@@ -108,6 +122,7 @@ function App() {
         <Route path="/users/*" element={<UserRoutes />} />
         <Route path="/documents/*" element={<DocumentRoutes />} />
         <Route path="/translations/*" element={<TranslationRoutes />} />
+        <Route path="/payer-backbone/*" element={<PayerBackboneRoutes />} />
         <Route path="/" element={<Navigate replace to="/sites" />} />
       </Route>
     </Routes>

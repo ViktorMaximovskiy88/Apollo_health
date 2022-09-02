@@ -13,6 +13,7 @@ import {
   InboxOutlined,
   FileTextTwoTone,
   MergeCellsOutlined,
+  WalletOutlined,
 } from '@ant-design/icons';
 
 export function AppLayout() {
@@ -92,12 +93,13 @@ function AppMenu() {
     '/work-queues': <InboxOutlined />,
     '/documents': <FileTextTwoTone />,
     '/translations': <MergeCellsOutlined />,
+    '/payer-backbone': <WalletOutlined />,
     '/users': <IdcardOutlined />,
   };
 
   return (
     <div className={classNames('flex flex-col items-center mt-4 space-y-4')}>
-      {menu.items.map(({ url, label, shortLabel }: any) => (
+      {menu.items.map(({ url, label, defaultSearchParams, shortLabel }: any) => (
         <Tooltip key={url} placement={'right'} title={label}>
           <Link
             className={classNames(
@@ -105,7 +107,7 @@ function AppMenu() {
               isCurrentClasses(location.pathname, url),
               'text-[18px] p-2'
             )}
-            to={url}
+            to={`${url}${defaultSearchParams ?? ''}`}
           >
             {icons[url]}
           </Link>

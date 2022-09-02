@@ -38,6 +38,9 @@ const routes = [
   '/work-queues/:workQueueId/:docDocumentId/process',
   '/work-queues/:workQueueId/:docDocumentId/read-only',
   '/work-queues/new',
+  '/payer-backbone',
+  '/payer-backbone/:type',
+  '/payer-backbone/:type/new',
 ];
 
 export const useBreadcrumbs = async () => {
@@ -112,6 +115,24 @@ export const useBreadcrumbs = async () => {
       '/translations': {
         translations: 'Translations',
         new: 'New',
+        ...asyncResolvers,
+      },
+      '/payer-backbone': {
+        'payer-backbone': 'Payer Backbone',
+        new: 'New',
+        ':type': (part: string, url: string) => {
+          const names: { [k: string]: string } = {
+            mco: 'MCO',
+            plan: 'Plan',
+            parent: 'Parent',
+            ump: 'UM Package',
+            bm: 'Benefit Manager',
+            formulary: 'Formulary',
+          };
+          const label = names[part];
+
+          return Promise.resolve({ url, label } as any);
+        },
         ...asyncResolvers,
       },
     };
