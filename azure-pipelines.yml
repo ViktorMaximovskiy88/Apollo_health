@@ -6,7 +6,7 @@ trigger:
       - main
   tags:
     include:
-      - 'v*'
+      - "v*"
 
 pool:
   vmImage: ubuntu-latest
@@ -27,24 +27,24 @@ stages:
   # - Build and Validate jobs run in parallel
   # - Once Build and Validate jobs are successful, then the Package SourceHub job commences.
   ###############################################################################################
-  - stage: build 
+  - stage: build
     displayName: Build Stage
     jobs:
       - job: packageSourceHub
         displayName: Package SourceHub
         condition: succeeded()
         steps:
-          ## 
+          ##
           # Pull Latest SourceHub Base Image from ECR if it exists. This will help improve build times of the Base and App images
           ##
           - task: ECRPullImage@1
             displayName: Pull SourceHub Base Image
             inputs:
               awsCredentials: "Apollo-AWS-Dev-Apollo"
-              regionName: 'us-east-1'
-              repository: 'sourcehub-base'
-              imageSource: 'imagetag'
-              imageTag: 'latest'
+              regionName: "us-east-1"
+              repository: "sourcehub-base"
+              imageSource: "imagetag"
+              imageTag: "latest"
             continueOnError: true
 
           - task: Docker@2
@@ -53,7 +53,7 @@ stages:
               command: build
               repository: sourcehub-base
               Dockerfile: Docker/base.Dockerfile
-              arguments: '--cache-from 307744843177.dkr.ecr.us-east-1.amazonaws.com/sourcehub-base:latest --build-arg BUILDKIT_INLINE_CACHE=1'
+              arguments: "--cache-from 307744843177.dkr.ecr.us-east-1.amazonaws.com/sourcehub-base:latest --build-arg BUILDKIT_INLINE_CACHE=1"
               tags: |
                 latest
 
@@ -61,22 +61,22 @@ stages:
             displayName: Push SourceHub Base Image to ECR
             inputs:
               awsCredentials: "Apollo-AWS-Dev-Apollo"
-              regionName: 'us-east-1'
-              imageSource: 'imagename'
-              sourceImageName: 'sourcehub-base'
-              sourceImageTag: 'latest'
-              repositoryName: 'sourcehub-base'
-              pushTag: 'latest'
+              regionName: "us-east-1"
+              imageSource: "imagename"
+              sourceImageName: "sourcehub-base"
+              sourceImageTag: "latest"
+              repositoryName: "sourcehub-base"
+              pushTag: "latest"
 
           ## Pull Latest SourceHub Base Image from ECR if it exists. This will help improve build time of the App image
           - task: ECRPullImage@1
             displayName: Pull SourceHub App Image
             inputs:
               awsCredentials: "Apollo-AWS-Dev-Apollo"
-              regionName: 'us-east-1'
-              repository: 'sourcehub-app'
-              imageSource: 'imagetag'
-              imageTag: 'latest'
+              regionName: "us-east-1"
+              repository: "sourcehub-app"
+              imageSource: "imagetag"
+              imageTag: "latest"
             continueOnError: true
 
           - task: Docker@2
@@ -86,53 +86,53 @@ stages:
               repository: sourcehub-app
               Dockerfile: Docker/app.Dockerfile
               buildContext: $(Build.SourcesDirectory)
-              arguments: '--cache-from 307744843177.dkr.ecr.us-east-1.amazonaws.com/sourcehub-app:latest --build-arg BUILDKIT_INLINE_CACHE=1'
+              arguments: "--cache-from 307744843177.dkr.ecr.us-east-1.amazonaws.com/sourcehub-app:latest --build-arg BUILDKIT_INLINE_CACHE=1"
               tags: |
                 $(Build.BuildNumber)
                 $(Build.SourceVersion)
                 latest
 
           - script: |
-              docker run -id --name test sourcehub-app:$(Build.BuildNumber) 
+              docker run -id --name test sourcehub-app:$(Build.BuildNumber)
               docker exec test bash -lc ". ./venv/bin/activate && pytest --junitxml='RESULTS.xml'"
-              TEST_EXIT_CODE=$? 
+              TEST_EXIT_CODE=$?
               docker cp test:/home/user/backend/RESULTS.xml RESULTS.xml
               docker stop test
               exit $TEST_EXIT_CODE
             displayName: Test SourceHub
-            continueOnError: true # Flip to false once all tests are passing initially
-          
+            continueOnError: false
+
           - task: PublishTestResults@2
             displayName: Publish Test Results
             condition: succeededOrFailed()
             inputs:
-              testResultsFiles: '**/RESULTS*.xml'
-              testRunTitle: 'Test Results for SourceHub-$(Build.BuildNumber)'
+              testResultsFiles: "**/RESULTS*.xml"
+              testRunTitle: "Test Results for SourceHub-$(Build.BuildNumber)"
 
           - task: ECRPushImage@1
             displayName: Push SourceHub App Image to ECR as SourceVersion
             inputs:
               awsCredentials: "Apollo-AWS-Dev-Apollo"
-              regionName: 'us-east-1'
-              imageSource: 'imagename'
-              sourceImageName: 'sourcehub-app'
-              sourceImageTag: '$(Build.SourceVersion)'
-              repositoryName: 'sourcehub-app'
-              pushTag: '$(Build.SourceVersion)'
+              regionName: "us-east-1"
+              imageSource: "imagename"
+              sourceImageName: "sourcehub-app"
+              sourceImageTag: "$(Build.SourceVersion)"
+              repositoryName: "sourcehub-app"
+              pushTag: "$(Build.SourceVersion)"
 
           - task: ECRPushImage@1
             displayName: Push SourceHub App Image to ECR as latest
             inputs:
               awsCredentials: "Apollo-AWS-Dev-Apollo"
-              regionName: 'us-east-1'
-              imageSource: 'imagename'
-              sourceImageName: 'sourcehub-app'
-              sourceImageTag: '$(Build.SourceVersion)'
-              repositoryName: 'sourcehub-app'
+              regionName: "us-east-1"
+              imageSource: "imagename"
+              sourceImageName: "sourcehub-app"
+              sourceImageTag: "$(Build.SourceVersion)"
+              repositoryName: "sourcehub-app"
               pushTag: latest
 
       - job: validateDevDeploy
-        displayName: Validate and Plan Dev Deployment 
+        displayName: Validate and Plan Dev Deployment
         steps:
           - template: .azure-pipelines/source-hub.validate.yml
             parameters:
@@ -140,13 +140,12 @@ stages:
               awsCredentials: "Apollo-AWS-Dev-Apollo"
 
       - job: validateTstDeploy
-        displayName: Validate and Plan Test Deployment 
+        displayName: Validate and Plan Test Deployment
         steps:
           - template: .azure-pipelines/source-hub.validate.yml
             parameters:
               environment: tst
               awsCredentials: "Apollo-AWS-Test-Apollo"
-
 
   ##############################################################################################
   # Stage: Deploy to the Development Environment
@@ -165,18 +164,16 @@ stages:
         displayName: Deploy to SourceHub Dev
         environment: SourceHub-Dev
         strategy:
-            runOnce:
-              deploy:
-                steps:
-
-                  ##
-                  # Deploy SourceHub to Dev environment
-                  ##
-                  - template: .azure-pipelines/source-hub.deploy.yml
-                    parameters:
-                      environment: dev
-                      awsCredentials: "Apollo-AWS-Dev-Apollo"
-
+          runOnce:
+            deploy:
+              steps:
+                ##
+                # Deploy SourceHub to Dev environment
+                ##
+                - template: .azure-pipelines/source-hub.deploy.yml
+                  parameters:
+                    environment: dev
+                    awsCredentials: "Apollo-AWS-Dev-Apollo"
 
   ##############################################################################################
   # Stage: Deploy to the Test Environment
@@ -197,43 +194,42 @@ stages:
         displayName: Deploy to SourceHub Test
         environment: SourceHub-Test
         strategy:
-            runOnce:
-              deploy:
-                steps:
-                  ##                
-                  # Pull SourceHub App Image from Dev ECR
-                  ##
-                  - task: ECRPullImage@1
-                    displayName: Pull SourceHub App Image
-                    inputs:
-                      awsCredentials: "Apollo-AWS-Dev-Apollo"
-                      regionName: 'us-east-1'
-                      repository: 'sourcehub-app'
-                      imageSource: 'imagetag'
-                      imageTag: '$(Build.SourceVersion)'
-                      outputVariable: 'DevImageId'
-                  
-                  ##                
-                  # Push SourceHub App Image to Test ECR
-                  ##
-                  - task: ECRPushImage@1
-                    displayName: Push SourceHub App Image to ECR as SourceVersion
-                    inputs:
-                      awsCredentials: "Apollo-AWS-Test-Apollo"
-                      regionName: 'us-east-1'
-                      imageSource: 'imageid'
-                      sourceImageId: $(DevImageId)
-                      repositoryName: 'sourcehub-app'
-                      pushTag: '$(Build.SourceVersion)'
+          runOnce:
+            deploy:
+              steps:
+                ##
+                # Pull SourceHub App Image from Dev ECR
+                ##
+                - task: ECRPullImage@1
+                  displayName: Pull SourceHub App Image
+                  inputs:
+                    awsCredentials: "Apollo-AWS-Dev-Apollo"
+                    regionName: "us-east-1"
+                    repository: "sourcehub-app"
+                    imageSource: "imagetag"
+                    imageTag: "$(Build.SourceVersion)"
+                    outputVariable: "DevImageId"
 
-                  ##
-                  # Deploy SourceHub to Test environment
-                  ##
-                  - template: .azure-pipelines/source-hub.deploy.yml
-                    parameters:
-                      environment: tst
-                      awsCredentials: "Apollo-AWS-Test-Apollo"
+                ##
+                # Push SourceHub App Image to Test ECR
+                ##
+                - task: ECRPushImage@1
+                  displayName: Push SourceHub App Image to ECR as SourceVersion
+                  inputs:
+                    awsCredentials: "Apollo-AWS-Test-Apollo"
+                    regionName: "us-east-1"
+                    imageSource: "imageid"
+                    sourceImageId: $(DevImageId)
+                    repositoryName: "sourcehub-app"
+                    pushTag: "$(Build.SourceVersion)"
 
+                ##
+                # Deploy SourceHub to Test environment
+                ##
+                - template: .azure-pipelines/source-hub.deploy.yml
+                  parameters:
+                    environment: tst
+                    awsCredentials: "Apollo-AWS-Test-Apollo"
 
   ##############################################################################################
   # Stage: Deploy to the Prod Environment
@@ -254,39 +250,39 @@ stages:
         displayName: Deploy to SourceHub Prod
         environment: SourceHub-Prod
         strategy:
-            runOnce:
-              deploy:
-                steps:
-                  ##                
-                  # Pull SourceHub App Image from Dev ECR
-                  ##
-                  - task: ECRPullImage@1
-                    displayName: Pull SourceHub App Image
-                    inputs:
-                      awsCredentials: "Apollo-AWS-Dev-Apollo"
-                      regionName: 'us-east-1'
-                      repository: 'sourcehub-app'
-                      imageSource: 'imagetag'
-                      imageTag: '$(Build.SourceVersion)'
-                      outputVariable: 'DevImageId'
+          runOnce:
+            deploy:
+              steps:
+                ##
+                # Pull SourceHub App Image from Dev ECR
+                ##
+                - task: ECRPullImage@1
+                  displayName: Pull SourceHub App Image
+                  inputs:
+                    awsCredentials: "Apollo-AWS-Dev-Apollo"
+                    regionName: "us-east-1"
+                    repository: "sourcehub-app"
+                    imageSource: "imagetag"
+                    imageTag: "$(Build.SourceVersion)"
+                    outputVariable: "DevImageId"
 
-                  ##
-                  # Push SourceHub App Image to Prod ECR
-                  ##
-                  - task: ECRPushImage@1
-                    displayName: Push SourceHub App Image to ECR as SourceVersion
-                    inputs:
-                      awsCredentials: "Apollo-AWS-Prod-Apollo"
-                      regionName: 'us-east-1'
-                      imageSource: 'imageid'
-                      sourceImageId: $(DevImageId)
-                      repositoryName: 'sourcehub-app'
-                      pushTag: '$(Build.SourceVersion)'
+                ##
+                # Push SourceHub App Image to Prod ECR
+                ##
+                - task: ECRPushImage@1
+                  displayName: Push SourceHub App Image to ECR as SourceVersion
+                  inputs:
+                    awsCredentials: "Apollo-AWS-Prod-Apollo"
+                    regionName: "us-east-1"
+                    imageSource: "imageid"
+                    sourceImageId: $(DevImageId)
+                    repositoryName: "sourcehub-app"
+                    pushTag: "$(Build.SourceVersion)"
 
-                  ##
-                  # Deploy SourceHub to Prod environment
-                  ##
-                  - template: .azure-pipelines/source-hub.deploy.yml
-                    parameters:
-                      environment: prd
-                      awsCredentials: "Apollo-AWS-Prod-Apollo"
+                ##
+                # Deploy SourceHub to Prod environment
+                ##
+                - template: .azure-pipelines/source-hub.deploy.yml
+                  parameters:
+                    environment: prd
+                    awsCredentials: "Apollo-AWS-Prod-Apollo"
