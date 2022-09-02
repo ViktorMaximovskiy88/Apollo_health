@@ -122,5 +122,6 @@ export const {
   useGetChangeLogQuery,
   useGetSiteRetrievedDocumentsQuery,
   useGetSiteDocDocumentsQuery,
+  useGetSiteDocDocumentQuery,
   useLazyGetSiteDocDocumentsQuery,
 } = sitesApi;
