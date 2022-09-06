@@ -127,9 +127,9 @@ function ElementInput({ name, field }: InputPropTypes) {
 
   const onSearch = (searchText: string) => {
     if (searchText) {
-      let newOptions = defaultOptions.filter((option) => option.label.includes(searchText));
-      newOptions = newOptions.slice(0, 3);
-      setOptions(newOptions);
+      const newOptions = defaultOptions.filter((option) => option.label.includes(searchText));
+      const topOptions = newOptions.slice(0, 3);
+      setOptions(topOptions);
     } else {
       setOptions([]);
     }
@@ -155,9 +155,9 @@ function NameInput({ name, field }: InputPropTypes) {
 
   const onSearch = (searchText: string) => {
     if (searchText) {
-      let newOptions = defaultOptions.filter((option) => option.label.includes(searchText));
-      newOptions = newOptions.slice(0, 3);
-      setOptions(newOptions);
+      const newOptions = defaultOptions.filter((option) => option.label.includes(searchText));
+      const topOptions = newOptions.slice(0, 3);
+      setOptions(topOptions);
     } else {
       setOptions([]);
     }
