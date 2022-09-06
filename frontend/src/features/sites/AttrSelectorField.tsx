@@ -114,17 +114,29 @@ function Header() {
   );
 }
 
-function ElementSelect({ name, field }: InputPropTypes) {
-  const elements = [
-    { value: 'a', label: 'a' },
-    { value: 'li', label: 'li' },
-    { value: 'span', label: 'span' },
-    { value: 'p', label: 'p' },
+function ElementInput({ name, field }: InputPropTypes) {
+  const defaultOptions = [
+    { label: 'a', value: 'a' },
+    { label: 'p', value: 'p' },
+    { label: 'li', value: 'li' },
+    { label: 'span', value: 'span' },
+    { label: 'input', value: 'input' },
   ];
+  const [options, setOptions] = useState<{ value: string }[]>([]);
+
+  const onSearch = (searchText: string) => {
+    if (searchText) {
+      let newOptions = defaultOptions.filter((option) => option.label.includes(searchText));
+      newOptions = newOptions.slice(0, 3);
+      setOptions(newOptions);
+    } else {
+      setOptions([]);
+    }
+  };
 
   return (
-    <Form.Item {...field} name={[name, 'attr_element']}>
-      <Select defaultValue={{ label: 'a', value: 'a' }} options={elements} />
+    <Form.Item {...field} name={[name, 'attr_element']} className="mb-0 shrink-0 col-span-2">
+      <AutoComplete defaultActiveFirstOption={false} onSearch={onSearch} options={options} />
     </Form.Item>
   );
 }
@@ -220,7 +232,7 @@ export function AttrSelectors() {
           {fields.map(({ key, name, ...field }) => (
             <Form.Item key={key} className="mb-2 whitespace-nowrap" {...field}>
               <Input.Group className="grid grid-cols-10 space-x-1">
-                <ElementSelect name={name} field={field} />
+                <ElementInput name={name} field={field} />
                 <NameInput name={name} field={field} />
                 <ValueInput name={name} field={field} />
                 <ContainsTextInput name={name} field={field} />

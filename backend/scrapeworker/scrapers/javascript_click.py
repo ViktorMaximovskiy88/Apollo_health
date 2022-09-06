@@ -75,12 +75,16 @@ class JavascriptClick(PlaywrightBaseScraper):
             try:
                 await response.finished()
                 content_type: str | None = None
+
                 if "content-type" in response.headers:
                     content_type = response.headers["content-type"]
-                download = await self.handle_json(response)
-                if download:
-                    download.metadata = await self.extract_metadata(link_handle)
-                    downloads.append(download)
+                # Handle special json response.
+                if content_type == "application/vnd.contentful.delivery.v1+json":
+                    download = await self.handle_json(response)
+                    if download:
+                        download.metadata = await self.extract_metadata(link_handle)
+                        downloads.append(download)
+                # Handle click which responses with pdf or other media download.
                 elif content_type in accepted_types:
                     self.log.debug(f"direct download {content_type}")
                     download = DownloadContext(
@@ -93,7 +97,6 @@ class JavascriptClick(PlaywrightBaseScraper):
                     downloads.append(download)
                 else:
                     self.log.debug(f"unknown format {content_type}")
-
             except Exception:
                 logging.error("exception", exc_info=True)
 
@@ -103,6 +106,7 @@ class JavascriptClick(PlaywrightBaseScraper):
         for index in range(0, xpath_locator_count):
             try:
                 link_handle = await xpath_locator.nth(index).element_handle(timeout=1000)
+                self.page.on("download", postprocess)
                 self.page.on("response", postprocess)
 
                 await link_handle.click()
