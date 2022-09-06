@@ -106,7 +106,7 @@ class JavascriptClick(PlaywrightBaseScraper):
                 logging.error("exception", exc_info=True)
 
         async def postprocess_download(download: Download) -> None:
-            accepted_types = [".pdf"]
+            accepted_types = [".pdf", ".xls", ".xlsx", ".doc", ".docx"]
             try:
                 # Response may not always have content-type header.
                 # Use filename ext instead.
