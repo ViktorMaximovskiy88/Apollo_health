@@ -84,8 +84,6 @@ class JavascriptClick(PlaywrightBaseScraper):
 
                 # Handle special json response.
                 download = await self.handle_json(response)
-                print("download is")
-                print(download)
                 if isinstance(download, DownloadContext):
                     download.metadata = await self.extract_metadata(link_handle)
                     downloads.append(download)
