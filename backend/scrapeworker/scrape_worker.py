@@ -187,6 +187,7 @@ class ScrapeWorker:
                 download.file_extension == "html"
                 and "html" in self.site.scrape_method_configuration.document_extensions
             ):
+                # TODO-TOMORROW: figure out how to PDF the text we get
                 async with self.playwright_context(url) as (page, _context):
                     dest_path = f"{checksum}.{download.file_extension}.pdf"
                     await page.goto(download.request.url, wait_until="domcontentloaded")

@@ -13,7 +13,7 @@ from tenacity import AttemptManager
 from backend.common.core.config import config
 from backend.common.models.link_task_log import InvalidResponse, ValidResponse
 from backend.common.models.proxy import Proxy
-from backend.common.storage.hash import DocStreamHasher
+from backend.common.storage.hash import DocStreamHasher, hash_full_text
 from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.common.rate_limiter import RateLimiter
 
@@ -155,6 +155,26 @@ class AioDownloader:
         )
         return download.file_path, download.file_hash
 
+    async def write_html_to_file(
+        self, download: DownloadContext, temp: tempfile._TemporaryFileWrapper
+    ):
+        # TODO: This may happen in the scraper
+        download.file_path = temp.name
+        async with aiofiles.open(download.file_path, "w") as f:
+            assert isinstance(download.html, str)
+            await f.write(download.html)
+            await f.flush()
+        download.set_mimetype()
+        download.set_extension_from_mimetype()
+        download.file_size = (
+            download.response.content_length or 0
+        )  # temp, do actual file size (these should 99.9% match but arent the same)
+        download.file_hash = hash_full_text(download.html)
+        self.log.info(
+            f"content_type={download.content_type} mimetype={download.mimetype} file_hash={download.file_hash}"  # noqa
+        )
+        return download.file_path, download.file_hash
+
     async def try_download_to_tempfile(
         self,
         download: DownloadContext,
@@ -163,45 +183,50 @@ class AioDownloader:
         url = download.request.url
         self.log.info(f"Before attempting download {url}")
 
-        async for attempt, proxy in self.proxy_with_backoff(proxies):
-            with attempt:
-                self.log.info(f"Attempting download {url}")
-                response: ClientResponse
-                proxy_url = proxy.proxy if proxy else None
-                try:
-                    response = await self.send_request(download, proxy)
-                    download.response.from_aio_response(response)
-                    self.log.info(f"Attempting download {url} response")
-                except ClientHttpProxyError as proxy_error:
-                    self.log.error(f"Client Proxy Error AIO {url}")
-                    # we catch so we can 'log' on the task and reraise for retry
-                    download.invalid_responses.append(
-                        InvalidResponse(
-                            proxy_url=proxy_url,
-                            status=proxy_error.status,
-                            message=proxy_error.message,
+        if download.html:
+            # may want this to happen in scraper
+            with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
+                yield await self.write_html_to_file(download, temp)
+        else:
+            async for attempt, proxy in self.proxy_with_backoff(proxies):
+                with attempt:
+                    self.log.info(f"Attempting download {url}")
+                    response: ClientResponse
+                    proxy_url = proxy.proxy if proxy else None
+                    try:
+                        response = await self.send_request(download, proxy)
+                        download.response.from_aio_response(response)
+                        self.log.info(f"Attempting download {url} response")
+                    except ClientHttpProxyError as proxy_error:
+                        self.log.error(f"Client Proxy Error AIO {url}")
+                        # we catch so we can 'log' on the task and reraise for retry
+                        download.invalid_responses.append(
+                            InvalidResponse(
+                                proxy_url=proxy_url,
+                                status=proxy_error.status,
+                                message=proxy_error.message,
+                            )
                         )
-                    )
-                    raise proxy_error
+                        raise proxy_error
 
-                self.log.info(f"Before link log {url} response")
+                    self.log.info(f"Before link log {url} response")
 
-                if not response.ok:
-                    invalid_response = InvalidResponse(
+                    if not response.ok:
+                        invalid_response = InvalidResponse(
+                            proxy_url=proxy_url, **download.response.dict()
+                        )
+                        download.invalid_responses.append(invalid_response)
+                        self.log.error(invalid_response)
+                        # if its 404 skip... maybe others we retry?
+                        yield (None, None)
+
+                    download.valid_response = ValidResponse(
                         proxy_url=proxy_url, **download.response.dict()
                     )
-                    download.invalid_responses.append(invalid_response)
-                    self.log.error(invalid_response)
-                    # if its 404 skip... maybe others we retry?
-                    yield (None, None)
 
-                download.valid_response = ValidResponse(
-                    proxy_url=proxy_url, **download.response.dict()
-                )
+                    # We only need this now due to the xlsx lib needing an ext (derp)
+                    # TODO see if we can unhave this; the excel lib is dumb
+                    download.guess_extension()
 
-                # We only need this now due to the xlsx lib needing an ext (derp)
-                # TODO see if we can unhave this; the excel lib is dumb
-                download.guess_extension()
-
-                with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
-                    yield await self.write_response_to_file(download, response, temp)
+                    with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
+                        yield await self.write_response_to_file(download, response, temp)

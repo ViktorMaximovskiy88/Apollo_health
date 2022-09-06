@@ -37,6 +37,8 @@ class ScrapeMethodConfiguration(BaseModel):
     searchable_input: AttrSelector | None = None
     searchable_submit: AttrSelector | None = None
     attr_selectors: list[AttrSelector] = []
+    html_attr_selectors: list[AttrSelector] = []
+    html_exclusion_selectors: list[AttrSelector] = []
     focus_therapy_configs: list[FocusTherapyConfig] = []
     allow_docdoc_updates: bool = False
 
