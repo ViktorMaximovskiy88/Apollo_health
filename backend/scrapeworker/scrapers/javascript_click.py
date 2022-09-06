@@ -47,8 +47,10 @@ class JavascriptClick(PlaywrightBaseScraper):
         except Exception:
             self.log.debug("no json response")
             return content_type
-        if content_type == "application/vnd.contentful.delivery.v1+json":  # Contentful
-            self.log.debug(f"follow json {content_type}")
+        # Handle contentful json field field.
+        # content_type == "application/vnd.contentful.delivery.v1+json"
+        if "fields" in parsed and "file" in parsed["fields"]:  # Contentful
+            self.log.debug(f"follow json file field {content_type}")
             file_field = parsed["fields"]["file"]
             return DownloadContext(
                 content_type=file_field["contentType"],
@@ -90,7 +92,7 @@ class JavascriptClick(PlaywrightBaseScraper):
                 elif content_type in accepted_types:
                     self.log.debug(f"json response -> direct download {content_type}")
                     download = DownloadContext(
-                        response=Response(content_type=content_type),
+                        response=Response(content_type=content_type, status=response.status),
                         request=Request(
                             url=response.url,
                         ),
