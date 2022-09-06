@@ -1,6 +1,7 @@
 import { BaseDocument } from '../../common';
 import { ApprovalStatus } from '../../common/approvalStatus';
 import { RetrievedDocument } from '../retrieved_documents/types';
+import { DocDocumentLocation } from './locations/types';
 
 export interface BaseDocTag {
   id: string;
@@ -33,6 +34,7 @@ export interface TaskLock {
 export interface CompareRequest extends BaseDocument {
   compareId?: string;
 }
+
 export interface CompareResponse extends BaseDocument {
   diff: string;
   org_doc: DocDocument;
@@ -40,13 +42,13 @@ export interface CompareResponse extends BaseDocument {
 }
 
 export interface DocDocument extends BaseDocument {
-  site_id: string;
   retrieved_document_id: string;
   classification_status: ApprovalStatus;
   classification_lock: TaskLock;
   name: string;
   checksum: string;
   file_extension: string;
+
   document_type: string;
   doc_type_confidence: number;
 
@@ -70,9 +72,7 @@ export interface DocDocument extends BaseDocument {
   lineage_id: string;
   version: string;
 
-  url: string;
-  base_url: string;
-  link_text: string;
+  locations: DocDocumentLocation[];
 
   lang_code: string;
 
@@ -84,15 +84,8 @@ export interface DocDocument extends BaseDocument {
   tags: string[];
 }
 
-export interface DocumentFamilyType extends BaseDocument {
-  name: string;
-  document_type: string;
-  description: string;
-  site_id: string;
-  relevance: string[];
-}
-
-export interface DocumentFamilyOption {
-  label: string;
-  value: string | null;
-}
+export type SiteDocDocument = Omit<
+  DocDocument,
+  'locations' | 'first_collected_date' | 'last_collected_date'
+> &
+  DocDocumentLocation;

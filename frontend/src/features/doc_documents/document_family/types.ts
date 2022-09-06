@@ -1,0 +1,9 @@
+import { BaseDocument } from '../../../common';
+
+export interface DocumentFamily extends BaseDocument {
+  name: string;
+  document_type: string;
+  description: string;
+  site_id: string;
+  relevance: string[];
+}

@@ -70,8 +70,8 @@ export function prettyDate(value: Date, dateFormat = DateTime.DATE_MED): string 
 }
 
 export function dateDuration(startDate: string, endDate?: string) {
-  const startDateTime = DateTime.fromISO(startDate);
-  const endDateTime = endDate ? DateTime.fromISO(endDate) : DateTime.now();
+  const startDateTime = DateTime.fromISO(startDate, { zone: 'utc' });
+  const endDateTime = endDate ? DateTime.fromISO(endDate, { zone: 'utc' }) : DateTime.utc();
   const duration = endDateTime.diff(startDateTime, ['hours', 'minutes', 'seconds', 'milliseconds']);
   return duration;
 }

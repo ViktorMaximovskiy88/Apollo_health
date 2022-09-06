@@ -5,6 +5,7 @@ import { dateToMoment } from '../../common';
 import { useCallback, useEffect, useState } from 'react';
 import { compact, groupBy, isEqual, maxBy } from 'lodash';
 import { DocDocumentInfoForm } from './DocDocumentInfoForm';
+import { DocDocumentLocations } from './locations/DocDocumentLocations';
 import { useNavigate } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 
@@ -121,6 +122,7 @@ interface EditFormPropTypes {
   onSubmit: (doc: Partial<DocDocument>) => Promise<void>;
   docId: string;
 }
+
 export function DocDocumentEditForm({
   isSaving,
   setIsSaving,
@@ -194,6 +196,9 @@ export function DocDocumentEditForm({
               onEditTag={handleTagEdit}
               currentPage={pageNumber}
             />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="Sites" key="sites" className="bg-white p-4 overflow-auto">
+            <DocDocumentLocations locations={doc.locations} docDocument={doc} />
           </Tabs.TabPane>
         </Tabs>
       </Form>

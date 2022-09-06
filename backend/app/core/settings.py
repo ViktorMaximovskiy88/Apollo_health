@@ -32,8 +32,8 @@ class Settings(BaseSettings):
 
     mongo_url: AnyUrl
     mongo_db: str
-    mongo_user: str
-    mongo_password: str
+    mongo_user: str | None
+    mongo_password: str | None
 
     aws_region: str | None
     aws_access_key_id: str | None

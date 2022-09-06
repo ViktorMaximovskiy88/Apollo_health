@@ -29,7 +29,6 @@ from backend.common.models.link_task_log import (
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.common.models.user import User
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.aio_downloader import AioDownloader
@@ -80,13 +79,6 @@ class ScrapeWorker:
         self.doc_updater = DocumentUpdater(_log, scrape_task, site)
 
     @alru_cache
-    async def get_user(self) -> User:
-        user = await User.by_email("admin@mmitnetwork.com")
-        if not user:
-            raise Exception("No user found")
-        return user
-
-    @alru_cache
     async def get_proxy_settings(
         self,
     ) -> list[tuple[Proxy | None, ProxySettings | None]]:
@@ -120,8 +112,8 @@ class ScrapeWorker:
         # Return lists of new therapy and indication tags compared against existing tags
         # Checks tag code and tag page for equality, ignoring changes in other attributes
         ###
-        therapy_tags_hash: dict[str, list[TherapyTag]] = {}
-        indicate_tags_hash: dict[str, list[IndicationTag]] = {}
+        therapy_tags_hash: dict[str, list[int]] = {}
+        indicate_tags_hash: dict[int, list[int]] = {}
         for tag in existing_doc.therapy_tags:
             if tag.code in therapy_tags_hash:
                 therapy_tags_hash[tag.code].append(tag.page)

@@ -1,4 +1,4 @@
-import { prettyDateFromISO, prettyDateUTCFromISO } from '../../common';
+import { prettyDateUTCFromISO, prettyDateTimeFromISO } from '../../common';
 import { Link } from 'react-router-dom';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { RetrievedDocument, DocumentTypes } from '../retrieved_documents/types';
@@ -6,8 +6,20 @@ import { useGetChangeLogQuery } from '../sites/sitesApi';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 
-
 export const useDocumentColumns = () => [
+  {
+    header: 'Name',
+    name: 'name',
+    minWidth: 200,
+    render: ({ data: doc }: { data: RetrievedDocument }) => {
+      return <Link to={`${doc._id}/edit`}>{doc.name}</Link>;
+    },
+  },
+  {
+    header: 'Link Text',
+    name: 'link_text',
+    render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
+  },
   {
     header: 'First Collected',
     name: 'first_collected_date',
@@ -21,7 +33,7 @@ export const useDocumentColumns = () => [
       };
     },
     render: ({ value: first_collected_date }: { value: string }) => {
-      return prettyDateFromISO(first_collected_date);
+      return prettyDateTimeFromISO(first_collected_date);
     },
   },
   {
@@ -37,20 +49,7 @@ export const useDocumentColumns = () => [
       };
     },
     render: ({ value: last_collected_date }: { value: string }) => {
-      return prettyDateFromISO(last_collected_date);
-    },
-  },
-  {
-    header: 'Link Text',
-    name: 'link_text',
-    render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
-  },
-  {
-    header: 'Name',
-    name: 'name',
-    defaultFlex: 1,
-    render: ({ data: doc }: { data: RetrievedDocument }) => {
-      return <Link to={`${doc._id}/edit`}>{doc.name}</Link>;
+      return prettyDateTimeFromISO(last_collected_date);
     },
   },
   {

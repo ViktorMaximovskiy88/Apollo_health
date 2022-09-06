@@ -1,7 +1,7 @@
 import { Form, Button, ModalProps, Modal } from 'antd';
 import { useCallback, useState, useMemo, useEffect } from 'react';
 import tw from 'twin.macro';
-import { RemoteSelect } from '../translations/RemoteSelect';
+import { RemoteSelect } from '../../components/RemoteSelect';
 import {
   useLazyGetTranslationConfigsQuery,
   useGetTranslationConfigQuery,
@@ -51,10 +51,13 @@ export function Translation() {
 
   if (!doc) return null;
 
+  // need any siteId for 'testing', grab the first (every doc has one at least)
+  const siteId = doc.locations[0].site_id;
+
   return (
     <div className="flex">
       <TranslationSelector translation={translation} />
-      <TranslationModal translation={translation} siteId={doc.site_id} docId={doc._id} />
+      <TranslationModal translation={translation} siteId={siteId} docId={doc._id} />
     </div>
   );
 }
