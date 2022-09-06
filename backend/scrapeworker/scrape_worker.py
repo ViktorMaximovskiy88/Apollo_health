@@ -332,7 +332,7 @@ class ScrapeWorker:
                 await stealth_async(page)
                 page.on("dialog", handle_dialog)
 
-                self.log.info(f"Awating response for {url}")
+                self.log.info(f"Awaiting response for {url}")
                 # TODO lets set this timeout lower generally and let exceptions set it higher
                 response = await page.goto(url, timeout=15000, wait_until="domcontentloaded")
                 self.log.info(f"Received response for {url}")
