@@ -81,7 +81,6 @@ class JavascriptClick(PlaywrightBaseScraper):
             try:
                 content_type: str | None = None
                 await response.finished()
-
                 # Handle special json response.
                 download = await self.handle_json(response)
                 if isinstance(download, DownloadContext):
@@ -110,10 +109,7 @@ class JavascriptClick(PlaywrightBaseScraper):
                 # Response may not always have content-type header.
                 # Use filename ext instead.
                 # suggested_filename='PriorAuthorization.pdf'
-                print(download.url)
                 filename, file_extension = os.path.splitext(download.suggested_filename)
-                print(file_extension)
-
                 if file_extension in accepted_types:
                     self.log.debug(
                         f"javascript click -> direct download: {filename}.{file_extension}"
