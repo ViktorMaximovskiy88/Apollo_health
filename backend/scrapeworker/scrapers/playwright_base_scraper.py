@@ -24,6 +24,18 @@ closest_heading_expression: str = """
 """
 
 
+sibling_text_expression: str = """
+    (node) => {
+        let n = node;
+        while (n) {
+            const h = n.querySelector('h1, h2, h3, h4, h5, h6, label')
+            if (h) return h.textContent;
+            n = n.parentNode;
+        }
+    }
+"""
+
+
 class PlaywrightBaseScraper(ABC):
     def __init__(
         self,
@@ -85,11 +97,18 @@ class PlaywrightBaseScraper(ABC):
 
         closest_heading: str | None
 
-        link_text, element_id, resource_value, closest_heading = await asyncio.gather(
+        (
+            link_text,
+            element_id,
+            resource_value,
+            closest_heading,
+            siblings_text,
+        ) = await asyncio.gather(
             element.text_content(),
             element.get_attribute("id"),
             element.get_attribute(resource_attr),
             element.evaluate(closest_heading_expression),
+            element.evaluate(sibling_text_expression),
         )
 
         if link_text:
@@ -104,6 +123,7 @@ class PlaywrightBaseScraper(ABC):
             resource_value=resource_value,
             closest_heading=closest_heading,
             playbook_context=self.playbook_context,
+            siblings_text=siblings_text,
         )
 
     def convert_proxy(self, proxy: Proxy):

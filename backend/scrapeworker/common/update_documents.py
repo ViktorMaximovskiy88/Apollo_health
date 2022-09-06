@@ -176,7 +176,7 @@ class DocumentUpdater:
         await create_and_log(self.logger, await self.get_user(), document)
         return document
 
-    async def create_doc_document(self, retrieved_document: RetrievedDocument):
+    async def create_doc_document(self, retrieved_document: RetrievedDocument) -> DocDocument:
         # we always have one initially
         rt_doc_location = retrieved_document.locations[0]
         doc_document = DocDocument(
@@ -206,3 +206,4 @@ class DocumentUpdater:
         doc_document.set_final_effective_date()
 
         await create_and_log(self.logger, await self.get_user(), doc_document)
+        return doc_document
