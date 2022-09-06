@@ -73,30 +73,33 @@ class JavascriptClick(PlaywrightBaseScraper):
                 "application/msword",
             ]
             try:
-                await response.finished()
                 content_type: str | None = None
 
-                if "content-type" in response.headers:
-                    content_type = response.headers["content-type"]
-                # Handle special json response.
-                if content_type == "application/vnd.contentful.delivery.v1+json":
-                    download = await self.handle_json(response)
-                    if download:
-                        download.metadata = await self.extract_metadata(link_handle)
-                        downloads.append(download)
                 # Handle click which responses with pdf or other media download.
-                elif content_type in accepted_types:
-                    self.log.debug(f"direct download {content_type}")
+                # AttributeError: 'Download' object has no attribute headers.
+                # Tried if isinstance(content_type, Download):, but does not work.
+                if not hasattr("response", "headers"):
+                    self.log.debug(f"javascript click -> direct download {content_type}")
                     download = DownloadContext(
-                        response=Response(content_type=content_type, status=response.status),
+                        response=Response(content_type=content_type),
                         request=Request(
                             url=response.url,
                         ),
                     )
                     download.metadata = await self.extract_metadata(link_handle)
                     downloads.append(download)
-                else:
-                    self.log.debug(f"unknown format {content_type}")
+                # Handle special json response.
+                elif content_type == "application/vnd.contentful.delivery.v1+json":
+                    if "content-type" in response.headers:
+                        content_type = response.headers["content-type"]
+                    if content_type in accepted_types:
+                        await response.finished()
+                        download = await self.handle_json(response)
+                        if download:
+                            download.metadata = await self.extract_metadata(link_handle)
+                            downloads.append(download)
+                    else:
+                        self.log.debug(f"unknown format {content_type}")
             except Exception:
                 logging.error("exception", exc_info=True)
 
