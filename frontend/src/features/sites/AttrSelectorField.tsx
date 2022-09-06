@@ -119,6 +119,7 @@ function ElementInput({ name, field }: InputPropTypes) {
     { label: 'a', value: 'a' },
     { label: 'p', value: 'p' },
     { label: 'li', value: 'li' },
+    { label: 'div', value: 'div' },
     { label: 'span', value: 'span' },
     { label: 'input', value: 'input' },
   ];
