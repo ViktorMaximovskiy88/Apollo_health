@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   useRunSiteScrapeTaskMutation,
   useCancelAllSiteScrapeTasksMutation,
-  useGetScrapeTasksForSiteQuery,
 } from './siteScrapeTasksApi';
 import { useGetSiteQuery } from '../sites/sitesApi';
 import { CollectionsDataTable } from './CollectionsDataTable';
