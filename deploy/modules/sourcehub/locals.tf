@@ -1,5 +1,5 @@
 locals {
-  app_name = "apollo"
+  app_name     = "apollo"
   service_name = "sourcehub"
 
   short_regions = {
@@ -13,7 +13,7 @@ locals {
 
   effective_tags = merge(var.tags, {
     environment = var.environment
-    service  = local.service_name
+    service     = local.service_name
   })
 
   target_azs = {
@@ -37,5 +37,24 @@ locals {
   # Will leave the base mongodb-url unchanged in case other apps need a different auth mechanism 
   # For SourceHub, add the authMechanism
   mongodb_url = "${data.aws_ssm_parameter.mongodb-url.value}&authMechanism=MONGODB-AWS&authSource=$external"
-  mongodb_db = "source-hub"
+  mongodb_db  = "source-hub"
+
+  new_relic_app_name_lookup = {
+    dev = "SourceHub-Dev"
+    tst = "SourceHub-Test"
+    prd = "SourceHub"
+  }
+
+  new_relic_app_name = local.new_relic_app_name_lookup[var.environment]
+
+  new_relic_secrets = [
+    {
+      name      = "NEW_RELIC_LICENSE_KEY"
+      valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/new_relic_license_key"
+    },
+    {
+      name      = "NEW_RELIC_API_KEY"
+      valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/new_relic_api_key"
+    }
+  ]
 }
