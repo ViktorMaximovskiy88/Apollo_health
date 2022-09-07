@@ -5,6 +5,7 @@ from functools import cached_property
 from bs4 import BeautifulSoup
 from playwright.async_api import Locator
 
+from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.selectors import to_xpath
 from backend.scrapeworker.scrapers.playwright_base_scraper import (
@@ -14,7 +15,8 @@ from backend.scrapeworker.scrapers.playwright_base_scraper import (
 
 
 class TargetedHtmlScraper(PlaywrightBaseScraper):
-    type: str = "TargetedHTML"
+    type = "TargetedHTML"
+    text_handler = TextHandler()
 
     @cached_property
     def css_selector(self) -> str | None:
@@ -72,14 +74,15 @@ class TargetedHtmlScraper(PlaywrightBaseScraper):
                 metadata = await self.extract_metadata(html_locator)
                 html_content = await html_locator.inner_html()
                 cleaned_html = self.remove_exclusions(html_content)
+                checksum = await self.text_handler.save_text(cleaned_html, ext="html")
                 filename = metadata.closest_heading
                 if not filename:
                     filename = await self.page.title()
                 downloads.append(
                     DownloadContext(
                         metadata=metadata,
-                        html=cleaned_html,
                         file_extension="html",
+                        file_hash=checksum,
                         request=Request(url=self.page.url, filename=filename),
                     )
                 )

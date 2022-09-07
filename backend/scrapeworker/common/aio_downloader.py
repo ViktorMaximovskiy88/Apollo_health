@@ -1,4 +1,5 @@
 import ssl
+import sys
 import tempfile
 from dataclasses import dataclass
 from random import shuffle
@@ -13,6 +14,7 @@ from tenacity import AttemptManager
 from backend.common.core.config import config
 from backend.common.models.link_task_log import InvalidResponse, ValidResponse
 from backend.common.models.proxy import Proxy
+from backend.common.storage.client import TextStorageClient
 from backend.common.storage.hash import DocStreamHasher, hash_full_text
 from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.common.rate_limiter import RateLimiter
@@ -161,7 +163,6 @@ class AioDownloader:
         # TODO: This may happen in the scraper
         download.file_path = temp.name
         async with aiofiles.open(download.file_path, "w") as f:
-            assert isinstance(download.html, str)
             await f.write(download.html)
             await f.flush()
         download.set_mimetype()
@@ -170,10 +171,21 @@ class AioDownloader:
             download.response.content_length or 0
         )  # temp, do actual file size (these should 99.9% match but arent the same)
         download.file_hash = hash_full_text(download.html)
+
+        return download.file_path, download.file_hash
+
+    async def set_download_info(self, download: DownloadContext, path: str) -> None:
+        # TODO: Continue working here
+        download.file_path = path
+        download.set_mimetype()
+        download.set_extension_from_mimetype()
+        download.file_size = download.response.content_length or 0
+        if download.file_size == 0:
+            async with aiofiles.open(path, "rb") as file:
+                download.file_size = sys.getsizeof(file)
         self.log.info(
             f"content_type={download.content_type} mimetype={download.mimetype} file_hash={download.file_hash}"  # noqa
         )
-        return download.file_path, download.file_hash
 
     async def try_download_to_tempfile(
         self,
@@ -183,10 +195,11 @@ class AioDownloader:
         url = download.request.url
         self.log.info(f"Before attempting download {url}")
 
-        if download.html:
-            # may want this to happen in scraper
-            with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
-                yield await self.write_html_to_file(download, temp)
+        if download.file_hash:
+            text_client = TextStorageClient()
+            with text_client.read_object_to_tempfile(download.file_hash) as temp:
+                await self.set_download_info(download, temp)
+
         else:
             async for attempt, proxy in self.proxy_with_backoff(proxies):
                 with attempt:

@@ -9,9 +9,9 @@ class TextHandler:
         self.text_client = TextStorageClient()
         self.diff_client = DiffStorageClient()
 
-    async def save_text(self, text: str) -> str:
+    async def save_text(self, text: str, ext="txt") -> str:
         hash = hash_full_text(text)
-        dest_path = f"{hash}.txt"
+        dest_path = f"{hash}.{ext}"
         if self.text_client.object_exists(dest_path):
             return hash
         bytes_obj = bytes(text, "utf-8")
