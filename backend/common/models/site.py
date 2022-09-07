@@ -8,6 +8,7 @@ from backend.common.models.base_document import BaseDocument
 
 
 class AttrSelector(BaseModel):
+    attr_element: str | None = "a"
     attr_name: str
     attr_value: str | None = None
     has_text: str | None = None

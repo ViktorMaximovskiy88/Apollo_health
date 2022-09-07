@@ -86,3 +86,23 @@ class TestToXpath:
             selector
             == '//a[contains(@*[contains(name(), "data-content")], "/policy") and contains(text(), "Get")]'  # noqa
         )
+
+    def test_li_selector(self):
+        attr_selector = AttrSelector(attr_element="li", attr_name="_ngcontent-uuw-c128")
+        selector = to_xpath(attr_selector)
+        assert selector == '//li[@*[contains(name(), "_ngcontent-uuw-c128")]]'
+
+    def test_span_selector(self):
+        attr_selector = AttrSelector(attr_element="span", attr_name="_ngcontent-uuw-c128")
+        selector = to_xpath(attr_selector)
+        assert selector == '//span[@*[contains(name(), "_ngcontent-uuw-c128")]]'
+
+    def test_p_selector(self):
+        attr_selector = AttrSelector(attr_element="p", attr_name="_ngcontent-uuw-c128")
+        selector = to_xpath(attr_selector)
+        assert selector == '//p[@*[contains(name(), "_ngcontent-uuw-c128")]]'
+
+    def test_input_selector(self):
+        attr_selector = AttrSelector(attr_element="input", attr_name="_ngcontent-uuw-c128")
+        selector = to_xpath(attr_selector)
+        assert selector == '//input[@*[contains(name(), "_ngcontent-uuw-c128")]]'
