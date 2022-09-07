@@ -17,10 +17,19 @@ class WorkItemOption(Enum):
     UNHANDLED = "UNHANDLED"
 
 
-class WorkItem(BaseModel):
+class WorkItem(BaseDocument):
     document_id: PydanticObjectId
     retrieved_document_id: PydanticObjectId
     selected: str = WorkItemOption.UNHANDLED
+    new_doc: PydanticObjectId | None = None
+    prev_doc: PydanticObjectId | None = None
+    last_collected_date: datetime | None = None
+
+
+class UpdateWorkItem(BaseModel):
+    document_id: PydanticObjectId | None = None
+    retrieved_document_id: PydanticObjectId | None = None
+    selected: str | None = None
     new_doc: PydanticObjectId | None = None
     prev_doc: PydanticObjectId | None = None
     last_collected_date: datetime | None = None

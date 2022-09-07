@@ -1,3 +1,6 @@
+// @Matt: file is a work in progress
+// But I would appreciate input if you feel like the approach could be improved
+
 import { Button, Spin } from 'antd';
 import {
   FileAddOutlined,
@@ -66,7 +69,7 @@ const FoundUnselected = ({
       return item;
     });
     setIsLoading(true);
-    await updateSiteScrapeTask({ _id: siteScrapeTaskId, work_list: newWorkList });
+    await updateSiteScrapeTask({ _id: siteScrapeTaskId, work_list: newWorkList }); // This does not direct to the endpoint yet.
     setIsLoading(false);
   };
   return (
