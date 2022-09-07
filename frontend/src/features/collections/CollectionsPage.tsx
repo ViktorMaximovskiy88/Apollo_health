@@ -32,7 +32,6 @@ export function CollectionsPage() {
     }
   );
 
-  console.log(scrapeTasks);
   if (!scrapeTasks) {
     return null;
   }
