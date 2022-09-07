@@ -24,17 +24,6 @@ export function CollectionsPage() {
   const siteId = params.siteId;
   const { data: site, refetch } = useGetSiteQuery(siteId);
   const [runScrape] = useRunSiteScrapeTaskMutation();
-  const { data: scrapeTasks, refetch: refetchScrapes } = useGetScrapeTasksForSiteQuery(
-    { siteId },
-    {
-      pollingInterval: 3000,
-      skip: !siteId,
-    }
-  );
-
-  if (!scrapeTasks) {
-    return null;
-  }
 
   if (!siteId || !site) return null;
 
@@ -42,7 +31,7 @@ export function CollectionsPage() {
     if (site?._id) {
       try {
         await runScrape(site._id).unwrap();
-        refetchScrapes();
+        refetch();
       } catch (err) {
         if (isErrorWithData(err)) {
           notification.error({
@@ -83,7 +72,6 @@ export function CollectionsPage() {
       >
         <CollectionsDataTable
           siteId={siteId}
-          scrapeTasks={scrapeTasks}
           openNewDocumentModal={() => setNewDocumentModalVisible(true)}
         />
       </MainLayout>
