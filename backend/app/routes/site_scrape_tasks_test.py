@@ -241,6 +241,11 @@ class TestRunBulk:
         assert scrapes == 0
         sites = await Site.find_all().to_list()
         for site in sites:
+            if site.id == site_one.id:
+                assert site.last_run_status == TaskStatus.CANCELING
+            else:
+                assert site.last_run_status is None
+
             assert site.collection_hold is not None
             assert site.collection_hold >= tomorrow
 
