@@ -17,7 +17,6 @@ import { useCollectionsColumns as useColumns } from './useCollectionsColumns';
 import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
 import { useInterval } from '../../common/hooks';
 import { TableInfoType } from '../../common/types';
-import { SiteScrapeTask } from './types';
 import { DateTime } from 'luxon';
 
 const useControlledPagination = () => {
@@ -86,7 +85,7 @@ export const useSiteScrapeSort = () => {
 
 interface DataTablePropTypes {
   siteId: string;
-  scrapeTasks?: { data: SiteScrapeTask[]; total: number };
+  openErrorModal: (errorTraceback: string) => void;
   openNewDocumentModal: () => void;
 }
 
