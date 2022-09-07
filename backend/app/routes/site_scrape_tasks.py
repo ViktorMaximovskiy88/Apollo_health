@@ -41,7 +41,7 @@ async def get_target(id: PydanticObjectId):
     return user
 
 
-@router.get("/config")
+@router.get("/config", response_model=Config, dependencies=[Security(get_current_user)])
 async def get_config(key: str):
     config = await Config.find_one({"key": key})
     if not config:
@@ -61,7 +61,6 @@ async def read_scrape_tasks_for_site(
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
-    print(site_id)
     query = SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id)
     return await query_table(query, limit, skip, sorts, filters)
 
