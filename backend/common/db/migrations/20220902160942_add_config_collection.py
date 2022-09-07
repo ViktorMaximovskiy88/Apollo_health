@@ -6,7 +6,7 @@ from backend.common.models.config import Config
 class Forward:
     @free_fall_migration(document_models=[Config])
     async def add_default_config(self, session):
-        initial_config = Config(key="collection", data={"defaultLastNDays": 10})
+        initial_config = Config(key="collections", data={"defaultLastNDays": 10})
         await initial_config.create()
 
 
