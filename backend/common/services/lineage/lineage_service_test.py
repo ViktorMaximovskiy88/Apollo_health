@@ -5,7 +5,12 @@ import pytest
 from beanie import PydanticObjectId
 
 from backend.common.db.init import init_db
-from backend.common.services.lineage.lineage_service import LineageService, tokenize_url
+from backend.common.services.lineage.lineage_service import (
+    LineageService,
+    jaccard,
+    tokenize_url,
+    unique_by_attr,
+)
 from backend.scrapeworker.common.state_parser import (
     guess_state_abbr,
     guess_state_name,
@@ -24,34 +29,28 @@ async def test_this():
     docs = await lineage.process_lineage_for_site(site_id)
 
     results = []
-    for doc in docs:
+    for index, doc in enumerate(docs):
         location = doc.get_site_location(site_id)
 
+        tags_a = unique_by_attr(doc.indication_tags, "code")
+        similiar = 0
+        if index + 1 < len(docs):
+            tags_b = unique_by_attr(docs[index + 1].indication_tags, "code")
+            similiar = jaccard(tags_a, tags_b)
+
         [*path_parts, filename] = tokenize_url(location.url)
-        print(path_parts, filename)
+        path = "/".join(path_parts)
+
+        print(filename, similiar)
         result = {
             "pathname": {
-                "year_part": list(
-                    set(
-                        [
-                            guess_year_part(part)
-                            for part in path_parts
-                            if guess_year_part(part) is not None
-                        ]
-                    )
-                ),
-                "state_abbr": list(
-                    set(
-                        [
-                            guess_state_abbr(part)
-                            for part in path_parts
-                            if guess_state_abbr(part) is not None
-                        ]
-                    )
-                ),
+                "year_part": guess_year_part(path),
+                "state_name": guess_state_name(location.link_text),
+                "state_abbr": guess_state_abbr(path),
             },
             "filename": {
                 "state_abbr": guess_state_abbr(filename),
+                "state_name": guess_state_name(location.link_text),
                 "year_part": guess_year_part(filename),
             },
             "element": {
@@ -59,36 +58,12 @@ async def test_this():
                 "state_name": guess_state_name(location.link_text),
                 "year_part": guess_year_part(location.link_text),
             },
-            "parent": {"state_abbr": guess_state_abbr(location.closest_heading)},
+            "parent": {
+                "state_abbr": guess_state_abbr(location.closest_heading),
+                "state_name": guess_state_name(location.closest_heading),
+                "year_part": guess_year_part(location.closest_heading),
+            },
         }
         results.append(result)
 
     pp.pprint(results)
-
-    # {
-    #     pathname: {
-    #         state,
-    #         year,
-    #         month
-    #         lang
-    #     },
-    #     filename: {
-    #         state,
-    #         year,
-    #         month
-    #         lang
-    #     }
-    #     link: {
-    #         state,
-    #         year,
-    #         month
-    #         lang
-    #     }
-    #     closest_heading{
-    #         state,
-    #         year,
-    #         month
-    #         lang
-    #     }
-
-    # }
