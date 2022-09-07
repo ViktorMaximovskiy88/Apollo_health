@@ -35,8 +35,9 @@ class JavascriptClick(PlaywrightBaseScraper):
         self.log.info(selector_string)
         return selector_string
 
+    # Handle special json responses which contain links to downloadable media.
     async def handle_json(self, response: PageResponse) -> DownloadContext | None:
-        if "content-type" not in response.headers:
+        if not response.headers.get("content-type", False):
             content_type = None
         else:
             content_type = response.headers["content-type"]
@@ -46,7 +47,7 @@ class JavascriptClick(PlaywrightBaseScraper):
             content_type = response.headers["content-type"]
         except Exception:
             self.log.debug("no json response")
-            return content_type
+            return None
         # Handle contentful json field field.
         # content_type == "application/vnd.contentful.delivery.v1+json"
         if "fields" in parsed and "file" in parsed["fields"]:  # Contentful
@@ -68,7 +69,7 @@ class JavascriptClick(PlaywrightBaseScraper):
                     filename=parsed["entry"]["title"]["value"],
                 ),
             )
-        return content_type
+        return None
 
     async def execute(self) -> list[DownloadContext]:
         downloads: list[DownloadContext] = []
@@ -81,26 +82,16 @@ class JavascriptClick(PlaywrightBaseScraper):
                 "application/msword",
             ]
             try:
-                content_type: str | None = None
                 await response.finished()
-                # Handle special json response.
                 download = await self.handle_json(response)
-                if isinstance(download, DownloadContext):
-                    download.metadata = await self.extract_metadata(link_handle)
-                    downloads.append(download)
-                # Handle json response with pdf link or other media.
-                elif content_type in accepted_types:
-                    self.log.debug(f"json response -> direct download {content_type}")
-                    download = DownloadContext(
-                        response=Response(content_type=content_type, status=response.status),
-                        request=Request(
-                            url=response.url,
-                        ),
-                    )
+                if (
+                    isinstance(download, DownloadContext)
+                    and download.content_type in accepted_types
+                ):
                     download.metadata = await self.extract_metadata(link_handle)
                     downloads.append(download)
                 else:
-                    self.log.debug(f"unknown json response: {content_type}")
+                    self.log.debug(f"Unknown json response: {response.headers}")
                     return None
             except Exception:
                 logging.error("exception", exc_info=True)
