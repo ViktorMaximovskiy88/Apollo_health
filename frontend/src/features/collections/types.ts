@@ -13,3 +13,6 @@ export interface SiteScrapeTask extends BaseDocument {
   collection_method: string;
 }
 
+export interface CollectionConfig {
+  defaultLastNDays: number;
+}
