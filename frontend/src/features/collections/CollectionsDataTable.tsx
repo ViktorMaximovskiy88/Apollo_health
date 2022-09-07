@@ -11,6 +11,7 @@ import {
 import {
   useCancelSiteScrapeTaskMutation,
   useGetCollectionConfigQuery,
+  useLazyGetCollectionConfigQuery,
   useLazyGetScrapeTasksForSiteQuery,
 } from './siteScrapeTasksApi';
 import { useCollectionsColumns as useColumns } from './useCollectionsColumns';
@@ -39,6 +40,48 @@ const useControlledPagination = () => {
     onSkipChange,
   };
   return controlledPaginationProps;
+};
+
+export const useSiteScrapeFilter = (siteId: string, dateOffset: number | undefined) => {
+  let { filter: filterValue }: { filter: TypeFilterValue } = useSelector(collectionTableState);
+
+  filterValue = [
+    {
+      name: 'queued_time',
+      operator: 'after',
+      type: 'date',
+      value: DateTime.now().minus({ days: dateOffset }).toLocaleString(DateTime.DATE_MED),
+    },
+    { name: 'status', operator: 'eq', type: 'select', value: null },
+  ];
+
+  const dispatch = useDispatch();
+  const onFilterChange = useCallback(
+    (filter: TypeFilterValue) => dispatch(setCollectionTableFilter(filter)),
+    [dispatch]
+  );
+
+  const filterProps = {
+    defaultFilterValue: filterValue,
+    filterValue,
+    onFilterValueChange: onFilterChange,
+  };
+  return filterProps;
+};
+
+export const useSiteScrapeSort = () => {
+  const { sort: sortInfo }: { sort: TypeSortInfo } = useSelector(collectionTableState);
+  const dispatch = useDispatch();
+  const onSortChange = useCallback(
+    (sortInfo: TypeSortInfo) => dispatch(setCollectionTableSort(sortInfo)),
+    [dispatch]
+  );
+  const sortProps = {
+    defaultSortInfo: sortInfo,
+    sortInfo,
+    onSortInfoChange: onSortChange,
+  };
+  return sortProps;
 };
 
 export const useSiteScrapeFilter = (siteId: string, dateOffset: number | undefined) => {
