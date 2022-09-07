@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { ReactNode, useCallback, useState } from 'react';
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -19,6 +19,15 @@ import { useInterval } from '../../common/hooks';
 import { TableInfoType } from '../../common/types';
 import { SiteScrapeTask } from './types';
 import { DateTime } from 'luxon';
+
+function disableLoadingMask(data: {
+  visible: boolean;
+  livePagination: boolean;
+  loadingText: ReactNode | (() => ReactNode);
+  zIndex: number;
+}) {
+  return <></>;
+}
 
 const useControlledPagination = () => {
   const tableState = useSelector(collectionTableState);
@@ -42,18 +51,8 @@ const useControlledPagination = () => {
   return controlledPaginationProps;
 };
 
-export const useSiteScrapeFilter = (siteId: string, dateOffset: number | undefined) => {
+export const useSiteScrapeFilter = (siteId: string) => {
   let { filter: filterValue }: { filter: TypeFilterValue } = useSelector(collectionTableState);
-
-  filterValue = [
-    {
-      name: 'queued_time',
-      operator: 'after',
-      type: 'date',
-      value: DateTime.now().minus({ days: dateOffset }).toLocaleString(DateTime.DATE_MED),
-    },
-    { name: 'status', operator: 'eq', type: 'select', value: null },
-  ];
 
   const dispatch = useDispatch();
   const onFilterChange = useCallback(
@@ -107,7 +106,17 @@ export function CollectionsDataTable({ siteId, openNewDocumentModal }: DataTable
 
   const config = useGetCollectionConfigQuery('collections');
   const dateOffset = config.data?.data.defaultLastNDays;
-  const filterProps = useSiteScrapeFilter(siteId, dateOffset);
+  const filterProps = useSiteScrapeFilter(siteId);
+  filterProps.defaultFilterValue = [
+    {
+      name: 'queued_time',
+      operator: 'after',
+      type: 'date',
+      value: DateTime.now().minus({ days: dateOffset }).toLocaleString(DateTime.DATE_MED),
+    },
+    { name: 'status', operator: 'eq', type: 'select', value: null },
+  ];
+
   const sortProps = useSiteScrapeSort();
   const controlledPagination = useControlledPagination();
 
@@ -130,6 +139,7 @@ export function CollectionsDataTable({ siteId, openNewDocumentModal }: DataTable
       {...sortProps}
       {...controlledPagination}
       columns={columns}
+      renderLoadMask={disableLoadingMask}
       rowHeight={50}
     />
   );
