@@ -24,10 +24,18 @@ export function CollectionsPage() {
   const siteId = params.siteId;
   const { data: site, refetch } = useGetSiteQuery(siteId);
   const [runScrape] = useRunSiteScrapeTaskMutation();
-  const { data: scrapeTasks, refetch: refetchScrapes } = useGetScrapeTasksForSiteQuery(siteId, {
-    pollingInterval: 3000,
-    skip: !siteId,
-  });
+  const { data: scrapeTasks, refetch: refetchScrapes } = useGetScrapeTasksForSiteQuery(
+    { siteId },
+    {
+      pollingInterval: 3000,
+      skip: !siteId,
+    }
+  );
+
+  console.log(scrapeTasks);
+  if (!scrapeTasks) {
+    return null;
+  }
 
   if (!siteId || !site) return null;
 

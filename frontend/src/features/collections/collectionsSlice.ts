@@ -5,7 +5,12 @@ export const initialState = {
   table: {
     sort: { name: 'queued_time', dir: -1 as 1 | -1 | 0 },
     filter: [
-      { name: 'queued_time', operator: 'before', type: 'date', value: '' },
+      {
+        name: 'queued_time',
+        operator: 'after',
+        type: 'date',
+        value: '',
+      },
       { name: 'status', operator: 'eq', type: 'select', value: null },
     ],
     pagination: { limit: 50, skip: 0 },
