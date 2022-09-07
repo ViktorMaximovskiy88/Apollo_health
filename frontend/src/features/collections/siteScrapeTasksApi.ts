@@ -1,7 +1,6 @@
 import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
-import { SiteScrapeTask } from './types';
-import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
+import { SiteScrapeTask, CollectionConfig } from './types';
 import { TableInfoType } from '../../common/types';
 
 export const siteScrapeTasksApi = createApi({
@@ -9,6 +8,9 @@ export const siteScrapeTasksApi = createApi({
   baseQuery: fetchBaseQuery(),
   tagTypes: ['SiteScrapeTask', 'ChangeLog'],
   endpoints: (builder) => ({
+    getCollectionConfig: builder.query<{ data: CollectionConfig }, {}>({
+      query: (type) => `/site-scrape-tasks/config?key=${type}`,
+    }),
     getScrapeTasksForSite: builder.query<
       { data: SiteScrapeTask[]; total: number },
       Partial<TableInfoType>
@@ -111,4 +113,6 @@ export const {
   useCancelAllSiteScrapeTasksMutation,
   useGetChangeLogQuery,
   useRunBulkMutation,
+  useGetCollectionConfigQuery,
+  endpoints,
 } = siteScrapeTasksApi;

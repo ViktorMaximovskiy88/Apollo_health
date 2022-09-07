@@ -10,20 +10,14 @@ import {
 } from './collectionsSlice';
 import {
   useCancelSiteScrapeTaskMutation,
-  useGetScrapeTasksForSiteQuery,
+  useGetCollectionConfigQuery,
   useLazyGetScrapeTasksForSiteQuery,
 } from './siteScrapeTasksApi';
 import { useCollectionsColumns as useColumns } from './useCollectionsColumns';
-import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
-import {
-  prettyDate,
-  prettyDateDistance,
-  prettyDateFromISO,
-  prettyDateTimeFromISO,
-  toDateTimeFromISO,
-} from '../../common';
+import { useInterval } from '../../common/hooks';
 import { TableInfoType } from '../../common/types';
+import { DateTime } from 'luxon';
 
 const useControlledPagination = () => {
   const tableState = useSelector(collectionTableState);
@@ -47,13 +41,25 @@ const useControlledPagination = () => {
   return controlledPaginationProps;
 };
 
-export const useSiteScrapeFilter = () => {
-  const { filter: filterValue }: { filter: TypeFilterValue } = useSelector(collectionTableState);
+export const useSiteScrapeFilter = (siteId: string, dateOffset: number | undefined) => {
+  let { filter: filterValue }: { filter: TypeFilterValue } = useSelector(collectionTableState);
+
+  filterValue = [
+    {
+      name: 'queued_time',
+      operator: 'after',
+      type: 'date',
+      value: DateTime.now().minus({ days: dateOffset }).toLocaleString(DateTime.DATE_MED),
+    },
+    { name: 'status', operator: 'eq', type: 'select', value: null },
+  ];
+
   const dispatch = useDispatch();
   const onFilterChange = useCallback(
     (filter: TypeFilterValue) => dispatch(setCollectionTableFilter(filter)),
     [dispatch]
   );
+
   const filterProps = {
     defaultFilterValue: filterValue,
     filterValue,
@@ -77,39 +83,6 @@ export const useSiteScrapeSort = () => {
   return sortProps;
 };
 
-// const useDataTableFilter = (siteId: string) => {
-//   const scrapeTasks = data?.data;
-
-//   const mostRecentTime = scrapeTasks?.[0].queued_time;
-
-//   const newFilter: TypeFilterValue = [
-//     {
-//       name: 'queued_time',
-//       operator: 'inrange',
-//       type: 'date',
-//       value: {
-//         start: mostRecentTime,
-//         end: prettyDateTimeFromISO(toDateTimeFromISO(mostRecentTime).minus({ days: 10 }).toISO()),
-//       },
-//     },
-//   ];
-
-//   const { filter: filterValue }: { filter: TypeFilterValue } = useSelector(collectionTableState);
-
-//   const dispatch = useDispatch();
-//   const onFilterChange = useCallback(
-//     (filter: TypeFilterValue) => {
-//       dispatch(setCollectionTableFilter(filter));
-//     },
-//     [dispatch]
-//   );
-
-//   const filterProps = {
-//     defaultFilterValue: newFilter,
-//     onFilterValueChange: onFilterChange,
-//   };
-//   return filterProps;
-// };
 interface DataTablePropTypes {
   siteId: string;
   scrapeTasks?: SiteScrapeTask[];
@@ -122,21 +95,22 @@ export function CollectionsDataTable({
   openNewDocumentModal,
 }: DataTablePropTypes) {
   const [getCollectionsFn] = useLazyGetScrapeTasksForSiteQuery();
+  const { watermark } = useInterval(5000);
 
   const loadData = useCallback(
     async (tableInfo: TableInfoType) => {
-      //  setLoading(true);
       const { data } = await getCollectionsFn({ ...tableInfo, siteId });
-      //  setLoading(false);
       const sites = data?.data ?? [];
       const count = data?.total ?? 0;
       return { data: sites, count };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [getCollectionsFn]
+    [getCollectionsFn, watermark]
   );
 
-  const filterProps = useSiteScrapeFilter();
+  const { data } = useGetCollectionConfigQuery('collections');
+  const dateOffset = data?.data.defaultLastNDays;
+  const filterProps = useSiteScrapeFilter(siteId, dateOffset);
   const sortProps = useSiteScrapeSort();
   const controlledPagination = useControlledPagination();
 
