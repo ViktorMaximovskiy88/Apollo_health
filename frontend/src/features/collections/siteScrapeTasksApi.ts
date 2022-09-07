@@ -120,4 +120,5 @@ export const {
   useGetChangeLogQuery,
   useRunBulkMutation,
   useGetCollectionConfigQuery,
+  endpoints,
 } = siteScrapeTasksApi;

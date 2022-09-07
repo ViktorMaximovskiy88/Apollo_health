@@ -13,11 +13,8 @@ export interface SiteScrapeTask extends BaseDocument {
   collection_method: string;
 }
 
-export enum BulkActionTypes {
-  Cancel = 'CANCEL',
-  CancelHold = 'CANCEL-HOLD',
-  Hold = 'HOLD',
-  Run = 'RUN',
+export interface CollectionConfig {
+  defaultLastNDays: number;
 }
 
 export interface CollectionConfig {
