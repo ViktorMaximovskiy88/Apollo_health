@@ -19,3 +19,7 @@ export enum BulkActionTypes {
   Hold = 'HOLD',
   Run = 'RUN',
 }
+
+export interface CollectionConfig {
+  defaultLastNDays: number;
+}

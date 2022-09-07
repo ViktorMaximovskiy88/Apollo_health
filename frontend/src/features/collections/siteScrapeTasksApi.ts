@@ -1,6 +1,7 @@
 import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
-import { BulkActionTypes, SiteScrapeTask } from './types';
+import { BulkActionTypes, SiteScrapeTask, CollectionConfig } from './types';
+import { TableInfoType } from '../../common/types';
 
 interface BulkRunResponse {
   type: BulkActionTypes;
@@ -13,10 +14,39 @@ export const siteScrapeTasksApi = createApi({
   baseQuery: fetchBaseQuery(),
   tagTypes: ['SiteScrapeTask', 'ChangeLog'],
   endpoints: (builder) => ({
-    getScrapeTasksForSite: builder.query<SiteScrapeTask[], string | undefined>({
-      query: (siteId) => `/site-scrape-tasks/?site_id=${siteId}`,
-      providesTags: (_r, _e, id) => [{ type: 'SiteScrapeTask' as const, id }],
+    getCollectionConfig: builder.query<{ data: CollectionConfig }, {}>({
+      query: (type) => `/site-scrape-tasks/config?key=${type}`,
     }),
+    getScrapeTasksForSite: builder.query<
+      { data: SiteScrapeTask[]; total: number },
+      Partial<TableInfoType>
+    >({
+      query: ({ limit, siteId, skip, filterValue, sortInfo }) => {
+        const args = [];
+        if (siteId) {
+          args.push(`site_id=${encodeURIComponent(siteId)}`);
+        }
+        if (skip != null) {
+          args.push(`skip=${encodeURIComponent(skip)}`);
+        }
+        if (limit) {
+          args.push(`limit=${encodeURIComponent(limit)}`);
+        }
+        if (sortInfo) {
+          args.push(`sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`);
+        }
+        if (filterValue) {
+          args.push(`filters=${encodeURIComponent(JSON.stringify(filterValue))}`);
+        }
+        return `/site-scrape-tasks/?${args.join('&')}`;
+      },
+      providesTags: (results) => {
+        const tags = [{ type: 'SiteScrapeTask' as const, id: 'LIST' }];
+        results?.data.forEach(({ _id: id }) => tags.push({ type: 'SiteScrapeTask', id }));
+        return tags;
+      },
+    }),
+
     runSiteScrapeTask: builder.mutation<SiteScrapeTask, string>({
       query: (siteId) => ({
         url: `/site-scrape-tasks/?site_id=${siteId}`,
@@ -81,6 +111,7 @@ export const siteScrapeTasksApi = createApi({
 
 export const {
   useGetScrapeTasksForSiteQuery,
+  useLazyGetScrapeTasksForSiteQuery,
   useRunSiteScrapeTaskMutation,
   useUpdateSiteScrapeTaskMutation,
   useDeleteSiteScrapeTaskMutation,
@@ -88,4 +119,5 @@ export const {
   useCancelAllSiteScrapeTasksMutation,
   useGetChangeLogQuery,
   useRunBulkMutation,
+  useGetCollectionConfigQuery,
 } = siteScrapeTasksApi;
