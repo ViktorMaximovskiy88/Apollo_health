@@ -60,8 +60,8 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
       },
     },
     {
-      header: 'Effective Date',
-      name: 'effective_date',
+      header: 'Final Effective Date',
+      name: 'final_effective_date',
       minWidth: 200,
       filterEditor: DateFilter,
       filterEditorProps: () => {
@@ -72,8 +72,8 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
         };
       },
       render: ({ data: doc }: { data: SiteDocDocument }) => {
-        if (!doc.effective_date) return null;
-        return prettyDateFromISO(doc.effective_date);
+        if (!doc.final_effective_date) return null;
+        return prettyDateFromISO(doc.final_effective_date);
       },
     },
     {
