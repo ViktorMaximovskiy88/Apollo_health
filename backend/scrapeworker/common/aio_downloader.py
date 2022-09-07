@@ -15,7 +15,7 @@ from backend.common.core.config import config
 from backend.common.models.link_task_log import InvalidResponse, ValidResponse
 from backend.common.models.proxy import Proxy
 from backend.common.storage.client import TextStorageClient
-from backend.common.storage.hash import DocStreamHasher, hash_full_text
+from backend.common.storage.hash import DocStreamHasher
 from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.common.rate_limiter import RateLimiter
 
@@ -131,51 +131,7 @@ class AioDownloader:
             )
             yield attempt, proxy_settings
 
-    async def write_response_to_file(
-        self,
-        download: DownloadContext,
-        response: ClientResponse,
-        temp: tempfile._TemporaryFileWrapper,
-    ):
-        hasher = DocStreamHasher()
-        download.file_path = temp.name
-
-        async with aiofiles.open(download.file_path, "wb") as fd:
-            async for data in response.content.iter_any():
-                await fd.write(data)
-                hasher.update(data)
-            await fd.flush()
-
-        download.set_mimetype()
-        download.set_extension_from_mimetype()
-        download.file_size = (
-            download.response.content_length or 0
-        )  # temp, do actual file size (these should 99.9% match but arent the same)
-        download.file_hash = hasher.hexdigest()
-        self.log.info(
-            f"content_type={download.content_type} mimetype={download.mimetype} file_hash={download.file_hash}"  # noqa
-        )
-        return download.file_path, download.file_hash
-
-    async def write_html_to_file(
-        self, download: DownloadContext, temp: tempfile._TemporaryFileWrapper
-    ):
-        # TODO: This may happen in the scraper
-        download.file_path = temp.name
-        async with aiofiles.open(download.file_path, "w") as f:
-            await f.write(download.html)
-            await f.flush()
-        download.set_mimetype()
-        download.set_extension_from_mimetype()
-        download.file_size = (
-            download.response.content_length or 0
-        )  # temp, do actual file size (these should 99.9% match but arent the same)
-        download.file_hash = hash_full_text(download.html)
-
-        return download.file_path, download.file_hash
-
-    async def set_download_info(self, download: DownloadContext, path: str) -> None:
-        # TODO: Continue working here
+    async def set_download_data(self, download: DownloadContext, path: str) -> None:
         download.file_path = path
         download.set_mimetype()
         download.set_extension_from_mimetype()
@@ -183,9 +139,28 @@ class AioDownloader:
         if download.file_size == 0:
             async with aiofiles.open(path, "rb") as file:
                 download.file_size = sys.getsizeof(file)
+
+    async def write_response_to_file(
+        self,
+        download: DownloadContext,
+        response: ClientResponse,
+        temp: tempfile._TemporaryFileWrapper,
+    ):
+        hasher = DocStreamHasher()
+
+        async with aiofiles.open(temp.name, "wb") as fd:
+            async for data in response.content.iter_any():
+                await fd.write(data)
+                hasher.update(data)
+            await fd.flush()
+
+        await self.set_download_data(download, temp.name)
+
+        download.file_hash = hasher.hexdigest()
         self.log.info(
             f"content_type={download.content_type} mimetype={download.mimetype} file_hash={download.file_hash}"  # noqa
         )
+        return download.file_path, download.file_hash
 
     async def try_download_to_tempfile(
         self,
@@ -197,9 +172,13 @@ class AioDownloader:
 
         if download.file_hash:
             text_client = TextStorageClient()
-            with text_client.read_object_to_tempfile(download.file_hash) as temp:
-                await self.set_download_info(download, temp)
-
+            dest_path = f"{download.file_hash}.{download.file_extension}"
+            with text_client.read_object_to_tempfile(dest_path) as path:
+                await self.set_download_data(download, path)
+                self.log.info(
+                    f"content_type={download.content_type} mimetype={download.mimetype} file_hash={download.file_hash}"  # noqa
+                )
+                yield download.file_path, download.file_hash
         else:
             async for attempt, proxy in self.proxy_with_backoff(proxies):
                 with attempt:

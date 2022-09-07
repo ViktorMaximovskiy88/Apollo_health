@@ -74,12 +74,15 @@ class TargetedHtmlScraper(PlaywrightBaseScraper):
                 metadata = await self.extract_metadata(html_locator)
                 html_content = await html_locator.inner_html()
                 cleaned_html = self.remove_exclusions(html_content)
-                checksum = await self.text_handler.save_text(cleaned_html, ext="html")
+                checksum = await self.text_handler.save_text(
+                    cleaned_html, ext="html"
+                )  # use doc client instead
                 filename = metadata.closest_heading
                 if not filename:
                     filename = await self.page.title()
                 downloads.append(
                     DownloadContext(
+                        direct_scrape=True,
                         metadata=metadata,
                         file_extension="html",
                         file_hash=checksum,

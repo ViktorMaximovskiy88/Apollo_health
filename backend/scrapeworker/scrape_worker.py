@@ -128,7 +128,6 @@ class ScrapeWorker:
         return new_therapy_tags, new_indicate_tags
 
     async def attempt_download(self, download: DownloadContext):
-
         url = download.request.url
         proxies = await self.get_proxy_settings()
         link_retrieved_task: LinkRetrievedTask = link_retrieved_task_from_download(
@@ -187,10 +186,10 @@ class ScrapeWorker:
                 download.file_extension == "html"
                 and "html" in self.site.scrape_method_configuration.document_extensions
             ):
-                # TODO-TOMORROW: figure out how to PDF the text we get
-                async with self.playwright_context(url) as (page, _context):
+                target_url = url if not download.direct_scrape else temp_path
+                async with self.playwright_context(target_url) as (page, _context):
                     dest_path = f"{checksum}.{download.file_extension}.pdf"
-                    await page.goto(download.request.url, wait_until="domcontentloaded")
+                    await page.goto(target_url, wait_until="domcontentloaded")
                     pdf_bytes = await page.pdf(display_header_footer=False, print_background=True)
                     self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
 
