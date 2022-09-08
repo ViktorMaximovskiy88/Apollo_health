@@ -66,9 +66,9 @@ function TranslationRoutes() {
 function PayerBackboneRoutes() {
   return (
     <Routes>
-      <Route path=":type" element={<PayerBackbomeHomePage />} />
-      <Route path=":type/new" element={<PayerBackboneNewPage />} />
-      <Route path=":type/:payerId" element={<PayerBackboneEditPage />} />
+      <Route path=":payerType" element={<PayerBackbomeHomePage />} />
+      <Route path=":payerType/new" element={<PayerBackboneNewPage />} />
+      <Route path=":payerType/:payerId" element={<PayerBackboneEditPage />} />
       <Route path="/" element={<Navigate replace to="./plan" />} />
     </Routes>
   );

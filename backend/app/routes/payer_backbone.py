@@ -18,18 +18,7 @@ from backend.app.utils.logger import (
     update_and_log_diff,
 )
 from backend.app.utils.user import get_current_user
-from backend.common.models.base_document import BaseDocument
-from backend.common.models.payer_backbone import (
-    MCO,
-    UMP,
-    BenefitManager,
-    DrugList,
-    Formulary,
-    PayerBackbone,
-    PayerBackboneUnionDoc,
-    PayerParent,
-    Plan,
-)
+from backend.common.models.payer_backbone import PayerBackbone, PayerBackboneUnionDoc, payer_classes
 from backend.common.models.user import User
 
 router = APIRouter(
@@ -38,79 +27,94 @@ router = APIRouter(
 )
 
 
-async def get_target(id: PydanticObjectId) -> PayerBackbone:
+async def get_target(id: PydanticObjectId):
     config = await PayerBackboneUnionDoc.find_one({"_id": id})
     if not config:
         raise HTTPException(
             detail=f"Payer Backbone {id} Not Found",
             status_code=status.HTTP_404_NOT_FOUND,
         )
-    return config  # type: ignore
+    return config
+
+
+def payer_class(
+    type: Literal["plan", "formulary", "druglist", "mco", "parent", "ump", "bm"],
+) -> Type[PayerBackbone]:
+    return next((i for i in payer_classes if i.payer_key == type))
 
 
 @router.get(
-    "/",
+    "/{type}",
     response_model=TableQueryResponse,
     dependencies=[Security(get_current_user)],
 )
 async def read_payer_backbones(
-    type: Literal["plan", "formulary", "mco", "parent", "ump", "bm"],
+    PayerClass: Type[PayerBackbone] = Depends(payer_class),
     limit: int | None = None,
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
-    query = BaseDocument.find({})
+    (class_filter,) = PayerClass._add_class_id_filter(())
+    query = PayerBackboneUnionDoc.find(class_filter)
     return await query_table(query, limit, skip, sorts, filters)
 
 
-def creates(model: Type[BaseDocument]):
-    @router.get(
-        "/{id}",
-        dependencies=[Security(get_current_user)],
-    )
-    async def read_payer_backbone(
-        target=Depends(get_target),
-    ):
-        return target
-
-    @router.post("/{id}")
-    async def update_translation_config(
-        updates: PayerBackbone,
-        target: PayerBackbone = Depends(get_target),
-        current_user: User = Security(get_current_user),
-        logger: Logger = Depends(get_logger),
-    ):
-        updated = await update_and_log_diff(logger, current_user, target, updates)
-        return updated
-
-    @router.delete("/{id}")
-    async def delete_payer_backbone(
-        target: PayerBackbone = Depends(get_target),
-        current_user: User = Security(get_current_user),
-        logger: Logger = Depends(get_logger),
-    ):
-        await delete_and_log(logger, current_user, target)
-        return {"success": True}
-
-    @router.put(f"/{clazz.payer_key}", status_code=status.HTTP_201_CREATED)
-    async def create_payerbackbone(
-        pb: model,
-        current_user: User = Security(get_current_user),
-        logger: Logger = Depends(get_logger),
-    ):
-        await create_and_log(logger, current_user, pb)
-        return pb
+@router.get(
+    "/{type}/l/{id}",
+    dependencies=[Security(get_current_user)],
+)
+async def read_payer_backbone_by_l_id(
+    id: int,
+    PayerClass: Type[PayerBackbone] = Depends(payer_class),
+):
+    payer = await PayerClass.find_one({"l_id": id})
+    if not payer:
+        raise HTTPException(
+            detail=f"Payer Backbone LId {id} Not Found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    return payer
 
 
-payer_types: list[Type[PayerBackbone]] = [
-    UMP,
-    MCO,
-    Plan,
-    DrugList,
-    Formulary,
-    PayerParent,
-    BenefitManager,
-]
-for clazz in payer_types:
-    creates(clazz)
+@router.get(
+    "/{type}/{id}",
+    dependencies=[Security(get_current_user)],
+)
+async def read_payer_backbone(
+    target=Depends(get_target),
+):
+    return target
+
+
+@router.post("/{type}/{id}")
+async def update_translation_config(
+    updates: PayerBackbone,
+    target: PayerBackbone = Depends(get_target),
+    current_user: User = Security(get_current_user),
+    logger: Logger = Depends(get_logger),
+):
+    updated = await update_and_log_diff(logger, current_user, target, updates)
+    return updated
+
+
+@router.delete("/{type}/{id}")
+async def delete_payer_backbone(
+    target: PayerBackbone = Depends(get_target),
+    current_user: User = Security(get_current_user),
+    logger: Logger = Depends(get_logger),
+):
+    await delete_and_log(logger, current_user, target)
+    return {"success": True}
+
+
+@router.put("/{type}", status_code=status.HTTP_201_CREATED)
+async def create_payerbackbone(
+    payer: PayerBackbone,
+    PayerClass: Type[PayerBackbone] = Depends(payer_class),
+    current_user: User = Security(get_current_user),
+    logger: Logger = Depends(get_logger),
+):
+    payer = PayerClass.parse_obj(payer.dict())
+    await create_and_log(logger, current_user, payer)
+    return payer

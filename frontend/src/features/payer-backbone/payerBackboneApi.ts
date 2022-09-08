@@ -8,9 +8,15 @@ export const payerBackboneApi = createApi({
   baseQuery: fetchBaseQuery(),
   tagTypes: ['PayerBackbone', 'ChangeLog'],
   endpoints: (builder) => ({
-    getPayerBackbone: builder.query<PayerBackbone, string | undefined>({
-      query: (id) => `/payer-backbone/${id}`,
-      providesTags: (_r, _e, id) => [{ type: 'PayerBackbone', id }],
+    getPayerBackboneByLId: builder.query<PayerBackbone, { id?: string; payerType: string }>({
+      query: ({ id, payerType }) => `/payer-backbone/${payerType}/l/${id}`,
+      providesTags: (_r, _e, { id, payerType }) => [
+        { type: 'PayerBackbone', id: `${payerType}-${id}` },
+      ],
+    }),
+    getPayerBackbone: builder.query<PayerBackbone, { payerType?: string; id: string | undefined }>({
+      query: ({ payerType, id }) => `/payer-backbone/${payerType}/${id}`,
+      providesTags: (_r, _e, { id }) => [{ type: 'PayerBackbone', id }],
     }),
     getPayerBackbones: builder.query<
       { data: PayerBackbone[]; total: number },
@@ -25,25 +31,38 @@ export const payerBackboneApi = createApi({
       query: ({ type, limit, skip, sortInfo, filterValue }) => {
         const sorts = sortInfo ? [sortInfo] : [];
         const args = [
-          `type=${type}`,
           `limit=${encodeURIComponent(limit)}`,
           `skip=${encodeURIComponent(skip)}`,
           `sorts=${encodeURIComponent(JSON.stringify(sorts))}`,
           `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
         ].join('&');
-        return `/payer-backbone/?${args}`;
+        return `/payer-backbone/${type}?${args}`;
       },
     }),
-    addPayerBackbone: builder.mutation<PayerBackbone, Partial<PayerBackbone>>({
-      query: (body) => ({ url: '/payer-backbone/', method: 'PUT', body }),
+    addPayerBackbone: builder.mutation<
+      PayerBackbone,
+      { payerType?: string; body: Partial<PayerBackbone> }
+    >({
+      query: ({ payerType, body }) => ({
+        url: `/payer-backbone/${payerType}`,
+        method: 'PUT',
+        body,
+      }),
       invalidatesTags: [{ type: 'PayerBackbone', id: 'LIST' }],
     }),
-    updatePayerBackbone: builder.mutation<PayerBackbone, Partial<PayerBackbone>>({
-      query: (body) => ({ url: `/payer-backbone/${body._id}`, method: 'POST', body }),
-      invalidatesTags: (_r, _e, { _id: id }) => [
-        { type: 'PayerBackbone', id },
+    updatePayerBackbone: builder.mutation<
+      PayerBackbone,
+      { payerType?: string; body: Partial<PayerBackbone> }
+    >({
+      query: ({ payerType, body }) => ({
+        url: `/payer-backbone/${payerType}/${body._id}`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: (_r, _e, { body }) => [
+        { type: 'PayerBackbone', id: body._id },
         { type: 'PayerBackbone', id: 'LIST' },
-        { type: 'ChangeLog', id },
+        { type: 'ChangeLog', id: body._id },
       ],
     }),
     getChangeLog: builder.query<ChangeLog[], string>({
@@ -59,5 +78,6 @@ export const {
   useUpdatePayerBackboneMutation,
   useGetPayerBackbonesQuery,
   useGetPayerBackboneQuery,
+  useGetPayerBackboneByLIdQuery,
   useGetChangeLogQuery,
 } = payerBackboneApi;

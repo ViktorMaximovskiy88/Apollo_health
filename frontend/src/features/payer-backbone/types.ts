@@ -7,8 +7,17 @@ export interface PayerBackbone extends BaseDocument {
 
 export interface Plan extends PayerBackbone {
   l_formulary_id: number;
+  l_parent_id: number;
+  l_mco_id: number;
+  l_bm_id: number;
   plan_type: string;
-  channel: number;
+  channel: string;
+  type: string;
+  is_national: boolean;
+  pharmacy_states: string[];
+  medical_states: string[];
+  pharmacy_lives: string[];
+  medical_lives: string[];
 }
 
 export interface Formulary extends PayerBackbone {
@@ -20,12 +29,13 @@ export interface Formulary extends PayerBackbone {
 
 export interface MCO extends PayerBackbone {}
 
-export interface UMP extends PayerBackbone {}
-
-export interface DrugList extends PayerBackbone {}
+export interface UMP extends PayerBackbone {
+  benefit: string;
+}
 
 export interface PayerParent extends PayerBackbone {
-  parent_type: string;
+  type: string;
+  control: string;
 }
 
 export interface BenefitManager extends PayerBackbone {}
