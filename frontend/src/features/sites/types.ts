@@ -67,3 +67,8 @@ export enum CollectionMethod {
   Automated = 'AUTOMATED',
   Manual = 'MANUAL',
 }
+
+export enum ScrapeMethod {
+  Simple = 'AUTOMATED',
+  Html = 'MANUAL',
+}

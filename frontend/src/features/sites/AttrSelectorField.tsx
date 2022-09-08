@@ -158,9 +158,15 @@ export function ElementInput({ displayLabel, name, field }: InputPropTypes) {
       name={nameProp}
       className="mb-0 shrink-0 col-span-2"
       label={label}
+      rules={[{ required: true, message: 'Required' }]}
       tooltip={tooltip}
     >
-      <AutoComplete defaultActiveFirstOption={false} onSearch={onSearch} options={options} />
+      <AutoComplete
+        defaultActiveFirstOption={false}
+        defaultValue={'a'}
+        onSearch={onSearch}
+        options={options}
+      />
     </Form.Item>
   );
 }

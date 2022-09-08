@@ -1,6 +1,6 @@
 import { Checkbox, Input, Form, FormInstance, Select, Radio, Tooltip, Switch } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
-import { CollectionMethod, Site } from './types';
+import { CollectionMethod, ScrapeMethod, Site } from './types';
 import { useGetProxiesQuery } from '../proxies/proxiesApi';
 import {
   AttrSelectors,
@@ -32,11 +32,10 @@ function CollectionMethodRadio() {
   );
 }
 
-function ScrapeMethod() {
+function ScrapeMethodSelect() {
   const scrapes = [
-    { value: 'SimpleDocumentScrape', label: 'Simple Document Scrape' },
-    { value: 'BrowserDocumentScrape', label: 'Browser Document Scrape' },
-    { value: 'MyPrimeSearchableScrape', label: 'MyPrime Searchable Scrape' },
+    { value: ScrapeMethod.Simple, label: 'Simple Document Scrape' },
+    { value: ScrapeMethod.Html, label: 'HTML Scrape' },
   ];
 
   return (
@@ -204,7 +203,11 @@ function SearchableConfig({ isSearchable }: { isSearchable: boolean }) {
           >
             <Select options={searchableTypes} />
           </Form.Item>
-          <Form.Item name={inputName} label="Searchable Input">
+          <Form.Item
+            name={inputName}
+            label="Searchable Input"
+            tooltip={'Input field for search terms'}
+          >
             <Input.Group className="grid grid-cols-10 space-x-1">
               <ElementInput displayLabel name={inputName} />
               <NameInput displayLabel name={inputName} />
@@ -212,7 +215,11 @@ function SearchableConfig({ isSearchable }: { isSearchable: boolean }) {
               <ContainsTextInput displayLabel name={inputName} />
             </Input.Group>
           </Form.Item>
-          <Form.Item name={submitName} label="Searchable Submit">
+          <Form.Item
+            name={submitName}
+            label="Searchable Submit Button"
+            tooltip={'Button to trigger search'}
+          >
             <Input.Group className="grid grid-cols-10 space-x-1">
               <ElementInput displayLabel name={submitName} />
               <NameInput displayLabel name={submitName} />
@@ -353,7 +360,7 @@ export function CollectionMethodComponent({
         {({ getFieldValue }) =>
           getFieldValue('collection_method') === CollectionMethod.Automated ? (
             <>
-              <ScrapeMethod />
+              <ScrapeMethodSelect />
               <ScrapeMethodConfiguration
                 initialValues={initialValues}
                 isSearchable={isSearchable}
