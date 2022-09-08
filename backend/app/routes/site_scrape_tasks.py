@@ -17,7 +17,6 @@ from backend.app.routes.table_query import (
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.core.enums import BulkScrapeActions, CollectionMethod, SiteStatus, TaskStatus
-from backend.common.models.config import Config
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import Site
@@ -39,14 +38,6 @@ async def get_target(id: PydanticObjectId):
             status_code=status.HTTP_404_NOT_FOUND,
         )
     return user
-
-
-@router.get("/config", response_model=Config, dependencies=[Security(get_current_user)])
-async def get_config(key: str):
-    config = await Config.find_one({"key": key})
-    if not config:
-        raise HTTPException(detail=f"Config {key} Not Found", status_code=status.HTTP_404_NOT_FOUND)
-    return config
 
 
 @router.get(

@@ -15,7 +15,7 @@ export const siteScrapeTasksApi = createApi({
   tagTypes: ['SiteScrapeTask', 'ChangeLog'],
   endpoints: (builder) => ({
     getCollectionConfig: builder.query<{ data: CollectionConfig }, {}>({
-      query: (type) => `/site-scrape-tasks/config?key=${type}`,
+      query: (type) => `/app-config/?key=${type}`,
     }),
     getScrapeTasksForSite: builder.query<{ data: SiteScrapeTask[]; total: number }, TableInfoType>({
       query: ({ limit, siteId, skip, filterValue, sortInfo }) => {

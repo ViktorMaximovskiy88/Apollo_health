@@ -9,6 +9,7 @@ from fastapi.templating import Jinja2Templates
 
 from backend.app.core.settings import settings
 from backend.app.routes import (
+    app_config,
     auth,
     change_log,
     content_extraction_tasks,
@@ -85,6 +86,7 @@ app.include_router(work_queues.router, prefix=prefix)
 app.include_router(translations.router, prefix=prefix)
 app.include_router(document_family.router, prefix=prefix)
 app.include_router(payer_backbone.router, prefix=prefix)
+app.include_router(app_config.router, prefix=prefix)
 
 
 @app.middleware("http")
