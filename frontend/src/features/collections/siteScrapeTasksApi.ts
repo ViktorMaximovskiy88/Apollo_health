@@ -17,26 +17,16 @@ export const siteScrapeTasksApi = createApi({
     getCollectionConfig: builder.query<{ data: CollectionConfig }, {}>({
       query: (type) => `/site-scrape-tasks/config?key=${type}`,
     }),
-    getScrapeTasksForSite: builder.query<
-      { data: SiteScrapeTask[]; total: number },
-      Partial<TableInfoType>
-    >({
+    getScrapeTasksForSite: builder.query<{ data: SiteScrapeTask[]; total: number }, TableInfoType>({
       query: ({ limit, siteId, skip, filterValue, sortInfo }) => {
-        const args = [];
+        const args = [
+          `limit=${encodeURIComponent(limit)}`,
+          `skip=${encodeURIComponent(skip)}`,
+          `sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`,
+          `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
+        ];
         if (siteId) {
           args.push(`site_id=${encodeURIComponent(siteId)}`);
-        }
-        if (skip != null) {
-          args.push(`skip=${encodeURIComponent(skip)}`);
-        }
-        if (limit) {
-          args.push(`limit=${encodeURIComponent(limit)}`);
-        }
-        if (sortInfo) {
-          args.push(`sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`);
-        }
-        if (filterValue) {
-          args.push(`filters=${encodeURIComponent(JSON.stringify(filterValue))}`);
         }
         return `/site-scrape-tasks/?${args.join('&')}`;
       },
