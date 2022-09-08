@@ -18,6 +18,8 @@ import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/t
 import { useInterval } from '../../common/hooks';
 import { TableInfoType } from '../../common/types';
 import { DateTime } from 'luxon';
+import { useEffect } from 'react';
+import { ErrorLogModal } from './ErrorLogModal';
 
 function disableLoadingMask(data: {
   visible: boolean;
@@ -50,10 +52,23 @@ const useControlledPagination = () => {
   return controlledPaginationProps;
 };
 
-export const useSiteScrapeFilter = (siteId: string) => {
+export const useSiteScrapeFilter = (siteId: string, dateOffset?: number) => {
   let { filter: filterValue }: { filter: TypeFilterValue } = useSelector(collectionTableState);
-
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    const defaultFilterValue = [
+      {
+        name: 'queued_time',
+        operator: 'after',
+        type: 'date',
+        value: DateTime.utc().minus({ days: dateOffset }).toISODate(),
+      },
+      { name: 'status', operator: 'eq', type: 'select', value: null },
+    ];
+    dispatch(setCollectionTableFilter(defaultFilterValue));
+  }, [dateOffset, dispatch]);
+
   const onFilterChange = useCallback(
     (filter: TypeFilterValue) => dispatch(setCollectionTableFilter(filter)),
     [dispatch]
@@ -105,16 +120,7 @@ export function CollectionsDataTable({ siteId, openNewDocumentModal }: DataTable
 
   const config = useGetCollectionConfigQuery('collections');
   const dateOffset = config.data?.data.defaultLastNDays;
-  const filterProps = useSiteScrapeFilter(siteId);
-  filterProps.defaultFilterValue = [
-    {
-      name: 'queued_time',
-      operator: 'after',
-      type: 'date',
-      value: DateTime.now().minus({ days: dateOffset }).toLocaleString(DateTime.DATE_MED),
-    },
-    { name: 'status', operator: 'eq', type: 'select', value: null },
-  ];
+  const filterProps = useSiteScrapeFilter(siteId, dateOffset);
 
   const sortProps = useSiteScrapeSort();
   const controlledPagination = useControlledPagination();
@@ -132,14 +138,21 @@ export function CollectionsDataTable({ siteId, openNewDocumentModal }: DataTable
   const [errorTraceback, setErrorTraceback] = useState('');
 
   return (
-    <ReactDataGrid
-      dataSource={loadData}
-      {...filterProps}
-      {...sortProps}
-      {...controlledPagination}
-      columns={columns}
-      renderLoadMask={disableLoadingMask}
-      rowHeight={50}
-    />
+    <>
+      <ErrorLogModal
+        visible={modalVisible}
+        setVisible={setModalVisible}
+        errorTraceback={errorTraceback}
+      />
+      <ReactDataGrid
+        dataSource={loadData}
+        {...filterProps}
+        {...sortProps}
+        {...controlledPagination}
+        columns={columns}
+        renderLoadMask={disableLoadingMask}
+        rowHeight={50}
+      />
+    </>
   );
 }
