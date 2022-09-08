@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 
 from beanie import PydanticObjectId
 
-from backend.common.models.document import RetrievedDocument
+from backend.common.models.document import LineageCompare, RetrievedDocument, SiteRetrievedDocument
 from backend.scrapeworker.common.state_parser import guess_state_abbr
 from backend.scrapeworker.common.utils import date_rgxs, label_rgxs
 
@@ -23,12 +23,27 @@ def unique_by_attr(items: list[any], attr: str) -> list:
     return list(set([getattr(item, attr) for item in items]))
 
 
+async def get_site_docs(site_id: PydanticObjectId) -> list[SiteRetrievedDocument]:
+    docs = await RetrievedDocument.aggregate(
+        aggregation_pipeline=[
+            {"$match": {"locations.site_id": site_id}},
+            {"$unwind": {"path": "$locations"}},
+            {"$replaceRoot": {"newRoot": {"$mergeObjects": ["$$ROOT", "$locations"]}}},
+            {"$match": {"site_id": site_id}},
+            {"$unset": ["locations"]},
+        ],
+        projection_model=SiteRetrievedDocument,
+    ).to_list()
+
+    return docs
+
+
 class LineageService:
     def __init__(self, log: PyLogger) -> None:
         self.log = log
 
     async def process_lineage_for_site(self, site_id: PydanticObjectId):
-        docs = await RetrievedDocument.find({"locations.site_id": site_id}).to_list()
+        docs = await get_site_docs(site_id)
         return docs
 
     async def process_lineage_for_site_url(self, site_id: PydanticObjectId, url: str):
@@ -46,6 +61,4 @@ class LineageService:
         return docs
 
     def determine_lineage(self, site_id: PydanticObjectId, doc: RetrievedDocument):
-        print(site_id, doc)
-        location = doc.get_site_location(site_id)
-        print(location)
+        pass

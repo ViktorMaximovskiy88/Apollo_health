@@ -1,7 +1,26 @@
 from datetime import datetime
 
-from beanie import PydanticObjectId
+from beanie import Indexed, PydanticObjectId
 from pydantic import BaseModel
+from pymongo import TEXT
+
+
+class LocationContext(BaseModel):
+    link_text: Indexed(str, index_type=TEXT) | None
+    closest_heading: Indexed(str, index_type=TEXT) | None
+    siblings_text: Indexed(str, index_type=TEXT) | None
+    resource_value: Indexed(str, index_type=TEXT) | None
+    base_url: Indexed(str, index_type=TEXT) | None
+    element_id: str | None
+    playbook_context: list[dict[str, str]] = []
+
+
+class LocationSimilarity(BaseModel):
+    pathname: list[str] = []
+    filename: list[str] = []
+    element_text: list[str] = []
+    heading_text: list[str] = []
+    sibling_text: list[str] = []
 
 
 class Location(BaseModel):
@@ -18,7 +37,8 @@ class SiteLocation(Location):
 
 
 class RetrievedDocumentLocation(SiteLocation):
-    context_metadata: dict = {}  # TODO, un have this and just move the stuff up?
+
+    context_metadata: LocationContext  # TODO, un have this and just move the stuff up?
     previous_retrieved_doc_id: PydanticObjectId | None = None
 
 
@@ -54,6 +74,7 @@ class IndicationTag(BaseModel):
     text: str
     code: int
     page: int = 0
+    focus: bool = False
 
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))
