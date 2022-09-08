@@ -36,7 +36,6 @@ export const navSlice = createSlice({
         },
         {
           url: '/payer-backbone',
-          defaultSearchParams: '?type=plan',
           label: 'Payers',
           shortLabel: 'Payers',
         },

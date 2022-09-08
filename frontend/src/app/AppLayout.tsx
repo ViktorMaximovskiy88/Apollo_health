@@ -99,7 +99,7 @@ function AppMenu() {
 
   return (
     <div className={classNames('flex flex-col items-center mt-4 space-y-4')}>
-      {menu.items.map(({ url, label, defaultSearchParams, shortLabel }: any) => (
+      {menu.items.map(({ url, label, shortLabel }: any) => (
         <Tooltip key={url} placement={'right'} title={label}>
           <Link
             className={classNames(
@@ -107,7 +107,7 @@ function AppMenu() {
               isCurrentClasses(location.pathname, url),
               'text-[18px] p-2'
             )}
-            to={`${url}${defaultSearchParams ?? ''}`}
+            to={url}
           >
             {icons[url]}
           </Link>

@@ -9,6 +9,7 @@ function PayerSelect({ field, payerType }: { field: string; payerType: string })
   const id = Form.useWatch(field);
   const { data: payer } = useGetPayerBackboneByLIdQuery({ id, payerType }, { skip: !id });
   const [getPayers] = useLazyGetPayerBackbonesQuery();
+
   const fetchOptions = useCallback(
     async (search: string) => {
       const { data } = await getPayers({
@@ -23,6 +24,7 @@ function PayerSelect({ field, payerType }: { field: string; payerType: string })
     },
     [payerType, getPayers]
   );
+
   const initialOptions = payer ? [{ value: payer.l_id, label: payer.name }] : [];
   return (
     <Form.Item name={field} noStyle>

@@ -109,15 +109,6 @@ class UMP(BaseDocument):
         union_doc = PayerBackboneUnionDoc
 
 
-class DrugList(BaseDocument):
-    payer_key: ClassVar[str] = "druglist"
-    name: str
-    l_id: int
-
-    class Settings:
-        union_doc = PayerBackboneUnionDoc
-
-
 class PayerParent(BaseDocument):
     payer_key: ClassVar[str] = "parent"
     name: str
@@ -138,12 +129,11 @@ class BenefitManager(BaseDocument):
         union_doc = PayerBackboneUnionDoc
 
 
-PayerBackbone = Union[Plan, PayerParent, BenefitManager, DrugList, UMP, MCO, Formulary]
+PayerBackbone = Union[Plan, PayerParent, BenefitManager, UMP, MCO, Formulary]
 payer_classes: list[Type[PayerBackbone]] = [
     Plan,
     PayerParent,
     BenefitManager,
-    DrugList,
     UMP,
     MCO,
     Formulary,
