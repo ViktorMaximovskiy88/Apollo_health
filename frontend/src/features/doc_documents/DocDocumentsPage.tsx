@@ -1,7 +1,7 @@
-import { DocDocumentsDataTable } from './AllDocDocumentsTable';
+import { DocDocumentsDataTable } from './DocDocumentsTable';
 import { MainLayout } from '../../components';
 
-export function AllDocDocumentsPage() {
+export function DocDocumentsPage() {
   return (
     <MainLayout pageTitle={'Documents'}>
       <DocDocumentsDataTable />

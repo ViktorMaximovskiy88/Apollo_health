@@ -1,6 +1,3 @@
-// @Matt: file is a work in progress
-// But I would appreciate input if you feel like the approach could be improved
-
 import { Button, Spin } from 'antd';
 import {
   FileAddOutlined,

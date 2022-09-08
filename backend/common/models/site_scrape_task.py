@@ -17,19 +17,10 @@ class WorkItemOption(Enum):
     UNHANDLED = "UNHANDLED"
 
 
-class WorkItem(BaseDocument):
+class ManualWorkItem(BaseModel):
     document_id: PydanticObjectId
     retrieved_document_id: PydanticObjectId
     selected: str = WorkItemOption.UNHANDLED
-    new_doc: PydanticObjectId | None = None
-    prev_doc: PydanticObjectId | None = None
-    last_collected_date: datetime | None = None
-
-
-class UpdateWorkItem(BaseModel):
-    document_id: PydanticObjectId | None = None
-    retrieved_document_id: PydanticObjectId | None = None
-    selected: str | None = None
     new_doc: PydanticObjectId | None = None
     prev_doc: PydanticObjectId | None = None
     last_collected_date: datetime | None = None
@@ -52,7 +43,7 @@ class SiteScrapeTask(BaseDocument):
     retry_if_lost: bool = False
     collection_method: str | None = CollectionMethod.Automated
     scrape_method_configuration: ScrapeMethodConfiguration | None = None
-    work_list: list[WorkItem] = []
+    work_list: list[ManualWorkItem] = []
 
 
 class UpdateSiteScrapeTask(BaseModel):
@@ -66,7 +57,7 @@ class UpdateSiteScrapeTask(BaseModel):
     error_message: str | None = None
     retry_if_lost: bool | None = False
     scrape_method_configuration: ScrapeMethodConfiguration | None
-    work_list: list[WorkItem] = []
+    work_list: list[ManualWorkItem] = []
 
 
 # Deprecated

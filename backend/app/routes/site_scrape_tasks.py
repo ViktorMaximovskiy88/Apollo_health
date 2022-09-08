@@ -21,10 +21,9 @@ from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import (
+    ManualWorkItem,
     SiteScrapeTask,
     UpdateSiteScrapeTask,
-    UpdateWorkItem,
-    WorkItem,
 )
 from backend.common.models.user import User
 from backend.common.task_queues.unique_task_insert import try_queue_unique_task
@@ -118,10 +117,10 @@ async def start_scrape_task(
                 {"retrieved_document_id": {"$in": site_scrape_task.retrieved_document_ids}}
             ).to_list()
             site_scrape_task.work_list = [
-                await WorkItem(
+                ManualWorkItem(
                     document_id=doc_document.id,
                     retrieved_document_id=doc_document.retrieved_document_id,
-                ).save()
+                )
                 for doc_document in doc_documents
             ]
 
@@ -373,22 +372,20 @@ async def cancel_scrape_task(
     )
 
 
-# @Matt: the endpoint for updating a work item I put in
-# work in progress
 @router.post(
-    "/{task_id}/work_items/{doc_id}",
-    response_model=WorkItem,
+    "/{task_id}/work-items/{doc_id}",
+    response_model=SiteScrapeTask,
 )
 async def update_work_item(
-    updates: UpdateWorkItem,
+    updates: ManualWorkItem,
     task_id: PydanticObjectId,
     doc_id: PydanticObjectId,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    site_scrape_task = await SiteScrapeTask.find_one({"_id": task_id})
-    target = next(
-        filter(lambda work_item: work_item.document_id == doc_id, site_scrape_task.work_list), None
-    )
-    updated = await update_and_log_diff(logger, current_user, target, updates)
+    target_task = await SiteScrapeTask.find_one({"_id": task_id})
+    task_updates = target_task.dict()
+    index = next(i for i, wi in enumerate(target_task.work_list) if wi.document_id == doc_id)
+    task_updates["work_list"][index] = updates.dict()
+    updated = await update_and_log_diff(logger, current_user, target_task, task_updates)
     return updated
