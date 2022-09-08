@@ -1,4 +1,14 @@
-import { AutoComplete, Button, Checkbox, Form, Input, Popover, Tooltip, Typography } from 'antd';
+import {
+  AutoComplete,
+  Button,
+  Select,
+  Checkbox,
+  Form,
+  Input,
+  Popover,
+  Tooltip,
+  Typography,
+} from 'antd';
 import { MinusCircleOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { FormListFieldData } from 'antd/lib/form/FormList';
 import { useState } from 'react';
@@ -18,15 +28,24 @@ function FieldHeaders({ fields }: HeaderPropTypes) {
     return null;
   }
   return (
-    <div className="grid grid-cols-8 space-x-1 whitespace-nowrap">
+    <div className="grid grid-cols-10 space-x-1 whitespace-nowrap">
       <div className="flex items-center col-span-2">
-        <h4 className="mr-1">Attribute Name</h4>
+        <h4 className="mr-1">Attr Element</h4>
+        <Tooltip
+          className="mb-2 ml-px"
+          title="Attribute element to search against. Example: <a> or <li>"
+        >
+          <QuestionCircleOutlined />
+        </Tooltip>
+      </div>
+      <div className="flex items-center col-span-2">
+        <h4 className="mr-1">Attr Name</h4>
         <Tooltip className="mb-2 ml-px" title="Text in name of attribute to search for">
           <QuestionCircleOutlined />
         </Tooltip>
       </div>
       <div className="flex items-center col-span-2 ">
-        <h4 className="mr-1">Attribute Value</h4>
+        <h4 className="mr-1">Attr Value</h4>
         <Tooltip className="mb-2 ml-px" title="Attributes whose value contain the search term">
           <QuestionCircleOutlined />
         </Tooltip>
@@ -62,8 +81,9 @@ function Header() {
     <Hr key="2" />,
     <div key="3">
       <p>
-        <Text strong>Attribute Name:</Text> onclick <br />
-        <Text strong>Attribute Value:</Text> /policy/ <br />
+        <Text strong>Attr Element:</Text> element <br />
+        <Text strong>Attr Name:</Text> onclick <br />
+        <Text strong>Attr Value:</Text> /policy/ <br />
         <Text strong>Contains Text:</Text> Download
       </p>
       <Text code>&lt;a onclick="/documents/policy/file.pdf"&gt;Download File&lt;/a&gt;</Text>
@@ -71,8 +91,9 @@ function Header() {
     <Hr key="4" />,
     <div key="5">
       <p>
-        <Text strong>Attribute Name:</Text> data- <br />
-        <Text strong>Attribute Value:</Text>
+        <Text strong>Attr Element:</Text> element <br />
+        <Text strong>Attr Name:</Text> data- <br />
+        <Text strong>Attr Value:</Text>
         <br />
         <Text strong>Contains Text:</Text>
       </p>
@@ -93,6 +114,34 @@ function Header() {
   );
 }
 
+function ElementInput({ name, field }: InputPropTypes) {
+  const defaultOptions = [
+    { label: 'a', value: 'a' },
+    { label: 'p', value: 'p' },
+    { label: 'li', value: 'li' },
+    { label: 'div', value: 'div' },
+    { label: 'span', value: 'span' },
+    { label: 'input', value: 'input' },
+  ];
+  const [options, setOptions] = useState<{ value: string }[]>([]);
+
+  const onSearch = (searchText: string) => {
+    if (searchText) {
+      const newOptions = defaultOptions.filter((option) => option.label.includes(searchText));
+      const topOptions = newOptions.slice(0, 3);
+      setOptions(topOptions);
+    } else {
+      setOptions([]);
+    }
+  };
+
+  return (
+    <Form.Item {...field} name={[name, 'attr_element']} className="mb-0 shrink-0 col-span-2">
+      <AutoComplete defaultActiveFirstOption={false} onSearch={onSearch} options={options} />
+    </Form.Item>
+  );
+}
+
 function NameInput({ name, field }: InputPropTypes) {
   const defaultOptions = [
     { label: 'aria-label', value: 'aria-label' },
@@ -106,9 +155,9 @@ function NameInput({ name, field }: InputPropTypes) {
 
   const onSearch = (searchText: string) => {
     if (searchText) {
-      let newOptions = defaultOptions.filter((option) => option.label.includes(searchText));
-      newOptions = newOptions.slice(0, 3);
-      setOptions(newOptions);
+      const newOptions = defaultOptions.filter((option) => option.label.includes(searchText));
+      const topOptions = newOptions.slice(0, 3);
+      setOptions(topOptions);
     } else {
       setOptions([]);
     }
@@ -183,7 +232,8 @@ export function AttrSelectors() {
           <FieldHeaders fields={fields} />
           {fields.map(({ key, name, ...field }) => (
             <Form.Item key={key} className="mb-2 whitespace-nowrap" {...field}>
-              <Input.Group className="grid grid-cols-8 space-x-1">
+              <Input.Group className="grid grid-cols-10 space-x-1">
+                <ElementInput name={name} field={field} />
                 <NameInput name={name} field={field} />
                 <ValueInput name={name} field={field} />
                 <ContainsTextInput name={name} field={field} />

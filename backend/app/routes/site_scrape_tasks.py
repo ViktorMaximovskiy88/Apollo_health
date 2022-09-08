@@ -191,7 +191,7 @@ async def run_bulk_by_type(
     else:
         async for site in sites:
             site_id: PydanticObjectId = site.id  # type: ignore
-            update = update_query
+            update = {**update_query}
 
             if bulk_type == "cancel-active" or bulk_type == "hold-all":
                 scrapes_canceled = await cancel_site_scrapes(site_id)

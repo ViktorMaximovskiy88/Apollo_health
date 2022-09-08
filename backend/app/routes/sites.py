@@ -28,6 +28,7 @@ from backend.common.models.site import (
     UpdateSite,
     UpdateSiteAssigne,
 )
+from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 
 router = APIRouter(
@@ -223,12 +224,15 @@ async def get_site_doc_by_id(
 )
 async def get_site_doc_docs(
     site_id: PydanticObjectId,
+    scrape_task_id: PydanticObjectId | None = None,
 ):
-    docs = (
-        await DocDocument.find({"locations.site_id": site_id})
-        .project(DocDocumentLimitTags)
-        .to_list()
-    )
+    query = {"locations.site_id": site_id}
+
+    if scrape_task_id:
+        scrape_task = await SiteScrapeTask.get(scrape_task_id)
+        query["retrieved_document_id"] = {"$in": scrape_task.retrieved_document_ids}
+
+    docs = await DocDocument.find(query).project(DocDocumentLimitTags).to_list()
     return [doc.for_site(site_id) for doc in docs]
 
 

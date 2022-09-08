@@ -7,6 +7,7 @@ export interface BaseUrl {
 }
 
 export interface AttrSelector {
+  attr_element: string;
   attr_name: string;
   attr_value?: string;
   has_text?: string;

@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useGetSiteRetrievedDocumentsQuery } from '../sites/sitesApi';
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import {
@@ -13,7 +13,12 @@ import { useDocumentColumns } from './useDocumentColumns';
 
 export function SiteDocumentsTable() {
   const { siteId } = useParams();
-  const { data } = useGetSiteRetrievedDocumentsQuery(siteId, { pollingInterval: 5000 });
+  const [searchParams] = useSearchParams();
+  const scrapeTaskId = searchParams.get('scrape_task_id');
+  const { data } = useGetSiteRetrievedDocumentsQuery(
+    { siteId, scrapeTaskId },
+    { pollingInterval: 5000 }
+  );
 
   const documents =
     data?.map((document) => ({

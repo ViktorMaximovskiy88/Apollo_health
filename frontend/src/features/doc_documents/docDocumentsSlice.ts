@@ -3,13 +3,17 @@ import { RootState } from '../../app/store';
 
 export const initialState = {
   table: {
-    sort: { name: 'last_collected_date', dir: -1 as 1 | -1 | 0 },
+    sort: [
+      { name: 'last_collected_date', dir: -1 as 1 | -1 | 0 },
+      { name: 'final_effective_date', dir: -1 as 1 | -1 | 0 },
+    ],
     filter: [
       { name: 'last_collected_date', operator: 'before', type: 'date', value: '' },
       { name: 'name', operator: 'contains', type: 'string', value: '' },
       { name: 'link_text', operator: 'contains', type: 'string', value: '' },
       { name: 'document_type', operator: 'eq', type: 'select', value: null },
       { name: 'effective_date', operator: 'before', type: 'date', value: '' },
+      { name: 'final_effective_date', operator: 'before', type: 'date', value: '' },
       { name: 'classification_status', operator: 'eq', type: 'select', value: null },
       { name: 'url', operator: 'contains', type: 'string', value: '' },
     ],

@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { useGetSiteDocDocumentsQuery } from '../sites/sitesApi';
 import {
@@ -18,7 +18,10 @@ interface DataTablePropTypes {
 
 export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) {
   const { siteId } = useParams();
-  const { data } = useGetSiteDocDocumentsQuery(siteId, { pollingInterval: 5000 });
+  const [searchParams] = useSearchParams();
+  const scrapeTaskId = searchParams.get('scrape_task_id');
+
+  const { data } = useGetSiteDocDocumentsQuery({ siteId, scrapeTaskId }, { pollingInterval: 5000 });
   const documents = data ?? [];
 
   const columns = useSiteDocDocumentColumns({ handleNewVersion });

@@ -19,6 +19,7 @@ const useAlreadyAssignedModal = () => {
   const { data: site } = useGetSiteQuery(params.siteId);
   const currentUser = useCurrentUser();
   const navigate = useNavigate();
+
   useEffect(() => {
     if (!site?._id) return;
 

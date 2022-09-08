@@ -3,7 +3,7 @@ import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Button } from 'antd';
 import { LinkOutlined } from '@ant-design/icons';
-import { prettyDateTimeFromISO } from '../../common';
+import { prettyDateFromISO, prettyDateTimeFromISO } from '../../common';
 import { SiteDocDocument } from './types';
 import { Link } from 'react-router-dom';
 import { DocumentTypes } from '../retrieved_documents/types';
@@ -15,7 +15,7 @@ interface CreateColumnsType {
 export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
   return [
     {
-      header: 'Last Collected Date',
+      header: 'Last Collected',
       name: 'last_collected_date',
       minWidth: 200,
       filterEditor: DateFilter,
@@ -32,8 +32,14 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
       },
     },
     {
+      header: 'Link Text',
+      name: 'link_text',
+      minWidth: 200,
+      render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
+    },
+    {
       header: 'Document Name',
-      key: 'name',
+      name: 'name',
       defaultFlex: 1,
       filterSearch: true,
       render: ({ data: doc }: { data: SiteDocDocument }) => {
@@ -54,14 +60,8 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
       },
     },
     {
-      header: 'Link Text',
-      name: 'link_text',
-      minWidth: 200,
-      render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
-    },
-    {
-      header: 'Effective Date',
-      name: 'effective_date',
+      header: 'Final Effective Date',
+      name: 'final_effective_date',
       minWidth: 200,
       filterEditor: DateFilter,
       filterEditorProps: () => {
@@ -72,13 +72,13 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
         };
       },
       render: ({ data: doc }: { data: SiteDocDocument }) => {
-        if (!doc.effective_date) return null;
-        return prettyDateTimeFromISO(doc.effective_date);
+        if (!doc.final_effective_date) return null;
+        return prettyDateFromISO(doc.final_effective_date);
       },
     },
     {
-      header: 'Url',
-      key: 'url',
+      header: 'URL',
+      name: 'url',
       minWidth: 200,
       filterSearch: true,
       render: ({ data: doc }: { data: SiteDocDocument }) => {
