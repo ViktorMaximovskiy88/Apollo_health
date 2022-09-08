@@ -58,10 +58,6 @@ export function prettyDateFromISO(value?: string, dateFormat = DateTime.DATE_MED
  * @returns
  */
 
-export function toDateTimeFromISO(value?: string) {
-  return DateTime.fromISO(value!);
-}
-
 /**
  * Short datetime format
  * @param value
