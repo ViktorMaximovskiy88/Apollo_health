@@ -21,7 +21,6 @@ class TextExtractor:
         self.full_text = await self._extract_text()
 
     def title_from_metadata(self):
-
         if not self.metadata:
             return None
         return self.metadata.get("Title") or self.metadata.get("Subject")
