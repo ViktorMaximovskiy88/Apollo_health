@@ -30,7 +30,6 @@ export function CollectionsPage() {
     if (site?._id) {
       try {
         await runScrape(site._id).unwrap();
-        refetch();
       } catch (err) {
         if (isErrorWithData(err)) {
           notification.error({
