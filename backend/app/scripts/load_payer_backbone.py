@@ -105,7 +105,10 @@ def convert_bm_type(type: str | None):
 
 
 async def load_payer_backbone():
-    await PayerBackboneUnionDoc.get_motor_collection().delete_many({})
+    if await PayerBackboneUnionDoc.count():
+        return
+
+    print("Loading Payer Backbone Data")
 
     xlsx_path = this_folder.joinpath("payer_backbone.xlsx")
     wb = load_workbook(str(xlsx_path))

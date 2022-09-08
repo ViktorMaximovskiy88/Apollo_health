@@ -38,7 +38,7 @@ async def get_target(id: PydanticObjectId):
 
 
 def payer_class(
-    type: Literal["plan", "formulary", "druglist", "mco", "parent", "ump", "bm"],
+    type: Literal["plan", "formulary", "mco", "parent", "ump", "bm"],
 ) -> Type[PayerBackbone]:
     return next((i for i in payer_classes if i.payer_key == type))
 
