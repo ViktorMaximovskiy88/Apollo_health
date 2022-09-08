@@ -11,13 +11,14 @@ import {
 } from 'antd';
 import { MinusCircleOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { FormListFieldData } from 'antd/lib/form/FormList';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Hr } from '../../components';
 
 interface InputPropTypes {
-  name: number;
-  field: { fieldKey?: number };
+  displayLabel?: boolean;
+  name: (string | number)[];
+  field?: { fieldKey?: number };
 }
 
 interface HeaderPropTypes {
@@ -30,36 +31,42 @@ function FieldHeaders({ fields }: HeaderPropTypes) {
   return (
     <div className="grid grid-cols-10 space-x-1 whitespace-nowrap">
       <div className="flex items-center col-span-2">
-        <h4 className="mr-1">Attr Element</h4>
+        <h4 className="mr-1">Element Name</h4>
         <Tooltip
-          className="mb-2 ml-px"
-          title="Attribute element to search against. Example: <a> or <li>"
+          className="mb-2 ml-px cursor-help"
+          title="Elements to search inside of for attribute. Example: <a> or <li>"
         >
           <QuestionCircleOutlined />
         </Tooltip>
       </div>
       <div className="flex items-center col-span-2">
         <h4 className="mr-1">Attr Name</h4>
-        <Tooltip className="mb-2 ml-px" title="Text in name of attribute to search for">
+        <Tooltip
+          className="mb-2 ml-px cursor-help"
+          title="Attributes whose name contain the search term"
+        >
           <QuestionCircleOutlined />
         </Tooltip>
       </div>
       <div className="flex items-center col-span-2 ">
         <h4 className="mr-1">Attr Value</h4>
-        <Tooltip className="mb-2 ml-px" title="Attributes whose value contain the search term">
+        <Tooltip
+          className="mb-2 ml-px cursor-help"
+          title="Attributes whose value contain the search term"
+        >
           <QuestionCircleOutlined />
         </Tooltip>
       </div>
       <div className="flex items-center col-span-2 mr-1">
         <h4 className="mr-1">Contains Text</h4>
-        <Tooltip className="mb-2 ml-px" title="<a/> tags that contain the search term">
+        <Tooltip className="mb-2 ml-px cursor-help" title="Tags that contain the search term'">
           <QuestionCircleOutlined />
         </Tooltip>
       </div>
       <div className="flex items-center col-span-2 mr-1">
         <h4 className="mr-1">Is Resource</h4>
         <Tooltip
-          className="mb-2 ml-px"
+          className="mb-2 ml-px cursor-help"
           title="Attribute with matching Attribute Name contains a direct
       link to the document"
         >
@@ -81,7 +88,7 @@ function Header() {
     <Hr key="2" />,
     <div key="3">
       <p>
-        <Text strong>Attr Element:</Text> element <br />
+        <Text strong>Element Name:</Text> a <br />
         <Text strong>Attr Name:</Text> onclick <br />
         <Text strong>Attr Value:</Text> /policy/ <br />
         <Text strong>Contains Text:</Text> Download
@@ -91,7 +98,7 @@ function Header() {
     <Hr key="4" />,
     <div key="5">
       <p>
-        <Text strong>Attr Element:</Text> element <br />
+        <Text strong>Element Name:</Text> a <br />
         <Text strong>Attr Name:</Text> data- <br />
         <Text strong>Attr Value:</Text>
         <br />
@@ -107,14 +114,19 @@ function Header() {
   return (
     <div className="flex items-center">
       <h4 className="mr-1">Custom Selectors</h4>
-      <Popover placement="right" title={title} content={contentItems} className="mb-2 ml-px">
+      <Popover
+        placement="right"
+        title={title}
+        content={contentItems}
+        className="mb-2 ml-px cursor-help"
+      >
         <QuestionCircleOutlined />
       </Popover>
     </div>
   );
 }
 
-function ElementInput({ name, field }: InputPropTypes) {
+export function ElementInput({ displayLabel, name, field }: InputPropTypes) {
   const defaultOptions = [
     { label: 'a', value: 'a' },
     { label: 'p', value: 'p' },
@@ -135,14 +147,25 @@ function ElementInput({ name, field }: InputPropTypes) {
     }
   };
 
+  const label = displayLabel ? 'Element Name' : undefined;
+  const tooltip = displayLabel
+    ? 'Elements to search inside of for attribute. Example: <a> or <li>'
+    : undefined;
+  const nameProp = [...name, 'attr_element'];
   return (
-    <Form.Item {...field} name={[name, 'attr_element']} className="mb-0 shrink-0 col-span-2">
+    <Form.Item
+      {...field}
+      name={nameProp}
+      className="mb-0 shrink-0 col-span-2"
+      label={label}
+      tooltip={tooltip}
+    >
       <AutoComplete defaultActiveFirstOption={false} onSearch={onSearch} options={options} />
     </Form.Item>
   );
 }
 
-function NameInput({ name, field }: InputPropTypes) {
+export function NameInput({ displayLabel, name, field }: InputPropTypes) {
   const defaultOptions = [
     { label: 'aria-label', value: 'aria-label' },
     { label: 'class', value: 'class' },
@@ -163,11 +186,16 @@ function NameInput({ name, field }: InputPropTypes) {
     }
   };
 
+  const nameProp = [...name, 'attr_name'];
+  const label = displayLabel ? 'Attr Name' : undefined;
+  const tooltip = displayLabel ? 'Attributes whose name contain the search term' : undefined;
   return (
     <Form.Item
       {...field}
-      name={[name, 'attr_name']}
+      name={nameProp}
+      label={label}
       rules={[{ required: true, message: 'Required' }]}
+      tooltip={tooltip}
       className="mb-0 shrink-0 col-span-2"
     >
       <AutoComplete defaultActiveFirstOption={false} onSearch={onSearch} options={options} />
@@ -175,33 +203,52 @@ function NameInput({ name, field }: InputPropTypes) {
   );
 }
 
-function ValueInput({ name, field }: InputPropTypes) {
-  return (
-    <Form.Item {...field} name={[name, 'attr_value']} className="mb-0 shrink-0 col-span-2">
-      <Input />
-    </Form.Item>
-  );
-}
-
-function ContainsTextInput({ name, field }: InputPropTypes) {
+export function ValueInput({ displayLabel, name, field }: InputPropTypes) {
+  const nameProp = [...name, 'attr_value'];
+  const label = displayLabel ? 'Attr Value' : undefined;
+  const tooltip = displayLabel ? 'Attributes whose value contain the search term' : undefined;
   return (
     <Form.Item
       {...field}
-      name={[name, 'has_text']}
+      name={nameProp}
+      label={label}
+      tooltip={tooltip}
       className="mb-0 shrink-0 col-span-2"
-      tooltip="Search for text contained within matching element"
     >
       <Input />
     </Form.Item>
   );
 }
 
-function IsResourceAddress({ name, field }: InputPropTypes) {
+export function ContainsTextInput({ displayLabel, name, field }: InputPropTypes) {
+  const nameProp = [...name, 'has_text'];
+  const label = displayLabel ? 'Contains Text' : undefined;
+  const tooltip = displayLabel ? 'Tags that contain the search term' : undefined;
   return (
     <Form.Item
       {...field}
-      name={[name, 'resource_address']}
-      tooltip="Attribute contains path to document"
+      name={nameProp}
+      label={label}
+      tooltip={tooltip}
+      className="mb-0 shrink-0 col-span-2"
+    >
+      <Input />
+    </Form.Item>
+  );
+}
+
+export function IsResourceAddress({ displayLabel, name, field }: InputPropTypes) {
+  const nameProp = [...name, 'resource_address'];
+  const label = displayLabel ? 'Is Resource' : undefined;
+  const tooltip = displayLabel
+    ? 'Attribute with matching Attribute Name contains a direct link to the document'
+    : undefined;
+  return (
+    <Form.Item
+      {...field}
+      name={nameProp}
+      label={label}
+      tooltip={tooltip}
       valuePropName="checked"
       className="mb-0 shrink-0"
     >
@@ -233,11 +280,11 @@ export function AttrSelectors() {
           {fields.map(({ key, name, ...field }) => (
             <Form.Item key={key} className="mb-2 whitespace-nowrap" {...field}>
               <Input.Group className="grid grid-cols-10 space-x-1">
-                <ElementInput name={name} field={field} />
-                <NameInput name={name} field={field} />
-                <ValueInput name={name} field={field} />
-                <ContainsTextInput name={name} field={field} />
-                <IsResourceAddress name={name} field={field} />
+                <ElementInput name={[name]} field={field} />
+                <NameInput name={[name]} field={field} />
+                <ValueInput name={[name]} field={field} />
+                <ContainsTextInput name={[name]} field={field} />
+                <IsResourceAddress name={[name]} field={field} />
                 <RemoveButton fields={fields} remove={remove} name={name} />
               </Input.Group>
             </Form.Item>

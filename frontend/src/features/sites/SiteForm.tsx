@@ -18,7 +18,9 @@ export function SiteForm(props: {
   setReadOnly?: (readOnly: boolean) => void;
 }) {
   const initialFollowLinks = props.initialValues?.scrape_method_configuration.follow_links ?? false;
+  const initialisSearchable = props.initialValues?.scrape_method_configuration.searchable ?? false;
   const [followLinks, setFollowLinks] = useState<boolean>(initialFollowLinks);
+  const [isSearchable, setIsSearchable] = useState<boolean>(initialisSearchable);
   const [form] = useForm();
 
   /* eslint-disable no-template-curly-in-string */
@@ -33,6 +35,9 @@ export function SiteForm(props: {
   function setFormState(modified: Partial<Site>) {
     if (modified.scrape_method_configuration?.follow_links !== undefined) {
       setFollowLinks(modified.scrape_method_configuration.follow_links);
+    }
+    if (modified.scrape_method_configuration?.searchable !== undefined) {
+      setIsSearchable(modified.scrape_method_configuration.searchable);
     }
   }
 
@@ -53,7 +58,13 @@ export function SiteForm(props: {
         follow_links: false,
         follow_link_keywords: [],
         follow_link_url_keywords: [],
+        searchable: false,
+        searchable_type: '',
+        searchable_input: null,
+        searchable_submit: null,
         attr_selectors: [],
+        html_attr_selectors: [],
+        html_exclusion_selectors: [],
         focus_therapy_configs: [],
         allow_docdoc_updates: false,
       },
@@ -90,6 +101,7 @@ export function SiteForm(props: {
         followLinks={followLinks}
         form={form}
         initialValues={initialValues}
+        isSearchable={isSearchable}
       />
       <Form.Item name="tags" label="Tags">
         <Select mode="tags" />
