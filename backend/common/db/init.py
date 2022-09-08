@@ -4,9 +4,9 @@ from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 from backend.common.db.settings import settings
+from backend.common.models.app_config import AppConfig
 from backend.common.models.change_log import ChangeLog
 from backend.common.models.comment import Comment
-from backend.common.models.config import Config
 from backend.common.models.content_extraction_task import (
     ContentExtractionResult,
     ContentExtractionTask,
@@ -51,7 +51,7 @@ async def init_db(mock=False, database_name=None):
         document_models=[
             User,
             Site,
-            Config,
+            AppConfig,
             Proxy,
             Comment,
             WorkQueue,
