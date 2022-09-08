@@ -36,12 +36,6 @@ interface AddDocumentModalPropTypes {
 
 export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocumentModalPropTypes) {
   const [form] = useForm();
-  const { data } = useGetScrapeTasksForSiteQuery(
-    { siteId },
-    {
-      pollingInterval: 3000,
-    }
-  );
   const [addDoc] = useAddDocumentMutation();
   const [fileData, setFileData] = useState<any>();
   let initialValues: any = {
