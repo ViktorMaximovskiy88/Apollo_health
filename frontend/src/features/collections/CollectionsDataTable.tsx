@@ -17,7 +17,6 @@ import { useCollectionsColumns as useColumns } from './useCollectionsColumns';
 import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
 import { useInterval } from '../../common/hooks';
 import { TableInfoType } from '../../common/types';
-import { SiteScrapeTask } from './types';
 import { DateTime } from 'luxon';
 import { useEffect } from 'react';
 import { ErrorLogModal } from './ErrorLogModal';
@@ -53,7 +52,7 @@ const useControlledPagination = () => {
   return controlledPaginationProps;
 };
 
-export const useSiteScrapeFilter = (siteId: string, dateOffset?: number) => {
+export const useSiteScrapeFilter = (dateOffset?: number) => {
   let { filter: filterValue }: { filter: TypeFilterValue } = useSelector(collectionTableState);
   const dispatch = useDispatch();
 
@@ -100,7 +99,6 @@ export const useSiteScrapeSort = () => {
 
 interface DataTablePropTypes {
   siteId: string;
-  scrapeTasks?: { data: SiteScrapeTask[]; total: number };
   openNewDocumentModal: () => void;
 }
 
@@ -119,9 +117,9 @@ export function CollectionsDataTable({ siteId, openNewDocumentModal }: DataTable
     [getCollectionsFn, watermark]
   );
 
-  const config = useGetCollectionConfigQuery('collections');
+  const config = useGetCollectionConfigQuery();
   const dateOffset = config.data?.data.defaultLastNDays;
-  const filterProps = useSiteScrapeFilter(siteId, dateOffset);
+  const filterProps = useSiteScrapeFilter(dateOffset);
 
   const sortProps = useSiteScrapeSort();
   const controlledPagination = useControlledPagination();
