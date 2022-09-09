@@ -61,16 +61,16 @@ function PayerInfo() {
         </Form.Item>
       </Input.Group>
       <Input.Group className="space-x-2 flex">
-        <Form.Item label="Channel" name={['payer_info', 'channel']} className="w-full">
+        <Form.Item label="Channel" name={['payer_info', 'channels']} className="w-full">
           <Select mode="multiple" options={channelOptions} />
         </Form.Item>
-        <Form.Item label="Benefit" name={['payer_info', 'benefit']} className="w-full">
+        <Form.Item label="Benefit" name={['payer_info', 'benefits']} className="w-full">
           <Select mode="multiple" options={benefitOptions} />
         </Form.Item>
         <Form.Item label="Plan Types" name={['payer_info', 'plan_types']} className="w-full">
           <Select mode="multiple" options={planTypeOptions} />
         </Form.Item>
-        <Form.Item label="Region" name={['payer_info', 'region']} className="w-full">
+        <Form.Item label="Region" name={['payer_info', 'regions']} className="w-full">
           <Select mode="multiple" options={regionOptions} />
         </Form.Item>
       </Input.Group>
