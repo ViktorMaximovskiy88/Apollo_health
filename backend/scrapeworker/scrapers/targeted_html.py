@@ -5,7 +5,8 @@ from functools import cached_property
 from bs4 import BeautifulSoup
 from playwright.async_api import Locator
 
-from backend.common.storage.text_handler import TextHandler
+from backend.common.storage.client import DocumentStorageClient
+from backend.common.storage.hash import hash_full_text
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.selectors import to_xpath
 from backend.scrapeworker.scrapers.playwright_base_scraper import (
@@ -16,7 +17,7 @@ from backend.scrapeworker.scrapers.playwright_base_scraper import (
 
 class TargetedHtmlScraper(PlaywrightBaseScraper):
     type = "TargetedHTML"
-    text_handler = TextHandler()
+    doc_client = DocumentStorageClient()
 
     @cached_property
     def css_selector(self) -> str | None:
@@ -62,7 +63,7 @@ class TargetedHtmlScraper(PlaywrightBaseScraper):
             for element in remove_elements:
                 element.extract()
 
-        return soup.prettify()
+        return str(soup)
 
     async def scrape_and_queue(self, downloads: list[DownloadContext]) -> None:
         xpath_locator = self.page.locator(self.xpath_selector)
@@ -74,10 +75,12 @@ class TargetedHtmlScraper(PlaywrightBaseScraper):
                 metadata = await self.extract_metadata(html_locator)
                 html_content = await html_locator.inner_html()
                 cleaned_html = self.remove_exclusions(html_content)
-                checksum = await self.text_handler.save_text(
-                    cleaned_html, ext="html"
-                )  # use doc client instead
-                filename = metadata.closest_heading
+                checksum = hash_full_text(cleaned_html)
+                dest_path = f"{checksum}.html"
+                # if not self.doc_client.object_exists(dest_path):
+                bytes_obj = bytes(cleaned_html, "iso-8859-1")
+                self.doc_client.write_object_mem(dest_path, bytes_obj)
+                filename = metadata.closest_heading  # something better?
                 if not filename:
                     filename = await self.page.title()
                 downloads.append(

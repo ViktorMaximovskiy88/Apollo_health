@@ -14,11 +14,13 @@ from backend.scrapeworker.scrapers.direct_download import (
     PlaywrightBaseScraper,
 )
 from backend.scrapeworker.scrapers.javascript_click import JavascriptClick
+from backend.scrapeworker.scrapers.targeted_html import TargetedHtmlScraper
 
 scrapers: list[Type[PlaywrightBaseScraper]] = [
     AspNetWebFormScraper,
     DirectDownloadScraper,
     JavascriptClick,
+    TargetedHtmlScraper,
 ]
 
 

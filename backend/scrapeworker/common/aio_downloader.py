@@ -14,7 +14,7 @@ from tenacity import AttemptManager
 from backend.common.core.config import config
 from backend.common.models.link_task_log import InvalidResponse, ValidResponse
 from backend.common.models.proxy import Proxy
-from backend.common.storage.client import TextStorageClient
+from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import DocStreamHasher
 from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.common.rate_limiter import RateLimiter
@@ -133,8 +133,10 @@ class AioDownloader:
 
     async def set_download_data(self, download: DownloadContext, path: str) -> None:
         download.file_path = path
-        download.set_mimetype()
-        download.set_extension_from_mimetype()
+        if not download.mimetype:
+            download.set_mimetype()
+        if not download.file_extension:
+            download.set_extension_from_mimetype()
         download.file_size = download.response.content_length or 0
         if download.file_size == 0:
             async with aiofiles.open(path, "rb") as file:
@@ -171,9 +173,9 @@ class AioDownloader:
         self.log.info(f"Before attempting download {url}")
 
         if download.file_hash:
-            text_client = TextStorageClient()
+            doc_client = DocumentStorageClient()
             dest_path = f"{download.file_hash}.{download.file_extension}"
-            with text_client.read_object_to_tempfile(dest_path) as path:
+            with doc_client.read_object_to_tempfile(dest_path) as path:
                 await self.set_download_data(download, path)
                 self.log.info(
                     f"content_type={download.content_type} mimetype={download.mimetype} file_hash={download.file_hash}"  # noqa

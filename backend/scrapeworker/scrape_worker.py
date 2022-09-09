@@ -149,9 +149,9 @@ class ScrapeWorker:
 
             # TODO can we separate the concept of extensions to scrape on
             # and ext we expect to download? for now just html
-            if (
-                download.file_extension == "html"
-                and "html" not in self.site.scrape_method_configuration.document_extensions
+            if download.file_extension == "html" and (
+                "html" not in self.site.scrape_method_configuration.document_extensions
+                and self.site.scrape_method != "HtmlScrape"
             ):
                 self.log.warn("Received an unexpected html response")
                 await link_retrieved_task.save()
@@ -182,11 +182,12 @@ class ScrapeWorker:
 
             # TODO i think this needs to not live here... a lambda to do the 'preview' thing
             # right now opt-in to it
-            if (
-                download.file_extension == "html"
-                and "html" in self.site.scrape_method_configuration.document_extensions
+            if download.file_extension == "html" and (
+                "html" in self.site.scrape_method_configuration.document_extensions
+                or self.site.scrape_method == "HtmlScrape"
             ):
-                target_url = url if not download.direct_scrape else temp_path
+                target_url = url if not download.direct_scrape else f"file:/{temp_path}"
+                # TODO: check if file is at target url. Figure out how to view it with playwright
                 async with self.playwright_context(target_url) as (page, _context):
                     dest_path = f"{checksum}.{download.file_extension}.pdf"
                     await page.goto(target_url, wait_until="domcontentloaded")
@@ -375,10 +376,11 @@ class ScrapeWorker:
                     config=self.site.scrape_method_configuration,
                 )
 
-                await scrape_handler.run_scrapers(url, base_url, all_downloads)
                 if await self.searchable.is_searchable(page):
                     async for code in self.searchable.run_searchable(page):
                         await scrape_handler.run_scrapers(url, base_url, all_downloads)
+                else:
+                    await scrape_handler.run_scrapers(url, base_url, all_downloads)
 
         return all_downloads
 
