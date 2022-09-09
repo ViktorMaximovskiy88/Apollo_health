@@ -212,8 +212,8 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.24.68"
-description = "Type annotations for boto3 1.24.68 generated with mypy-boto3-builder 7.11.8"
+version = "1.24.69"
+description = "Type annotations for boto3 1.24.69 generated with mypy-boto3-builder 7.11.8"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
@@ -923,14 +923,6 @@ description = "Safely pass data to untrusted environments and back."
 category = "main"
 optional = false
 python-versions = ">=3.7"
-
-[[package]]
-name = "jaro-winkler"
-version = "2.0.3"
-description = "Original, standard and customisable versions of the Jaro-Winkler functions."
-category = "main"
-optional = false
-python-versions = "*"
 
 [[package]]
 name = "jarowinkler"
@@ -2228,7 +2220,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.10.3"
-content-hash = "a99bbbc9521ad9a883e2ee14e832b424dca4c1da761bfb8d8bd7751b0f3d2237"
+content-hash = "98fc4a56284b42b8412dc0cd0543fe34b65e8e28ba2b3b335efd7c75d496e5c9"
 
 [metadata.files]
 aiodns = [
@@ -2809,7 +2801,6 @@ itsdangerous = [
     {file = "itsdangerous-2.1.2-py3-none-any.whl", hash = "sha256:2c2349112351b88699d8d4b6b075022c0808887cb7ad10069318a8b0bc88db44"},
     {file = "itsdangerous-2.1.2.tar.gz", hash = "sha256:5dbbc68b317e5e42f327f9021763545dc3fc3bfe22e6deb96aaf1fc38874156a"},
 ]
-jaro-winkler = []
 jarowinkler = []
 jinja2 = [
     {file = "Jinja2-3.1.2-py3-none-any.whl", hash = "sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61"},
