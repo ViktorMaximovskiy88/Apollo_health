@@ -16,7 +16,7 @@ from tenacity.wait import wait_random_exponential
 
 from backend.common.core.enums import TaskStatus
 from backend.common.core.log import logging
-from backend.common.models.doc_document import DocDocument, IndicationTag, TherapyTag
+from backend.common.models.doc_document import IndicationTag, TherapyTag
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.link_task_log import (
     FileMetadata,
@@ -437,38 +437,6 @@ class ScrapeWorker:
         extension = get_extension_from_path_like(url)
         return extension in ["docx", "pdf", "xlsx"]
 
-    async def process_lineage_queue(self, tasks: list[tuple[any, any]]):
-        for (doc, doc_doc) in tasks:
-            await self.determine_lineage(doc, doc_doc)
-
-    async def determine_lineage(self, doc: RetrievedDocument, doc_doc: DocDocument):
-
-        # same URL diff checksum
-        # this will not be perfomant ...
-        location = doc.get_site_location(self.site.id)
-        previous_doc = (
-            await RetrievedDocument.find(
-                {
-                    "checksum": {"$ne": doc.checksum},
-                    "site_id": self.site.id,
-                    "locations.url": location.url,
-                }
-            )
-            .sort("-last_collected_date")
-            .first_or_none()
-        )
-
-        if previous_doc:
-            print(previous_doc)
-        # doc type check (kinda werid since we guess this too
-        # but we'd guess it the same even if wrong...)
-
-        # geo check: 'state' or region?
-
-        # temporal check: effective date (month, year)
-
-        # content check: therapy and indication tags
-
     async def run_scrape(self):
         all_downloads: list[DownloadContext] = []
         base_urls: list[str] = [base_url.url for base_url in self.active_base_urls()]
@@ -506,8 +474,7 @@ class ScrapeWorker:
 
         await self.wait_for_completion_or_cancel(tasks)
 
-        await self.process_lineage_queue(self.lineage_tasks)
-        # print(self.lineage_tasks, "self.lineage_tasks")
+        print(self.lineage_tasks, "self.lineage_tasks")
 
         await self.downloader.close()
 
