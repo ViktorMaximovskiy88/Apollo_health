@@ -129,7 +129,7 @@ function ValidationButtons() {
       <NotFound />
       <NewVersion />
       <Unhandled />
-      <Spin spinning={isLoading ?? false} size="small" className="pl-3 pt-2" />
+      <Spin spinning={isLoading} size="small" className="pl-3 pt-2" />
     </div>
   );
 }
