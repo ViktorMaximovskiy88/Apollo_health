@@ -58,6 +58,10 @@ resource "aws_ecs_task_definition" "scrapeworker" {
         {
           name  = "SMARTPROXY_USERNAME"
           value = data.aws_ssm_parameter.smartproxy-username.value
+        },
+        {
+          name = "NEW_RELIC_APP_NAME"
+          value = local.new_relic_app_name
         }
       ]
       essential = true
@@ -76,7 +80,7 @@ resource "aws_ecs_task_definition" "scrapeworker" {
         }
       }
 
-      secrets = [
+      secrets = concat(local.new_relic_secrets, [
         {
           name      = "REDIS_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_auth_password"
@@ -85,7 +89,7 @@ resource "aws_ecs_task_definition" "scrapeworker" {
           name      = "SMARTPROXY_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/smartproxy_password"
         }
-      ]
+      ])
 
     }
   ])

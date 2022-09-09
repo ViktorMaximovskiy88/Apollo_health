@@ -81,6 +81,7 @@ async def create_document_family(
         description=document_family.description,
         site_id=document_family.site_id,
         relevance=document_family.relevance,
+        payer_info=document_family.payer_info,
         disabled=False,
     )
     await create_and_log(logger, current_user, new_document_family)

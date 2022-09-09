@@ -13,6 +13,7 @@ import {
   InboxOutlined,
   FileTextTwoTone,
   MergeCellsOutlined,
+  WalletOutlined,
 } from '@ant-design/icons';
 
 export function AppLayout() {
@@ -92,6 +93,7 @@ function AppMenu() {
     '/work-queues': <InboxOutlined />,
     '/documents': <FileTextTwoTone />,
     '/translations': <MergeCellsOutlined />,
+    '/payer-backbone': <WalletOutlined />,
     '/users': <IdcardOutlined />,
   };
 

@@ -1,8 +1,9 @@
 import asyncio
 import logging
+import os
 from functools import cached_property
 
-from playwright.async_api import ElementHandle
+from playwright.async_api import Download, ElementHandle
 from playwright.async_api import Response as PageResponse
 
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request, Response
@@ -34,15 +35,23 @@ class JavascriptClick(PlaywrightBaseScraper):
         self.log.info(selector_string)
         return selector_string
 
+    # Handle special json responses which contain links to downloadable media.
     async def handle_json(self, response: PageResponse) -> DownloadContext | None:
+        if not response.headers.get("content-type", False):
+            content_type = None
+        else:
+            content_type = response.headers["content-type"]
         try:
             parsed = await response.json()
+            # Reset content_type to headers returned by json response.
+            content_type = response.headers["content-type"]
         except Exception:
             self.log.debug("no json response")
             return None
-        content_type = response.headers["content-type"]
-        if content_type == "application/vnd.contentful.delivery.v1+json":  # Contentful
-            self.log.debug(f"follow json {content_type}")
+        # Handle contentful json field field.
+        # content_type == "application/vnd.contentful.delivery.v1+json"
+        if "fields" in parsed and "file" in parsed["fields"]:  # Contentful
+            self.log.debug(f"follow json file field {content_type}")
             file_field = parsed["fields"]["file"]
             return DownloadContext(
                 content_type=file_field["contentType"],
@@ -66,7 +75,7 @@ class JavascriptClick(PlaywrightBaseScraper):
         downloads: list[DownloadContext] = []
         link_handle: ElementHandle
 
-        async def postprocess(response: PageResponse) -> None:
+        async def postprocess_response(response: PageResponse) -> None:
             accepted_types = [
                 "application/pdf",
                 "application/vnd.ms-excel",
@@ -74,26 +83,41 @@ class JavascriptClick(PlaywrightBaseScraper):
             ]
             try:
                 await response.finished()
-                content_type: str | None = None
-                if "content-type" in response.headers:
-                    content_type = response.headers["content-type"]
                 download = await self.handle_json(response)
-                if download:
+                if (
+                    isinstance(download, DownloadContext)
+                    and download.content_type in accepted_types
+                ):
                     download.metadata = await self.extract_metadata(link_handle)
                     downloads.append(download)
-                elif content_type in accepted_types:
-                    self.log.debug(f"direct download {content_type}")
+                else:
+                    self.log.debug(f"Unknown json response: {response.headers}")
+                    return None
+            except Exception:
+                logging.error("exception", exc_info=True)
+
+        async def postprocess_download(download: Download) -> None:
+            accepted_types = [".pdf", ".xls", ".xlsx", ".doc", ".docx"]
+            try:
+                # Response may not always have content-type header.
+                # Use filename ext instead.
+                # suggested_filename='PriorAuthorization.pdf'
+                filename, file_extension = os.path.splitext(download.suggested_filename)
+                if file_extension in accepted_types:
+                    self.log.debug(
+                        f"javascript click -> direct download: {filename}.{file_extension}"
+                    )
                     download = DownloadContext(
-                        response=Response(content_type=content_type, status=response.status),
+                        response=Response(content_type=None),
                         request=Request(
-                            url=response.url,
+                            url=download.url,
                         ),
                     )
                     download.metadata = await self.extract_metadata(link_handle)
                     downloads.append(download)
                 else:
-                    self.log.debug(f"unknown format {content_type}")
-
+                    self.log.debug(f"unknown download extension: {file_extension}")
+                    return None
             except Exception:
                 logging.error("exception", exc_info=True)
 
@@ -103,7 +127,10 @@ class JavascriptClick(PlaywrightBaseScraper):
         for index in range(0, xpath_locator_count):
             try:
                 link_handle = await xpath_locator.nth(index).element_handle(timeout=1000)
-                self.page.on("response", postprocess)
+                # Handle onclick json response where the json has link to pdf.
+                self.page.on("response", postprocess_response)
+                # Handle onclick download directly to pdf rather than response.
+                self.page.on("download", postprocess_download)
 
                 await link_handle.click()
                 await asyncio.sleep(0.25)

@@ -114,7 +114,6 @@ class DateParser:
         """
         separator_match = self.hyphen_rgx.search(text, start)
         if separator_match:
-            logging.info(f"Checking for date span: {text}")
             dash_index = separator_match.start()
             if self.whitespace_rgx.search(text, start, dash_index):
                 return None
@@ -125,7 +124,6 @@ class DateParser:
             if closest_match:
                 second_date = dash_index + closest_match.start
                 if not self.whitespace_rgx.search(text, dash_index + 1, second_date):
-                    logging.info(f"Found second date: {closest_match.date}")
                     return closest_match
         return None
 
@@ -196,7 +194,6 @@ class DateParser:
             for m in self.get_dates(line):
                 end_date = self.extract_date_span(line, m.end)
                 if end_date:
-                    logging.info(f"Found date span {m.date}, {end_date.date}")
                     self.update_label(m, "effective_date")
                     self.update_label(end_date, "end_date")
                 else:
