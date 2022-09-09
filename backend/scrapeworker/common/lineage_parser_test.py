@@ -1,4 +1,4 @@
-from backend.scrapeworker.common.state_parser import (
+from backend.scrapeworker.common.lineage_parser import (
     guess_state_abbr,
     guess_state_name,
     guess_year_part,
@@ -46,16 +46,16 @@ def test_state_again_8():
 
 
 def test_state_again_9():
-    state_name = guess_state_name("\South Carolina|")
+    state_name = guess_state_name("South Carolina|")
     assert state_name == "South Carolina"
 
 
-def test_state_again_9():
+def test_state_again_10():
     state_name = guess_state_name(".Michigan.")
     assert state_name == "Michigan"
 
 
-def test_state_again_10():
+def test_state_again_11():
     state_name = guess_state_name(" Michigan s")
     assert state_name == "Michigan"
 

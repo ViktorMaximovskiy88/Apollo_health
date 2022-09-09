@@ -1,9 +1,5 @@
 import re
 
-from dateutil import parser
-
-from backend.scrapeworker.common.utils import date_rgxs, label_rgxs
-
 state_map = {
     "AK": "Alaska",
     "AL": "Alabama",
@@ -100,3 +96,39 @@ def guess_year_part(input: str | None):
         return None
     match = re.search(year_part_regex, input)
     return int(match.group("year_part")) if match else None
+
+
+month_part_regex = re.compile(r"(?P<month_part>(?<![0-9a-z])(0?[1-9]|1[0-2])(?![0-9a-z]))")
+
+
+def guess_month_part(input: str | None):
+    if input is None:
+        return None
+    match = re.search(month_part_regex, input)
+    return int(match.group("month_part")) if match else None
+
+
+month_abbr_regex = re.compile(
+    r"(?P<month_abbr>(?<![0-9a-z])(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sept?|Oct|Nov|Dec)(?![0-9a-z]))",
+    flags=re.IGNORECASE,
+)
+
+
+def guess_month_abbr(input: str | None):
+    if input is None:
+        return None
+    match = re.search(month_abbr_regex, input)
+    return match.group("month_abbr").title() if match else None
+
+
+month_name_regex = re.compile(
+    r"(?P<month_name>(?<![0-9a-z])(January|February|March|April|May|June|July|August|September|October|November|December)(?![0-9a-z]))",  # noqa
+    flags=re.IGNORECASE,
+)
+
+
+def guess_month_name(input: str | None):
+    if input is None:
+        return None
+    match = re.search(month_name_regex, input)
+    return match.group("month_name").title() if match else None

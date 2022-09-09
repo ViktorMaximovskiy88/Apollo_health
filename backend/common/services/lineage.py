@@ -8,7 +8,10 @@ from backend.common.models.lineage import Lineage, LineageAttrs, LineageCompare
 from backend.common.models.shared import get_unique_focus_tags, get_unique_reference_tags
 from backend.common.models.site import Site
 from backend.common.services.document import SiteRetrievedDocument, get_site_docs
-from backend.scrapeworker.common.state_parser import (
+from backend.scrapeworker.common.lineage_parser import (
+    guess_month_abbr,
+    guess_month_name,
+    guess_month_part,
     guess_state_abbr,
     guess_state_name,
     guess_year_part,
@@ -83,6 +86,9 @@ def build_attr_model(input: str) -> LineageAttrs:
         state_abbr=guess_state_abbr(input),
         state_name=guess_state_name(input),
         year_part=guess_year_part(input),
+        month_abbr=guess_month_abbr(input),
+        month_name=guess_month_name(input),
+        month_part=guess_month_part(input),
     )
 
 
@@ -92,6 +98,7 @@ def consensus_attr(model: LineageCompare, attr: str):
         [
             getattr(model.filename, attr),
             getattr(model.pathname, attr),
+            # TODO file and path are easier to guess due to human formatting of paths/urls/files
             getattr(model.element, attr),
             getattr(model.parent, attr),
             getattr(model.siblings, attr),
@@ -130,5 +137,8 @@ def build_lineage_compare(doc: SiteRetrievedDocument) -> LineageCompare:
 
     lineage_compare.state_abbr = consensus_attr(lineage_compare, "state_abbr")
     lineage_compare.state_name = consensus_attr(lineage_compare, "state_name")
+    lineage_compare.month_abbr = consensus_attr(lineage_compare, "month_abbr")
+    lineage_compare.month_name = consensus_attr(lineage_compare, "month_name")
+    lineage_compare.year_part = consensus_attr(lineage_compare, "year_part")
 
     return lineage_compare

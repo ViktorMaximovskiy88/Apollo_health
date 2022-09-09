@@ -12,6 +12,7 @@ class LineageAttrs(BaseModel):
     year_part: int | None
     month_part: int | None
     month_name: str | None
+    month_abbr: str | None
 
 
 class Lineage(BaseDocument):
@@ -25,6 +26,9 @@ class LineageCompare(BaseDocument):
 
     state_abbr: str | None
     state_name: str | None
+    year_part: int | None
+    month_name: str | None
+    month_abbr: str | None
 
     # location info
     element_text: str | None
