@@ -507,7 +507,7 @@ class ScrapeWorker:
         await self.wait_for_completion_or_cancel(tasks)
 
         await self.process_lineage_queue(self.lineage_tasks)
-        print(self.lineage_tasks, "self.lineage_tasks")
+        # print(self.lineage_tasks, "self.lineage_tasks")
 
         await self.downloader.close()
 

@@ -53,6 +53,7 @@ PyJWT = {extras = ["crypto"], version = "^2.4.0"}
 PyPDF2 = "^2.9.0"
 Wand = "^0.6.9"
 jaro-winkler = "^2.0.3"
+jarowinkler = "^1.2.1"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"

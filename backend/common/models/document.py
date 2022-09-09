@@ -1,6 +1,4 @@
-from bdb import effective
 from datetime import datetime
-from xml.dom.minidom import Element
 
 from beanie import Indexed, PydanticObjectId
 from pydantic import BaseModel, Field
@@ -53,43 +51,6 @@ class RetrievedDocument(BaseDocument, BaseRetrievedDocument, DocumentMixins):
 
 class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
     id: PydanticObjectId = Field(None, alias="_id")
-
-
-class LineageAttrs(BaseModel):
-    state_name: str | None
-    state_abbr: str | None
-    year_part: int | None
-
-
-class Lineage(BaseDocument):
-    pass
-    docs: list[PydanticObjectId]
-
-
-class LineageCompare(BaseDocument):
-    doc_id: PydanticObjectId
-    site_id: PydanticObjectId
-
-    # doc info
-    document_type: str | None
-    effective_date: datetime | None
-    focus_therapy_tags: list[int] = []
-    ref_therapy_tags: list[int] = []
-    focus_indication_tags: list[int] = []
-    ref_indication_tags: list[int] = []
-
-    # tokens
-    filename_tokens: list[str] = []
-    pathname_tokens: list[str] = []
-    element_text_tokens: list[str] = []
-    parent_text_tokens: list[str] = []
-    sibling_text_tokens: list[str] = []
-
-    filename: LineageAttrs | None
-    pathname: LineageAttrs | None
-    element: LineageAttrs | None
-    parent: LineageAttrs | None
-    siblings: LineageAttrs | None
 
 
 class UpdateRetrievedDocument(BaseModel, DocumentMixins):

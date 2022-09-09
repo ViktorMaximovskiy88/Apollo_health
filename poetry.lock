@@ -933,6 +933,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "jarowinkler"
+version = "1.2.1"
+description = "library for fast approximate string matching using Jaro and Jaro-Winkler similarity"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[[package]]
 name = "jinja2"
 version = "3.1.2"
 description = "A very fast and expressive template engine."
@@ -2220,7 +2228,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.10.3"
-content-hash = "c9b0027400d1f5ce0ffbfa2f7f37bcf5827dafc942e4d4771b22b92ae20bff11"
+content-hash = "a99bbbc9521ad9a883e2ee14e832b424dca4c1da761bfb8d8bd7751b0f3d2237"
 
 [metadata.files]
 aiodns = [
@@ -2802,6 +2810,7 @@ itsdangerous = [
     {file = "itsdangerous-2.1.2.tar.gz", hash = "sha256:5dbbc68b317e5e42f327f9021763545dc3fc3bfe22e6deb96aaf1fc38874156a"},
 ]
 jaro-winkler = []
+jarowinkler = []
 jinja2 = [
     {file = "Jinja2-3.1.2-py3-none-any.whl", hash = "sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61"},
     {file = "Jinja2-3.1.2.tar.gz", hash = "sha256:31351a702a408a9e7595a8fc6150fc3f43bb6bf7e319770cbc0db9df9437e852"},

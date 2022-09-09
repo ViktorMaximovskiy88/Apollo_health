@@ -4,6 +4,7 @@ import pathlib
 import re
 
 import magic
+from urllib.parse import urlparse
 
 
 def compile_date_rgx():
@@ -109,3 +110,21 @@ def get_extension_from_file_mimetype(file_path: str | None) -> str | None:
         return None
 
     return mimetype_to_extension_map.get(mimetype)
+
+
+def tokenize_url(url: str):
+    parsed = urlparse(url)
+    return parsed.path.split("/")
+
+
+def jaccard(a: list, b: list):
+    # what to really do when both inputs are 0; perfect match or no match?
+    if len(a) + len(b) == 0:
+        return 1
+    intersection = len(list(set(a).intersection(b)))
+    union = (len(a) + len(b)) - intersection
+    return float(intersection) / union
+
+
+def unique_by_attr(items: list[any], attr: str) -> list[any]:
+    return list(set([getattr(item, attr) for item in items]))
