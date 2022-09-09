@@ -12,7 +12,7 @@ from backend.common.models.document import (
     RetrievedDocumentLocation,
     UpdateRetrievedDocument,
 )
-from backend.common.models.shared import DocDocumentLocation, LocationContext
+from backend.common.models.shared import DocDocumentLocation
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
@@ -57,7 +57,7 @@ class DocumentUpdater:
         name = self.set_doc_name(parsed_content, download)
 
         location: RetrievedDocumentLocation = document.get_site_location(self.site.id)
-        context_metadata = LocationContext(**download.metadata.dict())
+        context_metadata = download.metadata.dict()
         if location:
             location.context_metadata = context_metadata
             location.last_collected_date = now
@@ -139,7 +139,7 @@ class DocumentUpdater:
         now = datetime.now(tz=timezone.utc)
         name = self.set_doc_name(parsed_content, download)
         text_checksum = await self.text_handler.save_text(parsed_content["text"])
-        context_metadata = LocationContext(**download.metadata.dict())
+        context_metadata = download.metadata.dict()
         document = RetrievedDocument(
             checksum=checksum,
             text_checksum=text_checksum,
