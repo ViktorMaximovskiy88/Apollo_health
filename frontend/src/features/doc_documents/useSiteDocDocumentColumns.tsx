@@ -6,7 +6,7 @@ import { prettyDateFromISO, prettyDateTimeFromISO } from '../../common';
 import { SiteDocDocument } from './types';
 import { Link } from 'react-router-dom';
 import { DocumentTypes } from '../retrieved_documents/types';
-import { ManualCollectionValidationButtons } from './ManualCollectionValidationButtons';
+import { ManualCollectionValidationButtons } from './manual_collection/ManualCollectionValidationButtons';
 
 interface CreateColumnsType {
   handleNewVersion?: (data: SiteDocDocument) => void;
