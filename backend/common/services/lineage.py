@@ -9,6 +9,7 @@ from backend.common.models.shared import get_unique_focus_tags, get_unique_refer
 from backend.common.models.site import Site
 from backend.common.services.document import SiteRetrievedDocument, get_site_docs
 from backend.scrapeworker.common.utils import (
+    compact,
     group_by_attr,
     jaccard,
     tokenize_filename,
@@ -23,11 +24,8 @@ class LineageService:
 
     async def process_lineage_for_sites(self):
         sites = await Site.find().to_list()
-
         for site in sites:
-            docs = await self.process_lineage_for_site(site.id)
-
-        await self.process_lineage_for_docs(docs)
+            await self.process_lineage_for_site(site.id)
 
     async def process_lineage_for_site(self, site_id: PydanticObjectId):
         docs = await get_site_docs(site_id)
@@ -42,10 +40,10 @@ class LineageService:
             compare_models.append(lineage_compare)
 
         # run on groups (one way to pick similar is doc type; TODO put more thought into it )
-        for _key, group in group_by_attr(docs, "document_type"):
+        for _key, group in group_by_attr(compare_models, "document_type"):
             await self._process_lineage(list(group))
 
-    async def _process_lineage(self, items):
+    async def _process_lineage(self, items: list[LineageCompare]):
         if len(items) == 0:
             return
 
@@ -65,7 +63,7 @@ class LineageService:
                 filename_match >= 0.60 or element_text_match >= 0.90
             ) and ref_indication_match >= 0.85:
                 self.log.info(item.filename, "MATCHED")
-                lineage.entries.append(item.doc_id)
+                lineage.entries.append(item.id)
             else:
                 self.log.info(item.filename, "UNMATCHED")
                 unmatched.append(item)
@@ -92,7 +90,8 @@ def build_lineage_compare(doc: SiteRetrievedDocument) -> LineageCompare:
 
     [*path_parts, filename] = tokenize_url(doc.url)
     lineage_compare.filename = filename
-    lineage_compare.pathname_tokens = path_parts
+    lineage_compare.pathname = "/".join(path_parts)
+    lineage_compare.pathname_tokens = compact(path_parts)
     lineage_compare.filename_tokens = tokenize_filename(filename)
 
     return lineage_compare
