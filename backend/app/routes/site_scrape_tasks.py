@@ -370,22 +370,3 @@ async def cancel_scrape_task(
         status_code=status.HTTP_406_NOT_ACCEPTABLE,
         detail="Scrape task is not queued or in progress.",
     )
-
-
-@router.post(
-    "/{task_id}/work-items/{doc_id}",
-    response_model=SiteScrapeTask,
-)
-async def update_work_item(
-    updates: ManualWorkItem,
-    task_id: PydanticObjectId,
-    doc_id: PydanticObjectId,
-    current_user: User = Security(get_current_user),
-    logger: Logger = Depends(get_logger),
-):
-    target_task = await SiteScrapeTask.find_one({"_id": task_id})
-    task_updates = target_task.dict()
-    index = next(i for i, wi in enumerate(target_task.work_list) if wi.document_id == doc_id)
-    task_updates["work_list"][index] = updates.dict()
-    updated = await update_and_log_diff(logger, current_user, target_task, task_updates)
-    return updated
