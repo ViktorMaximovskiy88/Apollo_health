@@ -23,7 +23,6 @@ import {
 
 import { prettyDate } from '../../common';
 import { useAddDocumentMutation } from '../retrieved_documents/documentsApi';
-import { useGetScrapeTasksForSiteQuery } from './siteScrapeTasksApi';
 import { baseApiUrl, client } from '../../app/base-api';
 import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
 import { SiteDocDocument } from '../doc_documents/types';
