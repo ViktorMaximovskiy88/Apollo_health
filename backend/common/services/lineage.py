@@ -4,10 +4,15 @@ from logging import Logger
 from beanie import PydanticObjectId
 from jarowinkler import jarowinkler_similarity
 
-from backend.common.models.lineage import Lineage, LineageCompare
+from backend.common.models.lineage import Lineage, LineageAttrs, LineageCompare
 from backend.common.models.shared import get_unique_focus_tags, get_unique_reference_tags
 from backend.common.models.site import Site
 from backend.common.services.document import SiteRetrievedDocument, get_site_docs
+from backend.scrapeworker.common.state_parser import (
+    guess_state_abbr,
+    guess_state_name,
+    guess_year_part,
+)
 from backend.scrapeworker.common.utils import (
     compact,
     group_by_attr,
@@ -73,6 +78,29 @@ class LineageService:
         await self._process_lineage(unmatched)
 
 
+def build_attr_model(input: str) -> LineageAttrs:
+    return LineageAttrs(
+        state_abbr=guess_state_abbr(input),
+        state_name=guess_state_name(input),
+        year_part=guess_year_part(input),
+    )
+
+
+# TODO tweak logic, for now its all or nothing
+def consensus_attr(model: LineageCompare, attr: str):
+    all_attrs = compact(
+        [
+            getattr(model.filename, attr),
+            getattr(model.pathname, attr),
+            getattr(model.element, attr),
+            getattr(model.parent, attr),
+            getattr(model.siblings, attr),
+        ]
+    )
+    consensus = list(set(all_attrs))
+    return consensus[0] if len(consensus) == 1 else None
+
+
 def build_lineage_compare(doc: SiteRetrievedDocument) -> LineageCompare:
     lineage_compare = LineageCompare(
         doc_id=doc.id,
@@ -89,9 +117,18 @@ def build_lineage_compare(doc: SiteRetrievedDocument) -> LineageCompare:
     lineage_compare.ref_indication_tags = get_unique_reference_tags(doc.indication_tags)
 
     [*path_parts, filename] = tokenize_url(doc.url)
-    lineage_compare.filename = filename
-    lineage_compare.pathname = "/".join(path_parts)
+    lineage_compare.filename_text = filename
+    lineage_compare.pathname_text = "/".join(path_parts)
     lineage_compare.pathname_tokens = compact(path_parts)
     lineage_compare.filename_tokens = tokenize_filename(filename)
+
+    lineage_compare.pathname = build_attr_model(lineage_compare.pathname_text)
+    lineage_compare.filename = build_attr_model(lineage_compare.filename_text)
+    lineage_compare.element = build_attr_model(lineage_compare.element_text)
+    lineage_compare.parent = build_attr_model(lineage_compare.parent_text)
+    lineage_compare.siblings = build_attr_model(lineage_compare.siblings_text)
+
+    lineage_compare.state_abbr = consensus_attr(lineage_compare, "state_abbr")
+    lineage_compare.state_name = consensus_attr(lineage_compare, "state_name")
 
     return lineage_compare

@@ -23,12 +23,15 @@ class LineageCompare(BaseDocument):
     site_id: PydanticObjectId
     lineage_id: PydanticObjectId | None
 
+    state_abbr: str | None
+    state_name: str | None
+
     # location info
     element_text: str | None
     parent_text: str | None
     siblings_text: str | None
-    filename: str | None
-    pathname: str | None
+    filename_text: str | None
+    pathname_text: str | None
 
     # doc info
     document_type: str | None
