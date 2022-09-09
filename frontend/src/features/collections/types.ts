@@ -11,7 +11,7 @@ export interface WorkItem {
   selected: WorkItemOption;
   new_doc?: string;
   prev_doc?: string;
-  last_collected_date?: string;
+  action_datetime?: string;
 }
 export interface SiteScrapeTask extends BaseDocument {
   site_id: string;

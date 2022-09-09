@@ -23,7 +23,7 @@ class ManualWorkItem(BaseModel):
     selected: str = WorkItemOption.UNHANDLED
     new_doc: PydanticObjectId | None = None
     prev_doc: PydanticObjectId | None = None
-    last_collected_date: datetime | None = None
+    action_datetime: datetime | None = None
 
 
 class SiteScrapeTask(BaseDocument):

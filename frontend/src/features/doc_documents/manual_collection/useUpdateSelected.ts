@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon';
 import { useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import {
@@ -26,7 +27,7 @@ export const useUpdateSelected = (selected: WorkItemOption) => {
 
     const newWorkList = workList.map((item) => {
       if (item.document_id === docId) {
-        return { ...item, selected };
+        return { ...item, selected, action_datetime: DateTime.now().toISO() };
       }
       return item;
     }); // O(n^2) time, max n of 1500
