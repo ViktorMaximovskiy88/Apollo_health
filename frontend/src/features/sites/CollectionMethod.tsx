@@ -175,7 +175,25 @@ function AllowDocDocUpdate() {
   );
 }
 
-function SearchableConfig({ isSearchable }: { isSearchable: boolean }) {
+function HtmlScrapeConfig() {
+  return (
+    <>
+      <AttrSelectors
+        parentName={['scrape_method_configuration', 'html_attr_selectors']}
+        title={'HTML Target Selector'}
+      />
+      <AttrSelectors
+        parentName={['scrape_method_configuration', 'html_exclusion_selectors']}
+        title={'HTML Exclusion Selector'}
+      />
+    </>
+  );
+}
+
+function SearchableConfig() {
+  const form = Form.useFormInstance();
+  const isSearchable = Form.useWatch(['scrape_method_configuration', 'searchable'], form);
+
   const searchableTypes = [
     { value: 'CPT Codes', label: 'CPT Codes' },
     { value: 'JCodes', label: 'JCodes' },
@@ -233,25 +251,26 @@ function SearchableConfig({ isSearchable }: { isSearchable: boolean }) {
   );
 }
 
-function ScrapeMethodConfiguration({
-  initialValues,
-  isSearchable,
-}: {
-  initialValues: Partial<Site>;
-  isSearchable: boolean;
-}) {
+function ScrapeMethodConfiguration({ initialValues }: { initialValues: Partial<Site> }) {
+  const form = Form.useFormInstance();
+  const currentScrapeMethod = Form.useWatch('scrape_method', form);
   return (
     <Form.Item name="scrape_method_configuration">
+      {(currentScrapeMethod as ScrapeMethod) === ScrapeMethod.Html && <HtmlScrapeConfig />}
       <DocumentExtensions />
       <UrlKeywords />
-      <AttrSelectors />
-      <SearchableConfig isSearchable={isSearchable} />
+      <AttrSelectors
+        displayIsResource
+        parentName={['scrape_method_configuration', 'attr_selectors']}
+        title={'Custom Selectors'}
+      />
+      <SearchableConfig />
       <ProxyExclusions />
       <WaitFor />
       <WaitForTimeout />
       <SearchInFrames />
-      <FocusTherapyConfig initialValues={initialValues} />
       <AllowDocDocUpdate />
+      <FocusTherapyConfig initialValues={initialValues} />
     </Form.Item>
   );
 }
@@ -270,7 +289,9 @@ function Schedule() {
   );
 }
 
-function FollowLinks(props: { followLinks: boolean; form: FormInstance }) {
+function FollowLinks() {
+  const form = Form.useFormInstance();
+  const followLinks = Form.useWatch(['scrape_method_configuration', 'follow_links'], form);
   function validateFollowLinks(fieldInfo: any, value: string) {
     if (value.length === 0) {
       const namePaths = [
@@ -283,7 +304,7 @@ function FollowLinks(props: { followLinks: boolean; form: FormInstance }) {
           return !path.every((ele) => currentNamePath.includes(ele));
         })
         .flat();
-      const otherValue = props.form.getFieldValue(otherNamePath);
+      const otherValue = form.getFieldValue(otherNamePath);
 
       if (otherValue.length === 0) {
         return Promise.reject(
@@ -304,7 +325,7 @@ function FollowLinks(props: { followLinks: boolean; form: FormInstance }) {
       >
         <Checkbox className="flex justify-center" />
       </Form.Item>
-      {props.followLinks && (
+      {followLinks && (
         <div className="flex grow space-x-5">
           <Form.Item
             className="grow"
@@ -337,17 +358,9 @@ function FollowLinks(props: { followLinks: boolean; form: FormInstance }) {
 }
 
 interface CollectionMethodPropTypes {
-  followLinks: boolean;
-  form: FormInstance;
   initialValues: Partial<Site>;
-  isSearchable: boolean;
 }
-export function CollectionMethodComponent({
-  followLinks,
-  form,
-  initialValues,
-  isSearchable,
-}: CollectionMethodPropTypes) {
+export function CollectionMethodComponent({ initialValues }: CollectionMethodPropTypes) {
   return (
     <>
       <CollectionMethodRadio />
@@ -361,12 +374,9 @@ export function CollectionMethodComponent({
           getFieldValue('collection_method') === CollectionMethod.Automated ? (
             <>
               <ScrapeMethodSelect />
-              <ScrapeMethodConfiguration
-                initialValues={initialValues}
-                isSearchable={isSearchable}
-              />
+              <ScrapeMethodConfiguration initialValues={initialValues} />
               <Schedule />
-              <FollowLinks followLinks={followLinks} form={form} />
+              <FollowLinks />
             </>
           ) : null
         }

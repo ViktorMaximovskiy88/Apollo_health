@@ -22,9 +22,10 @@ interface InputPropTypes {
 }
 
 interface HeaderPropTypes {
+  displayIsResource: boolean;
   fields: FormListFieldData[];
 }
-function FieldHeaders({ fields }: HeaderPropTypes) {
+function FieldHeaders({ displayIsResource, fields }: HeaderPropTypes) {
   if (fields.length === 0) {
     return null;
   }
@@ -59,25 +60,27 @@ function FieldHeaders({ fields }: HeaderPropTypes) {
       </div>
       <div className="flex items-center col-span-2 mr-1">
         <h4 className="mr-1">Contains Text</h4>
-        <Tooltip className="mb-2 ml-px cursor-help" title="Tags that contain the search term'">
+        <Tooltip className="mb-2 ml-px cursor-help" title="Tags that contain the search term">
           <QuestionCircleOutlined />
         </Tooltip>
       </div>
-      <div className="flex items-center col-span-2 mr-1">
-        <h4 className="mr-1">Is Resource</h4>
-        <Tooltip
-          className="mb-2 ml-px cursor-help"
-          title="Attribute with matching Attribute Name contains a direct
+      {displayIsResource && (
+        <div className="flex items-center col-span-2 mr-1">
+          <h4 className="mr-1">Is Resource</h4>
+          <Tooltip
+            className="mb-2 ml-px cursor-help"
+            title="Attribute with matching Attribute Name contains a direct
       link to the document"
-        >
-          <QuestionCircleOutlined />
-        </Tooltip>
-      </div>
+          >
+            <QuestionCircleOutlined />
+          </Tooltip>
+        </div>
+      )}
     </div>
   );
 }
 
-function Header() {
+function Header({ title }: { title: string }) {
   const { Text } = Typography;
   const contentItems = [
     <div key="1">
@@ -108,15 +111,15 @@ function Header() {
     </div>,
   ];
 
-  const title = (
+  const tipTitle = (
     <Text strong>Custom Selectors to Search Specific Attributes on &lt;a/&gt; Tags</Text>
   );
   return (
     <div className="flex items-center">
-      <h4 className="mr-1">Custom Selectors</h4>
+      <h4 className="mr-1">{title}</h4>
       <Popover
         placement="right"
-        title={title}
+        title={tipTitle}
         content={contentItems}
         className="mb-2 ml-px cursor-help"
       >
@@ -161,12 +164,7 @@ export function ElementInput({ displayLabel, name, field }: InputPropTypes) {
       rules={[{ required: true, message: 'Required' }]}
       tooltip={tooltip}
     >
-      <AutoComplete
-        defaultActiveFirstOption={false}
-        defaultValue={'a'}
-        onSearch={onSearch}
-        options={options}
-      />
+      <AutoComplete defaultActiveFirstOption={false} onSearch={onSearch} options={options} />
     </Form.Item>
   );
 }
@@ -276,13 +274,21 @@ function RemoveButton({ remove, name }: RemoveButtonPropTypes) {
   );
 }
 
-export function AttrSelectors() {
+export function AttrSelectors({
+  displayIsResource = false,
+  parentName,
+  title,
+}: {
+  displayIsResource?: boolean;
+  parentName: string[];
+  title: string;
+}) {
   return (
-    <Form.List name={['scrape_method_configuration', 'attr_selectors']}>
+    <Form.List name={parentName}>
       {(fields, { add, remove }, { errors }) => (
         <>
-          <Header />
-          <FieldHeaders fields={fields} />
+          <Header title={title} />
+          <FieldHeaders fields={fields} displayIsResource={displayIsResource} />
           {fields.map(({ key, name, ...field }) => (
             <Form.Item key={key} className="mb-2 whitespace-nowrap" {...field}>
               <Input.Group className="grid grid-cols-10 space-x-1">
@@ -290,7 +296,7 @@ export function AttrSelectors() {
                 <NameInput name={[name]} field={field} />
                 <ValueInput name={[name]} field={field} />
                 <ContainsTextInput name={[name]} field={field} />
-                <IsResourceAddress name={[name]} field={field} />
+                {displayIsResource && <IsResourceAddress name={[name]} field={field} />}
                 <RemoveButton fields={fields} remove={remove} name={name} />
               </Input.Group>
             </Form.Item>

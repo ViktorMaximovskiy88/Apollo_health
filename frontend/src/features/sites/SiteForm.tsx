@@ -17,6 +17,8 @@ export function SiteForm(props: {
   readOnly?: boolean;
   setReadOnly?: (readOnly: boolean) => void;
 }) {
+  const [form] = useForm();
+
   let initialValues: Partial<Site> | undefined = props.initialValues;
   if (!initialValues) {
     initialValues = {
@@ -47,27 +49,6 @@ export function SiteForm(props: {
     };
   }
 
-  const initialFollowLinks = initialValues?.scrape_method_configuration?.follow_links ?? false;
-  const initialisSearchable = initialValues?.scrape_method_configuration?.searchable ?? false;
-  const [followLinks, setFollowLinks] = useState<boolean>(initialFollowLinks);
-  const [isSearchable, setIsSearchable] = useState<boolean>(initialisSearchable);
-  const [scrapeMethodState, setScrapeMethodState] = useState<string | undefined>(
-    initialValues?.scrape_method
-  );
-  const [form] = useForm();
-
-  function setFormState(modified: Partial<Site>) {
-    if (modified.scrape_method_configuration?.follow_links !== undefined) {
-      setFollowLinks(modified.scrape_method_configuration.follow_links);
-    }
-    if (modified.scrape_method_configuration?.searchable !== undefined) {
-      setIsSearchable(modified.scrape_method_configuration.searchable);
-    }
-    if (modified.scrape_method !== undefined) {
-      setScrapeMethodState(modified.scrape_method);
-    }
-  }
-
   /* eslint-disable no-template-curly-in-string */
   const validateMessages = {
     required: '${label} is required!',
@@ -92,7 +73,6 @@ export function SiteForm(props: {
       wrapperCol={wrapperCol}
       requiredMark={false}
       onFinish={props.onFinish}
-      onValuesChange={setFormState}
       initialValues={initialValues}
       validateMessages={validateMessages}
     >
@@ -103,13 +83,7 @@ export function SiteForm(props: {
       <Form.Item name="playbook" label="Playbook">
         <Input.TextArea />
       </Form.Item>
-      <CollectionMethodComponent
-        followLinks={followLinks}
-        form={form}
-        initialValues={initialValues}
-        isSearchable={isSearchable}
-        // scrapeMethodState={scrapeMethodState} TODO: Move this into component using useWatch()
-      />
+      <CollectionMethodComponent initialValues={initialValues} />
       <Form.Item name="tags" label="Tags">
         <Select mode="tags" />
       </Form.Item>

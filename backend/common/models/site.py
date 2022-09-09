@@ -58,6 +58,8 @@ class UpdateScrapeMethodConfiguration(BaseModel):
     wait_for_timeout_ms: int = 0
     search_in_frames: bool = False
     attr_selectors: list[AttrSelector] | None = None
+    html_attr_selectors: list[AttrSelector] = []
+    html_exclusion_selectors: list[AttrSelector] = []
     focus_therapy_configs: list[FocusTherapyConfig] | None = None
     allow_docdoc_updates: bool | None = None
 

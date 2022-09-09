@@ -69,6 +69,6 @@ export enum CollectionMethod {
 }
 
 export enum ScrapeMethod {
-  Simple = 'AUTOMATED',
-  Html = 'MANUAL',
+  Simple = 'SimpleDocumentScrape',
+  Html = 'HtmlScrape',
 }
