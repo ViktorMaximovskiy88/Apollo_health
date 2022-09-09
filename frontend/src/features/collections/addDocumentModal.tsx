@@ -28,7 +28,7 @@ import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
 import { SiteDocDocument } from '../doc_documents/types';
 
 interface AddDocumentModalPropTypes {
-  oldVersion?: DocDocument;
+  oldVersion?: SiteDocDocument;
   setVisible: (visible: boolean) => void;
   siteId: any;
 }
@@ -41,13 +41,12 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
     lang_code: 'en',
   };
   if (oldVersion) {
+    const { site_id, link_text, base_url, url } = oldVersion;
     initialValues = {
       lang_code: oldVersion.lang_code,
       name: oldVersion.name,
       document_type: oldVersion.document_type,
-      link_text: oldVersion.link_text,
-      url: oldVersion.url,
-      base_url: oldVersion.base_url,
+      locations: [{ site_id, link_text, base_url, url }],
     };
   }
   /* eslint-disable no-template-curly-in-string */
