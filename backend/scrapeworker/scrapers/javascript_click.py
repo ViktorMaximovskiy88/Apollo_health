@@ -121,17 +121,16 @@ class JavascriptClick(PlaywrightBaseScraper):
             except Exception:
                 logging.error("exception", exc_info=True)
 
+        # Handle onclick json response where the json has link to pdf.
+        self.page.on("response", postprocess_response)
+        # Handle onclick download directly to pdf rather than response.
+        self.page.on("download", postprocess_download)
+
         xpath_locator = self.page.locator(self.xpath_selector)
         xpath_locator_count = await xpath_locator.count()
-
         for index in range(0, xpath_locator_count):
             try:
                 link_handle = await xpath_locator.nth(index).element_handle(timeout=1000)
-                # Handle onclick json response where the json has link to pdf.
-                self.page.on("response", postprocess_response)
-                # Handle onclick download directly to pdf rather than response.
-                self.page.on("download", postprocess_download)
-
                 await link_handle.click()
                 await asyncio.sleep(0.25)
             except Exception:
