@@ -52,7 +52,7 @@ const useControlledPagination = () => {
   return controlledPaginationProps;
 };
 
-export const useSiteScrapeFilter = (siteId: string, dateOffset?: number) => {
+export const useSiteScrapeFilter = (dateOffset?: number) => {
   let { filter: filterValue }: { filter: TypeFilterValue } = useSelector(collectionTableState);
   const dispatch = useDispatch();
 
@@ -118,9 +118,9 @@ export function CollectionsDataTable({ siteId, openNewDocumentModal }: DataTable
     [getCollectionsFn, watermark]
   );
 
-  const config = useGetCollectionConfigQuery('collections');
+  const config = useGetCollectionConfigQuery();
   const dateOffset = config.data?.data.defaultLastNDays;
-  const filterProps = useSiteScrapeFilter(siteId, dateOffset);
+  const filterProps = useSiteScrapeFilter(dateOffset);
 
   const sortProps = useSiteScrapeSort();
   const controlledPagination = useControlledPagination();
