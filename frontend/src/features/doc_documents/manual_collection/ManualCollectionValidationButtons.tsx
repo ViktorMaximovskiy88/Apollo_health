@@ -13,7 +13,7 @@ import { ValidationButtonsContext, ValidationButtonsProvider } from './ManualCol
 import { useUpdateSelected } from './useUpdateSelected';
 
 const Found = () => {
-  const updateSelected = useUpdateSelected(WorkItemOption.Found);
+  const updateSelected = useUpdateSelected();
 
   const { workItem } = useContext(ValidationButtonsContext) ?? {};
   if (!workItem) return null;
@@ -21,7 +21,7 @@ const Found = () => {
   switch (workItem.selected) {
     case Option.Found:
       return (
-        <Button type="primary">
+        <Button type="primary" onClick={() => updateSelected(WorkItemOption.Unhandled)}>
           <FileDoneOutlined className="text-white" />
         </Button>
       );
@@ -33,7 +33,7 @@ const Found = () => {
       );
     default:
       return (
-        <Button onClick={updateSelected}>
+        <Button onClick={() => updateSelected(WorkItemOption.Found)}>
           <FileDoneOutlined />
         </Button>
       );
@@ -61,7 +61,7 @@ const NewDocument = () => {
 };
 
 const NotFound = () => {
-  const updateSelected = useUpdateSelected(WorkItemOption.NotFound);
+  const updateSelected = useUpdateSelected();
 
   const { workItem } = useContext(ValidationButtonsContext) ?? {};
   if (!workItem) return null;
@@ -69,7 +69,7 @@ const NotFound = () => {
   switch (workItem.selected) {
     case Option.NotFound:
       return (
-        <Button type="primary">
+        <Button type="primary" onClick={() => updateSelected(WorkItemOption.Unhandled)}>
           <FileExcelOutlined className="text-white" />
         </Button>
       );
@@ -81,7 +81,7 @@ const NotFound = () => {
       );
     default:
       return (
-        <Button onClick={updateSelected}>
+        <Button onClick={() => updateSelected(WorkItemOption.NotFound)}>
           <FileExcelOutlined />
         </Button>
       );
@@ -100,27 +100,19 @@ const NewVersion = () => {
 };
 
 const Unhandled = () => {
-  const updateSelected = useUpdateSelected(WorkItemOption.Unhandled);
-
   const { workItem } = useContext(ValidationButtonsContext) ?? {};
   if (!workItem) return null;
 
   switch (workItem.selected) {
     case Option.Unhandled:
       return (
-        <Button type="primary">
+        <Button type="primary" className="cursor-not-allowed">
           <FileUnknownOutlined className="text-white" />
-        </Button>
-      );
-    case Option.NewDocument:
-      return (
-        <Button disabled>
-          <FileUnknownOutlined />
         </Button>
       );
     default:
       return (
-        <Button onClick={updateSelected}>
+        <Button disabled>
           <FileUnknownOutlined />
         </Button>
       );

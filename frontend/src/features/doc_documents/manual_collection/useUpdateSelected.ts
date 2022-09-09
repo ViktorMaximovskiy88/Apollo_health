@@ -17,12 +17,12 @@ const useSiteScrapeTaskId = () => {
   return siteScrapeTask._id;
 };
 
-export const useUpdateSelected = (selected: WorkItemOption) => {
+export const useUpdateSelected = () => {
   const { workList, refetch, docId, setIsLoading } = useContext(ValidationButtonsContext) ?? {};
   const siteScrapeTaskId = useSiteScrapeTaskId();
   const [updateSiteScrapeTask] = useUpdateSiteScrapeTaskMutation();
 
-  return async () => {
+  return async (selected: WorkItemOption) => {
     if (!siteScrapeTaskId || !workList || !setIsLoading || !refetch) return;
 
     const newWorkList = workList.map((item) => {
