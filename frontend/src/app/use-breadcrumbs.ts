@@ -9,6 +9,7 @@ import { documentsApi } from '../features/retrieved_documents/documentsApi';
 import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { workQueuesApi } from '../features/work_queue/workQueuesApi';
 import { translationsApi } from '../features/translations/translationApi';
+import { payerBackboneApi } from '../features/payer-backbone/payerBackboneApi';
 
 const routes = [
   '/documents',
@@ -38,6 +39,10 @@ const routes = [
   '/work-queues/:workQueueId/:docDocumentId/process',
   '/work-queues/:workQueueId/:docDocumentId/read-only',
   '/work-queues/new',
+  '/payer-backbone',
+  '/payer-backbone/:payerType',
+  '/payer-backbone/:payerType/new',
+  '/payer-backbone/:payerType/:payerId',
 ];
 
 export const useBreadcrumbs = async () => {
@@ -72,6 +77,13 @@ export const useBreadcrumbs = async () => {
       ':translationId': async (userId: string, url: string) => {
         const result: any = await dispatch(
           translationsApi.endpoints.getTranslationConfig.initiate(userId)
+        );
+        return { url, label: result.data.name } as any;
+      },
+      ':payerId': async (payerId: string, url: string) => {
+        const payerType = url.split('/')[2];
+        const result: any = await dispatch(
+          payerBackboneApi.endpoints.getPayerBackbone.initiate({ payerType, id: payerId })
         );
         return { url, label: result.data.name } as any;
       },
@@ -112,6 +124,24 @@ export const useBreadcrumbs = async () => {
       '/translations': {
         translations: 'Translations',
         new: 'New',
+        ...asyncResolvers,
+      },
+      '/payer-backbone': {
+        'payer-backbone': 'Payer Backbone',
+        new: 'New',
+        ':payerType': (part: string, url: string) => {
+          const names: { [k: string]: string } = {
+            mco: 'MCO',
+            plan: 'Plan',
+            parent: 'Parent',
+            ump: 'UM Package',
+            bm: 'Benefit Manager',
+            formulary: 'Formulary',
+          };
+          const label = names[part];
+
+          return Promise.resolve({ url, label } as any);
+        },
         ...asyncResolvers,
       },
     };

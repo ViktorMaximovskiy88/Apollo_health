@@ -11,6 +11,7 @@ import { workQueuesApi } from '../features/work_queue/workQueuesApi';
 import { proxiesApi } from '../features/proxies/proxiesApi';
 import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { translationsApi } from '../features/translations/translationApi';
+import { payerBackboneApi } from '../features/payer-backbone/payerBackboneApi';
 import { documentFamilyApi } from '../features/doc_documents/document_family/documentFamilyApi';
 import { rtkAuth } from '../common/auth-middleware';
 
@@ -22,6 +23,7 @@ import docDocumentsReducer from '../features/doc_documents/docDocumentsSlice';
 import documentsReducer from '../features/collections/documentsSlice';
 import extractionsReducer from '../features/extractions/extractionsSlice';
 import translationsReducer from '../features/translations/translationSlice';
+import payerBackboneReducer from '../features/payer-backbone/payerBackboneSlice';
 
 const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
   history: createBrowserHistory(),
@@ -39,6 +41,7 @@ export const store = configureStore({
     [docDocumentsApi.reducerPath]: docDocumentsApi.reducer,
     [translationsApi.reducerPath]: translationsApi.reducer,
     [documentFamilyApi.reducerPath]: documentFamilyApi.reducer,
+    [payerBackboneApi.reducerPath]: payerBackboneApi.reducer,
     nav: navSlice.reducer,
     sites: sitesReducer,
     users: userReducer,
@@ -47,6 +50,7 @@ export const store = configureStore({
     documents: documentsReducer,
     extractions: extractionsReducer,
     translations: translationsReducer,
+    payerBackbone: payerBackboneReducer,
     router: routerReducer,
   },
   middleware: (getDefaultMiddleware) =>
@@ -61,6 +65,7 @@ export const store = configureStore({
       docDocumentsApi.middleware,
       translationsApi.middleware,
       documentFamilyApi.middleware,
+      payerBackboneApi.middleware,
       routerMiddleware,
       rtkAuth
     ),

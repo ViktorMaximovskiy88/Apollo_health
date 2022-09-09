@@ -15,6 +15,7 @@ from backend.app.routes import (
     doc_documents,
     document_family,
     documents,
+    payer_backbone,
     proxies,
     site_scrape_tasks,
     sites,
@@ -25,6 +26,7 @@ from backend.app.routes import (
 from backend.app.scripts.add_user import create_system_users
 from backend.app.scripts.create_proxy_records import create_proxies
 from backend.app.scripts.create_work_queues import create_default_work_queues
+from backend.app.scripts.load_payer_backbone import load_payer_backbone
 from backend.app.utils.cors import cors
 from backend.common.db.init import init_db
 from backend.common.db.migrations import run_migrations
@@ -43,6 +45,7 @@ async def app_init():
     if not settings.disable_proxies and await Proxy.count() == 0:
         await create_proxies()
     await create_default_work_queues()
+    await load_payer_backbone()
 
 
 template_dir = Path(__file__).parent.joinpath("templates")
@@ -81,6 +84,7 @@ app.include_router(doc_documents.router, prefix=prefix)
 app.include_router(work_queues.router, prefix=prefix)
 app.include_router(translations.router, prefix=prefix)
 app.include_router(document_family.router, prefix=prefix)
+app.include_router(payer_backbone.router, prefix=prefix)
 
 
 @app.middleware("http")
