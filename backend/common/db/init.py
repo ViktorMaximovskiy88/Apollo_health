@@ -23,8 +23,6 @@ from backend.common.models.translation_config import TranslationConfig
 from backend.common.models.user import User
 from backend.common.models.work_queue import WorkQueue
 
-# https://github.com/maxbachmann/RapidFuzz
-
 
 @cache
 def get_motor_client(mock=False) -> AsyncIOMotorClient:
