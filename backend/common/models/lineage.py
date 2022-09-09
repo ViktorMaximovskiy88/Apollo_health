@@ -1,6 +1,8 @@
 from datetime import datetime
-from pydantic import BaseModel
+
 from beanie import PydanticObjectId
+from pydantic import BaseModel
+
 from backend.common.models.base_document import BaseDocument
 
 
@@ -20,8 +22,13 @@ class LineageCompare(BaseDocument):
     doc_id: PydanticObjectId
     site_id: PydanticObjectId
     lineage_id: PydanticObjectId | None
+
+    # location info
     element_text: str | None
+    parent_text: str | None
+    siblings_text: str | None
     filename: str | None
+    pathname: str | None
 
     # doc info
     document_type: str | None
@@ -34,10 +41,8 @@ class LineageCompare(BaseDocument):
     # tokens
     filename_tokens: list[str] = []
     pathname_tokens: list[str] = []
-    element_text_tokens: list[str] = []
-    parent_text_tokens: list[str] = []
-    sibling_text_tokens: list[str] = []
 
+    # explicit matches per thing (repetiion increase assuredness)
     filename: LineageAttrs | None
     pathname: LineageAttrs | None
     element: LineageAttrs | None

@@ -2,9 +2,10 @@
 import os
 import pathlib
 import re
+from itertools import groupby
+from urllib.parse import urlparse
 
 import magic
-from urllib.parse import urlparse
 
 
 def compile_date_rgx():
@@ -112,9 +113,31 @@ def get_extension_from_file_mimetype(file_path: str | None) -> str | None:
     return mimetype_to_extension_map.get(mimetype)
 
 
+def unique_by_attr(items: list[any], attr: str) -> list[any]:
+    return list(set([getattr(item, attr) for item in items]))
+
+
+# so you have to sort first for groupby to work...
+def group_by_attr(items: list[any], attr: str):
+    sorted_items = sorted(items, key=lambda x: getattr(x, attr))
+    return groupby(sorted_items, lambda x: getattr(x, attr))
+
+
+def compact(input: list[str]) -> list[str]:
+    return list(filter(None, input))
+
+
 def tokenize_url(url: str):
     parsed = urlparse(url)
     return parsed.path.split("/")
+
+
+def tokenize_filename(filename: str):
+    return compact(re.split(r"[^a-zA-Z0-9]", filename))
+
+
+def tokenize_string(input: str):
+    return compact(re.split(r"\s", input))
 
 
 def jaccard(a: list, b: list):
@@ -124,7 +147,3 @@ def jaccard(a: list, b: list):
     intersection = len(list(set(a).intersection(b)))
     union = (len(a) + len(b)) - intersection
     return float(intersection) / union
-
-
-def unique_by_attr(items: list[any], attr: str) -> list[any]:
-    return list(set([getattr(item, attr) for item in items]))

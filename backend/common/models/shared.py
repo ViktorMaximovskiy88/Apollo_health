@@ -1,26 +1,9 @@
 from datetime import datetime
 
-from beanie import Indexed, PydanticObjectId
+from beanie import PydanticObjectId
 from pydantic import BaseModel
-from pymongo import TEXT
 
-
-class LocationContext(BaseModel):
-    link_text: Indexed(str, index_type=TEXT) | None
-    closest_heading: Indexed(str, index_type=TEXT) | None
-    siblings_text: Indexed(str, index_type=TEXT) | None
-    resource_value: Indexed(str, index_type=TEXT) | None
-    base_url: Indexed(str, index_type=TEXT) | None
-    element_id: str | None
-    playbook_context: list[dict[str, str]] = []
-
-
-class LocationSimilarity(BaseModel):
-    pathname: list[str] = []
-    filename: list[str] = []
-    element_text: list[str] = []
-    heading_text: list[str] = []
-    sibling_text: list[str] = []
+from backend.scrapeworker.common.utils import unique_by_attr
 
 
 class Location(BaseModel):
@@ -38,7 +21,7 @@ class SiteLocation(Location):
 
 class RetrievedDocumentLocation(SiteLocation):
 
-    context_metadata: LocationContext  # TODO, un have this and just move the stuff up?
+    context_metadata: dict = {}
     previous_retrieved_doc_id: PydanticObjectId | None = None
 
 
@@ -105,3 +88,19 @@ class TaskLock(BaseModel):
 
 class LockableDocument(BaseModel):
     locks: list[TaskLock] = []
+
+
+def get_reference_tags(tags: list[TherapyTag | IndicationTag]):
+    return [tag for tag in tags if not tag.focus]
+
+
+def get_focus_tags(tags: list[TherapyTag | IndicationTag]):
+    return [tag for tag in tags if tag.focus]
+
+
+def get_unique_reference_tags(tags: list[TherapyTag | IndicationTag]):
+    return unique_by_attr(get_reference_tags(tags), "code")
+
+
+def get_unique_focus_tags(tags: list[TherapyTag | IndicationTag]):
+    return unique_by_attr(get_focus_tags(tags), "code")
