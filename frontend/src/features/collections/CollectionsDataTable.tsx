@@ -99,7 +99,6 @@ export const useSiteScrapeSort = () => {
 
 interface DataTablePropTypes {
   siteId: string;
-  openErrorModal: (errorTraceback: string) => void;
   openNewDocumentModal: () => void;
 }
 
