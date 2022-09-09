@@ -12,34 +12,54 @@ import {
   useUpdateSiteScrapeTaskMutation,
 } from '../collections/siteScrapeTasksApi';
 import { useParams } from 'react-router-dom';
-import { WorkItem, WorkItemOption as Option } from '../collections/types';
-import { useState } from 'react';
+import {
+  SiteScrapeTask,
+  WorkItem,
+  WorkItemOption as Option,
+  WorkItemOption,
+} from '../collections/types';
+import { createContext, useState, ReactNode, useContext } from 'react';
 
-const useWorkItem = (docId: string): WorkItem | undefined => {
-  const { siteId } = useParams();
-  const { data: siteScrapeTasks } = useGetScrapeTasksForSiteQuery(siteId);
-  if (!siteScrapeTasks) return;
-  const [siteScrapeTask] = siteScrapeTasks;
-  const { work_list: workList } = siteScrapeTask;
-  const workItem = workList.find((item) => item.document_id === docId);
-  return workItem;
-};
-
-const useWorkList = () => {
-  const { siteId } = useParams();
-  const { data: siteScrapeTasks } = useGetScrapeTasksForSiteQuery(siteId);
-  if (!siteScrapeTasks) return;
-  const [siteScrapeTask] = siteScrapeTasks;
-  const { work_list: workList } = siteScrapeTask;
-  return workList;
-};
+const ValidationButtonsContext = createContext<{
+  isLoading: boolean;
+  setIsLoading: (isLoading: boolean) => void;
+  doc: SiteDocDocument;
+  docId: string;
+  workList?: WorkItem[];
+  refetch: () => void;
+  workItem?: WorkItem;
+  handleNewVersion: (doc: SiteDocDocument) => void;
+} | null>(null);
 
 const useSiteScrapeTaskId = () => {
   const { siteId } = useParams();
-  const { data: siteScrapeTasks } = useGetScrapeTasksForSiteQuery(siteId);
+  const { data: siteScrapeTasks }: { data?: SiteScrapeTask[] } =
+    useGetScrapeTasksForSiteQuery(siteId);
   if (!siteScrapeTasks) return;
   const [siteScrapeTask] = siteScrapeTasks;
   return siteScrapeTask._id;
+};
+
+const useUpdateSelected = (selected: WorkItemOption) => {
+  const { workList, refetch, docId, setIsLoading } = useContext(ValidationButtonsContext) ?? {};
+  const siteScrapeTaskId = useSiteScrapeTaskId();
+  const [updateSiteScrapeTask] = useUpdateSiteScrapeTaskMutation();
+
+  return async () => {
+    if (!siteScrapeTaskId || !workList || !setIsLoading || !refetch) return;
+
+    const newWorkList = workList.map((item) => {
+      if (item.document_id === docId) {
+        return { ...item, selected };
+      }
+      return item;
+    }); // O(n^2) time, max n of 1500
+
+    setIsLoading(true);
+    await updateSiteScrapeTask({ _id: siteScrapeTaskId, work_list: newWorkList });
+    refetch();
+    setIsLoading(false);
+  };
 };
 
 const FoundSelected = () => (
@@ -47,30 +67,10 @@ const FoundSelected = () => (
     <FileDoneOutlined className="text-white" />
   </Button>
 );
-const FoundUnselected = ({
-  docId,
-  setIsLoading,
-}: {
-  docId: string;
-  setIsLoading: (isLoading: boolean) => void;
-}) => {
-  const workList = useWorkList();
-  const siteScrapeTaskId = useSiteScrapeTaskId();
-  const [updateSiteScrapeTask] = useUpdateSiteScrapeTaskMutation();
-  if (!siteScrapeTaskId || !workList) return null;
-  const handleClick = async () => {
-    const newWorkList = workList.map((item) => {
-      if (item.document_id === docId) {
-        return { ...item, selected: Option.Found };
-      }
-      return item;
-    });
-    setIsLoading(true);
-    await updateSiteScrapeTask({ _id: siteScrapeTaskId, work_list: newWorkList }); // This does not direct to the endpoint yet.
-    setIsLoading(false);
-  };
+const FoundUnselected = () => {
+  const updateSelected = useUpdateSelected(WorkItemOption.Found);
   return (
-    <Button onClick={handleClick}>
+    <Button onClick={updateSelected}>
       <FileDoneOutlined />
     </Button>
   );
@@ -80,14 +80,8 @@ const FoundDisabled = () => (
     <FileDoneOutlined />
   </Button>
 );
-const Found = ({
-  docId,
-  setIsLoading,
-}: {
-  docId: string;
-  setIsLoading: (isLoading: boolean) => void;
-}) => {
-  const workItem = useWorkItem(docId);
+const Found = () => {
+  const { workItem } = useContext(ValidationButtonsContext) ?? {};
   if (!workItem) return null;
   switch (workItem.selected) {
     case Option.Found:
@@ -95,7 +89,7 @@ const Found = ({
     case Option.NewDocument:
       return <FoundDisabled />;
     default:
-      return <FoundUnselected docId={docId} setIsLoading={setIsLoading} />;
+      return <FoundUnselected />;
   }
 };
 
@@ -109,8 +103,8 @@ const NewDocumentDisabled = () => (
     <FileAddOutlined />
   </Button>
 );
-const NewDocument = ({ docId }: { docId: string }) => {
-  const workItem = useWorkItem(docId);
+const NewDocument = () => {
+  const { workItem } = useContext(ValidationButtonsContext) ?? {};
   if (!workItem) return null;
   switch (workItem.selected) {
     case Option.NewDocument:
@@ -125,30 +119,21 @@ const NotFoundSelected = () => (
     <FileExcelOutlined className="text-white" />
   </Button>
 );
-const NotFoundUnselected = ({
-  docId,
-  setIsLoading,
-}: {
-  docId: string;
-  setIsLoading: (isLoading: boolean) => void;
-}) => (
-  <Button onClick={() => {}}>
-    <FileExcelOutlined />
-  </Button>
-);
+const NotFoundUnselected = () => {
+  const updateSelected = useUpdateSelected(WorkItemOption.NotFound);
+  return (
+    <Button onClick={updateSelected}>
+      <FileExcelOutlined />
+    </Button>
+  );
+};
 const NotFoundDisabled = () => (
   <Button disabled>
     <FileExcelOutlined />
   </Button>
 );
-const NotFound = ({
-  docId,
-  setIsLoading,
-}: {
-  docId: string;
-  setIsLoading: (isLoading: boolean) => void;
-}) => {
-  const workItem = useWorkItem(docId);
+const NotFound = () => {
+  const { workItem } = useContext(ValidationButtonsContext) ?? {};
   if (!workItem) return null;
   switch (workItem.selected) {
     case Option.NotFound:
@@ -156,51 +141,40 @@ const NotFound = ({
     case Option.NewDocument:
       return <NotFoundDisabled />;
     default:
-      return <NotFoundUnselected docId={docId} setIsLoading={setIsLoading} />;
+      return <NotFoundUnselected />;
   }
 };
 
-export const NewVersion = ({
-  doc,
-  handleNewVersion,
-}: {
-  doc: SiteDocDocument;
-  handleNewVersion: (doc: SiteDocDocument) => void;
-}) => (
-  <Button>
-    <FileExclamationOutlined onClick={() => handleNewVersion(doc)} />
-  </Button>
-);
+const NewVersion = () => {
+  const { doc, handleNewVersion } = useContext(ValidationButtonsContext) ?? {};
+  if (!doc || !handleNewVersion) return null;
+  return (
+    <Button>
+      <FileExclamationOutlined onClick={() => handleNewVersion(doc)} />
+    </Button>
+  );
+};
 
 const UnhandledSelected = () => (
   <Button type="primary">
     <FileUnknownOutlined className="text-white" />
   </Button>
 );
-const UnhandledUnselected = ({
-  docId,
-  setIsLoading,
-}: {
-  docId: string;
-  setIsLoading: (isLoading: boolean) => void;
-}) => (
-  <Button onClick={() => {}}>
-    <FileUnknownOutlined />
-  </Button>
-);
+const UnhandledUnselected = () => {
+  const updateSelected = useUpdateSelected(WorkItemOption.Unhandled);
+  return (
+    <Button onClick={updateSelected}>
+      <FileUnknownOutlined />
+    </Button>
+  );
+};
 const UnhandledDisabled = () => (
   <Button disabled>
     <FileUnknownOutlined />
   </Button>
 );
-const Unhandled = ({
-  docId,
-  setIsLoading,
-}: {
-  docId: string;
-  setIsLoading: (isLoading: boolean) => void;
-}) => {
-  const workItem = useWorkItem(docId);
+const Unhandled = () => {
+  const { workItem } = useContext(ValidationButtonsContext) ?? {};
   if (!workItem) return null;
   switch (workItem.selected) {
     case Option.Unhandled:
@@ -208,26 +182,81 @@ const Unhandled = ({
     case Option.NewDocument:
       return <UnhandledDisabled />;
     default:
-      return <UnhandledUnselected docId={docId} setIsLoading={setIsLoading} />;
+      return <UnhandledUnselected />;
   }
 };
 
-export function ValidationButtons({
+const useWorkList = (): { workList?: WorkItem[]; refetch: () => void } => {
+  const { siteId } = useParams();
+  const { data: siteScrapeTasks, refetch } = useGetScrapeTasksForSiteQuery(siteId);
+  if (!siteScrapeTasks) return { refetch };
+  const [siteScrapeTask] = siteScrapeTasks;
+  const { work_list: workList } = siteScrapeTask;
+  return { workList, refetch };
+};
+
+const useWorkItem = (docId: string): WorkItem | undefined => {
+  const { siteId } = useParams();
+  const { data: siteScrapeTasks } = useGetScrapeTasksForSiteQuery(siteId);
+  if (!siteScrapeTasks) return;
+  const [siteScrapeTask] = siteScrapeTasks;
+  const { work_list: workList } = siteScrapeTask;
+  const workItem = workList.find((item) => item.document_id === docId);
+  return workItem;
+};
+
+const ValidationButtonsProvider = ({
+  doc,
+  handleNewVersion,
+  children,
+}: {
+  doc: SiteDocDocument;
+  handleNewVersion: (doc: SiteDocDocument) => void;
+  children: ReactNode;
+}) => {
+  const docId = doc._id;
+  const [isLoading, setIsLoading] = useState(false);
+  const { workList, refetch } = useWorkList();
+  const workItem = useWorkItem(docId);
+  const value = {
+    isLoading,
+    setIsLoading,
+    doc,
+    docId,
+    workList,
+    refetch,
+    workItem,
+    handleNewVersion,
+  };
+  return (
+    <ValidationButtonsContext.Provider value={value}>{children}</ValidationButtonsContext.Provider>
+  );
+};
+
+function ValidationButtons() {
+  const { isLoading } = useContext(ValidationButtonsContext) ?? {};
+  return (
+    <div className="flex space-x-1">
+      <Found />
+      <NewDocument />
+      <NotFound />
+      <NewVersion />
+      <Unhandled />
+      <Spin spinning={isLoading ?? false} size="small" className="pl-3 pt-2" />
+    </div>
+  );
+}
+
+export function ManualCollectionValidationButtons({
   doc,
   handleNewVersion,
 }: {
   doc: SiteDocDocument;
   handleNewVersion: (doc: SiteDocDocument) => void;
 }) {
-  const [isLoading, setIsLoading] = useState(false);
   return (
-    <div className="flex space-x-1">
-      <Found docId={doc._id} setIsLoading={setIsLoading} />
-      <NewDocument docId={doc._id} />
-      <NotFound docId={doc._id} setIsLoading={setIsLoading} />
-      <NewVersion doc={doc} handleNewVersion={handleNewVersion} />
-      <Unhandled docId={doc._id} setIsLoading={setIsLoading} />
-      <Spin spinning={isLoading} size="small" />
-    </div>
+    <ValidationButtonsProvider doc={doc} handleNewVersion={handleNewVersion}>
+      <ValidationButtons />
+    </ValidationButtonsProvider>
   );
 }

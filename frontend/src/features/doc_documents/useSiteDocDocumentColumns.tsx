@@ -6,7 +6,7 @@ import { prettyDateFromISO, prettyDateTimeFromISO } from '../../common';
 import { SiteDocDocument } from './types';
 import { Link } from 'react-router-dom';
 import { DocumentTypes } from '../retrieved_documents/types';
-import { ValidationButtons } from './ManualCollectionValidationButtons';
+import { ManualCollectionValidationButtons } from './ManualCollectionValidationButtons';
 
 interface CreateColumnsType {
   handleNewVersion?: (data: SiteDocDocument) => void;
@@ -95,12 +95,12 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
     {
       header: 'Validation',
       name: 'validation',
-      minWidth: 200,
+      minWidth: 230,
       render: ({ data: doc }: { data: SiteDocDocument }) => {
         return (
           <>
             {handleNewVersion ? (
-              <ValidationButtons doc={doc} handleNewVersion={handleNewVersion} />
+              <ManualCollectionValidationButtons doc={doc} handleNewVersion={handleNewVersion} />
             ) : null}
           </>
         );
