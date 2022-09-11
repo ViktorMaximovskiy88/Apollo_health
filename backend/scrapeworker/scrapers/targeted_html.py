@@ -52,6 +52,7 @@ class TargetedHtmlScraper(PlaywrightBaseScraper):
 
     def remove_exclusions(self, html: str) -> str:
         soup = BeautifulSoup(html, features="html.parser")
+        new_soup = BeautifulSoup("", features="html.parser")
         for selector in self.config.html_exclusion_selectors:
             attrs = {}
             attrs[selector.attr_name] = (
@@ -63,7 +64,30 @@ class TargetedHtmlScraper(PlaywrightBaseScraper):
             for element in remove_elements:
                 element.extract()
 
-        return str(soup)
+        # TODO: conditionally add html and body tags
+        # new_soup = soup("<html/>")
+        # if no html tag and no body
+        # append body to new soup,
+        # add everything to new body tag.
+
+        # if no html
+        # add everything to new html tag
+
+        # if no body, append body to new soup
+        # add contents of html to body
+
+        # if both, new_soup = soup
+
+        html_element = soup.html
+        if not html_element:
+            html_element = soup.new_tag("html")
+            new_soup.append(html_element)
+        body_element = soup.body
+        if not body_element:
+            body_element = soup.new_tag("body")
+            new_soup.append(body_element)
+
+        return str(new_soup)
 
     async def scrape_and_queue(self, downloads: list[DownloadContext]) -> None:
         xpath_locator = self.page.locator(self.xpath_selector)

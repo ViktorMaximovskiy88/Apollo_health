@@ -186,8 +186,8 @@ class ScrapeWorker:
                 "html" in self.site.scrape_method_configuration.document_extensions
                 or self.site.scrape_method == "HtmlScrape"
             ):
-                target_url = url if not download.direct_scrape else f"file:/{temp_path}"
-                # TODO: check if file is at target url. Figure out how to view it with playwright
+                target_url = url if not download.direct_scrape else f"file://{temp_path}"
+                # TODO: open as HTML. probably need a body and html tag?
                 async with self.playwright_context(target_url) as (page, _context):
                     dest_path = f"{checksum}.{download.file_extension}.pdf"
                     await page.goto(target_url, wait_until="domcontentloaded")
