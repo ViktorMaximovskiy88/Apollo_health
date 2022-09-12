@@ -93,6 +93,7 @@ export const planTypeOptions = [
 export const payerTypeOptions = [
   { label: 'Plan', value: 'plan' },
   { label: 'Formulary', value: 'formulary' },
+  { label: 'UMP', value: 'ump' },
   { label: 'MCO', value: 'mco' },
   { label: 'Benefit Manager', value: 'bm' },
   { label: 'Parent', value: 'parent' },
