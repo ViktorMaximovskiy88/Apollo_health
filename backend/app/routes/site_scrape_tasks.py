@@ -7,6 +7,13 @@ from fastapi import APIRouter, Depends, HTTPException, Security, status
 from pydantic import BaseModel
 from pymongo import ReturnDocument
 
+from backend.app.routes.table_query import (
+    TableFilterInfo,
+    TableQueryResponse,
+    TableSortInfo,
+    get_query_json_list,
+    query_table,
+)
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.core.enums import BulkScrapeActions, CollectionMethod, SiteStatus, TaskStatus
@@ -35,18 +42,18 @@ async def get_target(id: PydanticObjectId):
 
 @router.get(
     "/",
-    response_model=list[SiteScrapeTask],
+    response_model=TableQueryResponse,
     dependencies=[Security(get_current_user)],
 )
 async def read_scrape_tasks_for_site(
     site_id: PydanticObjectId,
+    limit: int | None = None,
+    skip: int | None = None,
+    sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
+    filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
-    scrape_tasks: list[SiteScrapeTask] = (
-        await SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id)
-        .sort("-queued_time")
-        .to_list()
-    )
-    return scrape_tasks
+    query = SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id)
+    return await query_table(query, limit, skip, sorts, filters)
 
 
 @router.get(
