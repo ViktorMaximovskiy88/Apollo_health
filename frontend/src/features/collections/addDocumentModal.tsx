@@ -23,7 +23,6 @@ import {
 
 import { prettyDate } from '../../common';
 import { useAddDocumentMutation } from '../retrieved_documents/documentsApi';
-import { useGetScrapeTasksForSiteQuery } from './siteScrapeTasksApi';
 import { baseApiUrl, client } from '../../app/base-api';
 import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
 import { SiteDocDocument } from '../doc_documents/types';
@@ -36,9 +35,6 @@ interface AddDocumentModalPropTypes {
 
 export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocumentModalPropTypes) {
   const [form] = useForm();
-  const { data: scrapeTasks } = useGetScrapeTasksForSiteQuery(siteId, {
-    pollingInterval: 3000,
-  });
   const [addDoc] = useAddDocumentMutation();
   const [fileData, setFileData] = useState<any>();
   let initialValues: any = {
