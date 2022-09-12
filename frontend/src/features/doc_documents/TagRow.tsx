@@ -1,7 +1,7 @@
 import { Button, Input, InputNumber, Switch, Tag } from 'antd';
 import { CheckOutlined, CloseOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { VirtualItem } from '@tanstack/react-virtual';
-import { IndicationTag, TherapyTag } from './types';
+import { DocumentTag, TherapyTag } from './types';
 
 function labelColorMap(type: string) {
   const colorMap: any = {
@@ -21,7 +21,7 @@ export function EditTag({
   onDeleteTag: Function;
   onEditTag: Function;
   onToggleEdit: Function;
-  tag: IndicationTag | TherapyTag;
+  tag: DocumentTag;
   virtualRow: VirtualItem<unknown>;
 }) {
   let focus = false;
@@ -109,7 +109,7 @@ export function ReadTag({
 }: {
   onToggleEdit: Function;
   onDeleteTag: Function;
-  tag: IndicationTag | TherapyTag;
+  tag: DocumentTag;
   virtualRow: VirtualItem<unknown>;
 }) {
   let focus = false;

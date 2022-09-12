@@ -21,6 +21,7 @@ export const EditButtonLink = ({ site }: { site: Site }): JSX.Element => {
     await updateSite(update);
     navigate(`${site._id}/edit`);
   };
+
   const cancel = () => {
     setVisible(false);
   };
@@ -33,6 +34,7 @@ export const EditButtonLink = ({ site }: { site: Site }): JSX.Element => {
       setVisible(true);
     }
   };
+
   return (
     <Popconfirm
       title="Site is already assigned. Would you like to take over assignment?"

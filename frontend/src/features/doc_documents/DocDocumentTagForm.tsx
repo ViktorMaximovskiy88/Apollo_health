@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { Button, Radio, Checkbox, Input } from 'antd';
 import { debounce, orderBy } from 'lodash';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { TherapyTag, IndicationTag } from './types';
+import { DocumentTag, UITherapyTag } from './types';
 
 import { EditTag, ReadTag } from './TagRow';
 
@@ -21,7 +21,7 @@ function textFilter(tag: any, field: string, searchRegex: RegExp) {
 }
 
 export function DocDocumentTagForm(props: {
-  tags: Array<TherapyTag | IndicationTag>;
+  tags: Array<DocumentTag>;
   onDeleteTag: Function;
   onEditTag: Function;
   onAddTag: Function;
@@ -33,11 +33,11 @@ export function DocDocumentTagForm(props: {
   const [tagTypeFilter, setTagTypeFilter] = useState<
     ('indication' | 'therapy' | 'therapy-group')[]
   >(['indication', 'therapy', 'therapy-group']);
-  const [editTags, setEditTags] = useState<{ [index: string]: TherapyTag | IndicationTag }>({});
+  const [editTags, setEditTags] = useState<{ [index: string]: DocumentTag }>({});
   const [pageFilter, setPageFilter] = useState('page');
 
   const applyFilter = useCallback(
-    (tag: TherapyTag | IndicationTag) => {
+    (tag: DocumentTag) => {
       const validPage = pageFilter === 'doc' ? true : currentPage === tag.page;
       console.debug(currentPage === tag.page, 'currentPage', currentPage, 'tag.page', tag.page);
       return tagTypeFilter.includes(tag._type) && validPage;
@@ -82,11 +82,7 @@ export function DocDocumentTagForm(props: {
     overscan: 10,
   });
 
-  const handleToggleEdit = (
-    tag: IndicationTag | TherapyTag,
-    editState: boolean,
-    cancel: boolean = false
-  ) => {
+  const handleToggleEdit = (tag: DocumentTag, editState: boolean, cancel: boolean = false) => {
     if (!editState && !cancel) {
       onEditTag(editTags[tag.id]);
     }
@@ -110,7 +106,7 @@ export function DocDocumentTagForm(props: {
       } else if (field === 'page' && value != null) {
         target[field] = value - 1;
       } else if (field === 'focus') {
-        (target as TherapyTag)[field] = value;
+        (target as UITherapyTag)[field] = value;
       }
       return update;
     });

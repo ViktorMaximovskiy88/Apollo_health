@@ -33,7 +33,7 @@ from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.aio_downloader import AioDownloader
 from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocsCollectedException
-from backend.scrapeworker.common.models import DownloadContext, Request
+from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.scrapeworker.common.update_documents import DocumentUpdater
 from backend.scrapeworker.common.utils import get_extension_from_path_like
@@ -452,8 +452,9 @@ class ScrapeWorker:
 
             if self.is_artifact_file(url):
                 self.log.info(f"Skip scrape & queue download for {url}")
-                metacontent = await self.extract_metadata(url)
-                download = DownloadContext(request=Request(url=url), metadata=metacontent)
+                download = DownloadContext(
+                    request=Request(url=url), metadata=Metadata(base_url=url)
+                )
                 all_downloads.append(download)
                 continue
 
