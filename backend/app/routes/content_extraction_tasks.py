@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 
 from beanie import PydanticObjectId
-from beanie.odm.operators.update.general import Set
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 
 from backend.app.routes.table_query import (
@@ -19,7 +18,6 @@ from backend.common.models.content_extraction_task import (
     UpdateContentExtractionTask,
 )
 from backend.common.models.doc_document import DocDocument
-from backend.common.models.site import Site
 from backend.common.models.user import User
 
 router = APIRouter(
@@ -98,7 +96,6 @@ async def start_extraction_task(
     logger: Logger = Depends(get_logger),
 ):
     extraction_task = ContentExtractionTask(
-        site_id=doc.site_id,
         initiator_id=current_user.id,
         doc_document_id=doc.id,
         queued_time=datetime.now(tz=timezone.utc),
@@ -117,7 +114,4 @@ async def update_extraction_task(
 ):
     # NOTE: Could use a transaction here
     updated = await update_and_log_diff(logger, current_user, target, updates)
-    await Site.find_one(Site.id == target.site_id).update(
-        Set({Site.last_run_status: updates.status}),
-    )
     return updated

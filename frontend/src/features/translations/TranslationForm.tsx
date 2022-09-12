@@ -69,7 +69,7 @@ export function TableBasicInfoForm() {
         skip: 0,
         sortInfo: { name: 'name', dir: 1 },
         filterValue: [
-          { name: 'site_id', operator: 'eq', type: 'string', value: formSiteId },
+          { name: 'locations.site_id', operator: 'eq', type: 'string', value: formSiteId },
           { name: 'name', operator: 'contains', type: 'string', value: search },
         ],
       });
