@@ -9,7 +9,6 @@ from backend.common.models.base_document import BaseDocument
 
 
 class ContentExtractionTask(BaseDocument):
-    site_id: PydanticObjectId | None = None
     initiator_id: PydanticObjectId | None = None
     doc_document_id: PydanticObjectId | None = None
 

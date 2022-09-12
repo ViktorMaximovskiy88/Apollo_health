@@ -97,7 +97,7 @@ export function ExtractedDocumentsTable() {
       skip: 0,
       sortInfo: { name: 'name', dir: 1 },
       filterValue: [
-        { name: 'site_id', operator: 'eq', type: 'string', value: siteId },
+        { name: 'locations.site_id', operator: 'eq', type: 'string', value: siteId },
         { name: 'translation_id', operator: 'notEmpty', type: 'string', value: null },
       ],
     },

@@ -116,7 +116,6 @@ export function SampleTranslationTable(props: { docId: string; form: FormInstanc
           header: 'Code',
           name: 'code',
           minWidth: 80,
-          maxWidth: 80,
         });
       } else if (col.field === 'Tier') {
         cols.push({
