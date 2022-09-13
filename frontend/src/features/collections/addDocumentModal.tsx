@@ -61,6 +61,7 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
   async function saveDocument(newDocument: any) {
     try {
       newDocument.site_id = siteId;
+      newDocument.base_url = newDocument.base_url ?? newDocument.url;
       //  we nuked this relationship
       // if (scrapeTasks) {
       //   newDocument.scrape_task_id = scrapeTasks[0]._id;
