@@ -59,6 +59,7 @@ class ScrapeWorker:
         self.scrape_task = scrape_task
         self.site = site
         self.seen_urls = set()
+        self.seen_hashes = set()
         self.doc_client = DocumentStorageClient()
         self.text_handler = TextHandler()
         self.downloader = AioDownloader(_log)
@@ -89,6 +90,14 @@ class ScrapeWorker:
             return False
         self.log.info(f"unseen target -> {key}")
         self.seen_urls.add(key)
+        return True
+
+    def file_hash_not_seen(self, hash: str | None):
+        # skip if we've already seen this filehash
+        if not hash or hash in self.seen_hashes:
+            return False
+        self.log.info(f"unseen target -> {hash}")
+        self.seen_hashes.add(hash)
         return True
 
     def get_updated_tags(
@@ -378,7 +387,9 @@ class ScrapeWorker:
 
                 if await self.searchable.is_searchable(page):
                     async for code in self.searchable.run_searchable(page):
-                        await scrape_handler.run_scrapers(url, base_url, all_downloads)
+                        await scrape_handler.run_scrapers(
+                            url, base_url, all_downloads, {"file_name": code}
+                        )
                 else:
                     await scrape_handler.run_scrapers(url, base_url, all_downloads)
 
@@ -412,7 +423,7 @@ class ScrapeWorker:
 
         return (
             not self.skip_url(url) and self.url_not_seen(url, filename)
-        ) or download.file_hash is not None
+        ) or self.file_hash_not_seen(download.file_hash)
 
     def is_artifact_file(self, url: str):
         extension = get_extension_from_path_like(url)

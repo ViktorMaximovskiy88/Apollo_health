@@ -39,7 +39,6 @@ class ScrapeHandler:
         self.log = log
         self.config = config
 
-    # maybe refactor these out? Are they related?
     def __is_google(self, url: str) -> bool:
         parsed = urlparse(url)
         return parsed.hostname in ["drive.google.com", "docs.google.com"]
@@ -50,13 +49,19 @@ class ScrapeHandler:
             raise Exception(f"{url} is not a valid google doc/drive url")
         return matched.group(1)
 
-    def __preprocess_download(self, download: DownloadContext, base_url: str) -> None:
+    def __preprocess_download(
+        self, download: DownloadContext, base_url: str, metadata: dict
+    ) -> None:
+        for key in metadata:
+            download.__setattr__(key, metadata[key])
         download.metadata.base_url = base_url
         if self.__is_google(download.request.url):
             google_id = self.__get_google_id(download.request.url)
             download.request.url = f"https://drive.google.com/u/0/uc?id={google_id}&export=download"
 
-    async def run_scrapers(self, url: str, base_url: str, downloads: list[DownloadContext]) -> None:
+    async def run_scrapers(
+        self, url: str, base_url: str, downloads: list[DownloadContext], metadata: dict = {}
+    ) -> None:
         for Scraper in scrapers:
             scraper = Scraper(
                 page=self.page,
@@ -71,5 +76,5 @@ class ScrapeHandler:
                 continue
 
             for download in await scraper.execute():
-                self.__preprocess_download(download, base_url)
+                self.__preprocess_download(download, base_url, metadata)
                 downloads.append(download)
