@@ -410,7 +410,9 @@ class ScrapeWorker:
             else download.request.filename
         )
 
-        return not self.skip_url(url) and self.url_not_seen(url, filename)
+        return (
+            not self.skip_url(url) and self.url_not_seen(url, filename)
+        ) or download.file_hash is not None
 
     def is_artifact_file(self, url: str):
         extension = get_extension_from_path_like(url)

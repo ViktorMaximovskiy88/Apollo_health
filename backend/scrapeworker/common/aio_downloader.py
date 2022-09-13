@@ -175,7 +175,9 @@ class AioDownloader:
         if download.file_hash:
             doc_client = DocumentStorageClient()
             dest_path = f"{download.file_hash}.{download.file_extension}"
-            with doc_client.read_object_to_tempfile(dest_path) as path:
+            with doc_client.read_object_to_tempfile(
+                dest_path, suffix=f".{download.file_extension}"
+            ) as path:
                 await self.set_download_data(download, path)
                 self.log.info(
                     f"content_type={download.content_type} mimetype={download.mimetype} file_hash={download.file_hash}"  # noqa
