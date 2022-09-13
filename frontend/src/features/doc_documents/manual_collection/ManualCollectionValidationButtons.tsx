@@ -90,7 +90,8 @@ const NotFound = () => {
 
 const NewVersion = () => {
   const { doc, handleNewVersion } = useContext(ValidationButtonsContext) ?? {};
-  if (!doc || !handleNewVersion) return null;
+  const { workItem } = useContext(ValidationButtonsContext) ?? {};
+  if (!workItem || !doc || !handleNewVersion) return null;
 
   return (
     <Button>
