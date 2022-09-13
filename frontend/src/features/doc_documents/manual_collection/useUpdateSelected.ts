@@ -6,14 +6,24 @@ import {
   useUpdateSiteScrapeTaskMutation,
 } from '../../collections/siteScrapeTasksApi';
 import { SiteScrapeTask, WorkItemOption } from '../../collections/types';
+import { initialState } from '../../collections/collectionsSlice';
 import { ValidationButtonsContext } from './ManualCollectionContext';
+
+const mostRecentTask = {
+  limit: 1,
+  skip: 0,
+  sortInfo: initialState.table.sort,
+  filterValue: initialState.table.filter,
+};
 
 const useSiteScrapeTaskId = () => {
   const { siteId } = useParams();
-  const { data: siteScrapeTasks }: { data?: SiteScrapeTask[] } =
-    useGetScrapeTasksForSiteQuery(siteId);
-  if (!siteScrapeTasks) return;
-  const [siteScrapeTask] = siteScrapeTasks;
+  const { data }: { data?: { data?: SiteScrapeTask[] } } = useGetScrapeTasksForSiteQuery({
+    ...mostRecentTask,
+    siteId,
+  });
+  const siteScrapeTask = data?.data?.[0];
+  if (!siteScrapeTask) return;
   return siteScrapeTask._id;
 };
 

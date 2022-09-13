@@ -1,8 +1,16 @@
 import { createContext, ReactNode, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useGetScrapeTasksForSiteQuery } from '../../collections/siteScrapeTasksApi';
-import { WorkItem } from '../../collections/types';
+import { SiteScrapeTask, WorkItem } from '../../collections/types';
 import { SiteDocDocument } from '../types';
+import { initialState } from '../../collections/collectionsSlice';
+
+const mostRecentTask = {
+  limit: 1,
+  skip: 0,
+  sortInfo: initialState.table.sort,
+  filterValue: initialState.table.filter,
+};
 
 export const ValidationButtonsContext = createContext<{
   isLoading: boolean;
@@ -17,16 +25,24 @@ export const ValidationButtonsContext = createContext<{
 
 const useWorkList = (): { workList?: WorkItem[]; refetch: () => void } => {
   const { siteId } = useParams();
-  const { data: siteScrapeTasks, refetch } = useGetScrapeTasksForSiteQuery(siteId);
-  if (!siteScrapeTasks) return { refetch };
-  const [siteScrapeTask] = siteScrapeTasks;
+  const { data, refetch }: { data?: { data?: SiteScrapeTask[] }; refetch: () => void } =
+    useGetScrapeTasksForSiteQuery({
+      ...mostRecentTask,
+      siteId,
+    });
+  const siteScrapeTask = data?.data?.[0];
+  if (!siteScrapeTask) return { refetch };
   const { work_list: workList } = siteScrapeTask;
   return { workList, refetch };
 };
 
 const useWorkItem = (docId: string): WorkItem | undefined => {
   const { siteId } = useParams();
-  const { data: siteScrapeTasks } = useGetScrapeTasksForSiteQuery(siteId);
+  const { data }: { data?: { data?: SiteScrapeTask[] } } = useGetScrapeTasksForSiteQuery({
+    ...mostRecentTask,
+    siteId,
+  });
+  const siteScrapeTasks = data?.data;
   if (!siteScrapeTasks) return;
   const [siteScrapeTask] = siteScrapeTasks;
   const { work_list: workList } = siteScrapeTask;
