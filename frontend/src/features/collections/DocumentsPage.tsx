@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Button } from 'antd';
 import { MainLayout } from '../../components';
 import { DocumentsTable } from './DocumentsTable';
-import { AddDocumentModal } from './addDocumentModal';
+import { AddDocumentModal } from './AddDocumentModal';
 
 import { SiteMenu } from '../sites/SiteMenu';
 

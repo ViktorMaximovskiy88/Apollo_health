@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Button } from 'antd';
 import { MainLayout } from '../../components';
 import { SiteDocumentsTable } from '../collections/SiteDocumentsTable';
-import { AddDocumentModal } from '../collections/addDocumentModal';
+import { AddDocumentModal } from '../collections/AddDocumentModal';
 
 import { SiteMenu } from '../sites/SiteMenu';
 import { useGetSiteQuery } from '../sites/sitesApi';

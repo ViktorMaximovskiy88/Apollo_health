@@ -6,7 +6,7 @@ import { MainLayout } from '../../components';
 import { SiteMenu } from '../sites/SiteMenu';
 
 import { SiteDocDocumentsTable } from './SiteDocDocumentsTable';
-import { AddDocumentModal } from '../collections/addDocumentModal';
+import { AddDocumentModal } from '../collections/AddDocumentModal';
 import { SiteDocDocument } from './types';
 
 export function SiteDocDocumentsPage() {
