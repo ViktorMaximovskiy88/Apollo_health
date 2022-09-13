@@ -18,22 +18,20 @@ export const ValidationButtonsContext = createContext<{
   doc: SiteDocDocument;
   docId: string;
   workList?: WorkItem[];
-  refetch: () => void;
   workItem?: WorkItem;
   handleNewVersion: (doc: SiteDocDocument) => void;
 } | null>(null);
 
-const useWorkList = (): { workList?: WorkItem[]; refetch: () => void } => {
+const useWorkList = (): { workList?: WorkItem[] } => {
   const { siteId } = useParams();
-  const { data, refetch }: { data?: { data?: SiteScrapeTask[] }; refetch: () => void } =
-    useGetScrapeTasksForSiteQuery({
-      ...mostRecentTask,
-      siteId,
-    });
+  const { data }: { data?: { data?: SiteScrapeTask[] } } = useGetScrapeTasksForSiteQuery({
+    ...mostRecentTask,
+    siteId,
+  });
   const siteScrapeTask = data?.data?.[0];
-  if (!siteScrapeTask) return { refetch };
+  if (!siteScrapeTask) return {};
   const { work_list: workList } = siteScrapeTask;
-  return { workList, refetch };
+  return { workList };
 };
 
 const useWorkItem = (docId: string): WorkItem | undefined => {
@@ -61,7 +59,7 @@ export const ValidationButtonsProvider = ({
 }) => {
   const docId = doc._id;
   const [isLoading, setIsLoading] = useState(false);
-  const { workList, refetch } = useWorkList();
+  const { workList } = useWorkList();
   const workItem = useWorkItem(docId);
   const value = {
     isLoading,
@@ -69,7 +67,6 @@ export const ValidationButtonsProvider = ({
     doc,
     docId,
     workList,
-    refetch,
     workItem,
     handleNewVersion,
   };

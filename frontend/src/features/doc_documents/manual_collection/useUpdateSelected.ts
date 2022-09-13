@@ -3,11 +3,13 @@ import { useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   useGetScrapeTasksForSiteQuery,
-  useUpdateSiteScrapeTaskMutation,
+  useLazyGetScrapeTasksForSiteQuery,
+  useUpdateWorkItemMutation,
 } from '../../collections/siteScrapeTasksApi';
 import { SiteScrapeTask, WorkItemOption } from '../../collections/types';
 import { initialState } from '../../collections/collectionsSlice';
 import { ValidationButtonsContext } from './ManualCollectionContext';
+import { useLazyGetSiteDocDocumentsQuery } from '../../sites/sitesApi';
 
 const mostRecentTask = {
   limit: 1,
@@ -28,23 +30,22 @@ const useSiteScrapeTaskId = () => {
 };
 
 export const useUpdateSelected = () => {
-  const { workList, refetch, docId, setIsLoading } = useContext(ValidationButtonsContext) ?? {};
-  const siteScrapeTaskId = useSiteScrapeTaskId();
-  const [updateSiteScrapeTask] = useUpdateSiteScrapeTaskMutation();
+  const { siteId } = useParams();
+  const { workItem, setIsLoading } = useContext(ValidationButtonsContext) ?? {};
+  const scrapeTaskId = useSiteScrapeTaskId();
+  const [updateWorkItem] = useUpdateWorkItemMutation();
+  const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
+  const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
 
   return async (selected: WorkItemOption) => {
-    if (!siteScrapeTaskId || !workList || !setIsLoading || !refetch) return;
+    if (!scrapeTaskId || !workItem || !setIsLoading) return;
 
-    const newWorkList = workList.map((item) => {
-      if (item.document_id === docId) {
-        return { ...item, selected, action_datetime: DateTime.now().toISO() };
-      }
-      return item;
-    }); // O(n^2) time, max n of 1500
+    const newWorkItem = { ...workItem, selected, action_datetime: DateTime.now().toISO() };
 
     setIsLoading(true);
-    await updateSiteScrapeTask({ _id: siteScrapeTaskId, work_list: newWorkList });
-    refetch();
+    await updateWorkItem({ ...newWorkItem, scrapeTaskId });
+    await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
+    await getDocDocumentsQuery({ siteId, scrapeTaskId });
     setIsLoading(false);
   };
 };

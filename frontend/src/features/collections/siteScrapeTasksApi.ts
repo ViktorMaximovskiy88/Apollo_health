@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
-import { BulkActionTypes, SiteScrapeTask, CollectionConfig } from './types';
+import { BulkActionTypes, SiteScrapeTask, CollectionConfig, WorkItem } from './types';
 import { TableInfoType } from '../../common/types';
 
 interface BulkRunResponse {
@@ -85,6 +85,16 @@ export const siteScrapeTasksApi = createApi({
       }),
       invalidatesTags: (_r, _e, id) => [{ type: 'SiteScrapeTask', id }],
     }),
+    updateWorkItem: builder.mutation<SiteScrapeTask, WorkItem & { scrapeTaskId: string }>({
+      query: (body) => {
+        console.log(body);
+        return {
+          url: `/site-scrape-tasks/${body.scrapeTaskId}/work-items/${body.document_id}`,
+          method: 'POST',
+          body,
+        };
+      },
+    }),
     getChangeLog: builder.query<ChangeLog[], string>({
       query: (id) => `/change-log/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
@@ -107,6 +117,7 @@ export const {
   useDeleteSiteScrapeTaskMutation,
   useCancelSiteScrapeTaskMutation,
   useCancelAllSiteScrapeTasksMutation,
+  useUpdateWorkItemMutation,
   useGetChangeLogQuery,
   useRunBulkMutation,
   useGetCollectionConfigQuery,
