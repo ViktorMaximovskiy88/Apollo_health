@@ -8,6 +8,7 @@ from backend.common.models.shared import FileMetadata, Location
 class LinkTaskLog(UnionDoc):
     class Settings:
         name = "LinkTaskLog"
+        use_revision = False
 
 
 class ValidResponse(BaseModel):

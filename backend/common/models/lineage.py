@@ -6,7 +6,21 @@ from pydantic import BaseModel
 from backend.common.models.base_document import BaseDocument
 
 
-class LineageAttrs(BaseModel):
+class LineageEntry(BaseModel):
+    doc_id: PydanticObjectId
+    version: int | None
+
+
+class Lineage(BaseDocument):
+    entries: list[PydanticObjectId] = []
+    site_id: PydanticObjectId
+    current_version: int | None
+
+    class Settings:
+        use_revision = False
+
+
+class DocumentAttrs(BaseModel):
     state_name: str | None
     state_abbr: str | None
     year_part: int | None
@@ -15,11 +29,7 @@ class LineageAttrs(BaseModel):
     month_abbr: str | None
 
 
-class Lineage(BaseDocument):
-    entries: list[PydanticObjectId] = []
-
-
-class LineageCompare(BaseDocument):
+class DocumentAnalysis(BaseDocument):
     doc_id: PydanticObjectId
     site_id: PydanticObjectId
     lineage_id: PydanticObjectId | None
@@ -49,9 +59,9 @@ class LineageCompare(BaseDocument):
     filename_tokens: list[str] = []
     pathname_tokens: list[str] = []
 
-    # explicit matches per thing (repetiion increase assuredness)
-    filename: LineageAttrs | None
-    pathname: LineageAttrs | None
-    element: LineageAttrs | None
-    parent: LineageAttrs | None
-    siblings: LineageAttrs | None
+    # explicit matches per thing (repetition increase assuredness)
+    filename: DocumentAttrs | None
+    pathname: DocumentAttrs | None
+    element: DocumentAttrs | None
+    parent: DocumentAttrs | None
+    siblings: DocumentAttrs | None

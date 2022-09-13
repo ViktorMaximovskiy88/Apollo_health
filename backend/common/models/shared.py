@@ -20,14 +20,11 @@ class SiteLocation(Location):
 
 
 class RetrievedDocumentLocation(SiteLocation):
-
     context_metadata: dict = {}
-    previous_retrieved_doc_id: PydanticObjectId | None = None
 
 
 class DocDocumentLocation(SiteLocation):
     document_family_id: PydanticObjectId | None = None
-    previous_doc_doc_id: PydanticObjectId | None = None
 
 
 class DocDocumentLocationView(DocDocumentLocation):

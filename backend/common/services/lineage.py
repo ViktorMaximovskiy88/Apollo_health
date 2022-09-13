@@ -4,10 +4,14 @@ from logging import Logger
 from beanie import PydanticObjectId
 from jarowinkler import jarowinkler_similarity
 
-from backend.common.models.lineage import Lineage, LineageAttrs, LineageCompare
+from backend.common.models.lineage import Lineage, LineageAttrs, LineageCompare, LineageEntry
 from backend.common.models.shared import get_unique_focus_tags, get_unique_reference_tags
 from backend.common.models.site import Site
-from backend.common.services.document import SiteRetrievedDocument, get_site_docs
+from backend.common.services.document import (
+    SiteRetrievedDocument,
+    get_site_docs,
+    get_site_docs_for_ids,
+)
 from backend.scrapeworker.common.lineage_parser import (
     guess_month_abbr,
     guess_month_name,
@@ -39,6 +43,12 @@ class LineageService:
         docs = await get_site_docs(site_id)
         await self.process_lineage_for_docs(docs)
 
+    async def process_lineage_for_doc_ids(
+        self, site_id: PydanticObjectId, doc_ids: list[PydanticObjectId]
+    ):
+        docs = await get_site_docs_for_ids(site_id, doc_ids)
+        await self.process_lineage_for_docs(docs)
+
     async def process_lineage_for_docs(self, docs: list[SiteRetrievedDocument]):
         compare_models = []
         # build the model, currently saving but mreh
@@ -56,7 +66,11 @@ class LineageService:
             return
 
         first_item: LineageCompare = items.pop()
-        lineage = await Lineage(entries=[first_item.doc_id]).save()
+        lineage = await Lineage(
+            site_id=first_item.site_id,
+            entries=[LineageEntry(doc_id=first_item.doc_id)],
+        ).save()
+
         first_item.lineage_id = lineage.id
         unmatched = []
 
@@ -70,15 +84,24 @@ class LineageService:
             if (
                 filename_match >= 0.60 or element_text_match >= 0.90
             ) and ref_indication_match >= 0.85:
-                self.log.info(item.filename, "MATCHED")
+                self.log.info(f"MATCHED {item.filename}")
                 lineage.entries.append(item.id)
             else:
-                self.log.info(item.filename, "UNMATCHED")
+                self.log.info(f"UNMATCHED {item.filename}")
                 unmatched.append(item)
 
         await first_item.save()
         await lineage.save()
+
         await self._process_lineage(unmatched)
+
+
+def version(compare: LineageCompare):
+    pass
+
+
+def sort_entries(compare: LineageCompare):
+    pass
 
 
 def build_attr_model(input: str) -> LineageAttrs:

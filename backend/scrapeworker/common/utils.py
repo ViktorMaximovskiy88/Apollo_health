@@ -141,7 +141,6 @@ def tokenize_string(input: str):
 
 
 def jaccard(a: list, b: list):
-    # what to really do when both inputs are 0; perfect match or no match?
     if len(a) + len(b) == 0:
         return 1
     intersection = len(list(set(a).intersection(b)))

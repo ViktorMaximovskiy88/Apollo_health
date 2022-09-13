@@ -29,6 +29,7 @@ from backend.common.models.link_task_log import (
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.services.lineage import LineageService
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.aio_downloader import AioDownloader
@@ -77,6 +78,7 @@ class ScrapeWorker:
         self.playbook = ScrapePlaybook(self.site.playbook)
         self.log = _log
         self.doc_updater = DocumentUpdater(_log, scrape_task, site)
+        self.lineage_service = LineageService(log=_log)
         self.lineage_tasks = []
 
     @alru_cache
@@ -234,11 +236,11 @@ class ScrapeWorker:
                 document = await self.doc_updater.create_retrieved_document(
                     parsed_content, download, checksum, url
                 )
-                doc_document = await self.doc_updater.create_doc_document(document)
-                self.lineage_tasks.append((document, doc_document))
+                await self.doc_updater.create_doc_document(document)
+                # self.lineage_tasks.append((document, doc_document))
 
             link_retrieved_task.retrieved_document_id = document.id
-
+            self.lineage_tasks.append((document, None))
             await asyncio.gather(
                 self.scrape_task.update(
                     {
@@ -474,7 +476,9 @@ class ScrapeWorker:
 
         await self.wait_for_completion_or_cancel(tasks)
 
-        print(self.lineage_tasks, "self.lineage_tasks")
+        doc_ids = [doc.id for (doc, doc_doc) in self.lineage_tasks]
+        print(doc_ids, "doc_ids")
+        await self.lineage_service.process_lineage_for_doc_ids(self.site.id, doc_ids)
 
         await self.downloader.close()
 
