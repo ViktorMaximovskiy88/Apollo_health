@@ -1,6 +1,6 @@
 import { Checkbox, Input, Form, FormInstance, Select, Radio, Tooltip, Switch } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
-import { CollectionMethod, ScrapeMethod, Site } from './types';
+import { CollectionMethod, ScrapeMethod, SearchableType, Site } from './types';
 import { useGetProxiesQuery } from '../proxies/proxiesApi';
 import {
   AttrSelectors,
@@ -195,8 +195,8 @@ function SearchableConfig() {
   const isSearchable = Form.useWatch(['scrape_method_configuration', 'searchable'], form);
 
   const searchableTypes = [
-    { value: 'CPT Codes', label: 'CPT Codes' },
-    { value: 'JCodes', label: 'JCodes' },
+    { value: SearchableType.CPTCodes, label: 'CPT Codes' },
+    { value: SearchableType.JCodes, label: 'JCodes' },
   ];
   const inputName = ['scrape_method_configuration', 'searchable_input'];
   const submitName = ['scrape_method_configuration', 'searchable_submit'];

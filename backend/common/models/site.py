@@ -33,7 +33,7 @@ class ScrapeMethodConfiguration(BaseModel):
     follow_link_keywords: list[str]
     follow_link_url_keywords: list[str]
     searchable: bool = False
-    searchable_type: str | None = None
+    searchable_type: str | None = None  # make enum
     searchable_input: AttrSelector | None = None
     searchable_submit: AttrSelector | None = None
     attr_selectors: list[AttrSelector] = []

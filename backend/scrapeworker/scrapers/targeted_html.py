@@ -104,12 +104,14 @@ class TargetedHtmlScraper(PlaywrightBaseScraper):
                 metadata = await self.extract_metadata(html_locator)
                 html_content = await html_locator.inner_html()
                 cleaned_html = self.clean_html(html_content)
+
                 checksum = hash_full_text(cleaned_html)
                 dest_path = f"{checksum}.html"
-                # if not self.doc_client.object_exists(dest_path):
-                bytes_obj = bytes(cleaned_html, "iso-8859-1")
-                self.doc_client.write_object_mem(dest_path, bytes_obj)
-                filename = metadata.closest_heading  # something better?
+                if not self.doc_client.object_exists(dest_path):
+                    bytes_obj = bytes(cleaned_html, "utf-8")
+                    self.doc_client.write_object_mem(dest_path, bytes_obj)
+
+                filename = metadata.closest_heading
                 if not filename:
                     filename = await self.page.title()
                 downloads.append(

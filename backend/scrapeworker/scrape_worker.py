@@ -40,7 +40,7 @@ from backend.scrapeworker.file_parsers import parse_by_type
 from backend.scrapeworker.playbook import ScrapePlaybook
 from backend.scrapeworker.scrapers import ScrapeHandler
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
-from backend.scrapeworker.searcher import Searchable
+from backend.scrapeworker.searcher import SearchablePlaybook
 
 log = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ class ScrapeWorker:
         self.text_handler = TextHandler()
         self.downloader = AioDownloader(_log)
         self.playbook = ScrapePlaybook(self.site.playbook)
-        self.searchable = Searchable(config=self.site.scrape_method_configuration)
+        self.searchable = SearchablePlaybook(config=self.site.scrape_method_configuration)
         self.doc_updater = DocumentUpdater(_log, scrape_task, site)
         self.log = _log
 

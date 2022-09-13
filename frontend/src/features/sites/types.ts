@@ -72,3 +72,8 @@ export enum ScrapeMethod {
   Simple = 'SimpleDocumentScrape',
   Html = 'HtmlScrape',
 }
+
+export enum SearchableType {
+  CPTCodes = 'CPTCODES',
+  JCodes = 'JCODES',
+}
