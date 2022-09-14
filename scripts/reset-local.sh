@@ -3,7 +3,7 @@
 # todo format later
 COLLECTIONS=$(cat <<-END
     db.Lineage.drop();
-    db.LineageCompare.drop();
+    db.DocumentAnalysis.drop();
     db.RetrievedDocument.drop();
     db.SiteScrapeTask.drop();
     db.DocDocument.drop();

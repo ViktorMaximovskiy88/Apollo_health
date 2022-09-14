@@ -2,9 +2,8 @@ import pprint
 from logging import Logger
 
 from beanie import PydanticObjectId
-from jarowinkler import jarowinkler_similarity
 
-from backend.common.models.lineage import Lineage, LineageAttrs, LineageCompare, LineageEntry
+from backend.common.models.lineage import DocumentAnalysis, DocumentAttrs, Lineage, LineageEntry
 from backend.common.models.shared import get_unique_focus_tags, get_unique_reference_tags
 from backend.common.models.site import Site
 from backend.common.services.document import (
@@ -12,6 +11,7 @@ from backend.common.services.document import (
     get_site_docs,
     get_site_docs_for_ids,
 )
+from backend.common.services.lineage_matcher import LineageMatcher
 from backend.scrapeworker.common.lineage_parser import (
     guess_month_abbr,
     guess_month_name,
@@ -23,7 +23,6 @@ from backend.scrapeworker.common.lineage_parser import (
 from backend.scrapeworker.common.utils import (
     compact,
     group_by_attr,
-    jaccard,
     tokenize_filename,
     tokenize_url,
 )
@@ -51,7 +50,7 @@ class LineageService:
 
     async def process_lineage_for_docs(self, docs: list[SiteRetrievedDocument]):
         compare_models = []
-        # build the model, currently saving but mreh
+        # build the model, currently saving it too
         for doc in docs:
             lineage_compare = build_lineage_compare(doc)
             await lineage_compare.save()
@@ -61,31 +60,25 @@ class LineageService:
         for _key, group in group_by_attr(compare_models, "document_type"):
             await self._process_lineage(list(group))
 
-    async def _process_lineage(self, items: list[LineageCompare]):
+    async def _process_lineage(self, items: list[DocumentAnalysis]):
         if len(items) == 0:
             return
 
-        first_item: LineageCompare = items.pop()
-        lineage = await Lineage(
-            site_id=first_item.site_id,
-            entries=[LineageEntry(doc_id=first_item.doc_id)],
-        ).save()
+        first_item: DocumentAnalysis = items.pop()
+        entry = LineageEntry(doc_id=first_item.doc_id)
+        lineage = await Lineage(entries=[entry]).save()
 
         first_item.lineage_id = lineage.id
         unmatched = []
 
-        item: LineageCompare
+        item: DocumentAnalysis
         for item in items:
-            element_text_match = jarowinkler_similarity(first_item.element_text, item.element_text)
-            filename_match = jaccard(first_item.filename_tokens, item.filename_tokens)
-            ref_indication_match = jaccard(first_item.ref_indication_tags, item.ref_indication_tags)
 
-            # TODO refactor this for varying rulesets (this one example...)
-            if (
-                filename_match >= 0.60 or element_text_match >= 0.90
-            ) and ref_indication_match >= 0.85:
+            match = LineageMatcher(first_item, item).exec()
+
+            if match:
                 self.log.info(f"MATCHED {item.filename}")
-                lineage.entries.append(item.id)
+                lineage.entries.append(LineageEntry(doc_id=item.id))
             else:
                 self.log.info(f"UNMATCHED {item.filename}")
                 unmatched.append(item)
@@ -96,16 +89,8 @@ class LineageService:
         await self._process_lineage(unmatched)
 
 
-def version(compare: LineageCompare):
-    pass
-
-
-def sort_entries(compare: LineageCompare):
-    pass
-
-
-def build_attr_model(input: str) -> LineageAttrs:
-    return LineageAttrs(
+def build_attr_model(input: str) -> DocumentAttrs:
+    return DocumentAttrs(
         state_abbr=guess_state_abbr(input),
         state_name=guess_state_name(input),
         year_part=guess_year_part(input),
@@ -116,7 +101,7 @@ def build_attr_model(input: str) -> LineageAttrs:
 
 
 # TODO tweak logic, for now its all or nothing
-def consensus_attr(model: LineageCompare, attr: str):
+def consensus_attr(model: DocumentAnalysis, attr: str):
     all_attrs = compact(
         [
             getattr(model.filename, attr),
@@ -131,8 +116,8 @@ def consensus_attr(model: LineageCompare, attr: str):
     return consensus[0] if len(consensus) == 1 else None
 
 
-def build_lineage_compare(doc: SiteRetrievedDocument) -> LineageCompare:
-    lineage_compare = LineageCompare(
+def build_lineage_compare(doc: SiteRetrievedDocument) -> DocumentAnalysis:
+    lineage_compare = DocumentAnalysis(
         doc_id=doc.id,
         site_id=doc.site_id,
         effective_date=doc.effective_date,

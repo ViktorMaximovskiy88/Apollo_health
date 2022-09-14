@@ -37,6 +37,10 @@ class BaseRetrievedDocument(BaseModel):
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
 
+    lineage_id: PydanticObjectId | None = None
+    previous_doc_id: PydanticObjectId | None = None
+    lineage_head: bool = False
+
 
 class RetrievedDocument(BaseDocument, BaseRetrievedDocument, DocumentMixins):
     locations: list[RetrievedDocumentLocation] = []

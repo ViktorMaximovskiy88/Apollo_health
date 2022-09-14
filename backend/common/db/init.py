@@ -14,7 +14,7 @@ from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.document_family import DocumentFamily
 from backend.common.models.indication import Indication
-from backend.common.models.lineage import Lineage, LineageCompare
+from backend.common.models.lineage import DocumentAnalysis, Lineage
 from backend.common.models.link_task_log import LinkBaseTask, LinkRetrievedTask, LinkTaskLog
 from backend.common.models.payer_backbone import (
     MCO,
@@ -76,7 +76,7 @@ async def init_db(mock=False, database_name=None):
             LinkRetrievedTask,
             DocumentFamily,
             Lineage,
-            LineageCompare,
+            DocumentAnalysis,
             PayerBackboneUnionDoc,
             Plan,
             PayerParent,
