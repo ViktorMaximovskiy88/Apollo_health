@@ -11,9 +11,9 @@ router = APIRouter(
 )
 
 
-def populate_docs(lineage: Lineage):
+async def populate_docs(lineage: Lineage):
     doc_ids = [entry.doc_id for entry in lineage.entries]
-    docs = RetrievedDocument.find({"_id": {"$in": doc_ids}})
+    docs = await RetrievedDocument.find({"_id": {"$in": doc_ids}}).to_list()
     lineage.docs = docs
     return lineage
 
@@ -25,7 +25,7 @@ def populate_docs(lineage: Lineage):
 )
 async def lineages_for_doc_id(doc_id: PydanticObjectId):
     lineage: Lineage = await Lineage.find({"entries.doc_id": doc_id}).to_list()
-    return populate_docs(lineage)
+    return await populate_docs(lineage)
 
 
 @router.get(
@@ -35,4 +35,4 @@ async def lineages_for_doc_id(doc_id: PydanticObjectId):
 )
 async def lineages_for_id(lineage_id: PydanticObjectId):
     lineage: Lineage = await Lineage.get(lineage_id)
-    return populate_docs(lineage)
+    return await populate_docs(lineage)
