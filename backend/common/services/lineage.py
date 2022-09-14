@@ -1,3 +1,4 @@
+import asyncio
 import pprint
 from logging import Logger
 
@@ -54,7 +55,16 @@ class LineageService:
         for doc in docs:
             lineage_compare = build_lineage_compare(doc)
             await lineage_compare.save()
+
+            similar_docs = await DocumentAnalysis.find(
+                {
+                    "document_type": lineage_compare.document_type,
+                    "site_id": lineage_compare.site_id,
+                }
+            ).to_list()
+
             compare_models.append(lineage_compare)
+            compare_models += similar_docs
 
         # run on groups (one way to pick similar is doc type; TODO put more thought into it )
         for _key, group in group_by_attr(compare_models, "document_type"):
@@ -64,13 +74,13 @@ class LineageService:
         if len(items) == 0:
             return
 
+        missing_lineage = [item for item in items if not item.lineage_id]
+        if len(missing_lineage) == 0:
+            return
+
         first_item: DocumentAnalysis = items.pop()
-        entry = LineageEntry(doc_id=first_item.doc_id)
-        lineage = await Lineage(entries=[entry]).save()
 
-        first_item.lineage_id = lineage.id
         unmatched = []
-
         item: DocumentAnalysis
         for item in items:
 
@@ -78,13 +88,26 @@ class LineageService:
 
             if match:
                 self.log.info(f"MATCHED {item.filename}")
-                lineage.entries.append(LineageEntry(doc_id=item.doc_id))
+
+                entry = LineageEntry(doc_id=first_item.doc_id)
+                lineage: Lineage
+
+                if item.lineage_id:
+                    lineage = await Lineage.get(item.lineage_id)
+                else:
+                    lineage = Lineage()
+
+                lineage.entries.append(entry)
+                first_item.lineage_id = lineage.id
+
+                await asyncio.gather(
+                    first_item.save(),
+                    lineage.save(),
+                )
+
             else:
                 self.log.info(f"UNMATCHED {item.filename}")
                 unmatched.append(item)
-
-        await first_item.save()
-        await lineage.save()
 
         await self._process_lineage(unmatched)
 
