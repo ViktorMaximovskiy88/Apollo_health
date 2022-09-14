@@ -55,20 +55,7 @@ class LineageService:
         for doc in docs:
             doc_analysis = build_doc_analysis(doc)
             await doc_analysis.save()
-
-            similar_docs = await DocumentAnalysis.find(
-                {
-                    "_id": {"$ne": doc_analysis.id},
-                    "lineage_id": None,
-                    "document_type": doc_analysis.document_type,
-                    "site_id": doc_analysis.site_id,
-                }
-            ).to_list()
-
             compare_models.append(doc_analysis)
-            print(len(compare_models), "compare_models before")
-            compare_models += similar_docs
-            print(len(compare_models), "compare_models after")
 
         # run on groups (one way to pick similar is doc type; TODO put more thought into it )
         for _key, group in group_by_attr(compare_models, "document_type"):
@@ -83,6 +70,11 @@ class LineageService:
             return
 
         first_item: DocumentAnalysis = items.pop()
+        if len(items) == 0:
+            lineage_id = PydanticObjectId()
+            first_item.lineage_id = lineage_id
+            await first_item.save()
+            return
 
         unmatched = []
         item: DocumentAnalysis
