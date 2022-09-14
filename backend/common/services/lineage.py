@@ -78,7 +78,7 @@ class LineageService:
 
             if match:
                 self.log.info(f"MATCHED {item.filename}")
-                lineage.entries.append(LineageEntry(doc_id=item.id))
+                lineage.entries.append(LineageEntry(doc_id=item.doc_id))
             else:
                 self.log.info(f"UNMATCHED {item.filename}")
                 unmatched.append(item)

@@ -9,9 +9,15 @@ class LineageMatcher:
         #  text similarity
         self.doc_a = doc_a
         self.doc_b = doc_b
+
         self.element_text_match = jarowinkler_similarity(doc_a.element_text, doc_b.element_text)
+        print(f"element_text_match={self.element_text_match}")
+
         self.parent_text_match = jarowinkler_similarity(doc_a.parent_text, doc_b.parent_text)
+        print(f"parent_text_match={self.parent_text_match}")
+
         self.siblings_text_match = jarowinkler_similarity(doc_a.siblings_text, doc_b.siblings_text)
+        print(f"siblings_text_match={self.siblings_text_match}")
 
         # raw url matches
         self.filename_match = jaccard(doc_a.filename_tokens, doc_b.filename_tokens)
@@ -27,9 +33,13 @@ class LineageMatcher:
         )
 
         self.trusted_filename_match = jaccard(trusted_filename_tokens_a, trusted_filename_tokens_b)
+        print(f"trusted_filename_match={self.trusted_filename_match}")
 
         self.filename_match = jaccard(doc_a.filename_tokens, doc_b.filename_tokens)
+        print(f"filename_match={self.filename_match}")
+
         self.pathname_match = jaccard(doc_a.pathname_tokens, doc_b.pathname_tokens)
+        print(f"pathname_match={self.pathname_match}")
 
         self.ref_indication_match = jaccard(doc_a.ref_indication_tags, doc_b.ref_indication_tags)
         self.focus_indication_match = jaccard(
@@ -37,7 +47,10 @@ class LineageMatcher:
         )
 
         self.ref_therapy_match = jaccard(doc_a.ref_therapy_tags, doc_b.ref_therapy_tags)
+        print(f"ref_therapy_match={self.ref_therapy_match}")
+
         self.focus_therapy_match = jaccard(doc_a.focus_therapy_tags, doc_b.focus_therapy_tags)
+        print(f"focus_therapy_match={self.focus_therapy_match}")
 
     def exec(self) -> bool:
         rule_sets = ["revised_document", "updated_document"]

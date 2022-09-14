@@ -5,24 +5,12 @@ from pydantic import BaseModel
 
 from backend.common.core.enums import LangCode
 from backend.common.models.base_document import BaseDocument
-from backend.common.models.document import RetrievedDocument
 
 
 def lineage_version(previous_version: int | None):
     todays_date: str = datetime.now(tz=timezone.utc).strftime("%Y%m%d")
     ordinal_version = 0000 if not previous_version else abs(previous_version) % 1000
     return int(f"{todays_date}{ordinal_version}")
-
-
-# view model only
-class LineageDocumentEntry(BaseModel):
-    doc: RetrievedDocument
-    version: int | None
-
-
-class LineageView(BaseModel):
-    entries: list[LineageDocumentEntry] = []
-    current_version: int | None
 
 
 class LineageEntry(BaseModel):
@@ -91,3 +79,14 @@ class DocumentAnalysis(BaseDocument):
     siblings: DocumentAttrs | None
 
     doc_type_vectors: list[int] = []
+
+
+# view model only
+class LineageDocumentEntry(BaseModel):
+    doc: DocumentAnalysis
+    version: int | None
+
+
+class LineageView(BaseModel):
+    entries: list[LineageDocumentEntry] = []
+    current_version: int | None

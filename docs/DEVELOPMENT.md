@@ -68,16 +68,16 @@ brew install gnupg coreutils awscli protobuf libmagic swig xpdf imagemagick
 brew install docker
 brew install --cask docker
 curl -fsSL https://get.docker.com | sudo sh
-Install and run docker desktop: https://www.docker.com/products/docker-desktop/
+# Install and run docker desktop: https://www.docker.com/products/docker-desktop/
 
 # Install PyEnv and Python
 brew install pyenv
-If you are using latest version of osx run this command: touch ~/.zshrc
+# If you are using latest version of osx run this command: touch ~/.zshrc
 source ~/.zshrc
 pyenv install 3.10.3
 pyenv global 3.10.3
 
-Add pyenv path to ~/.zshrc (unless it is already there):
+# Add pyenv path to ~/.zshrc (unless it is already there):
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 export PATH="$HOME/.pyenv/bin:$HOME/.pyenv/shims:$HOME/.local/bin:$PATH"

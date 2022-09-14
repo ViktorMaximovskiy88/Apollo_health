@@ -2,8 +2,12 @@ from beanie import PydanticObjectId
 from fastapi import APIRouter, Security
 
 from backend.app.utils.user import get_current_user
-from backend.common.models.document import RetrievedDocument
-from backend.common.models.lineage import Lineage, LineageDocumentEntry, LineageView
+from backend.common.models.lineage import (
+    DocumentAnalysis,
+    Lineage,
+    LineageDocumentEntry,
+    LineageView,
+)
 
 router = APIRouter(
     prefix="/lineages",
@@ -13,7 +17,7 @@ router = APIRouter(
 
 async def populate_docs(lineage: Lineage):
     doc_ids = [entry.doc_id for entry in lineage.entries]
-    docs = await RetrievedDocument.find({"_id": {"$in": doc_ids}}).to_list()
+    docs = await DocumentAnalysis.find({"doc_id": {"$in": doc_ids}}).to_list()
     lineage_view = LineageView(id=lineage.id, current_version=lineage.current_version)
     lineage_view.entries = [LineageDocumentEntry(doc=doc) for doc in docs]
     return lineage_view
