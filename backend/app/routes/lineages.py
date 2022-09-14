@@ -25,7 +25,7 @@ async def populate_docs(lineage: Lineage):
     dependencies=[Security(get_current_user)],
 )
 async def lineages_for_doc_id(doc_id: PydanticObjectId):
-    lineage: Lineage = await Lineage.find({"entries.doc_id": doc_id}).to_list()
+    lineage: Lineage = await Lineage.find_one({"entries.doc_id": doc_id})
     return await populate_docs(lineage)
 
 

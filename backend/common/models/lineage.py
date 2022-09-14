@@ -20,7 +20,7 @@ class LineageDocumentEntry(BaseModel):
     version: int | None
 
 
-class LineageView(BaseDocument):
+class LineageView(BaseModel):
     entries: list[LineageDocumentEntry] = []
     current_version: int | None
 
