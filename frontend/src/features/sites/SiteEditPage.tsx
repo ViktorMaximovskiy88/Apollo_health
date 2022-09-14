@@ -26,7 +26,6 @@ const useAlreadyAssignedModal = () => {
     const assignCurrentUser = {
       _id: site._id,
       assignee: currentUser?._id,
-      status: SiteStatus.QualityHold,
     };
 
     if (!site.assignee) {
@@ -64,7 +63,6 @@ export function SiteEditPage() {
   const initialValues = {
     ...site,
     assignee: currentUser?._id,
-    status: SiteStatus.QualityHold,
   };
 
   async function tryUpdateSite(update: Partial<Site>) {
