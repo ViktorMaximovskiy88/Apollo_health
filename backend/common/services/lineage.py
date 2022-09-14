@@ -4,7 +4,7 @@ from logging import Logger
 
 from beanie import PydanticObjectId
 
-from backend.common.models.lineage import DocumentAnalysis, DocumentAttrs, Lineage, LineageEntry
+from backend.common.models.lineage import DocumentAnalysis, DocumentAttrs
 from backend.common.models.shared import get_unique_focus_tags, get_unique_reference_tags
 from backend.common.models.site import Site
 from backend.common.services.document import (
@@ -53,18 +53,22 @@ class LineageService:
         compare_models = []
         # build the model, currently saving it too
         for doc in docs:
-            lineage_compare = build_lineage_compare(doc)
-            await lineage_compare.save()
+            doc_analysis = build_doc_analysis(doc)
+            await doc_analysis.save()
 
             similar_docs = await DocumentAnalysis.find(
                 {
-                    "document_type": lineage_compare.document_type,
-                    "site_id": lineage_compare.site_id,
+                    "_id": {"$ne": doc_analysis.id},
+                    "lineage_id": None,
+                    "document_type": doc_analysis.document_type,
+                    "site_id": doc_analysis.site_id,
                 }
             ).to_list()
 
-            compare_models.append(lineage_compare)
+            compare_models.append(doc_analysis)
+            print(len(compare_models), "compare_models before")
             compare_models += similar_docs
+            print(len(compare_models), "compare_models after")
 
         # run on groups (one way to pick similar is doc type; TODO put more thought into it )
         for _key, group in group_by_attr(compare_models, "document_type"):
@@ -83,26 +87,20 @@ class LineageService:
         unmatched = []
         item: DocumentAnalysis
         for item in items:
-
             match = LineageMatcher(first_item, item).exec()
-
             if match:
                 self.log.info(f"MATCHED {item.filename}")
 
-                entry = LineageEntry(doc_id=first_item.doc_id)
-                lineage: Lineage
-
                 if item.lineage_id:
-                    lineage = await Lineage.get(item.lineage_id)
+                    first_item.lineage_id = item.lineage_id
                 else:
-                    lineage = Lineage()
-
-                lineage.entries.append(entry)
-                first_item.lineage_id = lineage.id
+                    lineage_id = PydanticObjectId()
+                    first_item.lineage_id = lineage_id
+                    item.lineage_id = lineage_id
 
                 await asyncio.gather(
                     first_item.save(),
-                    lineage.save(),
+                    item.save(),
                 )
 
             else:
@@ -139,37 +137,38 @@ def consensus_attr(model: DocumentAnalysis, attr: str):
     return consensus[0] if len(consensus) == 1 else None
 
 
-def build_lineage_compare(doc: SiteRetrievedDocument) -> DocumentAnalysis:
-    lineage_compare = DocumentAnalysis(
-        doc_id=doc.id,
+def build_doc_analysis(doc: SiteRetrievedDocument) -> DocumentAnalysis:
+    doc_analysis = DocumentAnalysis(
+        retrieved_document_id=doc.id,
         site_id=doc.site_id,
         effective_date=doc.effective_date,
         document_type=doc.document_type,
         element_text=doc.link_text,
+        file_size=doc.file_size,
     )
 
-    lineage_compare.focus_therapy_tags = get_unique_focus_tags(doc.therapy_tags)
-    lineage_compare.ref_therapy_tags = get_unique_reference_tags(doc.therapy_tags)
+    doc_analysis.focus_therapy_tags = get_unique_focus_tags(doc.therapy_tags)
+    doc_analysis.ref_therapy_tags = get_unique_reference_tags(doc.therapy_tags)
 
-    lineage_compare.focus_indication_tags = get_unique_focus_tags(doc.indication_tags)
-    lineage_compare.ref_indication_tags = get_unique_reference_tags(doc.indication_tags)
+    doc_analysis.focus_indication_tags = get_unique_focus_tags(doc.indication_tags)
+    doc_analysis.ref_indication_tags = get_unique_reference_tags(doc.indication_tags)
 
     [*path_parts, filename] = tokenize_url(doc.url)
-    lineage_compare.filename_text = filename
-    lineage_compare.pathname_text = "/".join(path_parts)
-    lineage_compare.pathname_tokens = compact(path_parts)
-    lineage_compare.filename_tokens = tokenize_filename(filename)
+    doc_analysis.filename_text = filename
+    doc_analysis.pathname_text = "/".join(path_parts)
+    doc_analysis.pathname_tokens = compact(path_parts)
+    doc_analysis.filename_tokens = tokenize_filename(filename)
 
-    lineage_compare.pathname = build_attr_model(lineage_compare.pathname_text)
-    lineage_compare.filename = build_attr_model(lineage_compare.filename_text)
-    lineage_compare.element = build_attr_model(lineage_compare.element_text)
-    lineage_compare.parent = build_attr_model(lineage_compare.parent_text)
-    lineage_compare.siblings = build_attr_model(lineage_compare.siblings_text)
+    doc_analysis.pathname = build_attr_model(doc_analysis.pathname_text)
+    doc_analysis.filename = build_attr_model(doc_analysis.filename_text)
+    doc_analysis.element = build_attr_model(doc_analysis.element_text)
+    doc_analysis.parent = build_attr_model(doc_analysis.parent_text)
+    doc_analysis.siblings = build_attr_model(doc_analysis.siblings_text)
 
-    lineage_compare.state_abbr = consensus_attr(lineage_compare, "state_abbr")
-    lineage_compare.state_name = consensus_attr(lineage_compare, "state_name")
-    lineage_compare.month_abbr = consensus_attr(lineage_compare, "month_abbr")
-    lineage_compare.month_name = consensus_attr(lineage_compare, "month_name")
-    lineage_compare.year_part = consensus_attr(lineage_compare, "year_part")
+    doc_analysis.state_abbr = consensus_attr(doc_analysis, "state_abbr")
+    doc_analysis.state_name = consensus_attr(doc_analysis, "state_name")
+    doc_analysis.month_abbr = consensus_attr(doc_analysis, "month_abbr")
+    doc_analysis.month_name = consensus_attr(doc_analysis, "month_name")
+    doc_analysis.year_part = consensus_attr(doc_analysis, "year_part")
 
-    return lineage_compare
+    return doc_analysis

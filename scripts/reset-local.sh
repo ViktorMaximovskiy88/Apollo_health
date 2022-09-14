@@ -2,7 +2,6 @@
 
 # todo format later
 COLLECTIONS=$(cat <<-END
-    db.Lineage.drop();
     db.DocumentAnalysis.drop();
     db.RetrievedDocument.drop();
     db.SiteScrapeTask.drop();

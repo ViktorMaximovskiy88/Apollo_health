@@ -141,6 +141,7 @@ class DocumentUpdater:
         text_checksum = await self.text_handler.save_text(parsed_content["text"])
         context_metadata = download.metadata.dict()
         document = RetrievedDocument(
+            file_size=download.file_size,
             checksum=checksum,
             text_checksum=text_checksum,
             doc_type_confidence=parsed_content["confidence"],
