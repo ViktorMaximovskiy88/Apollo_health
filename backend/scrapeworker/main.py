@@ -125,7 +125,7 @@ async def start_worker_async(worker_id):
     loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.create_task(signal_handler()))
 
     async with async_playwright() as playwright:
-        browser = await playwright.chromium.launch()
+        browser = await playwright.chromium.launch(headless=False)
 
         async def get_browser_context(proxy) -> BrowserContext:
             global browser

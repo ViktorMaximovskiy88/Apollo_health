@@ -1,5 +1,4 @@
 import logging
-from functools import cached_property
 
 from playwright.async_api import Page
 
@@ -8,7 +7,7 @@ from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.selectors import to_xpath
 
 
-class SearchablePlaybook:
+class SearchableCrawler:
     def __init__(self, config: ScrapeMethodConfiguration) -> None:
         self.config = config
         self.input_selector: str | None = (
@@ -18,7 +17,6 @@ class SearchablePlaybook:
             to_xpath(config.searchable_submit) if config.searchable_submit else None
         )
 
-    @cached_property
     async def __codes(self):
         search_codes = await SearchCodeSet.find_one({"type": self.config.searchable_type})
         if search_codes:
@@ -36,7 +34,7 @@ class SearchablePlaybook:
     async def run_searchable(self, page: Page):
         assert self.input_selector is not None
         base_url = page.url
-        codes = await self.__codes
+        codes = await self.__codes()
         for code in codes:
             try:
                 await page.fill(self.input_selector, "")

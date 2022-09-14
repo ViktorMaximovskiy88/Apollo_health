@@ -172,7 +172,7 @@ class AioDownloader:
         url = download.request.url
         self.log.info(f"Before attempting download {url}")
 
-        if download.file_hash:
+        if download.direct_scrape:
             doc_client = DocumentStorageClient()
             dest_path = f"{download.file_hash}.{download.file_extension}"
             with doc_client.read_object_to_tempfile(

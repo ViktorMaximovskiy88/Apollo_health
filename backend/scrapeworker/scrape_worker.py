@@ -40,7 +40,7 @@ from backend.scrapeworker.file_parsers import parse_by_type
 from backend.scrapeworker.playbook import ScrapePlaybook
 from backend.scrapeworker.scrapers import ScrapeHandler
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
-from backend.scrapeworker.searcher import SearchablePlaybook
+from backend.scrapeworker.search_crawler import SearchableCrawler
 
 log = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ class ScrapeWorker:
         self.text_handler = TextHandler()
         self.downloader = AioDownloader(_log)
         self.playbook = ScrapePlaybook(self.site.playbook)
-        self.searchable = SearchablePlaybook(config=self.site.scrape_method_configuration)
+        self.search_crawler = SearchableCrawler(config=self.site.scrape_method_configuration)
         self.doc_updater = DocumentUpdater(_log, scrape_task, site)
         self.log = _log
 
@@ -196,7 +196,6 @@ class ScrapeWorker:
                 or self.site.scrape_method == "HtmlScrape"
             ):
                 target_url = url if not download.direct_scrape else f"file://{temp_path}"
-                # TODO: open as HTML. probably need a body and html tag?
                 async with self.playwright_context(target_url) as (page, _context):
                     dest_path = f"{checksum}.{download.file_extension}.pdf"
                     await page.goto(target_url, wait_until="domcontentloaded")
@@ -385,8 +384,8 @@ class ScrapeWorker:
                     config=self.site.scrape_method_configuration,
                 )
 
-                if await self.searchable.is_searchable(page):
-                    async for code in self.searchable.run_searchable(page):
+                if await self.search_crawler.is_searchable(page):
+                    async for code in self.search_crawler.run_searchable(page):
                         await scrape_handler.run_scrapers(
                             url, base_url, all_downloads, {"file_name": code}
                         )
