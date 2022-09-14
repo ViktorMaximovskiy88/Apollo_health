@@ -228,7 +228,7 @@ class ScrapeWorker:
                     parsed_content=parsed_content,
                 )
 
-                await self.doc_updater.update_doc_document(
+                doc_document = await self.doc_updater.update_doc_document(
                     document, new_therapy_tags, new_indicate_tags
                 )
 
@@ -236,11 +236,11 @@ class ScrapeWorker:
                 document = await self.doc_updater.create_retrieved_document(
                     parsed_content, download, checksum, url
                 )
-                await self.doc_updater.create_doc_document(document)
-                # self.lineage_tasks.append((document, doc_document))
+                doc_document = await self.doc_updater.create_doc_document(document)
+                self.lineage_tasks.append((document, doc_document))
 
             link_retrieved_task.retrieved_document_id = document.id
-            self.lineage_tasks.append((document, None))
+
             await asyncio.gather(
                 self.scrape_task.update(
                     {
