@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import math
 import signal
 import sys
@@ -107,6 +108,7 @@ async def start_scheduler():
         sites = find_sites_eligible_for_scraping(crons, now)
 
         async for site in sites:
+            logging.info(f"Queuing site {site.id} at {now}")
             site_id: PydanticObjectId = site.id  # type: ignore
             site_scrape_task = await enqueue_scrape_task(site_id)
             if site_scrape_task:
@@ -204,6 +206,11 @@ async def start_hung_task_checker():
             }
         )
         async for task in tasks:
+            site = await Site.get(task.site_id)
+            if site and site.collection_hold:
+                if site.collection_hold > now:
+                    logging.info(f"Site {site.id} held, skipping requeue.")
+                    continue
             await requeue_lost_task(task, now)
         await asyncio.sleep(60)
 
