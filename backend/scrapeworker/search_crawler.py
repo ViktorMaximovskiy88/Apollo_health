@@ -5,6 +5,7 @@ from playwright.async_api import Page
 from backend.common.models.search_codes import SearchCodeSet
 from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.selectors import to_xpath
+from backend.scrapeworker.playbook import PlaybookContext, ScrapePlaybook
 
 
 class SearchableCrawler:
@@ -23,6 +24,11 @@ class SearchableCrawler:
             return search_codes.codes
         return set()
 
+    async def replay_playbook(self, page: Page, playbook_context: PlaybookContext):
+        playbook = ScrapePlaybook(playbook_str=None, playbook_context=playbook_context)
+        async for step in playbook.run_playbook(page):
+            continue
+
     async def is_searchable(self, page: Page):
         locator_count = 0
         if self.config.searchable and self.input_selector:
@@ -31,7 +37,7 @@ class SearchableCrawler:
 
         return locator_count > 0
 
-    async def run_searchable(self, page: Page):
+    async def run_searchable(self, page: Page, playbook_context: PlaybookContext):
         assert self.input_selector is not None
         base_url = page.url
         codes = await self.__codes()
@@ -46,4 +52,7 @@ class SearchableCrawler:
                 yield code
             except Exception:
                 logging.error("Searchable Execution Error", exc_info=True)
-                await page.goto(base_url)
+            finally:
+                if page.url != base_url:
+                    await page.goto(base_url)
+                    await self.replay_playbook(page, playbook_context)

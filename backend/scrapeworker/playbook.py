@@ -24,8 +24,13 @@ PlaybookContext = list[PlaybookStep]
 class ScrapePlaybook:
     playbook: list[PlaybookStep] = []
 
-    def __init__(self, playbook_str: str | None) -> None:
-        self.playbook = self.process_playbook_str(playbook_str)
+    def __init__(
+        self, playbook_str: str | None, playbook_context: list[PlaybookStep] | None = None
+    ) -> None:
+        if playbook_context:
+            self.playbook = playbook_context
+        else:
+            self.playbook = self.process_playbook_str(playbook_str)
 
     def process_playbook_str(self, playbook_str: str | None) -> list[PlaybookStep]:
         steps: list[PlaybookStep] = []
