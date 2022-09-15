@@ -2,6 +2,7 @@ import { rest } from 'msw';
 import { TaskStatus } from '../../../common';
 import { faker } from '@faker-js/faker';
 import site from '../../sites/mocks/site.fixture.json';
+import appConfig from '../../sites/mocks/appConfig.fixture.json';
 
 import { factory, primaryKey } from '@mswjs/data';
 
@@ -66,6 +67,9 @@ const processScrape = async (scrapeTaskId: string): Promise<void> => {
 };
 
 export const handlers = [
+  rest.get('http://localhost/api/v1/app-config', async (req, res, ctx) => {
+    return res(ctx.json(appConfig));
+  }),
   rest.get('http://localhost/api/v1/sites/site-id1', async (req, res, ctx) => {
     return res(ctx.json(site));
   }),
