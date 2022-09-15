@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import AsyncGenerator
 
-from playwright.async_api import Page
+from playwright.async_api import Page, TimeoutError
 from pydantic import BaseModel
 
 
@@ -124,13 +124,32 @@ class ScrapePlaybook:
         remaining_steps: list[PlaybookStep],
         context: PlaybookContext,
     ) -> AsyncGenerator[tuple[Page, PlaybookContext], None]:
-        await page.wait_for_selector(step.target)
-        await page.click(step.target)
-        new_context = context + [step]
-        if not step.continue_steps:
-            yield page, new_context
-        async for page, result_context in self.playbook_step(page, remaining_steps, new_context):
-            yield page, result_context
+        async def run_action():
+            await page.wait_for_selector(step.target)
+            await page.click(step.target)
+
+        async def next_step(page):
+            new_context = context + [step]
+            if not step.continue_steps:
+                yield page, new_context
+            async for page, result_context in self.playbook_step(
+                page, remaining_steps, new_context
+            ):
+                yield page, result_context
+
+        retries = 0
+        await run_action()
+        try:
+            async for page, context in next_step(page):
+                yield page, context
+        except TimeoutError as err:
+            if retries < 1:
+                retries += 1
+                await run_action()
+                async for page, context in next_step(page):
+                    yield page, context
+            else:
+                raise err
 
     async def handle_wait_for_nav(
         self,
