@@ -37,6 +37,16 @@ class SearchableCrawler:
 
         return locator_count > 0
 
+    async def handle_select(self, page: Page, code: str):
+        """
+        Best attempt to check for and click the appropriate option.
+        """
+        try:
+            select_locator = page.locator(":not(input)", has_text=code).last
+            await select_locator.click(timeout=5000)
+        except Exception:
+            return
+
     async def run_searchable(self, page: Page, playbook_context: PlaybookContext):
         assert self.input_selector is not None
         base_url = page.url
@@ -45,6 +55,7 @@ class SearchableCrawler:
             try:
                 await page.fill(self.input_selector, "")
                 await page.fill(self.input_selector, code)
+                await self.handle_select(page, code)
                 if self.submit_selector:
                     await page.click(self.submit_selector)
                 else:
