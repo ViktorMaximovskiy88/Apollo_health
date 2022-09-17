@@ -64,7 +64,9 @@ class ScrapeWorker:
         self.text_handler = TextHandler()
         self.downloader = AioDownloader(_log)
         self.playbook = ScrapePlaybook(self.site.playbook)
-        self.search_crawler = SearchableCrawler(config=self.site.scrape_method_configuration)
+        self.search_crawler = SearchableCrawler(
+            config=self.site.scrape_method_configuration, log=_log
+        )
         self.doc_updater = DocumentUpdater(_log, scrape_task, site)
         self.log = _log
 
