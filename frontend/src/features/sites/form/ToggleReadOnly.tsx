@@ -2,10 +2,10 @@ import { Button, Popconfirm } from 'antd';
 import { FormInstance } from 'antd/lib/form/Form';
 import { useParams } from 'react-router-dom';
 import { useState } from 'react';
-import { Site } from './types';
-import { SiteStatus } from './siteStatus';
-import { useUpdateSiteMutation } from './sitesApi';
-import { useCurrentUser } from '../../common/hooks/use-current-user';
+import { Site } from '../types';
+import { SiteStatus } from '../siteStatus';
+import { useUpdateSiteMutation } from '../sitesApi';
+import { useCurrentUser } from '../../../common/hooks/use-current-user';
 
 interface ToggleReadOnlyPropTypes {
   form: FormInstance;

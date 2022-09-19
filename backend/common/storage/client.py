@@ -70,8 +70,8 @@ class BaseS3Client:
         return self.read_object_stream(relative_key).read()
 
     @contextmanager
-    def read_object_to_tempfile(self, relative_key):
-        with tempfile.NamedTemporaryFile() as temp:
+    def read_object_to_tempfile(self, relative_key, suffix=None):
+        with tempfile.NamedTemporaryFile(suffix=suffix) as temp:
             doc = self.read_object(relative_key)
             temp.write(doc)
             yield temp.name

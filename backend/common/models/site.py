@@ -3,7 +3,7 @@ from datetime import datetime
 from beanie import PydanticObjectId
 from pydantic import BaseModel, Field, HttpUrl
 
-from backend.common.core.enums import CollectionMethod, SiteStatus
+from backend.common.core.enums import CollectionMethod, SearchableType, SiteStatus
 from backend.common.models.base_document import BaseDocument
 
 
@@ -32,7 +32,13 @@ class ScrapeMethodConfiguration(BaseModel):
     follow_links: bool = False
     follow_link_keywords: list[str]
     follow_link_url_keywords: list[str]
+    searchable: bool = False
+    searchable_type: SearchableType | None = None
+    searchable_input: AttrSelector | None = None
+    searchable_submit: AttrSelector | None = None
     attr_selectors: list[AttrSelector] = []
+    html_attr_selectors: list[AttrSelector] = []
+    html_exclusion_selectors: list[AttrSelector] = []
     focus_therapy_configs: list[FocusTherapyConfig] = []
     allow_docdoc_updates: bool = False
 
@@ -45,9 +51,15 @@ class UpdateScrapeMethodConfiguration(BaseModel):
     follow_links: bool | None = None
     follow_link_keywords: list[str] | None = None
     follow_link_url_keywords: list[str] | None = None
+    searchable: bool | None = None
+    searchable_type: SearchableType | None = None
+    searchable_input: AttrSelector | None = None
+    searchable_submit: AttrSelector | None = None
     wait_for_timeout_ms: int = 0
     search_in_frames: bool = False
     attr_selectors: list[AttrSelector] | None = None
+    html_attr_selectors: list[AttrSelector] = []
+    html_exclusion_selectors: list[AttrSelector] = []
     focus_therapy_configs: list[FocusTherapyConfig] | None = None
     allow_docdoc_updates: bool | None = None
 
@@ -101,11 +113,24 @@ class Site(BaseDocument, NewSite):
 
 
 # Deprecated
-class NoDocDocUpdatesConfig(ScrapeMethodConfiguration):
+class NoSearchableHtmlConfig(ScrapeMethodConfiguration):
+    searchable: bool | None = None
+    html_attr_selectors: list[AttrSelector] | None = None
+    html_exclusion_selectors: list[AttrSelector] | None = None
+
+
+class NoSearchableHtmlSite(Site):
+    scrape_method_configuration: NoSearchableHtmlConfig
+
+    class Collection:
+        name = "Site"
+
+
+class NoDocDocUpdatesConfig(NoSearchableHtmlConfig):
     allow_docdoc_updates: bool | None = None
 
 
-class NoDocDocUpdatesSite(Site):
+class NoDocDocUpdatesSite(NoSearchableHtmlSite):
     scrape_method_configuration: NoDocDocUpdatesConfig
 
     class Collection:

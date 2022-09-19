@@ -1,6 +1,6 @@
 import { Button, Form, Input, Select } from 'antd';
 import { LinkOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { Site } from './types';
+import { Site } from '../types';
 import { FormInstance } from 'antd/lib/form/Form';
 import { FormListFieldData } from 'antd/lib/form/FormList';
 import { UrlInput } from './UrlInput';

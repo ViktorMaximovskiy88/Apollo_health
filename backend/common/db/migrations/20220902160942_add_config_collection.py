@@ -13,4 +13,4 @@ class Forward:
 class Backward:
     @free_fall_migration(document_models=[AppConfig])
     async def delete_default_config(self, session):
-        await AppConfig.find({}).delete
+        await AppConfig.find({}).delete()
