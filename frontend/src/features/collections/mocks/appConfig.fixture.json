@@ -1,0 +1,7 @@
+{
+  "name": "Test App Config",
+  "key": "collections",
+  "data": {
+    "defaultLastNDays": 10
+  }
+}

@@ -5,7 +5,7 @@ import site from '../../sites/mocks/site.fixture.json';
 
 import { factory, primaryKey } from '@mswjs/data';
 
-const db = factory({
+export const db = factory({
   scrapeTask: {
     status: String,
     _id: primaryKey(String),
@@ -19,6 +19,13 @@ const db = factory({
     new_documents_found: Number,
     error_message: String,
     links_found: Number,
+  },
+  appConfig: {
+    _id: primaryKey(String),
+    key: String,
+    data: {
+      defaultLastNDays: Number,
+    },
   },
 });
 
@@ -38,6 +45,14 @@ db.scrapeTask.create({
   worker_id: faker.database.mongodbObjectId(),
   error_message: errorMessage,
   links_found: 0,
+});
+
+db.appConfig.create({
+  _id: faker.database.mongodbObjectId(),
+  key: 'collections',
+  data: {
+    defaultLastNDays: 10,
+  },
 });
 
 const timeOut = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
@@ -66,6 +81,9 @@ const processScrape = async (scrapeTaskId: string): Promise<void> => {
 };
 
 export const handlers = [
+  rest.get('http://localhost/api/v1/app-config', async (req, res, ctx) => {
+    return res(ctx.json(db.appConfig.getAll()));
+  }),
   rest.get('http://localhost/api/v1/sites/site-id1', async (req, res, ctx) => {
     return res(ctx.json(site));
   }),
