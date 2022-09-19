@@ -115,7 +115,7 @@ class TestReadScrapeTasksForSite:
         await simple_scrape(site_one).save()
         query = await SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id).to_list()
         scrapeTasks = await read_scrape_tasks_for_site(query, limit, skip, sorts, filters)
-        assert scrapeTasks.total
+        assert scrapeTasks.total == 5
 
     @pytest.mark.asyncio
     async def test_limit_read_scrape_task_no_filter(self):
