@@ -1,19 +1,9 @@
-import {
-  AutoComplete,
-  Button,
-  Select,
-  Checkbox,
-  Form,
-  Input,
-  Popover,
-  Tooltip,
-  Typography,
-} from 'antd';
+import { AutoComplete, Button, Checkbox, Form, Input, Popover, Tooltip, Typography } from 'antd';
 import { MinusCircleOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { FormListFieldData } from 'antd/lib/form/FormList';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
-import { Hr } from '../../components';
+import { Hr } from '../../../components';
 
 interface InputPropTypes {
   displayLabel?: boolean;

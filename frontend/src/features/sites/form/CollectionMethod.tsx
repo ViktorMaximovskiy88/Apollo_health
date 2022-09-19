@@ -1,13 +1,13 @@
 import { Checkbox, Input, Form, Select, Radio, Tooltip, Switch } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 
-import { useGetProxiesQuery } from '../proxies/proxiesApi';
-import { CollectionMethod, ScrapeMethod, Site } from './types';
+import { useGetProxiesQuery } from '../../proxies/proxiesApi';
+import { CollectionMethod, ScrapeMethod, Site } from '../types';
 
 import { AttrSelectors } from './AttrSelectorField';
 import { FocusTherapyConfig } from './FocusTherapyConfig';
-import { HtmlScrapeConfig } from './components/HtmlScrapeConfig';
-import { SearchableConfig } from './components/SearchableConfig';
+import { HtmlScrapeConfig } from './HtmlScrapeConfig';
+import { SearchableConfig } from './SearchableConfig';
 
 function CollectionMethodRadio() {
   const collections = [

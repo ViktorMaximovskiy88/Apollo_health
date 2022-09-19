@@ -1,6 +1,6 @@
 import { Input, Form, Select, Switch } from 'antd';
 import { SearchableType } from '../types';
-import { ElementInput, NameInput, ValueInput, ContainsTextInput } from '../AttrSelectorField';
+import { ElementInput, NameInput, ValueInput, ContainsTextInput } from './AttrSelectorField';
 
 export function SearchableConfig() {
   const isSearchable = Form.useWatch(['scrape_method_configuration', 'searchable']);

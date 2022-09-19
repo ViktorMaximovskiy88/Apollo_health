@@ -1,4 +1,4 @@
-import { AttrSelectors } from '../AttrSelectorField';
+import { AttrSelectors } from './AttrSelectorField';
 
 export function HtmlScrapeConfig() {
   return (

@@ -2,8 +2,8 @@ import { Button, Popconfirm } from 'antd';
 import { FormInstance } from 'antd/lib/form/Form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
-import { useLazyGetSiteQuery } from './sitesApi';
-import { useCurrentUser } from '../../common/hooks/use-current-user';
+import { useLazyGetSiteQuery } from '../sitesApi';
+import { useCurrentUser } from '../../../common/hooks/use-current-user';
 
 export function SiteSubmitButton(props: { form: FormInstance }) {
   const params = useParams();
