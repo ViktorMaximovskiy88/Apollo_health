@@ -1,11 +1,20 @@
+from dataclasses import dataclass
 from logging import Logger
 
-from playwright.async_api import Page, TimeoutError
+from playwright.async_api import Page
 
 from backend.common.models.search_codes import SearchCodeSet
 from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.selectors import to_xpath
 from backend.scrapeworker.playbook import PlaybookContext, ScrapePlaybook
+
+
+@dataclass
+class NavState:
+    has_navigated: bool = False
+
+    def handle_nav(self, _):
+        self.has_navigated = True
 
 
 class SearchableCrawler:
@@ -27,7 +36,7 @@ class SearchableCrawler:
 
     async def replay_playbook(self, page: Page, playbook_context: PlaybookContext):
         playbook = ScrapePlaybook(playbook_str=None, playbook_context=playbook_context)
-        async for step in playbook.run_playbook(page):
+        async for _ in playbook.run_playbook(page):
             continue
 
     async def is_searchable(self, page: Page):
@@ -54,32 +63,26 @@ class SearchableCrawler:
             return
 
     async def __search(self, page: Page):
-        try:
-            async with page.expect_event("load", timeout=10000):
-                try:
-                    if self.submit_selector:
-                        await page.click(self.submit_selector, timeout=1)
-                    else:
-                        await page.keyboard.press("Enter")
-                except TimeoutError as err:
-                    raise err
-            return True
-        except TimeoutError:
-            return False
+        if self.submit_selector:
+            await page.click(self.submit_selector)
+        else:
+            await page.keyboard.press("Enter")
 
     async def run_searchable(self, page: Page, playbook_context: PlaybookContext):
         base_url = page.url
         codes = await self.__codes()
 
         for code in codes:
-            has_navigated = False
+            nav_state = NavState()
             try:
+                page.on("load", nav_state.handle_nav)
                 await self.__type(page, code)
                 await self.__select(page, code)
-                has_navigated = await self.__search(page)
+                await self.__search(page)
                 yield code
             except Exception:
                 self.log.error("Searchable Execution Error", exc_info=True)
-            if has_navigated:
+
+            if nav_state.has_navigated:
                 await page.goto(base_url)
                 await self.replay_playbook(page, playbook_context)
