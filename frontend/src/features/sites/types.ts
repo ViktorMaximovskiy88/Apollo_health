@@ -35,7 +35,7 @@ export interface Site extends BaseDocument {
     follow_link_keywords: string[];
     follow_link_url_keywords: string[];
     searchable: boolean;
-    searchable_type: string;
+    searchable_type: SearchableType | null;
     searchable_input: AttrSelector | null;
     searchable_submit: AttrSelector | null;
     attr_selectors: AttrSelector[];

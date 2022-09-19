@@ -1,15 +1,13 @@
-import { Checkbox, Input, Form, FormInstance, Select, Radio, Tooltip, Switch } from 'antd';
+import { Checkbox, Input, Form, Select, Radio, Tooltip, Switch } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
-import { CollectionMethod, ScrapeMethod, SearchableType, Site } from './types';
+
 import { useGetProxiesQuery } from '../proxies/proxiesApi';
-import {
-  AttrSelectors,
-  ElementInput,
-  NameInput,
-  ValueInput,
-  ContainsTextInput,
-} from './AttrSelectorField';
+import { CollectionMethod, ScrapeMethod, Site } from './types';
+
+import { AttrSelectors } from './AttrSelectorField';
 import { FocusTherapyConfig } from './FocusTherapyConfig';
+import { HtmlScrapeConfig } from './components/HtmlScrapeConfig';
+import { SearchableConfig } from './components/SearchableConfig';
 
 function CollectionMethodRadio() {
   const collections = [
@@ -175,88 +173,11 @@ function AllowDocDocUpdate() {
   );
 }
 
-function HtmlScrapeConfig() {
-  return (
-    <>
-      <AttrSelectors
-        parentName={['scrape_method_configuration', 'html_attr_selectors']}
-        title={'HTML Target Selector'}
-      />
-      <AttrSelectors
-        parentName={['scrape_method_configuration', 'html_exclusion_selectors']}
-        title={'HTML Exclusion Selector'}
-      />
-    </>
-  );
-}
-
-function SearchableConfig() {
-  const form = Form.useFormInstance();
-  const isSearchable = Form.useWatch(['scrape_method_configuration', 'searchable'], form);
-
-  const searchableTypes = [
-    { value: SearchableType.CPTCodes, label: 'CPT Codes' },
-    { value: SearchableType.JCodes, label: 'JCodes' },
-  ];
-  const inputName = ['scrape_method_configuration', 'searchable_input'];
-  const submitName = ['scrape_method_configuration', 'searchable_submit'];
-  const groupClass = isSearchable ? 'border-solid border-slate-300 rounded p-2 pb-0' : undefined;
-  return (
-    <div className={groupClass}>
-      <Form.Item
-        name={['scrape_method_configuration', 'searchable']}
-        label="Searchable"
-        tooltip={'Site should be searched using CPT or JCodes'}
-        valuePropName="checked"
-      >
-        <Switch className="flex justify-center" />
-      </Form.Item>
-      {isSearchable && (
-        <>
-          <Form.Item
-            name={['scrape_method_configuration', 'searchable_type']}
-            label="Searchable Type"
-            rules={[{ required: true, message: 'Required' }]}
-            tooltip={'Type of inputs to search for'}
-          >
-            <Select options={searchableTypes} />
-          </Form.Item>
-          <Form.Item
-            name={inputName}
-            label="Searchable Input"
-            tooltip={'Input field for search terms'}
-          >
-            <Input.Group className="grid grid-cols-10 space-x-1">
-              <ElementInput displayLabel name={inputName} />
-              <NameInput displayLabel name={inputName} />
-              <ValueInput displayLabel name={inputName} />
-              <ContainsTextInput displayLabel name={inputName} />
-            </Input.Group>
-          </Form.Item>
-          <Form.Item
-            name={submitName}
-            label="Searchable Submit Button"
-            tooltip={'Button to trigger search'}
-          >
-            <Input.Group className="grid grid-cols-10 space-x-1">
-              <ElementInput displayLabel name={submitName} />
-              <NameInput displayLabel name={submitName} />
-              <ValueInput displayLabel name={submitName} />
-              <ContainsTextInput displayLabel name={submitName} />
-            </Input.Group>
-          </Form.Item>
-        </>
-      )}
-    </div>
-  );
-}
-
 function ScrapeMethodConfiguration({ initialValues }: { initialValues: Partial<Site> }) {
-  const form = Form.useFormInstance();
-  const currentScrapeMethod = Form.useWatch('scrape_method', form);
+  const currentScrapeMethod: ScrapeMethod = Form.useWatch('scrape_method');
   return (
     <Form.Item name="scrape_method_configuration">
-      {(currentScrapeMethod as ScrapeMethod) === ScrapeMethod.Html && <HtmlScrapeConfig />}
+      {currentScrapeMethod === ScrapeMethod.Html && <HtmlScrapeConfig />}
       <DocumentExtensions />
       <UrlKeywords />
       <AttrSelectors
@@ -291,7 +212,7 @@ function Schedule() {
 
 function FollowLinks() {
   const form = Form.useFormInstance();
-  const followLinks = Form.useWatch(['scrape_method_configuration', 'follow_links'], form);
+  const followLinks = Form.useWatch(['scrape_method_configuration', 'follow_links']);
   function validateFollowLinks(fieldInfo: any, value: string) {
     if (value.length === 0) {
       const namePaths = [

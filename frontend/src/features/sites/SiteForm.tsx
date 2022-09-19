@@ -1,7 +1,6 @@
 import { Button, Form, Input, Select, Space } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
 import { Site, CollectionMethod } from './types';
 import { UrlFormFields } from './UrlFormField';
 import { CollectionMethodComponent } from './CollectionMethod';
@@ -37,7 +36,7 @@ export function SiteForm(props: {
         follow_link_keywords: [],
         follow_link_url_keywords: [],
         searchable: false,
-        searchable_type: '',
+        searchable_type: null,
         searchable_input: null,
         searchable_submit: null,
         attr_selectors: [],
