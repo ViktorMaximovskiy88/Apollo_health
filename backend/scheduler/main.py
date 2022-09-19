@@ -189,28 +189,33 @@ async def requeue_lost_task(task: SiteScrapeTask, now):
     await Site.find_one(Site.id == task.site_id).update({"$set": {"last_run_status": task.status}})
 
 
+async def get_hung_tasks(now: datetime):
+    tasks = SiteScrapeTask.find(
+        {
+            "status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.CANCELING]},
+            "collection_method": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
+            "$or": [
+                {"last_active": {"$lt": now - timedelta(minutes=5)}},
+                {"last_active": None},
+            ],
+        }
+    )
+    async for task in tasks:
+        site = await Site.get(task.site_id)
+        if site and site.collection_hold:
+            if site.collection_hold.replace(tzinfo=timezone.utc) > now:
+                logging.info(f"Site {site.id} held, skipping requeue.")
+                continue
+        yield task
+
+
 async def start_hung_task_checker():
     """
-    Retry tasks that are in progress but are not longer sending a heartbeat
+    Retry tasks that are in progress but are no longer sending a heartbeat
     """
     while True:
         now = datetime.now(tz=timezone.utc)
-        tasks = SiteScrapeTask.find(
-            {
-                "status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.CANCELING]},
-                "collection_method": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
-                "$or": [
-                    {"last_active": {"$lt": now - timedelta(minutes=5)}},
-                    {"last_active": None},
-                ],
-            }
-        )
-        async for task in tasks:
-            site = await Site.get(task.site_id)
-            if site and site.collection_hold:
-                if site.collection_hold > now:
-                    logging.info(f"Site {site.id} held, skipping requeue.")
-                    continue
+        async for task in get_hung_tasks(now):
             await requeue_lost_task(task, now)
         await asyncio.sleep(60)
 
