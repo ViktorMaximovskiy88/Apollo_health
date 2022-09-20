@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import pymongo
 from beanie import Indexed, PydanticObjectId
 from pydantic import BaseModel, Field
 
@@ -47,6 +48,9 @@ class RetrievedDocument(BaseDocument, BaseRetrievedDocument, DocumentMixins):
         copy.pop("first_collected_date")
         copy.pop("last_collected_date")
         return SiteRetrievedDocument(_id=self.id, **copy, **location.dict())
+
+    class Settings:
+        indexes = [["locations.site_id", pymongo.ASCENDING]]
 
 
 class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
