@@ -83,6 +83,6 @@ class SearchableCrawler:
             except Exception:
                 self.log.error("Searchable Execution Error", exc_info=True)
 
-            if nav_state.has_navigated:
+            if nav_state.has_navigated or page.url != base_url:
                 await page.goto(base_url)
                 await self.replay_playbook(page, playbook_context)

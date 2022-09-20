@@ -74,6 +74,7 @@ class BaseS3Client:
         with tempfile.NamedTemporaryFile(suffix=suffix) as temp:
             doc = self.read_object(relative_key)
             temp.write(doc)
+            temp.seek(0)
             yield temp.name
 
     def read_object_stream(self, relative_key):
