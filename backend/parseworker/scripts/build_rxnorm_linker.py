@@ -85,10 +85,10 @@ with tempfile.NamedTemporaryFile("w", suffix="jsonl") as file:
             record["types"] = list(record["types"])
             file.write(json.dumps(record))
             file.write("\n")
-    client.write_object("rxnorm/drugid/rxnorm.jsonl", file.name)
+    client.write_object("rxnorm/latest/rxnorm.jsonl", file.name)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         create_tfidf_ann_index(tmpdir, KnowledgeBase(file.name))
         for local_path in os.listdir(tmpdir):
-            remote_path = f"rxnorm/drugid/{local_path}"
+            remote_path = f"rxnorm/latest/{local_path}"
             client.write_object(remote_path, f"{tmpdir}/{local_path}")
