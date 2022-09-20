@@ -1,5 +1,5 @@
 import values from 'lodash/values';
-import { Button, Upload, Dropdown, Space, Menu, notification } from 'antd';
+import { Button, Upload, Dropdown, Space, Menu, notification, Spin } from 'antd';
 import { LoadingOutlined, UploadOutlined, DownOutlined, DownloadOutlined } from '@ant-design/icons';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
@@ -41,7 +41,7 @@ function Assign({ selected, setSelected }: AssignTypes) {
 }
 
 function BulkActions() {
-  const [runBulk] = useRunBulkMutation();
+  const [runBulk, { isLoading }] = useRunBulkMutation();
   const onMenuSelect = async (key: string) => {
     try {
       const response = await runBulk(key).unwrap();
@@ -127,12 +127,15 @@ function BulkActions() {
       ]}
     />
   );
+  const icon = isLoading ? (
+    <Spin className="ml-2" size="small" />
+  ) : (
+    <DownOutlined className="text-sm" />
+  );
   return (
     <Dropdown overlay={menu}>
       <Space>
-        <Button>
-          Collection <DownOutlined className="text-sm" />
-        </Button>
+        <Button>Collection {icon}</Button>
       </Space>
     </Dropdown>
   );

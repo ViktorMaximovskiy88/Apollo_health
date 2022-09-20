@@ -1,7 +1,7 @@
 import { Modal } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Site, CollectionMethod } from './types';
-import { SiteForm } from './SiteForm';
+import { SiteForm } from './form/SiteForm';
 import { useGetSiteQuery, useUpdateSiteMutation } from './sitesApi';
 import { useCancelAllSiteScrapeTasksMutation } from '../collections/siteScrapeTasksApi';
 import { MainLayout } from '../../components';
@@ -26,7 +26,6 @@ const useAlreadyAssignedModal = () => {
     const assignCurrentUser = {
       _id: site._id,
       assignee: currentUser?._id,
-      status: SiteStatus.QualityHold,
     };
 
     if (!site.assignee) {
@@ -64,7 +63,6 @@ export function SiteEditPage() {
   const initialValues = {
     ...site,
     assignee: currentUser?._id,
-    status: SiteStatus.QualityHold,
   };
 
   async function tryUpdateSite(update: Partial<Site>) {
