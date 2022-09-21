@@ -50,7 +50,7 @@ class RetrievedDocument(BaseDocument, BaseRetrievedDocument, DocumentMixins):
         return SiteRetrievedDocument(_id=self.id, **copy, **location.dict())
 
     class Settings:
-        indexes = [["locations.site_id", pymongo.ASCENDING]]
+        indexes = [[("locations.site_id", pymongo.ASCENDING)]]
 
 
 class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
