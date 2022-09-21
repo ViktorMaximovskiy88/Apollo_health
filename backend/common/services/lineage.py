@@ -4,6 +4,7 @@ from logging import Logger
 
 from beanie import PydanticObjectId
 
+from backend.common.models.document import RetrievedDocument
 from backend.common.models.lineage import DocumentAnalysis, DocumentAttrs
 from backend.common.models.shared import get_unique_focus_tags, get_unique_reference_tags
 from backend.common.models.site import Site
@@ -90,10 +91,11 @@ class LineageService:
                     first_item.lineage_id = lineage_id
                     item.lineage_id = lineage_id
 
-                await asyncio.gather(
-                    first_item.save(),
-                    item.save(),
-                )
+                print(item.lineage_id, "item.lineage_id")
+                doc = await RetrievedDocument.get(item.retrieved_document_id)
+                doc.lineage_id = item.lineage_id
+
+                await asyncio.gather(first_item.save(), item.save(), doc.save())
 
             else:
                 self.log.info(f"UNMATCHED {item.filename}")
