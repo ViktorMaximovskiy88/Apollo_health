@@ -33,6 +33,7 @@ class BaseDocDocument(BaseModel):
     # Document Type
     document_type: str | None = None
     doc_type_confidence: float | None = None
+    internal_document: bool | None = None
 
     # Extracted Dates
     effective_date: datetime | None = None
