@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Button, notification } from 'antd';
-import { useParams } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   useRunSiteScrapeTaskMutation,
   useCancelAllSiteScrapeTasksMutation,

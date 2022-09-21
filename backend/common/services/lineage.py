@@ -4,6 +4,7 @@ from logging import Logger
 
 from beanie import PydanticObjectId
 
+from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.lineage import DocumentAnalysis, DocumentAttrs
 from backend.common.models.shared import get_unique_focus_tags, get_unique_reference_tags
@@ -134,16 +135,38 @@ class LineageService:
         # Theoretically unmatched shouldnt be matched with previous, so lets assign prev doc here
         # TODO what if we dont have effective date ... last collected :x
         sorted_matched = sort_by_attr(matched, "effective_date")
-        prev = None
+        prev_doc = None
+        prev_doc_doc = None
         for index, match in enumerate(sorted_matched):
             is_last = index == len(sorted_matched) - 1
-            doc = await RetrievedDocument.get(match.retrieved_document_id)
-            doc.is_current_version = is_last
-            doc.previous_doc_id = prev.id if prev else None
-            await doc.save()
-            prev = doc
+            doc, doc_doc = await asyncio.gather(
+                version_doc(match.retrieved_document_id, is_last, prev_doc),
+                version_doc_doc(match.retrieved_document_id, is_last, prev_doc_doc),
+            )
+            prev_doc = doc
+            prev_doc_doc = doc_doc
 
         await self._process_lineage(unmatched)
+
+
+async def version_doc(
+    retrieved_document_id: PydanticObjectId, is_last: bool, prev_doc: RetrievedDocument
+):
+    doc = await RetrievedDocument.get(retrieved_document_id)
+    doc.is_current_version = is_last
+    doc.previous_doc_id = prev_doc.id if prev_doc else None
+    doc = await doc.save()
+    return doc
+
+
+async def version_doc_doc(
+    retrieved_document_id: PydanticObjectId, is_last: bool, prev_doc: DocDocument
+):
+    doc = await DocDocument.get(retrieved_document_id)
+    doc.is_current_version = is_last
+    doc.previous_doc_doc_id = prev_doc.id if prev_doc else None
+    doc = await doc.save()
+    return doc
 
 
 def build_attr_model(input: str) -> DocumentAttrs:
