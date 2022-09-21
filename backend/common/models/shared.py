@@ -52,7 +52,7 @@ class FileMetadata(BaseModel):
 
 class IndicationTag(BaseModel):
     text: str
-    code: int
+    indication_number: int
     page: int = 0
     focus: bool = False
 

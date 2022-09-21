@@ -55,7 +55,6 @@ class BaseDocDocument(BaseModel):
     lineage_id: PydanticObjectId | None = None
     previous_doc_id: PydanticObjectId | None = None
     is_current_version: bool = False
-    is_root_version: bool = False
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []

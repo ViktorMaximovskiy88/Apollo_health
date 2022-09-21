@@ -42,7 +42,6 @@ class BaseRetrievedDocument(BaseModel):
     lineage_id: PydanticObjectId | None = None
     previous_doc_id: PydanticObjectId | None = None
     is_current_version: bool = False
-    is_root_version: bool = False
 
 
 class RetrievedDocument(BaseDocument, BaseRetrievedDocument, DocumentMixins):

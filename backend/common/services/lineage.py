@@ -116,6 +116,7 @@ def build_attr_model(input: str) -> DocumentAttrs:
 
 
 # TODO tweak logic, for now its all or nothing
+#  url, context, document
 def consensus_attr(model: DocumentAnalysis, attr: str):
     all_attrs = compact(
         [

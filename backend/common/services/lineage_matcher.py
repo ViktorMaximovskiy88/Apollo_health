@@ -23,18 +23,6 @@ class LineageMatcher:
         self.filename_match = jaccard(doc_a.filename_tokens, doc_b.filename_tokens)
         self.pathname_match = jaccard(doc_a.pathname_tokens, doc_b.pathname_tokens)
 
-        # url matches minus trusted identified attrs
-        # TODO move ... dedupe
-        trusted_filename_tokens_a = list(
-            set(doc_a.filename_tokens) ^ set({doc_a.filename.month_abbr, doc_a.filename.year_part})
-        )
-        trusted_filename_tokens_b = list(
-            set(doc_b.filename_tokens) ^ set({doc_b.filename.month_abbr, doc_b.filename.year_part})
-        )
-
-        self.trusted_filename_match = jaccard(trusted_filename_tokens_a, trusted_filename_tokens_b)
-        print(f"trusted_filename_match={self.trusted_filename_match}")
-
         self.filename_match = jaccard(doc_a.filename_tokens, doc_b.filename_tokens)
         print(f"filename_match={self.filename_match}")
 
@@ -84,12 +72,3 @@ class LineageMatcher:
         return (
             self.filename_match >= 0.60 or self.element_text_match >= 0.90
         ) and self.ref_indication_match >= 0.85
-
-    ###
-    #  Scored rules
-    ###
-    def trusted_state_match(self):
-        return True
-
-    def maybe_state_match(self):
-        return True
