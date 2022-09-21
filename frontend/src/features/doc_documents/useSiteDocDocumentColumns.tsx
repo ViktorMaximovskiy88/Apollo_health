@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Button } from 'antd';
-import { LinkOutlined } from '@ant-design/icons';
+import { LinkOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { prettyDateFromISO, prettyDateTimeFromISO } from '../../common';
 import { SiteDocDocument } from './types';
 import { Link } from 'react-router-dom';
@@ -11,6 +11,19 @@ import { DocumentTypes } from '../retrieved_documents/types';
 interface CreateColumnsType {
   handleNewVersion?: (data: SiteDocDocument) => void;
 }
+
+export enum TextAlignType {
+  Start = 'start',
+  End = 'end',
+  Left = 'left',
+  Right = 'right',
+  Center = 'center',
+}
+
+const InternalDocs = [
+  { id: true, value: true, label: 'true' },
+  { id: false, value: false, label: 'false' },
+];
 
 export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
   return [
@@ -57,6 +70,20 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
       },
       render: ({ value: document_type }: { value: string }) => {
         return <>{document_type}</>;
+      },
+    },
+    {
+      header: 'Internal Document',
+      name: 'internal_document',
+      minWidth: 200,
+      filterEditor: SelectFilter,
+      textAlign: TextAlignType.Center,
+      filterEditorProps: {
+        placeholder: 'All',
+        dataSource: InternalDocs,
+      },
+      render: ({ value: internal_document }: { value: boolean }) => {
+        return <>{internal_document ? <CheckCircleFilled /> : null}</>;
       },
     },
     {

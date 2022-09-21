@@ -10,6 +10,7 @@ import {
   Select,
   Tooltip,
   message,
+  Checkbox,
 } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { UploadChangeParam } from 'antd/lib/upload';
@@ -26,6 +27,7 @@ import { useAddDocumentMutation } from '../retrieved_documents/documentsApi';
 import { baseApiUrl, client } from '../../app/base-api';
 import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
 import { SiteDocDocument } from '../doc_documents/types';
+import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 
 interface AddDocumentModalPropTypes {
   oldVersion?: SiteDocDocument;
@@ -37,15 +39,24 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
   const [form] = useForm();
   const [addDoc] = useAddDocumentMutation();
   const [fileData, setFileData] = useState<any>();
+  const [isInternalDoc, setIsInternalDoc] = useState<boolean>(false);
+
   let initialValues: any = {
     lang_code: 'en',
   };
+  useEffect(() => {
+    if (oldVersion) {
+      setIsInternalDoc(oldVersion.internal_document);
+    }
+  }, [oldVersion]);
+
   if (oldVersion) {
     const { site_id, link_text, base_url, url } = oldVersion;
     initialValues = {
       lang_code: oldVersion.lang_code,
       name: oldVersion.name,
       document_type: oldVersion.document_type,
+      internal_document: oldVersion.internal_document,
       locations: [{ site_id, link_text, base_url, url }],
     };
   }
@@ -58,9 +69,14 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
   };
   /* eslint-enable no-template-curly-in-string */
 
+  const handleCheckBoxChange = (e: CheckboxChangeEvent) => {
+    setIsInternalDoc(e.target.checked);
+  };
+
   async function saveDocument(newDocument: any) {
     try {
       newDocument.site_id = siteId;
+      newDocument.internal_document = isInternalDoc;
       //  we nuked this relationship
       // if (scrapeTasks) {
       //   newDocument.scrape_task_id = scrapeTasks[0]._id;
@@ -69,11 +85,11 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
       if (oldVersion) {
         newDocument._id = oldVersion._id;
         newDocument.last_collected_date = oldVersion.last_collected_date;
+        newDocument.internal_document = oldVersion.internal_document;
       }
       fileData.metadata.link_text = newDocument.link_text;
       delete newDocument.link_text;
       delete newDocument.document_file;
-
       await addDoc({
         ...newDocument,
         ...fileData,
@@ -96,7 +112,16 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
         validateMessages={validateMessages}
         onFinish={saveDocument}
       >
-        <UploadItem form={form} setFileData={setFileData} />
+        <div className="flex grow space-x-3">
+          <UploadItem form={form} setFileData={setFileData} />
+          <InternalDocument
+            isInternalDoc={isInternalDoc}
+            setIsInternalDoc={setIsInternalDoc}
+            oldVersion={oldVersion}
+            handleCheckBoxChange={handleCheckBoxChange}
+          />
+        </div>
+
         <div className="flex grow space-x-3">
           <Form.Item
             className="grow"
@@ -170,38 +195,54 @@ function UploadItem(props: any) {
   };
 
   return (
-    <Form.Item
-      name="document_file"
-      label="Document File"
-      rules={[{ required: uploadStatus === 'done' ? false : true }]}
-    >
-      <Upload
-        name="file"
-        accept=".pdf,.xlsx,.docx"
-        action={`${baseApiUrl}/documents/upload`}
-        headers={{
-          Authorization: `Bearer ${token}`,
-        }}
-        showUploadList={false}
-        onChange={onChange}
+    <div className="flex grow space-x-4">
+      <Form.Item
+        name="document_file"
+        label="Document File"
+        rules={[{ required: uploadStatus === 'done' ? false : true }]}
       >
-        {uploadStatus === 'uploading' ? (
-          <Button style={{ marginRight: '10px' }} icon={<LoadingOutlined />}>
-            Uploading {fileName}...
-          </Button>
-        ) : uploadStatus === 'done' ? (
-          <Button style={{ marginRight: '10px' }} icon={<CheckCircleOutlined />}>
-            {fileName} uploaded!
-          </Button>
-        ) : (
-          <Button style={{ marginRight: '10px' }} icon={<UploadOutlined />}>
-            Click to Upload
-          </Button>
-        )}
-      </Upload>
-      <Tooltip placement="right" title="Only upload .pdf, .xlsx and .docx">
-        <QuestionCircleOutlined />
-      </Tooltip>
+        <Upload
+          name="file"
+          accept=".pdf,.xlsx,.docx"
+          action={`${baseApiUrl}/documents/upload`}
+          headers={{
+            Authorization: `Bearer ${token}`,
+          }}
+          showUploadList={false}
+          onChange={onChange}
+        >
+          {uploadStatus === 'uploading' ? (
+            <Button style={{ marginRight: '10px' }} icon={<LoadingOutlined />}>
+              Uploading {fileName}...
+            </Button>
+          ) : uploadStatus === 'done' ? (
+            <Button style={{ marginRight: '10px' }} icon={<CheckCircleOutlined />}>
+              {fileName} uploaded!
+            </Button>
+          ) : (
+            <Button style={{ marginRight: '10px' }} icon={<UploadOutlined />}>
+              Click to Upload
+            </Button>
+          )}
+        </Upload>
+        <Tooltip placement="right" title="Only upload .pdf, .xlsx and .docx">
+          <QuestionCircleOutlined />
+        </Tooltip>
+      </Form.Item>
+    </div>
+  );
+}
+
+function InternalDocument(props: any) {
+  const { isInternalDoc, oldVersion, handleCheckBoxChange } = props;
+  return (
+    <Form.Item className="grow" name="internal_document">
+      Internal Document&nbsp;{' '}
+      <Checkbox
+        disabled={oldVersion ? true : false}
+        checked={isInternalDoc}
+        onChange={handleCheckBoxChange}
+      />
     </Form.Item>
   );
 }
