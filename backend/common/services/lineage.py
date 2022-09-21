@@ -127,11 +127,9 @@ class LineageService:
         if len(matched) == 0:
             lineage_id = PydanticObjectId()
             first_item.lineage_id = lineage_id
+            await first_item.save()
             print(first_item.lineage_id, "first_item.lineage_id")
-            doc = await RetrievedDocument.get(first_item.retrieved_document_id)
-            doc.lineage_id = first_item.lineage_id
-            doc.is_current_version = True
-            await asyncio.gather(first_item.save(), doc.save())
+            matched.append(first_item)
 
         # Theoretically unmatched shouldnt be matched with previous, so lets assign prev doc here
         # TODO what if we dont have effective date ... last collected :x
