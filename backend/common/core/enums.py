@@ -41,3 +41,8 @@ class SiteStatus(str, Enum):
     QUALITY_HOLD = "QUALITY_HOLD"
     ONLINE = "ONLINE"
     INACTIVE = "INACTIVE"
+
+
+class SearchableType(str, Enum):
+    CPTCODES = "CPTCODES"
+    JCODES = "JCODES"

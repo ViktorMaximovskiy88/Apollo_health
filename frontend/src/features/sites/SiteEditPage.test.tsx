@@ -70,4 +70,59 @@ describe(`SiteEditPage`, () => {
       expect(warning).toBeInTheDocument();
     }
   });
+
+  it(`hides, displays HTML Config`, async () => {
+    const user = userEvent.setup();
+
+    render(<SiteEditPage />);
+
+    const scrapeMethodSelect = screen.getByText('Simple Document Scrape');
+    expect(scrapeMethodSelect).toBeInTheDocument();
+    const targetSelectorHidden = screen.queryByRole('heading', { name: /html target selector/i });
+    expect(targetSelectorHidden).not.toBeInTheDocument();
+    const exclusionSelectorHidden = screen.queryByRole('heading', {
+      name: /html exclusion selector/i,
+    });
+    expect(exclusionSelectorHidden).not.toBeInTheDocument();
+
+    await user.click(scrapeMethodSelect);
+    const htmlOption = screen.getByTitle(/html scrape/i);
+    await user.click(htmlOption);
+
+    const targetSelector = screen.queryByRole('heading', { name: /html target selector/i });
+    expect(targetSelector).toBeInTheDocument();
+    const exclusionSelector = screen.queryByRole('heading', { name: /html exclusion selector/i });
+    expect(exclusionSelector).toBeInTheDocument();
+  });
+
+  it(`hides, displays, validates Searchable Config`, async () => {
+    const user = userEvent.setup();
+
+    render(<SiteEditPage />);
+
+    const searchableTypeHidden = screen.queryByText(/searchable type/i);
+    const inputSelectorHidden = screen.queryByText(/searchable input/i);
+    const submitSelectorHidden = screen.queryByText(/searchable submit button/i);
+    expect(inputSelectorHidden).not.toBeInTheDocument();
+    expect(submitSelectorHidden).not.toBeInTheDocument();
+    expect(searchableTypeHidden).not.toBeInTheDocument();
+
+    const searchableSwitch = screen.getByLabelText('Searchable');
+    await user.click(searchableSwitch);
+
+    const inputSelector = screen.getByText(/searchable input/i);
+    const submitSelector = screen.getByText(/searchable submit button/i);
+    const searchableType = screen.getByText(/searchable type/i);
+    expect(inputSelector).toBeInTheDocument();
+    expect(submitSelector).toBeInTheDocument();
+    expect(searchableType).toBeInTheDocument();
+
+    const submit = await screen.findByRole('button', { name: /Submit/i });
+    await user.click(submit);
+    const validationWarning = await screen.findAllByText('Required');
+    expect(validationWarning.length === 5); // Required searchable fields
+    for (const warning of validationWarning) {
+      expect(warning).toBeInTheDocument();
+    }
+  });
 });

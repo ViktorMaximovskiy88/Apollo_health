@@ -5,14 +5,16 @@ from backend.common.models.base_document import BaseDocument
 
 
 class TranslationMapping(BaseModel):
-    pattern: str
+    pattern: str = ""
     translation: str
 
 
 class TranslationRule(BaseModel):
     field: str
-    pattern: str
+    pattern: str = ""
     separator: str = ""
+    value: str = ""
+    capture_all: bool = False
     mappings: list[TranslationMapping]
 
 
@@ -35,6 +37,7 @@ class TableExtractionConfig(BaseModel):
     merge_on_missing_columns: list[str] = []
     merge_strategy: str = "DOWN"
     snap_tolerance: int = 3
+    intersection_tolerance: int = 3
     table_shape: str = "lines"
     explicit_headers: list[str] = []
     explicit_column_lines: list[str] = []
@@ -74,6 +77,7 @@ class UpdateTableExtractionConfig(BaseModel):
     merge_on_missing_columns: list[str] | None = None
     merge_strategy: str | None = None
     snap_tolerance: int | None = None
+    intersection_tolerance: int | None = None
     table_shape: str | None = None
     explicit_headers: list[str] | None = None
     explicit_column_lines: list[str] | None = None

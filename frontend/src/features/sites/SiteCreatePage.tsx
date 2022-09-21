@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Site } from './types';
-import { SiteForm } from './SiteForm';
+import { SiteForm } from './form/SiteForm';
 import { useAddSiteMutation } from './sitesApi';
 import { MainLayout } from '../../components';
 

@@ -8,6 +8,9 @@ export interface TranslationMapping {
 export interface TranslationRule {
   field: string; // 'Tier', 'PA', 'QL', 'SP' etc.
   pattern: string;
+  value: string;
+  capture_all: string;
+  separator: string;
   mappings: TranslationMapping[];
 }
 
@@ -30,6 +33,7 @@ export interface TableExtractionConfig {
   merge_on_missing_columns: string[];
   merge_strategy: string;
   snap_tolerance: number;
+  intersection_tolerance: number;
   table_shape: string;
   explicit_headers: string[];
   explicit_column_lines: string[];

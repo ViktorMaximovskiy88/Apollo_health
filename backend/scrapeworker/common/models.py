@@ -78,6 +78,7 @@ class DownloadContext(BaseModel):
     metadata: Metadata = Metadata()
     request: Request
     response: Response = Response()
+    direct_scrape: bool = False
 
     file_name: str | None = None
     file_extension: str | None = None

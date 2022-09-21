@@ -38,6 +38,7 @@ class TherapyTag(BaseModel):
     name: str
     score: float = 0
     focus: bool = False
+    rxcui: str | None = None
 
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))

@@ -27,6 +27,7 @@ from backend.common.models.payer_backbone import (
     Plan,
 )
 from backend.common.models.proxy import Proxy
+from backend.common.models.search_codes import SearchCodeSet
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.translation_config import TranslationConfig
@@ -85,5 +86,6 @@ async def init_db(mock=False, database_name=None):
             UMP,
             MCO,
             Formulary,
+            SearchCodeSet,
         ],  # type: ignore
     )

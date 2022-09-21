@@ -58,6 +58,7 @@ class DocumentUpdater:
 
         location: RetrievedDocumentLocation = document.get_site_location(self.site.id)
         context_metadata = download.metadata.dict()
+        text_checksum = await self.text_handler.save_text(parsed_content["text"])
         if location:
             location.context_metadata = context_metadata
             location.last_collected_date = now
@@ -90,7 +91,7 @@ class DocumentUpdater:
             indication_tags=parsed_content["indication_tags"],
             metadata=parsed_content["metadata"],
             name=name,
-            text_checksum=document.text_checksum,
+            text_checksum=text_checksum,
             locations=document.locations,
             last_collected_date=now,
         )
