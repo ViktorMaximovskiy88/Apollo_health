@@ -92,7 +92,7 @@ async def load_retrieved_docs() -> list[RetrievedDocument]:
                 TherapyTag(text="trastuzumab", name="Trastuzumab", code="224905", focus=1)
             ],
             indication_tags=[IndicationTag(text="TDAP", indication_number=155, focus=False)],
-            file_size=1600000,
+            file_size=1400000,
             locations=[
                 RetrievedDocumentLocation(
                     site_id=site_id_a,

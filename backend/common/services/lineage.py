@@ -83,21 +83,17 @@ class LineageService:
 
     async def _process_lineage(self, items: list[DocumentAnalysis]):
         if len(items) == 0:
+            print("no items remain")
             return
 
         missing_lineage = [item for item in items if not item.lineage_id]
         if len(missing_lineage) == 0:
+            print("all lineage assigned")
             return
 
         first_item: DocumentAnalysis = missing_lineage.pop()
-        if len(missing_lineage) == 0:
-            lineage_id = PydanticObjectId()
-            first_item.lineage_id = lineage_id
-            print(first_item.lineage_id, "first_item.lineage_id")
-            await first_item.save()
-            return
-
         unmatched = []
+        matched = []
         item: DocumentAnalysis
         for item in items:
             if first_item.id == item.id:
@@ -119,10 +115,25 @@ class LineageService:
                 doc.lineage_id = item.lineage_id
 
                 await asyncio.gather(first_item.save(), item.save(), doc.save())
+                matched.append(first_item)
+                matched.append(item)
 
             else:
                 print(f"UNMATCHED {first_item.filename_text} {item.filename_text}")
                 unmatched.append(item)
+
+        #  refactor pending
+        if len(matched) == 0:
+            lineage_id = PydanticObjectId()
+            first_item.lineage_id = lineage_id
+            print(first_item.lineage_id, "first_item.lineage_id")
+            doc = await RetrievedDocument.get(first_item.retrieved_document_id)
+            doc.lineage_id = first_item.lineage_id
+            doc.is_current_version = True
+            await asyncio.gather(first_item.save(), doc.save())
+
+        # Theoretically unmatched shouldnt be matched with previous, so lets assign prev doc here
+        print(len(matched))
 
         await self._process_lineage(unmatched)
 
