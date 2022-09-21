@@ -212,7 +212,6 @@ async def add_document(
     now = datetime.now(tz=timezone.utc)
 
     link_text = document.metadata.get("link_text", None)
-
     new_document = RetrievedDocument(
         checksum=document.checksum,
         content_type=document.content_type,
@@ -231,6 +230,7 @@ async def add_document(
         next_review_date=document.next_review_date,
         next_update_date=document.next_update_date,
         published_date=document.published_date,
+        internal_document=document.internal_document,
         text_checksum=document.text_checksum,
         therapy_tags=document.therapy_tags,
         uploader_id=current_user.id,
@@ -248,7 +248,6 @@ async def add_document(
     )
 
     await create_and_log(logger, current_user, new_document)
-
     doc_document = DocDocument(
         retrieved_document_id=new_document.id,  # type: ignore
         name=document.name,
@@ -267,6 +266,7 @@ async def add_document(
         therapy_tags=document.therapy_tags,
         indication_tags=document.indication_tags,
         file_extension=document.file_extension,
+        internal_document=document.internal_document,
         identified_dates=document.identified_dates,
         locations=[
             DocDocumentLocation(
