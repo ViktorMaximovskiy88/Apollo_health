@@ -25,6 +25,7 @@ from backend.scrapeworker.common.lineage_parser import (
 from backend.scrapeworker.common.utils import (
     compact,
     group_by_attr,
+    sort_by_attr,
     tokenize_filename,
     tokenize_url,
 )
@@ -133,7 +134,16 @@ class LineageService:
             await asyncio.gather(first_item.save(), doc.save())
 
         # Theoretically unmatched shouldnt be matched with previous, so lets assign prev doc here
-        print(len(matched))
+        # TODO what if we dont have effective date ... last collected :x
+        sorted_matched = sort_by_attr(matched, "effective_date")
+        prev = None
+        for index, match in enumerate(sorted_matched):
+            is_last = index == len(sorted_matched) - 1
+            doc = await RetrievedDocument.get(match.retrieved_document_id)
+            doc.is_current_version = is_last
+            doc.previous_doc_id = prev.id if prev else None
+            await doc.save()
+            prev = doc
 
         await self._process_lineage(unmatched)
 

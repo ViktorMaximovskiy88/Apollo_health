@@ -118,6 +118,10 @@ def unique_by_attr(items: list[any], attr: str) -> list[any]:
     return list(set([getattr(item, attr) for item in items]))
 
 
+def sort_by_attr(items: list[any], attr: str):
+    return sorted(items, key=lambda x: getattr(x, attr))
+
+
 # so you have to sort first for groupby to work...
 def group_by_attr(items: list[any], attr: str):
     sorted_items = sorted(items, key=lambda x: getattr(x, attr))
