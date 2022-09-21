@@ -55,7 +55,7 @@ class LineageService:
         docs = await query.to_list()
         return docs
 
-    async def reprocess_all_sites(self):
+    async def process_all_sites(self):
         async for site in Site.find():
             await self.process_lineage_for_site(site.id)
 
@@ -85,84 +85,77 @@ class LineageService:
 
     async def _process_lineage(self, items: list[DocumentAnalysis]):
         if len(items) == 0:
-            print("no items remain")
+            self.logger.info("no items remain")
             return
 
         missing_lineage = [item for item in items if not item.lineage_id]
         if len(missing_lineage) == 0:
-            print("all lineage assigned")
+            self.logger.info("all lineage assigned")
             return
 
-        first_item: DocumentAnalysis = missing_lineage.pop()
-        unmatched = []
         matched = []
+        unmatched = []
         item: DocumentAnalysis
-        for item in items:
-            if first_item.id == item.id:
-                continue
 
+        first_item: DocumentAnalysis = missing_lineage.pop()
+        first_item = await create_lineage(first_item)
+        matched.append(first_item)
+
+        for item in items:
             match = LineageMatcher(first_item, item, logger=self.logger).exec()
             if match:
-                print(f"MATCHED {first_item.filename_text} {item.filename_text}")
+                self.logger.info(f"MATCHED {first_item.filename_text} {item.filename_text}")
 
                 if item.lineage_id:
                     first_item.lineage_id = item.lineage_id
                 else:
-                    lineage_id = PydanticObjectId()
-                    first_item.lineage_id = lineage_id
-                    item.lineage_id = lineage_id
+                    item.lineage_id = first_item.lineage_id
 
-                print(item.lineage_id, "item.lineage_id")
-                doc = await RetrievedDocument.get(item.retrieved_document_id)
-                doc.lineage_id = item.lineage_id
-
-                await asyncio.gather(first_item.save(), item.save(), doc.save())
-                matched.append(first_item)
+                await asyncio.gather(first_item.save(), item.save())
                 matched.append(item)
 
             else:
-                print(f"UNMATCHED {first_item.filename_text} {item.filename_text}")
+                self.logger.info(f"UNMATCHED {first_item.filename_text} {item.filename_text}")
                 unmatched.append(item)
-
-        #  refactor pending
-        if len(matched) == 0:
-            lineage_id = PydanticObjectId()
-            first_item.lineage_id = lineage_id
-            await first_item.save()
-            print(first_item.lineage_id, "first_item.lineage_id")
-            matched.append(first_item)
 
         # Theoretically unmatched shouldnt be matched with previous, so lets assign prev doc here
         # TODO what if we dont have effective date ... last collected :x
-        sorted_matched = sort_by_attr(matched, "effective_date")
+        await self._version_matched(matched)
+        await self._process_lineage(unmatched)
+
+    async def _version_matched(self, items: list[DocumentAnalysis]):
+        matches = sort_by_attr(items, "effective_date")
         prev_doc = None
         prev_doc_doc = None
-        for index, match in enumerate(sorted_matched):
-            is_last = index == len(sorted_matched) - 1
+        for index, match in enumerate(matches):
+            is_last = index == len(matches) - 1
             doc, doc_doc = await asyncio.gather(
-                version_doc(match.retrieved_document_id, is_last, prev_doc),
-                version_doc_doc(match.retrieved_document_id, is_last, prev_doc_doc),
+                version_doc(match, is_last, prev_doc),
+                version_doc_doc(match, is_last, prev_doc_doc),
             )
             prev_doc = doc
             prev_doc_doc = doc_doc
 
-        await self._process_lineage(unmatched)
+
+async def create_lineage(item: DocumentAnalysis):
+    lineage_id = PydanticObjectId()
+    item.lineage_id = lineage_id
+    item = await item.save()
+    return item
 
 
-async def version_doc(
-    retrieved_document_id: PydanticObjectId, is_last: bool, prev_doc: RetrievedDocument
-):
-    doc = await RetrievedDocument.get(retrieved_document_id)
+async def version_doc(doc_analysis: DocumentAnalysis, is_last: bool, prev_doc: RetrievedDocument):
+    doc = await RetrievedDocument.get(doc_analysis.retrieved_document_id)
+    doc.lineage_id = doc_analysis.lineage_id
     doc.is_current_version = is_last
     doc.previous_doc_id = prev_doc.id if prev_doc else None
     doc = await doc.save()
     return doc
 
 
-async def version_doc_doc(
-    retrieved_document_id: PydanticObjectId, is_last: bool, prev_doc: DocDocument
-):
-    doc = await DocDocument.get(retrieved_document_id)
+async def version_doc_doc(doc_analysis: DocumentAnalysis, is_last: bool, prev_doc: DocDocument):
+    doc = await DocDocument.find_one({"retrieved_document_id": doc_analysis.retrieved_document_id})
+    doc.lineage_id = doc_analysis.lineage_id
     doc.is_current_version = is_last
     doc.previous_doc_doc_id = prev_doc.id if prev_doc else None
     doc = await doc.save()

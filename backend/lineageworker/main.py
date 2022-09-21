@@ -22,7 +22,7 @@ async def _process(site_id: str):
         await lineage_service.process_lineage_for_site(PydanticObjectId(site_id))
     else:
         typer.secho("Processing lineage for all sites...", fg=typer.colors.GREEN)
-        await lineage_service.reprocess_all_sites()
+        await lineage_service.process_all_sites()
 
 
 @app.command()
