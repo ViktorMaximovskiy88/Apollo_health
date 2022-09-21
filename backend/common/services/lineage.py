@@ -55,6 +55,31 @@ class LineageService:
         docs = await query.to_list()
         return docs
 
+    async def clear_lineage_for_site(self, site_id: PydanticObjectId | None):
+        await asyncio.gather(
+            RetrievedDocument.get_motor_collection().update_many(
+                {"locations.site_id": site_id},
+                {
+                    "$set": {
+                        "lineage_id": None,
+                        "is_current_version": False,
+                        "previous_doc_id": None,
+                    }
+                },
+            ),
+            DocDocument.get_motor_collection().update_many(
+                {"locations.site_id": site_id},
+                {
+                    "$set": {
+                        "lineage_id": None,
+                        "is_current_version": False,
+                        "previous_doc_doc_id": None,
+                    }
+                },
+            ),
+            DocumentAnalysis.get_motor_collection().delete_many({"site_id": site_id}),
+        )
+
     async def process_all_sites(self):
         async for site in Site.find():
             await self.process_lineage_for_site(site.id)
@@ -62,6 +87,10 @@ class LineageService:
     async def process_lineage_for_site(self, site_id: PydanticObjectId):
         docs = await get_site_docs(site_id)
         await self.process_lineage_for_docs(site_id, docs)
+
+    async def reprocess_lineage_for_site(self, site_id: PydanticObjectId):
+        await self.clear_lineage_for_site(site_id)
+        await self.process_lineage_for_site(site_id)
 
     async def process_lineage_for_doc_ids(
         self, site_id: PydanticObjectId, doc_ids: list[PydanticObjectId]

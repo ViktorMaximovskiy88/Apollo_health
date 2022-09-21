@@ -45,7 +45,7 @@ export function SiteDocDocumentsPage() {
             }}
             className="ml-auto"
           >
-            Process Lineage
+            Reprocess Lineage
           </Button>
 
           <Button onClick={() => setNewDocumentModalVisible(true)} className="ml-auto">

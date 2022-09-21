@@ -54,7 +54,7 @@ class LineageMatcher:
             rule = getattr(self, rule_set)
             match = rule()
             if match:
-                print(f"matched rule '{rule_set}'")
+                self.logger.info(f"matched rule '{rule_set}'")
                 break
 
         return match

@@ -18,5 +18,5 @@ async def lineage_for_site(
     site_id: PydanticObjectId,
     background_tasks: BackgroundTasks,
 ):
-    background_tasks.add_task(lineage_service.process_lineage_for_site, site_id)
+    background_tasks.add_task(lineage_service.reprocess_lineage_for_site, site_id)
     return {"message": "Lineage task queued"}
