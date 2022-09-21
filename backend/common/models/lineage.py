@@ -21,6 +21,7 @@ class DocumentAnalysis(BaseDocument):
     retrieved_document_id: PydanticObjectId
     site_id: PydanticObjectId
     lineage_id: PydanticObjectId | None
+    is_current_version: bool = False
 
     state_abbr: str | None
     state_name: str | None

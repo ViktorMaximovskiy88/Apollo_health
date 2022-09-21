@@ -78,7 +78,7 @@ class ScrapeWorker:
         self.playbook = ScrapePlaybook(self.site.playbook)
         self.log = _log
         self.doc_updater = DocumentUpdater(_log, scrape_task, site)
-        self.lineage_service = LineageService(log=_log)
+        self.lineage_service = LineageService(logger=_log)
         self.lineage_tasks = []
 
     @alru_cache

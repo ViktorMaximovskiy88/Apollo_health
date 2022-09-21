@@ -31,35 +31,54 @@ from backend.scrapeworker.common.utils import (
 
 
 class LineageService:
-    def __init__(self, log: Logger) -> None:
-        self.log = log
+    def __init__(self, logger: Logger) -> None:
+        self.logger = logger
         self.pp = pprint.PrettyPrinter(depth=4)
 
-    async def process_lineage_for_sites(self):
-        sites = await Site.find().to_list()
-        for site in sites:
+    async def get_comparision_docs(
+        self, site_id: PydanticObjectId | None
+    ) -> list[DocumentAnalysis]:
+        query = DocumentAnalysis.find(
+            {
+                "$or": [
+                    {"lineage_id": None},
+                    {"is_current_version": True},
+                ],
+            }
+        )
+
+        if site_id:
+            DocumentAnalysis.find({"site_id": site_id})
+
+        docs = await query.to_list()
+        return docs
+
+    async def reprocess_all_sites(self):
+        async for site in Site.find():
             await self.process_lineage_for_site(site.id)
 
     async def process_lineage_for_site(self, site_id: PydanticObjectId):
         docs = await get_site_docs(site_id)
-        await self.process_lineage_for_docs(docs)
+        await self.process_lineage_for_docs(site_id, docs)
 
     async def process_lineage_for_doc_ids(
         self, site_id: PydanticObjectId, doc_ids: list[PydanticObjectId]
     ):
         docs = await get_site_docs_for_ids(site_id, doc_ids)
-        await self.process_lineage_for_docs(docs)
+        await self.process_lineage_for_docs(site_id, docs)
 
-    async def process_lineage_for_docs(self, docs: list[SiteRetrievedDocument]):
-        compare_models = []
-        # build the model, currently saving it too
+    async def process_lineage_for_docs(
+        self, site_id: PydanticObjectId, docs: list[SiteRetrievedDocument]
+    ):
+        # build the model and save it
         for doc in docs:
             doc_analysis = build_doc_analysis(doc)
             await doc_analysis.save()
-            compare_models.append(doc_analysis)
 
-        # run on groups (one way to pick similar is doc type; TODO put more thought into it )
-        for _key, group in group_by_attr(compare_models, "document_type"):
+        # pick all from DB that are most recent OR no lineage...
+        compare_docs = await self.get_comparision_docs(site_id)
+        # TODO prob shouldnt group docs that are already lineage'd?
+        for _key, group in group_by_attr(compare_docs, "document_type"):
             await self._process_lineage(list(group))
 
     async def _process_lineage(self, items: list[DocumentAnalysis]):
@@ -70,19 +89,23 @@ class LineageService:
         if len(missing_lineage) == 0:
             return
 
-        first_item: DocumentAnalysis = items.pop()
-        if len(items) == 0:
+        first_item: DocumentAnalysis = missing_lineage.pop()
+        if len(missing_lineage) == 0:
             lineage_id = PydanticObjectId()
             first_item.lineage_id = lineage_id
+            print(first_item.lineage_id, "first_item.lineage_id")
             await first_item.save()
             return
 
         unmatched = []
         item: DocumentAnalysis
         for item in items:
-            match = LineageMatcher(first_item, item).exec()
+            if first_item.id == item.id:
+                continue
+
+            match = LineageMatcher(first_item, item, logger=self.logger).exec()
             if match:
-                self.log.info(f"MATCHED {item.filename}")
+                print(f"MATCHED {first_item.filename_text} {item.filename_text}")
 
                 if item.lineage_id:
                     first_item.lineage_id = item.lineage_id
@@ -98,7 +121,7 @@ class LineageService:
                 await asyncio.gather(first_item.save(), item.save(), doc.save())
 
             else:
-                self.log.info(f"UNMATCHED {item.filename}")
+                print(f"UNMATCHED {first_item.filename_text} {item.filename_text}")
                 unmatched.append(item)
 
         await self._process_lineage(unmatched)

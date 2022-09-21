@@ -1,3 +1,5 @@
+import logging
+
 from jarowinkler import jarowinkler_similarity
 
 from backend.common.models.lineage import DocumentAnalysis
@@ -5,29 +7,30 @@ from backend.scrapeworker.common.utils import jaccard
 
 
 class LineageMatcher:
-    def __init__(self, doc_a: DocumentAnalysis, doc_b: DocumentAnalysis):
+    def __init__(self, doc_a: DocumentAnalysis, doc_b: DocumentAnalysis, logger=logging):
+        self.logger = logger
         #  text similarity
         self.doc_a = doc_a
         self.doc_b = doc_b
 
         self.element_text_match = jarowinkler_similarity(doc_a.element_text, doc_b.element_text)
-        print(f"element_text_match={self.element_text_match}")
+        self.logger.debug(f"element_text_match={self.element_text_match}")
 
         self.parent_text_match = jarowinkler_similarity(doc_a.parent_text, doc_b.parent_text)
-        print(f"parent_text_match={self.parent_text_match}")
+        self.logger.debug(f"parent_text_match={self.parent_text_match}")
 
         self.siblings_text_match = jarowinkler_similarity(doc_a.siblings_text, doc_b.siblings_text)
-        print(f"siblings_text_match={self.siblings_text_match}")
+        self.logger.debug(f"siblings_text_match={self.siblings_text_match}")
 
         # raw url matches
         self.filename_match = jaccard(doc_a.filename_tokens, doc_b.filename_tokens)
         self.pathname_match = jaccard(doc_a.pathname_tokens, doc_b.pathname_tokens)
 
         self.filename_match = jaccard(doc_a.filename_tokens, doc_b.filename_tokens)
-        print(f"filename_match={self.filename_match}")
+        self.logger.debug(f"filename_match={self.filename_match}")
 
         self.pathname_match = jaccard(doc_a.pathname_tokens, doc_b.pathname_tokens)
-        print(f"pathname_match={self.pathname_match}")
+        self.logger.debug(f"pathname_match={self.pathname_match}")
 
         self.ref_indication_match = jaccard(doc_a.ref_indication_tags, doc_b.ref_indication_tags)
         self.focus_indication_match = jaccard(
@@ -35,12 +38,15 @@ class LineageMatcher:
         )
 
         self.ref_therapy_match = jaccard(doc_a.ref_therapy_tags, doc_b.ref_therapy_tags)
-        print(f"ref_therapy_match={self.ref_therapy_match}")
+        self.logger.debug(f"ref_therapy_match={self.ref_therapy_match}")
 
         self.focus_therapy_match = jaccard(doc_a.focus_therapy_tags, doc_b.focus_therapy_tags)
-        print(f"focus_therapy_match={self.focus_therapy_match}")
+        self.logger.debug(f"focus_therapy_match={self.focus_therapy_match}")
 
     def exec(self) -> bool:
+        if self.doc_a.id == self.doc_b.id:
+            return False
+
         rule_sets = ["revised_document", "updated_document"]
         match = False
 
@@ -70,5 +76,7 @@ class LineageMatcher:
     # same base url, update date parts in url, new version/publish
     def updated_document(self):
         return (
-            self.filename_match >= 0.60 or self.element_text_match >= 0.90
-        ) and self.ref_indication_match >= 0.85
+            (self.filename_match >= 0.60 or self.element_text_match >= 0.90)
+            and self.ref_indication_match >= 0.85
+            and self.focus_therapy_match == 1
+        )
