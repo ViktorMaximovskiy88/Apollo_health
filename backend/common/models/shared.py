@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from beanie import PydanticObjectId
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from backend.scrapeworker.common.utils import unique_by_attr
 
@@ -53,7 +53,7 @@ class FileMetadata(BaseModel):
 
 class IndicationTag(BaseModel):
     text: str
-    code: int = Field(type=int, alias="indication_number")
+    code: int
     page: int = 0
     focus: bool = False
 

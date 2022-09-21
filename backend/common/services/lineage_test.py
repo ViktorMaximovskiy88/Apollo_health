@@ -25,7 +25,7 @@ async def load_retrieved_docs() -> list[RetrievedDocument]:
             document_type="Formulary",
             doc_type_confidence=1,
             therapy_tags=[TherapyTag(text="Tykerb", name="Tykerb", code="659616", focus=1)],
-            indication_tags=[IndicationTag(text="TDAP", indication_number=155, focus=False)],
+            indication_tags=[IndicationTag(text="TDAP", code=155, focus=False)],
             file_size=1500000,
             locations=[
                 RetrievedDocumentLocation(
