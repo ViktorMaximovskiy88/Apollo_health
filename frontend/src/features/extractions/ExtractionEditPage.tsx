@@ -69,8 +69,13 @@ export function ExtractionEditPage() {
       minWidth: 200,
     },
     {
-      header: 'Code',
+      header: 'Drug ID',
       name: 't_code',
+      group: 'translated',
+    },
+    {
+      header: 'RXCUI',
+      name: 't_rxcui',
       group: 'translated',
       render: ({ value }: { value: string }) => {
         return (

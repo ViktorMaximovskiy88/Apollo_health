@@ -23,15 +23,15 @@ class FocusTherapyConfig(BaseModel):
 
 
 class ScrapeMethodConfiguration(BaseModel):
-    document_extensions: list[str]
-    url_keywords: list[str]
+    document_extensions: list[str] = []
+    url_keywords: list[str] = []
     proxy_exclusions: list[PydanticObjectId] = []
     wait_for: list[str] = []
     wait_for_timeout_ms: int = 0
     search_in_frames: bool = False
     follow_links: bool = False
-    follow_link_keywords: list[str]
-    follow_link_url_keywords: list[str]
+    follow_link_keywords: list[str] = []
+    follow_link_url_keywords: list[str] = []
     searchable: bool = False
     searchable_type: SearchableType | None = None
     searchable_input: AttrSelector | None = None
@@ -76,7 +76,7 @@ class NewSite(BaseModel):
     base_urls: list[BaseUrl] = []
     collection_method: str | None = CollectionMethod.Automated
     scrape_method: str | None = ""
-    scrape_method_configuration: ScrapeMethodConfiguration
+    scrape_method_configuration: ScrapeMethodConfiguration = ScrapeMethodConfiguration()
     tags: list[str] = []
     playbook: str | None = None
     cron: str | None = ""
@@ -104,7 +104,7 @@ class UpdateSiteAssigne(BaseModel):
 
 
 class Site(BaseDocument, NewSite):
-    disabled: bool
+    disabled: bool = False
     last_run_status: str | None = None
     collection_method: str | None = CollectionMethod.Automated
     collection_hold: datetime | None = None
