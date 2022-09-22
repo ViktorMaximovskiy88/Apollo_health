@@ -125,7 +125,7 @@ def sort_by_attr(items: list[any], attr: str):
 
 # so you have to sort first for groupby to work...
 def group_by_attr(items: list[any], attr: str):
-    sorted_items = sorted(items, key=lambda x: getattr(x, attr))
+    sorted_items = sort_by_attr(items, attr)
     return groupby(sorted_items, lambda x: getattr(x, attr))
 
 

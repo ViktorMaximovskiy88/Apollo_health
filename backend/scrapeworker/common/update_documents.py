@@ -76,7 +76,7 @@ class DocumentUpdater:
             )
 
         updated_doc = UpdateRetrievedDocument(
-            doc_type_vectors=parsed_content["doc_type_vectors"],
+            doc_vectors=parsed_content["doc_vectors"],
             doc_type_confidence=parsed_content["confidence"],
             document_type=parsed_content["document_type"],
             effective_date=parsed_content["effective_date"],
@@ -148,7 +148,7 @@ class DocumentUpdater:
             text_checksum=text_checksum,
             doc_type_confidence=parsed_content["confidence"],
             document_type=parsed_content["document_type"],
-            doc_type_vectors=parsed_content["doc_type_vectors"],
+            doc_vectors=parsed_content["doc_vectors"],
             effective_date=parsed_content["effective_date"],
             end_date=parsed_content["end_date"],
             last_updated_date=parsed_content["last_updated_date"],

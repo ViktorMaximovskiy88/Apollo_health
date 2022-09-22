@@ -44,6 +44,16 @@ class LineageMatcher:
         self.focus_therapy_match = jaccard(doc_a.focus_therapy_tags, doc_b.focus_therapy_tags)
         self.logger.debug(f"focus_therapy_match={self.focus_therapy_match}")
 
+        self.cosine_similarity = spatial.distance.cosine(
+            self.doc_a.doc_vectors[0],
+            self.doc_b.doc_vectors[0],
+        )
+
+        self.euclidean_distance = spatial.distance.euclidean(
+            self.doc_a.doc_vectors[0],
+            self.doc_b.doc_vectors[0],
+        )
+
     def exec(self) -> bool:
         if self.doc_a.id == self.doc_b.id:
             return False
@@ -51,7 +61,7 @@ class LineageMatcher:
         rule_sets = [
             "revised_document",
             "updated_document",
-            "cosine_similarity",
+            "score_euclidean_distance",
         ]
         match = False
 
@@ -86,10 +96,6 @@ class LineageMatcher:
             and self.focus_therapy_match == 1
         )
 
-    def cosine_similarity(self):
-        similiar = 1 - spatial.distance.cosine(
-            self.doc_a.doc_type_vectors[0],
-            self.doc_b.doc_type_vectors[0],
-        )
-        print(f"similiar {similiar}")
-        return similiar > 0.94
+    def score_euclidean_distance(self):
+        print(f"{self.euclidean_distance}")
+        return self.euclidean_distance < 10

@@ -148,11 +148,12 @@ class LineageService:
                 unmatched.append(item)
 
         # Theoretically unmatched shouldnt be matched with previous, so lets assign prev doc here
-        # TODO what if we dont have effective date ... last collected :x
         await self._version_matched(matched)
         await self._process_lineage(unmatched)
 
     async def _version_matched(self, items: list[DocumentAnalysis]):
+        print(items)
+        # TODO what if we dont have effective date ... last collected :x
         matches = sort_by_attr(items, "effective_date")
         prev_doc = None
         prev_doc_doc = None
@@ -227,7 +228,7 @@ def build_doc_analysis(doc: SiteRetrievedDocument) -> DocumentAnalysis:
         document_type=doc.document_type,
         element_text=doc.link_text,
         file_size=doc.file_size,
-        doc_type_vectors=doc.doc_type_vectors,
+        doc_vectors=doc.doc_vectors,
     )
 
     doc_analysis.focus_therapy_tags = get_unique_focus_tags(doc.therapy_tags)

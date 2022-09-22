@@ -38,7 +38,7 @@ class BaseRetrievedDocument(BaseModel):
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
-    doc_type_vectors: list[list[float]] = []
+    doc_vectors: list[list[float]] = []
 
     # lineage
     lineage_id: PydanticObjectId | None = None

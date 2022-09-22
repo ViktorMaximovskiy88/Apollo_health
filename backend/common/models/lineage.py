@@ -58,4 +58,4 @@ class DocumentAnalysis(BaseDocument):
     parent: DocumentAttrs | None
     siblings: DocumentAttrs | None
 
-    doc_type_vectors: list[list[float]] = []
+    doc_vectors: list[list[float]] = []
