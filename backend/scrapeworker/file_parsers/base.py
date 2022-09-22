@@ -58,7 +58,7 @@ class FileParser(ABC):
         self.metadata = await self.get_info()
         self.text = await self.get_text()
         title = self.get_title(self.metadata)
-        document_type, confidence, document_type_vectors = classify_doc_type(self.text)
+        document_type, confidence, doc_type_vectors = classify_doc_type(self.text)
         lang_code = detect_lang(self.text)
 
         date_parser = DateParser(self.text, date_rgxs, label_rgxs)
@@ -90,7 +90,7 @@ class FileParser(ABC):
             "lang_code": lang_code,
             "therapy_tags": therapy_tags,
             "indication_tags": indication_tags,
-            "document_type_vectors": document_type_vectors,
+            "doc_type_vectors": doc_type_vectors.tolist(),
         }
 
         return self.result
