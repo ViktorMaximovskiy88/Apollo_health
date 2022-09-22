@@ -62,7 +62,7 @@ class LineageMatcher:
         rule_sets = [
             # "revised_document",
             # "updated_document",
-            "cosine_similarity",
+            "score_cosine_similarity",
             "score_euclidean_distance",
         ]
         match = False

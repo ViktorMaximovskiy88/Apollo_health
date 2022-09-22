@@ -152,7 +152,6 @@ class LineageService:
         await self._process_lineage(unmatched)
 
     async def _version_matched(self, items: list[DocumentAnalysis]):
-        print(items)
         # TODO what if we dont have effective date ... last collected :x
         matches = sort_by_attr(items, "effective_date")
         prev_doc = None
