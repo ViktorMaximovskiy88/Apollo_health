@@ -92,4 +92,4 @@ class LineageMatcher:
             self.doc_b.doc_type_vectors[0],
         )
         print(f"similiar {similiar}")
-        return similiar > 0.92
+        return similiar > 0.94
