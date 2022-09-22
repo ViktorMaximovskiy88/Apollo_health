@@ -1,6 +1,7 @@
 import logging
 
 from jarowinkler import jarowinkler_similarity
+from scipy import spatial
 
 from backend.common.models.lineage import DocumentAnalysis
 from backend.scrapeworker.common.utils import jaccard
@@ -47,7 +48,11 @@ class LineageMatcher:
         if self.doc_a.id == self.doc_b.id:
             return False
 
-        rule_sets = ["revised_document", "updated_document"]
+        rule_sets = [
+            "revised_document",
+            "updated_document",
+            "cosine_similarity",
+        ]
         match = False
 
         for rule_set in rule_sets:
@@ -80,3 +85,11 @@ class LineageMatcher:
             and self.ref_indication_match >= 0.85
             and self.focus_therapy_match == 1
         )
+
+    def cosine_similarity(self):
+        similiar = 1 - spatial.distance.cosine(
+            self.doc_a.doc_type_vectors[0],
+            self.doc_b.doc_type_vectors[0],
+        )
+        print(f"similiar {similiar}")
+        return similiar > 0.92

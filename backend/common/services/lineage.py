@@ -227,7 +227,7 @@ def build_doc_analysis(doc: SiteRetrievedDocument) -> DocumentAnalysis:
         document_type=doc.document_type,
         element_text=doc.link_text,
         file_size=doc.file_size,
-        doc_type_vectors=doc.document_type,
+        doc_type_vectors=doc.doc_type_vectors,
     )
 
     doc_analysis.focus_therapy_tags = get_unique_focus_tags(doc.therapy_tags)
