@@ -151,4 +151,4 @@ def jaccard(a: list, b: list):
         return 1
     intersection = len(list(set(a).intersection(b)))
     union = (len(a) + len(b)) - intersection
-    return float(intersection) / union
+    return intersection / union
