@@ -14,7 +14,7 @@ app = typer.Typer()
 log = logging.getLogger(__name__)
 
 
-async def _process(site_id: str):
+async def _process_lineage(site_id: str):
     await init_db()
     lineage_service = LineageService(logger=logging)
     typer.secho(f"Processing lineage for {site_id}...", fg=typer.colors.GREEN)
@@ -22,7 +22,7 @@ async def _process(site_id: str):
 
 
 @app.command()
-def process(
+def lineage(
     site_id: str = typer.Option(
         ...,
         help="Site Id of the site to lineage...",
@@ -30,7 +30,7 @@ def process(
 ):
     typer.secho("Starting lineage process...", fg=typer.colors.GREEN)
     site_id = PydanticObjectId(site_id)
-    asyncio.run(_process(site_id))
+    asyncio.run(_process_lineage(site_id))
 
 
 if __name__ == "__main__":

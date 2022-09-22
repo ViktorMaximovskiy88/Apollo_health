@@ -471,8 +471,9 @@ class ScrapeWorker:
 
         await self.wait_for_completion_or_cancel(tasks)
 
-        doc_ids = [doc.id for (doc, doc_doc) in self.lineage_tasks]
-        await self.lineage_service.process_lineage_for_doc_ids(self.site.id, doc_ids)
+        # doc_ids = [doc.id for (doc, doc_doc) in self.lineage_tasks]
+        # TODO enable for new docs after testing in another env
+        # await self.lineage_service.process_lineage_for_doc_ids(self.site.id, doc_ids)
 
         await self.downloader.close()
 
