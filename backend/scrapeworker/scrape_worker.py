@@ -28,6 +28,7 @@ from backend.common.models.link_task_log import (
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.services.lineage import LineageService
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.aio_downloader import AioDownloader
@@ -68,6 +69,8 @@ class ScrapeWorker:
             config=self.site.scrape_method_configuration, log=_log
         )
         self.doc_updater = DocumentUpdater(_log, scrape_task, site)
+        self.lineage_service = LineageService(logger=_log)
+        self.lineage_tasks = []
         self.log = _log
 
     @alru_cache
@@ -225,7 +228,7 @@ class ScrapeWorker:
                     parsed_content=parsed_content,
                 )
 
-                await self.doc_updater.update_doc_document(
+                doc_document = await self.doc_updater.update_doc_document(
                     document, new_therapy_tags, new_indicate_tags
                 )
 
@@ -233,7 +236,8 @@ class ScrapeWorker:
                 document = await self.doc_updater.create_retrieved_document(
                     parsed_content, download, checksum, url
                 )
-                await self.doc_updater.create_doc_document(document)
+                doc_document = await self.doc_updater.create_doc_document(document)
+                self.lineage_tasks.append((document, doc_document))
 
             link_retrieved_task.retrieved_document_id = document.id
 
@@ -466,6 +470,11 @@ class ScrapeWorker:
                 self.log.info(f"Skip download {download.request.url}")
 
         await self.wait_for_completion_or_cancel(tasks)
+
+        # doc_ids = [doc.id for (doc, doc_doc) in self.lineage_tasks]
+        # TODO enable for new docs after testing in another env
+        # await self.lineage_service.process_lineage_for_doc_ids(self.site.id, doc_ids)
+
         await self.downloader.close()
 
         if not self.scrape_task.documents_found:

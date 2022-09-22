@@ -32,11 +32,18 @@ class BaseRetrievedDocument(BaseModel):
     doc_type_confidence: float | None = None
     identified_dates: list[datetime] = []
     lang_code: LangCode | None = None
+    file_size: int = 0
     file_extension: str | None = None
     content_type: str | None = None
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
+    doc_vectors: list[list[float]] = []
+
+    # lineage
+    lineage_id: PydanticObjectId | None = None
+    previous_doc_id: PydanticObjectId | None = None
+    is_current_version: bool = False
 
 
 class RetrievedDocument(BaseDocument, BaseRetrievedDocument, DocumentMixins):
