@@ -101,7 +101,7 @@ class LineageMatcher:
         )
 
     def score_euclidean_distance(self):
-        return self.euclidean_distance < 10
+        return self.euclidean_distance < 2
 
     def score_cosine_similarity(self):
         return self.cosine_similarity > 0.9
