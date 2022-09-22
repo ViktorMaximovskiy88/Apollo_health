@@ -48,19 +48,21 @@ class LineageMatcher:
             self.doc_a.doc_vectors[0],
             self.doc_b.doc_vectors[0],
         )
-
+        print(f"self.cosine_similarity={self.cosine_similarity}")
         self.euclidean_distance = spatial.distance.euclidean(
             self.doc_a.doc_vectors[0],
             self.doc_b.doc_vectors[0],
         )
+        print(f"self.euclidean_distance={self.euclidean_distance}")
 
     def exec(self) -> bool:
         if self.doc_a.id == self.doc_b.id:
             return False
 
         rule_sets = [
-            "revised_document",
-            "updated_document",
+            # "revised_document",
+            # "updated_document",
+            "cosine_similarity",
             "score_euclidean_distance",
         ]
         match = False
@@ -97,5 +99,7 @@ class LineageMatcher:
         )
 
     def score_euclidean_distance(self):
-        print(f"{self.euclidean_distance}")
         return self.euclidean_distance < 10
+
+    def score_cosine_similarity(self):
+        return self.cosine_similarity > 0.9
