@@ -11,10 +11,10 @@ from backend.common.events.event_convert import EventConvert
 from backend.common.events.send_event_client import SendEventClient
 from backend.common.models.doc_document import DocDocument, DocDocumentLocation
 from backend.common.models.document import (
+    BaseRetrievedDocument,
     RetrievedDocument,
     RetrievedDocumentLimitTags,
     RetrievedDocumentLocation,
-    SiteRetrievedDocument,
     UpdateRetrievedDocument,
 )
 from backend.common.models.site_scrape_task import SiteScrapeTask, TaskStatus
@@ -202,10 +202,17 @@ async def delete_document(
     return {"success": True}
 
 
+class NewManualDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
+    internal_document: bool
+
+
+# One time use case for the PUT request below in order to pass in internal_document
+
+
 @router.put("/", status_code=status.HTTP_201_CREATED, response_model=SiteScrapeTask)
 async def add_document(
     # verify we only want SiteRetrievedDocument
-    document: SiteRetrievedDocument | RetrievedDocument,
+    document: NewManualDocument,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
@@ -230,7 +237,6 @@ async def add_document(
         next_review_date=document.next_review_date,
         next_update_date=document.next_update_date,
         published_date=document.published_date,
-        internal_document=document.internal_document,
         text_checksum=document.text_checksum,
         therapy_tags=document.therapy_tags,
         uploader_id=current_user.id,

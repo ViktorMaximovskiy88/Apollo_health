@@ -26,7 +26,6 @@ class BaseRetrievedDocument(BaseModel):
     published_date: datetime | None = None
     first_collected_date: datetime | None = None
     last_collected_date: datetime | None = None
-    internal_document: bool | None = None
     document_type: str | None = None
     doc_type_confidence: float | None = None
     identified_dates: list[datetime] = []
@@ -65,7 +64,6 @@ class UpdateRetrievedDocument(BaseModel, DocumentMixins):
     identified_dates: list[datetime] | None = None
     first_collected_date: datetime | None = None
     last_collected_date: datetime | None = None
-    internal_document: bool | None = None
     checksum: str | None = None
     text_checksum: str | None = None
     disabled: bool | None = None

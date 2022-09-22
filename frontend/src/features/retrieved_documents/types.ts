@@ -17,7 +17,6 @@ export interface RetrievedDocument extends BaseDocument {
   doc_type_confidence?: number;
   first_collected_date: string;
   last_collected_date: string;
-  internal_document: boolean;
   disabled: boolean;
   url: string;
   checksum: string;
