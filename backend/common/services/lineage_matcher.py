@@ -44,15 +44,17 @@ class LineageMatcher:
         self.focus_therapy_match = jaccard(doc_a.focus_therapy_tags, doc_b.focus_therapy_tags)
         self.logger.debug(f"focus_therapy_match={self.focus_therapy_match}")
 
-        self.cosine_similarity = spatial.distance.cosine(
+        self.cosine_similarity = 1 - spatial.distance.cosine(
             self.doc_a.doc_vectors[0],
             self.doc_b.doc_vectors[0],
         )
         print(f"self.cosine_similarity={self.cosine_similarity}")
+
         self.euclidean_distance = spatial.distance.euclidean(
             self.doc_a.doc_vectors[0],
             self.doc_b.doc_vectors[0],
         )
+
         print(f"self.euclidean_distance={self.euclidean_distance}")
 
     def exec(self) -> bool:
@@ -60,8 +62,8 @@ class LineageMatcher:
             return False
 
         rule_sets = [
-            # "revised_document",
-            # "updated_document",
+            "revised_document",
+            "updated_document",
             "score_cosine_similarity",
             "score_euclidean_distance",
         ]
