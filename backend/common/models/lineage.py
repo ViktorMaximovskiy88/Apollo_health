@@ -9,12 +9,12 @@ from backend.common.models.base_document import BaseDocument
 
 class LineageDoc(BaseModel):
     id: PydanticObjectId = Field(None, alias="_id")
-    name: str
+    name: str | None
     previous_doc_id: PydanticObjectId | None
-    is_current_version: bool
-    lineage_id: PydanticObjectId
-    file_extension: str
-    checksum: str
+    is_current_version: bool | None
+    lineage_id: PydanticObjectId | None
+    file_extension: str | None
+    checksum: str | None
 
 
 class DocumentAttrs(BaseModel):

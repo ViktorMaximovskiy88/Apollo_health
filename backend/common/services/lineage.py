@@ -167,7 +167,6 @@ class LineageService:
 
     async def _version_matched(self, items: list[DocumentAnalysis]):
         matches = self.sort_matched(items)
-        print(matches)
         prev_doc = None
         prev_doc_doc = None
         for index, match in enumerate(matches):

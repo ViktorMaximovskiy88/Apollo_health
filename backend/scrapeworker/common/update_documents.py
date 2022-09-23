@@ -76,7 +76,6 @@ class DocumentUpdater:
             )
 
         updated_doc = UpdateRetrievedDocument(
-            doc_vectors=parsed_content["doc_vectors"],
             doc_type_confidence=parsed_content["confidence"],
             document_type=parsed_content["document_type"],
             effective_date=parsed_content["effective_date"],
