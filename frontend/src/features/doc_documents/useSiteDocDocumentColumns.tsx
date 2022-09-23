@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
+import BoolFilter from '@inovua/reactdatagrid-community/BoolFilter';
 import { Button } from 'antd';
 import { LinkOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { prettyDateFromISO, prettyDateTimeFromISO } from '../../common';
@@ -76,7 +77,7 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
       header: 'Internal Document',
       name: 'internal_document',
       minWidth: 200,
-      filterEditor: SelectFilter,
+      filterEditor: BoolFilter,
       textAlign: TextAlignType.Center,
       filterEditorProps: {
         placeholder: 'All',
