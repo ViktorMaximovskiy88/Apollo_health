@@ -4,6 +4,7 @@ from logging import Logger
 
 from beanie import PydanticObjectId
 
+from backend.app.scripts.retag_document import ReTagger
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.lineage import DocumentAnalysis, DocumentAttrs
@@ -80,6 +81,14 @@ class LineageService:
             DocumentAnalysis.get_motor_collection().delete_many({"site_id": site_id}),
         )
 
+    async def update_site_docs(self, site_id):
+        # Updates tags, doc vecs and whatever else we need for lineage
+        # using retagger for now
+        retagger = ReTagger()
+        await retagger.indication.model()
+        site = await Site.get(site_id)
+        await retagger.retag_docs_on_site(site, 0)
+
     async def process_all_sites(self):
         async for site in Site.find():
             await self.process_lineage_for_site(site.id)
@@ -89,6 +98,7 @@ class LineageService:
         await self.process_lineage_for_docs(site_id, docs)
 
     async def reprocess_lineage_for_site(self, site_id: PydanticObjectId):
+        await self.update_site_docs(site_id)
         await self.clear_lineage_for_site(site_id)
         await self.process_lineage_for_site(site_id)
 
@@ -148,11 +158,11 @@ class LineageService:
                 unmatched.append(item)
 
         # Theoretically unmatched shouldnt be matched with previous, so lets assign prev doc here
+        # TODO what if we dont have effective date ... last collected :x
         await self._version_matched(matched)
         await self._process_lineage(unmatched)
 
     async def _version_matched(self, items: list[DocumentAnalysis]):
-        # TODO what if we dont have effective date ... last collected :x
         matches = sort_by_attr(items, "effective_date")
         prev_doc = None
         prev_doc_doc = None
