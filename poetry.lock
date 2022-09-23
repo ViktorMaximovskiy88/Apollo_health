@@ -224,7 +224,7 @@ description = "The AWS SDK for Python"
 name = "boto3"
 optional = false
 python-versions = ">= 3.7"
-version = "1.21.42"
+version = "1.24.18"
 
 [package.dependencies]
 botocore = ">=1.27.18,<1.28.0"
