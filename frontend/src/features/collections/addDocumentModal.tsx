@@ -12,6 +12,8 @@ import {
   message,
   Checkbox,
 } from 'antd';
+import type { CheckboxChangeEvent } from 'antd/es/checkbox';
+
 import { useForm } from 'antd/lib/form/Form';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
@@ -27,7 +29,6 @@ import { useAddDocumentMutation } from '../retrieved_documents/documentsApi';
 import { baseApiUrl, client } from '../../app/base-api';
 import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
 import { SiteDocDocument } from '../doc_documents/types';
-import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 
 interface AddDocumentModalPropTypes {
   oldVersion?: SiteDocDocument;
@@ -39,16 +40,11 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
   const [form] = useForm();
   const [addDoc] = useAddDocumentMutation();
   const [fileData, setFileData] = useState<any>();
-  const [isInternalDoc, setIsInternalDoc] = useState<boolean>(false);
 
   let initialValues: any = {
     lang_code: 'en',
+    internal_document: false,
   };
-  useEffect(() => {
-    if (oldVersion) {
-      setIsInternalDoc(oldVersion.internal_document);
-    }
-  }, [oldVersion]);
 
   if (oldVersion) {
     const { site_id, link_text, base_url, url } = oldVersion;
@@ -69,14 +65,9 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
   };
   /* eslint-enable no-template-curly-in-string */
 
-  const handleCheckBoxChange = (e: CheckboxChangeEvent) => {
-    setIsInternalDoc(e.target.checked);
-  };
-
   async function saveDocument(newDocument: any) {
     try {
       newDocument.site_id = siteId;
-      newDocument.internal_document = isInternalDoc;
       //  we nuked this relationship
       // if (scrapeTasks) {
       //   newDocument.scrape_task_id = scrapeTasks[0]._id;
@@ -88,6 +79,7 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
         newDocument.internal_document = oldVersion.internal_document;
       }
       fileData.metadata.link_text = newDocument.link_text;
+      console.log(newDocument);
       delete newDocument.link_text;
       delete newDocument.document_file;
       await addDoc({
@@ -114,12 +106,7 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
       >
         <div className="flex grow space-x-3">
           <UploadItem form={form} setFileData={setFileData} />
-          <InternalDocument
-            isInternalDoc={isInternalDoc}
-            setIsInternalDoc={setIsInternalDoc}
-            oldVersion={oldVersion}
-            handleCheckBoxChange={handleCheckBoxChange}
-          />
+          <InternalDocument oldVersion={oldVersion} />
         </div>
 
         <div className="flex grow space-x-3">
@@ -234,16 +221,15 @@ function UploadItem(props: any) {
 }
 
 function InternalDocument(props: any) {
-  const { isInternalDoc, oldVersion, handleCheckBoxChange } = props;
+  const { oldVersion } = props;
+
   return (
-    <Form.Item className="grow" name="internal_document">
-      Internal Document&nbsp;{' '}
-      <Checkbox
-        disabled={oldVersion ? true : false}
-        checked={isInternalDoc}
-        onChange={handleCheckBoxChange}
-      />
-    </Form.Item>
+    <>
+      <div className="mt-1">Internal Document&nbsp;</div>
+      <Form.Item valuePropName="checked" className="grow" name="internal_document">
+        <Checkbox disabled={oldVersion ? true : false} />
+      </Form.Item>
+    </>
   );
 }
 
