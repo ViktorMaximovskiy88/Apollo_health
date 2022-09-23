@@ -227,7 +227,7 @@ python-versions = ">= 3.7"
 version = "1.24.18"
 
 [package.dependencies]
-botocore = ">=1.27.79,<1.28.0"
+botocore = ">=1.27.18,<1.28.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.6.0,<0.7.0"
 
@@ -720,6 +720,7 @@ identitystore = ["mypy-boto3-identitystore (>=1.24.0,<1.25.0)"]
 imagebuilder = ["mypy-boto3-imagebuilder (>=1.24.0,<1.25.0)"]
 importexport = ["mypy-boto3-importexport (>=1.24.0,<1.25.0)"]
 inspector = ["mypy-boto3-inspector (>=1.24.0,<1.25.0)"]
+inspector2 = ["mypy-boto3-inspector2 (>=1.24.0,<1.25.0)"]
 iot = ["mypy-boto3-iot (>=1.24.0,<1.25.0)"]
 iot-data = ["mypy-boto3-iot-data (>=1.24.0,<1.25.0)"]
 iot-jobs-data = ["mypy-boto3-iot-jobs-data (>=1.24.0,<1.25.0)"]
@@ -910,7 +911,7 @@ python-dateutil = ">=2.1,<3.0.0"
 urllib3 = ">=1.25.4,<1.27"
 
 [package.extras]
-crt = ["awscrt (==0.14.0)"]
+crt = ["awscrt (==0.13.8)"]
 
 [[package]]
 category = "dev"
@@ -921,7 +922,7 @@ python-versions = ">=3.6"
 version = "1.27.18"
 
 [package.dependencies]
-types-awscrt = "*"
+typing-extensions = ">=4.1.0"
 
 [[package]]
 category = "main"
@@ -1035,7 +1036,7 @@ cffi = ">=1.12"
 docs = ["sphinx (>=1.6.5,!=1.8.0,!=3.1.0,!=3.1.1)", "sphinx-rtd-theme"]
 docstest = ["pyenchant (>=1.6.11)", "twine (>=1.12.0)", "sphinxcontrib-spelling (>=4.0.1)"]
 pep8test = ["black", "flake8", "flake8-import-order", "pep8-naming"]
-sdist = ["setuptools-rust (>=0.11.4)"]
+sdist = ["setuptools_rust (>=0.11.4)"]
 ssh = ["bcrypt (>=3.1.5)"]
 test = [
   "pytest (>=6.2.0)",
@@ -1216,8 +1217,8 @@ python-versions = ">=3.7"
 version = "3.7.1"
 
 [package.extras]
-docs = ["furo (>=2022.6.21)", "sphinx (>=5.1.1)", "sphinx-autodoc-typehints (>=1.19.1)"]
-testing = ["covdefaults (>=2.2)", "coverage (>=6.4.2)", "pytest (>=7.1.2)", "pytest-cov (>=3)", "pytest-timeout (>=2.1)"]
+docs = ["furo (>=2021.8.17b43)", "sphinx (>=4.1)", "sphinx-autodoc-typehints (>=1.12)"]
+testing = ["covdefaults (>=1.2.0)", "coverage (>=4)", "pytest (>=4)", "pytest-cov", "pytest-timeout (>=1.4.2)"]
 
 [[package]]
 category = "dev"
@@ -1468,6 +1469,7 @@ version = "4.0.0"
 [package.dependencies]
 packaging = "*"
 sentinels = "*"
+six = "*"
 
 [[package]]
 category = "main"
@@ -1668,7 +1670,7 @@ python-dateutil = ">=2.8.1"
 pytz = ">=2020.1"
 
 [package.extras]
-test = ["pytest-xdist (>=1.31)", "pytest (>=6.0)", "hypothesis (>=5.5.3)"]
+test = ["hypothesis (>=5.5.3)", "pytest (>=6.0)", "pytest-xdist (>=1.31)"]
 
 [[package]]
 category = "main"
@@ -1701,14 +1703,14 @@ python-versions = ">= 3.6"
 version = "0.6.1"
 
 [package.dependencies]
-smart-open = ">=5.2.1,<6.0.0"
+smart-open = ">=5.0.0,<6.0.0"
 typer = ">=0.3.0,<1.0.0"
 
 [package.extras]
-all = ["typer-cli", "mock", "pytest-coverage", "pytest", "boto3", "google-cloud-storage (>=1.26.0,<2.0.0)"]
+all = ["google-cloud-storage (>=1.26.0,<2.0.0)", "boto3", "pytest", "pytest-coverage", "mock", "typer-cli"]
 gcs = ["google-cloud-storage (>=1.26.0,<2.0.0)"]
 s3 = ["boto3"]
-test = ["typer-cli", "mock", "pytest-coverage", "pytest"]
+test = ["pytest", "pytest-coverage", "mock", "typer-cli"]
 
 [[package]]
 category = "main"
@@ -1781,7 +1783,7 @@ python-versions = ">=3.7"
 version = "1.22.0"
 
 [package.dependencies]
-greenlet = "1.1.3"
+greenlet = "1.1.2"
 pyee = "8.1.0"
 websockets = "10.1"
 
@@ -1802,8 +1804,8 @@ python-versions = ">=3.6"
 version = "1.0.0"
 
 [package.extras]
-dev = ["tox", "pre-commit"]
-testing = ["pytest-benchmark", "pytest"]
+dev = ["pre-commit", "tox"]
+testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 category = "dev"
@@ -1950,7 +1952,6 @@ version = "2.4.0"
 
 [package.dependencies]
 cryptography = {version = ">=3.3.1", optional = true, markers = "extra == \"crypto\""}
-types-cryptography = {version = ">=3.3.21", optional = true, markers = "extra == \"crypto\""}
 
 [package.extras]
 crypto = ["cryptography (>=3.3.1)"]
@@ -1997,11 +1998,8 @@ python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
 version = "1.0.2"
 
 [package.dependencies]
-boto3 = "*"
 botocore = "*"
-
-[package.extras]
-test = ["pymongo"]
+requests = "<3.0.0"
 
 [[package]]
 category = "main"
@@ -2042,6 +2040,7 @@ python-versions = ">=3.7"
 version = "7.1.2"
 
 [package.dependencies]
+atomicwrites = {version = ">=1.0", markers = "sys_platform == \"win32\""}
 attrs = ">=19.2.0"
 colorama = {version = "*", markers = "sys_platform == \"win32\""}
 iniconfig = "*"
@@ -2170,13 +2169,13 @@ version = "2.25.1"
 
 [package.dependencies]
 certifi = ">=2017.4.17"
-charset-normalizer = ">=2,<3"
-idna = ">=2.5,<4"
+chardet = ">=3.0.2,<5"
+idna = ">=2.5,<3"
 urllib3 = ">=1.21.1,<1.27"
 
 [package.extras]
-socks = ["PySocks (>=1.5.6,!=1.5.7)"]
-use_chardet_on_py3 = ["chardet (>=3.0.2,<6)"]
+security = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)"]
+socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
 
 [[package]]
 category = "main"
@@ -2244,7 +2243,7 @@ python-versions = ">=3.8,<3.11"
 version = "1.8.1"
 
 [package.dependencies]
-numpy = ">=1.18.5,<1.25.0"
+numpy = ">=1.17.3,<1.25.0"
 
 [[package]]
 category = "main"
@@ -2451,9 +2450,8 @@ python-versions = ">=3.6"
 version = "8.1.0"
 
 [package.dependencies]
-blis = ">=0.7.8,<0.10.0"
+blis = ">=0.7.8,<0.8.0"
 catalogue = ">=2.0.4,<2.1.0"
-confection = ">=0.0.1,<1.0.0"
 cymem = ">=2.0.2,<2.1.0"
 murmurhash = ">=1.0.2,<1.1.0"
 numpy = ">=1.15.0"
@@ -2584,7 +2582,7 @@ version = "1.26.9"
 
 [package.extras]
 brotli = ["brotlicffi (>=0.8.0)", "brotli (>=1.0.9)", "brotlipy (>=0.6.0)"]
-secure = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "certifi", "urllib3-secure-extra", "ipaddress"]
+secure = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "certifi", "ipaddress"]
 socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
@@ -2641,15 +2639,7 @@ dev = [
   "mypy (>=0.800)",
 ]
 docs = ["Sphinx (>=4.1.2,<4.2.0)", "sphinxcontrib-asyncio (>=0.3.0,<0.4.0)", "sphinx-rtd-theme (>=0.5.2,<0.6.0)"]
-test = [
-  "flake8 (>=3.9.2,<3.10.0)",
-  "psutil",
-  "pycodestyle (>=2.7.0,<2.8.0)",
-  "pyOpenSSL (>=22.0.0,<22.1.0)",
-  "mypy (>=0.800)",
-  "Cython (>=0.29.32,<0.30.0)",
-  "aiohttp",
-]
+test = ["aiohttp", "flake8 (>=3.9.2,<3.10.0)", "psutil", "pycodestyle (>=2.7.0,<2.8.0)", "pyOpenSSL (>=19.0.0,<19.1.0)", "mypy (>=0.800)"]
 
 [[package]]
 category = "dev"
@@ -2660,9 +2650,10 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 version = "20.15.1"
 
 [package.dependencies]
-distlib = ">=0.3.5,<1"
-filelock = ">=3.4.1,<4"
-platformdirs = ">=2.4,<3"
+distlib = ">=0.3.1,<1"
+filelock = ">=3.2,<4"
+platformdirs = ">=2,<3"
+six = ">=1.9.0,<2"
 
 [package.extras]
 docs = ["proselint (>=0.10.2)", "sphinx (>=3)", "sphinx-argparse (>=0.2.5)", "sphinx-rtd-theme (>=0.4.3)", "towncrier (>=21.3)"]
@@ -4065,10 +4056,11 @@ scispacy = []
 sentinels = [
   {file = "sentinels-1.0.0.tar.gz", hash = "sha256:7be0704d7fe1925e397e92d18669ace2f619c92b5d4eb21a89f31e026f9ff4b1"},
 ]
-smart-open = [
-  {file = "smart_open-5.2.1-py3-none-any.whl", hash = "sha256:71d14489da58b60ce12fc3ecb823facc59a8b23cd1b58edb97175640350d3a62"},
-  {file = "smart_open-5.2.1.tar.gz", hash = "sha256:75abf758717a92a8f53aa96953f0c245c8cedf8e1e4184903db3659b419d4c17"},
+six = [
+  {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
+  {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
 ]
+smart-open = []
 sniffio = [
   {file = "sniffio-1.2.0-py3-none-any.whl", hash = "sha256:471b71698eac1c2112a40ce2752bb2f4a4814c22a54a3eed3676bc0f5ca9f663"},
   {file = "sniffio-1.2.0.tar.gz", hash = "sha256:c4666eecec1d3f50960c6bdf61ab7bc350648da6c126e3cf6898d8cd4ddcd3de"},
@@ -4086,6 +4078,7 @@ tenacity = [
   {file = "tenacity-8.0.1-py3-none-any.whl", hash = "sha256:f78f4ea81b0fabc06728c11dc2a8c01277bfc5181b321a4770471902e3eb844a"},
   {file = "tenacity-8.0.1.tar.gz", hash = "sha256:43242a20e3e73291a28bcbcacfd6e000b02d3857a9a9fff56b297a27afdc932f"},
 ]
+thinc = []
 threadpoolctl = [
   {file = "threadpoolctl-3.1.0-py3-none-any.whl", hash = "sha256:8b99adda265feb6773280df41eece7b2e6561b772d21ffd52e372f999024907b"},
   {file = "threadpoolctl-3.1.0.tar.gz", hash = "sha256:a335baacfaa4400ae1f0d8e3a58d6674d2f8828e3716bb2802c44955ad391380"},
