@@ -142,7 +142,7 @@ class LineageService:
         for item in items:
             match = LineageMatcher(first_item, item, logger=self.logger).exec()
             if match:
-                self.logger.info(f"MATCHED {first_item.filename_text} {item.filename_text}")
+                self.logger.info(f"'{first_item.filename_text}' '{item.filename_text}' -> MATCHED")
 
                 if item.lineage_id:
                     first_item.lineage_id = item.lineage_id
@@ -153,7 +153,9 @@ class LineageService:
                 matched.append(item)
 
             else:
-                self.logger.info(f"UNMATCHED {first_item.filename_text} {item.filename_text}")
+                self.logger.info(
+                    f"'{first_item.filename_text}' '{item.filename_text}' -> UNMATCHED"
+                )
                 unmatched.append(item)
 
         # Theoretically unmatched shouldnt be matched with previous, so lets assign prev doc here
@@ -236,17 +238,18 @@ async def build_doc_analysis(doc: SiteRetrievedDocument) -> DocumentAnalysis:
 
     doc_analysis = await DocumentAnalysis.find_one({"retrieved_document_id": doc.id})
 
-    if not doc_analysis:
+    if doc_analysis is None:
         doc_analysis = DocumentAnalysis(
             retrieved_document_id=doc.id,
-            name=doc.name,
             site_id=doc.site_id,
-            final_effective_date=calc_final_effective_date(doc),
-            document_type=doc.document_type,
-            element_text=doc.link_text,
-            file_size=doc.file_size,
-            doc_vectors=doc.doc_vectors,
         )
+
+    doc_analysis.name = doc.name
+    doc_analysis.final_effective_date = calc_final_effective_date(doc)
+    doc_analysis.document_type = doc.document_type
+    doc_analysis.element_text = doc.link_text
+    doc_analysis.file_size = doc.file_size
+    doc_analysis.doc_vectors = doc.doc_vectors
 
     doc_analysis.focus_therapy_tags = get_unique_focus_tags(doc.therapy_tags)
     doc_analysis.ref_therapy_tags = get_unique_reference_tags(doc.therapy_tags)
