@@ -12,7 +12,6 @@ import {
   message,
   Checkbox,
 } from 'antd';
-import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 
 import { useForm } from 'antd/lib/form/Form';
 import { UploadChangeParam } from 'antd/lib/upload';
@@ -79,7 +78,6 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
         newDocument.internal_document = oldVersion.internal_document;
       }
       fileData.metadata.link_text = newDocument.link_text;
-      console.log(newDocument);
       delete newDocument.link_text;
       delete newDocument.document_file;
       await addDoc({
