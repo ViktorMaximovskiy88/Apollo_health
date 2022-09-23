@@ -1,10 +1,20 @@
 from datetime import datetime
 
 from beanie import PydanticObjectId
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from backend.common.core.enums import LangCode
 from backend.common.models.base_document import BaseDocument
+
+
+class LineageDoc(BaseModel):
+    id: PydanticObjectId = Field(None, alias="_id")
+    name: str
+    previous_doc_id: PydanticObjectId | None
+    is_current_version: bool
+    lineage_id: PydanticObjectId
+    file_extension: str
+    checksum: str
 
 
 class DocumentAttrs(BaseModel):
@@ -23,6 +33,7 @@ class DocumentAnalysis(BaseDocument):
     lineage_id: PydanticObjectId | None
     is_current_version: bool = False
 
+    name: str | None
     state_abbr: str | None
     state_name: str | None
     year_part: int | None
@@ -39,7 +50,7 @@ class DocumentAnalysis(BaseDocument):
 
     # doc info
     document_type: str | None
-    effective_date: datetime | None
+    final_effective_date: datetime | None
     file_size: int | None
 
     focus_therapy_tags: list[int] = []

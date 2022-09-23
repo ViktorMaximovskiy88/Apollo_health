@@ -14,6 +14,7 @@ class LineageMatcher:
         self.doc_a = doc_a
         self.doc_b = doc_b
 
+        self.name_text_match = jarowinkler_similarity(doc_a.name, doc_b.name)
         self.element_text_match = jarowinkler_similarity(doc_a.element_text, doc_b.element_text)
         self.logger.debug(f"element_text_match={self.element_text_match}")
 
@@ -44,18 +45,26 @@ class LineageMatcher:
         self.focus_therapy_match = jaccard(doc_a.focus_therapy_tags, doc_b.focus_therapy_tags)
         self.logger.debug(f"focus_therapy_match={self.focus_therapy_match}")
 
-        self.cosine_similarity = 1 - spatial.distance.cosine(
-            self.doc_a.doc_vectors[0],
-            self.doc_b.doc_vectors[0],
-        )
-        print(f"self.cosine_similarity={self.cosine_similarity}")
-
-        self.euclidean_distance = spatial.distance.euclidean(
-            self.doc_a.doc_vectors[0],
-            self.doc_b.doc_vectors[0],
-        )
-
-        print(f"self.euclidean_distance={self.euclidean_distance}")
+        if len(self.doc_a.doc_vectors) == 0 or len(self.doc_b.doc_vectors) == 0:
+            self.logger.info(
+                f"EMPTY VECTOR len(self.doc_a.doc_vectors)={len(self.doc_a.doc_vectors)}"
+            )
+            self.logger.info(
+                f"EMPTY VECTOR len(self.doc_b.doc_vectors)={len(self.doc_b.doc_vectors)}"
+            )
+            self.cosine_similarity = 0
+            self.euclidean_distance = 100
+        else:
+            self.cosine_similarity = 1 - spatial.distance.cosine(
+                self.doc_a.doc_vectors[0],
+                self.doc_b.doc_vectors[0],
+            )
+            print(f"self.cosine_similarity={self.cosine_similarity}")
+            self.euclidean_distance = spatial.distance.euclidean(
+                self.doc_a.doc_vectors[0],
+                self.doc_b.doc_vectors[0],
+            )
+            print(f"self.euclidean_distance={self.euclidean_distance}")
 
     def exec(self) -> bool:
         if self.doc_a.id == self.doc_b.id:
@@ -84,9 +93,8 @@ class LineageMatcher:
     # same base url, same url, same doc, new doc revision/updated
     def revised_document(self):
         return (
-            # url exact match
-            self.filename_match == 1
-            and self.pathname_match == 1
+            # same name or url exact match
+            (self.name_text_match == 1 or (self.filename_match == 1 and self.pathname_match == 1))
             # focus exact match
             and self.focus_therapy_match == 1
             and self.focus_indication_match == 1

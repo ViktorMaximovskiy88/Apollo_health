@@ -5,7 +5,6 @@ import { SiteForm } from './form/SiteForm';
 import { useGetSiteQuery, useUpdateSiteMutation } from './sitesApi';
 import { useCancelAllSiteScrapeTasksMutation } from '../collections/siteScrapeTasksApi';
 import { MainLayout } from '../../components';
-import { SiteStatus } from './siteStatus';
 import { useCurrentUser } from '../../common/hooks/use-current-user';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { useEffect } from 'react';
@@ -77,7 +76,7 @@ export function SiteEditPage() {
     navigate(-1);
   }
   return (
-    <MainLayout pageTitle={'Edit Site'} sidebar={<SiteMenu />}>
+    <MainLayout sidebar={<SiteMenu />}>
       <SiteForm onFinish={tryUpdateSite} initialValues={initialValues} />
     </MainLayout>
   );
