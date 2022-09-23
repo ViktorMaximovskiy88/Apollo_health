@@ -43,18 +43,23 @@ class FocusChecker:
         focus_areas = []
         for config in self.focus_configs:
             last_match = 0
-            if not config.start_separator:
-                continue
+            start = 0
             while True:
-                match = text_lower.find(config.start_separator.lower(), last_match)
+                if not config.start_separator:
+                    match = 0
+                else:
+                    match = text_lower.find(config.start_separator.lower(), last_match)
                 if match > -1:
-                    start = match + len(config.start_separator)
+                    if config.start_separator:
+                        start = match + len(config.start_separator or "")
                     end = len(self.full_text) - 1
                     if config.end_separator:
                         end_match = text_lower.find(config.end_separator.lower(), start)
                         end = end_match if end_match > -1 else end
                     focus_areas.append(FocusArea(start=start, end=end))
                     last_match = end
+                    if not config.start_separator:
+                        break
                 else:
                     break
         return focus_areas
