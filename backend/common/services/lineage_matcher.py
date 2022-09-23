@@ -16,23 +16,33 @@ class LineageMatcher:
 
         self.name_text_match = jarowinkler_similarity(doc_a.name, doc_b.name)
         self.element_text_match = jarowinkler_similarity(doc_a.element_text, doc_b.element_text)
-        self.logger.debug(f"element_text_match={self.element_text_match}")
+        self.logger.info(
+            f"'{self.doc_a.name}' '{self.doc_b.name}' element_text_match={self.element_text_match}"
+        )
 
         self.parent_text_match = jarowinkler_similarity(doc_a.parent_text, doc_b.parent_text)
-        self.logger.debug(f"parent_text_match={self.parent_text_match}")
+        self.logger.info(
+            f"'{self.doc_a.name}' '{self.doc_b.name}' parent_text_match={self.parent_text_match}"
+        )
 
         self.siblings_text_match = jarowinkler_similarity(doc_a.siblings_text, doc_b.siblings_text)
-        self.logger.debug(f"siblings_text_match={self.siblings_text_match}")
+        self.logger.info(
+            f"'{self.doc_a.name}' '{self.doc_b.name}' siblings_text_match={self.siblings_text_match}"
+        )
 
         # raw url matches
         self.filename_match = jaccard(doc_a.filename_tokens, doc_b.filename_tokens)
         self.pathname_match = jaccard(doc_a.pathname_tokens, doc_b.pathname_tokens)
 
         self.filename_match = jaccard(doc_a.filename_tokens, doc_b.filename_tokens)
-        self.logger.debug(f"filename_match={self.filename_match}")
+        self.logger.info(
+            f"'{self.doc_a.name}' '{self.doc_b.name}' filename_match={self.filename_match}"
+        )
 
         self.pathname_match = jaccard(doc_a.pathname_tokens, doc_b.pathname_tokens)
-        self.logger.debug(f"pathname_match={self.pathname_match}")
+        self.logger.info(
+            f"'{self.doc_a.name}' '{self.doc_b.name}' pathname_match={self.pathname_match}"
+        )
 
         self.ref_indication_match = jaccard(doc_a.ref_indication_tags, doc_b.ref_indication_tags)
         self.focus_indication_match = jaccard(
@@ -40,18 +50,18 @@ class LineageMatcher:
         )
 
         self.ref_therapy_match = jaccard(doc_a.ref_therapy_tags, doc_b.ref_therapy_tags)
-        self.logger.debug(f"ref_therapy_match={self.ref_therapy_match}")
+        self.logger.info(
+            f"'{self.doc_a.name}' '{self.doc_b.name}' ref_therapy_match={self.ref_therapy_match}"
+        )
 
         self.focus_therapy_match = jaccard(doc_a.focus_therapy_tags, doc_b.focus_therapy_tags)
-        self.logger.debug(f"focus_therapy_match={self.focus_therapy_match}")
+        self.logger.info(
+            f"'{self.doc_a.name}' '{self.doc_b.name}' focus_therapy_match={self.focus_therapy_match}"
+        )
 
         if len(self.doc_a.doc_vectors) == 0 or len(self.doc_b.doc_vectors) == 0:
-            self.logger.info(
-                f"EMPTY VECTOR len(self.doc_a.doc_vectors)={len(self.doc_a.doc_vectors)}"
-            )
-            self.logger.info(
-                f"EMPTY VECTOR len(self.doc_b.doc_vectors)={len(self.doc_b.doc_vectors)}"
-            )
+            self.logger.info(f"'{self.doc_a.name}' len(doc_vectors)={len(self.doc_a.doc_vectors)}")
+            self.logger.info(f"'{self.doc_b.name}' len(doc_vectors)={len(self.doc_b.doc_vectors)}")
             self.cosine_similarity = 0
             self.euclidean_distance = 100
         else:
@@ -59,12 +69,16 @@ class LineageMatcher:
                 self.doc_a.doc_vectors[0],
                 self.doc_b.doc_vectors[0],
             )
-            print(f"self.cosine_similarity={self.cosine_similarity}")
+            self.logger.info(
+                f"'{self.doc_a.name}' '{self.doc_b.name}' self.cosine_similarity={self.cosine_similarity}"
+            )
             self.euclidean_distance = spatial.distance.euclidean(
                 self.doc_a.doc_vectors[0],
                 self.doc_b.doc_vectors[0],
             )
-            print(f"self.euclidean_distance={self.euclidean_distance}")
+            self.logger.info(
+                f"'{self.doc_a.name}' '{self.doc_b.name}' self.euclidean_distance={self.euclidean_distance}"
+            )
 
     def exec(self) -> bool:
         if self.doc_a.id == self.doc_b.id:
@@ -73,8 +87,7 @@ class LineageMatcher:
         rule_sets = [
             "revised_document",
             "updated_document",
-            "score_cosine_similarity",
-            "score_euclidean_distance",
+            "similar_rule",
         ]
         match = False
 
@@ -82,7 +95,9 @@ class LineageMatcher:
             rule = getattr(self, rule_set)
             match = rule()
             if match:
-                self.logger.info(f"matched rule '{rule_set}'")
+                self.logger.info(
+                    f"'{self.doc_a.name}' '{self.doc_b.name}' matched rule '{rule_set}'"
+                )
                 break
 
         return match
@@ -98,6 +113,7 @@ class LineageMatcher:
             # focus exact match
             and self.focus_therapy_match == 1
             and self.focus_indication_match == 1
+            and self.state_abbr_rule()
         )
 
     # same base url, update date parts in url, new version/publish
@@ -106,7 +122,25 @@ class LineageMatcher:
             (self.filename_match >= 0.60 or self.element_text_match >= 0.90)
             and self.ref_indication_match >= 0.85
             and self.focus_therapy_match == 1
+            and self.state_abbr_rule()
         )
+
+    def require_state_abbr(self):
+        return self.doc_a.state_abbr or self.doc_a.state_abbr
+
+    def state_abbr_match(self):
+        return self.doc_a.state_abbr == self.doc_b.state_abbr
+
+    def require_year_part(self):
+        return self.doc_a.year_part and self.doc_a.year_part
+
+    def state_abbr_rule(self):
+        return (
+            self.require_state_abbr() and self.state_abbr_match()
+        ) or not self.require_state_abbr()
+
+    def similar_rule(self):
+        return self.euclidean_distance < 2 and self.state_abbr_rule() and self.require_year_part()
 
     def score_euclidean_distance(self):
         return self.euclidean_distance < 2
