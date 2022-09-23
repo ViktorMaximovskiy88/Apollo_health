@@ -118,7 +118,7 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     therapy_tags: list[UpdateTherapyTag] | None = None
     indication_tags: list[UpdateIndicationTag] | None = None
     tags: list[str] | None = None
-
+    internal_document: bool | None = None
     translation_id: PydanticObjectId | None = None
     content_extraction_task_id: PydanticObjectId | None = None
     content_extraction_status: ApprovalStatus = ApprovalStatus.QUEUED
