@@ -84,7 +84,7 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
         dataSource: InternalDocs,
       },
       render: ({ value: internal_document }: { value: boolean }) => {
-        return <>{internal_document ? <CheckCircleFilled /> : null}</>;
+        return internal_document ? <CheckCircleFilled /> : null;
       },
     },
     {
