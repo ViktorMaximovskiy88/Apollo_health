@@ -12,6 +12,7 @@ from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import Site
 from backend.common.storage.client import DocumentStorageClient, TextStorageClient
 from backend.common.storage.hash import hash_full_text
+from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.document_tagging.indication_tagging import IndicationTagger
 from backend.scrapeworker.document_tagging.therapy_tagging import TherapyTagger
 from backend.scrapeworker.file_parsers import docx, html, pdf, text, xlsx
@@ -41,6 +42,8 @@ class ReTagger:
         link_text = location.link_text
         url = location.url
         doc_text = await self.get_text(doc, rdoc, url, link_text, focus_config)
+        _doc_type, _confidence, doc_vectors = classify_doc_type(doc_text)
+
         therapy_tags = await self.therapy.tag_document(
             doc_text, document_type, url, link_text, focus_config
         )
@@ -50,6 +53,7 @@ class ReTagger:
             "$set": {
                 "therapy_tags": [t.dict() for t in therapy_tags],
                 "indication_tags": [i.dict() for i in indication_tags],
+                "doc_vectors": doc_vectors.tolist(),
             }
         }
         up1 = RetrievedDocument.get_motor_collection().find_one_and_update({"_id": rdoc.id}, update)
