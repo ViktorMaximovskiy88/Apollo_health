@@ -1,0 +1,314 @@
+import asyncio
+import logging
+import os
+import re
+from urllib.parse import urljoin
+from functools import cached_property
+
+from playwright._impl._api_structures import SetCookieParam
+from playwright.async_api import Download, ElementHandle, Locator
+from playwright.async_api import Request as RouteRequest
+from playwright.async_api import Route
+from playwright.async_api import Request as PageRequest
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
+
+from backend.common.models.site import AttrSelector
+from backend.scrapeworker.common.models import DownloadContext, Metadata, Request, Response
+from backend.scrapeworker.common.selectors import filter_by_href, to_xpath
+from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
+
+
+class AspNetWebFormScraper(PlaywrightBaseScraper):
+
+    type: str = "AspNetWebForm"
+    requests: list[Request | None] = []
+    metadatas: list[Metadata] = []
+    downloads: list[DownloadContext] = []
+    links_found: int = 0
+    last_metadata_index: int = 0
+
+    @cached_property
+    def css_selector(self) -> str:
+        href_selectors = filter_by_href(
+            url_keywords=self.config.url_keywords,
+        )
+        return ", ".join(href_selectors)
+
+    @cached_property
+    def xpath_selector(self) -> str:
+        selectors = []
+        for attr_selector in self.config.attr_selectors:
+            if not attr_selector.resource_address:
+                selectors.append(to_xpath(attr_selector))
+        selector_string = "|".join(selectors)
+        self.log.info(selector_string)
+        return selector_string
+
+    async def __setup(self):
+        cookie: SetCookieParam = {
+            "name": "AspxAutoDetectCookieSupport",
+            "value": "1",
+            "domain": self.parsed_url.hostname,
+            "path": "/",
+            "httpOnly": True,
+            "secure": True,
+        }
+
+        await self.context.add_cookies([cookie])
+
+    async def __gather(self):
+        self.link_handles = await self.page.query_selector_all(self.css_selector)
+        self.links_found = len(self.link_handles)
+
+        link_handle: ElementHandle
+        for index, link_handle in enumerate(self.link_handles):
+            metadata = await self.extract_metadata(link_handle)
+            self.metadatas.append(metadata)
+
+    async def __interact(self) -> None:
+        element_id: str
+        self.log.info(f"interacting {self.url}")
+
+        async def intercept(route: Route, request: RouteRequest):
+            print("intercepting")
+            # Handle post
+            if self.url in request.url and request.method == "POST":
+                self.log.info(f"queueing {element_id}")
+                self.requests.append(
+                    Request(
+                        url=request.url,
+                        method=request.method,
+                        headers=request.headers,
+                        data=request.post_data,
+                        filename=element_id,
+                    )
+                )
+                await route.continue_()
+            else:
+                await route.abort()
+
+        async def postprocess_download(download: Download) -> None:
+            accepted_types = [".pdf", ".xls", ".xlsx", ".doc", ".docx"]
+            try:
+                # Response may not always have content-type header.
+                # Use filename ext instead.
+                # suggested_filename='PriorAuthorization.pdf'
+                filename, file_extension = os.path.splitext(download.suggested_filename)
+                if file_extension in accepted_types:
+                    self.log.debug(f"asp -> direct download: {filename}.{file_extension}")
+                    download = DownloadContext(
+                        response=Response(content_type=None),
+                        request=Request(
+                            url=download.url,
+                        ),
+                    )
+                    download.metadata = await self.extract_metadata(link_handle)
+                    self.downloads.append(download)
+                else:
+                    self.log.debug(f"unknown download extension: {file_extension}")
+                    return None
+            except Exception:
+                logging.error("exception", exc_info=True)
+
+        async def postprocess_request(request: PageRequest) -> None:
+            accepted_types = [
+                "application/pdf",
+                "application/vnd.ms-excel",
+                "application/msword",
+            ]
+            print("processing request")
+            try:
+                print(request)
+                # await request.finished()
+                # download = await self.handle_json(response)
+                # if (
+                #     isinstance(download, DownloadContext)
+                #     and download.content_type in accepted_types
+                # ):
+                #     download.metadata = await self.extract_metadata(link_handle)
+                #     downloads.append(download)
+                # else:
+                #     self.log.debug(f"Unknown json response: {response.headers}")
+                #     return None
+            except Exception:
+                logging.error("exception", exc_info=True)
+
+    async def queue_downloads(
+        self,
+        downloads: list[DownloadContext],
+        link_handles: list[ElementHandle],
+        base_url: str,
+        resource_attr: str = "href",
+    ) -> None:
+        link_handle: ElementHandle
+        for link_handle in link_handles:
+            print("DIRECT DOWNLOADING")
+            metadata: Metadata = await self.extract_metadata(link_handle, resource_attr)
+            downloads.append(
+                DownloadContext(
+                    metadata=metadata,
+                    request=Request(
+                        url=urljoin(
+                            base_url,
+                            metadata.resource_value,
+                        ),
+                    ),
+                )
+            )
+
+        async def click_with_backoff(locator: Locator, max_retries: int = 2) -> None:
+            for retry in range(0, max_retries + 1):
+                try:
+                    timeout = 30000
+                    if retry > 0:
+                        wait = (retry + 1) ** 3
+                        timeout *= retry
+                        await asyncio.sleep(wait)
+                    await locator.click(timeout=timeout)
+                    return
+                except PlaywrightTimeoutError:
+                    if retry == max_retries:
+                        self.log.info(f"Max retries reached {element_id}")
+                    continue
+            return
+
+        await self.page.route("**/*", intercept)
+
+        if self.config.attr_selectors:
+            print("HEY")
+            self.page.on("download", postprocess_download)
+            xpath_locator = self.page.locator(self.xpath_selector)
+            print(xpath_locator)
+            xpath_locator_count = await xpath_locator.count()
+            print(xpath_locator_count)
+            for index in range(0, xpath_locator_count):
+                print("DOWNLOADING")
+                try:
+                    link_handle = await xpath_locator.nth(index).element_handle(timeout=1000)
+                    # await click_with_backoff(locator)
+                    await link_handle.click()
+                    await asyncio.sleep(0.25)
+                except Exception:
+                    logging.error("exception", exc_info=True)
+                    await self.page.goto(self.url)
+        else:
+            # self.page.on("download", lambda download: download.cancel())
+            # self.page.on("download", postprocess_download)
+            self.page.on("requestfinished", postprocess_request)
+
+            metadata: Metadata
+            downloads: list[DownloadContext] = []
+
+            # css_locator = self.page.locator(self.css_selector)
+            # print(css_locator)
+            # css_locator_count = await css_locator.count()
+            # print(css_locator_count)
+
+            link_handles = await self.page.query_selector_all(self.css_selector)
+            await self.queue_downloads(downloads, link_handles, self.page.url)
+
+            for index in range(0, css_locator_count):
+                try:
+                    await self.queue_downloads(downloads, link_handles, self.page.url, attr_name)
+                    link_handle = await css_locator.nth(index).element_handle(timeout=1000)
+                    metadata: Metadata = await self.extract_metadata(link_handle, "href")
+                    downloads.append(
+                        DownloadContext(
+                            metadata=metadata,
+                            request=Request(
+                                url=urljoin(
+                                    self.page.url,
+                                    metadata.resource_value,
+                                ),
+                            ),
+                        )
+                    )
+                    # await downloads
+                    # print("CLICKING")
+                    # print(link_handle)
+                    # # await click_with_backoff(locator)
+                    # await link_handle.click()
+                    # await asyncio.sleep(0.25)
+                except Exception:
+                    logging.error("exception", exc_info=True)
+
+            # for index, link_handle in enumerate(self.link_handles):
+            #     try:
+            #         await link_handle.click()
+            #         await asyncio.sleep(0.25)
+            #     except Exception:
+            #         logging.error("exception", exc_info=True)
+            # print(link_handle.
+            # await link_handle.click()
+            # downloads.append(
+            #     DownloadContext(
+            #         metadata=metadata,
+            #         request=Request(
+            #             url=urljoin(
+            #                 base_url,
+            #                 metadata.resource_value,
+            #             ),
+            #         ),
+            #     )
+            # )
+            # link_handle = await xpath_locator.nth(index).element_handle(timeout=1000)
+            # await click_with_backoff(locator)
+            # await link_handle.click()
+            # locator: Locator = self.page.locator(link_handle)
+            # await click_with_backoff(locator)
+
+            # for index, metadata in enumerate(self.metadatas):
+            #     # link_text='BI464:00' element_id=None closest_heading='QualChoice Members' resource_value='https://documents.qualchoice.com/area/shared/PrintPolicy.aspx?mp=14' base_url=None playbook_context=[]
+            #     print("metadata is")
+            #     print(metadata)
+            #     if metadata.element_id:
+            #         element_id = re.sub(r"(?u)[^-\w.]", "_", metadata.element_id)
+            #         locator: Locator = self.page.locator(f"#{metadata.element_id}")
+            #     elif metadata.resource_value:
+            #         # downloads.append(
+            #         #     DownloadContext(
+            #         #         metadata=metadata,
+            #         #         request=Request(
+            #         #             url=urljoin(
+            #         #                 base_url,
+            #         #                 metadata.resource_value,
+            #         #             ),
+            #         #         ),
+            #         #     )
+            #         # )
+            #         # attr_selector = AttrSelector(
+            #         #     attr_name="href", attr_value=metadata.resource_value
+            #         # )
+            #         # selector = to_xpath(attr_selector)
+            #         # locator: Locator = self.page.locator(selector)
+            #         # "span", has_text="playwright"
+            #         # attr_selector = AttrSelector(attr_name="a", has_text=f"#{metadata.link_text}")
+            #         # selector = to_xpath(attr_selector)
+            #         a[href*="tbm=isch"]
+            #         locator: Locator = self.page.locator("href", has_text=metadata.resource_value)
+            # locator: Locator = self.page.locator("a", has_text=metadata.resource_value)
+            # else:
+            #     continue
+            # await click_with_backoff(locator)
+
+            await self.page.unroute("**/*", intercept)
+
+    async def __process(self):
+        print("processing request")
+        for index, request in enumerate(self.requests):
+            if request:
+                self.downloads.append(
+                    DownloadContext(
+                        metadata=self.metadatas[index],
+                        request=request,
+                    )
+                )
+
+    async def execute(self) -> list[DownloadContext]:
+
+        await self.__setup()
+        await self.__gather()
+        await self.__interact()
+        await self.__process()
+
+        return self.downloads
