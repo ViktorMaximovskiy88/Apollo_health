@@ -96,6 +96,8 @@ class UpdateRetrievedDocument(BaseModel, DocumentMixins):
     automated_content_extraction_class: str | None = None
 
     locations: list[RetrievedDocumentLocation] = []
+    doc_vectors: list[list[float]] = []
+    file_size: int = 0
 
 
 class RetrievedDocumentLimitTags(RetrievedDocument):

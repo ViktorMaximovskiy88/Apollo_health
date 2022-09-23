@@ -95,6 +95,8 @@ class DocumentUpdater:
             text_checksum=text_checksum,
             locations=document.locations,
             last_collected_date=now,
+            doc_vectors=parsed_content["doc_vectors"],
+            file_size=download.file_size,
         )
 
         await document.update(Set(updated_doc.dict(exclude_unset=True)))

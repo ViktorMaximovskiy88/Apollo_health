@@ -95,7 +95,7 @@ class TestFocusChecker:
         assert focus is True
         non_focus_span = MockSpan("ACITRETIN", 30, 38)
         focus = focus_checker.check_focus(non_focus_span, 0)
-        assert focus is False
+        assert focus is True
 
     def test_no_end_separator(self):
         url = "www.test.com"
