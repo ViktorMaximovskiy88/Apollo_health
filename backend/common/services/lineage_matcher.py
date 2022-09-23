@@ -112,7 +112,8 @@ class LineageMatcher:
             (self.name_text_match == 1 or (self.filename_match == 1 and self.pathname_match == 1))
             # focus exact match
             and self.focus_therapy_match == 1
-            and self.focus_indication_match == 1()
+            and self.focus_indication_match == 1
+            and self.state_abbr_rule()
         )
 
     # same base url, update date parts in url, new version/publish
@@ -121,6 +122,7 @@ class LineageMatcher:
             (self.filename_match >= 0.60 or self.element_text_match >= 0.90)
             and self.ref_indication_match >= 0.85
             and self.focus_therapy_match == 1
+            and self.state_abbr_rule()
         )
 
     def require_state_abbr(self):
@@ -132,15 +134,13 @@ class LineageMatcher:
     def require_year_part(self):
         return self.doc_a.year_part and self.doc_a.year_part
 
-    def similar_rule(self):
+    def state_abbr_rule(self):
         return (
-            self.euclidean_distance < 2
-            and (
-                (self.require_state_abbr() and self.state_abbr_match())
-                or not self.require_state_abbr()
-            )
-            and self.require_year_part()
-        )
+            self.require_state_abbr() and self.state_abbr_match()
+        ) or not self.require_state_abbr()
+
+    def similar_rule(self):
+        return self.euclidean_distance < 2 and self.state_abbr_rule() and self.require_year_part()
 
     def score_euclidean_distance(self):
         return self.euclidean_distance < 2
