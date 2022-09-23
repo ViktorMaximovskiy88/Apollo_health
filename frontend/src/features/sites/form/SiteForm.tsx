@@ -1,11 +1,10 @@
 import { Button, Form, Input, Select, Space } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
-import { Site, CollectionMethod } from './types';
+import { Site, CollectionMethod } from '../types';
 import { UrlFormFields } from './UrlFormField';
 import { CollectionMethodComponent } from './CollectionMethod';
-import { SiteStatus } from './siteStatus';
+import { SiteStatus } from '../siteStatus';
 import { Assignee } from './AssigneeInput';
 import { SiteSubmitButton as Submit } from './SiteSubmitButton';
 import { ToggleReadOnly } from './ToggleReadOnly';
@@ -17,24 +16,7 @@ export function SiteForm(props: {
   readOnly?: boolean;
   setReadOnly?: (readOnly: boolean) => void;
 }) {
-  const initialFollowLinks = props.initialValues?.scrape_method_configuration.follow_links ?? false;
-  const [followLinks, setFollowLinks] = useState<boolean>(initialFollowLinks);
   const [form] = useForm();
-
-  /* eslint-disable no-template-curly-in-string */
-  const validateMessages = {
-    required: '${label} is required!',
-    types: {
-      url: '${label} is not a valid url!',
-    },
-  };
-  /* eslint-enable no-template-curly-in-string */
-
-  function setFormState(modified: Partial<Site>) {
-    if (modified.scrape_method_configuration?.follow_links !== undefined) {
-      setFollowLinks(modified.scrape_method_configuration.follow_links);
-    }
-  }
 
   let initialValues: Partial<Site> | undefined = props.initialValues;
   if (!initialValues) {
@@ -53,12 +35,27 @@ export function SiteForm(props: {
         follow_links: false,
         follow_link_keywords: [],
         follow_link_url_keywords: [],
+        searchable: false,
+        searchable_type: null,
+        searchable_input: null,
+        searchable_submit: null,
         attr_selectors: [],
+        html_attr_selectors: [],
+        html_exclusion_selectors: [],
         focus_therapy_configs: [],
         allow_docdoc_updates: false,
       },
     };
   }
+
+  /* eslint-disable no-template-curly-in-string */
+  const validateMessages = {
+    required: '${label} is required!',
+    types: {
+      url: '${label} is not a valid url!',
+    },
+  };
+  /* eslint-enable no-template-curly-in-string */
 
   const wrapperCol = {
     xs: { span: 24 },
@@ -75,7 +72,6 @@ export function SiteForm(props: {
       wrapperCol={wrapperCol}
       requiredMark={false}
       onFinish={props.onFinish}
-      onValuesChange={setFormState}
       initialValues={initialValues}
       validateMessages={validateMessages}
     >
@@ -86,11 +82,7 @@ export function SiteForm(props: {
       <Form.Item name="playbook" label="Playbook">
         <Input.TextArea />
       </Form.Item>
-      <CollectionMethodComponent
-        followLinks={followLinks}
-        form={form}
-        initialValues={initialValues}
-      />
+      <CollectionMethodComponent initialValues={initialValues} />
       <Form.Item name="tags" label="Tags">
         <Select mode="tags" />
       </Form.Item>

@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import pymongo
 from beanie import Indexed, PydanticObjectId
 from pydantic import BaseModel, Field
 
@@ -30,11 +31,18 @@ class BaseRetrievedDocument(BaseModel):
     doc_type_confidence: float | None = None
     identified_dates: list[datetime] = []
     lang_code: LangCode | None = None
+    file_size: int = 0
     file_extension: str | None = None
     content_type: str | None = None
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
+    doc_vectors: list[list[float]] = []
+
+    # lineage
+    lineage_id: PydanticObjectId | None = None
+    previous_doc_id: PydanticObjectId | None = None
+    is_current_version: bool = False
 
 
 class RetrievedDocument(BaseDocument, BaseRetrievedDocument, DocumentMixins):
@@ -46,6 +54,9 @@ class RetrievedDocument(BaseDocument, BaseRetrievedDocument, DocumentMixins):
         copy.pop("first_collected_date")
         copy.pop("last_collected_date")
         return SiteRetrievedDocument(_id=self.id, **copy, **location.dict())
+
+    class Settings:
+        indexes = [[("locations.site_id", pymongo.ASCENDING)]]
 
 
 class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):

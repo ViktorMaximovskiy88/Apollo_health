@@ -48,6 +48,7 @@ class TableContentExtractor:
 
     def tablefinder_config(self):
         snap = self.config.extraction.snap_tolerance
+        intersect = self.config.extraction.intersection_tolerance
         table_shape = self.config.extraction.table_shape
         explicit_columns = map(int, self.config.extraction.explicit_column_lines)
         return {
@@ -55,6 +56,7 @@ class TableContentExtractor:
             "vertical_strategy": table_shape,
             "explicit_vertical_lines": explicit_columns,
             "snap_tolerance": snap,
+            "intersection_tolerance": intersect,
         }
 
     def extract_clean_tables(self, page: Page):
@@ -104,7 +106,7 @@ class TableContentExtractor:
         return clean_tables
 
     def match_rule(self, rule, value):
-        rgx = re.escape(rule.pattern).replace("\\*", "(.+)")
+        rgx = rule.pattern.replace("(", "\\(").replace(")", "\\)").replace("*", "(.+)")
         if match := re.search(rgx, value):
             if groups := match.groups():
                 return True, groups[0]
@@ -130,8 +132,10 @@ class TableContentExtractor:
         return -1
 
     def translate_line(self, line, header):
-        codes = []
+        brands: list[tuple[float, str, str | None, str]] = []
+        generics: list[tuple[float, str, str | None, str]] = []
         t9n = FormularyDatum()
+        bvg, ql_time, ql_quantity = None, None, None
         for column_rules in self.config.translation.column_rules:
             value = str(line[self.hmap(header, column_rules.column)])
             value = re.sub(r"\s+", " ", value, re.MULTILINE).strip()
@@ -143,19 +147,46 @@ class TableContentExtractor:
                             break
                     continue
 
-                if rule.field == "Generic":
+                if rule.field in ["Generic", "Brand"]:
+                    codes = generics if rule.field == "Generic" else brands
                     for (_, candidate, name, score) in rxnorm_linker.find_candidates([value], rule):
                         if candidate:
-                            codes.append((score, candidate.concept_id, name))
+                            splits = candidate.concept_id.split("|")
+                            drugid, rxcui = "", ""
+                            if len(splits) == 1:
+                                drugid = splits[0]
+                            elif len(splits) == 2:
+                                drugid, rxcui = splits
+                            if not rxcui:
+                                rxcui = None
+                            codes.append((score, drugid, rxcui, name))
+                    continue
+
+                if rule.field == "BvG":
+                    for mapping in rule.mappings:
+                        if value.strip() == mapping.pattern:
+                            bvg = mapping.translation
+
+                if rule.field == "QLC" and value:
+                    if rule.value == "time":
+                        ql_time = value
+                    if rule.value == "quantity":
+                        ql_quantity = value
                     continue
 
                 matches, note = self.match_rule(rule, value)
+                if rule.capture_all:
+                    note = value
+
                 if not matches:
                     continue
 
                 if rule.field == "PA":
                     t9n.pa = True
                     t9n.pan = note
+                if rule.field == "CPA":
+                    t9n.cpa = True
+                    t9n.cpan = note
                 if rule.field == "QL":
                     t9n.ql = True
                     t9n.qln = note
@@ -165,8 +196,20 @@ class TableContentExtractor:
                 if rule.field == "SP":
                     t9n.sp = True
 
-        for (score, code, name) in codes:
-            yield t9n.copy(update={"score": score, "code": code, "name": name})
+        if ql_time and ql_quantity:
+            t9n.ql = True
+            t9n.qln = f"{ql_quantity} / {ql_time}"
+
+        if not bvg or bvg == "generic" or bvg == "both":
+            for (score, drugid, rxcui, name) in generics:
+                yield t9n.copy(
+                    update={"score": score, "code": drugid, "rxcui": rxcui, "name": name}
+                )
+        if not bvg or bvg == "brand" or bvg == "both":
+            for (score, drugid, rxcui, name) in brands:
+                yield t9n.copy(
+                    update={"score": score, "code": drugid, "rxcui": rxcui, "name": name}
+                )
 
     def translate_tables(
         self, tables: list[list[list[str]]]

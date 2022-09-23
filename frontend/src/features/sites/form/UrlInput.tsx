@@ -1,7 +1,7 @@
 import { Form, Input } from 'antd';
 import { useState } from 'react';
-import { ActiveUrlResponse, BaseUrl, Site } from './types';
-import { fetchWithAuth, baseApiUrl } from '../../app/base-api';
+import { ActiveUrlResponse, BaseUrl, Site } from '../types';
+import { fetchWithAuth, baseApiUrl } from '../../../app/base-api';
 import { FormInstance } from 'antd/lib/form/Form';
 
 function useValidateUrlAndErrorMessage(form: FormInstance, initialValues?: Site) {

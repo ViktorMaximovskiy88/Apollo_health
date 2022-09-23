@@ -3,7 +3,7 @@ import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import {
   extractedDocumentTableState,
   setExtractedDocumentTableFilter,
@@ -88,7 +88,6 @@ const useControlledPagination = () => {
 };
 
 export function ExtractedDocumentsTable() {
-  const [searchParams] = useSearchParams();
   const params = useParams();
   const siteId = params.siteId;
   const { data } = useGetDocDocumentsQuery(

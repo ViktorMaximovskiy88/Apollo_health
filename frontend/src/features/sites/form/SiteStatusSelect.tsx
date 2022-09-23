@@ -1,11 +1,11 @@
 import { Form, Popconfirm, Select } from 'antd';
 import { useParams } from 'react-router-dom';
 import { useState } from 'react';
-import { Site } from './types';
-import { SiteStatus } from './siteStatus';
+import { Site } from '../types';
+import { SiteStatus } from '../siteStatus';
 import { FormInstance } from 'antd/lib/form/Form';
-import { useUpdateSiteMutation } from './sitesApi';
-import { useCurrentUser } from '../../common/hooks/use-current-user';
+import { useUpdateSiteMutation } from '../sitesApi';
+import { useCurrentUser } from '../../../common/hooks/use-current-user';
 
 const siteStatuses = [
   { value: SiteStatus.New, label: 'New' },

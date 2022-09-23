@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Form, Select } from 'antd';
-import { User } from '../users/types';
-import { useGetUsersQuery } from '../users/usersApi';
+import { User } from '../../users/types';
+import { useGetUsersQuery } from '../../users/usersApi';
 
 const { Option } = Select;
 

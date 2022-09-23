@@ -34,6 +34,10 @@ export const sitesApi = createApi({
       query: (id) => `/sites/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
     }),
+    processSiteLineage: builder.query<Site, string | undefined>({
+      query: (id) => `/lineage/${id}`,
+      providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
+    }),
     getSiteRetrievedDocuments: builder.query<
       RetrievedDocument[],
       {
@@ -124,4 +128,5 @@ export const {
   useGetSiteDocDocumentsQuery,
   useGetSiteDocDocumentQuery,
   useLazyGetSiteDocDocumentsQuery,
+  useLazyProcessSiteLineageQuery,
 } = sitesApi;

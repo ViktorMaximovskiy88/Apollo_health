@@ -57,9 +57,10 @@ class DocumentUpdater:
         name = self.set_doc_name(parsed_content, download)
 
         location: RetrievedDocumentLocation = document.get_site_location(self.site.id)
-
+        context_metadata = download.metadata.dict()
+        text_checksum = await self.text_handler.save_text(parsed_content["text"])
         if location:
-            location.context_metadata = download.metadata.dict()
+            location.context_metadata = context_metadata
             location.last_collected_date = now
         else:
             document.locations.append(
@@ -69,12 +70,13 @@ class DocumentUpdater:
                     last_collected_date=now,
                     site_id=self.site.id,
                     url=download.request.url,
-                    context_metadata=download.metadata.dict(),
+                    context_metadata=context_metadata,
                     link_text=download.metadata.link_text,
                 )
             )
 
         updated_doc = UpdateRetrievedDocument(
+            doc_vectors=parsed_content["doc_vectors"],
             doc_type_confidence=parsed_content["confidence"],
             document_type=parsed_content["document_type"],
             effective_date=parsed_content["effective_date"],
@@ -90,7 +92,7 @@ class DocumentUpdater:
             indication_tags=parsed_content["indication_tags"],
             metadata=parsed_content["metadata"],
             name=name,
-            text_checksum=document.text_checksum,
+            text_checksum=text_checksum,
             locations=document.locations,
             last_collected_date=now,
         )
@@ -139,11 +141,14 @@ class DocumentUpdater:
         now = datetime.now(tz=timezone.utc)
         name = self.set_doc_name(parsed_content, download)
         text_checksum = await self.text_handler.save_text(parsed_content["text"])
+        context_metadata = download.metadata.dict()
         document = RetrievedDocument(
+            file_size=download.file_size,
             checksum=checksum,
             text_checksum=text_checksum,
             doc_type_confidence=parsed_content["confidence"],
             document_type=parsed_content["document_type"],
+            doc_vectors=parsed_content["doc_vectors"],
             effective_date=parsed_content["effective_date"],
             end_date=parsed_content["end_date"],
             last_updated_date=parsed_content["last_updated_date"],
@@ -168,7 +173,7 @@ class DocumentUpdater:
                     last_collected_date=now,
                     site_id=self.site.id,
                     url=url,
-                    context_metadata=download.metadata.dict(),
+                    context_metadata=context_metadata,
                     link_text=download.metadata.link_text,
                 )
             ],
@@ -176,7 +181,7 @@ class DocumentUpdater:
         await create_and_log(self.logger, await self.get_user(), document)
         return document
 
-    async def create_doc_document(self, retrieved_document: RetrievedDocument):
+    async def create_doc_document(self, retrieved_document: RetrievedDocument) -> DocDocument:
         # we always have one initially
         rt_doc_location = retrieved_document.locations[0]
         doc_document = DocDocument(
@@ -206,3 +211,4 @@ class DocumentUpdater:
         doc_document.set_final_effective_date()
 
         await create_and_log(self.logger, await self.get_user(), doc_document)
+        return doc_document

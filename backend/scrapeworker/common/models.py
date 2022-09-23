@@ -18,6 +18,7 @@ class Metadata(BaseModel):
     link_text: str | None = None
     element_id: str | None = None
     closest_heading: str | None = None
+    siblings_text: str | None = None
     resource_value: str | None = None
     base_url: str | None = None
     playbook_context: PlaybookContext | None = None
@@ -77,6 +78,7 @@ class DownloadContext(BaseModel):
     metadata: Metadata = Metadata()
     request: Request
     response: Response = Response()
+    direct_scrape: bool = False
 
     file_name: str | None = None
     file_extension: str | None = None

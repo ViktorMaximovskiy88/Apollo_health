@@ -1,18 +1,26 @@
 import { useState } from 'react';
-import { Button } from 'antd';
+import { Button, notification } from 'antd';
 import { useParams } from 'react-router-dom';
 
 import { MainLayout } from '../../components';
 import { SiteMenu } from '../sites/SiteMenu';
 
+import { useLazyProcessSiteLineageQuery } from '../sites/sitesApi';
 import { SiteDocDocumentsTable } from './SiteDocDocumentsTable';
 import { AddDocumentModal } from '../collections/addDocumentModal';
 import { SiteDocDocument } from './types';
 
 export function SiteDocDocumentsPage() {
+  const [processSiteLineage] = useLazyProcessSiteLineageQuery();
   const [newDocumentModalVisible, setNewDocumentModalVisible] = useState(false);
   const [oldVersion, setOldVersion] = useState<any>();
-  const params = useParams();
+  const { siteId } = useParams();
+
+  const openNotification = () => {
+    notification.success({
+      message: 'Processing lineage...',
+    });
+  };
 
   function handleNewVersion(data: SiteDocDocument) {
     setOldVersion(data);
@@ -30,6 +38,16 @@ export function SiteDocDocumentsPage() {
       sidebar={<SiteMenu />}
       pageToolbar={
         <>
+          <Button
+            onClick={() => {
+              processSiteLineage(siteId);
+              openNotification();
+            }}
+            className="ml-auto"
+          >
+            Reprocess Lineage
+          </Button>
+
           <Button onClick={() => setNewDocumentModalVisible(true)} className="ml-auto">
             Create Document
           </Button>
@@ -37,11 +55,7 @@ export function SiteDocDocumentsPage() {
       }
     >
       {newDocumentModalVisible && (
-        <AddDocumentModal
-          oldVersion={oldVersion}
-          setVisible={hideNewDocument}
-          siteId={params.siteId}
-        />
+        <AddDocumentModal oldVersion={oldVersion} setVisible={hideNewDocument} siteId={siteId} />
       )}
       <SiteDocDocumentsTable handleNewVersion={handleNewVersion} />
     </MainLayout>

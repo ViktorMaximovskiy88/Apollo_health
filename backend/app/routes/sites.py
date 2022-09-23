@@ -230,7 +230,8 @@ async def get_site_doc_docs(
 
     if scrape_task_id:
         scrape_task = await SiteScrapeTask.get(scrape_task_id)
-        query["retrieved_document_id"] = {"$in": scrape_task.retrieved_document_ids}
+        if scrape_task:
+            query["retrieved_document_id"] = {"$in": scrape_task.retrieved_document_ids}
 
     docs = await DocDocument.find(query).project(DocDocumentLimitTags).to_list()
     return [doc.for_site(site_id) for doc in docs]

@@ -15,6 +15,7 @@ from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.document_family import DocumentFamily
 from backend.common.models.indication import Indication
+from backend.common.models.lineage import DocumentAnalysis
 from backend.common.models.link_task_log import LinkBaseTask, LinkRetrievedTask, LinkTaskLog
 from backend.common.models.payer_backbone import (
     MCO,
@@ -26,6 +27,7 @@ from backend.common.models.payer_backbone import (
     Plan,
 )
 from backend.common.models.proxy import Proxy
+from backend.common.models.search_codes import SearchCodeSet
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.translation_config import TranslationConfig
@@ -76,6 +78,7 @@ async def init_db(mock=False, database_name=None):
             LinkBaseTask,
             LinkRetrievedTask,
             DocumentFamily,
+            DocumentAnalysis,
             PayerBackboneUnionDoc,
             Plan,
             PayerParent,
@@ -83,5 +86,6 @@ async def init_db(mock=False, database_name=None):
             UMP,
             MCO,
             Formulary,
+            SearchCodeSet,
         ],  # type: ignore
     )
