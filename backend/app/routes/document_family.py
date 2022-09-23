@@ -54,8 +54,8 @@ async def read_document_family_by_name(
     site_id: PydanticObjectId,
     name: str,
 ):
-    document_families = await DocumentFamily.find_one({"name": name, "site_id": site_id})
-    return document_families
+    document_family = await DocumentFamily.find_one({"name": name, "site_id": site_id})
+    return document_family
 
 
 @router.get(
