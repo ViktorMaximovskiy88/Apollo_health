@@ -86,14 +86,11 @@ export const siteScrapeTasksApi = createApi({
       invalidatesTags: (_r, _e, id) => [{ type: 'SiteScrapeTask', id }],
     }),
     updateWorkItem: builder.mutation<SiteScrapeTask, WorkItem & { scrapeTaskId: string }>({
-      query: (body) => {
-        console.log(body);
-        return {
-          url: `/site-scrape-tasks/${body.scrapeTaskId}/work-items/${body.document_id}`,
-          method: 'POST',
-          body,
-        };
-      },
+      query: (body) => ({
+        url: `/site-scrape-tasks/${body.scrapeTaskId}/work-items/${body.document_id}`,
+        method: 'POST',
+        body,
+      }),
     }),
     getChangeLog: builder.query<ChangeLog[], string>({
       query: (id) => `/change-log/${id}`,
