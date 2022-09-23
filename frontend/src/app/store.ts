@@ -13,6 +13,7 @@ import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { translationsApi } from '../features/translations/translationApi';
 import { payerBackboneApi } from '../features/payer-backbone/payerBackboneApi';
 import { documentFamilyApi } from '../features/doc_documents/document_family/documentFamilyApi';
+import { lineageApi } from '../features/lineage/lineageApi';
 import { rtkAuth } from '../common/auth-middleware';
 
 import navSlice from './navSlice';
@@ -42,6 +43,7 @@ export const store = configureStore({
     [translationsApi.reducerPath]: translationsApi.reducer,
     [documentFamilyApi.reducerPath]: documentFamilyApi.reducer,
     [payerBackboneApi.reducerPath]: payerBackboneApi.reducer,
+    [lineageApi.reducerPath]: lineageApi.reducer,
     nav: navSlice.reducer,
     sites: sitesReducer,
     users: userReducer,

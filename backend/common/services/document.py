@@ -1,6 +1,7 @@
 from beanie import PydanticObjectId
 
 from backend.common.models.document import RetrievedDocument, SiteRetrievedDocument
+from backend.common.models.lineage import LineageDoc
 
 
 async def get_site_docs(site_id: PydanticObjectId) -> list[SiteRetrievedDocument]:
@@ -30,6 +31,28 @@ async def get_site_docs_for_ids(
             {"$unset": ["locations"]},
         ],
         projection_model=SiteRetrievedDocument,
+    ).to_list()
+
+    return docs
+
+
+async def get_site_lineage(site_id: PydanticObjectId):
+    docs = await RetrievedDocument.aggregate(
+        aggregation_pipeline=[
+            {"$match": {"locations.site_id": site_id}},
+            {
+                "$project": {
+                    "_id": 1,
+                    "name": 1,
+                    "lineage_id": 1,
+                    "previous_doc_id": 1,
+                    "is_current_version": 1,
+                    "checksum": 1,
+                    "file_extension": 1,
+                }
+            },
+        ],
+        projection_model=LineageDoc,
     ).to_list()
 
     return docs
