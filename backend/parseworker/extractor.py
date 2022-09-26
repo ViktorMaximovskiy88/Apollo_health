@@ -50,14 +50,69 @@ class TableContentExtractor:
         snap = self.config.extraction.snap_tolerance
         intersect = self.config.extraction.intersection_tolerance
         table_shape = self.config.extraction.table_shape
-        explicit_columns = map(int, self.config.extraction.explicit_column_lines)
+        explicit_columns = list(map(int, self.config.extraction.explicit_column_lines))
+        explicit_only = self.config.extraction.explicit_column_lines_only
         return {
             "horizontal_strategy": table_shape,
-            "vertical_strategy": table_shape,
+            "vertical_strategy": "explicit" if explicit_only else table_shape,
             "explicit_vertical_lines": explicit_columns,
             "snap_tolerance": snap,
             "intersection_tolerance": intersect,
         }
+
+    def table_started(self, table_started: bool, line: list[str | None]) -> bool:
+        if table_started or not self.config.extraction.start_table_text:
+            return True
+
+        for value in line:
+            if value and value in self.config.extraction.start_table_text:
+                return True
+
+        return False
+
+    def table_ended(self, line: list[str | None]) -> bool:
+        end_text = self.config.extraction.end_table_text.lower()
+        if not end_text:
+            return False
+
+        if end_text in "".join(map(str, line)).lower():
+            return True
+
+        return False
+
+    def drop_line_if_required_or_banned(self, line, header) -> bool:
+        for col in self.config.extraction.required_columns:
+            if not line[self.hmap(header, col)]:
+                return True
+        for col in self.config.extraction.banned_columns:
+            if line[self.hmap(header, col)]:
+                return True
+        return False
+
+    def merge_on_missing_columns(self, line, row_n, header, table, clean_table) -> bool:
+        for col in self.config.extraction.merge_on_missing_columns:
+            if not line[self.hmap(header, col)]:
+                if self.config.extraction.merge_strategy == "DOWN":
+                    next_line = table[row_n + 1]
+                    for i in range(len(next_line)):
+                        next_line[i] = f"{next_line[i] or ''} {line[i] or ''}"
+                    return True
+                elif self.config.extraction.merge_strategy == "UP":
+                    if clean_table:
+                        prev_line = clean_table[-1]
+                        for i in range(len(prev_line)):
+                            prev_line[i] = f"{prev_line[i] or ''} {line[i] or ''}"
+                    return True
+        return False
+
+    def skip_table(self, header):
+        rtext = self.config.detection.required_header_text
+        if rtext and not self.hmap(header, rtext) > 0:
+            return True
+        etext = self.config.detection.excluded_header_text
+        if etext and self.hmap(header, etext) > 0:
+            return True
+        return False
 
     def extract_clean_tables(self, page: Page):
         tables = page.extract_tables(self.tablefinder_config())
@@ -69,40 +124,27 @@ class TableContentExtractor:
 
             header, table = self.extract_header(table)
 
-            rtext = self.config.detection.required_header_text
-            if rtext and not self.hmap(header, rtext) > 0:
-                continue
-            etext = self.config.detection.excluded_header_text
-            if etext and self.hmap(header, etext) > 0:
+            if self.skip_table(header):
                 continue
 
             clean_table = []
+            table_started = False
             for row_n, line in enumerate(table):
-                drop_line = False
-                for col in self.config.extraction.required_columns:
-                    if not line[self.hmap(header, col)]:
-                        drop_line = True
-                        break
-                if drop_line:
+                table_started = self.table_started(table_started, line)
+                if not table_started:
+                    continue
+                if self.table_ended(line):
+                    break
+
+                if self.drop_line_if_required_or_banned(line, header):
                     continue
 
-                for col in self.config.extraction.merge_on_missing_columns:
-                    if not line[self.hmap(header, col)]:
-                        if self.config.extraction.merge_strategy == "DOWN":
-                            next_line = table[row_n + 1]
-                            for i in range(len(next_line)):
-                                next_line[i] = f"{next_line[i] or ''} {line[i] or ''}"
-                            drop_line = True
-                        elif self.config.extraction.merge_strategy == "UP":
-                            prev_line = clean_table[-1]
-                            for i in range(len(prev_line)):
-                                prev_line[i] = f"{prev_line[i] or ''} {line[i] or ''}"
-                            drop_line = True
-                            break
-                if drop_line:
+                if self.merge_on_missing_columns(line, row_n, header, table, clean_table):
                     continue
+
                 clean_table.append(line)
             clean_tables.append(clean_table)
+
         return clean_tables
 
     def match_rule(self, rule, value):
