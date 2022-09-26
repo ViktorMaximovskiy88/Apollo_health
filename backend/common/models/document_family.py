@@ -20,6 +20,8 @@ class NewDocumentFamily(BaseModel):
     site_id: PydanticObjectId
     payer_info: PayerInfo = PayerInfo()
     relevance: list[str] = []
+    legacy_relevance: list[str] = []
+    field_groups: list[str] = []
 
 
 class UpdateDocumentFamily(BaseModel):
