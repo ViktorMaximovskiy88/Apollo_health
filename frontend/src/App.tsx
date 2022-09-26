@@ -28,7 +28,7 @@ import { PayerBackbomeHomePage } from './features/payer-backbone/PayerBackboneHo
 import { PayerBackboneNewPage } from './features/payer-backbone/PayerBackboneNewPage';
 import { PayerBackboneEditPage } from './features/payer-backbone/PayerBackboneEditPage';
 import { LineagePage } from './features/lineage/LineagePage';
-import { DocumentFamilyPage } from './features/doc_documents/document_family/DocumentFamilyPage';
+import { DocumentFamilyHomePage } from './features/doc_documents/document_family/DocumentFamilyHomePage';
 
 function AppHomePage() {
   return <>{'Home'}</>;
@@ -91,6 +91,7 @@ function App() {
             </Route>
           </Route>
         </Route>
+        <Route path="/document_family" element={<DocumentFamilyHomePage />} />
         <Route path="/sites">
           <Route index element={<SitesHomePage />} />
           <Route path="new" element={<SiteCreatePage />} />
@@ -114,7 +115,6 @@ function App() {
                 <Route path=":extractionId/results" element={<ExtractionEditPage />} />
               </Route>
             </Route>
-            <Route path="document_family" element={<DocumentFamilyPage />} />
             <Route path="doc-documents">
               <Route index element={<SiteDocDocumentsPage />} />
               <Route path=":docId">

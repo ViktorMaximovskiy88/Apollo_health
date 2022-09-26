@@ -14,6 +14,7 @@ import { payerBackboneApi } from '../features/payer-backbone/payerBackboneApi';
 const routes = [
   '/documents',
   '/documents/:docDocId',
+  '/document_family',
   '/sites',
   '/sites/:siteId',
   '/sites/:siteId/doc-documents',
@@ -108,6 +109,10 @@ export const useBreadcrumbs = async () => {
       },
       '/documents': {
         documents: 'All Documents',
+        ...asyncResolvers,
+      },
+      '/document_family': {
+        document_family: 'Document Family',
         ...asyncResolvers,
       },
       '/users': {

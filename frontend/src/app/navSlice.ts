@@ -30,6 +30,11 @@ export const navSlice = createSlice({
           shortLabel: 'Docs',
         },
         {
+          url: '/document_family',
+          label: 'Document Family',
+          shortLabel: 'Document Family',
+        },
+        {
           url: '/translations',
           label: 'Translations',
           shortLabel: 'Translations',
