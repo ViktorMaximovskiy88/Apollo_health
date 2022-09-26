@@ -93,7 +93,7 @@ async def create_document_family(
     return new_document_family
 
 
-@router.post(
+@router.get(
     "/{id}/convert", dependencies=[Security(get_current_user)], response_model=DocumentFamily
 )
 async def document_family_payer_data(
