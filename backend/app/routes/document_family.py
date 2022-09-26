@@ -1,6 +1,10 @@
+from typing import Type
+
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 
+from backend.app.routes.payer_backbone import payer_class
+from backend.app.services.payer_backbone.payer_backbone_querier import PayerBackboneQuerier
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.models.document_family import (
@@ -8,6 +12,7 @@ from backend.common.models.document_family import (
     NewDocumentFamily,
     UpdateDocumentFamily,
 )
+from backend.common.models.payer_backbone import PayerBackbone
 from backend.common.models.user import User
 
 router = APIRouter(
@@ -86,6 +91,22 @@ async def create_document_family(
     )
     await create_and_log(logger, current_user, new_document_family)
     return new_document_family
+
+
+@router.get(
+    "/{id}/convert", dependencies=[Security(get_current_user)], response_model=DocumentFamily
+)
+async def document_family_payer_data(
+    effective_date: str | None = None,
+    PayerClass: Type[PayerBackbone] = Depends(payer_class),
+    target: DocumentFamily = Depends(get_target),
+):
+    pbbq = PayerBackboneQuerier(target.payer_info, effective_date)
+    result_ids = await pbbq.relevant_payer_ids_of_type(PayerClass)
+
+    target.payer_info.payer_type = PayerClass.payer_key
+    target.payer_info.payer_ids = [str(id) for id in result_ids]
+    return target
 
 
 @router.post("/{id}", response_model=DocumentFamily)

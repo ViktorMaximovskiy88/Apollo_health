@@ -11,7 +11,7 @@ import _ from 'lodash';
 
 export function LineagePage() {
   const { siteId } = useParams();
-  const { data: items = [] } = useGetSiteLineageQuery(siteId, {
+  const { data: items = [], status } = useGetSiteLineageQuery(siteId, {
     pollingInterval: 5000,
   });
   const [processSiteLineage] = useLazyProcessSiteLineageQuery();
@@ -43,7 +43,7 @@ export function LineagePage() {
       .value();
 
     setLineageGroups(grouped);
-  }, [items]);
+  }, [items.length]);
 
   const openNotification = () => {
     notification.success({

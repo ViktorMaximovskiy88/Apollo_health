@@ -13,6 +13,7 @@ export const initialState = {
       { name: 'final_effective_date', operator: 'before', type: 'date', value: '' },
       { name: 'classification_status', operator: 'eq', type: 'select', value: null },
       { name: 'url', operator: 'contains', type: 'string', value: '' },
+      { name: 'internal_document', operator: 'eq', type: 'select', value: null },
     ],
     pagination: { limit: 50, skip: 0 },
   },

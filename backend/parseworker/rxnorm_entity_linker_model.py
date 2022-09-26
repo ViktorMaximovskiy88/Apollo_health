@@ -47,6 +47,7 @@ class RxNormEntityLinkerModel:
         (r"\b12.hour\b", "12 HR extended release"),
         (r"\b24.hour\b", "24 HR extended release"),
         (r"\bsoln\b", "solution"),
+        (r"\btbec\b", "tablet delayed release"),
         (r"\bdr\b", "delayed release"),
         (r"\ber\b", "extended release"),
         (r"\bxr\b", "extended release"),

@@ -30,13 +30,17 @@ export interface TableDetectionConfig {
 
 export interface TableExtractionConfig {
   required_columns: string[];
+  banned_columns: string[];
   merge_on_missing_columns: string[];
   merge_strategy: string;
+  start_table_text: string;
+  end_table_text: string;
   snap_tolerance: number;
   intersection_tolerance: number;
   table_shape: string;
   explicit_headers: string[];
   explicit_column_lines: string[];
+  explicit_column_lines_only: boolean;
   skip_rows: number;
   skip_row_first_table_only: boolean;
 }
