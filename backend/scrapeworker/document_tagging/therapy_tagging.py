@@ -43,18 +43,23 @@ class FocusChecker:
         focus_areas = []
         for config in self.focus_configs:
             last_match = 0
-            if not config.start_separator:
-                continue
+            start = 0
             while True:
-                match = text_lower.find(config.start_separator.lower(), last_match)
+                if not config.start_separator:
+                    match = 0
+                else:
+                    match = text_lower.find(config.start_separator.lower(), last_match)
                 if match > -1:
-                    start = match + len(config.start_separator)
+                    if config.start_separator:
+                        start = match + len(config.start_separator or "")
                     end = len(self.full_text) - 1
                     if config.end_separator:
                         end_match = text_lower.find(config.end_separator.lower(), start)
                         end = end_match if end_match > -1 else end
                     focus_areas.append(FocusArea(start=start, end=end))
                     last_match = end
+                    if not config.start_separator:
+                        break
                 else:
                     break
         return focus_areas
@@ -89,7 +94,7 @@ class TherapyTagger:
             # This limit assumes the default large NER model is being used
             # We are not using this model so safe to bump limit
             # saw a value of 20074378... bumping more
-            self.nlp.max_length = 30000000
+            self.nlp.max_length = 300000000
         except Exception:
             print("RxNorm Span Ruler Model not found and therefore not loaded")
 
@@ -117,8 +122,17 @@ class TherapyTagger:
                 is_focus = focus_checker.check_focus(span, offset=char_offset)
                 text = span.text
                 lexeme = span.vocab[span.label]
-                rxnorm, display_name = lexeme.text.split("|")
-                tag = TherapyTag(text=text, code=rxnorm, name=display_name, page=i, focus=is_focus)
+                splits = lexeme.text.split("|")
+                rxcui, drugid, display_name = "", "", ""
+                if len(splits) == 2:
+                    drugid, display_name = splits
+                elif len(splits) == 3:
+                    drugid, rxcui, display_name = splits
+                if not rxcui:
+                    rxcui = None
+                tag = TherapyTag(
+                    text=text, code=drugid, rxcui=rxcui, name=display_name, page=i, focus=is_focus
+                )
                 tags.add(tag)
             char_offset += len(page) + 1
 

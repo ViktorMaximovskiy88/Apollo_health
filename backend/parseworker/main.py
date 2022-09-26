@@ -16,7 +16,6 @@ from backend.common.core.enums import TaskStatus
 from backend.common.db.init import init_db
 from backend.common.models.content_extraction_task import ContentExtractionTask
 from backend.common.models.doc_document import DocDocument
-from backend.common.models.site import Site
 from backend.common.models.translation_config import TranslationConfig
 from backend.common.models.user import User
 from backend.parseworker.extractor import TableContentExtractor
@@ -46,12 +45,9 @@ async def start_worker_async():
         )
         if acquired:
             extract_task = ContentExtractionTask.parse_obj(acquired)
-            site = await Site.find_one(Site.id == extract_task.site_id)
             doc_document = await DocDocument.find_one(
                 DocDocument.id == extract_task.doc_document_id
             )
-            if not site:
-                raise Exception("Site not found")
             if not doc_document:
                 raise Exception("DocDocument not found")
             if not doc_document.translation_id:

@@ -1,11 +1,10 @@
 import { Modal } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Site, CollectionMethod } from './types';
-import { SiteForm } from './SiteForm';
+import { SiteForm } from './form/SiteForm';
 import { useGetSiteQuery, useUpdateSiteMutation } from './sitesApi';
 import { useCancelAllSiteScrapeTasksMutation } from '../collections/siteScrapeTasksApi';
 import { MainLayout } from '../../components';
-import { SiteStatus } from './siteStatus';
 import { useCurrentUser } from '../../common/hooks/use-current-user';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { useEffect } from 'react';
@@ -19,13 +18,13 @@ const useAlreadyAssignedModal = () => {
   const { data: site } = useGetSiteQuery(params.siteId);
   const currentUser = useCurrentUser();
   const navigate = useNavigate();
+
   useEffect(() => {
     if (!site?._id) return;
 
     const assignCurrentUser = {
       _id: site._id,
       assignee: currentUser?._id,
-      status: SiteStatus.QualityHold,
     };
 
     if (!site.assignee) {
@@ -63,7 +62,6 @@ export function SiteEditPage() {
   const initialValues = {
     ...site,
     assignee: currentUser?._id,
-    status: SiteStatus.QualityHold,
   };
 
   async function tryUpdateSite(update: Partial<Site>) {
@@ -78,7 +76,7 @@ export function SiteEditPage() {
     navigate(-1);
   }
   return (
-    <MainLayout pageTitle={'Edit Site'} sidebar={<SiteMenu />}>
+    <MainLayout sidebar={<SiteMenu />}>
       <SiteForm onFinish={tryUpdateSite} initialValues={initialValues} />
     </MainLayout>
   );

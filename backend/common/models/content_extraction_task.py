@@ -9,7 +9,6 @@ from backend.common.models.base_document import BaseDocument
 
 
 class ContentExtractionTask(BaseDocument):
-    site_id: PydanticObjectId | None = None
     initiator_id: PydanticObjectId | None = None
     doc_document_id: PydanticObjectId | None = None
 
@@ -37,11 +36,15 @@ class UpdateContentExtractionTask(BaseModel):
 class FormularyDatum(BaseModel):
     score: float = 0
     code: str | None = None
+    rxcui: str | None = None
     name: str | None = None
     tier: int = 0
 
     pa: bool = False
     pan: str | None = None
+
+    cpa: bool = False
+    cpan: str | None = None
 
     st: bool = False
     stn: str | None = None

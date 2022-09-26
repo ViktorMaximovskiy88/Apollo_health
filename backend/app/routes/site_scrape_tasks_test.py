@@ -9,9 +9,11 @@ from fastapi import HTTPException
 from backend.app.routes.site_scrape_tasks import (
     BulkRunResponse,
     cancel_scrape_task,
+    read_scrape_tasks_for_site,
     run_bulk_by_type,
     start_scrape_task,
 )
+from backend.app.routes.table_query import TableFilterInfo, TableSortInfo
 from backend.common.core.enums import BulkScrapeActions, CollectionMethod, SiteStatus, TaskStatus
 from backend.common.db.init import init_db
 from backend.common.models.site import BaseUrl, HttpUrl, ScrapeMethodConfiguration, Site
@@ -88,6 +90,65 @@ def simple_scrape(site: Site, status=TaskStatus.QUEUED) -> SiteScrapeTask:
         status=status,
         queued_time=datetime.now(tz=timezone.utc),
     )
+
+
+class TestReadScrapeTasksForSite:
+    @pytest.mark.asyncio
+    async def test_limit_read_scrape_task_default(self):
+        site_one = await simple_site().save()
+        await simple_scrape(site_one).save()
+        site_id = site_one.id
+        limit = 50
+        filters = [
+            TableFilterInfo(name="queued_time", operator="after", type="date", value="2022-09-05"),
+            TableFilterInfo(name="status", operator="eq", type="select", value=None),
+        ]
+        sorts = [TableSortInfo(name="queued_time", dir=-1)]
+        skip = 0
+
+        query = await SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id).to_list()
+        scrapeTasks = await read_scrape_tasks_for_site(query, limit, skip, sorts, filters)
+        assert scrapeTasks.total == 1
+        await simple_scrape(site_one).save()
+        await simple_scrape(site_one).save()
+        await simple_scrape(site_one).save()
+        await simple_scrape(site_one).save()
+        query = await SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id).to_list()
+        scrapeTasks = await read_scrape_tasks_for_site(query, limit, skip, sorts, filters)
+        assert scrapeTasks.total == 5
+
+    @pytest.mark.asyncio
+    async def test_limit_read_scrape_task_no_filter(self):
+        site_one = await simple_site().save()
+        await simple_scrape(site_one).save()
+        site_id = site_one.id
+        limit = 50
+        filters = ""
+        sorts = [TableSortInfo(name="queued_time", dir=1)]
+        skip = 0
+
+        query = await SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id).to_list()
+        scrapeTasks = await read_scrape_tasks_for_site(query, limit, skip, sorts, filters)
+        assert scrapeTasks.total == 1
+
+    @pytest.mark.asyncio
+    async def test_limit_read_scrape_task_not_found(self, user, logger):
+        site_one = await simple_site().save()
+        limit = 50
+        filters = [
+            TableFilterInfo(name="queued_time", operator="after", type="date", value="2022-09-05"),
+            TableFilterInfo(name="status", operator="eq", type="select", value=None),
+        ]
+        sorts = [TableSortInfo(name="queued_time", dir=1)]
+        skip = 0
+        with pytest.raises(HTTPException) as e:
+            await start_scrape_task("62e823397ab9edcd2557612d", user, logger)
+        assert isinstance(e.value, HTTPException)
+        assert e.value.status_code == 404
+        assert e.value.detail == "Site 62e823397ab9edcd2557612d Not Found"
+        query = await SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_one.id).to_list()
+        scrapeTasks = await read_scrape_tasks_for_site(query, limit, skip, sorts, filters)
+        assert scrapeTasks.total == 0
 
 
 class TestStartScrapeTask:
@@ -241,6 +302,11 @@ class TestRunBulk:
         assert scrapes == 0
         sites = await Site.find_all().to_list()
         for site in sites:
+            if site.id == site_one.id:
+                assert site.last_run_status == TaskStatus.CANCELING
+            else:
+                assert site.last_run_status is None
+
             assert site.collection_hold is not None
             assert site.collection_hold.replace(tzinfo=timezone.utc) >= now
 

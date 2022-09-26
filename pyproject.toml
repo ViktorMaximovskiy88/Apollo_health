@@ -1,70 +1,71 @@
 [tool.poetry]
+authors = ["Matthew Brown <mbrown@bhei.com>"]
+description = ""
 name = "source-hub"
 version = "0.1.0"
-description = ""
-authors = ["Matthew Brown <mbrown@bhei.com>"]
-
 
 [pytest]
-asyncio_mode="strict"
+asyncio_mode = "strict"
 
 [tool.poetry.dependencies]
-python = "3.10.3"
-fastapi = {extras = ["all"], version = "^0.75.0"}
-python-decouple = "^3.6"
-passlib = "^1.7.4"
-motor = "^2.5.1"
-beanie = "^1.10.1"
-bcrypt = "^3.2.0"
-jsonpatch = "^1.32"
-typer = "^0.4.1"
-playwright = "^1.20.1"
-aiohttp = {extras = ["speedups"], version = "^3.8.1"}
 aiofiles = "^0.8.0"
-pdfplumber = "^0.6.0"
-python-dateutil = "^2.8.2"
+aiohttp = {extras = ["speedups"], version = "^3.8.1"}
+async-lru = "^1.0.3"
+bcrypt = "^3.2.0"
+beanie = "^1.10.1"
 boto3 = "^1.21.42"
-tenacity = "^8.0.1"
-xxhash = "^3.0.0"
-playwright-stealth = "^1.0.5"
-redis = "^4.2.2"
+fastapi = {extras = ["all"], version = "^0.75.0"}
 gensim = "^4.2.0"
-xgboost = "^1.6.1"
+jsonpatch = "^1.32"
+mongomock-motor = "^0.0.10"
+motor = "^2.5.1"
+numpy = "<1.23.0"
+openpyxl = "^3.0.9"
+passlib = "^1.7.4"
+pdfplumber = "^0.6.0"
+playwright = "^1.20.1"
+playwright-stealth = "^1.0.5"
+pycld3 = "^0.22"
+python = "3.10.3"
+python-dateutil = "^2.8.2"
+python-decouple = "^3.6"
+redis = "^4.2.2"
 scikit-learn = "^1.1.0"
 scipy = ">=1.8.0"
-openpyxl = "^3.0.9"
-mongomock-motor = "^0.0.10"
-async-lru = "^1.0.3"
-pycld3 = "^0.22"
-numpy = "<1.23.0"
+tenacity = "^8.0.1"
+typer = "^0.4.1"
+xgboost = "^1.6.1"
+xxhash = "^3.0.0"
 
 spacy = "^3.4.0"
 # SciSpacy requires older SpaCy, which we aren't using due to pydantic issue
 # However per an open ticket, there is no compatability issue with later SpaCy
 # This fork is identical except for bumped SpaCy version requirement
-scispacy = {git = "https://github.com/mbrown-bhe/scispacy.git", rev = "main"}
-pymongo = {version = "<4", extras = ["aws"]}
-pandas = "^1.4.3"
-docx2txt = "^0.8"
-python-docx = "^0.8.11"
-python-magic = "^0.4.27"
-beautifulsoup4 = "^4.11.1"
 PyJWT = {extras = ["crypto"], version = "^2.4.0"}
 PyPDF2 = "^2.9.0"
 Wand = "^0.6.9"
+beautifulsoup4 = "^4.11.1"
+docx2txt = "^0.8"
+jarowinkler = "^1.2.1"
+pandas = "^1.4.3"
+pycryptodome = "^3.15.0"
+pymongo = {version = "<4", extras = ["aws"]}
+python-docx = "^0.8.11"
+python-magic = "^0.4.27"
+scispacy = {git = "https://github.com/mbrown-bhe/scispacy.git", rev = "main"}
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
 boto3-stubs = {extras = ["essential"], version = "^1.21.42"}
-pytest = "^7.1.1"
-pytest-asyncio = "^0.18.3"
 flake8 = "^4.0.1"
 isort = "^5.10.1"
 pre-commit = "^2.20.0"
+pytest = "^7.1.1"
+pytest-asyncio = "^0.18.3"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0"]
 
 [tool.isort]
 line_length = 100

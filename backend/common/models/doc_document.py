@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import pymongo
 from beanie import Indexed, PydanticObjectId
 from pydantic import BaseModel, Field
 
@@ -33,6 +34,7 @@ class BaseDocDocument(BaseModel):
     # Document Type
     document_type: str | None = None
     doc_type_confidence: float | None = None
+    internal_document: bool | None = None
 
     # Extracted Dates
     effective_date: datetime | None = None
@@ -52,9 +54,9 @@ class BaseDocDocument(BaseModel):
     end_date: datetime | None = None
 
     # Lineage
-    # TODO ask about these two ...
     lineage_id: PydanticObjectId | None = None
-    version: str | None = None
+    previous_doc_doc_id: PydanticObjectId | None = None
+    is_current_version: bool = False
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
@@ -74,6 +76,9 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
         copy.pop("first_collected_date")
         copy.pop("last_collected_date")
         return SiteDocDocument(_id=self.id, **copy, **location.dict())
+
+    class Settings:
+        indexes = [[("locations.site_id", pymongo.ASCENDING)]]
 
 
 class DocDocumentView(DocDocument):
@@ -107,6 +112,7 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     next_review_date: datetime | None = None
     next_update_date: datetime | None = None
     first_created_date: datetime | None = None
+    last_collected_date: datetime | None = None
     published_date: datetime | None = None
     end_date: datetime | None = None
 
@@ -116,7 +122,7 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     therapy_tags: list[UpdateTherapyTag] | None = None
     indication_tags: list[UpdateIndicationTag] | None = None
     tags: list[str] | None = None
-
+    internal_document: bool | None = None
     translation_id: PydanticObjectId | None = None
     content_extraction_task_id: PydanticObjectId | None = None
     content_extraction_status: ApprovalStatus = ApprovalStatus.QUEUED

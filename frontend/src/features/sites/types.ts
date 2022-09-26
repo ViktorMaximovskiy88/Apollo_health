@@ -7,6 +7,7 @@ export interface BaseUrl {
 }
 
 export interface AttrSelector {
+  attr_element: string;
   attr_name: string;
   attr_value?: string;
   has_text?: string;
@@ -33,7 +34,13 @@ export interface Site extends BaseDocument {
     follow_links: boolean;
     follow_link_keywords: string[];
     follow_link_url_keywords: string[];
+    searchable: boolean;
+    searchable_type: SearchableType | null;
+    searchable_input: AttrSelector | null;
+    searchable_submit: AttrSelector | null;
     attr_selectors: AttrSelector[];
+    html_attr_selectors: AttrSelector[];
+    html_exclusion_selectors: AttrSelector[];
     focus_therapy_configs: FocusTherapyConfig[];
     allow_docdoc_updates: boolean;
   };
@@ -59,4 +66,14 @@ export interface ActiveUrlResponse {
 export enum CollectionMethod {
   Automated = 'AUTOMATED',
   Manual = 'MANUAL',
+}
+
+export enum ScrapeMethod {
+  Simple = 'SimpleDocumentScrape',
+  Html = 'HtmlScrape',
+}
+
+export enum SearchableType {
+  CPTCodes = 'CPTCODES',
+  JCodes = 'JCODES',
 }

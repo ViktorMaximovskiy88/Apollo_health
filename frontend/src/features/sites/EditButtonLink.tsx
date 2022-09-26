@@ -17,10 +17,11 @@ export const EditButtonLink = ({ site }: { site: Site }): JSX.Element => {
     if (!currentUser?._id) {
       throw new Error(`Current user id not found. Found instead: ${currentUser?._id}`);
     }
-    const update = { _id: site._id, assignee: currentUser?._id, status: SiteStatus.QualityHold };
+    const update = { _id: site._id, assignee: currentUser?._id };
     await updateSite(update);
     navigate(`${site._id}/edit`);
   };
+
   const cancel = () => {
     setVisible(false);
   };
@@ -33,6 +34,7 @@ export const EditButtonLink = ({ site }: { site: Site }): JSX.Element => {
       setVisible(true);
     }
   };
+
   return (
     <Popconfirm
       title="Site is already assigned. Would you like to take over assignment?"

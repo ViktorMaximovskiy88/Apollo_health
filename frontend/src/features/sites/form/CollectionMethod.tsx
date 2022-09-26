@@ -1,9 +1,13 @@
-import { Checkbox, Input, Form, FormInstance, Select, Radio, Tooltip, Switch } from 'antd';
+import { Checkbox, Input, Form, Select, Radio, Tooltip, Switch } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
-import { CollectionMethod, Site } from './types';
-import { useGetProxiesQuery } from '../proxies/proxiesApi';
+
+import { useGetProxiesQuery } from '../../proxies/proxiesApi';
+import { CollectionMethod, ScrapeMethod, Site } from '../types';
+
 import { AttrSelectors } from './AttrSelectorField';
 import { FocusTherapyConfig } from './FocusTherapyConfig';
+import { HtmlScrapeConfig } from './HtmlScrapeConfig';
+import { SearchableConfig } from './SearchableConfig';
 
 function CollectionMethodRadio() {
   const collections = [
@@ -26,11 +30,10 @@ function CollectionMethodRadio() {
   );
 }
 
-function ScrapeMethod() {
+function ScrapeMethodSelect() {
   const scrapes = [
-    { value: 'SimpleDocumentScrape', label: 'Simple Document Scrape' },
-    { value: 'BrowserDocumentScrape', label: 'Browser Document Scrape' },
-    { value: 'MyPrimeSearchableScrape', label: 'MyPrime Searchable Scrape' },
+    { value: ScrapeMethod.Simple, label: 'Simple Document Scrape' },
+    { value: ScrapeMethod.Html, label: 'HTML Scrape' },
   ];
 
   return (
@@ -171,17 +174,24 @@ function AllowDocDocUpdate() {
 }
 
 function ScrapeMethodConfiguration({ initialValues }: { initialValues: Partial<Site> }) {
+  const currentScrapeMethod: ScrapeMethod = Form.useWatch('scrape_method');
   return (
     <Form.Item name="scrape_method_configuration">
+      {currentScrapeMethod === ScrapeMethod.Html && <HtmlScrapeConfig />}
       <DocumentExtensions />
       <UrlKeywords />
-      <AttrSelectors />
+      <AttrSelectors
+        displayIsResource
+        parentName={['scrape_method_configuration', 'attr_selectors']}
+        title={'Custom Selectors'}
+      />
+      <SearchableConfig />
       <ProxyExclusions />
       <WaitFor />
       <WaitForTimeout />
       <SearchInFrames />
-      <FocusTherapyConfig initialValues={initialValues} />
       <AllowDocDocUpdate />
+      <FocusTherapyConfig initialValues={initialValues} />
     </Form.Item>
   );
 }
@@ -200,7 +210,9 @@ function Schedule() {
   );
 }
 
-function FollowLinks(props: { followLinks: boolean; form: FormInstance }) {
+function FollowLinks() {
+  const form = Form.useFormInstance();
+  const followLinks = Form.useWatch(['scrape_method_configuration', 'follow_links']);
   function validateFollowLinks(fieldInfo: any, value: string) {
     if (value.length === 0) {
       const namePaths = [
@@ -213,7 +225,7 @@ function FollowLinks(props: { followLinks: boolean; form: FormInstance }) {
           return !path.every((ele) => currentNamePath.includes(ele));
         })
         .flat();
-      const otherValue = props.form.getFieldValue(otherNamePath);
+      const otherValue = form.getFieldValue(otherNamePath);
 
       if (otherValue.length === 0) {
         return Promise.reject(
@@ -234,7 +246,7 @@ function FollowLinks(props: { followLinks: boolean; form: FormInstance }) {
       >
         <Checkbox className="flex justify-center" />
       </Form.Item>
-      {props.followLinks && (
+      {followLinks && (
         <div className="flex grow space-x-5">
           <Form.Item
             className="grow"
@@ -267,15 +279,9 @@ function FollowLinks(props: { followLinks: boolean; form: FormInstance }) {
 }
 
 interface CollectionMethodPropTypes {
-  followLinks: boolean;
-  form: FormInstance;
   initialValues: Partial<Site>;
 }
-export function CollectionMethodComponent({
-  followLinks,
-  form,
-  initialValues,
-}: CollectionMethodPropTypes) {
+export function CollectionMethodComponent({ initialValues }: CollectionMethodPropTypes) {
   return (
     <>
       <CollectionMethodRadio />
@@ -288,10 +294,10 @@ export function CollectionMethodComponent({
         {({ getFieldValue }) =>
           getFieldValue('collection_method') === CollectionMethod.Automated ? (
             <>
-              <ScrapeMethod />
+              <ScrapeMethodSelect />
               <ScrapeMethodConfiguration initialValues={initialValues} />
               <Schedule />
-              <FollowLinks followLinks={followLinks} form={form} />
+              <FollowLinks />
             </>
           ) : null
         }

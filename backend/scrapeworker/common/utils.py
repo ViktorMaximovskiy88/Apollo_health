@@ -2,18 +2,21 @@
 import os
 import pathlib
 import re
+from itertools import groupby
+from urllib.parse import urlparse
 
 import magic
 
 
 def compile_date_rgx():
     date_formats = [
+        r"^[0-9]{8}$",  # mmddyyyy
         r"(?<!\d|\/)[0-9]{4}[\/\-\.\|][0-9][0-9]?[\/\-\.\|][0-9][0-9]?(?!\d|\/)",  # yyyy-MM-dd with -, /, . or | # noqa
         r"(?<!\d|\/)[0-9][0-9]?[\/\-\.\|][0-9][0-9]?[\/\-\.\|](?:\d{4}|\d{2})(?!\d|\/)",  # dd-MM-yyyy, dd-mm-yy. With -, /, . or | # noqa
-        r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).? [0-9][0-9]?,? [0-9][0-9][0-9][0-9]",  # M d, yyyy # noqa
+        r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).? [0-9][0-9]?(?:st|nd|rd|th)?,? [0-9][0-9][0-9][0-9]",  # M d, yyyy # noqa
         r"(?<! \d|\w{2})[0-9][0-9]? (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).? [0-9][0-9][0-9][0-9]",  # d M yyyy # noqa
         r"(?<! \d|\w{2})[0-9][0-9]? (January|February|March|April|May|June|July|August|September|October|November|December),? [0-9][0-9][0-9][0-9]",  # d M yyyy # noqa
-        r"(January|February|March|April|May|June|July|August|September|October|November|December) [0-9][0-9]?,? [0-9][0-9][0-9][0-9]",  # M d, yyyy # noqa
+        r"(January|February|March|April|May|June|July|August|September|October|November|December) [0-9][0-9]?(?:st|nd|rd|th)?,? [0-9][0-9][0-9][0-9]",  # M d, yyyy # noqa
         r"(?<!\d |\w{2})(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).?,? [0-9][0-9]?(?!\d |\w{2})",  # M, dd # noqa
         r"(?<!\d |\w{2})(January|February|March|April|May|June|July|August|September|October|November|December),? [0-9][0-9]?(?!\d |\w{2})",  # M, dd # noqa
         r"(?<!\d |\w{2})(January|February|March|April|May|June|July|August|September|October|November|December),? [0-9][0-9][0-9][0-9]",  # M, yyyy # noqa
@@ -67,6 +70,7 @@ mimetype_to_extension_map = {
     "text/csv": "csv",
     "text/plain": "txt",
     "application/octet-stream": "bin",
+    "image/png": "png",
 }
 extension_to_mimetype_map = {v: k for k, v in mimetype_to_extension_map.items()}
 
@@ -109,3 +113,42 @@ def get_extension_from_file_mimetype(file_path: str | None) -> str | None:
         return None
 
     return mimetype_to_extension_map.get(mimetype)
+
+
+def unique_by_attr(items: list[any], attr: str) -> list[any]:
+    return list(set([getattr(item, attr) for item in items]))
+
+
+def sort_by_attr(items: list[any], attr: str):
+    return sorted(items, key=lambda x: getattr(x, attr))
+
+
+# so you have to sort first for groupby to work...
+def group_by_attr(items: list[any], attr: str):
+    sorted_items = sort_by_attr(items, attr)
+    return groupby(sorted_items, lambda x: getattr(x, attr))
+
+
+def compact(input: list[str]) -> list[str]:
+    return list(filter(None, input))
+
+
+def tokenize_url(url: str):
+    parsed = urlparse(url)
+    return parsed.path.split("/")
+
+
+def tokenize_filename(filename: str):
+    return compact(re.split(r"[^a-zA-Z0-9]", filename))
+
+
+def tokenize_string(input: str):
+    return compact(re.split(r"\s", input))
+
+
+def jaccard(a: list, b: list):
+    if len(a) + len(b) == 0:
+        return 0
+    intersection = len(list(set(a).intersection(b)))
+    union = (len(a) + len(b)) - intersection
+    return intersection / union

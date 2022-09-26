@@ -54,6 +54,15 @@ export const DocumentTypes = [
   { id: 'Regulatory Document', value: 'Regulatory Document', label: 'Regulatory Document' },
   { id: 'Formulary', value: 'Formulary', label: 'Formulary' },
   { id: 'Internal Reference', value: 'Internal Reference', label: 'Internal Reference' },
+  { id: 'Formulary Update', value: 'Formulary Update', label: 'Formulary Update' },
+  { id: 'NCCN Guideline', value: 'NCCN Guideline', label: 'NCCN Guideline' },
+  { id: 'Restriction List', value: 'Restriction List', label: 'Restriction List' },
+  {
+    id: 'Review Committee Meetings',
+    value: 'Review Committee Meetings',
+    label: 'Review Committee Meetings',
+  },
+
   { id: 'Not Applicable', value: 'Not Applicable', label: 'Not Applicable' },
 ];
 

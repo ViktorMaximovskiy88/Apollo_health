@@ -1,10 +1,10 @@
 import { Button, Form, Input, Popover, Select, Switch, Tooltip } from 'antd';
 import { MinusCircleOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { FormListFieldData } from 'antd/lib/form/FormList';
-import { useMemo, useState } from 'react';
-import { DocumentTypes } from '../retrieved_documents/types';
+import { useState } from 'react';
+import { DocumentTypes } from '../../retrieved_documents/types';
 
-import { Site } from './types';
+import { Site } from '../types';
 
 interface HeaderPropTypes {
   fields: FormListFieldData[];
@@ -23,7 +23,7 @@ function FieldHeaders({ fields }: HeaderPropTypes) {
       </div>
       <div className="flex items-center col-span-2 ">
         <h4 className="mr-1">Start Separator</h4>
-        <Tooltip className="mb-2 ml-px" title="Keyword to start focus search (Required)">
+        <Tooltip className="mb-2 ml-px" title="Keyword to start focus search">
           <QuestionCircleOutlined />
         </Tooltip>
       </div>
@@ -94,14 +94,8 @@ interface InputPropTypes {
   field: { fieldKey?: number };
 }
 function StartSeparatorInput({ disabled, name, field }: InputPropTypes) {
-  const rules = disabled ? undefined : [{ required: true, message: 'Required' }];
   return (
-    <Form.Item
-      {...field}
-      name={[name, 'start_separator']}
-      rules={rules}
-      className="mb-0 shrink-0 col-span-2"
-    >
+    <Form.Item {...field} name={[name, 'start_separator']} className="mb-0 shrink-0 col-span-2">
       <Input disabled={disabled} />
     </Form.Item>
   );

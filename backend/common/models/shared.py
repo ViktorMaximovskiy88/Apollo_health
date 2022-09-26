@@ -3,6 +3,8 @@ from datetime import datetime
 from beanie import PydanticObjectId
 from pydantic import BaseModel
 
+from backend.scrapeworker.common.utils import unique_by_attr
+
 
 class Location(BaseModel):
     base_url: str
@@ -18,13 +20,11 @@ class SiteLocation(Location):
 
 
 class RetrievedDocumentLocation(SiteLocation):
-    context_metadata: dict = {}  # TODO, un have this and just move the stuff up?
-    previous_retrieved_doc_id: PydanticObjectId | None = None
+    context_metadata: dict = {}
 
 
 class DocDocumentLocation(SiteLocation):
     document_family_id: PydanticObjectId | None = None
-    previous_doc_doc_id: PydanticObjectId | None = None
 
 
 class DocDocumentLocationView(DocDocumentLocation):
@@ -38,6 +38,7 @@ class TherapyTag(BaseModel):
     name: str
     score: float = 0
     focus: bool = False
+    rxcui: str | None = None
 
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))
@@ -54,6 +55,7 @@ class IndicationTag(BaseModel):
     text: str
     code: int
     page: int = 0
+    focus: bool = False
 
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))
@@ -84,3 +86,19 @@ class TaskLock(BaseModel):
 
 class LockableDocument(BaseModel):
     locks: list[TaskLock] = []
+
+
+def get_reference_tags(tags: list[TherapyTag | IndicationTag]):
+    return [tag for tag in tags if not tag.focus]
+
+
+def get_focus_tags(tags: list[TherapyTag | IndicationTag]):
+    return [tag for tag in tags if tag.focus]
+
+
+def get_unique_reference_tags(tags: list[TherapyTag | IndicationTag]):
+    return unique_by_attr(get_reference_tags(tags), "code")
+
+
+def get_unique_focus_tags(tags: list[TherapyTag | IndicationTag]):
+    return unique_by_attr(get_focus_tags(tags), "code")

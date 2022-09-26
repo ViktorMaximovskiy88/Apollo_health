@@ -69,7 +69,7 @@ export function TableBasicInfoForm() {
         skip: 0,
         sortInfo: { name: 'name', dir: 1 },
         filterValue: [
-          { name: 'site_id', operator: 'eq', type: 'string', value: formSiteId },
+          { name: 'locations.site_id', operator: 'eq', type: 'string', value: formSiteId },
           { name: 'name', operator: 'contains', type: 'string', value: search },
         ],
       });
@@ -157,6 +157,9 @@ export function TableExtractionForm() {
       <Form.Item name={['extraction', 'snap_tolerance']} label="Snap Tolerance">
         <Input type="number" />
       </Form.Item>
+      <Form.Item name={['extraction', 'intersection_tolerance']} label="Intersection Tolerance">
+        <Input type="number" />
+      </Form.Item>
     </TranslationFormContainer>
   );
 }
@@ -209,11 +212,22 @@ function newTranslationRule() {
 
 function PatternTranslationInput({ name, field }: { name: number; field: any }) {
   return (
-    <Form.Item label="Pattern" name={[name, 'pattern']} {...field}>
-      <Input />
-    </Form.Item>
+    <>
+      <Form.Item label="Pattern" name={[name, 'pattern']} {...field}>
+        <Input />
+      </Form.Item>
+      <Form.Item
+        label="Capture All"
+        valuePropName="checked"
+        name={[name, 'capture_all']}
+        {...field}
+      >
+        <Checkbox />
+      </Form.Item>
+    </>
   );
 }
+
 function TierTranslationRow(props: {
   name: number;
   index: number;
@@ -233,11 +247,48 @@ function TierTranslationRow(props: {
       </Form.Item>
       <Form.Item
         className="grow mb-2"
-        label={first ? 'Tier' : null}
+        label={first ? 'Action' : null}
         name={[props.name, 'translation']}
         {...props.field}
       >
         <Input />
+      </Form.Item>
+      <Form.Item className="mb-2" label={first ? ' ' : null}>
+        <RemoveTranslationRule onClick={() => props.remove(props.name)} />
+      </Form.Item>
+    </Input.Group>
+  );
+}
+
+function BvGRuleRow(props: {
+  name: number;
+  index: number;
+  remove: (name: number) => void;
+  field: any;
+}) {
+  const first = props.index === 0;
+  const actions = [
+    { label: 'Use Brand', value: 'brand' },
+    { label: 'Use Generic', value: 'generic' },
+    { label: 'Use Both', value: 'both' },
+  ];
+  return (
+    <Input.Group className="space-x-2 flex">
+      <Form.Item
+        className="grow mb-2"
+        label={first ? 'Text' : null}
+        name={[props.name, 'pattern']}
+        {...props.field}
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item
+        className="grow mb-2"
+        label={first ? 'Tier' : null}
+        name={[props.name, 'translation']}
+        {...props.field}
+      >
+        <Select options={actions} />
       </Form.Item>
       <Form.Item className="mb-2" label={first ? ' ' : null}>
         <RemoveTranslationRule onClick={() => props.remove(props.name)} />
@@ -263,9 +314,44 @@ function TierTranslationInput(props: { name: number; field: any }) {
 
 function CodeTranslationInput(props: { name: number; field: any }) {
   return (
-    <Form.Item name={[props.name, 'separator']} label="Strength Seperator">
+    <Form.Item name={[props.name, 'separator']} label="Strength Seperators">
       <Input />
     </Form.Item>
+  );
+}
+
+function QLCTranslationInput(props: { name: number; field: any }) {
+  const options = [
+    { value: 'time', label: 'Time' },
+    { value: 'quantity', label: 'Quantity' },
+  ];
+  return (
+    <Form.Item className="w-32" name={[props.name, 'value']} label="Component">
+      <Select options={options} />
+    </Form.Item>
+  );
+}
+
+function BvGTranslationInput(props: { name: number; field: any }) {
+  const options = [
+    { value: 'time', label: 'Time' },
+    { value: 'quantity', label: 'Quantity' },
+  ];
+  return (
+    <Form.List name={[props.name, 'mappings']}>
+      {(fields, { add, remove }, { errors }) => (
+        <div className="px-12">
+          {fields.map(({ key, name, ...field }, index) => (
+            <BvGRuleRow key={key} name={name} field={field} remove={remove} index={index} />
+          ))}
+          <Form.Item>
+            <Button onClick={() => add({})} icon={<PlusOutlined />}>
+              Action
+            </Button>
+          </Form.Item>
+        </div>
+      )}
+    </Form.List>
   );
 }
 
@@ -277,11 +363,14 @@ function TranslationRule(props: {
 }) {
   const options = [
     { value: 'PA', label: 'Prior Authorization' },
+    { value: 'CPA', label: 'Conditional PA' },
     { value: 'QL', label: 'Quantity Limit' },
+    { value: 'QLC', label: 'QL Component' },
     { value: 'SP', label: 'Specialty Pharmacy' },
     { value: 'ST', label: 'Step Therapy' },
     { value: 'Generic', label: 'Generic' },
     { value: 'Brand', label: 'Brand' },
+    { value: 'BvG', label: 'Brand vs Generic' },
     { value: 'Tier', label: 'Tier' },
   ];
   const field = Form.useWatch([
@@ -298,17 +387,19 @@ function TranslationRule(props: {
         <Form.Item className="grow" label="Field" name={[props.name, 'field']} {...props.field}>
           <Select options={options} />
         </Form.Item>
-        {['PA', 'QL', 'ST', 'SP'].includes(field) && (
+        {['PA', 'CPA', 'QL', 'ST', 'SP'].includes(field) && (
           <PatternTranslationInput name={props.name} field={props.field} />
         )}
         {['Brand', 'Generic'].includes(field) && (
           <CodeTranslationInput name={props.name} field={props.field} />
         )}
+        {field === 'QLC' && <QLCTranslationInput name={props.name} field={props.field} />}
         <Form.Item label=" ">
           <RemoveTranslationRule onClick={() => props.remove(props.name)} />
         </Form.Item>
       </Input.Group>
       {field === 'Tier' && <TierTranslationInput name={props.name} field={props.field} />}
+      {field === 'BvG' && <BvGTranslationInput name={props.name} field={props.field} />}
     </>
   );
 }

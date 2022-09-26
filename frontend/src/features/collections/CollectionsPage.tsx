@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { Button, notification } from 'antd';
-import { useParams } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   useRunSiteScrapeTaskMutation,
   useCancelAllSiteScrapeTasksMutation,
-  useGetScrapeTasksForSiteQuery,
 } from './siteScrapeTasksApi';
 import { useGetSiteQuery } from '../sites/sitesApi';
 import { CollectionsDataTable } from './CollectionsDataTable';
@@ -24,10 +22,6 @@ export function CollectionsPage() {
   const siteId = params.siteId;
   const { data: site, refetch } = useGetSiteQuery(siteId);
   const [runScrape] = useRunSiteScrapeTaskMutation();
-  const { data: scrapeTasks, refetch: refetchScrapes } = useGetScrapeTasksForSiteQuery(siteId, {
-    pollingInterval: 3000,
-    skip: !siteId,
-  });
 
   if (!siteId || !site) return null;
 
@@ -35,7 +29,6 @@ export function CollectionsPage() {
     if (site?._id) {
       try {
         await runScrape(site._id).unwrap();
-        refetchScrapes();
       } catch (err) {
         if (isErrorWithData(err)) {
           notification.error({
@@ -76,7 +69,6 @@ export function CollectionsPage() {
       >
         <CollectionsDataTable
           siteId={siteId}
-          scrapeTasks={scrapeTasks}
           openNewDocumentModal={() => setNewDocumentModalVisible(true)}
         />
       </MainLayout>

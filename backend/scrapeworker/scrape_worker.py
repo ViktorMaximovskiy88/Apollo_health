@@ -1,5 +1,4 @@
 import asyncio
-import re
 from contextlib import asynccontextmanager
 from random import shuffle
 from typing import Any, AsyncGenerator, Callable, Coroutine
@@ -29,6 +28,7 @@ from backend.common.models.link_task_log import (
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.services.lineage import LineageService
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.aio_downloader import AioDownloader
@@ -39,22 +39,11 @@ from backend.scrapeworker.common.update_documents import DocumentUpdater
 from backend.scrapeworker.common.utils import get_extension_from_path_like
 from backend.scrapeworker.file_parsers import parse_by_type
 from backend.scrapeworker.playbook import ScrapePlaybook
-from backend.scrapeworker.scrapers import scrapers
+from backend.scrapeworker.scrapers import ScrapeHandler
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
+from backend.scrapeworker.search_crawler import SearchableCrawler
 
 log = logging.getLogger(__name__)
-
-
-def is_google(url):
-    parsed = urlparse(url)
-    return parsed.hostname in ["drive.google.com", "docs.google.com"]
-
-
-def get_google_id(url: str) -> str:
-    matched = re.search(r"/d/(.*)/", url)
-    if not matched:
-        raise Exception(f"{url} is not a valid google doc/drive url")
-    return matched.group(1)
 
 
 class ScrapeWorker:
@@ -71,12 +60,18 @@ class ScrapeWorker:
         self.scrape_task = scrape_task
         self.site = site
         self.seen_urls = set()
+        self.seen_hashes = set()
         self.doc_client = DocumentStorageClient()
         self.text_handler = TextHandler()
         self.downloader = AioDownloader(_log)
         self.playbook = ScrapePlaybook(self.site.playbook)
-        self.log = _log
+        self.search_crawler = SearchableCrawler(
+            config=self.site.scrape_method_configuration, log=_log
+        )
         self.doc_updater = DocumentUpdater(_log, scrape_task, site)
+        self.lineage_service = LineageService(logger=_log)
+        self.lineage_tasks = []
+        self.log = _log
 
     @alru_cache
     async def get_proxy_settings(
@@ -100,6 +95,14 @@ class ScrapeWorker:
             return False
         self.log.info(f"unseen target -> {key}")
         self.seen_urls.add(key)
+        return True
+
+    def file_hash_not_seen(self, hash: str | None):
+        # skip if we've already seen this filehash
+        if not hash or hash in self.seen_hashes:
+            return False
+        self.log.info(f"unseen target -> {hash}")
+        self.seen_hashes.add(hash)
         return True
 
     def get_updated_tags(
@@ -139,7 +142,6 @@ class ScrapeWorker:
         return new_therapy_tags, new_indicate_tags
 
     async def attempt_download(self, download: DownloadContext):
-
         url = download.request.url
         proxies = await self.get_proxy_settings()
         link_retrieved_task: LinkRetrievedTask = link_retrieved_task_from_download(
@@ -161,9 +163,9 @@ class ScrapeWorker:
 
             # TODO can we separate the concept of extensions to scrape on
             # and ext we expect to download? for now just html
-            if (
-                download.file_extension == "html"
-                and "html" not in self.site.scrape_method_configuration.document_extensions
+            if download.file_extension == "html" and (
+                "html" not in self.site.scrape_method_configuration.document_extensions
+                and self.site.scrape_method != "HtmlScrape"
             ):
                 self.log.warn("Received an unexpected html response")
                 await link_retrieved_task.save()
@@ -194,13 +196,14 @@ class ScrapeWorker:
 
             # TODO i think this needs to not live here... a lambda to do the 'preview' thing
             # right now opt-in to it
-            if (
-                download.file_extension == "html"
-                and "html" in self.site.scrape_method_configuration.document_extensions
+            if download.file_extension == "html" and (
+                "html" in self.site.scrape_method_configuration.document_extensions
+                or self.site.scrape_method == "HtmlScrape"
             ):
-                async with self.playwright_context(url) as (page, _context):
+                target_url = url if not download.direct_scrape else f"file://{temp_path}"
+                async with self.playwright_context(target_url) as (page, _context):
                     dest_path = f"{checksum}.{download.file_extension}.pdf"
-                    await page.goto(download.request.url, wait_until="domcontentloaded")
+                    await page.goto(target_url, wait_until="domcontentloaded")
                     pdf_bytes = await page.pdf(display_header_footer=False, print_background=True)
                     self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
 
@@ -225,7 +228,7 @@ class ScrapeWorker:
                     parsed_content=parsed_content,
                 )
 
-                await self.doc_updater.update_doc_document(
+                doc_document = await self.doc_updater.update_doc_document(
                     document, new_therapy_tags, new_indicate_tags
                 )
 
@@ -233,7 +236,8 @@ class ScrapeWorker:
                 document = await self.doc_updater.create_retrieved_document(
                     parsed_content, download, checksum, url
                 )
-                await self.doc_updater.create_doc_document(document)
+                doc_document = await self.doc_updater.create_doc_document(document)
+                self.lineage_tasks.append((document, doc_document))
 
             link_retrieved_task.retrieved_document_id = document.id
 
@@ -324,7 +328,7 @@ class ScrapeWorker:
                 await stealth_async(page)
                 page.on("dialog", handle_dialog)
 
-                self.log.info(f"Awating response for {url}")
+                self.log.info(f"Awaiting response for {url}")
                 # TODO lets set this timeout lower generally and let exceptions set it higher
                 response = await page.goto(url, timeout=15000, wait_until="domcontentloaded")
                 self.log.info(f"Received response for {url}")
@@ -373,33 +377,26 @@ class ScrapeWorker:
     def active_base_urls(self):
         return [url for url in self.site.base_urls if url.status == "ACTIVE"]
 
-    def preprocess_download(self, download: DownloadContext, base_url: str):
-        download.metadata.base_url = base_url
-        if is_google(download.request.url):
-            google_id = get_google_id(download.request.url)
-            download.request.url = f"https://drive.google.com/u/0/uc?id={google_id}&export=download"
-
     async def queue_downloads(self, url: str, base_url: str):
         all_downloads: list[DownloadContext] = []
 
         async with self.playwright_context(url) as (base_page, context):
             async for (page, playbook_context) in self.playbook.run_playbook(base_page):
-                for Scraper in scrapers:
-                    scraper = Scraper(
-                        page=page,
-                        context=context,
-                        config=self.site.scrape_method_configuration,
-                        playbook_context=playbook_context,
-                        url=url,
-                        log=self.log,
-                    )
+                scrape_handler = ScrapeHandler(
+                    context=context,
+                    page=page,
+                    playbook_context=playbook_context,
+                    log=self.log,
+                    config=self.site.scrape_method_configuration,
+                )
 
-                    if not await scraper.is_applicable():
-                        continue
-
-                    for download in await scraper.execute():
-                        self.preprocess_download(download, base_url)
-                        all_downloads.append(download)
+                if await self.search_crawler.is_searchable(page):
+                    async for code in self.search_crawler.run_searchable(page, playbook_context):
+                        await scrape_handler.run_scrapers(
+                            url, base_url, all_downloads, {"file_name": code}
+                        )
+                else:
+                    await scrape_handler.run_scrapers(url, base_url, all_downloads)
 
         return all_downloads
 
@@ -429,7 +426,9 @@ class ScrapeWorker:
             else download.request.filename
         )
 
-        return not self.skip_url(url) and self.url_not_seen(url, filename)
+        return (
+            not self.skip_url(url) and self.url_not_seen(url, filename)
+        ) or self.file_hash_not_seen(download.file_hash)
 
     def is_artifact_file(self, url: str):
         extension = get_extension_from_path_like(url)
@@ -471,6 +470,10 @@ class ScrapeWorker:
                 self.log.info(f"Skip download {download.request.url}")
 
         await self.wait_for_completion_or_cancel(tasks)
+
+        # doc_ids = [doc.id for (doc, doc_doc) in self.lineage_tasks]
+        # await self.lineage_service.process_lineage_for_doc_ids(self.site.id, doc_ids)
+
         await self.downloader.close()
 
         if not self.scrape_task.documents_found:

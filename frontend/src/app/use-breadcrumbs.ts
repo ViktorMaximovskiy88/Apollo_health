@@ -9,6 +9,7 @@ import { documentsApi } from '../features/retrieved_documents/documentsApi';
 import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { workQueuesApi } from '../features/work_queue/workQueuesApi';
 import { translationsApi } from '../features/translations/translationApi';
+import { payerBackboneApi } from '../features/payer-backbone/payerBackboneApi';
 
 const routes = [
   '/documents',
@@ -26,6 +27,7 @@ const routes = [
   '/sites/:siteId/extraction/document/:docDocId/edit',
   '/sites/:siteId/scrapes',
   '/sites/:siteId/view',
+  '/sites/:siteId/lineage',
   '/sites/new',
   '/translations',
   '/translations/:translationId',
@@ -38,6 +40,10 @@ const routes = [
   '/work-queues/:workQueueId/:docDocumentId/process',
   '/work-queues/:workQueueId/:docDocumentId/read-only',
   '/work-queues/new',
+  '/payer-backbone',
+  '/payer-backbone/:payerType',
+  '/payer-backbone/:payerType/new',
+  '/payer-backbone/:payerType/:payerId',
 ];
 
 export const useBreadcrumbs = async () => {
@@ -75,6 +81,13 @@ export const useBreadcrumbs = async () => {
         );
         return { url, label: result.data.name } as any;
       },
+      ':payerId': async (payerId: string, url: string) => {
+        const payerType = url.split('/')[2];
+        const result: any = await dispatch(
+          payerBackboneApi.endpoints.getPayerBackbone.initiate({ payerType, id: payerId })
+        );
+        return { url, label: result.data.name } as any;
+      },
     };
 
     // Mapping paths to display labels based on the root menu item; many are shared...
@@ -90,6 +103,7 @@ export const useBreadcrumbs = async () => {
         'doc-documents': 'Documents',
         extraction: 'Extracted Content',
         results: 'Results',
+        lineage: 'Lineage',
         ...asyncResolvers,
       },
       '/documents': {
@@ -112,6 +126,24 @@ export const useBreadcrumbs = async () => {
       '/translations': {
         translations: 'Translations',
         new: 'New',
+        ...asyncResolvers,
+      },
+      '/payer-backbone': {
+        'payer-backbone': 'Payer Backbone',
+        new: 'New',
+        ':payerType': (part: string, url: string) => {
+          const names: { [k: string]: string } = {
+            mco: 'MCO',
+            plan: 'Plan',
+            parent: 'Parent',
+            ump: 'UM Package',
+            bm: 'Benefit Manager',
+            formulary: 'Formulary',
+          };
+          const label = names[part];
+
+          return Promise.resolve({ url, label } as any);
+        },
         ...asyncResolvers,
       },
     };

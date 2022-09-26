@@ -9,7 +9,7 @@ export interface BaseDocTag {
   _normalized: string;
 }
 
-export interface TherapyTag extends BaseDocTag {
+export interface TherapyTag {
   name: string;
   text: string;
   page: number;
@@ -18,12 +18,16 @@ export interface TherapyTag extends BaseDocTag {
   focus: boolean;
 }
 
-export interface IndicationTag extends BaseDocTag {
+export interface IndicationTag {
   name?: string;
   text: string;
   page: number;
   code: string;
 }
+
+export interface UIIndicationTag extends IndicationTag, BaseDocTag {}
+export interface UITherapyTag extends TherapyTag, BaseDocTag {}
+export type DocumentTag = UIIndicationTag | UITherapyTag;
 
 export interface TaskLock {
   work_queue_id: string;
@@ -62,7 +66,6 @@ export interface DocDocument extends BaseDocument {
   first_created_date: string;
   published_date: string;
   identified_dates: string[];
-
   final_effective_date: string;
   end_date: string;
 
@@ -71,6 +74,7 @@ export interface DocDocument extends BaseDocument {
 
   lineage_id: string;
   version: string;
+  internal_document: boolean;
 
   locations: DocDocumentLocation[];
 

@@ -1,11 +1,20 @@
-import { Form, Input } from 'antd';
+import { Form, Input, Select } from 'antd';
 import { useLazyGetDocumentFamilyByNameQuery } from './documentFamilyApi';
 import { DocDocumentLocation } from '../locations/types';
 import { useAddDocumentFamilyMutation } from './documentFamilyApi';
-import { Button, Modal } from 'antd';
+import { Modal } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
+import { RemoteSelect } from '../../../components';
+import { useLazyGetPayerBackbonesQuery } from '../../payer-backbone/payerBackboneApi';
+import {
+  payerTypeOptions,
+  channelOptions,
+  benefitOptions,
+  planTypeOptions,
+  regionOptions,
+} from './payerLevels';
 
 interface DocumentFamilyCreateModalPropTypes {
   documentType: string;
@@ -13,6 +22,60 @@ interface DocumentFamilyCreateModalPropTypes {
   visible?: boolean;
   onClose: () => void;
   onSave: (documentFamilyId: string) => void;
+}
+
+function PayerInfo() {
+  const [getPayers] = useLazyGetPayerBackbonesQuery();
+  const form = Form.useFormInstance();
+  const payerType = Form.useWatch(['payer_info', 'payer_type']);
+
+  useEffect(() => {
+    form.setFieldsValue({ payer_info: { payer_ids: [] } });
+  }, [form, payerType]);
+
+  const payerOptions = useCallback(
+    async (search: string) => {
+      if (!payerType) return [];
+      const { data } = await getPayers({
+        type: payerType,
+        limit: 20,
+        skip: 0,
+        sortInfo: { name: 'name', dir: 1 },
+        filterValue: [{ name: 'name', operator: 'contains', type: 'string', value: search }],
+      });
+      if (!data) return [];
+      return data.data.map((payer) => ({ label: payer.name, value: payer.l_id }));
+    },
+    [getPayers, payerType]
+  );
+
+  return (
+    <div className="mt-4">
+      <h2>Payer</h2>
+      <Input.Group className="space-x-2 flex">
+        <Form.Item label="Payer Type" name={['payer_info', 'payer_type']} className="w-48">
+          <Select options={payerTypeOptions} />
+        </Form.Item>
+        <Form.Item label="Payers" name={['payer_info', 'payer_ids']} className="grow">
+          <RemoteSelect mode="multiple" className="w-full" fetchOptions={payerOptions} />
+        </Form.Item>
+      </Input.Group>
+      <Input.Group className="space-x-2 flex">
+        <Form.Item label="Channel" name={['payer_info', 'channels']} className="w-full">
+          <Select mode="multiple" options={channelOptions} />
+        </Form.Item>
+        <Form.Item label="Benefit" name={['payer_info', 'benefits']} className="w-full">
+          <Select mode="multiple" options={benefitOptions} />
+        </Form.Item>
+        <Form.Item label="Plan Types" name={['payer_info', 'plan_types']} className="w-full">
+          <Select mode="multiple" options={planTypeOptions} />
+        </Form.Item>
+        <Form.Item label="Region" name={['payer_info', 'regions']} className="w-full">
+          <Select mode="multiple" options={regionOptions} />
+        </Form.Item>
+      </Input.Group>
+    </div>
+  );
 }
 
 export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTypes) => {
@@ -37,15 +100,9 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
       visible={visible}
       title={<>Add Document Family for {location.site_name}</>}
       width="50%"
-      onCancel={() => {
-        onClose();
-      }}
-      footer={[
-        <Button onClick={onClose}>cancel</Button>,
-        <Button type="primary" htmlType="submit" onClick={() => form.submit()}>
-          Save
-        </Button>,
-      ]}
+      okText="Submit"
+      onOk={form.submit}
+      onCancel={onClose}
     >
       <Form
         form={form}
@@ -64,17 +121,15 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
       >
         <div className="flex">
           <div className="flex-1 mt-2 mb-4">
-            <label>Site Name</label>
+            <h3>Site</h3>
             <div>{location.site_name}</div>
           </div>
 
-          <div className=" flex-1 mt-2 mb-4">
-            <label>Document Type</label>
+          <div className="flex-1 mt-2 mb-4">
+            <h3>Document Type</h3>
             <div>{documentType}</div>
           </div>
         </div>
-
-        <h4>Document Family</h4>
         <Form.Item
           label="Name"
           name="name"
@@ -85,6 +140,8 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
         >
           <Input />
         </Form.Item>
+
+        <PayerInfo />
       </Form>
     </Modal>
   );

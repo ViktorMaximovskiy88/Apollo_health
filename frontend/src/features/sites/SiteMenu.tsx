@@ -38,6 +38,10 @@ export function SiteMenu() {
       label: <Link to={`/sites/${siteId}/extraction`}>Content Extraction</Link>,
     },
     {
+      key: 'lineage',
+      label: <Link to={`/sites/${siteId}/lineage`}>Lineage</Link>,
+    },
+    {
       key: 'edit',
       label: <Link to={`/sites/${siteId}/edit`}>Edit Site</Link>,
     },

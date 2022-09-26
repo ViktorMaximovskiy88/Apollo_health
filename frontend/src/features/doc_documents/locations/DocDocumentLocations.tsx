@@ -18,18 +18,16 @@ export const DocDocumentLocations = ({ docDocument, locations }: DocDocumentLoca
   return (
     <div>
       {locations.map((location, index) => (
-        <>
-          <DocDocumentLocationForm
-            key={location.site_id}
-            index={index}
-            documentType={docDocument.document_type}
-            location={location}
-            onShowDocumentFamilyCreate={() => {
-              setSelectedLocationIndex(index);
-              setIsVisible(true);
-            }}
-          />
-        </>
+        <DocDocumentLocationForm
+          key={location.site_id}
+          index={index}
+          documentType={docDocument.document_type}
+          location={location}
+          onShowDocumentFamilyCreate={() => {
+            setSelectedLocationIndex(index);
+            setIsVisible(true);
+          }}
+        />
       ))}
 
       <DocumentFamilyCreateModal

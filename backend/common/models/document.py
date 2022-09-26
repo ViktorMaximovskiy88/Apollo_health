@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import pymongo
 from beanie import Indexed, PydanticObjectId
 from pydantic import BaseModel, Field
 
@@ -26,16 +27,22 @@ class BaseRetrievedDocument(BaseModel):
     published_date: datetime | None = None
     first_collected_date: datetime | None = None
     last_collected_date: datetime | None = None
-
     document_type: str | None = None
     doc_type_confidence: float | None = None
     identified_dates: list[datetime] = []
     lang_code: LangCode | None = None
+    file_size: int = 0
     file_extension: str | None = None
     content_type: str | None = None
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
+    doc_vectors: list[list[float]] = []
+
+    # lineage
+    lineage_id: PydanticObjectId | None = None
+    previous_doc_id: PydanticObjectId | None = None
+    is_current_version: bool = False
 
 
 class RetrievedDocument(BaseDocument, BaseRetrievedDocument, DocumentMixins):
@@ -47,6 +54,9 @@ class RetrievedDocument(BaseDocument, BaseRetrievedDocument, DocumentMixins):
         copy.pop("first_collected_date")
         copy.pop("last_collected_date")
         return SiteRetrievedDocument(_id=self.id, **copy, **location.dict())
+
+    class Settings:
+        indexes = [[("locations.site_id", pymongo.ASCENDING)]]
 
 
 class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
@@ -65,7 +75,6 @@ class UpdateRetrievedDocument(BaseModel, DocumentMixins):
     identified_dates: list[datetime] | None = None
     first_collected_date: datetime | None = None
     last_collected_date: datetime | None = None
-
     checksum: str | None = None
     text_checksum: str | None = None
     disabled: bool | None = None
@@ -85,6 +94,8 @@ class UpdateRetrievedDocument(BaseModel, DocumentMixins):
     automated_content_extraction_class: str | None = None
 
     locations: list[RetrievedDocumentLocation] = []
+    doc_vectors: list[list[float]] = []
+    file_size: int = 0
 
 
 class RetrievedDocumentLimitTags(RetrievedDocument):
