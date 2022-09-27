@@ -1,4 +1,4 @@
-import { Button, Form, Input, Select, Space, Typography } from 'antd';
+import { Button, Card, Col, Form, Input, Row, Select, Space, Typography } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { Link } from 'react-router-dom';
 import { Site, CollectionMethod } from '../types';
@@ -57,50 +57,49 @@ export function SiteForm(props: {
   };
   /* eslint-enable no-template-curly-in-string */
 
-  const wrapperCol = {
-    xs: { span: 24 },
-    sm: { span: 24 },
-    md: { span: 24 },
-    lg: { span: 16 },
-    xl: { span: 12 },
-  };
-
   return (
     <Form
       layout="vertical"
       form={form}
-      wrapperCol={wrapperCol}
       requiredMark={false}
       onFinish={props.onFinish}
       initialValues={initialValues}
       validateMessages={validateMessages}
     >
-      <Typography.Title level={3}>Site Information</Typography.Title>
-      <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-        <Input />
-      </Form.Item>
-      <UrlFormFields initialValues={props.initialValues} form={form} />
-      <Form.Item name="tags" label="Tags">
-        <Select mode="tags" />
-      </Form.Item>
-      <Status />
-      <Assignee />
-
-      <Typography.Title level={3}>Collection Settings</Typography.Title>
-      <CollectionMethodComponent initialValues={initialValues} />
-
-      {props.readOnly ? (
-        <ToggleReadOnly setReadOnly={props.setReadOnly} form={form} />
-      ) : (
-        <Form.Item>
-          <Space>
-            <Submit form={form} />
-            <Link to="/sites">
-              <Button htmlType="submit">Cancel</Button>
-            </Link>
-          </Space>
-        </Form.Item>
-      )}
+      <Row gutter={16} className="flex pb-[20%]">
+        <Col span={16}>
+          <Card>
+            <Typography.Title level={3}>Site Information</Typography.Title>
+            <Form.Item name="name" label="Name" rules={[{ required: true }]}>
+              <Input />
+            </Form.Item>
+            <UrlFormFields initialValues={props.initialValues} form={form} />
+            <Form.Item name="tags" label="Tags">
+              <Select mode="tags" />
+            </Form.Item>
+            <Status />
+            <Assignee />
+            {props.readOnly ? (
+              <ToggleReadOnly setReadOnly={props.setReadOnly} form={form} />
+            ) : (
+              <Form.Item>
+                <Space>
+                  <Submit form={form} />
+                  <Link to="/sites">
+                    <Button htmlType="submit">Cancel</Button>
+                  </Link>
+                </Space>
+              </Form.Item>
+            )}
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card>
+            <Typography.Title level={3}>Collection Settings</Typography.Title>
+            <CollectionMethodComponent initialValues={initialValues} />
+          </Card>
+        </Col>
+      </Row>
     </Form>
   );
 }
