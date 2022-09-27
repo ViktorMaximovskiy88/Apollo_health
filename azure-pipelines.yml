@@ -147,6 +147,14 @@ stages:
               environment: tst
               awsCredentials: "Apollo-AWS-Test-Apollo"
 
+      - job: validatePrdDeploy
+        displayName: Validate and Plan Prod Deployment
+        steps:
+          - template: .azure-pipelines/source-hub.validate.yml
+            parameters:
+              environment: prd
+              awsCredentials: "Apollo-AWS-Prod-Apollo"
+
   ##############################################################################################
   # Stage: Deploy to the Development Environment
   #
@@ -158,7 +166,7 @@ stages:
   - stage: development
     displayName: Development Stage
     dependsOn: build
-    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature/')))
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature/'), startsWith(variables['Build.SourceBranch'], 'refs/tags/v')))
     jobs:
       - deployment: dev_deployment
         displayName: Deploy to SourceHub Dev
@@ -188,7 +196,7 @@ stages:
   - stage: test
     displayName: Test Stage
     dependsOn: development
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/tags/v')))
     jobs:
       - deployment: tst_deployment
         displayName: Deploy to SourceHub Test
