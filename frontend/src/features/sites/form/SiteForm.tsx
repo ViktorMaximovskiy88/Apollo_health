@@ -84,12 +84,11 @@ export function SiteForm(props: {
         <Select mode="tags" />
       </Form.Item>
       <Status />
-      <Typography.Title level={3}>Collection Settings</Typography.Title>
-      <Form.Item name="playbook" label="Playbook">
-        <Input.TextArea />
-      </Form.Item>
-      <CollectionMethodComponent initialValues={initialValues} />
       <Assignee />
+
+      <Typography.Title level={3}>Collection Settings</Typography.Title>
+      <CollectionMethodComponent initialValues={initialValues} />
+
       {props.readOnly ? (
         <ToggleReadOnly setReadOnly={props.setReadOnly} form={form} />
       ) : (

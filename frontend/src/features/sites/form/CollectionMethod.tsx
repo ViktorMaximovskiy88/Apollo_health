@@ -288,6 +288,9 @@ export function CollectionMethodComponent({ initialValues }: CollectionMethodPro
             <>
               <ScrapeMethodSelect />
               <ScrapeMethodConfiguration initialValues={initialValues} />
+              <Form.Item name="playbook" label="Playbook">
+                <Input.TextArea />
+              </Form.Item>
               <Schedule />
               <FollowLinks />
             </>
