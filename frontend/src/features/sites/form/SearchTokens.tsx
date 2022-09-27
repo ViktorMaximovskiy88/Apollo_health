@@ -2,7 +2,7 @@ import { Input, Form, Switch, Radio } from 'antd';
 import { SearchableType } from '../types';
 import { ElementInput, NameInput, ValueInput, ContainsTextInput } from './AttrSelectorField';
 
-export function SearchableConfig() {
+export function SearchTokens() {
   const isSearchable = Form.useWatch(['scrape_method_configuration', 'searchable']);
 
   const searchableTypes = [
@@ -34,7 +34,7 @@ export function SearchableConfig() {
           </Form.Item>
           <Form.Item
             name={inputName}
-            label="Searchable Input"
+            label="ID Search Input"
             tooltip={'Input field for search terms'}
           >
             <Input.Group className="grid grid-cols-10 space-x-1">
@@ -46,7 +46,7 @@ export function SearchableConfig() {
           </Form.Item>
           <Form.Item
             name={submitName}
-            label="Searchable Submit Button"
+            label="ID Search Submit Button"
             tooltip={'Button to trigger search'}
           >
             <Input.Group className="grid grid-cols-10 space-x-1">

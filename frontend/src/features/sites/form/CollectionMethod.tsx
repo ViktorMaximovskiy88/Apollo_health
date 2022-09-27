@@ -1,7 +1,20 @@
-import { Checkbox, Input, Form, Select, Radio, Switch } from 'antd';
+import { Input, Form, Select, Radio, Switch } from 'antd';
 
 import { CollectionMethod, ScrapeMethod, Site } from '../types';
-import { ScrapeMethodConfiguration } from './ScrapeMethodConfiguration';
+import {
+  DocumentExtensions,
+  UrlKeywords,
+  ProxyExclusions,
+  WaitFor,
+  WaitForTimeout,
+  SearchInFrames,
+  AllowDocDocUpdate,
+} from './ScrapeConfigFields';
+
+import { AttrSelectors } from './AttrSelectorField';
+import { FocusTherapyConfig } from './FocusTherapyConfig';
+import { HtmlScrapeConfig } from './HtmlScrapeConfig';
+import { SearchTokens } from './SearchTokens';
 
 function CollectionMethodRadio() {
   const collections = [
@@ -115,6 +128,7 @@ interface CollectionMethodPropTypes {
   initialValues: Partial<Site>;
 }
 export function CollectionMethodComponent({ initialValues }: CollectionMethodPropTypes) {
+  const currentScrapeMethod: ScrapeMethod = Form.useWatch('scrape_method');
   return (
     <>
       <CollectionMethodRadio />
@@ -127,13 +141,27 @@ export function CollectionMethodComponent({ initialValues }: CollectionMethodPro
         {({ getFieldValue }) =>
           getFieldValue('collection_method') === CollectionMethod.Automated ? (
             <>
-              <ScrapeMethodSelect />
-              <ScrapeMethodConfiguration initialValues={initialValues} />
+              <SearchTokens />
               <Form.Item name="playbook" label="Playbook">
                 <Input.TextArea />
               </Form.Item>
+              <ScrapeMethodSelect />
+              {currentScrapeMethod === ScrapeMethod.Html && <HtmlScrapeConfig />}
+              <DocumentExtensions />
+              <UrlKeywords />
+              <ProxyExclusions />
+              <WaitFor />
+              <WaitForTimeout />
               <Schedule />
               <FollowLinks />
+              <SearchInFrames />
+              <AllowDocDocUpdate />
+              <FocusTherapyConfig initialValues={initialValues} />
+              <AttrSelectors
+                displayIsResource
+                parentName={['scrape_method_configuration', 'attr_selectors']}
+                title={<label className="font-semibold">Custom Selectors</label>}
+              />
             </>
           ) : null
         }

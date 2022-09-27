@@ -74,7 +74,7 @@ export function SiteForm(props: {
               <Input />
             </Form.Item>
             <UrlFormFields initialValues={props.initialValues} form={form} />
-            <Form.Item name="tags" label="Tags">
+            <Form.Item name="tags" label="Site Tags">
               <Select mode="tags" />
             </Form.Item>
             <Status />
