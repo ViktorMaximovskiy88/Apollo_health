@@ -1,4 +1,4 @@
-import { Checkbox, Input, Form, Select, Radio } from 'antd';
+import { Checkbox, Input, Form, Select, Radio, Switch } from 'antd';
 
 import { CollectionMethod, ScrapeMethod, Site } from '../types';
 import { ScrapeMethodConfiguration } from './ScrapeMethodConfiguration';
@@ -77,7 +77,7 @@ function FollowLinks() {
         label="Follow Links"
         valuePropName="checked"
       >
-        <Checkbox className="flex justify-center" />
+        <Switch />
       </Form.Item>
       {followLinks && (
         <div className="flex grow space-x-5">
