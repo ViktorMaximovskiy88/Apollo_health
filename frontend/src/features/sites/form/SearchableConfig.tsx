@@ -1,4 +1,4 @@
-import { Input, Form, Select, Switch } from 'antd';
+import { Input, Form, Switch, Radio } from 'antd';
 import { SearchableType } from '../types';
 import { ElementInput, NameInput, ValueInput, ContainsTextInput } from './AttrSelectorField';
 
@@ -22,7 +22,7 @@ export function SearchableConfig() {
       >
         <Switch className="flex justify-center" />
       </Form.Item>
-      {isSearchable && (
+      {isSearchable ? (
         <>
           <Form.Item
             name={['scrape_method_configuration', 'searchable_type']}
@@ -30,7 +30,7 @@ export function SearchableConfig() {
             rules={[{ required: true, message: 'Required' }]}
             tooltip={'Type of inputs to search for'}
           >
-            <Select options={searchableTypes} />
+            <Radio.Group options={searchableTypes} optionType="button" buttonStyle="solid" />
           </Form.Item>
           <Form.Item
             name={inputName}
@@ -57,7 +57,7 @@ export function SearchableConfig() {
             </Input.Group>
           </Form.Item>
         </>
-      )}
+      ) : null}
     </div>
   );
 }
