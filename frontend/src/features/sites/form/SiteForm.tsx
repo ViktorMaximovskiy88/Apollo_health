@@ -8,7 +8,7 @@ import { SiteStatus } from '../siteStatus';
 import { Assignee } from './AssigneeInput';
 import { SiteSubmitButton as Submit } from './SiteSubmitButton';
 import { ToggleReadOnly } from './ToggleReadOnly';
-import { SiteStatusSelect as Status } from './SiteStatusSelect';
+import { SiteStatusRadio as Status } from './SiteStatusRadio';
 
 export function SiteForm(props: {
   onFinish: (update: Partial<Site>) => void;
@@ -87,7 +87,7 @@ export function SiteForm(props: {
         <Select mode="tags" />
       </Form.Item>
       <Assignee />
-      <Status form={form} />
+      <Status />
       {props.readOnly ? (
         <ToggleReadOnly setReadOnly={props.setReadOnly} form={form} />
       ) : (
