@@ -1,4 +1,4 @@
-import { Button, Form, Input, Select, Space } from 'antd';
+import { Button, Form, Input, Select, Space, Typography } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { Link } from 'react-router-dom';
 import { Site, CollectionMethod } from '../types';
@@ -75,6 +75,7 @@ export function SiteForm(props: {
       initialValues={initialValues}
       validateMessages={validateMessages}
     >
+      <Typography.Title level={3}>Site Information</Typography.Title>
       <Form.Item name="name" label="Name" rules={[{ required: true }]}>
         <Input />
       </Form.Item>
@@ -83,6 +84,7 @@ export function SiteForm(props: {
         <Select mode="tags" />
       </Form.Item>
       <Status />
+      <Typography.Title level={3}>Collection Settings</Typography.Title>
       <Form.Item name="playbook" label="Playbook">
         <Input.TextArea />
       </Form.Item>
