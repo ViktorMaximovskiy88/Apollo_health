@@ -17,15 +17,7 @@ function CollectionMethodRadio() {
 
   return (
     <Form.Item name="collection_method" label="Collection Method">
-      <Radio.Group>
-        {collections.map((col) => {
-          return (
-            <Radio key={col.value} value={col.value}>
-              {col.label}
-            </Radio>
-          );
-        })}
-      </Radio.Group>
+      <Radio.Group options={collections} optionType="button" buttonStyle="solid" />
     </Form.Item>
   );
 }
