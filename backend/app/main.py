@@ -9,7 +9,6 @@ import sys
 import uvicorn
 
 if __name__ == "__main__":
-
     sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
     from backend.common.core.config import is_local
 
