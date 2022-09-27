@@ -30,7 +30,7 @@ export function SiteViewPage() {
   }
 
   return (
-    <MainLayout pageTitle={`${readOnly ? 'View' : 'Edit'} Site`} sidebar={<SiteMenu />}>
+    <MainLayout sidebar={<SiteMenu />}>
       <SiteForm
         readOnly={readOnly}
         setReadOnly={setReadOnly}
