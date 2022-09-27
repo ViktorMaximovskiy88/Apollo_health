@@ -1,7 +1,7 @@
 import { AutoComplete, Button, Checkbox, Form, Input, Popover, Tooltip, Typography } from 'antd';
 import { MinusCircleOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { FormListFieldData } from 'antd/lib/form/FormList';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { Hr } from '../../../components';
 
@@ -70,7 +70,7 @@ function FieldHeaders({ displayIsResource, fields }: HeaderPropTypes) {
   );
 }
 
-function Header({ title }: { title: string }) {
+function Header({ title }: { title: ReactNode }) {
   const { Text } = Typography;
   const contentItems = [
     <div key="1">
@@ -271,7 +271,7 @@ export function AttrSelectors({
 }: {
   displayIsResource?: boolean;
   parentName: string[];
-  title: string;
+  title: ReactNode;
 }) {
   return (
     <Form.List name={parentName}>

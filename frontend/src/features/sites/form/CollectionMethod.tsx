@@ -175,7 +175,7 @@ function ScrapeMethodConfiguration({ initialValues }: { initialValues: Partial<S
       <AttrSelectors
         displayIsResource
         parentName={['scrape_method_configuration', 'attr_selectors']}
-        title={'Custom Selectors'}
+        title={<label className="font-semibold">Custom Selectors</label>}
       />
       <SearchableConfig />
       <ProxyExclusions />

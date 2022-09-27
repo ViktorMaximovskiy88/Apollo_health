@@ -79,15 +79,15 @@ export function SiteForm(props: {
         <Input />
       </Form.Item>
       <UrlFormFields initialValues={props.initialValues} form={form} />
+      <Form.Item name="tags" label="Tags">
+        <Select mode="tags" />
+      </Form.Item>
+      <Status />
       <Form.Item name="playbook" label="Playbook">
         <Input.TextArea />
       </Form.Item>
       <CollectionMethodComponent initialValues={initialValues} />
-      <Form.Item name="tags" label="Tags">
-        <Select mode="tags" />
-      </Form.Item>
       <Assignee />
-      <Status />
       {props.readOnly ? (
         <ToggleReadOnly setReadOnly={props.setReadOnly} form={form} />
       ) : (
