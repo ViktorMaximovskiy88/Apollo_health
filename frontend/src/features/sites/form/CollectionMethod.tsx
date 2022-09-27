@@ -197,7 +197,7 @@ function Schedule() {
 
   return (
     <Form.Item name="cron" label="Schedule">
-      <Select options={schedules} />
+      <Radio.Group options={schedules} optionType="button" buttonStyle="solid" />
     </Form.Item>
   );
 }
