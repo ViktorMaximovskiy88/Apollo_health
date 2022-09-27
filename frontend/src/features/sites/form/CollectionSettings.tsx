@@ -1,4 +1,4 @@
-import { Input, Form, Select, Radio, Switch } from 'antd';
+import { Input, Form, Select, Radio, Switch, Typography } from 'antd';
 
 import { CollectionMethod, ScrapeMethod, Site } from '../types';
 import {
@@ -124,13 +124,14 @@ function FollowLinks() {
   );
 }
 
-interface CollectionMethodPropTypes {
+interface CollectionSettingsPropTypes {
   initialValues: Partial<Site>;
 }
-export function CollectionMethodComponent({ initialValues }: CollectionMethodPropTypes) {
+export function CollectionSettings({ initialValues }: CollectionSettingsPropTypes) {
   const currentScrapeMethod: ScrapeMethod = Form.useWatch('scrape_method');
   return (
     <>
+      <Typography.Title level={3}>Collection Settings</Typography.Title>
       <CollectionMethodRadio />
       <Form.Item
         noStyle
