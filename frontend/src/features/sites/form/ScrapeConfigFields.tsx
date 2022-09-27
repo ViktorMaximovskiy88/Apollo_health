@@ -1,4 +1,4 @@
-import { Input, Form, Select, Tooltip, Switch } from 'antd';
+import { Input, Form, Select, Tooltip, Switch, Checkbox } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 
 import { useGetProxiesQuery } from '../../proxies/proxiesApi';
@@ -16,7 +16,7 @@ export function DocumentExtensions() {
       name={['scrape_method_configuration', 'document_extensions']}
       label="Document Extensions"
     >
-      <Select mode="multiple" options={extensions} />
+      <Checkbox.Group options={extensions} className="flex flex-col space-y-2" />
     </Form.Item>
   );
 }
