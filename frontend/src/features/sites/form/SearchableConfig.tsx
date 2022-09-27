@@ -16,7 +16,7 @@ export function SearchableConfig() {
     <div className={groupClass}>
       <Form.Item
         name={['scrape_method_configuration', 'searchable']}
-        label="Searchable"
+        label={<span className="text-lg">Search Tokens</span>}
         tooltip={'Site should be searched using CPT or JCodes'}
         valuePropName="checked"
       >
