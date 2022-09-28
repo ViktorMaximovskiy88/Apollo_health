@@ -42,7 +42,7 @@ def calc_final_effective_date(doc) -> datetime | None:
         computeFromFields.append(doc.last_updated_date)
 
     final_effective_date = (
-        max(computeFromFields) if len(computeFromFields) > 0 else doc.last_collected_date
+        max(computeFromFields) if len(computeFromFields) > 0 else doc.first_collected_date
     )
     return final_effective_date
 

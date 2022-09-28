@@ -17,24 +17,38 @@ function TranslationFormContainer(props: { children: ReactNode }) {
 export function TableDetectionForm() {
   return (
     <TranslationFormContainer>
-      <Form.Item name={['detection', 'start_text']} label="Start Text">
-        <Input />
-      </Form.Item>
-      <Form.Item name={['detection', 'start_page']} label="Start Page">
-        <Input type="number" />
-      </Form.Item>
-      <Form.Item name={['detection', 'end_text']} label="End Text">
-        <Input />
-      </Form.Item>
-      <Form.Item name={['detection', 'end_page']} label="End Page">
-        <Input type="number" />
-      </Form.Item>
-      <Form.Item name={['detection', 'required_header_text']} label="Required Header Text">
-        <Input />
-      </Form.Item>
-      <Form.Item name={['detection', 'exclude_header_text']} label="Exclude Header Text">
-        <Input />
-      </Form.Item>
+      <div className="flex space-x-4">
+        <Form.Item className="grow" name={['detection', 'start_text']} label="Start Text">
+          <Input />
+        </Form.Item>
+        <Form.Item name={['detection', 'start_page']} label="Start Page">
+          <Input type="number" />
+        </Form.Item>
+      </div>
+      <div className="flex space-x-4">
+        <Form.Item className="grow" name={['detection', 'end_text']} label="End Text">
+          <Input />
+        </Form.Item>
+        <Form.Item name={['detection', 'end_page']} label="End Page">
+          <Input type="number" />
+        </Form.Item>
+      </div>
+      <div className="flex space-x-4">
+        <Form.Item
+          className="grow"
+          name={['detection', 'required_header_text']}
+          label="Required Header Text"
+        >
+          <Input />
+        </Form.Item>
+        <Form.Item
+          className="grow"
+          name={['detection', 'exclude_header_text']}
+          label="Exclude Header Text"
+        >
+          <Input />
+        </Form.Item>
+      </div>
     </TranslationFormContainer>
   );
 }
@@ -111,23 +125,35 @@ export function TableBasicInfoForm() {
 export function TableExtractionForm() {
   return (
     <TranslationFormContainer>
-      <Form.Item name={['extraction', 'required_columns']} label="Required Columns">
-        <Select mode="tags" />
-      </Form.Item>
-      <Form.Item
-        name={['extraction', 'merge_on_missing_columns']}
-        label="Collapse on Missing Columns"
-      >
-        <Select mode="tags" />
-      </Form.Item>
-      <Form.Item name={['extraction', 'merge_strategy']} label="Merge Strategy">
-        <Select
-          options={[
-            { label: 'Merge Above', value: 'UP' },
-            { label: 'Merge Below', value: 'DOWN' },
-          ]}
-        />
-      </Form.Item>
+      <div className="flex space-x-4">
+        <Form.Item
+          className="grow"
+          name={['extraction', 'required_columns']}
+          label="Required Columns"
+        >
+          <Select mode="tags" />
+        </Form.Item>
+        <Form.Item className="grow" name={['extraction', 'banned_columns']} label="Banned Columns">
+          <Select mode="tags" />
+        </Form.Item>
+      </div>
+      <div className="flex space-x-4">
+        <Form.Item
+          className="grow"
+          name={['extraction', 'merge_on_missing_columns']}
+          label="Collapse on Missing Columns"
+        >
+          <Select mode="tags" />
+        </Form.Item>
+        <Form.Item name={['extraction', 'merge_strategy']} label="Merge Strategy">
+          <Select
+            options={[
+              { label: 'Merge Above', value: 'UP' },
+              { label: 'Merge Below', value: 'DOWN' },
+            ]}
+          />
+        </Form.Item>
+      </div>
       <div className="flex space-x-4">
         <Form.Item className="grow" name={['extraction', 'skip_rows']} label="Skip N Rows">
           <Input type="number" />
@@ -138,6 +164,18 @@ export function TableExtractionForm() {
           label="First Page Only"
         >
           <Checkbox />
+        </Form.Item>
+      </div>
+      <div className="flex space-x-4">
+        <Form.Item
+          className="grow"
+          name={['extraction', 'start_table_text']}
+          label="Start Table Text"
+        >
+          <Input />
+        </Form.Item>
+        <Form.Item className="grow" name={['extraction', 'end_table_text']} label="End Table Text">
+          <Input />
         </Form.Item>
       </div>
       <Form.Item name={['extraction', 'table_shape']} label="Table Defined By">
@@ -151,15 +189,34 @@ export function TableExtractionForm() {
       <Form.Item name={['extraction', 'explicit_headers']} label="Explicit Headers">
         <Select mode="tags" />
       </Form.Item>
-      <Form.Item name={['extraction', 'explicit_column_lines']} label="Explicit Column Lines">
-        <Select mode="tags" />
-      </Form.Item>
-      <Form.Item name={['extraction', 'snap_tolerance']} label="Snap Tolerance">
-        <Input type="number" />
-      </Form.Item>
-      <Form.Item name={['extraction', 'intersection_tolerance']} label="Intersection Tolerance">
-        <Input type="number" />
-      </Form.Item>
+      <div className="flex space-x-4">
+        <Form.Item
+          name={['extraction', 'explicit_column_lines']}
+          className="grow"
+          label="Explicit Column Lines"
+        >
+          <Select mode="tags" />
+        </Form.Item>
+        <Form.Item
+          valuePropName="checked"
+          name={['extraction', 'explicit_column_lines_only']}
+          label="Explicit Only"
+        >
+          <Checkbox />
+        </Form.Item>
+      </div>
+      <div className="flex space-x-4">
+        <Form.Item className="grow" name={['extraction', 'snap_tolerance']} label="Snap Tolerance">
+          <Input type="number" />
+        </Form.Item>
+        <Form.Item
+          className="grow"
+          name={['extraction', 'intersection_tolerance']}
+          label="Intersection Tolerance"
+        >
+          <Input type="number" />
+        </Form.Item>
+      </div>
     </TranslationFormContainer>
   );
 }
