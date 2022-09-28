@@ -28,6 +28,7 @@ export const DocDocumentLocationForm = ({
   const options = data.map((item: DocumentFamily) => ({ value: item._id, label: item.name }));
   const updatedLocation = Form.useWatch(['locations', index]);
   const baseUrl = Form.useWatch(['locations', index, 'base_url']);
+  const url = Form.useWatch(['locations', index, 'url']);
 
   return (
     <div className="property-grid mb-4">
@@ -73,9 +74,18 @@ export const DocDocumentLocationForm = ({
           </Col>
         </Row>
 
-        <Form.Item label="URL" name={['locations', index, 'url']}>
-          <Input readOnly={true} />
-        </Form.Item>
+        <Row>
+          <Col span={23}>
+            <Form.Item label="URL" name={['locations', index, 'url']}>
+              <Input readOnly={true} />
+            </Form.Item>
+          </Col>
+          <Col span={1}>
+            <Form.Item label=" ">
+              <LinkIcon href={url} />
+            </Form.Item>
+          </Col>
+        </Row>
 
         <Form.Item label="Link Text" name={['locations', index, 'link_text']}>
           <Input readOnly={true} />
