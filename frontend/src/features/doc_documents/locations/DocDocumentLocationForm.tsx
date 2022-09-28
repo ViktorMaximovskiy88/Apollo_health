@@ -6,19 +6,28 @@ import { DocumentFamily } from '../document_family/types';
 import { useGetDocumentFamiliesQuery } from '../document_family/documentFamilyApi';
 import { TextEllipsis } from '../../../components';
 
-function LinkButton({ index }: { index: number }) {
-  const form = Form.useFormInstance();
-
+interface LinkButtonPropTypes {
+  url: string;
+  formItemClassName?: string;
+  buttonClassName?: string;
+  linkClassName?: string;
+}
+function LinkButton({
+  url,
+  formItemClassName,
+  buttonClassName,
+  linkClassName,
+}: LinkButtonPropTypes) {
   return (
-    <Form.Item label=" " className="mb-0">
+    <Form.Item label=" " className={formItemClassName}>
       <Button
-        className="p-0 focus:border focus:border-offset-2 focus:border-blue-500"
-        href={form.getFieldValue('locations')[index].base_url}
+        className={buttonClassName}
+        href={url}
         type="link"
         target="_blank"
         rel="noreferrer noopener"
       >
-        <LinkOutlined className="text-gray-500 hover:text-blue-500 focus:text-blue-500" />
+        <LinkOutlined className={linkClassName} />
       </Button>
     </Form.Item>
   );
@@ -84,7 +93,12 @@ export const DocDocumentLocationForm = ({
             </Form.Item>
           </Col>
           <Col span={1}>
-            <LinkButton index={index} />
+            <LinkButton
+              url={form.getFieldValue('locations')[index].base_url}
+              formItemClassName="mb-0"
+              buttonClassName="p-0 focus:border focus:border-offset-2 focus:border-blue-500"
+              linkClassName="text-gray-500 hover:text-blue-500 focus:text-blue-500"
+            />
           </Col>
         </Row>
 
