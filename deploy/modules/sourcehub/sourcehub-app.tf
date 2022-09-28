@@ -86,7 +86,11 @@ resource "aws_ecs_task_definition" "app" {
         {
           name = "NEW_RELIC_APP_NAME"
           value = local.new_relic_app_name
-        }
+        },
+        {
+          name  = "NEW_RELIC_ENVIRONMENT"
+          value = var.environment
+        },
       ]
       essential = true
       portMappings = [
