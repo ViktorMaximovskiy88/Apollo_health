@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from '../../../app/base-api';
+import { TableInfoType } from '../../../common/types';
 import { DocumentFamily } from './types';
 
 export const documentFamilyApi = createApi({
@@ -6,7 +7,29 @@ export const documentFamilyApi = createApi({
   baseQuery: fetchBaseQuery(),
   tagTypes: ['DocumentFamily', 'ChangeLog'],
   endpoints: (builder) => ({
-    getDocumentFamilies: builder.query<DocumentFamily[], { siteId: string; documentType: string }>({
+    getAllDocumentFamilies: builder.query<{ data: DocumentFamily[]; total: number }, TableInfoType>(
+      {
+        query: ({ limit, skip, filterValue, sortInfo }) => {
+          const args = [
+            `limit=${encodeURIComponent(limit)}`,
+            `skip=${encodeURIComponent(skip)}`,
+            `sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`,
+            `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
+          ];
+
+          return `/document-family/all?${args.join('&')}`;
+        },
+        providesTags: (results) => {
+          const tags = [{ type: 'DocumentFamily' as const, id: 'LIST' }];
+          results?.data.forEach(({ _id: id }) => tags.push({ type: 'DocumentFamily', id }));
+          return tags;
+        },
+      }
+    ),
+    getDocumentFamiliesBySite: builder.query<
+      DocumentFamily[],
+      { siteId: string; documentType: string }
+    >({
       query: ({ siteId, documentType }) => {
         const args = [
           `site_id=${encodeURIComponent(siteId)}`,
@@ -47,10 +70,11 @@ export const documentFamilyApi = createApi({
 });
 
 export const {
-  useGetDocumentFamilyQuery,
+  useGetAllDocumentFamiliesQuery,
+  useLazyGetAllDocumentFamiliesQuery,
   useLazyGetDocumentFamilyByNameQuery,
-  useGetDocumentFamiliesQuery,
-  useLazyGetDocumentFamiliesQuery,
+  useGetDocumentFamiliesBySiteQuery,
+  useLazyGetDocumentFamiliesBySiteQuery,
   useAddDocumentFamilyMutation,
   useUpdateDocumentFamilyMutation,
 } = documentFamilyApi;
