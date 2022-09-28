@@ -41,6 +41,22 @@ async def get_site_lineage(site_id: PydanticObjectId):
         aggregation_pipeline=[
             {"$match": {"locations.site_id": site_id}},
             {
+                "$set": {
+                    "final_effective_date": {
+                        "$ifNull": [
+                            {
+                                "$max": [
+                                    "$effective_date",
+                                    "$last_reviewed_date",
+                                    "$last_updated_date",
+                                ]
+                            },
+                            "$first_collected_date",
+                        ]
+                    }
+                }
+            },
+            {
                 "$project": {
                     "_id": 1,
                     "name": 1,
@@ -49,6 +65,8 @@ async def get_site_lineage(site_id: PydanticObjectId):
                     "is_current_version": 1,
                     "checksum": 1,
                     "file_extension": 1,
+                    "document_type": 1,
+                    "final_effective_date": 1,
                 }
             },
         ],

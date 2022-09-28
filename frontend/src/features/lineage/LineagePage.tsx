@@ -1,3 +1,4 @@
+import classNames from 'classnames';
 import { useState, useEffect } from 'react';
 import { Button, notification } from 'antd';
 import { MainLayout } from '../../components';
@@ -8,6 +9,7 @@ import { FileTypeViewer } from '../retrieved_documents/RetrievedDocumentViewer';
 import { LineageDoc, LineageGroup } from './types';
 import { TextEllipsis } from '../../components';
 import _ from 'lodash';
+import { prettyDateUTCFromISO } from '../../common/date';
 
 export function LineagePage() {
   const { siteId } = useParams();
@@ -71,14 +73,22 @@ export function LineagePage() {
       <div className="flex flex-row h-full">
         <div className="overflow-auto w-64 mr-2">
           {lineageGroups.map((group) => (
-            <div key={group.lineageId} className="p-2 my-6 bg-white border">
+            <div key={group.lineageId} className="p-2 mb-4 bg-white border">
               <div className="text-slate-500 uppercase mb-2">
                 {group.lineageId} ({group.items.length})
               </div>
               {group.items.map((item) => (
-                <div key={item._id} className="p-2 my-2 bg-slate-50 border group relative">
+                <div
+                  key={item._id}
+                  className={classNames(
+                    'p-2 my-2 bg-slate-50 border group relative',
+                    item._id == leftSideDoc?._id && ['border-l-2', 'border-gray-100 ']
+                  )}
+                >
                   <TextEllipsis text={item.name} />
-                  <div className="hidden group-hover:block absolute right-0 z-50">
+                  <TextEllipsis text={item.document_type} />
+                  <div>{prettyDateUTCFromISO(item.final_effective_date)}</div>
+                  <div className="hidden group-hover:block absolute bottom-2 right-2 z-50">
                     <Button
                       onClick={() => {
                         setLeftSide(item);
@@ -106,7 +116,7 @@ export function LineagePage() {
             <div>{leftSideDoc?.name}</div>
             <FileTypeViewer doc={leftSideDoc} docId={leftSideDoc?._id} />
           </div>
-          <div className="w-1/2 h-full overflow-auto ant-tabs-h-full">
+          <div className="w-1/2 h-full overflow-auto">
             <div>{rightSideDoc?.name}</div>
             <FileTypeViewer doc={rightSideDoc} docId={rightSideDoc?._id} />
           </div>
