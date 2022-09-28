@@ -1,13 +1,10 @@
-import { Button, Card, Col, Form, Input, Row, Select, Space, Typography } from 'antd';
-import { useForm } from 'antd/lib/form/Form';
-import { Link } from 'react-router-dom';
+import { Card, Col, Form, Input, Row, Select, Typography } from 'antd';
+import { FormInstance } from 'antd/lib/form/Form';
 import { Site, CollectionMethod } from '../types';
 import { UrlFormFields } from './UrlFormField';
 import { CollectionSettings } from './CollectionSettings';
 import { SiteStatus } from '../siteStatus';
 import { Assignee } from './AssigneeInput';
-import { SiteSubmitButton as Submit } from './SiteSubmitButton';
-import { ToggleReadOnly } from './ToggleReadOnly';
 import { SiteStatusRadio as Status } from './SiteStatusRadio';
 
 const buildInitialValues = () => ({
@@ -46,11 +43,7 @@ const validateMessages = {
 };
 /* eslint-enable no-template-curly-in-string */
 
-const SiteInformation = (props: {
-  initialValues?: Site;
-  readOnly?: boolean;
-  setReadOnly?: (readOnly: boolean) => void;
-}) => {
+const SiteInformation = ({ initialValues }: { initialValues?: Site }) => {
   const form = Form.useFormInstance();
   return (
     <>
@@ -58,24 +51,12 @@ const SiteInformation = (props: {
       <Form.Item name="name" label="Name" rules={[{ required: true }]}>
         <Input />
       </Form.Item>
-      <UrlFormFields initialValues={props.initialValues} form={form} />
+      <UrlFormFields initialValues={initialValues} form={form} />
       <Form.Item name="tags" label="Site Tags">
         <Select mode="tags" />
       </Form.Item>
       <Status />
       <Assignee />
-      {props.readOnly ? (
-        <ToggleReadOnly setReadOnly={props.setReadOnly} form={form} />
-      ) : (
-        <Form.Item>
-          <Space>
-            <Submit form={form} />
-            <Link to="/sites">
-              <Button htmlType="submit">Cancel</Button>
-            </Link>
-          </Space>
-        </Form.Item>
-      )}
     </>
   );
 };
@@ -83,11 +64,8 @@ const SiteInformation = (props: {
 export function SiteForm(props: {
   onFinish: (update: Partial<Site>) => void;
   initialValues?: Site;
-  readOnly?: boolean;
-  setReadOnly?: (readOnly: boolean) => void;
+  form: FormInstance;
 }) {
-  const [form] = useForm();
-
   let initialValues: Partial<Site> | undefined = props.initialValues;
   if (!initialValues) {
     initialValues = buildInitialValues();
@@ -96,7 +74,7 @@ export function SiteForm(props: {
   return (
     <Form
       layout="vertical"
-      form={form}
+      form={props.form}
       requiredMark={false}
       onFinish={props.onFinish}
       initialValues={initialValues}
