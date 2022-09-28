@@ -1,37 +1,11 @@
 import { Form, Select, Button, Input, Row, Col } from 'antd';
 import { Link } from 'react-router-dom';
-import { LinkOutlined, PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined } from '@ant-design/icons';
 import { DocDocumentLocation } from './types';
 import { DocumentFamily } from '../document_family/types';
 import { useGetDocumentFamiliesQuery } from '../document_family/documentFamilyApi';
 import { TextEllipsis } from '../../../components';
-
-interface LinkButtonPropTypes {
-  url: string;
-  formItemClassName?: string;
-  buttonClassName?: string;
-  linkClassName?: string;
-}
-function LinkButton({
-  url,
-  formItemClassName,
-  buttonClassName,
-  linkClassName,
-}: LinkButtonPropTypes) {
-  return (
-    <Form.Item label=" " className={formItemClassName}>
-      <Button
-        className={buttonClassName}
-        href={url}
-        type="link"
-        target="_blank"
-        rel="noreferrer noopener"
-      >
-        <LinkOutlined className={linkClassName} />
-      </Button>
-    </Form.Item>
-  );
-}
+import { LinkIcon } from '../../../components';
 
 interface DocDocumentLocationFormTypes {
   documentType: string;
@@ -39,7 +13,6 @@ interface DocDocumentLocationFormTypes {
   index: number;
   onShowDocumentFamilyCreate: (location: DocDocumentLocation) => void;
 }
-
 export const DocDocumentLocationForm = ({
   documentType,
   location,
@@ -54,6 +27,7 @@ export const DocDocumentLocationForm = ({
 
   const options = data.map((item: DocumentFamily) => ({ value: item._id, label: item.name }));
   const updatedLocation = Form.useWatch(['locations', index]);
+  const baseUrl = Form.useWatch(['locations', index, 'base_url']);
 
   return (
     <div className="property-grid mb-4">
@@ -93,12 +67,9 @@ export const DocDocumentLocationForm = ({
             </Form.Item>
           </Col>
           <Col span={1}>
-            <LinkButton
-              url={form.getFieldValue('locations')[index].base_url}
-              formItemClassName="mb-0"
-              buttonClassName="p-0 focus:border focus:border-offset-2 focus:border-blue-500"
-              linkClassName="text-gray-500 hover:text-blue-500 focus:text-blue-500"
-            />
+            <Form.Item label=" ">
+              <LinkIcon href={baseUrl} />
+            </Form.Item>
           </Col>
         </Row>
 
