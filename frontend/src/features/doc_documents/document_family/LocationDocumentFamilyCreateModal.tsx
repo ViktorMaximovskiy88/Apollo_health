@@ -107,9 +107,14 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
       if (e.value === 'EDITOR_MANUAL' || e.value === 'N/A') return { ...e, disabled: true };
       return e;
     });
-  } else if (nameValue?.includes('EDITOR_MANUAL') && nameValue?.includes('EDITOR_AUTOMATED')) {
+  } else if (nameValue?.includes('EDITOR_MANUAL')) {
     filteredlegacyRelevanceOptions = legacyRelevanceOptions.map((e) => {
-      if (e.value === 'PAR' || e.value === 'N/A') return { ...e, disabled: true };
+      if (e.value === 'N/A' || e.value === 'EDITOR_AUTOMATED') return { ...e, disabled: true };
+      return e;
+    });
+  } else if (nameValue?.includes('EDITOR_AUTOMATED')) {
+    filteredlegacyRelevanceOptions = legacyRelevanceOptions.map((e) => {
+      if (e.value === 'N/A' || e.value === 'EDITOR_MANUAL') return { ...e, disabled: true };
       return e;
     });
   } else if (nameValue?.length >= 1) {
