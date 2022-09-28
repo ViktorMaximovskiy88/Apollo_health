@@ -1,4 +1,4 @@
-import { Modal } from 'antd';
+import { Button, Form, Modal, Space } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Site, CollectionMethod } from './types';
 import { SiteForm } from './form/SiteForm';
@@ -9,6 +9,9 @@ import { useCurrentUser } from '../../common/hooks/use-current-user';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { useEffect } from 'react';
 import { SiteMenu } from '../sites/SiteMenu';
+import { useForm } from 'antd/lib/form/Form';
+import { SiteSubmitButton } from './form/SiteSubmitButton';
+import { Link } from 'react-router-dom';
 
 const { confirm } = Modal;
 
@@ -49,6 +52,7 @@ const useAlreadyAssignedModal = () => {
 };
 
 export function SiteEditPage() {
+  const [form] = useForm();
   const params = useParams();
   const [updateSite] = useUpdateSiteMutation();
   const { data: site } = useGetSiteQuery(params.siteId);
@@ -76,8 +80,20 @@ export function SiteEditPage() {
     navigate(-1);
   }
   return (
-    <MainLayout sidebar={<SiteMenu />}>
-      <SiteForm onFinish={tryUpdateSite} initialValues={initialValues} />
+    <MainLayout
+      sidebar={<SiteMenu />}
+      sectionToolbar={
+        <Form.Item className="m-1">
+          <Space>
+            <SiteSubmitButton form={form} />
+            <Link to="/sites">
+              <Button htmlType="submit">Cancel</Button>
+            </Link>
+          </Space>
+        </Form.Item>
+      }
+    >
+      <SiteForm onFinish={tryUpdateSite} initialValues={initialValues} form={form} />
     </MainLayout>
   );
 }

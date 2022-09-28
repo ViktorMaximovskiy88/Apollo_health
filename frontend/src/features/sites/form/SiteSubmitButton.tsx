@@ -18,9 +18,9 @@ export function SiteSubmitButton(props: { form: FormInstance }) {
     navigate(`/sites/${params.siteId}/view`);
   };
   const letFormSubmit = () => props.form.submit();
-  const onCreateSitePage = () => !params.siteId;
+  const isCreateSitePage = () => !params.siteId;
   const handleVisibleChange = async () => {
-    if (onCreateSitePage()) {
+    if (isCreateSitePage()) {
       letFormSubmit();
     }
     const { data: site } = await getSite(params.siteId);

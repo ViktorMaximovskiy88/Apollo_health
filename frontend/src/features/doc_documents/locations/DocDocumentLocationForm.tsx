@@ -1,10 +1,11 @@
-import { Form, Select, Button, Input } from 'antd';
+import { Form, Select, Button, Input, Row, Col } from 'antd';
 import { Link } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { DocDocumentLocation } from './types';
 import { DocumentFamily } from '../document_family/types';
 import { useGetDocumentFamiliesBySiteQuery } from '../document_family/documentFamilyApi';
 import { TextEllipsis } from '../../../components';
+import { LinkIcon } from '../../../components';
 
 interface DocDocumentLocationFormTypes {
   documentType: string;
@@ -12,7 +13,6 @@ interface DocDocumentLocationFormTypes {
   index: number;
   onShowDocumentFamilyCreate: (location: DocDocumentLocation) => void;
 }
-
 export const DocDocumentLocationForm = ({
   documentType,
   location,
@@ -27,6 +27,8 @@ export const DocDocumentLocationForm = ({
 
   const options = data.map((item: DocumentFamily) => ({ value: item._id, label: item.name }));
   const updatedLocation = Form.useWatch(['locations', index]);
+  const baseUrl = Form.useWatch(['locations', index, 'base_url']);
+  const url = Form.useWatch(['locations', index, 'url']);
 
   return (
     <div className="property-grid mb-4">
@@ -59,13 +61,31 @@ export const DocDocumentLocationForm = ({
           <Input type={'hidden'} />
         </Form.Item>
 
-        <Form.Item label="Base URL" name={['locations', index, 'base_url']}>
-          <Input readOnly={true} />
-        </Form.Item>
+        <Row>
+          <Col span={23}>
+            <Form.Item label="Base URL" name={['locations', index, 'base_url']}>
+              <Input readOnly={true} />
+            </Form.Item>
+          </Col>
+          <Col span={1}>
+            <Form.Item label=" ">
+              <LinkIcon href={baseUrl} />
+            </Form.Item>
+          </Col>
+        </Row>
 
-        <Form.Item label="URL" name={['locations', index, 'url']}>
-          <Input readOnly={true} />
-        </Form.Item>
+        <Row>
+          <Col span={23}>
+            <Form.Item label="URL" name={['locations', index, 'url']}>
+              <Input readOnly={true} />
+            </Form.Item>
+          </Col>
+          <Col span={1}>
+            <Form.Item label=" ">
+              <LinkIcon href={url} />
+            </Form.Item>
+          </Col>
+        </Row>
 
         <Form.Item label="Link Text" name={['locations', index, 'link_text']}>
           <Input readOnly={true} />
