@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { DocDocumentLocation } from './types';
 import { DocumentFamily } from '../document_family/types';
-import { useGetDocumentFamiliesQuery } from '../document_family/documentFamilyApi';
+import { useGetDocumentFamiliesBySiteQuery } from '../document_family/documentFamilyApi';
 import { TextEllipsis } from '../../../components';
 
 interface DocDocumentLocationFormTypes {
@@ -20,7 +20,7 @@ export const DocDocumentLocationForm = ({
   onShowDocumentFamilyCreate,
 }: DocDocumentLocationFormTypes) => {
   const form = Form.useFormInstance();
-  const { data = [] } = useGetDocumentFamiliesQuery({
+  const { data = [] } = useGetDocumentFamiliesBySiteQuery({
     siteId: location.site_id,
     documentType,
   });
