@@ -63,6 +63,10 @@ class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
     id: PydanticObjectId = Field(None, alias="_id")
 
 
+class NewManualDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
+    internal_document: bool
+
+
 class UpdateRetrievedDocument(BaseModel, DocumentMixins):
     id: PydanticObjectId = Field(None, alias="_id")
     effective_date: datetime | None = None
