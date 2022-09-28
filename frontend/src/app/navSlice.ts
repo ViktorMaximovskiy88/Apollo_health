@@ -23,16 +23,16 @@ export const navSlice = createSlice({
     menu: {
       items: [
         { url: '/sites', label: 'Sites', shortLabel: 'Sites' },
+        {
+          url: '/document_family',
+          label: 'Document Family',
+          shortLabel: 'Document Family',
+        },
         { url: '/work-queues', label: 'Work Queues', shortLabel: 'Queues' },
         {
           url: '/documents',
           label: 'All Documents',
           shortLabel: 'Docs',
-        },
-        {
-          url: '/document_family',
-          label: 'Document Family',
-          shortLabel: 'Document Family',
         },
         {
           url: '/translations',

@@ -91,7 +91,6 @@ function App() {
             </Route>
           </Route>
         </Route>
-        <Route path="/document_family" element={<DocumentFamilyHomePage />} />
         <Route path="/sites">
           <Route index element={<SitesHomePage />} />
           <Route path="new" element={<SiteCreatePage />} />
@@ -123,6 +122,7 @@ function App() {
             </Route>
           </Route>
         </Route>
+        <Route path="/document_family" element={<DocumentFamilyHomePage />} />
         <Route path="/users/*" element={<UserRoutes />} />
         <Route path="/documents/*" element={<DocumentRoutes />} />
         <Route path="/translations/*" element={<TranslationRoutes />} />

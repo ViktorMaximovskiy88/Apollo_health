@@ -12,5 +12,6 @@ export interface TableInfoType {
   skip: number;
   sortInfo: TypeSortInfo;
   filterValue: TypeFilterValue;
-  siteId?: string;
+  siteId: string;
+  documentType: string;
 }
