@@ -1,10 +1,28 @@
-import { Form, Select, Button, Input } from 'antd';
+import { Form, Select, Button, Input, Row, Col } from 'antd';
 import { Link } from 'react-router-dom';
-import { PlusOutlined } from '@ant-design/icons';
+import { LinkOutlined, PlusOutlined } from '@ant-design/icons';
 import { DocDocumentLocation } from './types';
 import { DocumentFamily } from '../document_family/types';
 import { useGetDocumentFamiliesQuery } from '../document_family/documentFamilyApi';
 import { TextEllipsis } from '../../../components';
+
+function LinkButton({ index }: { index: number }) {
+  const form = Form.useFormInstance();
+
+  return (
+    <Form.Item label=" " className="mb-0">
+      <Button
+        className="p-0 focus:border focus:border-offset-2 focus:border-blue-500"
+        href={form.getFieldValue('locations')[index].base_url}
+        type="link"
+        target="_blank"
+        rel="noreferrer noopener"
+      >
+        <LinkOutlined className="text-gray-500 hover:text-blue-500 focus:text-blue-500" />
+      </Button>
+    </Form.Item>
+  );
+}
 
 interface DocDocumentLocationFormTypes {
   documentType: string;
@@ -59,9 +77,16 @@ export const DocDocumentLocationForm = ({
           <Input type={'hidden'} />
         </Form.Item>
 
-        <Form.Item label="Base URL" name={['locations', index, 'base_url']}>
-          <Input readOnly={true} />
-        </Form.Item>
+        <Row>
+          <Col span={23}>
+            <Form.Item label="Base URL" name={['locations', index, 'base_url']}>
+              <Input readOnly={true} />
+            </Form.Item>
+          </Col>
+          <Col span={1}>
+            <LinkButton index={index} />
+          </Col>
+        </Row>
 
         <Form.Item label="URL" name={['locations', index, 'url']}>
           <Input readOnly={true} />
