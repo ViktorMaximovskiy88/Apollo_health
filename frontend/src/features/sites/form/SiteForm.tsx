@@ -81,12 +81,12 @@ export function SiteForm(props: {
       validateMessages={validateMessages}
     >
       <Row gutter={16} className="flex pb-[20%]">
-        <Col span={16}>
+        <Col span={12}>
           <Card>
             <SiteInformation {...props} />
           </Card>
         </Col>
-        <Col span={8}>
+        <Col span={12}>
           <Card>
             <CollectionSettings initialValues={initialValues} />
           </Card>
