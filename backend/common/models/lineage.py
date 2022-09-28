@@ -10,6 +10,8 @@ from backend.common.models.base_document import BaseDocument
 class LineageDoc(BaseModel):
     id: PydanticObjectId = Field(None, alias="_id")
     name: str | None
+    document_type: str | None
+    final_effective_date: datetime | None
     previous_doc_id: PydanticObjectId | None
     is_current_version: bool | None
     lineage_id: PydanticObjectId | None
