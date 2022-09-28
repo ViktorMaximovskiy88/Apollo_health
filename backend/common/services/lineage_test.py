@@ -5,8 +5,14 @@ import pytest
 from beanie import PydanticObjectId
 
 from backend.common.db.init import init_db
+from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
-from backend.common.models.shared import IndicationTag, RetrievedDocumentLocation, TherapyTag
+from backend.common.models.shared import (
+    DocDocumentLocation,
+    IndicationTag,
+    RetrievedDocumentLocation,
+    TherapyTag,
+)
 from backend.common.services.lineage import LineageService
 
 site_id_a = PydanticObjectId("00000000000000000000000a")
@@ -114,7 +120,37 @@ async def load_retrieved_docs() -> list[RetrievedDocument]:
         )
     )
 
-    [await doc.save() for doc in docs]
+    for doc in docs:
+        doc = await doc.save()
+        rt_doc_location = doc.locations[0]
+
+        doc_document = DocDocument(
+            retrieved_document_id=doc.id,  # type: ignore
+            name=doc.name,
+            checksum=doc.checksum,
+            text_checksum=doc.text_checksum,
+            document_type=doc.document_type,
+            doc_type_confidence=doc.doc_type_confidence,
+            end_date=doc.end_date,
+            effective_date=doc.effective_date,
+            last_updated_date=doc.last_updated_date,
+            last_reviewed_date=doc.last_reviewed_date,
+            next_review_date=doc.next_review_date,
+            next_update_date=doc.next_update_date,
+            published_date=doc.published_date,
+            lang_code=doc.lang_code,
+            therapy_tags=doc.therapy_tags,
+            indication_tags=doc.indication_tags,
+            file_extension=doc.file_extension,
+            identified_dates=doc.identified_dates,
+            last_collected_date=doc.last_collected_date,
+            first_collected_date=doc.first_collected_date,
+            locations=[DocDocumentLocation(**rt_doc_location.dict())],
+        )
+
+        doc_document.set_final_effective_date()
+
+        await doc_document.save()
 
 
 @pytest.mark.asyncio()
