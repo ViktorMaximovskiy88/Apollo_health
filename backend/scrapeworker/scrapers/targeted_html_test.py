@@ -43,12 +43,6 @@ def scraper():
 
 
 def test_clean_html(mock_s3_client, scraper: TargetedHtmlScraper):  # noqa
-    scraper = TargetedHtmlScraper(
-        MagicMock(spec=BrowserContext),
-        MagicMock(spec=Page),
-        "https://www.example.com",
-        simple_scrape_config(),
-    )
     test_html = "<html><body><div>not me</div></body></html>"
 
     html = '<div delete_me="test"></div><div>not me</div>'

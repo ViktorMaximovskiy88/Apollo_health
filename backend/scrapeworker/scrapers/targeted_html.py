@@ -6,7 +6,7 @@ from functools import cached_property
 from bs4 import BeautifulSoup, PageElement
 from playwright.async_api import Locator
 
-from backend.common.storage.client import TextStorageClient
+from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_full_text
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.selectors import to_xpath
@@ -21,7 +21,7 @@ class TargetedHtmlScraper(PlaywrightBaseScraper):
 
     def __init__(self, *args, **kwargs):
         super(TargetedHtmlScraper, self).__init__(*args, **kwargs)
-        self.doc_client = TextStorageClient()
+        self.doc_client = DocumentStorageClient()
 
     @cached_property
     def css_selector(self) -> str | None:
