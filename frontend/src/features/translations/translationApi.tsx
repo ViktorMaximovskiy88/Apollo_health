@@ -31,6 +31,7 @@ export const translationsApi = createApi({
         ].join('&');
         return `/translations/?${args}`;
       },
+      providesTags: [{ type: 'Translation', id: 'LIST' }],
     }),
     getTranslationConfigByName: builder.query<TranslationConfig, string>({
       query: (name) => `/translations/search?name=${name}`,

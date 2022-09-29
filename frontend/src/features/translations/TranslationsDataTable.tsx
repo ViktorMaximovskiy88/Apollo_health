@@ -9,19 +9,17 @@ import {
 } from './translationSlice';
 import { ButtonLink } from '../../components';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { Site } from '../sites/types';
 import { useGetChangeLogQuery, useLazyGetTranslationConfigsQuery } from './translationApi';
 import { useDataTableSort, useDataTableFilter, useDataTablePagination } from '../../common/hooks';
 import { TranslationConfig } from './types';
-import { CopyOutlined } from '@ant-design/icons';
-import { Tooltip } from 'antd';
+import { CopyTranslation } from './CopyTranslation';
 
 const columns = [
   {
     header: 'Name',
     name: 'name',
-    render: ({ data: doc }: { data: TranslationConfig }) => {
-      return <ButtonLink to={`${doc._id}`}>{doc.name}</ButtonLink>;
+    render: ({ data: translation }: { data: TranslationConfig }) => {
+      return <ButtonLink to={`${translation._id}`}>{translation.name}</ButtonLink>;
     },
     defaultFlex: 1,
   },
@@ -29,15 +27,11 @@ const columns = [
     header: 'Actions',
     name: 'action',
     minWidth: 180,
-    render: ({ data: site }: { data: Site }) => {
+    render: ({ data: translation }: { data: TranslationConfig }) => {
       return (
         <>
-          <ChangeLogModal target={site} useChangeLogQuery={useGetChangeLogQuery} />
-          <Tooltip title="Copy Translation">
-            <ButtonLink>
-              <CopyOutlined />
-            </ButtonLink>
-          </Tooltip>
+          <ChangeLogModal target={translation} useChangeLogQuery={useGetChangeLogQuery} />
+          <CopyTranslation translation={translation} />
         </>
       );
     },
@@ -45,7 +39,7 @@ const columns = [
 ];
 
 export function TranslationsDataTable() {
-  const [getTranslationsFn] = useLazyGetTranslationConfigsQuery();
+  const [getTranslationsFn, { currentData }] = useLazyGetTranslationConfigsQuery();
 
   const loadData = useCallback(
     async (tableInfo: any) => {
@@ -54,9 +48,9 @@ export function TranslationsDataTable() {
       const count = data?.total ?? 0;
       return { data: sites, count };
     },
-    [getTranslationsFn]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [getTranslationsFn, currentData]
   );
-
   const filterProps = useDataTableFilter(translationTableState, setTranslationTableFilter);
   const sortProps = useDataTableSort(translationTableState, setTranslationTableSort);
   const paginationProps = useDataTablePagination(
