@@ -27,7 +27,7 @@ export const documentFamilyApi = createApi({
         },
       }
     ),
-    getDocumentFamiliesBySite: builder.query<
+    getDocumentFamiliesBySiteAndDocumentType: builder.query<
       DocumentFamily[],
       { siteId: string; documentType: string }
     >({
@@ -78,8 +78,8 @@ export const {
   useGetAllDocumentFamiliesQuery,
   useLazyGetAllDocumentFamiliesQuery,
   useLazyGetDocumentFamilyByNameQuery,
-  useGetDocumentFamiliesBySiteQuery,
-  useLazyGetDocumentFamiliesBySiteQuery,
+  useGetDocumentFamiliesBySiteAndDocumentTypeQuery,
+  useLazyGetDocumentFamiliesBySiteAndDocumentTypeQuery,
   useAddDocumentFamilyMutation,
   useUpdateDocumentFamilyMutation,
   useGetChangeLogQuery,
