@@ -20,8 +20,7 @@ RUN python3 -m venv venv && \
     PIP_CONSTRAINT=build-constraints.txt \
     CFLAGS="-mavx -DWARN(a)=(a)" \
     poetry install && \
-    playwright install-deps && \
-    playwright install chromium
+    playwright install --with-deps chrome
 
 RUN echo ". ${HOME_DIR}/backend/venv/bin/activate" >> ~/.bashrc
 
