@@ -1,12 +1,12 @@
 import asyncio
 from contextlib import asynccontextmanager
 from random import shuffle
-from typing import Any, AsyncGenerator, Callable, Coroutine
+from typing import AsyncGenerator, Coroutine
 from urllib.parse import urlparse
 
 from async_lru import alru_cache
 from beanie.odm.operators.update.general import Inc
-from playwright.async_api import BrowserContext, Dialog, Page, ProxySettings
+from playwright.async_api import Browser, BrowserContext, Dialog, Page, ProxySettings
 from playwright.async_api import Response as PlaywrightResponse
 from playwright_stealth import stealth_async
 from tenacity._asyncio import AsyncRetrying
@@ -31,7 +31,7 @@ from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.services.lineage import LineageService
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.text_handler import TextHandler
-from backend.scrapeworker.common.aio_downloader import AioDownloader
+from backend.scrapeworker.common.aio_downloader import AioDownloader, default_headers
 from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocsCollectedException
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
@@ -50,13 +50,13 @@ class ScrapeWorker:
     def __init__(
         self,
         playwright,
-        get_browser_context: Callable[[ProxySettings | None], Coroutine[Any, Any, BrowserContext]],
+        browser: Browser,
         scrape_task: SiteScrapeTask,
         site: Site,
     ) -> None:
         _log = logging.getLogger(str(scrape_task.id))
         self.playwright = playwright
-        self.get_browser_context = get_browser_context
+        self.browser = browser
         self.scrape_task = scrape_task
         self.site = site
         self.seen_urls = set()
@@ -322,7 +322,11 @@ class ScrapeWorker:
 
         async for attempt, proxy in self.try_each_proxy():
             with attempt:
-                context = await self.get_browser_context(proxy)
+                context = await self.browser.new_context(
+                    extra_http_headers=default_headers,
+                    proxy=proxy,  # type: ignore
+                    ignore_https_errors=True,
+                )
 
                 page = await context.new_page()
                 await stealth_async(page)
