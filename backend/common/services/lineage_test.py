@@ -160,5 +160,4 @@ async def test_this():
     await init_db(mock=True, database_name=random_name)
     await load_retrieved_docs()
 
-    lineage_service = LineageService(logger=logging)
-    await lineage_service.process_lineage_for_site(site_id_a)
+    lineage_service = LineageService(logger=logging)  # noqa
