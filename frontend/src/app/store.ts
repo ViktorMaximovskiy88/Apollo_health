@@ -25,6 +25,7 @@ import documentsReducer from '../features/collections/documentsSlice';
 import extractionsReducer from '../features/extractions/extractionsSlice';
 import translationsReducer from '../features/translations/translationSlice';
 import payerBackboneReducer from '../features/payer-backbone/payerBackboneSlice';
+import workQueueReducer from '../features/work_queue/workQueueSlice';
 
 const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
   history: createBrowserHistory(),
@@ -52,6 +53,7 @@ export const store = configureStore({
     documents: documentsReducer,
     extractions: extractionsReducer,
     translations: translationsReducer,
+    workQueues: workQueueReducer,
     payerBackbone: payerBackboneReducer,
     router: routerReducer,
   },

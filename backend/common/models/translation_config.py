@@ -13,6 +13,7 @@ class TranslationRule(BaseModel):
     field: str
     pattern: str = ""
     separator: str = ""
+    separator2: str = ""
     value: str = ""
     capture_all: bool = False
     mappings: list[TranslationMapping]
@@ -47,6 +48,7 @@ class TableExtractionConfig(BaseModel):
     explicit_column_lines_only: bool = False
     skip_rows: int = 0
     skip_rows_first_table_only: bool = False
+    max_font_size: int = 0
 
 
 class TableTranslationConfig(BaseModel):
@@ -91,6 +93,7 @@ class UpdateTableExtractionConfig(BaseModel):
     explicit_column_lines_only: bool = False
     skip_rows: int | None = None
     skip_rows_first_table_only: bool | None = None
+    max_font_size: int | None = None
 
 
 class UpdateTableTranslationConfig(BaseModel):

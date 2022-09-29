@@ -8,6 +8,7 @@ import { DocDocumentInfoForm } from './DocDocumentInfoForm';
 import { DocDocumentLocations } from './locations/DocDocumentLocations';
 import { useNavigate } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
+import { DocDocumentExtractionTab } from './DocDocumentExtractionTab';
 
 const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   const calculateFinalEffectiveDate = useCallback(() => {
@@ -208,6 +209,11 @@ export function DocDocumentEditForm({
           <Tabs.TabPane tab="Sites" key="sites" className="bg-white p-4 overflow-auto">
             <DocDocumentLocations locations={doc.locations} docDocument={doc} />
           </Tabs.TabPane>
+          {doc?.content_extraction_task_id ? (
+            <Tabs.TabPane tab="Extraction" key="extraction">
+              <DocDocumentExtractionTab doc={doc} />
+            </Tabs.TabPane>
+          ) : null}
         </Tabs>
       </Form>
     </div>

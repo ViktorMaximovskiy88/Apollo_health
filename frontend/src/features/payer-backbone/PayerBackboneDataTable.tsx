@@ -45,7 +45,8 @@ export function PayerBackboneDataTable() {
   const paginationProps = useDataTablePagination(
     payerBackboneTableState,
     setPayerBackboneTableLimit,
-    setPayerBackboneTableSkip
+    setPayerBackboneTableSkip,
+    undefined
   );
 
   if (!payerType) return null;

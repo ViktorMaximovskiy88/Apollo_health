@@ -115,6 +115,15 @@ class TableContentExtractor:
         return False
 
     def extract_clean_tables(self, page: Page):
+        if self.config.extraction.max_font_size:
+
+            def filter_out_large_text(obj):
+                if "size" in obj:
+                    return obj["size"] < self.config.extraction.max_font_size
+                return True
+
+            page = page.filter(filter_out_large_text)
+
         tables = page.extract_tables(self.tablefinder_config())
         clean_tables: list[list[list[str]]] = []
         for table in tables:
@@ -244,14 +253,18 @@ class TableContentExtractor:
 
         if not bvg or bvg == "generic" or bvg == "both":
             for (score, drugid, rxcui, name) in generics:
+                print("after", line, t9n.qln)
                 yield t9n.copy(
-                    update={"score": score, "code": drugid, "rxcui": rxcui, "name": name}
+                    update={"score": score, "code": drugid, "rxcui": rxcui, "name": name}, deep=True
                 )
         if not bvg or bvg == "brand" or bvg == "both":
             for (score, drugid, rxcui, name) in brands:
                 yield t9n.copy(
                     update={"score": score, "code": drugid, "rxcui": rxcui, "name": name}
                 )
+
+        if not generics and not brands:
+            yield t9n
 
     def translate_tables(
         self, tables: list[list[list[str]]]

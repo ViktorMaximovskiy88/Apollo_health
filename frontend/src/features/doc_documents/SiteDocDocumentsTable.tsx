@@ -30,7 +30,8 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
   const controlledPagination = useDataTablePagination(
     docDocumentTableState,
     setDocDocumentTableLimit,
-    setDocDocumentTableSkip
+    setDocDocumentTableSkip,
+    undefined
   );
 
   return (

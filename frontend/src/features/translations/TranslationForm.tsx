@@ -177,6 +177,9 @@ export function TableExtractionForm() {
         <Form.Item className="grow" name={['extraction', 'end_table_text']} label="End Table Text">
           <Input />
         </Form.Item>
+        <Form.Item className="grow" name={['extraction', 'max_font_size']} label="Max Font Size">
+          <Input type="number" />
+        </Form.Item>
       </div>
       <Form.Item name={['extraction', 'table_shape']} label="Table Defined By">
         <Select
@@ -371,9 +374,14 @@ function TierTranslationInput(props: { name: number; field: any }) {
 
 function CodeTranslationInput(props: { name: number; field: any }) {
   return (
-    <Form.Item name={[props.name, 'separator']} label="Strength Seperators">
-      <Input />
-    </Form.Item>
+    <>
+      <Form.Item name={[props.name, 'separator']} label="Strength Sep" className="w-24">
+        <Input />
+      </Form.Item>
+      <Form.Item name={[props.name, 'separator2']} label="Form Sep" className="w-24">
+        <Input />
+      </Form.Item>
+    </>
   );
 }
 

@@ -22,7 +22,7 @@ class TableFilterInfo(BaseModel):
     name: str
     operator: str
     type: str
-    value: str | None
+    value: str | list[str] | None
 
 
 class TableQueryResponse(BaseModel, Generic[T]):
@@ -42,13 +42,27 @@ def get_query_json_list(arg: str, type):
     return func
 
 
-async def query_table(
+def transform_value(filter_value: str, filter_type: str):
+    if filter_type == "number":
+        value = float(filter_value)
+    elif filter_type == "date":
+        value = parser.parse(filter_value)
+    else:
+        value = filter_value
+
+    try:
+        value = PydanticObjectId(value)
+    except Exception:
+        pass
+
+    return value
+
+
+def construct_table_query(
     query: FindMany[T],  # type: ignore
-    limit: int | None = None,
-    skip: int | None = None,
     sorts: list[TableSortInfo] = [],
     filters: list[TableFilterInfo] = [],
-) -> TableQueryResponse[T]:
+) -> FindMany[T]:  # type: ignore
     for filter in filters:
         if not filter.value and filter.operator not in ["empty", "notEmpty"]:
             continue
@@ -56,17 +70,10 @@ async def query_table(
         if not filter.value:
             filter.value = ""
 
-        if filter.type == "number":
-            value = float(filter.value)
-        elif filter.type == "date":
-            value = parser.parse(filter.value)
+        if isinstance(filter.value, list):
+            value = [transform_value(value, filter.type) for value in filter.value]
         else:
-            value = filter.value
-
-        try:
-            value = PydanticObjectId(value)
-        except Exception:
-            pass
+            value = transform_value(filter.value, filter.type)
 
         if filter.operator == "contains":
             query = query.find({filter.name: {"$regex": value, "$options": "i"}})
@@ -77,9 +84,15 @@ async def query_table(
         if filter.operator == "endsWith":
             query = query.find({filter.name: {"$regex": f"{value}$", "$options": "i"}})
         if filter.operator == "eq":
-            query = query.find({filter.name: value})
+            if isinstance(value, list):
+                query = query.find({filter.name: {"$in": value}})
+            else:
+                query = query.find({filter.name: value})
         if filter.operator == "neq":
-            query = query.find({filter.name: {"$ne": value}})
+            if isinstance(value, list):
+                query = query.find({filter.name: {"$nin": value}})
+            else:
+                query = query.find({filter.name: {"$ne": value}})
         if filter.operator == "empty":
             query = query.find({filter.name: {"$in": [None, ""]}})
         if filter.operator == "notEmpty":
@@ -101,6 +114,19 @@ async def query_table(
         elif sort.dir == 1:
             query = query.sort(sort.name)
         # dir could be 0, in which case do not add sort
+
+    return query
+
+
+async def query_table(
+    query: FindMany[T],  # type: ignore
+    limit: int | None = None,
+    skip: int | None = None,
+    sorts: list[TableSortInfo] = [],
+    filters: list[TableFilterInfo] = [],
+) -> TableQueryResponse[T]:
+    query = construct_table_query(query, sorts, filters)
+
     if limit:
         query = query.limit(limit)
     if skip:

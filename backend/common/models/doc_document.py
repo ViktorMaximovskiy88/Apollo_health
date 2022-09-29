@@ -78,7 +78,10 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
         return SiteDocDocument(_id=self.id, **copy, **location.dict())
 
     class Settings:
-        indexes = [[("locations.site_id", pymongo.ASCENDING)]]
+        indexes = [
+            [("locations.site_id", pymongo.ASCENDING)],
+            [("locks.user_id", pymongo.ASCENDING)],
+        ]
 
 
 class DocDocumentView(DocDocument):

@@ -84,6 +84,7 @@ export interface DocDocument extends BaseDocument {
   indication_tags: IndicationTag[];
 
   translation_id?: string;
+  content_extraction_task_id?: string;
 
   tags: string[];
 }

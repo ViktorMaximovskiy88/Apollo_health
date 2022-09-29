@@ -14,6 +14,8 @@ import {
   useTakeNextWorkItemMutation,
   useTakeWorkItemMutation,
 } from './workQueuesApi';
+import { useSelector } from 'react-redux';
+import { workQueueTableState } from './workQueueSlice';
 
 function notifyFailedLock() {
   notification.open({
@@ -125,6 +127,7 @@ export function WorkQueueWorkItem(props: { wq: WorkQueue; itemId: string; readon
   const navigate = useNavigate();
   const [submitWorkItem] = useSubmitWorkItemMutation();
   const [takeNextWorkItem] = useTakeNextWorkItemMutation();
+  const tableState = useSelector(workQueueTableState);
 
   useEffect(() => {
     if (action) {
@@ -149,7 +152,7 @@ export function WorkQueueWorkItem(props: { wq: WorkQueue; itemId: string; readon
       };
       await submitWorkItem({ itemId: props.itemId, workQueueId: props.wq._id, body });
       if (takeNext) {
-        const response = await takeNextWorkItem(props.wq._id);
+        const response = await takeNextWorkItem({ queueId: props.wq._id, tableState });
         if ('data' in response) {
           if (!response.data.acquired_lock) {
             notification.success({
@@ -165,7 +168,17 @@ export function WorkQueueWorkItem(props: { wq: WorkQueue; itemId: string; readon
         navigate('../../..');
       }
     },
-    [props, action, takeNext, navigate, reassignment, comment, submitWorkItem, takeNextWorkItem]
+    [
+      props,
+      action,
+      takeNext,
+      navigate,
+      tableState,
+      reassignment,
+      comment,
+      submitWorkItem,
+      takeNextWorkItem,
+    ]
   );
 
   return (

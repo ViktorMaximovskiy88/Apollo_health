@@ -81,21 +81,39 @@ class RxNormEntityLinkerModel:
             for rgx, st in self.form_abbr:
                 text = re.sub(rgx, st, text)
             text = re.sub(r"\s+", " ", text)
+            text = re.sub(r" \.(\d)", r"0.\1", text)
 
-            if rule.separator:
-                splits = re.split(f"[{rule.separator}]", text)
-                name, strengths = splits[0], splits[1:]
-                name_and_first_strength = re.split(r"(\d\d*(?:\.\d+)?)", name, 1)
-                if len(name_and_first_strength) > 1:
-                    name, first_strength, unit = name_and_first_strength
-                    strengths.insert(0, first_strength + unit)
+            split_texts = [text]
+            if rule.separator2:
+                form_splits = re.split(f"[{rule.separator2}]", text)
+                name, form_and_strengths = form_splits[0], form_splits[1:]
+                name_and_first_form_strength = re.split(
+                    r"(CHEW|TBEC|SOLN|TABS?|SUSP|SUPP|CAPS|LIQD|TBCR|SUSR|SOLR|NEBU|TBSO|PACK|TB12|POWD|SYRP|INJ|CONC)",  # noqa: E501
+                    name,
+                    1,
+                )
+                if len(name_and_first_form_strength) > 1:
+                    name, first_form, first_strengths = name_and_first_form_strength
+                    form_and_strengths.insert(0, first_form + first_strengths)
                 else:
-                    strengths.insert(0, "")
+                    form_and_strengths.insert(0, "")
+                split_texts = [f"{name.strip()} {fands.strip()}" for fands in form_and_strengths]
 
-                for strength in strengths:
-                    new_texts.append(f"{name.strip()} {strength.strip()}")
-            else:
-                new_texts.append(text)
+            for text in split_texts:
+                if rule.separator:
+                    splits = re.split(f"[{rule.separator}]", text)
+                    name, strengths = splits[0], splits[1:]
+                    name_and_first_strength = re.split(r"(\d\d*(?:\.\d+)?)", name, 1)
+                    if len(name_and_first_strength) > 1:
+                        name, first_strength, unit = name_and_first_strength
+                        strengths.insert(0, first_strength + unit)
+                    else:
+                        strengths.insert(0, "")
+
+                    for strength in strengths:
+                        new_texts.append(f"{name.strip()} {strength.strip()}")
+                else:
+                    new_texts.append(text)
         return new_texts
 
     def find_candidates(
@@ -121,6 +139,8 @@ class RxNormEntityLinkerModel:
             best_candidate: MentionCandidate | None = None
             for candidate in candidates:
                 for score, description in zip(candidate.similarities, candidate.aliases):
+                    if "colchicine" in span:
+                        print(score, description)
                     if score < 0.5:
                         continue
                     if "bulk" in description.lower() and not has_bulk:

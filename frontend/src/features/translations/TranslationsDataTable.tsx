@@ -55,7 +55,8 @@ export function TranslationsDataTable() {
   const paginationProps = useDataTablePagination(
     translationTableState,
     setTranslationTableLimit,
-    setTranslationTableSkip
+    setTranslationTableSkip,
+    undefined
   );
 
   return (

@@ -11,6 +11,7 @@ export interface TranslationRule {
   value: string;
   capture_all: string;
   separator: string;
+  separator2: string;
   mappings: TranslationMapping[];
 }
 
@@ -43,6 +44,7 @@ export interface TableExtractionConfig {
   explicit_column_lines_only: boolean;
   skip_rows: number;
   skip_row_first_table_only: boolean;
+  max_font_size: number;
 }
 
 export interface TableTranslationConfig {
