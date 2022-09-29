@@ -26,13 +26,13 @@ closest_heading_expression: str = """
 
 sibling_text_expression: str = """
     (node) => {
-        let siblingText = "";
-        for(const n of node.parentElement.childNodes) {
-            if(n !== node) {
-                siblingText += n.textContent;
+        let n = node;
+        while (n) {
+            if(n.tagName == 'TD' && n.previousElementSibling) {
+                return n.previousElementSibling.textContent
             }
+            n = n.parentNode;
         }
-        return siblingText;
     }
 """
 
@@ -120,6 +120,8 @@ class PlaywrightBaseScraper(ABC):
             link_text = element_content.strip()
         elif element_text.strip():
             link_text = element_text.strip()
+        elif siblings_text.strip():
+            link_text = siblings_text.strip()
         elif resource_value.strip():
             parsed_url = urlsplit(resource_value)
             link_text = parsed_url.path

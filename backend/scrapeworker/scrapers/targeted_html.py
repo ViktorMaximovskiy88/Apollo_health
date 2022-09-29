@@ -18,7 +18,10 @@ from backend.scrapeworker.scrapers.playwright_base_scraper import (
 
 class TargetedHtmlScraper(PlaywrightBaseScraper):
     type = "TargetedHTML"
-    doc_client = DocumentStorageClient()
+
+    def __init__(self, *args, **kwargs):
+        super(TargetedHtmlScraper, self).__init__(*args, **kwargs)
+        self.doc_client = DocumentStorageClient()
 
     @cached_property
     def css_selector(self) -> str | None:
