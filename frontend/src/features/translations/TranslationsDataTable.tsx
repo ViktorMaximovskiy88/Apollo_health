@@ -13,6 +13,8 @@ import { Site } from '../sites/types';
 import { useGetChangeLogQuery, useLazyGetTranslationConfigsQuery } from './translationApi';
 import { useDataTableSort, useDataTableFilter, useDataTablePagination } from '../../common/hooks';
 import { TranslationConfig } from './types';
+import { CopyOutlined } from '@ant-design/icons';
+import { Tooltip } from 'antd';
 
 const columns = [
   {
@@ -31,6 +33,11 @@ const columns = [
       return (
         <>
           <ChangeLogModal target={site} useChangeLogQuery={useGetChangeLogQuery} />
+          <Tooltip title="Copy Translation">
+            <ButtonLink>
+              <CopyOutlined />
+            </ButtonLink>
+          </Tooltip>
         </>
       );
     },
