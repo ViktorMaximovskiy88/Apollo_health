@@ -35,7 +35,7 @@ function Assign({ selected, setSelected }: AssignTypes) {
 
   const assignSites = async () => {
     const sites = values(selected);
-    const resp = await updateMultipleSites(sites);
+    await updateMultipleSites(sites);
   };
   return <Button onClick={assignSites}>Assign to me</Button>;
 }
