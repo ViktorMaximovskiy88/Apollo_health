@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone
+from random import random
 
 import pytest
 from beanie import PydanticObjectId
@@ -155,7 +156,8 @@ async def load_retrieved_docs() -> list[RetrievedDocument]:
 
 @pytest.mark.asyncio()
 async def test_this():
-    await init_db()
+    random_name = str(random())
+    await init_db(mock=True, database_name=random_name)
     await load_retrieved_docs()
 
     lineage_service = LineageService(logger=logging)
