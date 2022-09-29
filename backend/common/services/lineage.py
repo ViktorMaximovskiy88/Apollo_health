@@ -7,6 +7,7 @@ from beanie import PydanticObjectId
 from backend.app.scripts.retag_document import ReTagger
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
+from backend.common.models.document_mixins import calc_final_effective_date
 from backend.common.models.lineage import DocumentAnalysis, DocumentAttrs
 from backend.common.models.shared import get_unique_focus_tags, get_unique_reference_tags
 from backend.common.models.site import Site
@@ -27,7 +28,6 @@ from backend.scrapeworker.common.lineage_parser import (
 from backend.scrapeworker.common.utils import (
     compact,
     group_by_attr,
-    sort_by_attr,
     tokenize_filename,
     tokenize_url,
 )
@@ -113,8 +113,7 @@ class LineageService:
     ):
         # build the model and save it
         for doc in docs:
-            doc_analysis = build_doc_analysis(doc)
-            await doc_analysis.save()
+            await build_doc_analysis(doc)
 
         # pick all from DB that are most recent OR no lineage...
         compare_docs = await self.get_comparision_docs(site_id)
@@ -143,7 +142,7 @@ class LineageService:
         for item in items:
             match = LineageMatcher(first_item, item, logger=self.logger).exec()
             if match:
-                self.logger.info(f"MATCHED {first_item.filename_text} {item.filename_text}")
+                self.logger.info(f"'{first_item.filename_text}' '{item.filename_text}' -> MATCHED")
 
                 if item.lineage_id:
                     first_item.lineage_id = item.lineage_id
@@ -154,7 +153,9 @@ class LineageService:
                 matched.append(item)
 
             else:
-                self.logger.info(f"UNMATCHED {first_item.filename_text} {item.filename_text}")
+                self.logger.info(
+                    f"'{first_item.filename_text}' '{item.filename_text}' -> UNMATCHED"
+                )
                 unmatched.append(item)
 
         # Theoretically unmatched shouldnt be matched with previous, so lets assign prev doc here
@@ -162,8 +163,12 @@ class LineageService:
         await self._version_matched(matched)
         await self._process_lineage(unmatched)
 
+    def sort_matched(self, items: list[DocumentAnalysis]):
+        items.sort(key=lambda x: x.final_effective_date or x.year_part or 0)
+        return items
+
     async def _version_matched(self, items: list[DocumentAnalysis]):
-        matches = sort_by_attr(items, "effective_date")
+        matches = self.sort_matched(items)
         prev_doc = None
         prev_doc_doc = None
         for index, match in enumerate(matches):
@@ -229,16 +234,22 @@ def consensus_attr(model: DocumentAnalysis, attr: str):
     return consensus[0] if len(consensus) == 1 else None
 
 
-def build_doc_analysis(doc: SiteRetrievedDocument) -> DocumentAnalysis:
-    doc_analysis = DocumentAnalysis(
-        retrieved_document_id=doc.id,
-        site_id=doc.site_id,
-        effective_date=doc.effective_date,
-        document_type=doc.document_type,
-        element_text=doc.link_text,
-        file_size=doc.file_size,
-        doc_vectors=doc.doc_vectors,
-    )
+async def build_doc_analysis(doc: SiteRetrievedDocument) -> DocumentAnalysis:
+
+    doc_analysis = await DocumentAnalysis.find_one({"retrieved_document_id": doc.id})
+
+    if doc_analysis is None:
+        doc_analysis = DocumentAnalysis(
+            retrieved_document_id=doc.id,
+            site_id=doc.site_id,
+        )
+
+    doc_analysis.name = doc.name
+    doc_analysis.final_effective_date = calc_final_effective_date(doc)
+    doc_analysis.document_type = doc.document_type
+    doc_analysis.element_text = doc.link_text
+    doc_analysis.file_size = doc.file_size
+    doc_analysis.doc_vectors = doc.doc_vectors
 
     doc_analysis.focus_therapy_tags = get_unique_focus_tags(doc.therapy_tags)
     doc_analysis.ref_therapy_tags = get_unique_reference_tags(doc.therapy_tags)
@@ -263,5 +274,7 @@ def build_doc_analysis(doc: SiteRetrievedDocument) -> DocumentAnalysis:
     doc_analysis.month_abbr = consensus_attr(doc_analysis, "month_abbr")
     doc_analysis.month_name = consensus_attr(doc_analysis, "month_name")
     doc_analysis.year_part = consensus_attr(doc_analysis, "year_part")
+
+    doc_analysis = await doc_analysis.save()
 
     return doc_analysis

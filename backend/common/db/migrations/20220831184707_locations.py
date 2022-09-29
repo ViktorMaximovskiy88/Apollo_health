@@ -86,7 +86,7 @@ class Forward:
         )
 
         result = await DocDocument.get_motor_collection().update_many(
-            {},
+            {"locations": {"$exists": False}},
             [
                 {
                     "$set": {

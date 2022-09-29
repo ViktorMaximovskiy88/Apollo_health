@@ -69,11 +69,11 @@ class Plan(BaseDocument):
     l_bm_id: int | None = None
     type: PlanType
     channel: Channel
-    is_national: bool
-    pharmacy_lives: int
-    medical_lives: int
-    pharmacy_states: list[str]
-    medical_states: list[str]
+    is_national: bool = False
+    pharmacy_lives: int = 0
+    medical_lives: int = 0
+    pharmacy_states: list[str] = []
+    medical_states: list[str] = []
 
     class Settings:
         union_doc = PayerBackboneUnionDoc
@@ -121,8 +121,8 @@ class PayerParent(BaseDocument):
 class BenefitManager(BaseDocument):
     payer_key: ClassVar[str] = "bm"
     name: str
-    type: BenefitManagerType | None
-    control: BenefitManagerControl | None
+    type: BenefitManagerType | None = None
+    control: BenefitManagerControl | None = None
     l_id: int
 
     class Settings:

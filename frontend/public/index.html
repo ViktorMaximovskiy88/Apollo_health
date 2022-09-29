@@ -1,47 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/favicon.svg" />
+    <meta name="description" content="Source Hub" />
+    <title>Source Hub</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:wght@400;600;800" />
 
-<head>
-  <meta charset="utf-8" />
-  <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/favicon.svg" />
-  <meta name="description" content="Source Hub" />
-  <title>Source Hub</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:800">
+    <!-- no judgements; this avoids so much tomfoolery -->
+    <script>
+      // so this _REALLY_ is blocking and we want that...
+      try {
+        const url = '/api/v1/settings';
+        const req = new XMLHttpRequest();
+        req.open('GET', url, false);
+        req.send(null);
 
-  <!-- no judgements; this avoids so much tomfoolery -->
-  <script>
-    // so this _REALLY_ is blocking and we want that...
-    try {
-      const url = "/api/v1/settings";
-      const req = new XMLHttpRequest();
-      req.open('GET', url, false);
-      req.send(null);
+        const jsonResponse = req.response;
+        const data = JSON.parse(jsonResponse);
 
-      const jsonResponse = req.response;
-      const data = JSON.parse(jsonResponse);
+        window._settings = {
+          baseApiUrl: '/api/v1',
+          auth0: {
+            domain: data.auth0_domain,
+            clientId: data.auth0_client_id,
+            audience: data.auth0_audience,
+            cacheLocation: 'localstorage',
+            redirectUri: window.location.origin,
+          },
+        };
+      } catch (error) {
+        console.error(error, 'cant load remote try normal');
+      }
+    </script>
+  </head>
 
-      window._settings = {
-        baseApiUrl: '/api/v1',
-        auth0: {
-          domain: data.auth0_domain,
-          clientId: data.auth0_client_id,
-          audience: data.auth0_audience,
-          cacheLocation: 'localstorage',
-          redirectUri: window.location.origin,
-        }
-      };
-    } catch (error) {
-      console.error(error, "cant load remote try normal")
-    }
-
-  </script>
-
-</head>
-
-<body>
-  <noscript>You need to enable JavaScript to run this app.</noscript>
-  <div id="root"></div>
-</body>
-
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
 </html>

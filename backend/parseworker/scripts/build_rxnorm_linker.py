@@ -13,7 +13,7 @@ from backend.common.storage.client import ModelStorageClient
 
 client = ModelStorageClient()
 input_path = "rxnorm/data/RxNorm_full_09062022/RXNCONSO.RRF"
-xref_path = "rxnorm/data/RxNorm Xref-2022-08-30.txt"
+xref_path = "rxnorm/data/RxNorm-Xref-2022-08-30.txt"
 
 header_line = [
     "RXCUI",

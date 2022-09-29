@@ -35,4 +35,4 @@ class UpdateDocumentFamily(BaseModel):
 
 
 class DocumentFamily(BaseDocument, NewDocumentFamily):
-    disabled: bool
+    disabled: bool = False

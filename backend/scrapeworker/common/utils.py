@@ -148,7 +148,7 @@ def tokenize_string(input: str):
 
 def jaccard(a: list, b: list):
     if len(a) + len(b) == 0:
-        return 1
+        return 0
     intersection = len(list(set(a).intersection(b)))
     union = (len(a) + len(b)) - intersection
     return intersection / union

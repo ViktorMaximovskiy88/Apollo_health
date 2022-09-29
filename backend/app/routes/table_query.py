@@ -1,3 +1,4 @@
+import asyncio
 import json
 from typing import Generic, TypeVar
 
@@ -94,8 +95,6 @@ async def query_table(
         if filter.operator == "beforeOrOn":
             query = query.find({filter.name: {"$lte": value}})
 
-    total = await query.count()
-
     for sort in sorts:
         if sort.dir == -1:
             query = query.sort(f"-{sort.name}")
@@ -107,5 +106,12 @@ async def query_table(
     if skip:
         query = query.skip(skip)
 
-    data = await query.to_list()
+    data_q = query.to_list()
+    if query.find_expressions == [{}]:
+        total_q = query.document_model.get_motor_collection().estimated_document_count()
+    else:
+        total_q = query.count()
+
+    (data, total) = await asyncio.gather(data_q, total_q)
+
     return TableQueryResponse(data=data, total=total)

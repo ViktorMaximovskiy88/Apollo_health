@@ -42,6 +42,7 @@ class DocumentUpdater:
         return (
             parsed_content["title"]
             or download.metadata.link_text
+            or download.metadata.siblings_text
             or download.file_name
             or download.request.url
         )
@@ -60,6 +61,8 @@ class DocumentUpdater:
         context_metadata = download.metadata.dict()
         text_checksum = await self.text_handler.save_text(parsed_content["text"])
         if location:
+            location.link_text = download.metadata.link_text
+            location.siblings_text = download.metadata.siblings_text
             location.context_metadata = context_metadata
             location.last_collected_date = now
         else:
@@ -72,11 +75,11 @@ class DocumentUpdater:
                     url=download.request.url,
                     context_metadata=context_metadata,
                     link_text=download.metadata.link_text,
+                    siblings_text=download.metadata.siblings_text,
                 )
             )
 
         updated_doc = UpdateRetrievedDocument(
-            doc_vectors=parsed_content["doc_vectors"],
             doc_type_confidence=parsed_content["confidence"],
             document_type=parsed_content["document_type"],
             effective_date=parsed_content["effective_date"],
@@ -117,6 +120,8 @@ class DocumentUpdater:
             location: DocDocumentLocation = doc_document.get_site_location(self.site.id)
 
             if location:
+                location.link_text = rt_doc_location.link_text
+                location.siblings_text = rt_doc_location.siblings_text
                 location.last_collected_date = rt_doc_location.last_collected_date
             else:
                 doc_document.locations.append(DocDocumentLocation(**rt_doc_location.dict()))
@@ -177,6 +182,7 @@ class DocumentUpdater:
                     url=url,
                     context_metadata=context_metadata,
                     link_text=download.metadata.link_text,
+                    siblings_text=download.metadata.siblings_text,
                 )
             ],
         )

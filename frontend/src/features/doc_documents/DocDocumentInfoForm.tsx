@@ -1,4 +1,4 @@
-import { Form, Input } from 'antd';
+import { Checkbox, Form, Input } from 'antd';
 import { useParams } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 
@@ -19,6 +19,12 @@ export function DocDocumentInfoForm({ onFieldChange }: { onFieldChange: () => vo
       <Form.Item name="name" label="Name" required={true}>
         <Input />
       </Form.Item>
+      <div className="flex">
+        <div className="mt-1">Internal Document&nbsp;</div>
+        <Form.Item valuePropName="checked" name="internal_document">
+          <Checkbox />
+        </Form.Item>
+      </div>
       <Hr />
       <DocumentClassification />
       <Translation />

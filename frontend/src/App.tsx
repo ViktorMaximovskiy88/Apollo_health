@@ -27,6 +27,7 @@ import { TranslationsEditPage } from './features/translations/TranslationsEditPa
 import { PayerBackbomeHomePage } from './features/payer-backbone/PayerBackboneHomePage';
 import { PayerBackboneNewPage } from './features/payer-backbone/PayerBackboneNewPage';
 import { PayerBackboneEditPage } from './features/payer-backbone/PayerBackboneEditPage';
+import { LineagePage } from './features/lineage/LineagePage';
 
 function AppHomePage() {
   return <>{'Home'}</>;
@@ -104,6 +105,7 @@ function App() {
                 <Route path="edit" element={<DocumentEditPage />} />
               </Route>
             </Route>
+            <Route path="lineage" element={<LineagePage />} />
             <Route path="extraction">
               <Route index element={<ExtractionsPage />} />
               <Route path="document/:docId">
