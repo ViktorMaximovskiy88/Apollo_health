@@ -22,6 +22,7 @@ from backend.common.models.shared import RetrievedDocumentLocation
 from backend.common.models.site import BaseUrl, ScrapeMethodConfiguration, Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
+from backend.common.test.test_utils import mock_s3_client  # noqa
 
 RetrievedDocumentLimitTags.Settings.projection = None  # type: ignore
 
@@ -261,7 +262,7 @@ class TestGetDocuments:
 
 class TestUploadFile:
     @pytest.mark.asyncio
-    async def test_upload_file(self, user, logger):
+    async def test_upload_file(self, user, logger, mock_s3_client):  # noqa
         URL = "https://parprdusemmitst01.blob.core.windows.net/autohunteddocs/7c8418d4-054b-4fa4-9b97-d3f75c353dd1/7c8418d4-054b-4fa4-9b97-d3f75c353dd1.pdf"  # noqa
         response = requests.get(URL)
         with tempfile.NamedTemporaryFile() as temp:
@@ -280,7 +281,7 @@ class TestUploadFile:
                 assert uploaded_document["data"]["doc_type_confidence"] is not None  # type: ignore
 
     @pytest.mark.asyncio
-    async def test_upload_create_document(self, user, logger):
+    async def test_upload_create_document(self, user, logger, mock_s3_client):  # noqa
         URL = "https://parprdusemmitst01.blob.core.windows.net/autohunteddocs/7c8418d4-054b-4fa4-9b97-d3f75c353dd1/7c8418d4-054b-4fa4-9b97-d3f75c353dd1.pdf"  # noqa
         response = requests.get(URL)
         with tempfile.NamedTemporaryFile() as temp:
