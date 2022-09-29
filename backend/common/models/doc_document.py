@@ -34,6 +34,7 @@ class BaseDocDocument(BaseModel):
     # Document Type
     document_type: str | None = None
     doc_type_confidence: float | None = None
+    internal_document: bool | None = None
 
     # Extracted Dates
     effective_date: datetime | None = None
@@ -49,7 +50,7 @@ class BaseDocDocument(BaseModel):
     last_collected_date: datetime | None = None
 
     # Manual/Calculated Dates
-    final_effective_date: datetime | None = None
+    final_effective_date: Indexed(datetime, pymongo.DESCENDING) | None = None  # type: ignore
     end_date: datetime | None = None
 
     # Lineage
@@ -121,7 +122,7 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     therapy_tags: list[UpdateTherapyTag] | None = None
     indication_tags: list[UpdateIndicationTag] | None = None
     tags: list[str] | None = None
-
+    internal_document: bool | None = None
     translation_id: PydanticObjectId | None = None
     content_extraction_task_id: PydanticObjectId | None = None
     content_extraction_status: ApprovalStatus = ApprovalStatus.QUEUED

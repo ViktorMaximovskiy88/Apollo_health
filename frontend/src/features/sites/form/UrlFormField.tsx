@@ -1,9 +1,10 @@
 import { Button, Form, Input, Select } from 'antd';
-import { LinkOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { Site } from '../types';
 import { FormInstance } from 'antd/lib/form/Form';
 import { FormListFieldData } from 'antd/lib/form/FormList';
 import { UrlInput } from './UrlInput';
+import { LinkIcon } from '../../../components';
 
 interface LabelInputPropTypes {
   name: number;
@@ -54,16 +55,10 @@ function LinkButton({ form, index }: LinkButtonPropTypes) {
   return (
     <Form.Item label=" " shouldUpdate className="mb-0">
       {() => (
-        <Button
-          className="p-0 focus:border focus:border-offset-2 focus:border-blue-500"
+        <LinkIcon
           href={form.getFieldValue('base_urls')[index].url}
           disabled={hasError('base_urls', index)}
-          type="link"
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          <LinkOutlined className="text-gray-500 hover:text-blue-500 focus:text-blue-500" />
-        </Button>
+        />
       )}
     </Form.Item>
   );

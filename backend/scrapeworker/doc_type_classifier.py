@@ -25,6 +25,10 @@ doc_types = [
     "Regulatory Document",
     "Formulary",
     "Internal Reference",
+    "Formulary Update",
+    "NCCN Guideline",
+    "Restriction List",
+    "Review Committee Meetings",
 ]
 
 
