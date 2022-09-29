@@ -4,6 +4,7 @@ import pytest
 from playwright.async_api import BrowserContext, Page
 
 from backend.common.models.site import AttrSelector, ScrapeMethodConfiguration
+from backend.common.test.test_utils import mock_s3_client  # noqa
 from backend.scrapeworker.scrapers.targeted_html import TargetedHtmlScraper
 
 
@@ -41,7 +42,13 @@ def scraper():
     return html_scraper
 
 
-def test_clean_html(scraper: TargetedHtmlScraper):
+def test_clean_html(mock_s3_client, scraper: TargetedHtmlScraper):  # noqa
+    scraper = TargetedHtmlScraper(
+        MagicMock(spec=BrowserContext),
+        MagicMock(spec=Page),
+        "https://www.example.com",
+        simple_scrape_config(),
+    )
     test_html = "<html><body><div>not me</div></body></html>"
 
     html = '<div delete_me="test"></div><div>not me</div>'
@@ -57,7 +64,7 @@ def test_clean_html(scraper: TargetedHtmlScraper):
     assert test_html == clean_html
 
 
-def test_multiple_delete_clean_html(scraper: TargetedHtmlScraper):
+def test_multiple_delete_clean_html(mock_s3_client, scraper: TargetedHtmlScraper):  # noqa
     test_html = "<html><body><div><div>not me</div></div></body></html>"
 
     html = '<div><span delete="me">byebye</span><div delete_me="test"></div><div>not me</div></div>'
