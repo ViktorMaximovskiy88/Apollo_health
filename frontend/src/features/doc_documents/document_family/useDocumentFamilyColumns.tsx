@@ -15,9 +15,10 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
     {
       header: 'Family Name',
       name: 'name',
+      defaultFlex: 1,
       minWidth: 200,
       render: ({ data: docFamily }: { data: DocumentFamily }) => {
-        return <Link to={`/document_family/${docFamily._id}`}>{docFamily.name}</Link>;
+        return <>{docFamily.name}</>;
       },
     },
     {
@@ -30,10 +31,6 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
         dataSource: DocumentTypes,
       },
       render: ({ data: docFamily }: { data: DocumentFamily }) => <>{docFamily.document_type}</>,
-    },
-    {
-      header: 'Count of Docs',
-      name: 'count_of_docs',
     },
     {
       header: 'Actions',
