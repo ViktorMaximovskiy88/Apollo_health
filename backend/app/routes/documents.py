@@ -11,7 +11,7 @@ from backend.common.events.event_convert import EventConvert
 from backend.common.events.send_event_client import SendEventClient
 from backend.common.models.doc_document import DocDocument, DocDocumentLocation
 from backend.common.models.document import (
-    BaseRetrievedDocument,
+    NewManualDocument,
     RetrievedDocument,
     RetrievedDocumentLimitTags,
     RetrievedDocumentLocation,
@@ -200,10 +200,6 @@ async def delete_document(
 ):
     await update_and_log_diff(logger, current_user, target, UpdateRetrievedDocument(disabled=True))
     return {"success": True}
-
-
-class NewManualDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
-    internal_document: bool
 
 
 # One time use case for the PUT request below in order to pass in internal_document
