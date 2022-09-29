@@ -1,9 +1,8 @@
-import { Form, Popconfirm, Select } from 'antd';
+import { Form, Popconfirm, Radio, RadioChangeEvent } from 'antd';
 import { useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { Site } from '../types';
 import { SiteStatus } from '../siteStatus';
-import { FormInstance } from 'antd/lib/form/Form';
 import { useUpdateSiteMutation } from '../sitesApi';
 import { useCurrentUser } from '../../../common/hooks/use-current-user';
 
@@ -14,15 +13,17 @@ const siteStatuses = [
   { value: SiteStatus.Online, label: 'Online' },
 ];
 
-export function SiteStatusSelect({ form }: { form: FormInstance }) {
+export function SiteStatusRadio() {
+  const form = Form.useFormInstance();
   const params = useParams();
   const [visible, setVisible] = useState(false);
   const currentUser = useCurrentUser();
   const [updateSite] = useUpdateSiteMutation();
 
-  const onEditPage = (): boolean => !!params.siteId;
-  const onSelect = (_: string, { value }: { value: string }) => {
-    if (onEditPage() && value === SiteStatus.Online) {
+  const isEditPage = (): boolean => !!params.siteId;
+  const isAssignedToSelf = (): boolean => !!(currentUser?._id === form.getFieldValue('assignee'));
+  const onChange = ({ target: { value } }: RadioChangeEvent) => {
+    if (isEditPage() && isAssignedToSelf() && value === SiteStatus.Online) {
       setVisible(true);
     }
   };
@@ -43,17 +44,24 @@ export function SiteStatusSelect({ form }: { form: FormInstance }) {
   };
 
   return (
-    <Popconfirm
-      title="Keep site assignment or release?"
-      visible={visible}
-      onConfirm={release}
-      onCancel={keep}
-      okText="Release"
-      cancelText="Keep"
-    >
+    <>
+      <Popconfirm
+        title="Keep site assignment or release?"
+        visible={visible}
+        onConfirm={release}
+        onCancel={keep}
+        okText="Release"
+        cancelText="Keep"
+        placement="bottomLeft"
+      />
       <Form.Item name="status" label="Site Status">
-        <Select options={siteStatuses} onSelect={onSelect} />
+        <Radio.Group
+          options={siteStatuses}
+          optionType="button"
+          buttonStyle="solid"
+          onChange={onChange}
+        />
       </Form.Item>
-    </Popconfirm>
+    </>
   );
 }

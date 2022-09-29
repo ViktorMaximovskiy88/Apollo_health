@@ -56,7 +56,7 @@ function Header() {
   );
   return (
     <div className="flex items-center">
-      <h4 className="mr-1">Therapy Focus Separators</h4>
+      <h4 className="mr-1 font-semibold">Therapy Focus Separators</h4>
       <Popover placement="right" title={title} content={content} className="mb-2 ml-px">
         <QuestionCircleOutlined />
       </Popover>
