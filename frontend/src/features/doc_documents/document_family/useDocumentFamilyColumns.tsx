@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { DocumentTypes } from '../../retrieved_documents/types';
+import { ChangeLogModal } from '../../change-log/ChangeLogModal';
+import { useGetChangeLogQuery } from './documentFamilyApi';
 interface CreateColumnsType {
   handleNewVersion?: (data: DocumentFamily) => void;
 }
@@ -36,6 +38,11 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
     {
       header: 'Actions',
       name: 'action',
+      render: ({ data: docFamily }: { data: DocumentFamily }) => (
+        <>
+          <ChangeLogModal target={docFamily} useChangeLogQuery={useGetChangeLogQuery} />
+        </>
+      ),
     },
   ];
 };

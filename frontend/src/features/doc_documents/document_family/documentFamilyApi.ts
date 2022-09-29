@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from '../../../app/base-api';
 import { TableInfoType } from '../../../common/types';
+import { ChangeLog } from '../../change-log/types';
 import { DocumentFamily } from './types';
 
 export const documentFamilyApi = createApi({
@@ -66,6 +67,10 @@ export const documentFamilyApi = createApi({
         { type: 'ChangeLog', id },
       ],
     }),
+    getChangeLog: builder.query<ChangeLog[], string>({
+      query: (id) => `/change-log/${id}`,
+      providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
+    }),
   }),
 });
 
@@ -77,4 +82,5 @@ export const {
   useLazyGetDocumentFamiliesBySiteQuery,
   useAddDocumentFamilyMutation,
   useUpdateDocumentFamilyMutation,
+  useGetChangeLogQuery,
 } = documentFamilyApi;
