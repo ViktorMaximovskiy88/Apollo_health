@@ -4,7 +4,13 @@ import { TypeSingleSortInfo, TypeSingleFilterValue } from '@inovua/reactdatagrid
 import { useCallback } from 'react';
 import { useLazyGetExtractionTaskResultsQuery, useGetExtractionTaskQuery } from './extractionsApi';
 
-export function ExtractionResultsDataTable({ extractionId }: { extractionId?: string }) {
+export function ExtractionResultsDataTable({
+  extractionId,
+  delta,
+}: {
+  extractionId?: string;
+  delta?: boolean;
+}) {
   const [getResultsFn] = useLazyGetExtractionTaskResultsQuery();
   const { data: extractionTask } = useGetExtractionTaskQuery(extractionId);
 
@@ -36,6 +42,7 @@ export function ExtractionResultsDataTable({ extractionId }: { extractionId?: st
         ...tableInfo,
         sortInfo,
         filterValue,
+        delta,
       });
       const extractions = data?.data || [];
       const count = data?.total || 0;
@@ -50,7 +57,7 @@ export function ExtractionResultsDataTable({ extractionId }: { extractionId?: st
       });
       return { data: formattedExtractions, count };
     },
-    [extractionId, getResultsFn]
+    [extractionId, getResultsFn, delta]
   );
 
   if (!extractionTask) return null;

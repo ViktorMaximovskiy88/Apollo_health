@@ -62,3 +62,7 @@ class ContentExtractionResult(BaseDocument):
     first_collected_date: datetime
     result: dict = {}
     translation: FormularyDatum | None = None
+    add: bool = False
+    remove: bool = False
+    edit: PydanticObjectId | None = None
+    hash: Indexed(bytes) | None = None  # type: ignore

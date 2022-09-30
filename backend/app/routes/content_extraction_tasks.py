@@ -43,12 +43,15 @@ async def get_target(id: PydanticObjectId):
 )
 async def read_extraction_results(
     extraction_id: PydanticObjectId,
+    delta: bool = False,
     limit: int | None = None,
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
     query = ContentExtractionResult.find({"content_extraction_task_id": extraction_id})
+    if delta:
+        query = query.find({"$or": [{"add": True}, {"remove": True}, {"edit": {"$exists": True}}]})
     return await query_table(query, limit, skip, sorts, filters)
 
 

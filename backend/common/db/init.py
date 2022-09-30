@@ -47,6 +47,20 @@ def get_motor_client(mock=False) -> AsyncIOMotorClient:
             username=settings.mongo_user,
             password=settings.mongo_password,
         )
+
+        def dont():
+            import os
+            from urllib.parse import quote_plus
+
+            user = quote_plus(os.environ["AWS_ACCESS_KEY_ID"])
+            password = quote_plus(os.environ["AWS_SECRET_ACCESS_KEY"])
+            session = quote_plus(os.environ["AWS_SESSION_TOKEN"])
+            host = "apollo-dev-use1-mmit-01.3qm7h.mongodb.net"
+            host = "apollo-tst-use1-mmit-01.3qm7h.mongodb.net"
+            url = f"mongodb+srv://{user}:{password}@{host}/?authMechanism=MONGODB-AWS&authSource=$external&authMechanismProperties=AWS_SESSION_TOKEN:{session}"  # noqa: E501
+            client = AsyncIOMotorClient(url)
+            print(client)
+
     return client
 
 

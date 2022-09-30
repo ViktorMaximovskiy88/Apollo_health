@@ -42,12 +42,14 @@ class RxNormEntityLinkerModel:
 
     form_abbr = [
         (r"\btabs?\b", "tablet"),
+        (r"\bchew\b", "chewable"),
         (r"\bca?ps?\b", "capsule"),
         (r"\bcp24\b", "capsule extended release"),
         (r"\b12.hour\b", "12 HR extended release"),
         (r"\b24.hour\b", "24 HR extended release"),
         (r"\bsoln\b", "solution"),
         (r"\btbec\b", "tablet delayed release"),
+        (r"\btbcr\b", "tablet extended release"),
         (r"\bdr\b", "delayed release"),
         (r"\ber\b", "extended release"),
         (r"\bxr\b", "extended release"),
@@ -60,6 +62,7 @@ class RxNormEntityLinkerModel:
         (r"\bprsyr\b", "prefilled syringe"),
         (r"\bpref\b", "prefilled"),
         (r"\bsuppos\b", "suppository"),
+        (r"\bsupp\b", "suppository"),
         (r"\bsusp\b", "suspension"),
         (r"\bconc\b", "concentrate"),
         (r"\boint\b", "ointment"),
@@ -71,6 +74,110 @@ class RxNormEntityLinkerModel:
     ]
     form_abbr = [(re.compile(rgx, re.IGNORECASE), st) for rgx, st in form_abbr]
 
+    form_abbr_caps = [
+        "MISC",
+        "CAPS",
+        "CPCR",
+        "TABS",
+        "TBCR",
+        "CHEW",
+        "TBEC",
+        "SUBL",
+        "TBEF",
+        "LIQD",
+        "ELIX",
+        "LQCR",
+        "SYRP",
+        "CONC",
+        "EXTR",
+        "TINC",
+        "EMUL",
+        "OIL",
+        "SUSP",
+        "SUSR",
+        "SOLN",
+        "SOLR",
+        "INJ",
+        "IMPL",
+        "INHA",
+        "NEBU",
+        "GAS",
+        "GRAN",
+        "GUM",
+        "POWD",
+        "PACK",
+        "WAFR",
+        "AERO",
+        "AERP",
+        "AERS",
+        "BAR",
+        "BEAD",
+        "CREA",
+        "CRYS",
+        "FOAM",
+        "GEL",
+        "LOTN",
+        "OINT",
+        "PADS",
+        "PSTE",
+        "SHAM",
+        "TAPE",
+        "LOZG",
+        "TROC",
+        "WHIP",
+        "OCSY",
+        "ENEM",
+        "SUPP",
+        "IUD",
+        "DPRH",
+        "DCHE",
+        "DCHP",
+        "DCHS",
+        "TAMP",
+        "PTCH",
+        "TEST",
+        "STRP",
+        "DEVI",
+        "MISC",
+        "KIT",
+        "CPDR",
+        "CPEC",
+        "CPEP",
+        "CPSP",
+        "CP12",
+        "CP24",
+        "TBDR",
+        "TBDP",
+        "TBSO",
+        "TB12",
+        "TB24",
+        "SOLG",
+        "GREF",
+        "PDEF",
+        "PUDG",
+        "AEPB",
+        "AERB",
+        "FILM",
+        "FLAK",
+        "LPOP",
+        "PT24",
+        "PT72",
+        "PTTW",
+        "PTWK",
+        "PLLT",
+        "RING",
+        "SHEE",
+        "SPRT",
+        "STCK",
+        "SWAB",
+        "TAR",
+        "WAX",
+        "LEAV",
+        "DISK",
+        "INST",
+    ]
+    form_abbrev_rgx = re.compile(f"({'|'.join(form_abbr_caps)})")
+
     NUMBER_REGEX = re.compile(r"\d\d*(?:\.\d+)?")
 
     def preprocess(self, texts: list[str | None], rule: TranslationRule):
@@ -78,8 +185,6 @@ class RxNormEntityLinkerModel:
         for text in texts:
             if text is None:
                 text = ""
-            for rgx, st in self.form_abbr:
-                text = re.sub(rgx, st, text)
             text = re.sub(r"\s+", " ", text)
             text = re.sub(r" \.(\d)", r"0.\1", text)
 
@@ -87,11 +192,7 @@ class RxNormEntityLinkerModel:
             if rule.separator2:
                 form_splits = re.split(f"[{rule.separator2}]", text)
                 name, form_and_strengths = form_splits[0], form_splits[1:]
-                name_and_first_form_strength = re.split(
-                    r"(CHEW|TBEC|SOLN|TABS?|SUSP|SUPP|CAPS|LIQD|TBCR|SUSR|SOLR|NEBU|TBSO|PACK|TB12|POWD|SYRP|INJ|CONC)",  # noqa: E501
-                    name,
-                    1,
-                )
+                name_and_first_form_strength = re.split(self.form_abbrev_rgx, name, 1)
                 if len(name_and_first_form_strength) > 1:
                     name, first_form, first_strengths = name_and_first_form_strength
                     form_and_strengths.insert(0, first_form + first_strengths)
@@ -100,6 +201,8 @@ class RxNormEntityLinkerModel:
                 split_texts = [f"{name.strip()} {fands.strip()}" for fands in form_and_strengths]
 
             for text in split_texts:
+                for rgx, st in self.form_abbr:
+                    text = re.sub(rgx, st, text)
                 if rule.separator:
                     splits = re.split(f"[{rule.separator}]", text)
                     name, strengths = splits[0], splits[1:]

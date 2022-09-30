@@ -20,13 +20,15 @@ export const extractionTasksApi = createApi({
         skip: number;
         sortInfo: TypeSortInfo;
         filterValue: TypeFilterValue;
+        delta: boolean;
       }
     >({
-      query: ({ limit, skip, sortInfo, filterValue, id }) => {
+      query: ({ limit, skip, sortInfo, filterValue, delta, id }) => {
         const args = [
           `extraction_id=${encodeURIComponent(id)}`,
           `limit=${encodeURIComponent(limit)}`,
           `skip=${encodeURIComponent(skip)}`,
+          `delta=${encodeURIComponent(delta)}`,
           `sorts=${encodeURIComponent(JSON.stringify(sortInfo))}`,
           `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
         ].join('&');
