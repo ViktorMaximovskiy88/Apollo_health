@@ -1,51 +1,25 @@
 import classNames from 'classnames';
-import { useState, useEffect } from 'react';
-import { Button, notification } from 'antd';
+import { Button, Input, notification } from 'antd';
 import { MainLayout } from '../../components';
 import { useParams } from 'react-router-dom';
 import { useGetSiteLineageQuery, useLazyProcessSiteLineageQuery } from './lineageApi';
+import useLineage from './use-lineage';
 import { SiteMenu } from '../sites/SiteMenu';
 import { FileTypeViewer } from '../retrieved_documents/RetrievedDocumentViewer';
-import { LineageDoc, LineageGroup } from './types';
 import { TextEllipsis } from '../../components';
-import _ from 'lodash';
+import _, { debounce } from 'lodash';
 import { prettyDateUTCFromISO } from '../../common/date';
 
 export function LineagePage() {
   const { siteId } = useParams();
-  const { data: items = [], status } = useGetSiteLineageQuery(siteId, {
+
+  useGetSiteLineageQuery(siteId, {
     pollingInterval: 5000,
   });
+
   const [processSiteLineage] = useLazyProcessSiteLineageQuery();
-
-  const [leftSideDoc, setLeftSide] = useState<LineageDoc>();
-  const [rightSideDoc, setRighttSide] = useState<LineageDoc>();
-  const [lineageGroups, setLineageGroups] = useState<LineageGroup[]>([]);
-
-  // TODO refactor this is view model stuff... uhh
-  useEffect(() => {
-    const grouped = _(items)
-      .groupBy('lineage_id')
-      .map((items, lineageId) => {
-        const currentIndex = items.findIndex((item) => item.is_current_version);
-        const ordered = items.splice(currentIndex, 1);
-
-        while (items.length > 0) {
-          const child = ordered[0];
-          const parentIndex = items.findIndex((item) => item._id == child.previous_doc_id);
-          const [parent] = items.splice(parentIndex, 1);
-          ordered.unshift(parent);
-        }
-
-        return {
-          lineageId,
-          items: ordered,
-        } as LineageGroup;
-      })
-      .value();
-
-    setLineageGroups(grouped);
-  }, [items.length]);
+  const { state, actions } = useLineage();
+  const { list, leftSideDoc, rightSideDoc } = state;
 
   const openNotification = () => {
     notification.success({
@@ -71,44 +45,49 @@ export function LineagePage() {
       }
     >
       <div className="flex flex-row h-full">
-        <div className="overflow-auto w-64 mr-2">
-          {lineageGroups.map((group) => (
-            <div key={group.lineageId} className="p-2 mb-4 bg-white border">
-              <div className="text-slate-500 uppercase mb-2">
-                {group.lineageId} ({group.items.length})
-              </div>
-              {group.items.map((item) => (
-                <div
-                  key={item._id}
-                  className={classNames(
-                    'p-2 my-2 bg-slate-50 border group relative',
-                    item._id == leftSideDoc?._id && ['border-l-2', 'border-gray-100 ']
-                  )}
-                >
-                  <TextEllipsis text={item.name} />
-                  <TextEllipsis text={item.document_type} />
-                  <div>{prettyDateUTCFromISO(item.final_effective_date)}</div>
-                  <div className="hidden group-hover:block absolute bottom-2 right-2 z-50">
-                    <Button
-                      onClick={() => {
-                        setLeftSide(item);
-                      }}
-                    >
-                      Left
-                    </Button>
+        <div className="flex flex-col w-64 mr-2 mb-2">
+          <Input.Search allowClear={true} placeholder="Search" />
 
-                    <Button
-                      onClick={() => {
-                        setRighttSide(item);
-                      }}
-                    >
-                      Right
-                    </Button>
-                  </div>
+          <div className="overflow-auto h-full  bg-white">
+            {list.filtered.map((group) => (
+              <div key={group.lineageId} className="p-2 mb-4 border">
+                <div className="text-slate-500 uppercase mb-2">
+                  {group.lineageId} ({group.items.length})
                 </div>
-              ))}
-            </div>
-          ))}
+                {group.items.map((item) => (
+                  <div
+                    key={item._id}
+                    className={classNames(
+                      'p-2 my-2 bg-slate-50 border group relative',
+                      item._id == leftSideDoc?._id && ['border-l-2', 'border-gray-100 ']
+                    )}
+                  >
+                    <TextEllipsis text={item.name} />
+                    <TextEllipsis text={item.document_type} />
+                    <div>{prettyDateUTCFromISO(item.final_effective_date)}</div>
+                    <div className="hidden group-hover:block absolute bottom-2 right-2 z-50">
+                      <Button
+                        onClick={() => {
+                          console.log(item, actions.setLeftSide);
+                          actions.setLeftSide(item);
+                        }}
+                      >
+                        Left
+                      </Button>
+
+                      <Button
+                        onClick={() => {
+                          actions.setRightSide(item);
+                        }}
+                      >
+                        Right
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="flex flex-1">

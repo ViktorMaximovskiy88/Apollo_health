@@ -25,6 +25,7 @@ import documentsReducer from '../features/collections/documentsSlice';
 import extractionsReducer from '../features/extractions/extractionsSlice';
 import translationsReducer from '../features/translations/translationSlice';
 import payerBackboneReducer from '../features/payer-backbone/payerBackboneSlice';
+import lineageReducer from '../features/lineage/lineage-slice';
 
 const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
   history: createBrowserHistory(),
@@ -54,6 +55,7 @@ export const store = configureStore({
     translations: translationsReducer,
     payerBackbone: payerBackboneReducer,
     router: routerReducer,
+    lineage: lineageReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
