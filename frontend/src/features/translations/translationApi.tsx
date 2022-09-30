@@ -31,6 +31,11 @@ export const translationsApi = createApi({
         ].join('&');
         return `/translations/?${args}`;
       },
+      providesTags: [{ type: 'Translation', id: 'LIST' }],
+    }),
+    getTranslationConfigByName: builder.query<TranslationConfig, string>({
+      query: (name) => `/translations/search?name=${name}`,
+      providesTags: (_r, _e, name) => [{ type: 'Translation' as const, name }],
     }),
     addTranslationConfig: builder.mutation<TranslationConfig, Partial<TranslationConfig>>({
       query: (body) => ({ url: '/translations/', method: 'PUT', body }),
@@ -66,6 +71,8 @@ export const translationsApi = createApi({
 export const {
   useLazyGetTranslationConfigsQuery,
   useTranslateSampleDocumentTablesQuery,
+  useGetTranslationConfigByNameQuery,
+  useLazyGetTranslationConfigByNameQuery,
   useExtractSampleDocumentTablesQuery,
   useAddTranslationConfigMutation,
   useUpdateTranslationConfigMutation,
