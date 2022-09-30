@@ -3,7 +3,7 @@ import { Button, Input, notification } from 'antd';
 import { MainLayout } from '../../components';
 import { useParams } from 'react-router-dom';
 import { useGetSiteLineageQuery, useLazyProcessSiteLineageQuery } from './lineageApi';
-import useLineage from './use-lineage';
+import useLineageSlice from './use-lineage-slice';
 import { SiteMenu } from '../sites/SiteMenu';
 import { FileTypeViewer } from '../retrieved_documents/RetrievedDocumentViewer';
 import { TextEllipsis } from '../../components';
@@ -18,7 +18,7 @@ export function LineagePage() {
   });
 
   const [processSiteLineage] = useLazyProcessSiteLineageQuery();
-  const { state, actions } = useLineage();
+  const { state, actions } = useLineageSlice();
   const { list, leftSideDoc, rightSideDoc } = state;
 
   const openNotification = () => {

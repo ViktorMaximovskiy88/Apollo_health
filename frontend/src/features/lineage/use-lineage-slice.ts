@@ -1,8 +1,7 @@
 import { useSelector, useDispatch } from 'react-redux';
 import { lineageSelector, actions } from './lineage-slice';
-import _ from 'lodash';
 
-export default function useLineage() {
+export default function useLineageSlice() {
   const state = useSelector(lineageSelector);
   const dispatch = useDispatch();
   return {
