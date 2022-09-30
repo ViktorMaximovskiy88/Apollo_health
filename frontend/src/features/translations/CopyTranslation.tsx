@@ -11,6 +11,7 @@ import {
   useLazyGetTranslationConfigByNameQuery,
 } from './translationApi';
 import { TranslationConfig } from './types';
+import { useNavigate } from 'react-router-dom';
 
 const nameMustBeUnique = (getTranslationByName: any) => {
   return {
@@ -28,6 +29,7 @@ const nameMustBeUnique = (getTranslationByName: any) => {
 export const CopyTranslation = ({ translation }: { translation: TranslationConfig }) => {
   const [visible, setVisible] = useState(false);
   const [form] = useForm();
+  const navigate = useNavigate();
 
   const [getTranslationByName, { isLoading: validatorLoading }] =
     useLazyGetTranslationConfigByNameQuery();
@@ -41,7 +43,20 @@ export const CopyTranslation = ({ translation }: { translation: TranslationConfi
 
   const handleFinish = async ({ name }: { name: string }) => {
     setVisible(false);
-    await addTranslation({ ...translation, name, _id: undefined });
+    const response = await addTranslation({
+      ...translation,
+      name,
+      _id: undefined,
+    });
+
+    // resolves TS error
+    if ('error' in response) {
+      console.error(response.error);
+      throw new Error('Tried to add a new translation but recieved an error in response');
+    }
+
+    const { data: newTranslation } = response;
+    navigate(`./${newTranslation._id}`);
   };
 
   const isLoading = validatorLoading || addTranslationLoading;

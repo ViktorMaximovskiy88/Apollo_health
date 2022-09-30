@@ -39,7 +39,7 @@ const columns = [
 ];
 
 export function TranslationsDataTable() {
-  const [getTranslationsFn, { currentData }] = useLazyGetTranslationConfigsQuery();
+  const [getTranslationsFn] = useLazyGetTranslationConfigsQuery();
 
   const loadData = useCallback(
     async (tableInfo: any) => {
@@ -48,8 +48,7 @@ export function TranslationsDataTable() {
       const count = data?.total ?? 0;
       return { data: sites, count };
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [getTranslationsFn, currentData]
+    [getTranslationsFn]
   );
   const filterProps = useDataTableFilter(translationTableState, setTranslationTableFilter);
   const sortProps = useDataTableSort(translationTableState, setTranslationTableSort);
