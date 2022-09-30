@@ -3,7 +3,6 @@ import logging
 import os
 import re
 from functools import cached_property
-from urllib.parse import urljoin
 
 from playwright._impl._api_structures import SetCookieParam
 from playwright.async_api import Download, ElementHandle, Locator
@@ -27,10 +26,7 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
 
     @cached_property
     def css_selector(self) -> str:
-        href_selectors = filter_by_href(
-            webform=True,
-            url_keywords=self.config.url_keywords or [],
-        )
+        href_selectors = filter_by_href(webform=True)
         return ", ".join(href_selectors)
 
     @cached_property
@@ -61,7 +57,7 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
 
         link_handle: ElementHandle
         for index, link_handle in enumerate(self.link_handles):
-            metadata = await self.extract_metadata(link_handle, "href")
+            metadata = await self.extract_metadata(link_handle)
             self.metadatas.append(metadata)
 
     async def __interact(self) -> None:
@@ -124,26 +120,6 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
                     continue
             return
 
-        async def queue_downloads(
-            link_handles: list[ElementHandle],
-            base_url: str,
-            resource_attr: str = "href",
-        ) -> None:
-            link_handle: ElementHandle
-            for link_handle in link_handles:
-                metadata: Metadata = await self.extract_metadata(link_handle, resource_attr)
-                self.downloads.append(
-                    DownloadContext(
-                        metadata=metadata,
-                        request=Request(
-                            url=urljoin(
-                                base_url,
-                                metadata.resource_value,
-                            ),
-                        ),
-                    )
-                )
-
         await self.page.route("**/*", intercept)
 
         if self.config.attr_selectors:
@@ -159,25 +135,14 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
                     logging.error("exception", exc_info=True)
                     await self.page.goto(self.url)
         else:
-            # If an element is clicked which causes a download response,
-            # do not download. The request may require a post callback to download.
             self.page.on("download", lambda download: download.cancel())
             metadata: Metadata
-
-            elements_clicked = 0
             for index, metadata in enumerate(self.metadatas):
                 if not metadata.element_id:
                     continue
-                elements_clicked += 1
                 element_id = re.sub(r"(?u)[^-\w.]", "_", metadata.element_id)
                 locator: Locator = self.page.locator(f"#{metadata.element_id}")
                 await click_with_backoff(locator)
-
-            # Handle case where the elements do not have an id
-            # and only searchable path is URL keyword.
-            if elements_clicked == 0:
-                link_handles = await self.page.query_selector_all(self.css_selector)
-                await queue_downloads(link_handles, self.page.url)
 
             await self.page.unroute("**/*", intercept)
 
