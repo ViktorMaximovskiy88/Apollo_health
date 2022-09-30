@@ -3,7 +3,6 @@ import { mockUrl, render, screen } from '../../test/test-utils';
 import { setupServer } from 'msw/node';
 import { SiteEditPage } from './SiteEditPage';
 import { handlers } from './mocks/siteEditPageHandlers';
-import { useParams, Params, useLocation, Location, useSearchParams } from 'react-router-dom';
 
 jest.mock('react-router-dom');
 
@@ -50,7 +49,7 @@ describe(`SiteEditPage`, () => {
 
     render(<SiteEditPage />);
 
-    const followLinksCheck = screen.getByRole('checkbox', {
+    const followLinksCheck = screen.getByRole('switch', {
       name: /follow links/i,
     });
     let followLinkKeywords = screen.queryByText(/follow link keywords/i);
@@ -101,17 +100,17 @@ describe(`SiteEditPage`, () => {
     render(<SiteEditPage />);
 
     const searchableTypeHidden = screen.queryByText(/searchable type/i);
-    const inputSelectorHidden = screen.queryByText(/searchable input/i);
-    const submitSelectorHidden = screen.queryByText(/searchable submit button/i);
+    const inputSelectorHidden = screen.queryByText(/id search input/i);
+    const submitSelectorHidden = screen.queryByText(/id search submit button/i);
     expect(inputSelectorHidden).not.toBeInTheDocument();
     expect(submitSelectorHidden).not.toBeInTheDocument();
     expect(searchableTypeHidden).not.toBeInTheDocument();
 
-    const searchableSwitch = screen.getByLabelText('Searchable');
+    const searchableSwitch = screen.getByLabelText(/search tokens/i);
     await user.click(searchableSwitch);
 
-    const inputSelector = screen.getByText(/searchable input/i);
-    const submitSelector = screen.getByText(/searchable submit button/i);
+    const inputSelector = screen.getByText(/id search input/i);
+    const submitSelector = screen.getByText(/id search submit button/i);
     const searchableType = screen.getByText(/searchable type/i);
     expect(inputSelector).toBeInTheDocument();
     expect(submitSelector).toBeInTheDocument();
