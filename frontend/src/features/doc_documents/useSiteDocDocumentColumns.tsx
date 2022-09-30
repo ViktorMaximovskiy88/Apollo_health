@@ -8,6 +8,7 @@ import { prettyDateFromISO, prettyDateTimeFromISO } from '../../common';
 import { SiteDocDocument } from './types';
 import { Link } from 'react-router-dom';
 import { DocumentTypes } from '../retrieved_documents/types';
+import { calculateFinalEffectiveFromValues } from './helpers';
 
 interface CreateColumnsType {
   handleNewVersion?: (data: SiteDocDocument) => void;
@@ -100,8 +101,11 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
         };
       },
       render: ({ data: doc }: { data: SiteDocDocument }) => {
-        if (!doc.final_effective_date) return null;
-        return prettyDateFromISO(doc.final_effective_date);
+        if (doc.final_effective_date) {
+          return prettyDateFromISO(doc.final_effective_date);
+        } else {
+          return calculateFinalEffectiveFromValues(doc).format('YYYY-MM-DD');
+        }
       },
     },
     {

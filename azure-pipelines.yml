@@ -4,9 +4,6 @@ trigger:
   branches:
     include:
       - main
-  tags:
-    include:
-      - "v*"
 
 pool:
   vmImage: ubuntu-latest
@@ -166,7 +163,7 @@ stages:
   - stage: development
     displayName: Development Stage
     dependsOn: build
-    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature/'), startsWith(variables['Build.SourceBranch'], 'refs/tags/v')))
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature/')))
     jobs:
       - deployment: dev_deployment
         displayName: Deploy to SourceHub Dev
@@ -196,7 +193,7 @@ stages:
   - stage: test
     displayName: Test Stage
     dependsOn: development
-    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/tags/v')))
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
       - deployment: tst_deployment
         displayName: Deploy to SourceHub Test
@@ -252,7 +249,7 @@ stages:
   - stage: production
     displayName: Production Stage
     dependsOn: test
-    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
       - deployment: prd_deployment
         displayName: Deploy to SourceHub Prod
