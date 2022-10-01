@@ -12,13 +12,6 @@ export const calculateFinalEffectiveFromValues = (values: any) => {
   const finalEffectiveDate: moment.Moment =
     computeFromFields.length > 0
       ? maxBy(computeFromFields, (date) => date.unix())
-      : values.locations
-      ? minBy(
-          values.locations.map((loc: DocDocumentLocation) =>
-            dateToMoment(loc.first_collected_date)
-          ),
-          (date) => date.unix()
-        )
       : values.first_collected_date;
   return finalEffectiveDate.startOf('day');
 };
