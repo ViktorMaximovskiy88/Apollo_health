@@ -31,7 +31,7 @@ export const lineageSlice = createSlice({
     onSearch: (state, action: PayloadAction<string>) => {
       state.searchTerm = action.payload;
       const regex = new RegExp(state.searchTerm, 'i');
-      const filtered = state.domainItems.filter((doc: any) => doc.name.match(regex));
+      const filtered = state.domainItems.filter((doc: any) => doc.name?.match(regex));
       state.displayItems = groupItems(filtered);
     },
   },
