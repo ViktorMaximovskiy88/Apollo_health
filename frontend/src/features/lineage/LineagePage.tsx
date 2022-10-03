@@ -1,4 +1,3 @@
-import classNames from 'classnames';
 import { Button, Input, notification } from 'antd';
 import { MainLayout } from '../../components';
 import { useParams } from 'react-router-dom';
@@ -6,9 +5,8 @@ import { useGetSiteLineageQuery, useLazyProcessSiteLineageQuery } from './lineag
 import useLineageSlice from './use-lineage-slice';
 import { SiteMenu } from '../sites/SiteMenu';
 import { FileTypeViewer } from '../retrieved_documents/RetrievedDocumentViewer';
-import { TextEllipsis } from '../../components';
 import _, { debounce } from 'lodash';
-import { prettyDateUTCFromISO } from '../../common/date';
+import { LineageDocRow } from './LineageDocRow';
 
 export function LineagePage() {
   const { siteId } = useParams();
@@ -19,7 +17,7 @@ export function LineagePage() {
 
   const [processSiteLineage] = useLazyProcessSiteLineageQuery();
   const { state, actions } = useLineageSlice();
-  const { list, leftSideDoc, rightSideDoc } = state;
+  const { displayItems, leftSideDoc, rightSideDoc } = state;
 
   const openNotification = () => {
     notification.success({
@@ -46,44 +44,22 @@ export function LineagePage() {
     >
       <div className="flex flex-row h-full">
         <div className="flex flex-col w-64 mr-2 mb-2">
-          <Input.Search allowClear={true} placeholder="Search" />
+          <Input.Search
+            allowClear={true}
+            placeholder="Search"
+            onChange={debounce((e) => {
+              actions.onSearch(e.target.value);
+            }, 250)}
+          />
 
-          <div className="overflow-auto h-full  bg-white">
-            {list.filtered.map((group) => (
+          <div className="overflow-auto h-full bg-white">
+            {displayItems.map((group) => (
               <div key={group.lineageId} className="p-2 mb-4 border">
                 <div className="text-slate-500 uppercase mb-2">
                   {group.lineageId} ({group.items.length})
                 </div>
                 {group.items.map((item) => (
-                  <div
-                    key={item._id}
-                    className={classNames(
-                      'p-2 my-2 bg-slate-50 border group relative',
-                      item._id == leftSideDoc?._id && ['border-l-2', 'border-gray-100 ']
-                    )}
-                  >
-                    <TextEllipsis text={item.name} />
-                    <TextEllipsis text={item.document_type} />
-                    <div>{prettyDateUTCFromISO(item.final_effective_date)}</div>
-                    <div className="hidden group-hover:block absolute bottom-2 right-2 z-50">
-                      <Button
-                        onClick={() => {
-                          console.log(item, actions.setLeftSide);
-                          actions.setLeftSide(item);
-                        }}
-                      >
-                        Left
-                      </Button>
-
-                      <Button
-                        onClick={() => {
-                          actions.setRightSide(item);
-                        }}
-                      >
-                        Right
-                      </Button>
-                    </div>
-                  </div>
+                  <LineageDocRow key={item._id} doc={item} isSelected={true} {...actions} />
                 ))}
               </div>
             ))}

@@ -9,6 +9,7 @@ export default function useLineageSlice() {
     actions: {
       setLeftSide: (args: any) => dispatch(actions.setLeftSide(args)),
       setRightSide: (args: any) => dispatch(actions.setRightSide(args)),
+      onSearch: (args: any) => dispatch(actions.onSearch(args)),
     },
   };
 }
