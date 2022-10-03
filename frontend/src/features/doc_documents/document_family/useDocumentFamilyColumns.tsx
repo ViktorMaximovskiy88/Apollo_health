@@ -1,16 +1,13 @@
 import { useMemo } from 'react';
 import { DocumentFamily } from './types';
-import { Link } from 'react-router-dom';
 
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { DocumentTypes } from '../../retrieved_documents/types';
 import { ChangeLogModal } from '../../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './documentFamilyApi';
-interface CreateColumnsType {
-  handleNewVersion?: (data: DocumentFamily) => void;
-}
+import { TypeColumn } from '@inovua/reactdatagrid-community/types';
 
-export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
+export const createColumns = () => {
   return [
     {
       header: 'Family Name',
@@ -44,5 +41,4 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
   ];
 };
 
-export const useDocumentFamilyColumns = ({ handleNewVersion }: CreateColumnsType) =>
-  useMemo(() => createColumns({ handleNewVersion }), [handleNewVersion]);
+export const useDocumentFamilyColumns = (): TypeColumn[] => useMemo(() => createColumns(), []);

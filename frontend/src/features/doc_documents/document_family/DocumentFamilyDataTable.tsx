@@ -1,7 +1,6 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
 import { useDocumentFamilyColumns as useColumns } from './useDocumentFamilyColumns';
-import { useParams, useSearchParams } from 'react-router-dom';
 import { useDataTableFilter, useDataTableSort, useInterval } from '../../../common/hooks';
 import { useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
@@ -13,7 +12,6 @@ import {
   setDocumentFamilyTableSort,
   setDocumentFamilyTableSkip,
 } from './documentFamilySlice';
-import { DocumentFamily } from './types';
 import { TableInfoType } from '../../../common/types';
 import { useLazyGetAllDocumentFamiliesQuery } from './documentFamilyApi';
 
@@ -60,20 +58,14 @@ const useControlledPagination = ({
   return controlledPaginationProps;
 };
 
-interface DataTablePropTypes {
-  handleNewVersion: (data: DocumentFamily) => void;
-}
-
-export function DocumentFamilyTable({ handleNewVersion }: DataTablePropTypes) {
+export function DocumentFamilyTable() {
   const { isActive, setActive, watermark } = useInterval(10000);
-  const { siteId } = useParams();
 
-  const [searchParams] = useSearchParams();
-  const columns = useColumns({ handleNewVersion });
+  const columns = useColumns();
   const [getDocumentFamiliesFn] = useLazyGetAllDocumentFamiliesQuery();
 
   const loadData = useCallback(
-    async (tableInfo: any) => {
+    async (tableInfo: TableInfoType) => {
       const { data } = await getDocumentFamiliesFn({ ...tableInfo });
       const families = data?.data ?? [];
       const count = data?.total ?? 0;
