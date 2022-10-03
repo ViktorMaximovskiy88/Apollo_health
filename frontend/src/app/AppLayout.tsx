@@ -90,7 +90,7 @@ function AppMenu() {
   const menu: any = useSelector(menuState);
 
   const icons: any = {
-    '/document_family': <GroupOutlined />,
+    '/document-family': <GroupOutlined />,
     '/sites': <ProjectTwoTone />,
     '/work-queues': <InboxOutlined />,
     '/documents': <FileTextTwoTone />,

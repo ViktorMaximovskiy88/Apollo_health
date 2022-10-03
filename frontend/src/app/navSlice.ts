@@ -24,7 +24,7 @@ export const navSlice = createSlice({
       items: [
         { url: '/sites', label: 'Sites', shortLabel: 'Sites' },
         {
-          url: '/document_family',
+          url: '/document-family',
           label: 'Document Family',
           shortLabel: 'Document Family',
         },

@@ -122,7 +122,7 @@ function App() {
             </Route>
           </Route>
         </Route>
-        <Route path="/document_family" element={<DocumentFamilyHomePage />} />
+        <Route path="/document-family" element={<DocumentFamilyHomePage />} />
         <Route path="/users/*" element={<UserRoutes />} />
         <Route path="/documents/*" element={<DocumentRoutes />} />
         <Route path="/translations/*" element={<TranslationRoutes />} />

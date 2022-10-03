@@ -5,7 +5,6 @@ import { DocDocumentLocation } from './types';
 import { DocumentFamily } from '../document_family/types';
 import { useGetDocumentFamiliesBySiteAndDocumentTypeQuery } from '../document_family/documentFamilyApi';
 import { TextEllipsis } from '../../../components';
-import { LinkIcon } from '../../../components';
 
 interface DocDocumentLocationFormTypes {
   documentType: string;
