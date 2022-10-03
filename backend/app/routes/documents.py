@@ -11,7 +11,7 @@ from backend.common.events.event_convert import EventConvert
 from backend.common.events.send_event_client import SendEventClient
 from backend.common.models.doc_document import DocDocument, DocDocumentLocation
 from backend.common.models.document import (
-    BaseRetrievedDocument,
+    NewManualDocument,
     RetrievedDocument,
     RetrievedDocumentLimitTags,
     RetrievedDocumentLocation,
@@ -22,8 +22,10 @@ from backend.common.models.user import User
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_handler import TextHandler
+from backend.common.services.document import create_doc_document_service
 from backend.scrapeworker.common.models import DownloadContext, Request
 from backend.scrapeworker.file_parsers import parse_by_type
+
 
 router = APIRouter(
     prefix="/documents",
@@ -202,10 +204,6 @@ async def delete_document(
     return {"success": True}
 
 
-class NewManualDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
-    internal_document: bool
-
-
 # One time use case for the PUT request below in order to pass in internal_document
 
 
@@ -240,6 +238,8 @@ async def add_document(
         text_checksum=document.text_checksum,
         therapy_tags=document.therapy_tags,
         uploader_id=current_user.id,
+        first_collected_date=now,
+        last_collected_date=now,
         locations=[
             RetrievedDocumentLocation(
                 url=document.url,
@@ -254,40 +254,6 @@ async def add_document(
     )
 
     await create_and_log(logger, current_user, new_document)
-    doc_document = DocDocument(
-        retrieved_document_id=new_document.id,  # type: ignore
-        name=document.name,
-        checksum=document.checksum,
-        text_checksum=document.text_checksum,
-        document_type=document.document_type,
-        doc_type_confidence=document.doc_type_confidence,
-        effective_date=document.effective_date,
-        end_date=document.end_date,
-        last_updated_date=document.last_updated_date,
-        last_reviewed_date=document.last_reviewed_date,
-        next_review_date=document.next_review_date,
-        next_update_date=document.next_update_date,
-        published_date=document.published_date,
-        lang_code=document.lang_code,
-        therapy_tags=document.therapy_tags,
-        indication_tags=document.indication_tags,
-        file_extension=document.file_extension,
-        internal_document=document.internal_document,
-        identified_dates=document.identified_dates,
-        locations=[
-            DocDocumentLocation(
-                site_id=document.site_id,
-                first_collected_date=now,
-                last_collected_date=now,
-                url=document.url,
-                base_url=document.base_url,
-                link_text=link_text,
-            )
-        ],
-    )
-
-    doc_document.set_final_effective_date()
-    await create_and_log(logger, current_user, doc_document)
 
     scrape_task = SiteScrapeTask(
         site_id=document.site_id,
@@ -298,6 +264,9 @@ async def add_document(
         end_time=now,
         documents_found=1,
     )
+
+    await create_doc_document_service(new_document, current_user)
+
     await scrape_task.save()
 
     return scrape_task

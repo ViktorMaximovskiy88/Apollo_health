@@ -62,7 +62,7 @@ xcode-select --install
 # brew is apt more or less
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-brew install gnupg coreutils awscli protobuf libmagic swig xpdf imagemagick
+brew install gnupg coreutils awscli protobuf libmagic swig xpdf imagemagick@6
 
 # Install Docker
 brew install docker

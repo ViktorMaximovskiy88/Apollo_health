@@ -14,6 +14,7 @@ import {
   benefitOptions,
   planTypeOptions,
   regionOptions,
+  fieldGroupsOptions,
 } from './payerLevels';
 
 interface DocumentFamilyCreateModalPropTypes {
@@ -79,10 +80,41 @@ function PayerInfo() {
 }
 
 export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTypes) => {
+  let legacyRelevanceOptions = [
+    { label: 'Editor Manual', value: 'EDITOR_MANUAL' },
+    { label: 'Editor Automated ', value: 'EDITOR_AUTOMATED' },
+    { label: 'PAR', value: 'PAR' },
+    { label: 'N/A', value: 'N/A' },
+  ];
   const { documentType, location, visible, onClose, onSave } = props;
   const [form] = useForm();
   const [getDocumentFamilyByName] = useLazyGetDocumentFamilyByNameQuery();
   const [addDocumentFamily, { isLoading, data, isSuccess }] = useAddDocumentFamilyMutation();
+  const nameValue: string[] = Form.useWatch('legacy_relevance', form);
+  let filteredlegacyRelevanceOptions = legacyRelevanceOptions;
+
+  if (nameValue?.includes('N/A')) {
+    filteredlegacyRelevanceOptions = legacyRelevanceOptions.map((e) => {
+      if (e.value === 'N/A') return e;
+      return { ...e, disabled: true };
+    });
+  } else if (
+    nameValue?.includes('PAR') ||
+    nameValue?.includes('EDITOR_MANUAL') ||
+    nameValue?.includes('EDITOR_AUTOMATED')
+  ) {
+    filteredlegacyRelevanceOptions = legacyRelevanceOptions.map((e) => {
+      if (e.value === 'N/A') {
+        return { ...e, disabled: true };
+      } else if (
+        (nameValue?.includes('EDITOR_MANUAL') && e.value == 'EDITOR_AUTOMATED') ||
+        (nameValue?.includes('EDITOR_AUTOMATED') && e.value == 'EDITOR_MANUAL')
+      ) {
+        return { ...e, disabled: true };
+      }
+      return e;
+    });
+  }
 
   useEffect(() => {
     if (isSuccess && data) {
@@ -140,6 +172,15 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
         >
           <Input />
         </Form.Item>
+        <Input.Group className="space-x-2 flex">
+          <Form.Item label="Legacy Relevance" name="legacy_relevance" className="w-full">
+            <Select mode="multiple" options={filteredlegacyRelevanceOptions} />
+          </Form.Item>
+
+          <Form.Item label="Field Groups" name="field_groups" className="w-full">
+            <Select mode="multiple" options={fieldGroupsOptions} />
+          </Form.Item>
+        </Input.Group>
 
         <PayerInfo />
       </Form>
@@ -147,7 +188,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
   );
 };
 
-// asyncValidator because rkt query makes this tough without hooks/dispatch
+// asyncValidator because rtk query makes this tough without hooks/dispatch
 function mustBeUniqueToSite(siteId: string, asyncValidator: Function) {
   return {
     async validator(_rule: Rule, value: string) {

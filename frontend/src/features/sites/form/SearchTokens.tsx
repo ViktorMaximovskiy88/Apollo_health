@@ -3,20 +3,24 @@ import { SearchableType } from '../types';
 import { ElementInput, NameInput, ValueInput, ContainsTextInput } from './AttrSelectorField';
 
 export function SearchTokens() {
-  const isSearchable = Form.useWatch(['scrape_method_configuration', 'searchable']);
+  const isSearchable: boolean = Form.useWatch(['scrape_method_configuration', 'searchable']);
 
   const searchableTypes = [
     { value: SearchableType.CPTCodes, label: 'CPT Codes' },
     { value: SearchableType.JCodes, label: 'JCodes' },
   ];
+
   const inputName = ['scrape_method_configuration', 'searchable_input'];
   const submitName = ['scrape_method_configuration', 'searchable_submit'];
-  const groupClass = isSearchable ? 'border-solid border-slate-300 rounded p-2 pb-0' : undefined;
+
+  const groupDivClass = isSearchable ? 'border-solid border-slate-300 rounded p-2 pb-0' : undefined;
+  const groupLabelClass = isSearchable ? 'text-lg' : undefined;
+
   return (
-    <div className={groupClass}>
+    <div className={groupDivClass}>
       <Form.Item
         name={['scrape_method_configuration', 'searchable']}
-        label={<span className="text-lg">Search Tokens</span>}
+        label={<span className={groupLabelClass}>Search Tokens</span>}
         tooltip={'Site should be searched using CPT or JCodes'}
         valuePropName="checked"
       >

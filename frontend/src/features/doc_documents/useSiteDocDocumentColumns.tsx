@@ -100,8 +100,9 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
         };
       },
       render: ({ data: doc }: { data: SiteDocDocument }) => {
-        if (!doc.final_effective_date) return null;
-        return prettyDateFromISO(doc.final_effective_date);
+        if (doc.final_effective_date) {
+          return prettyDateFromISO(doc.final_effective_date);
+        }
       },
     },
     {

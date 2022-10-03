@@ -22,6 +22,7 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
   const scrapeTaskId = searchParams.get('scrape_task_id');
 
   const { data } = useGetSiteDocDocumentsQuery({ siteId, scrapeTaskId }, { pollingInterval: 5000 });
+
   const documents = data ?? [];
 
   const columns = useSiteDocDocumentColumns({ handleNewVersion });

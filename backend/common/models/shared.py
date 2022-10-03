@@ -11,6 +11,7 @@ class Location(BaseModel):
     url: str
     link_text: str | None
     closest_heading: str | None
+    siblings_text: str | None
 
 
 class SiteLocation(Location):
