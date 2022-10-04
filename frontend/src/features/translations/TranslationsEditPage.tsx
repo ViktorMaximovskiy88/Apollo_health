@@ -7,16 +7,7 @@ import { useGetTranslationConfigQuery, useUpdateTranslationConfigMutation } from
 import { TranslationDocPreview } from './TranslationDocPreview';
 import { TranslationForm } from './TranslationForm';
 import { TranslationConfig } from './types';
-
-function SaveAs({ form }: { form: FormInstance<any> }) {
-  return (
-    <Button
-      style={{ color: 'white', backgroundColor: '#6C757D' }} // TODO: refactor to use type prop or classname
-    >
-      Save As
-    </Button>
-  );
-}
+import { SaveAsNew } from './SaveAsNewTranslation';
 
 function SumbitTranslation({ form }: { form: FormInstance<any> }) {
   const navigate = useNavigate();
@@ -29,7 +20,7 @@ function SumbitTranslation({ form }: { form: FormInstance<any> }) {
       >
         Cancel
       </Button>
-      <SaveAs form={form} />
+      <SaveAsNew form={form} />
       <Button
         type="primary"
         onClick={() => {

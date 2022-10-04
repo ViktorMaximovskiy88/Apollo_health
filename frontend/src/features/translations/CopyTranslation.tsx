@@ -31,7 +31,7 @@ export const CopyTranslation = ({ translation }: { translation: TranslationConfi
   const [form] = useForm();
   const navigate = useNavigate();
 
-  const [getTranslationByName, { isLoading: validatorLoading }] =
+  const [getTranslationByName, { isFetching: validatorLoading }] =
     useLazyGetTranslationConfigByNameQuery();
 
   const [addTranslation, { isLoading: addTranslationLoading }] = useAddTranslationConfigMutation();
