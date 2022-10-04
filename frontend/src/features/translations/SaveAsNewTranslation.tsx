@@ -43,16 +43,24 @@ export function SaveAsNew({ form: editTranslationForm }: { form: FormInstance<an
     const isTranslationNameUnique = await getIsTranslationNameUnique(
       editTranslationForm.getFieldValue('name')
     );
-    if (isTranslationNameUnique) {
-      const values = editTranslationForm.getFieldsValue();
-      await addTranslation({
-        ...values,
-        _id: undefined,
-      });
-      navigate('..');
+    if (!isTranslationNameUnique) {
+      setVisible(true);
       return;
     }
-    setVisible(true);
+    const values = editTranslationForm.getFieldsValue();
+    const response = await addTranslation({
+      ...values,
+      _id: undefined,
+    });
+
+    // resolves TS error
+    if ('error' in response) {
+      console.error(response.error);
+      throw new Error('Tried to add a new translation but recieved an error in response');
+    }
+
+    const { data: newTranslation } = response;
+    navigate(`../${newTranslation._id}`);
   };
 
   const handleCancel = () => {
@@ -62,12 +70,22 @@ export function SaveAsNew({ form: editTranslationForm }: { form: FormInstance<an
 
   const handleFinish = async ({ name }: { name: string }) => {
     const values = editTranslationForm.getFieldsValue();
-    await addTranslation({
+    const response = await addTranslation({
       ...values,
       name,
       _id: undefined,
     });
-    navigate('..');
+
+    // resolves TS error
+    if ('error' in response) {
+      console.error(response.error);
+      throw new Error('Tried to add a new translation but recieved an error in response');
+    }
+
+    const { data: newTranslation } = response;
+    navigate(`../${newTranslation._id}`);
+    editTranslationForm.setFieldsValue({ name }); // does not update name without
+    setVisible(false);
   };
 
   const isLoading = validatorLoading || addTranslationLoading;
