@@ -107,7 +107,11 @@ class ComparePreviousResponse(BaseModel):
 )
 async def create_diff_with_previous(current_doc: DocDocument = Depends(get_target)):
     text_handler = TextHandler()
-    print(current_doc)
+    if current_doc.previous_doc_doc_id is None:
+        raise HTTPException(
+            detail="Current DocDocument does not have an associate Previous DocDocument",
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+        )
     previous_doc: DocDocument = await get_target(current_doc.previous_doc_doc_id)
     if current_doc.text_checksum is None or previous_doc.text_checksum is None:
         raise HTTPException(
