@@ -48,18 +48,11 @@ export function SaveAsNew({ form: editTranslationForm }: { form: FormInstance<an
       return;
     }
     const values = editTranslationForm.getFieldsValue();
-    const response = await addTranslation({
+    const newTranslation = await addTranslation({
       ...values,
       _id: undefined,
-    });
+    }).unwrap();
 
-    // resolves TS error
-    if ('error' in response) {
-      console.error(response.error);
-      throw new Error('Tried to add a new translation but recieved an error in response');
-    }
-
-    const { data: newTranslation } = response;
     navigate(`../${newTranslation._id}`);
   };
 
@@ -70,19 +63,12 @@ export function SaveAsNew({ form: editTranslationForm }: { form: FormInstance<an
 
   const handleFinish = async ({ name }: { name: string }) => {
     const values = editTranslationForm.getFieldsValue();
-    const response = await addTranslation({
+    const newTranslation = await addTranslation({
       ...values,
       name,
       _id: undefined,
-    });
+    }).unwrap();
 
-    // resolves TS error
-    if ('error' in response) {
-      console.error(response.error);
-      throw new Error('Tried to add a new translation but recieved an error in response');
-    }
-
-    const { data: newTranslation } = response;
     navigate(`../${newTranslation._id}`);
     editTranslationForm.setFieldsValue({ name }); // does not update name without
     setVisible(false);

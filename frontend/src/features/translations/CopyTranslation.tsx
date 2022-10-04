@@ -43,19 +43,11 @@ export const CopyTranslation = ({ translation }: { translation: TranslationConfi
 
   const handleFinish = async ({ name }: { name: string }) => {
     setVisible(false);
-    const response = await addTranslation({
+    const newTranslation = await addTranslation({
       ...translation,
       name,
       _id: undefined,
-    });
-
-    // resolves TS error
-    if ('error' in response) {
-      console.error(response.error);
-      throw new Error('Tried to add a new translation but recieved an error in response');
-    }
-
-    const { data: newTranslation } = response;
+    }).unwrap();
     navigate(`./${newTranslation._id}`);
   };
 
