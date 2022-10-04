@@ -92,11 +92,7 @@ export function SaveAsNew({ form: editTranslationForm }: { form: FormInstance<an
 
   return (
     <>
-      <Button
-        onClick={handleSaveAsClick}
-        style={{ color: 'white', backgroundColor: '#6C757D' }} // TODO: refactor to use type prop or classname
-        loading={validatorLoading}
-      >
+      <Button onClick={handleSaveAsClick} loading={validatorLoading}>
         Save As New
       </Button>
       <Modal
