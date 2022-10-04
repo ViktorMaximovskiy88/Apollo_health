@@ -1,4 +1,4 @@
-import { Input, Form, Select, Radio, Typography } from 'antd';
+import { Input, Form, Select, Radio, Typography, Slider } from 'antd';
 
 import { CollectionMethod, ScrapeMethod, Site } from '../types';
 import {
@@ -70,6 +70,18 @@ const CustomSelectors = () => (
   />
 );
 
+const DocumentTypeThreshold = () => (
+  <Form.Item name="doc_type_threshold" label="Document Type Threshold">
+    <Slider defaultValue={75} />
+  </Form.Item>
+);
+
+const LineageThreshold = () => (
+  <Form.Item name="lineage_threshold" label="Lineage Threshold">
+    <Slider defaultValue={75} />
+  </Form.Item>
+);
+
 interface CollectionSettingsPropTypes {
   initialValues: Partial<Site>;
 }
@@ -103,6 +115,8 @@ export function CollectionSettings({ initialValues }: CollectionSettingsPropType
               <SearchInFrames />
               <AllowDocDocUpdate />
               <FocusTherapyConfig initialValues={initialValues} />
+              <DocumentTypeThreshold />
+              <LineageThreshold />
             </>
           ) : null
         }
