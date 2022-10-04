@@ -1,15 +1,35 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import NumberFilter from '@inovua/reactdatagrid-community/NumberFilter';
-import { TypeSingleSortInfo, TypeSingleFilterValue } from '@inovua/reactdatagrid-community/types';
+import {
+  TypeSingleSortInfo,
+  TypeSingleFilterValue,
+  TypeColumn,
+} from '@inovua/reactdatagrid-community/types';
 import { useCallback } from 'react';
+import tw from 'twin.macro';
 import { useLazyGetExtractionTaskResultsQuery, useGetExtractionTaskQuery } from './extractionsApi';
+
+function rowStyle({ data }: { data: any }) {
+  if (data.remove) {
+    return tw`text-red-500 bg-red-100`;
+  } else if (data.add) {
+    return tw`text-green-500 bg-green-100`;
+  } else if (data.edit) {
+    return tw`text-blue-500 bg-blue-100`;
+  }
+  return {};
+}
 
 export function ExtractionResultsDataTable({
   extractionId,
-  delta,
+  deltaSubset = [],
+  fullSubset = [],
+  delta = false,
 }: {
   extractionId?: string;
   delta?: boolean;
+  fullSubset?: string[];
+  deltaSubset?: string[];
 }) {
   const [getResultsFn] = useLazyGetExtractionTaskResultsQuery();
   const { data: extractionTask } = useGetExtractionTaskQuery(extractionId);
@@ -43,21 +63,25 @@ export function ExtractionResultsDataTable({
         sortInfo,
         filterValue,
         delta,
+        deltaSubset,
+        fullSubset,
       });
       const extractions = data?.data || [];
       const count = data?.total || 0;
-      const formattedExtractions = extractions.map(({ page, row, result, translation }) => {
-        const translatedPrefixedKeys: any = {};
-        if (translation) {
-          for (const [key, value] of Object.entries(translation)) {
-            translatedPrefixedKeys[`t_${key}`] = value;
+      const formattedExtractions = extractions.map(
+        ({ page, row, add, remove, edit, result, translation }) => {
+          const translatedPrefixedKeys: any = {};
+          if (translation) {
+            for (const [key, value] of Object.entries(translation)) {
+              translatedPrefixedKeys[`t_${key}`] = value;
+            }
           }
+          return { page, row, add, remove, edit, ...result, ...translatedPrefixedKeys };
         }
-        return { page, row, ...result, ...translatedPrefixedKeys };
-      });
+      );
       return { data: formattedExtractions, count };
     },
-    [extractionId, getResultsFn, delta]
+    [extractionId, getResultsFn, delta, deltaSubset, fullSubset]
   );
 
   if (!extractionTask) return null;
@@ -125,10 +149,11 @@ export function ExtractionResultsDataTable({
       render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
     },
   ];
-  const columns: any[] = [
+  const columns: TypeColumn[] = [
     {
       header: 'Page',
       name: 'page',
+      defaultVisible: !delta,
       group: 'raw',
       type: 'number',
       filterEditor: NumberFilter,
@@ -136,6 +161,7 @@ export function ExtractionResultsDataTable({
     {
       header: 'Row',
       name: 'row',
+      defaultVisible: !delta,
       group: 'raw',
       type: 'number',
       filterEditor: NumberFilter,
@@ -170,10 +196,7 @@ export function ExtractionResultsDataTable({
   const defaultFilterValue = header
     .map((name) => ({ name, operator: 'contains', type: 'string', value: '' }))
     .concat(fixedFilters);
-  const defaultSortInfo = [
-    { name: 'page', dir: 1 as 1 | -1 | 0 },
-    { name: 'row', dir: 1 as 1 | -1 | 0 },
-  ];
+  const defaultSortInfo = [{ name: 't_code', dir: 1 as 1 | -1 | 0 }];
 
   return (
     <ReactDataGrid
@@ -181,6 +204,7 @@ export function ExtractionResultsDataTable({
       columns={columns}
       className="h-full"
       rowHeight={50}
+      rowStyle={rowStyle}
       groups={groups}
       pagination
       defaultFilterValue={defaultFilterValue}

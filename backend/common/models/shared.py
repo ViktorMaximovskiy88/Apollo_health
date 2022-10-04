@@ -39,7 +39,11 @@ class TherapyTag(BaseModel):
     name: str
     score: float = 0
     focus: bool = False
+    section: str = ""
     rxcui: str | None = None
+    add: bool = False
+    edit: bool = False
+    removed: bool = False
 
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))
@@ -57,6 +61,7 @@ class IndicationTag(BaseModel):
     code: int
     page: int = 0
     focus: bool = False
+    section: bytes = b"\x00"
 
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))

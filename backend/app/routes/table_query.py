@@ -35,7 +35,9 @@ def get_query_json_list(arg: str, type):
         value_str = request.query_params.get(arg, None)
         if value_str:
             values: list[type] = json.loads(value_str)
-            return [type.parse_obj(v) for v in values]
+            if issubclass(type, BaseModel):
+                return [type.parse_obj(v) for v in values]
+            return values
         else:
             return []
 

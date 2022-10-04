@@ -288,7 +288,14 @@ class TableContentExtractor:
                 translation=t9n,
             )
             await asyncio.gather(
-                extract_task.update(Inc({ContentExtractionTask.extraction_count: 1})),
+                extract_task.update(
+                    Inc(
+                        {
+                            ContentExtractionTask.extraction_count: 1,
+                            ContentExtractionTask.untranslated_count: 0 if t9n.code else 1,
+                        }
+                    )
+                ),
                 extract_task.update(Set({ContentExtractionTask.header: header})),
                 result.save(),
             )
