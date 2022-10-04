@@ -118,20 +118,6 @@ class PlaywrightBaseScraper(ABC):
 
         # Use first response for inner_text() text_content() for link_text.
         # If an element has no text (<p></p>), use url path.
-        print(
-            "element_content",
-            element_content,
-            "element_text",
-            element_text,
-            "element_id",
-            element_id,
-            "resource_value",
-            resource_value,
-            "closest_heading",
-            closest_heading,
-            "siblings_text",
-            siblings_text,
-        )
         if element_content and element_content.strip():
             link_text = element_content.strip()
         elif element_text and element_text.strip():
