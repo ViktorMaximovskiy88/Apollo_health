@@ -16,10 +16,9 @@ from backend.common.models.shared import DocDocumentLocation
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
+from backend.common.services.document import create_doc_document_service
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.models import DownloadContext
-
-from backend.common.services.document import create_doc_document_service
 
 
 class DocumentUpdater:
@@ -129,8 +128,22 @@ class DocumentUpdater:
                 doc_document.locations.append(DocDocumentLocation(**rt_doc_location.dict()))
 
             if self.site.scrape_method_configuration.allow_docdoc_updates is True:
+                doc_document.document_type = retrieved_document.document_type
+
+                doc_document.effective_date = retrieved_document.effective_date
+                doc_document.last_reviewed_date = retrieved_document.last_reviewed_date
+                doc_document.last_updated_date = retrieved_document.last_updated_date
+                doc_document.next_review_date = retrieved_document.next_review_date
+                doc_document.next_update_date = retrieved_document.next_update_date
+                doc_document.published_date = retrieved_document.published_date
+                doc_document.identified_dates = retrieved_document.identified_dates
+                doc_document.first_collected_date = retrieved_document.first_collected_date
+                doc_document.last_collected_date = retrieved_document.last_collected_date
+
                 doc_document.therapy_tags = retrieved_document.therapy_tags
                 doc_document.indication_tags = retrieved_document.indication_tags
+
+                doc_document.lang_code = retrieved_document.lang_code
             else:
                 doc_document.therapy_tags = doc_document.therapy_tags + new_therapy_tags
                 doc_document.indication_tags = doc_document.indication_tags + new_indicate_tags
