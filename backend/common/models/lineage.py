@@ -73,12 +73,12 @@ class DocumentAnalysis(BaseDocument):
 
     doc_vectors: list[list[float]] = []
 
-    create_at: datetime | None
+    created_at: datetime | None
     updated_at: datetime | None
 
     @before_event(Insert)
     def insert_dates(self):
-        self.create_at = datetime.now(tz=timezone.utc)
+        self.created_at = datetime.now(tz=timezone.utc)
         self.updated_at = datetime.now(tz=timezone.utc)
 
     @before_event(Replace)
