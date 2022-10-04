@@ -17,8 +17,8 @@ export function LineageDocRow({ isSelected, doc, setLeftSide, setRightSide }: Pr
     <div
       key={doc._id}
       className={classNames(
-        'p-2 my-2 bg-slate-50 border group relative',
-        isSelected && ['border-2', 'border-black']
+        'p-2 my-2 bg-slate-50 group relative border-slate-200 border border-solid',
+        isSelected && ['outline outline-offset-2 outline-1 outline-blue-300']
       )}
     >
       <TextEllipsis text={doc.name} />

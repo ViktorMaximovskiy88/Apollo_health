@@ -1,4 +1,5 @@
 import { Button, Input, notification } from 'antd';
+import { FilterTwoTone, FilterOutlined } from '@ant-design/icons';
 import { MainLayout } from '../../components';
 import { useParams } from 'react-router-dom';
 import { useGetSiteLineageQuery, useLazyProcessSiteLineageQuery } from './lineageApi';
@@ -17,7 +18,8 @@ export function LineagePage() {
 
   const [processSiteLineage] = useLazyProcessSiteLineageQuery();
   const { state, actions } = useLineageSlice();
-  const { displayItems, leftSideDoc, rightSideDoc } = state;
+  const { displayItems, domainItems, leftSideDoc, rightSideDoc, filters } = state;
+  const hasFilters = filters.multipleLineage || filters.missingLineage || filters.singularLineage;
 
   const openNotification = () => {
     notification.success({
@@ -43,14 +45,29 @@ export function LineagePage() {
       }
     >
       <div className="flex flex-row h-full">
-        <div className="flex flex-col w-64 mr-2 mb-2">
-          <Input.Search
-            allowClear={true}
-            placeholder="Search"
-            onChange={debounce((e) => {
-              actions.onSearch(e.target.value);
-            }, 250)}
-          />
+        <div className="flex flex-col w-64 mr-2">
+          <div className="bg-white p-1 mb-2 border-slate-200 border-solid border">
+            <Input.Search
+              allowClear={true}
+              placeholder="Search"
+              onChange={debounce((e) => {
+                actions.onSearch(e.target.value);
+              }, 250)}
+              suffix={
+                <>
+                  {hasFilters ? (
+                    <FilterTwoTone style={{ color: '#e0f2fe', fontSize: 16 }} />
+                  ) : (
+                    <FilterOutlined style={{ color: '#999', fontSize: 16 }} />
+                  )}
+                </>
+              }
+            />
+            <div className="p-1 flex flex-col justify-center">
+              <div> Lineage: None | Single | Multiple</div>
+              <div> Collapse: All | None</div>
+            </div>
+          </div>
 
           <div className="overflow-auto h-full bg-white">
             {displayItems.map((group) => (
@@ -59,10 +76,19 @@ export function LineagePage() {
                   {group.lineageId} ({group.items.length})
                 </div>
                 {group.items.map((item) => (
-                  <LineageDocRow key={item._id} doc={item} isSelected={true} {...actions} />
+                  <LineageDocRow
+                    key={item._id}
+                    doc={item}
+                    isSelected={item._id == rightSideDoc?._id || item._id == leftSideDoc?._id}
+                    {...actions}
+                  />
                 ))}
               </div>
             ))}
+          </div>
+
+          <div className="p-1">
+            {displayItems.length} groups, {domainItems.length} docs
           </div>
         </div>
 

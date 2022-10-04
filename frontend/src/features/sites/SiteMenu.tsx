@@ -1,5 +1,6 @@
 import { Layout, Menu } from 'antd';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
+import { SelectOutlined } from '@ant-design/icons';
 
 export function SiteMenu() {
   const { siteId } = useParams();
@@ -39,7 +40,17 @@ export function SiteMenu() {
     },
     {
       key: 'lineage',
-      label: <Link to={`/sites/${siteId}/lineage`}>Lineage</Link>,
+      label: (
+        <div className="flex justify-between items-center">
+          <Link to={`/sites/${siteId}/lineage`}>Lineage</Link>
+          <SelectOutlined
+            rotate={90}
+            onClick={() => {
+              console.log('lineage');
+            }}
+          />
+        </div>
+      ),
     },
     {
       key: 'edit',

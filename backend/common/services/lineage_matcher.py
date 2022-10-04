@@ -15,6 +15,10 @@ class LineageMatcher:
         self.doc_b = doc_b
 
         self.name_text_match = jarowinkler_similarity(doc_a.name, doc_b.name)
+        self.logger.info(
+            f"'{self.doc_a.name}' '{self.doc_b.name}' name_text_match={self.name_text_match}"
+        )
+
         self.element_text_match = jarowinkler_similarity(doc_a.element_text, doc_b.element_text)
         self.logger.info(
             f"'{self.doc_a.name}' '{self.doc_b.name}' element_text_match={self.element_text_match}"
@@ -30,10 +34,6 @@ class LineageMatcher:
             f"'{self.doc_a.name}' '{self.doc_b.name}' siblings_text_match={self.siblings_text_match}"
         )
 
-        # raw url matches
-        self.filename_match = jaccard(doc_a.filename_tokens, doc_b.filename_tokens)
-        self.pathname_match = jaccard(doc_a.pathname_tokens, doc_b.pathname_tokens)
-
         self.filename_match = jaccard(doc_a.filename_tokens, doc_b.filename_tokens)
         self.logger.info(
             f"'{self.doc_a.name}' '{self.doc_b.name}' filename_match={self.filename_match}"
@@ -45,8 +45,15 @@ class LineageMatcher:
         )
 
         self.ref_indication_match = jaccard(doc_a.ref_indication_tags, doc_b.ref_indication_tags)
+        self.logger.info(
+            f"'{self.doc_a.name}' '{self.doc_b.name}' ref_indication_match={self.ref_indication_match}"
+        )
+
         self.focus_indication_match = jaccard(
             doc_a.focus_indication_tags, doc_b.focus_indication_tags
+        )
+        self.logger.info(
+            f"'{self.doc_a.name}' '{self.doc_b.name}' focus_indication_match={self.focus_indication_match}"
         )
 
         self.ref_therapy_match = jaccard(doc_a.ref_therapy_tags, doc_b.ref_therapy_tags)
@@ -86,7 +93,9 @@ class LineageMatcher:
 
         rule_sets = [
             "revised_document",
-            "updated_document",
+            "updated_document_b",
+            "updated_document_a",
+            "updated_document_c",
             "similar_rule",
         ]
         match = False
@@ -114,19 +123,45 @@ class LineageMatcher:
             and self.focus_therapy_match == 1
             and self.focus_indication_match == 1
             and self.state_abbr_rule()
+            and self.state_name_rule()
         )
 
-    # same base url, update date parts in url, new version/publish
-    def updated_document(self):
+    # strict context with less tag assuredness
+    def updated_document_a(self):
+        return (
+            (self.filename_match >= 0.90 or self.element_text_match >= 0.90)
+            and self.ref_indication_match >= 0.75
+            and self.state_abbr_rule()
+            and self.state_name_rule()
+        )
+
+    # looser context with stricter tag assuredness
+    def updated_document_b(self):
         return (
             (self.filename_match >= 0.60 or self.element_text_match >= 0.90)
             and self.ref_indication_match >= 0.85
             and self.focus_therapy_match == 1
             and self.state_abbr_rule()
+            and self.state_name_rule()
         )
+
+    # looser context with no tag assuredness
+    def updated_document_c(self):
+        return (
+            (self.filename_match >= 0.90 or self.element_text_match >= 0.90)
+            and self.score_cosine_similarity()
+            and self.state_abbr_rule()
+            and self.state_name_rule()
+        )
+
+    def require_state_name(self):
+        return self.doc_a.state_name or self.doc_a.state_name
 
     def require_state_abbr(self):
         return self.doc_a.state_abbr or self.doc_a.state_abbr
+
+    def state_name_match(self):
+        return self.doc_a.state_name == self.doc_b.state_name
 
     def state_abbr_match(self):
         return self.doc_a.state_abbr == self.doc_b.state_abbr
@@ -139,8 +174,18 @@ class LineageMatcher:
             self.require_state_abbr() and self.state_abbr_match()
         ) or not self.require_state_abbr()
 
+    def state_name_rule(self):
+        return (
+            self.require_state_name() and self.state_name_match()
+        ) or not self.require_state_name()
+
     def similar_rule(self):
-        return self.euclidean_distance < 2 and self.state_abbr_rule() and self.require_year_part()
+        return (
+            self.euclidean_distance < 2
+            and self.state_abbr_rule()
+            and self.require_year_part()
+            and self.state_name_rule()
+        )
 
     def score_euclidean_distance(self):
         return self.euclidean_distance < 2

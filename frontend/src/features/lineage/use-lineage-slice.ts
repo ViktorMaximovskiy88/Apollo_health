@@ -9,6 +9,9 @@ export default function useLineageSlice() {
     actions: {
       setLeftSide: (args: any) => dispatch(actions.setLeftSide(args)),
       setRightSide: (args: any) => dispatch(actions.setRightSide(args)),
+      toggleSingularLineage: () => dispatch(actions.toggleSingularLineage()),
+      toggleMultipleLineage: () => dispatch(actions.toggleMultipleLineage()),
+      toggleMissingLineage: () => dispatch(actions.toggleMissingLineage()),
       onSearch: (args: any) => dispatch(actions.onSearch(args)),
     },
   };
