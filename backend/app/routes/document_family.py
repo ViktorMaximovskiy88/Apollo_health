@@ -40,35 +40,26 @@ async def get_target(id: PydanticObjectId) -> DocumentFamily:
 @router.get(
     "/",
     dependencies=[Security(get_current_user)],
-    response_model=list[DocumentFamily],
+    response_model=list[DocumentFamily] | TableQueryResponse,
 )
 async def read_document_families(
     site_id: PydanticObjectId | None = None,
     document_type: str | None = None,
-):
-    query = DocumentFamily.find({"disabled": False})
-
-    if site_id:
-        query = query.find({"site_id": site_id})
-
-    if document_type:
-        query = query.find({"document_type": document_type})
-
-    return await query.to_list()
-
-
-@router.get(
-    "/all",
-    response_model=TableQueryResponse,
-    dependencies=[Security(get_current_user)],
-)
-async def read_all_document_families(
-    # site_id: PydanticObjectId,
     limit: int | None = None,
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
+    query = DocumentFamily.find({"disabled": False})
+
+    if site_id:
+        query = query.find({"site_id": site_id})
+        return await query.to_list()
+
+    if document_type:
+        query = query.find({"document_type": document_type})
+        return await query.to_list()
+
     query = DocumentFamily.find_many({"disabled": False})
     return await query_table(query, limit, skip, sorts, filters)
 
