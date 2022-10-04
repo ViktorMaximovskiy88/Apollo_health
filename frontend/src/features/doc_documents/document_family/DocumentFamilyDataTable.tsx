@@ -13,7 +13,7 @@ import {
   setDocumentFamilyTableSkip,
 } from './documentFamilySlice';
 import { TableInfoType } from '../../../common/types';
-import { useLazyGetAllDocumentFamiliesQuery } from './documentFamilyApi';
+import { useLazyGetDocumentFamiliesQuery } from './documentFamilyApi';
 
 const useControlledPagination = ({
   isActive,
@@ -62,7 +62,7 @@ export function DocumentFamilyTable() {
   const { isActive, setActive, watermark } = useInterval(10000);
 
   const columns = useColumns();
-  const [getDocumentFamiliesFn] = useLazyGetAllDocumentFamiliesQuery();
+  const [getDocumentFamiliesFn] = useLazyGetDocumentFamiliesQuery();
 
   const loadData = useCallback(
     async (tableInfo: TableInfoType) => {

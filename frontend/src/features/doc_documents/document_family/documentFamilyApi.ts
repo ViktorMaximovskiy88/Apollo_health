@@ -8,39 +8,20 @@ export const documentFamilyApi = createApi({
   baseQuery: fetchBaseQuery(),
   tagTypes: ['DocumentFamily', 'ChangeLog'],
   endpoints: (builder) => ({
-    getAllDocumentFamilies: builder.query<{ data: DocumentFamily[]; total: number }, TableInfoType>(
-      {
-        query: ({ limit, skip, filterValue, sortInfo }) => {
-          const args = [
-            `limit=${encodeURIComponent(limit)}`,
-            `skip=${encodeURIComponent(skip)}`,
-            `sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`,
-            `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
-          ];
-
-          return `/document-family/all?${args.join('&')}`;
-        },
-        providesTags: (results) => {
-          const tags = [{ type: 'DocumentFamily' as const, id: 'LIST' }];
-          results?.data.forEach(({ _id: id }) => tags.push({ type: 'DocumentFamily', id }));
-          return tags;
-        },
-      }
-    ),
-    getDocumentFamiliesBySiteAndDocumentType: builder.query<
-      DocumentFamily[],
-      { siteId: string; documentType: string }
-    >({
-      query: ({ siteId, documentType }) => {
+    getDocumentFamilies: builder.query<{ data: DocumentFamily[]; total: number }, TableInfoType>({
+      query: ({ limit, skip, filterValue, sortInfo }) => {
         const args = [
-          `site_id=${encodeURIComponent(siteId)}`,
-          `document_type=${encodeURIComponent(documentType)}`,
-        ].join('&');
-        return `/document-family/?${args}`;
+          `limit=${encodeURIComponent(limit)}`,
+          `skip=${encodeURIComponent(skip)}`,
+          `sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`,
+          `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
+        ];
+
+        return `/document-family/?${args.join('&')}`;
       },
       providesTags: (results) => {
         const tags = [{ type: 'DocumentFamily' as const, id: 'LIST' }];
-        results?.forEach(({ _id: id }) => tags.push({ type: 'DocumentFamily', id }));
+        results?.data.forEach(({ _id: id }) => tags.push({ type: 'DocumentFamily', id }));
         return tags;
       },
     }),
@@ -75,11 +56,9 @@ export const documentFamilyApi = createApi({
 });
 
 export const {
-  useGetAllDocumentFamiliesQuery,
-  useLazyGetAllDocumentFamiliesQuery,
+  useGetDocumentFamiliesQuery,
+  useLazyGetDocumentFamiliesQuery,
   useLazyGetDocumentFamilyByNameQuery,
-  useGetDocumentFamiliesBySiteAndDocumentTypeQuery,
-  useLazyGetDocumentFamiliesBySiteAndDocumentTypeQuery,
   useAddDocumentFamilyMutation,
   useUpdateDocumentFamilyMutation,
   useGetChangeLogQuery,

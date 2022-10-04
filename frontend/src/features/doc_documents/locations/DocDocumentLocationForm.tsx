@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { DocDocumentLocation } from './types';
 import { DocumentFamily } from '../document_family/types';
-import { useGetDocumentFamiliesBySiteAndDocumentTypeQuery } from '../document_family/documentFamilyApi';
+import { useGetDocumentFamiliesQuery } from '../document_family/documentFamilyApi';
 import { TextEllipsis } from '../../../components';
+import { LinkIcon } from '../../../components/LinkIcon';
+import { useMemo } from 'react';
 
 interface DocDocumentLocationFormTypes {
   documentType: string;
@@ -19,12 +21,24 @@ export const DocDocumentLocationForm = ({
   onShowDocumentFamilyCreate,
 }: DocDocumentLocationFormTypes) => {
   const form = Form.useFormInstance();
-  const { data = [] } = useGetDocumentFamiliesBySiteAndDocumentTypeQuery({
-    siteId: location.site_id,
-    documentType,
-  });
 
-  const options = data.map((item: DocumentFamily) => ({ value: item._id, label: item.name }));
+  const useGetDocumentFamiliesBySiteAndDocType = (siteId: string, documentType: string) => {
+    const args = useMemo(() => {
+      return {
+        limit: 1000,
+        skip: 0,
+        sortInfo: { name: 'name', dir: -1 as 1 | -1 | 0 },
+        filterValue: [
+          { name: 'site_id', operator: 'eq', type: 'string', value: siteId },
+          { name: 'document_type', operator: 'eq', type: 'string', value: documentType },
+        ],
+      };
+    }, [siteId, documentType]);
+    return useGetDocumentFamiliesQuery(args);
+  };
+
+  const { data } = useGetDocumentFamiliesBySiteAndDocType(location.site_id, documentType);
+  const options = data?.data.map((item: DocumentFamily) => ({ value: item._id, label: item.name }));
   const updatedLocation = Form.useWatch(['locations', index]);
   const baseUrl = Form.useWatch(['locations', index, 'base_url']);
   const url = Form.useWatch(['locations', index, 'url']);
