@@ -118,7 +118,7 @@ export function AllowDocDocUpdate() {
       valuePropName="checked"
       label={
         <>
-          <span style={{ marginRight: '5px' }}>Allow Doc Document Updates</span>
+          <span style={{ marginRight: '5px' }}>Allow Document Updates</span>
           <Tooltip
             placement="right"
             title="Overwrite existing Therapy and Indication Tags on Doc Document during collection"
