@@ -43,12 +43,7 @@ export function SiteMenu() {
       label: (
         <div className="flex justify-between items-center">
           <Link to={`/sites/${siteId}/lineage`}>Lineage</Link>
-          <SelectOutlined
-            rotate={90}
-            onClick={() => {
-              console.log('lineage');
-            }}
-          />
+          {/* <SelectOutlined rotate={90} onClick={() => {}} /> */}
         </div>
       ),
     },

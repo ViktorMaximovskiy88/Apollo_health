@@ -12,6 +12,8 @@ export default function useLineageSlice() {
       toggleSingularLineage: () => dispatch(actions.toggleSingularLineage()),
       toggleMultipleLineage: () => dispatch(actions.toggleMultipleLineage()),
       toggleMissingLineage: () => dispatch(actions.toggleMissingLineage()),
+      toggleCollapsed: (args: any) => dispatch(actions.toggleCollapsed(args)),
+      setCollapsed: (args: any) => dispatch(actions.setCollapsed(args)),
       onSearch: (args: any) => dispatch(actions.onSearch(args)),
     },
   };

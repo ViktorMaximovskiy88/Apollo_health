@@ -15,60 +15,60 @@ class LineageMatcher:
         self.doc_b = doc_b
 
         self.name_text_match = jarowinkler_similarity(doc_a.name, doc_b.name)
-        self.logger.info(
+        self.logger.debug(
             f"'{self.doc_a.name}' '{self.doc_b.name}' name_text_match={self.name_text_match}"
         )
 
         self.element_text_match = jarowinkler_similarity(doc_a.element_text, doc_b.element_text)
-        self.logger.info(
+        self.logger.debug(
             f"'{self.doc_a.name}' '{self.doc_b.name}' element_text_match={self.element_text_match}"
         )
 
         self.parent_text_match = jarowinkler_similarity(doc_a.parent_text, doc_b.parent_text)
-        self.logger.info(
+        self.logger.debug(
             f"'{self.doc_a.name}' '{self.doc_b.name}' parent_text_match={self.parent_text_match}"
         )
 
         self.siblings_text_match = jarowinkler_similarity(doc_a.siblings_text, doc_b.siblings_text)
-        self.logger.info(
+        self.logger.debug(
             f"'{self.doc_a.name}' '{self.doc_b.name}' siblings_text_match={self.siblings_text_match}"
         )
 
         self.filename_match = jaccard(doc_a.filename_tokens, doc_b.filename_tokens)
-        self.logger.info(
+        self.logger.debug(
             f"'{self.doc_a.name}' '{self.doc_b.name}' filename_match={self.filename_match}"
         )
 
         self.pathname_match = jaccard(doc_a.pathname_tokens, doc_b.pathname_tokens)
-        self.logger.info(
+        self.logger.debug(
             f"'{self.doc_a.name}' '{self.doc_b.name}' pathname_match={self.pathname_match}"
         )
 
         self.ref_indication_match = jaccard(doc_a.ref_indication_tags, doc_b.ref_indication_tags)
-        self.logger.info(
+        self.logger.debug(
             f"'{self.doc_a.name}' '{self.doc_b.name}' ref_indication_match={self.ref_indication_match}"
         )
 
         self.focus_indication_match = jaccard(
             doc_a.focus_indication_tags, doc_b.focus_indication_tags
         )
-        self.logger.info(
+        self.logger.debug(
             f"'{self.doc_a.name}' '{self.doc_b.name}' focus_indication_match={self.focus_indication_match}"
         )
 
         self.ref_therapy_match = jaccard(doc_a.ref_therapy_tags, doc_b.ref_therapy_tags)
-        self.logger.info(
+        self.logger.debug(
             f"'{self.doc_a.name}' '{self.doc_b.name}' ref_therapy_match={self.ref_therapy_match}"
         )
 
         self.focus_therapy_match = jaccard(doc_a.focus_therapy_tags, doc_b.focus_therapy_tags)
-        self.logger.info(
+        self.logger.debug(
             f"'{self.doc_a.name}' '{self.doc_b.name}' focus_therapy_match={self.focus_therapy_match}"
         )
 
         if len(self.doc_a.doc_vectors) == 0 or len(self.doc_b.doc_vectors) == 0:
-            self.logger.info(f"'{self.doc_a.name}' len(doc_vectors)={len(self.doc_a.doc_vectors)}")
-            self.logger.info(f"'{self.doc_b.name}' len(doc_vectors)={len(self.doc_b.doc_vectors)}")
+            self.logger.debug(f"'{self.doc_a.name}' len(doc_vectors)={len(self.doc_a.doc_vectors)}")
+            self.logger.debug(f"'{self.doc_b.name}' len(doc_vectors)={len(self.doc_b.doc_vectors)}")
             self.cosine_similarity = 0
             self.euclidean_distance = 100
         else:
@@ -76,14 +76,14 @@ class LineageMatcher:
                 self.doc_a.doc_vectors[0],
                 self.doc_b.doc_vectors[0],
             )
-            self.logger.info(
+            self.logger.debug(
                 f"'{self.doc_a.name}' '{self.doc_b.name}' self.cosine_similarity={self.cosine_similarity}"
             )
             self.euclidean_distance = spatial.distance.euclidean(
                 self.doc_a.doc_vectors[0],
                 self.doc_b.doc_vectors[0],
             )
-            self.logger.info(
+            self.logger.debug(
                 f"'{self.doc_a.name}' '{self.doc_b.name}' self.euclidean_distance={self.euclidean_distance}"
             )
 

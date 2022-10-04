@@ -40,6 +40,20 @@ export const lineageSlice = createSlice({
     setRightSide: (state, action: PayloadAction<LineageDoc>) => {
       state.rightSideDoc = action.payload;
     },
+    toggleCollapsed: (state, action: PayloadAction<LineageGroup>) => {
+      const lineageGroup = state.displayItems.find(
+        (item) => item.lineageId == action.payload.lineageId
+      );
+      if (lineageGroup) {
+        lineageGroup.collapsed = !lineageGroup.collapsed;
+      }
+    },
+    setCollapsed: (state, action: PayloadAction<boolean>) => {
+      const collapsed = action.payload;
+      for (const item of state.displayItems) {
+        item.collapsed = collapsed;
+      }
+    },
     toggleSingularLineage: (state) => {
       state.filters.singularLineage = !state.filters.singularLineage;
     },
@@ -81,6 +95,7 @@ function groupItems(items: LineageDoc[]): LineageGroup[] {
       return {
         lineageId,
         items: ordered,
+        collapsed: false,
       } as LineageGroup;
     })
     .value();
