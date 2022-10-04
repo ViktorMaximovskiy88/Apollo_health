@@ -45,6 +45,12 @@ export interface CompareResponse extends BaseDocument {
   new_doc: RetrievedDocument;
 }
 
+export interface ComparePreviousResponse extends BaseDocument {
+  diff: string;
+  previous_doc: DocDocument;
+  current_doc: DocDocument;
+}
+
 export interface DocDocument extends BaseDocument {
   retrieved_document_id: string;
   classification_status: ApprovalStatus;
@@ -75,6 +81,7 @@ export interface DocDocument extends BaseDocument {
   lineage_id: string;
   version: string;
   internal_document: boolean;
+  previous_doc_doc_id: string | null;
 
   locations: DocDocumentLocation[];
 

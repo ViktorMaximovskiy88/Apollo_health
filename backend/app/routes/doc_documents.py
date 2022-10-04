@@ -94,6 +94,32 @@ async def read_extraction_task(
     return doc
 
 
+class ComparePreviousResponse(BaseModel):
+    diff: str
+    previous_doc: DocDocument
+    current_doc: DocDocument
+
+
+@router.post(
+    "/diff-with-previous/{id}",
+    response_model=ComparePreviousResponse,
+    dependencies=[Security(get_current_user)],
+)
+async def create_diff_with_previous(current_doc: DocDocument = Depends(get_target)):
+    text_handler = TextHandler()
+    print(current_doc)
+    previous_doc: DocDocument = await get_target(current_doc.previous_doc_doc_id)
+    if current_doc.text_checksum is None or previous_doc.text_checksum is None:
+        raise HTTPException(
+            detail="Current or previous DocDocument does not have an associated text file.",
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+        )
+    _, diff = await text_handler.create_diff(previous_doc.text_checksum, current_doc.text_checksum)
+    return ComparePreviousResponse(
+        diff=diff.decode("utf-8"), previous_doc=previous_doc, current_doc=current_doc
+    )
+
+
 class CompareResponse(BaseModel):
     diff: str
     org_doc: DocDocument
