@@ -7,6 +7,7 @@ import { useGetTranslationConfigQuery, useUpdateTranslationConfigMutation } from
 import { TranslationDocPreview } from './TranslationDocPreview';
 import { TranslationForm } from './TranslationForm';
 import { TranslationConfig } from './types';
+import { SaveAsNew } from './SaveAsNewTranslation';
 
 function SumbitTranslation({ form }: { form: FormInstance<any> }) {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ function SumbitTranslation({ form }: { form: FormInstance<any> }) {
       >
         Cancel
       </Button>
+      <SaveAsNew form={form} />
       <Button
         type="primary"
         onClick={() => {
