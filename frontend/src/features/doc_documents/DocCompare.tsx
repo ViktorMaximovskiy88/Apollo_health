@@ -9,11 +9,9 @@ import { isErrorWithData } from '../../common/helpers';
 import { Hr } from '../../components';
 import { useCreateDiffMutation, useGetDocDocumentQuery } from './docDocumentApi';
 import { RetrievedDocument } from '../retrieved_documents/types';
-import { DocDocument } from './types';
 
 function CompareModal(props: {
   diff?: string;
-  orgDoc?: DocDocument;
   newDoc?: RetrievedDocument;
   isModalVisible: boolean;
   handleCloseModal: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void;
@@ -119,7 +117,6 @@ export function DocCompare() {
         <CompareModal
           isModalVisible={isModalVisible}
           diff={diffData?.diff}
-          orgDoc={orgDoc}
           newDoc={diffData?.new_doc}
           handleCloseModal={handleCloseModal}
         />
