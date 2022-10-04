@@ -113,9 +113,12 @@ async def start_scrape_task(
         if previous_scrape_task:
             site_scrape_task.documents_found = previous_scrape_task.documents_found
             site_scrape_task.retrieved_document_ids = previous_scrape_task.retrieved_document_ids
+
+            # TODO: When business logic centralized, move to add / remove task to work_item.
             doc_documents = await DocDocument.find(
                 {"retrieved_document_id": {"$in": site_scrape_task.retrieved_document_ids}}
             ).to_list()
+
             site_scrape_task.work_list = [
                 ManualWorkItem(
                     document_id=doc_document.id,
@@ -124,10 +127,7 @@ async def start_scrape_task(
                 for doc_document in doc_documents
             ]
 
-            await create_and_log(logger, current_user, site_scrape_task)
-        else:
-            await create_and_log(logger, current_user, site_scrape_task)
-
+        await create_and_log(logger, current_user, site_scrape_task)
     else:
         site_scrape_task = SiteScrapeTask(
             site_id=site_id, queued_time=datetime.now(tz=timezone.utc)
@@ -324,8 +324,29 @@ async def update_work_item(
 ):
     target_task = await SiteScrapeTask.find_one({"_id": task_id})
     task_updates = target_task.dict()
-    index = next(i for i, wi in enumerate(target_task.work_list) if wi.document_id == doc_id)
-    task_updates["work_list"][index] = updates.dict()
+    work_item_update_index = None
+    set_work_list = []
+    for index, work_item in enumerate(target_task.work_list):
+        set_work_list.append(work_item)
+        if work_item.retrieved_document_id == updates.retrieved_document_id:
+            work_item_update_index = index
+
+    print(updates)
+    if updates.selected == "NOT_FOUND":
+        # Remove retrieved_document from target_test.retrieved_documents.
+        set_retrieved_documents = [
+            retrieved_document
+            for retrieved_document in target_task.retrieved_document_ids
+            if retrieved_document != updates.retrieved_document_id
+        ]
+        target_task.retrieved_document_ids = set_retrieved_documents
+        task_updates["retrieved_document_ids"] = set_retrieved_documents
+        # Remove work_item from target_task.work_list.
+        del set_work_list[work_item_update_index]
+        task_updates["work_list"] = set_work_list
+
+    if work_item_update_index is not None:
+        task_updates["work_list"][work_item_update_index] = updates.dict()
     updated = await update_and_log_diff(logger, current_user, target_task, task_updates)
     return updated
 
