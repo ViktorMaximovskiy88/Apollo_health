@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from beanie import PydanticObjectId
+from beanie import Insert, PydanticObjectId, Replace, before_event
 from pydantic import BaseModel, Field
 
 from backend.common.core.enums import LangCode
@@ -72,3 +72,15 @@ class DocumentAnalysis(BaseDocument):
     siblings: DocumentAttrs | None
 
     doc_vectors: list[list[float]] = []
+
+    created_at: datetime | None
+    updated_at: datetime | None
+
+    @before_event(Insert)
+    def insert_dates(self):
+        self.created_at = datetime.now(tz=timezone.utc)
+        self.updated_at = datetime.now(tz=timezone.utc)
+
+    @before_event(Replace)
+    def replace_dates(self):
+        self.updated_at = datetime.now(tz=timezone.utc)

@@ -4,12 +4,19 @@ import { LineageGroup, LineageDoc } from './types';
 import { lineageApi } from './lineageApi';
 import _ from 'lodash';
 
+interface FilterSettings {
+  singularLineage: boolean;
+  multipleLineage: boolean;
+  missingLineage: boolean;
+}
+
 interface InitialState {
   searchTerm: string;
   leftSideDoc: undefined | LineageDoc;
   rightSideDoc: undefined | LineageDoc;
   displayItems: LineageGroup[];
   domainItems: LineageDoc[];
+  filters: FilterSettings;
 }
 
 export const lineageSlice = createSlice({
@@ -20,6 +27,11 @@ export const lineageSlice = createSlice({
     rightSideDoc: undefined,
     domainItems: [],
     displayItems: [],
+    filters: {
+      singularLineage: false,
+      multipleLineage: false,
+      missingLineage: false,
+    },
   } as InitialState,
   reducers: {
     setLeftSide: (state, action: PayloadAction<LineageDoc>) => {
@@ -28,10 +40,33 @@ export const lineageSlice = createSlice({
     setRightSide: (state, action: PayloadAction<LineageDoc>) => {
       state.rightSideDoc = action.payload;
     },
+    toggleCollapsed: (state, action: PayloadAction<LineageGroup>) => {
+      const lineageGroup = state.displayItems.find(
+        (item) => item.lineageId == action.payload.lineageId
+      );
+      if (lineageGroup) {
+        lineageGroup.collapsed = !lineageGroup.collapsed;
+      }
+    },
+    setCollapsed: (state, action: PayloadAction<boolean>) => {
+      const collapsed = action.payload;
+      for (const item of state.displayItems) {
+        item.collapsed = collapsed;
+      }
+    },
+    toggleSingularLineage: (state) => {
+      state.filters.singularLineage = !state.filters.singularLineage;
+    },
+    toggleMultipleLineage: (state) => {
+      state.filters.multipleLineage = !state.filters.multipleLineage;
+    },
+    toggleMissingLineage: (state) => {
+      state.filters.missingLineage = !state.filters.missingLineage;
+    },
     onSearch: (state, action: PayloadAction<string>) => {
       state.searchTerm = action.payload;
       const regex = new RegExp(state.searchTerm, 'i');
-      const filtered = state.domainItems.filter((doc: any) => doc.name.match(regex));
+      const filtered = state.domainItems.filter((doc: any) => doc.name?.match(regex));
       state.displayItems = groupItems(filtered);
     },
   },
@@ -60,6 +95,7 @@ function groupItems(items: LineageDoc[]): LineageGroup[] {
       return {
         lineageId,
         items: ordered,
+        collapsed: false,
       } as LineageGroup;
     })
     .value();

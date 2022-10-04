@@ -1,4 +1,5 @@
-import { Button, Input, notification } from 'antd';
+import { Button, Input, Radio, notification } from 'antd';
+import { FilterTwoTone, FilterOutlined } from '@ant-design/icons';
 import { MainLayout } from '../../components';
 import { useParams } from 'react-router-dom';
 import { useGetSiteLineageQuery, useLazyProcessSiteLineageQuery } from './lineageApi';
@@ -7,6 +8,7 @@ import { SiteMenu } from '../sites/SiteMenu';
 import { FileTypeViewer } from '../retrieved_documents/RetrievedDocumentViewer';
 import _, { debounce } from 'lodash';
 import { LineageDocRow } from './LineageDocRow';
+import classNames from 'classnames';
 
 export function LineagePage() {
   const { siteId } = useParams();
@@ -17,7 +19,8 @@ export function LineagePage() {
 
   const [processSiteLineage] = useLazyProcessSiteLineageQuery();
   const { state, actions } = useLineageSlice();
-  const { displayItems, leftSideDoc, rightSideDoc } = state;
+  const { displayItems, domainItems, leftSideDoc, rightSideDoc, filters } = state;
+  const hasFilters = filters.multipleLineage || filters.missingLineage || filters.singularLineage;
 
   const openNotification = () => {
     notification.success({
@@ -43,26 +46,43 @@ export function LineagePage() {
       }
     >
       <div className="flex flex-row h-full">
-        <div className="flex flex-col w-64 mr-2 mb-2">
-          <Input.Search
-            allowClear={true}
-            placeholder="Search"
-            onChange={debounce((e) => {
-              actions.onSearch(e.target.value);
-            }, 250)}
-          />
+        <div className="flex flex-col w-64 mr-2">
+          <div className="bg-white mb-1">
+            <Input.Search
+              allowClear={true}
+              placeholder="Search"
+              onChange={debounce((e) => {
+                actions.onSearch(e.target.value);
+              }, 250)}
+            />
+          </div>
 
-          <div className="overflow-auto h-full bg-white">
+          <div className="overflow-auto h-full bg-white border-slate-200 border-solid border">
             {displayItems.map((group) => (
-              <div key={group.lineageId} className="p-2 mb-4 border">
-                <div className="text-slate-500 uppercase mb-2">
+              <div key={group.lineageId} className="p-2 mb-1 border">
+                <div
+                  className={classNames('text-slate-500 uppercase mb-1 cursor-pointer')}
+                  onClick={() => {
+                    actions.toggleCollapsed(group);
+                  }}
+                >
                   {group.lineageId} ({group.items.length})
                 </div>
-                {group.items.map((item) => (
-                  <LineageDocRow key={item._id} doc={item} isSelected={true} {...actions} />
-                ))}
+                {!group.collapsed &&
+                  group.items.map((item) => (
+                    <LineageDocRow
+                      key={item._id}
+                      doc={item}
+                      isSelected={item._id == rightSideDoc?._id || item._id == leftSideDoc?._id}
+                      {...actions}
+                    />
+                  ))}
               </div>
             ))}
+          </div>
+
+          <div className="p-1">
+            {displayItems.length} groups, {domainItems.length} docs
           </div>
         </div>
 
