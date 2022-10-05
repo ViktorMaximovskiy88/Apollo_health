@@ -1,3 +1,9 @@
+from pathlib import Path
+
+import newrelic.agent
+
+newrelic.agent.initialize(Path(__file__).parent / "newrelic.ini")
+
 import asyncio
 import logging
 import signal
@@ -6,7 +12,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import UUID, uuid4
 
-import newrelic.agent
 import pymongo
 import typer
 from beanie import PydanticObjectId
@@ -25,6 +30,7 @@ from backend.scrapeworker.scrape_worker import ScrapeWorker
 
 app = typer.Typer()
 log = logging.getLogger(__name__)
+application = newrelic.agent.register_application(timeout=10.0)
 
 accepting_tasks = True
 active_tasks: dict[PydanticObjectId | None, SiteScrapeTask] = {}

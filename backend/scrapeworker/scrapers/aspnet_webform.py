@@ -36,7 +36,7 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
             if not attr_selector.resource_address:
                 selectors.append(to_xpath(attr_selector))
         selector_string = "|".join(selectors)
-        self.log.info(selector_string)
+        self.log.debug(selector_string)
         return selector_string
 
     async def __setup(self):
@@ -62,12 +62,12 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
 
     async def __interact(self) -> None:
         element_id: str
-        self.log.info(f"interacting {self.url}")
+        self.log.debug(f"interacting {self.url}")
 
         async def intercept(route: Route, request: RouteRequest):
             # Handle post
             if self.url in request.url and request.method == "POST":
-                self.log.info(f"queueing {element_id}")
+                self.log.debug(f"queueing {element_id}")
                 self.requests.append(
                     Request(
                         url=request.url,
@@ -116,7 +116,7 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
                     return
                 except PlaywrightTimeoutError:
                     if retry == max_retries:
-                        self.log.info(f"Max retries reached {element_id}")
+                        self.log.debug(f"Max retries reached {element_id}")
                     continue
             return
 
