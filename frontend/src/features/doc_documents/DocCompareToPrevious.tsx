@@ -1,6 +1,6 @@
 import { Button, Form, Modal, notification, Tooltip, Typography } from 'antd';
 import { LinkOutlined } from '@ant-design/icons';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { parseDiff, Diff, Hunk } from 'react-diff-view';
 import 'react-diff-view/style/index.css';
@@ -74,7 +74,7 @@ export function DocCompareToPrevious() {
     setIsModalVisible(false);
   }
 
-  async function handleCompare() {
+  const handleCompare = useCallback(async () => {
     try {
       await createDiffWithPrevious(currentDocDocId).unwrap();
       setIsModalVisible(true);
@@ -91,7 +91,7 @@ export function DocCompareToPrevious() {
         });
       }
     }
-  }
+  }, [createDiffWithPrevious, currentDocDocId]);
 
   return (
     <div className="flex space-x-8 items-center">
