@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import UUID, uuid4
 
+import newrelic.agent
 import pymongo
 import typer
 from beanie import PydanticObjectId
@@ -127,6 +128,7 @@ async def start_worker_async(worker_id):
 
 
 @app.command()
+@newrelic.agent.background_task()
 def start_worker():
     worker_id = uuid4()
     typer.secho(f"Starting Scrape Worker {worker_id}", fg=typer.colors.GREEN)
