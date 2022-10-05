@@ -81,8 +81,8 @@ class NewSite(BaseModel):
     playbook: str | None = None
     cron: str | None = ""
     status: str | None = SiteStatus.NEW
-    doc_type_threshold: int | None = 75
-    lineage_threshold: int | None = 75
+    doc_type_threshold: float = 0.75
+    lineage_threshold: float = 0.75
 
 
 class UpdateSite(BaseModel):
@@ -99,8 +99,8 @@ class UpdateSite(BaseModel):
     playbook: str | None = None
     status: str | None = None
     assignee: PydanticObjectId | None = None
-    doc_type_threshold: int | None = None
-    lineage_threshold: int | None = None
+    doc_type_threshold: float | None = None
+    lineage_threshold: float | None = None
 
 
 class UpdateSiteAssigne(BaseModel):

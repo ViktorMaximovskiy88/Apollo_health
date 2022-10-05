@@ -70,15 +70,21 @@ const CustomSelectors = () => (
   />
 );
 
+const formatter = (value?: number) => {
+  if (!value) return;
+  const displayedValue = Math.round(value * 100); // fix floating point math bugs
+  return `${displayedValue}%`;
+};
+
 const DocumentTypeThreshold = () => (
   <Form.Item name="doc_type_threshold" label="Document Type Threshold">
-    <Slider defaultValue={75} />
+    <Slider min={0} max={1} step={0.01} tipFormatter={formatter} />
   </Form.Item>
 );
 
 const LineageThreshold = () => (
   <Form.Item name="lineage_threshold" label="Lineage Threshold">
-    <Slider defaultValue={75} />
+    <Slider min={0} max={1} step={0.01} tipFormatter={formatter} />
   </Form.Item>
 );
 
