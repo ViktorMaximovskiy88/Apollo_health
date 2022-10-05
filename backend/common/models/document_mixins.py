@@ -8,7 +8,7 @@ class DocumentMixins:
         location = get_first_collected(self)
         self.first_collected_date = location.first_collected_date
 
-    def set_last_collected(self):
+    def set_retrieved_collected(self):
         location = get_last_collected(self)
         self.last_collected_date = location.last_collected_date
 

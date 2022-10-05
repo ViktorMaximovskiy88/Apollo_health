@@ -81,28 +81,45 @@ function ManualCollectionButton(props: any) {
   const navigate = useNavigate();
   const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
 
-  async function handleRunScrape() {
+  async function handleRunManualScrape() {
     let response: any = await runScrape(site!._id);
     if (response) {
       refetch();
       navigate(`../doc-documents?scrape_task_id=${response.data._id}`);
     }
   }
-  async function handleCancelScrape() {
-    await cancelAllScrapes(site!._id);
-    refetch();
+
+  async function handleCancelManualScrape() {
+    if (site?._id) {
+      try {
+        let response: any = await cancelAllScrapes(site!._id);
+      } catch (err) {
+        if (isErrorWithData(err)) {
+          notification.error({
+            message: 'Error Running Collection',
+            description: `${err.data.detail}`,
+          });
+        } else {
+          notification.error({
+            message: 'Error Running Collection',
+            description: JSON.stringify(err),
+          });
+        }
+      }
+    }
   }
+
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
 
   if (activeStatuses.includes(site.last_run_status)) {
     return (
-      <Button className="ml-auto" onClick={handleCancelScrape}>
+      <Button className="ml-auto" onClick={handleCancelManualScrape}>
         End Manual Collection
       </Button>
     );
   } else {
     return (
-      <Button className="ml-auto" onClick={handleRunScrape}>
+      <Button className="ml-auto" onClick={handleRunManualScrape}>
         Start Manual Collection
       </Button>
     );

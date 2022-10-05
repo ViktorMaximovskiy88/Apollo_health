@@ -22,7 +22,7 @@ function FieldHeaders({ displayIsResource, fields }: HeaderPropTypes) {
   return (
     <div className="grid grid-cols-10 space-x-1 whitespace-nowrap">
       <div className="flex items-center col-span-2">
-        <h4 className="mr-1">Element Name</h4>
+        <h4 className="mr-1">Element Type</h4>
         <Tooltip
           className="mb-2 ml-px cursor-help"
           title="Elements to search inside of for attribute. Example: <a> or <li>"
@@ -81,7 +81,7 @@ function Header({ title }: { title: ReactNode }) {
     <Hr key="2" />,
     <div key="3">
       <p>
-        <Text strong>Element Name:</Text> a <br />
+        <Text strong>Element Type:</Text> a <br />
         <Text strong>Attr Name:</Text> onclick <br />
         <Text strong>Attr Value:</Text> /policy/ <br />
         <Text strong>Contains Text:</Text> Download
@@ -91,7 +91,7 @@ function Header({ title }: { title: ReactNode }) {
     <Hr key="4" />,
     <div key="5">
       <p>
-        <Text strong>Element Name:</Text> a <br />
+        <Text strong>Element Type:</Text> a <br />
         <Text strong>Attr Name:</Text> data- <br />
         <Text strong>Attr Value:</Text>
         <br />
@@ -140,7 +140,7 @@ export function ElementInput({ displayLabel, name, field }: InputPropTypes) {
     }
   };
 
-  const label = displayLabel ? 'Element Name' : undefined;
+  const label = displayLabel ? 'Element Type' : undefined;
   const tooltip = displayLabel
     ? 'Elements to search inside of for attribute. Example: <a> or <li>'
     : undefined;
