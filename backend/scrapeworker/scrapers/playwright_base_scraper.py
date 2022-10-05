@@ -2,7 +2,7 @@ import asyncio
 import logging
 from abc import ABC, abstractmethod
 from functools import cached_property
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlsplit
 
 from playwright.async_api import BrowserContext, ElementHandle, Page, ProxySettings
 
@@ -20,6 +20,20 @@ closest_heading_expression: str = """
             if (h) return h.textContent;
             n = n.parentNode;
         }
+    }
+"""
+
+
+sibling_text_expression: str = """
+    (node) => {
+        let n = node;
+        while (n) {
+            if(n.tagName == 'TD' && n.previousElementSibling) {
+                return n.previousElementSibling.textContent
+            }
+            n = n.parentNode;
+        }
+        return '';
     }
 """
 
@@ -85,15 +99,35 @@ class PlaywrightBaseScraper(ABC):
 
         closest_heading: str | None
 
-        link_text, element_id, resource_value, closest_heading = await asyncio.gather(
+        (
+            element_content,
+            element_text,
+            element_id,
+            resource_value,
+            closest_heading,
+            siblings_text,
+        ) = await asyncio.gather(
             element.text_content(),
+            element.inner_text(),
             element.get_attribute("id"),
             element.get_attribute(resource_attr),
             element.evaluate(closest_heading_expression),
+            element.evaluate(sibling_text_expression),
         )
 
-        if link_text:
-            link_text = link_text.strip()
+        # Use first response for inner_text() text_content() for link_text.
+        # If an element has no text (<p></p>), use url path.
+        if element_content.strip():
+            link_text = element_content.strip()
+        elif element_text.strip():
+            link_text = element_text.strip()
+        elif siblings_text.strip():
+            link_text = siblings_text.strip()
+        elif resource_value.strip():
+            parsed_url = urlsplit(resource_value)
+            link_text = parsed_url.path
+        else:
+            logging.error("Not able to set link_text. No text or url path")
 
         if closest_heading:
             closest_heading = closest_heading.strip()
@@ -104,6 +138,7 @@ class PlaywrightBaseScraper(ABC):
             resource_value=resource_value,
             closest_heading=closest_heading,
             playbook_context=self.playbook_context,
+            siblings_text=siblings_text,
         )
 
     def convert_proxy(self, proxy: Proxy):

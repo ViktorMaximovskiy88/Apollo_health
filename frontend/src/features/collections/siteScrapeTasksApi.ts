@@ -1,16 +1,42 @@
 import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
-import { SiteScrapeTask } from './types';
+import { BulkActionTypes, SiteScrapeTask, CollectionConfig } from './types';
+import { TableInfoType } from '../../common/types';
+
+interface BulkRunResponse {
+  type: BulkActionTypes;
+  scrapes: number;
+  sites: number;
+}
 
 export const siteScrapeTasksApi = createApi({
   reducerPath: 'siteScrapeTasksApi',
   baseQuery: fetchBaseQuery(),
   tagTypes: ['SiteScrapeTask', 'ChangeLog'],
   endpoints: (builder) => ({
-    getScrapeTasksForSite: builder.query<SiteScrapeTask[], string | undefined>({
-      query: (siteId) => `/site-scrape-tasks/?site_id=${siteId}`,
-      providesTags: (_r, _e, id) => [{ type: 'SiteScrapeTask' as const, id }],
+    getCollectionConfig: builder.query<{ data: CollectionConfig }, void>({
+      query: () => `/app-config/?key=collections`,
     }),
+    getScrapeTasksForSite: builder.query<{ data: SiteScrapeTask[]; total: number }, TableInfoType>({
+      query: ({ limit, siteId, skip, filterValue, sortInfo }) => {
+        const args = [
+          `limit=${encodeURIComponent(limit)}`,
+          `skip=${encodeURIComponent(skip)}`,
+          `sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`,
+          `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
+        ];
+        if (siteId) {
+          args.push(`site_id=${encodeURIComponent(siteId)}`);
+        }
+        return `/site-scrape-tasks/?${args.join('&')}`;
+      },
+      providesTags: (results) => {
+        const tags = [{ type: 'SiteScrapeTask' as const, id: 'LIST' }];
+        results?.data.forEach(({ _id: id }) => tags.push({ type: 'SiteScrapeTask', id }));
+        return tags;
+      },
+    }),
+
     runSiteScrapeTask: builder.mutation<SiteScrapeTask, string>({
       query: (siteId) => ({
         url: `/site-scrape-tasks/?site_id=${siteId}`,
@@ -63,7 +89,7 @@ export const siteScrapeTasksApi = createApi({
       query: (id) => `/change-log/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
     }),
-    runBulk: builder.mutation<SiteScrapeTask, string>({
+    runBulk: builder.mutation<BulkRunResponse, string>({
       query: (type) => ({
         url: `/site-scrape-tasks/bulk-run?type=${type}`,
         method: 'POST',
@@ -75,6 +101,7 @@ export const siteScrapeTasksApi = createApi({
 
 export const {
   useGetScrapeTasksForSiteQuery,
+  useLazyGetScrapeTasksForSiteQuery,
   useRunSiteScrapeTaskMutation,
   useUpdateSiteScrapeTaskMutation,
   useDeleteSiteScrapeTaskMutation,
@@ -82,4 +109,5 @@ export const {
   useCancelAllSiteScrapeTasksMutation,
   useGetChangeLogQuery,
   useRunBulkMutation,
+  useGetCollectionConfigQuery,
 } = siteScrapeTasksApi;

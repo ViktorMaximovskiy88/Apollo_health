@@ -48,16 +48,82 @@ class TableContentExtractor:
 
     def tablefinder_config(self):
         snap = self.config.extraction.snap_tolerance
+        intersect = self.config.extraction.intersection_tolerance
         table_shape = self.config.extraction.table_shape
-        explicit_columns = map(int, self.config.extraction.explicit_column_lines)
+        explicit_columns = list(map(int, self.config.extraction.explicit_column_lines))
+        explicit_only = self.config.extraction.explicit_column_lines_only
         return {
             "horizontal_strategy": table_shape,
-            "vertical_strategy": table_shape,
+            "vertical_strategy": "explicit" if explicit_only else table_shape,
             "explicit_vertical_lines": explicit_columns,
             "snap_tolerance": snap,
+            "intersection_tolerance": intersect,
         }
 
+    def table_started(self, table_started: bool, line: list[str | None]) -> bool:
+        if table_started or not self.config.extraction.start_table_text:
+            return True
+
+        for value in line:
+            if value and value in self.config.extraction.start_table_text:
+                return True
+
+        return False
+
+    def table_ended(self, line: list[str | None]) -> bool:
+        end_text = self.config.extraction.end_table_text.lower()
+        if not end_text:
+            return False
+
+        if end_text in "".join(map(str, line)).lower():
+            return True
+
+        return False
+
+    def drop_line_if_required_or_banned(self, line, header) -> bool:
+        for col in self.config.extraction.required_columns:
+            if not line[self.hmap(header, col)]:
+                return True
+        for col in self.config.extraction.banned_columns:
+            if line[self.hmap(header, col)]:
+                return True
+        return False
+
+    def merge_on_missing_columns(self, line, row_n, header, table, clean_table) -> bool:
+        for col in self.config.extraction.merge_on_missing_columns:
+            if not line[self.hmap(header, col)]:
+                if self.config.extraction.merge_strategy == "DOWN":
+                    next_line = table[row_n + 1]
+                    for i in range(len(next_line)):
+                        next_line[i] = f"{next_line[i] or ''} {line[i] or ''}"
+                    return True
+                elif self.config.extraction.merge_strategy == "UP":
+                    if clean_table:
+                        prev_line = clean_table[-1]
+                        for i in range(len(prev_line)):
+                            prev_line[i] = f"{prev_line[i] or ''} {line[i] or ''}"
+                    return True
+        return False
+
+    def skip_table(self, header):
+        rtext = self.config.detection.required_header_text
+        if rtext and not self.hmap(header, rtext) > 0:
+            return True
+        etext = self.config.detection.excluded_header_text
+        if etext and self.hmap(header, etext) > 0:
+            return True
+        return False
+
     def extract_clean_tables(self, page: Page):
+        if self.config.extraction.max_font_size:
+
+            def filter_out_large_text(obj):
+                if "size" in obj:
+                    return obj["size"] < self.config.extraction.max_font_size
+                return True
+
+            page = page.filter(filter_out_large_text)
+
         tables = page.extract_tables(self.tablefinder_config())
         clean_tables: list[list[list[str]]] = []
         for table in tables:
@@ -67,44 +133,31 @@ class TableContentExtractor:
 
             header, table = self.extract_header(table)
 
-            rtext = self.config.detection.required_header_text
-            if rtext and not self.hmap(header, rtext) > 0:
-                continue
-            etext = self.config.detection.excluded_header_text
-            if etext and self.hmap(header, etext) > 0:
+            if self.skip_table(header):
                 continue
 
             clean_table = []
+            table_started = False
             for row_n, line in enumerate(table):
-                drop_line = False
-                for col in self.config.extraction.required_columns:
-                    if not line[self.hmap(header, col)]:
-                        drop_line = True
-                        break
-                if drop_line:
+                table_started = self.table_started(table_started, line)
+                if not table_started:
+                    continue
+                if self.table_ended(line):
+                    break
+
+                if self.drop_line_if_required_or_banned(line, header):
                     continue
 
-                for col in self.config.extraction.merge_on_missing_columns:
-                    if not line[self.hmap(header, col)]:
-                        if self.config.extraction.merge_strategy == "DOWN":
-                            next_line = table[row_n + 1]
-                            for i in range(len(next_line)):
-                                next_line[i] = f"{next_line[i] or ''} {line[i] or ''}"
-                            drop_line = True
-                        elif self.config.extraction.merge_strategy == "UP":
-                            prev_line = clean_table[-1]
-                            for i in range(len(prev_line)):
-                                prev_line[i] = f"{prev_line[i] or ''} {line[i] or ''}"
-                            drop_line = True
-                            break
-                if drop_line:
+                if self.merge_on_missing_columns(line, row_n, header, table, clean_table):
                     continue
+
                 clean_table.append(line)
             clean_tables.append(clean_table)
+
         return clean_tables
 
     def match_rule(self, rule, value):
-        rgx = re.escape(rule.pattern).replace("\\*", "(.+)")
+        rgx = rule.pattern.replace("(", "\\(").replace(")", "\\)").replace("*", "(.+)")
         if match := re.search(rgx, value):
             if groups := match.groups():
                 return True, groups[0]
@@ -130,8 +183,10 @@ class TableContentExtractor:
         return -1
 
     def translate_line(self, line, header):
-        codes = []
+        brands: list[tuple[float, str, str | None, str]] = []
+        generics: list[tuple[float, str, str | None, str]] = []
         t9n = FormularyDatum()
+        bvg, ql_time, ql_quantity = None, None, None
         for column_rules in self.config.translation.column_rules:
             value = str(line[self.hmap(header, column_rules.column)])
             value = re.sub(r"\s+", " ", value, re.MULTILINE).strip()
@@ -143,19 +198,46 @@ class TableContentExtractor:
                             break
                     continue
 
-                if rule.field == "Generic":
+                if rule.field in ["Generic", "Brand"]:
+                    codes = generics if rule.field == "Generic" else brands
                     for (_, candidate, name, score) in rxnorm_linker.find_candidates([value], rule):
                         if candidate:
-                            codes.append((score, candidate.concept_id, name))
+                            splits = candidate.concept_id.split("|")
+                            drugid, rxcui = "", ""
+                            if len(splits) == 1:
+                                drugid = splits[0]
+                            elif len(splits) == 2:
+                                drugid, rxcui = splits
+                            if not rxcui:
+                                rxcui = None
+                            codes.append((score, drugid, rxcui, name))
+                    continue
+
+                if rule.field == "BvG":
+                    for mapping in rule.mappings:
+                        if value.strip() == mapping.pattern:
+                            bvg = mapping.translation
+
+                if rule.field == "QLC" and value:
+                    if rule.value == "time":
+                        ql_time = value
+                    if rule.value == "quantity":
+                        ql_quantity = value
                     continue
 
                 matches, note = self.match_rule(rule, value)
+                if rule.capture_all:
+                    note = value
+
                 if not matches:
                     continue
 
                 if rule.field == "PA":
                     t9n.pa = True
                     t9n.pan = note
+                if rule.field == "CPA":
+                    t9n.cpa = True
+                    t9n.cpan = note
                 if rule.field == "QL":
                     t9n.ql = True
                     t9n.qln = note
@@ -164,9 +246,33 @@ class TableContentExtractor:
                     t9n.stn = note
                 if rule.field == "SP":
                     t9n.sp = True
+                if rule.field == "STPA":
+                    t9n.stpa = True
+                if rule.field == "MB":
+                    t9n.mb = True
+                if rule.field == "SCO":
+                    t9n.sco = True
+                if rule.field == "DME":
+                    t9n.dme = True
 
-        for (score, code, name) in codes:
-            yield t9n.copy(update={"score": score, "code": code, "name": name})
+        if ql_time and ql_quantity:
+            t9n.ql = True
+            t9n.qln = f"{ql_quantity} / {ql_time}"
+
+        if not bvg or bvg == "generic" or bvg == "both":
+            for (score, drugid, rxcui, name) in generics:
+                print("after", line, t9n.qln)
+                yield t9n.copy(
+                    update={"score": score, "code": drugid, "rxcui": rxcui, "name": name}, deep=True
+                )
+        if not bvg or bvg == "brand" or bvg == "both":
+            for (score, drugid, rxcui, name) in brands:
+                yield t9n.copy(
+                    update={"score": score, "code": drugid, "rxcui": rxcui, "name": name}
+                )
+
+        if not generics and not brands:
+            yield t9n
 
     def translate_tables(
         self, tables: list[list[list[str]]]
@@ -190,7 +296,14 @@ class TableContentExtractor:
                 translation=t9n,
             )
             await asyncio.gather(
-                extract_task.update(Inc({ContentExtractionTask.extraction_count: 1})),
+                extract_task.update(
+                    Inc(
+                        {
+                            ContentExtractionTask.extraction_count: 1,
+                            ContentExtractionTask.untranslated_count: 0 if t9n.code else 1,
+                        }
+                    )
+                ),
                 extract_task.update(Set({ContentExtractionTask.header: header})),
                 result.save(),
             )

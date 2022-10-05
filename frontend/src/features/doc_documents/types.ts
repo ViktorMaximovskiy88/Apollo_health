@@ -1,6 +1,7 @@
 import { BaseDocument } from '../../common';
 import { ApprovalStatus } from '../../common/approvalStatus';
 import { RetrievedDocument } from '../retrieved_documents/types';
+import { DocDocumentLocation } from './locations/types';
 
 export interface BaseDocTag {
   id: string;
@@ -8,7 +9,7 @@ export interface BaseDocTag {
   _normalized: string;
 }
 
-export interface TherapyTag extends BaseDocTag {
+export interface TherapyTag {
   name: string;
   text: string;
   page: number;
@@ -17,12 +18,16 @@ export interface TherapyTag extends BaseDocTag {
   focus: boolean;
 }
 
-export interface IndicationTag extends BaseDocTag {
+export interface IndicationTag {
   name?: string;
   text: string;
   page: number;
   code: string;
 }
+
+export interface UIIndicationTag extends IndicationTag, BaseDocTag {}
+export interface UITherapyTag extends TherapyTag, BaseDocTag {}
+export type DocumentTag = UIIndicationTag | UITherapyTag;
 
 export interface TaskLock {
   work_queue_id: string;
@@ -33,6 +38,7 @@ export interface TaskLock {
 export interface CompareRequest extends BaseDocument {
   compareId?: string;
 }
+
 export interface CompareResponse extends BaseDocument {
   diff: string;
   org_doc: DocDocument;
@@ -40,13 +46,13 @@ export interface CompareResponse extends BaseDocument {
 }
 
 export interface DocDocument extends BaseDocument {
-  site_id: string;
   retrieved_document_id: string;
   classification_status: ApprovalStatus;
   classification_lock: TaskLock;
   name: string;
   checksum: string;
   file_extension: string;
+
   document_type: string;
   doc_type_confidence: number;
 
@@ -60,7 +66,6 @@ export interface DocDocument extends BaseDocument {
   first_created_date: string;
   published_date: string;
   identified_dates: string[];
-
   final_effective_date: string;
   end_date: string;
 
@@ -69,10 +74,9 @@ export interface DocDocument extends BaseDocument {
 
   lineage_id: string;
   version: string;
+  internal_document: boolean;
 
-  url: string;
-  base_url: string;
-  link_text: string;
+  locations: DocDocumentLocation[];
 
   lang_code: string;
 
@@ -80,19 +84,13 @@ export interface DocDocument extends BaseDocument {
   indication_tags: IndicationTag[];
 
   translation_id?: string;
+  content_extraction_task_id?: string;
 
   tags: string[];
 }
 
-export interface DocumentFamilyType extends BaseDocument {
-  name: string;
-  document_type: string;
-  description: string;
-  site_id: string;
-  relevance: string[];
-}
-
-export interface DocumentFamilyOption {
-  label: string;
-  value: string | null;
-}
+export type SiteDocDocument = Omit<
+  DocDocument,
+  'locations' | 'first_collected_date' | 'last_collected_date'
+> &
+  DocDocumentLocation;

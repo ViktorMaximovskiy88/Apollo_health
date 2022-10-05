@@ -20,13 +20,19 @@ export const extractionTasksApi = createApi({
         skip: number;
         sortInfo: TypeSortInfo;
         filterValue: TypeFilterValue;
+        delta: boolean;
+        deltaSubset: string[];
+        fullSubset: string[];
       }
     >({
-      query: ({ limit, skip, sortInfo, filterValue, id }) => {
+      query: ({ limit, skip, sortInfo, filterValue, delta, deltaSubset, fullSubset, id }) => {
         const args = [
           `extraction_id=${encodeURIComponent(id)}`,
           `limit=${encodeURIComponent(limit)}`,
           `skip=${encodeURIComponent(skip)}`,
+          `delta=${encodeURIComponent(delta)}`,
+          `delta_subset=${encodeURIComponent(JSON.stringify(deltaSubset))}`,
+          `full_subset=${encodeURIComponent(JSON.stringify(fullSubset))}`,
           `sorts=${encodeURIComponent(JSON.stringify(sortInfo))}`,
           `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
         ].join('&');
@@ -41,6 +47,18 @@ export const extractionTasksApi = createApi({
       }),
       invalidatesTags: (_r, _e, id) => [{ type: 'ExtractionTask', id }],
     }),
+    runExtractionDelta: builder.mutation<ExtractionTask, { id: string | undefined; docId: string }>(
+      {
+        query: ({ id, docId }) => ({
+          url: `/extraction-tasks/${id}/delta?doc_document_id=${docId}`,
+          method: 'POST',
+        }),
+        invalidatesTags: (_r, _e, { id }) => [
+          { type: 'ExtractionTask', id },
+          { type: 'ExtractionTaskResult', id },
+        ],
+      }
+    ),
     getExtractionTask: builder.query<ExtractionTask, string | undefined>({
       query: (id) => `/extraction-tasks/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'ExtractionTask' as const, id }],
@@ -82,6 +100,7 @@ export const {
   useLazyGetExtractionTaskResultsQuery,
   useGetExtractionTaskQuery,
   useRunExtractionTaskMutation,
+  useRunExtractionDeltaMutation,
   useUpdateExtractionTaskMutation,
   useDeleteExtractionTaskMutation,
   useGetChangeLogQuery,

@@ -9,33 +9,41 @@ import { documentsApi } from '../features/retrieved_documents/documentsApi';
 import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { workQueuesApi } from '../features/work_queue/workQueuesApi';
 import { translationsApi } from '../features/translations/translationApi';
+import { payerBackboneApi } from '../features/payer-backbone/payerBackboneApi';
 
 const routes = [
-  '/sites',
-  '/sites/new',
-  '/sites/:siteId',
-  '/sites/:siteId/view',
-  '/sites/:siteId/edit',
-  '/sites/:siteId/scrapes',
-  '/sites/:siteId/documents',
-  '/sites/:siteId/doc-documents',
-  '/sites/:siteId/documents/:docId/edit',
-  '/sites/:siteId/extraction',
-  '/sites/:siteId/extraction/document/:docDocId/edit',
-  '/sites/:siteId/extraction/document/:docDocId',
-  '/sites/:siteId/extraction/document/:docDocId/:extractionId/results',
   '/documents',
   '/documents/:docDocId',
-  '/users',
-  '/users/new',
-  '/users/:userId/edit',
-  '/work-queues',
-  '/work-queues/new',
-  '/work-queues/:workQueueId',
+  '/sites',
+  '/sites/:siteId',
+  '/sites/:siteId/doc-documents',
+  '/sites/:siteId/documents',
+  '/sites/:siteId/documents/:docId',
+  '/sites/:siteId/documents/:docId/edit',
+  '/sites/:siteId/edit',
+  '/sites/:siteId/extraction',
+  '/sites/:siteId/extraction/document/:docDocId',
+  '/sites/:siteId/extraction/document/:docDocId/:extractionId/results',
+  '/sites/:siteId/extraction/document/:docDocId/edit',
+  '/sites/:siteId/scrapes',
+  '/sites/:siteId/view',
+  '/sites/:siteId/lineage',
+  '/sites/new',
   '/translations',
-  '/translations/new',
   '/translations/:translationId',
+  '/translations/new',
+  '/users',
+  '/users/:userId/edit',
+  '/users/new',
+  '/work-queues',
+  '/work-queues/:workQueueId',
   '/work-queues/:workQueueId/:docDocumentId/process',
+  '/work-queues/:workQueueId/:docDocumentId/read-only',
+  '/work-queues/new',
+  '/payer-backbone',
+  '/payer-backbone/:payerType',
+  '/payer-backbone/:payerType/new',
+  '/payer-backbone/:payerType/:payerId',
 ];
 
 export const useBreadcrumbs = async () => {
@@ -73,6 +81,13 @@ export const useBreadcrumbs = async () => {
         );
         return { url, label: result.data.name } as any;
       },
+      ':payerId': async (payerId: string, url: string) => {
+        const payerType = url.split('/')[2];
+        const result: any = await dispatch(
+          payerBackboneApi.endpoints.getPayerBackbone.initiate({ payerType, id: payerId })
+        );
+        return { url, label: result.data.name } as any;
+      },
     };
 
     // Mapping paths to display labels based on the root menu item; many are shared...
@@ -88,6 +103,7 @@ export const useBreadcrumbs = async () => {
         'doc-documents': 'Documents',
         extraction: 'Extracted Content',
         results: 'Results',
+        lineage: 'Lineage',
         ...asyncResolvers,
       },
       '/documents': {
@@ -104,11 +120,30 @@ export const useBreadcrumbs = async () => {
         'work-queues': 'Work Queues',
         new: 'Create',
         process: 'Process',
+        'read-only': 'View',
         ...asyncResolvers,
       },
       '/translations': {
         translations: 'Translations',
         new: 'New',
+        ...asyncResolvers,
+      },
+      '/payer-backbone': {
+        'payer-backbone': 'Payer Backbone',
+        new: 'New',
+        ':payerType': (part: string, url: string) => {
+          const names: { [k: string]: string } = {
+            mco: 'MCO',
+            plan: 'Plan',
+            parent: 'Parent',
+            ump: 'UM Package',
+            bm: 'Benefit Manager',
+            formulary: 'Formulary',
+          };
+          const label = names[part];
+
+          return Promise.resolve({ url, label } as any);
+        },
         ...asyncResolvers,
       },
     };
@@ -140,6 +175,7 @@ export const useBreadcrumbs = async () => {
         }
         i++;
       }
+      break;
     }
 
     Promise.all(promises).then((results) => dispatch(setBreadcrumbs(results)));

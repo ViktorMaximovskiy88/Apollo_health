@@ -13,9 +13,9 @@ resource "aws_ecs_task_definition" "app" {
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   # TODO: Make cpu, memory a variable and determine appropriate thresholds
-  cpu                      = 1024
-  memory                   = 2048
-  
+  cpu    = 1024
+  memory = 2048
+
 
   container_definitions = jsonencode([
     {
@@ -28,65 +28,69 @@ resource "aws_ecs_task_definition" "app" {
       ]
       environment = [
         {
-          name = "ENV_TYPE"
+          name  = "ENV_TYPE"
           value = var.environment
         },
         {
-          name = "S3_ENDPOINT_URL"
+          name  = "S3_ENDPOINT_URL"
           value = data.aws_service.s3.dns_name
         },
         {
-          name = "MONGO_URL"
-          value = data.aws_ssm_parameter.mongodb-url.value
+          name  = "MONGO_URL"
+          value = local.mongodb_url
         },
         {
-          name = "MONGO_DB"
-          value = data.aws_ssm_parameter.mongodb-db.value
+          name  = "MONGO_DB"
+          value = local.mongodb_db
         },
         {
-          name = "MONGO_USER"
-          value = data.aws_ssm_parameter.mongodb-user.value
-        },
-         {
-          name = "REDIS_URL"
+          name  = "REDIS_URL"
           value = data.aws_ssm_parameter.redis-url.value
         },
         {
-          name = "S3_DOCUMENT_BUCKET"
+          name  = "S3_DOCUMENT_BUCKET"
           value = data.aws_ssm_parameter.docrepo-bucket-name.value
         },
         {
-          name = "REACT_APP_AUTH0_DOMAIN"
+          name  = "REACT_APP_AUTH0_DOMAIN"
           value = var.auth0-config.domain
         },
         {
-          name = "REACT_APP_AUTH0_CLIENT_ID"
+          name  = "REACT_APP_AUTH0_CLIENT_ID"
           value = var.auth0-config.client_id
         },
         {
-          name = "REACT_APP_AUTH0_AUDIENCE"
+          name  = "REACT_APP_AUTH0_AUDIENCE"
           value = var.auth0-config.audience
         },
         {
-          name = "AUTH0_WELLKNOWN_URL"
+          name  = "AUTH0_WELLKNOWN_URL"
           value = var.auth0-config.wellknown_url
         },
         {
-          name = "AUTH0_AUDIENCE"
+          name  = "AUTH0_AUDIENCE"
           value = var.auth0-config.audience
         },
         {
-          name = "AUTH0_ISSUER"
+          name  = "AUTH0_ISSUER"
           value = var.auth0-config.issuer
         },
         {
-          name = "EVENT_BUS_ARN"
+          name  = "EVENT_BUS_ARN"
           value = data.aws_cloudwatch_event_bus.sourcehub.arn
         },
         {
-          name = "EVENT_SOURCE"
+          name  = "EVENT_SOURCE"
           value = local.event_source
-        }
+        },
+        {
+          name = "NEW_RELIC_APP_NAME"
+          value = local.new_relic_app_name
+        },
+        {
+          name  = "NEW_RELIC_ENVIRONMENT"
+          value = var.environment
+        },
       ]
       essential = true
       portMappings = [
@@ -98,22 +102,18 @@ resource "aws_ecs_task_definition" "app" {
       LogConfiguration = {
         LogDriver = "awslogs"
         Options = {
-          awslogs-region = var.region
-          awslogs-group = aws_cloudwatch_log_group.app.name
+          awslogs-region        = var.region
+          awslogs-group         = aws_cloudwatch_log_group.app.name
           awslogs-stream-prefix = local.service_name
         }
       }
-      
-      secrets = [
+
+      secrets = concat(local.new_relic_secrets, [
         {
-          name = "MONGO_PASSWORD"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/mongodb_password"
-        },
-        {
-          name = "REDIS_PASSWORD"
+          name      = "REDIS_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_auth_password"
         }
-      ]
+      ])
 
       # healthCheck = {
       #   command = [
@@ -135,7 +135,7 @@ resource "aws_ecs_task_definition" "app" {
   }
 
   execution_role_arn = data.aws_iam_role.ecs-execution.arn
-  task_role_arn      = aws_iam_role.app-task.arn
+  task_role_arn      = aws_iam_role.sourcehub.arn
 
   tags = merge(local.effective_tags, {
     component = "${local.service_name}-app"
@@ -143,7 +143,7 @@ resource "aws_ecs_task_definition" "app" {
 }
 
 resource "aws_iam_role" "app-task" {
-  name = format("%s-%s-%s-app-mmit-role-%02d", local.app_name, var.environment,  local.service_name, var.revision)
+  name = format("%s-%s-%s-app-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
 
   assume_role_policy = jsonencode({
     Version = "2008-10-17"
@@ -198,7 +198,7 @@ resource "aws_iam_role" "app-task" {
   ]
 
   tags = merge(local.effective_tags, {
-    Name = format("%s-%s-%s-app-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
+    Name      = format("%s-%s-%s-app-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
     component = "${local.service_name}-app"
   })
 
@@ -208,7 +208,7 @@ resource "aws_security_group" "app" {
   name        = format("%s-%s-%s-app-%s-mmit-sg-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
   description = "${title(local.app_name)} SourceHub App Security Group"
   vpc_id      = data.aws_subnet.first-app-subnet.vpc_id
-  
+
   ingress = [
     {
       description = "Allow HTTP from Load Balancer"
@@ -254,7 +254,7 @@ resource "aws_security_group" "app" {
   ]
 
   tags = merge(local.effective_tags, {
-    Name = format("%s-%s-%s-app-%s-mmit-sg-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
+    Name      = format("%s-%s-%s-app-%s-mmit-sg-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
     component = "${local.service_name}-app"
   })
 
@@ -266,7 +266,7 @@ resource "aws_ecs_service" "app" {
   cluster          = data.aws_ecs_cluster.ecs-cluster.id
   task_definition  = aws_ecs_task_definition.app.arn
 
-  desired_count    = 2
+  desired_count = 2
   deployment_circuit_breaker {
     enable   = true
     rollback = true
@@ -307,7 +307,7 @@ resource "aws_ecs_service" "app" {
 resource "aws_alb_target_group" "app-http" {
   name = format("%s-%s-%s-http", local.app_name, var.environment, local.service_name)
   health_check {
-    path = "/ping"
+    path    = "/ping"
     matcher = "200-299,303"
   }
   port                 = 80
@@ -317,13 +317,13 @@ resource "aws_alb_target_group" "app-http" {
   target_type = "ip"
   vpc_id      = data.aws_subnet.first-app-subnet.vpc_id
   tags = {
-    Name = format("%s-%s-%s-http", local.app_name, var.environment, local.service_name)
+    Name      = format("%s-%s-%s-http", local.app_name, var.environment, local.service_name)
     component = "${local.service_name}-app"
   }
 }
 
 resource "aws_alb_listener_rule" "app-https" {
-  
+
   action {
     target_group_arn = aws_alb_target_group.app-http.arn
     type             = "forward"

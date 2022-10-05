@@ -21,23 +21,13 @@ interface PropTypes {
   onPageChange?: Function;
 }
 
-export function RetrievedDocumentViewer({
-  docId,
-  doc,
-  showMetadata,
-  onPageChange = () => {},
-}: PropTypes) {
+export function FileTypeViewer({ docId, doc, onPageChange = () => {} }: PropTypes) {
   const token = useAccessToken();
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
 
   if (!(token && doc)) return null;
 
-  const dataSource = Object.entries(doc.metadata || {}).map(([key, value]) => ({
-    key,
-    value,
-  }));
-
-  const viewer = ['pdf', 'html'].includes(doc.file_extension) ? (
+  return ['pdf', 'html'].includes(doc.file_extension) ? (
     <Viewer
       withCredentials={true}
       fileUrl={`${baseApiUrl}/documents/${docId}.pdf`}
@@ -61,12 +51,25 @@ export function RetrievedDocumentViewer({
   ) : (
     <TextFileLoader docId={docId} />
   );
+}
+
+export function RetrievedDocumentViewer({
+  docId,
+  doc,
+  showMetadata,
+  onPageChange = () => {},
+}: PropTypes) {
+  if (!doc) return null;
+  const dataSource = Object.entries(doc.metadata || {}).map(([key, value]) => ({
+    key,
+    value,
+  }));
 
   if (showMetadata) {
     return (
       <Tabs className="h-full">
         <Tabs.TabPane tab="Document" key="document" className="h-full overflow-auto">
-          {viewer}
+          <FileTypeViewer doc={doc} onPageChange={onPageChange} docId={docId} />
         </Tabs.TabPane>
         <Tabs.TabPane tab="Metadata" key="properties">
           <Table dataSource={dataSource} columns={columns} pagination={false} />
@@ -74,6 +77,6 @@ export function RetrievedDocumentViewer({
       </Tabs>
     );
   } else {
-    return viewer;
+    return <FileTypeViewer doc={doc} onPageChange={onPageChange} docId={docId} />;
   }
 }

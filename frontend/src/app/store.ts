@@ -11,7 +11,9 @@ import { workQueuesApi } from '../features/work_queue/workQueuesApi';
 import { proxiesApi } from '../features/proxies/proxiesApi';
 import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { translationsApi } from '../features/translations/translationApi';
-import { documentFamilyApi } from '../features/doc_documents/documentFamilyApi';
+import { payerBackboneApi } from '../features/payer-backbone/payerBackboneApi';
+import { documentFamilyApi } from '../features/doc_documents/document_family/documentFamilyApi';
+import { lineageApi } from '../features/lineage/lineageApi';
 import { rtkAuth } from '../common/auth-middleware';
 
 import navSlice from './navSlice';
@@ -19,9 +21,13 @@ import sitesReducer from '../features/sites/sitesSlice';
 import userReducer from '../features/users/userSlice';
 import collectionsReducer from '../features/collections/collectionsSlice';
 import docDocumentsReducer from '../features/doc_documents/docDocumentsSlice';
+import siteDocDocumentsReducer from '../features/doc_documents/siteDocDocumentsSlice';
 import documentsReducer from '../features/collections/documentsSlice';
 import extractionsReducer from '../features/extractions/extractionsSlice';
 import translationsReducer from '../features/translations/translationSlice';
+import payerBackboneReducer from '../features/payer-backbone/payerBackboneSlice';
+import workQueueReducer from '../features/work_queue/workQueueSlice';
+import lineageReducer from '../features/lineage/lineage-slice';
 
 const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
   history: createBrowserHistory(),
@@ -39,15 +45,21 @@ export const store = configureStore({
     [docDocumentsApi.reducerPath]: docDocumentsApi.reducer,
     [translationsApi.reducerPath]: translationsApi.reducer,
     [documentFamilyApi.reducerPath]: documentFamilyApi.reducer,
+    [payerBackboneApi.reducerPath]: payerBackboneApi.reducer,
+    [lineageApi.reducerPath]: lineageApi.reducer,
     nav: navSlice.reducer,
     sites: sitesReducer,
     users: userReducer,
     collections: collectionsReducer,
     docDocuments: docDocumentsReducer,
+    siteDocDocuments: siteDocDocumentsReducer,
     documents: documentsReducer,
     extractions: extractionsReducer,
     translations: translationsReducer,
+    workQueues: workQueueReducer,
+    payerBackbone: payerBackboneReducer,
     router: routerReducer,
+    lineage: lineageReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -61,6 +73,7 @@ export const store = configureStore({
       docDocumentsApi.middleware,
       translationsApi.middleware,
       documentFamilyApi.middleware,
+      payerBackboneApi.middleware,
       routerMiddleware,
       rtkAuth
     ),

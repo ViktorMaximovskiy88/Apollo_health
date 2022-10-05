@@ -23,9 +23,9 @@ export function DocumentsPage() {
       }
     >
       <DocumentsTable />
-      {newDocumentModalVisible ? (
+      {newDocumentModalVisible && (
         <AddDocumentModal setVisible={setNewDocumentModalVisible} siteId={params.siteId} />
-      ) : null}
+      )}
     </MainLayout>
   );
 }

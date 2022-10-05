@@ -3,3 +3,5 @@ max-line-length = 100
 extend-ignore = E402
 per-file-ignores =
     backend/scrapeworker/common/utils.py:E501
+    backend/common/services/lineage_test.py:E501
+    backend/common/services/lineage_matcher.py:E501

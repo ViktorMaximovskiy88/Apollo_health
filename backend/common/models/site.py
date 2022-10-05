@@ -3,11 +3,12 @@ from datetime import datetime
 from beanie import PydanticObjectId
 from pydantic import BaseModel, Field, HttpUrl
 
-from backend.common.core.enums import CollectionMethod, SiteStatus
+from backend.common.core.enums import CollectionMethod, SearchableType, SiteStatus
 from backend.common.models.base_document import BaseDocument
 
 
 class AttrSelector(BaseModel):
+    attr_element: str | None = "a"
     attr_name: str
     attr_value: str | None = None
     has_text: str | None = None
@@ -22,8 +23,8 @@ class FocusTherapyConfig(BaseModel):
 
 
 class ScrapeMethodConfiguration(BaseModel):
-    document_extensions: list[str]
-    url_keywords: list[str]
+    document_extensions: list[str] = []
+    url_keywords: list[str] = []
     proxy_exclusions: list[PydanticObjectId] = []
     wait_for: list[str] = []
     wait_for_timeout_ms: int = 0
@@ -31,8 +32,15 @@ class ScrapeMethodConfiguration(BaseModel):
     follow_links: bool = False
     follow_link_keywords: list[str] = []
     follow_link_url_keywords: list[str] = []
+    searchable: bool = False
+    searchable_type: SearchableType | None = None
+    searchable_input: AttrSelector | None = None
+    searchable_submit: AttrSelector | None = None
     attr_selectors: list[AttrSelector] = []
+    html_attr_selectors: list[AttrSelector] = []
+    html_exclusion_selectors: list[AttrSelector] = []
     focus_therapy_configs: list[FocusTherapyConfig] = []
+    allow_docdoc_updates: bool = False
 
 
 class UpdateScrapeMethodConfiguration(BaseModel):
@@ -43,10 +51,17 @@ class UpdateScrapeMethodConfiguration(BaseModel):
     follow_links: bool | None = None
     follow_link_keywords: list[str] | None = None
     follow_link_url_keywords: list[str] | None = None
+    searchable: bool | None = None
+    searchable_type: SearchableType | None = None
+    searchable_input: AttrSelector | None = None
+    searchable_submit: AttrSelector | None = None
     wait_for_timeout_ms: int = 0
     search_in_frames: bool = False
     attr_selectors: list[AttrSelector] | None = None
+    html_attr_selectors: list[AttrSelector] = []
+    html_exclusion_selectors: list[AttrSelector] = []
     focus_therapy_configs: list[FocusTherapyConfig] | None = None
+    allow_docdoc_updates: bool | None = None
 
 
 class BaseUrl(BaseModel):
@@ -61,7 +76,7 @@ class NewSite(BaseModel):
     base_urls: list[BaseUrl] = []
     collection_method: str | None = CollectionMethod.Automated
     scrape_method: str | None = ""
-    scrape_method_configuration: ScrapeMethodConfiguration
+    scrape_method_configuration: ScrapeMethodConfiguration = ScrapeMethodConfiguration()
     tags: list[str] = []
     playbook: str | None = None
     cron: str | None = ""
@@ -73,6 +88,7 @@ class UpdateSite(BaseModel):
     base_urls: list[BaseUrl] | None = None
     scrape_method: str | None = None
     collection_method: str | None = None
+    collection_hold: datetime | None = None
     tags: list[str] | None = None
     cron: str | None = None
     disabled: bool | None = None
@@ -88,19 +104,44 @@ class UpdateSiteAssigne(BaseModel):
 
 
 class Site(BaseDocument, NewSite):
-    disabled: bool
+    disabled: bool = False
     last_run_status: str | None = None
     collection_method: str | None = CollectionMethod.Automated
+    collection_hold: datetime | None = None
     last_run_time: datetime | None = None
     assignee: PydanticObjectId | None = None
 
 
 # Deprecated
+class NoSearchableHtmlConfig(ScrapeMethodConfiguration):
+    searchable: bool | None = None
+    html_attr_selectors: list[AttrSelector] | None = None
+    html_exclusion_selectors: list[AttrSelector] | None = None
+
+
+class NoSearchableHtmlSite(Site):
+    scrape_method_configuration: NoSearchableHtmlConfig
+
+    class Collection:
+        name = "Site"
+
+
+class NoDocDocUpdatesConfig(NoSearchableHtmlConfig):
+    allow_docdoc_updates: bool | None = None
+
+
+class NoDocDocUpdatesSite(NoSearchableHtmlSite):
+    scrape_method_configuration: NoDocDocUpdatesConfig
+
+    class Collection:
+        name = "Site"
+
+
 class NoFocusConfigsScrapeConfig(ScrapeMethodConfiguration):
     focus_therapy_configs: list[FocusTherapyConfig] | None = None
 
 
-class NoFocusConfigsSite(Site):
+class NoFocusConfigsSite(NoDocDocUpdatesSite):
     scrape_method_configuration: NoFocusConfigsScrapeConfig
 
     class Collection:
@@ -171,3 +212,8 @@ class CollectionTypeSite(SingleUrlSite):
 
     class Collection:
         name = "Site"
+
+
+class ActiveUrlResponse(BaseModel):
+    in_use: bool
+    site: Site | None = None

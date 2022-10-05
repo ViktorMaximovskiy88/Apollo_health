@@ -30,7 +30,7 @@ def get_provider_detail(token: str):
 async def get_auth0_user_info(token: str):
     headers = {"Authorization": f"Bearer {token}"}
     async with aiohttp.ClientSession() as session:
-        async with session.get(settings.auth0.user_info_url, headers=headers) as resp:
+        async with session.get(settings.auth0.userinfo_url, headers=headers) as resp:
             json_resp = await resp.json()
             return json_resp
 

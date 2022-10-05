@@ -10,7 +10,9 @@ import {
   Select,
   Tooltip,
   message,
+  Checkbox,
 } from 'antd';
+
 import { useForm } from 'antd/lib/form/Form';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
@@ -23,38 +25,36 @@ import {
 
 import { prettyDate } from '../../common';
 import { useAddDocumentMutation } from '../retrieved_documents/documentsApi';
-import { useGetScrapeTasksForSiteQuery } from './siteScrapeTasksApi';
 import { baseApiUrl, client } from '../../app/base-api';
-import { DocumentTypes, LanguageCodes } from '../retrieved_documents/types';
-import { DocDocument } from '../doc_documents/types';
+import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
+import { SiteDocDocument } from '../doc_documents/types';
 
 interface AddDocumentModalPropTypes {
-  oldVersion?: DocDocument;
+  oldVersion?: SiteDocDocument;
   setVisible: (visible: boolean) => void;
   siteId: any;
 }
 
 export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocumentModalPropTypes) {
   const [form] = useForm();
-  const { data: scrapeTasks } = useGetScrapeTasksForSiteQuery(siteId, {
-    pollingInterval: 3000,
-  });
   const [addDoc] = useAddDocumentMutation();
   const [fileData, setFileData] = useState<any>();
+
   let initialValues: any = {
     lang_code: 'en',
+    internal_document: false,
   };
+
   if (oldVersion) {
+    const { site_id, link_text, base_url, url } = oldVersion;
     initialValues = {
       lang_code: oldVersion.lang_code,
       name: oldVersion.name,
       document_type: oldVersion.document_type,
-      link_text: oldVersion.link_text,
-      url: oldVersion.url,
-      base_url: oldVersion.base_url,
+      internal_document: oldVersion.internal_document,
+      locations: [{ site_id, link_text, base_url, url }],
     };
   }
-
   /* eslint-disable no-template-curly-in-string */
   const validateMessages = {
     required: '${label} is required!',
@@ -67,18 +67,19 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
   async function saveDocument(newDocument: any) {
     try {
       newDocument.site_id = siteId;
-      if (scrapeTasks) {
-        newDocument.scrape_task_id = scrapeTasks[0]._id;
-      }
+      //  we nuked this relationship
+      // if (scrapeTasks) {
+      //   newDocument.scrape_task_id = scrapeTasks[0]._id;
+      // }
       // used to determine how we handle this request if new_version or new document
       if (oldVersion) {
         newDocument._id = oldVersion._id;
         newDocument.last_collected_date = oldVersion.last_collected_date;
+        newDocument.internal_document = oldVersion.internal_document;
       }
       fileData.metadata.link_text = newDocument.link_text;
       delete newDocument.link_text;
       delete newDocument.document_file;
-
       await addDoc({
         ...newDocument,
         ...fileData,
@@ -101,7 +102,11 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
         validateMessages={validateMessages}
         onFinish={saveDocument}
       >
-        <UploadItem form={form} setFileData={setFileData} />
+        <div className="flex grow space-x-3">
+          <UploadItem form={form} setFileData={setFileData} />
+          <InternalDocument oldVersion={oldVersion} />
+        </div>
+
         <div className="flex grow space-x-3">
           <Form.Item
             className="grow"
@@ -175,39 +180,54 @@ function UploadItem(props: any) {
   };
 
   return (
-    <Form.Item
-      name="document_file"
-      label="Document File"
-      rules={[{ required: uploadStatus === 'done' ? false : true }]}
-    >
-      <Upload
-        name="file"
-        accept=".pdf,.xlsx,.docx"
-        action={`${baseApiUrl}/documents/upload`}
-        headers={{
-          Authorization: `Bearer ${token}`,
-        }}
-        showUploadList={false}
-        onChange={onChange}
+    <div className="flex grow space-x-4">
+      <Form.Item
+        name="document_file"
+        label="Document File"
+        rules={[{ required: uploadStatus === 'done' ? false : true }]}
       >
-        {uploadStatus === 'uploading' ? (
-          <Button style={{ marginRight: '10px' }} icon={<LoadingOutlined />}>
-            Uploading {fileName}...
-          </Button>
-        ) : uploadStatus === 'done' ? (
-          <Button style={{ marginRight: '10px' }} icon={<CheckCircleOutlined />}>
-            {fileName} uploaded!
-          </Button>
-        ) : (
-          <Button style={{ marginRight: '10px' }} icon={<UploadOutlined />}>
-            Click to Upload
-          </Button>
-        )}
-      </Upload>
-      <Tooltip placement="right" title="Only upload .pdf, .xlsx and .docx">
-        <QuestionCircleOutlined />
-      </Tooltip>
-    </Form.Item>
+        <Upload
+          name="file"
+          accept=".pdf,.xlsx,.docx"
+          action={`${baseApiUrl}/documents/upload`}
+          headers={{
+            Authorization: `Bearer ${token}`,
+          }}
+          showUploadList={false}
+          onChange={onChange}
+        >
+          {uploadStatus === 'uploading' ? (
+            <Button style={{ marginRight: '10px' }} icon={<LoadingOutlined />}>
+              Uploading {fileName}...
+            </Button>
+          ) : uploadStatus === 'done' ? (
+            <Button style={{ marginRight: '10px' }} icon={<CheckCircleOutlined />}>
+              {fileName} uploaded!
+            </Button>
+          ) : (
+            <Button style={{ marginRight: '10px' }} icon={<UploadOutlined />}>
+              Click to Upload
+            </Button>
+          )}
+        </Upload>
+        <Tooltip placement="right" title="Only upload .pdf, .xlsx and .docx">
+          <QuestionCircleOutlined />
+        </Tooltip>
+      </Form.Item>
+    </div>
+  );
+}
+
+function InternalDocument(props: any) {
+  const { oldVersion } = props;
+
+  return (
+    <>
+      <div className="mt-1">Internal Document&nbsp;</div>
+      <Form.Item valuePropName="checked" className="grow" name="internal_document">
+        <Checkbox disabled={oldVersion ? true : false} />
+      </Form.Item>
+    </>
   );
 }
 
@@ -227,7 +247,7 @@ function DocumentTypeItem() {
 function LanguageItem() {
   return (
     <Form.Item className="grow" name="lang_code" label="Language" rules={[{ required: true }]}>
-      <Select options={LanguageCodes} />
+      <Select options={languageCodes} />
     </Form.Item>
   );
 }

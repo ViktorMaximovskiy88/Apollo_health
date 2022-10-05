@@ -10,6 +10,7 @@ import {
   WorkQueue,
   WorkQueueCount,
 } from './types';
+import { TableState } from './workQueueSlice';
 
 export const workQueuesApi = createApi({
   reducerPath: 'workQueuesApi',
@@ -78,23 +79,32 @@ export const workQueuesApi = createApi({
       query: (id) => `/change-log/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
     }),
-    takeNextWorkItem: builder.mutation<TakeNextWorkItemResponse, string | undefined>({
-      query: (workQueueId) => ({
-        url: `/work-queues/${workQueueId}/items/take-next`,
+    takeNextWorkItem: builder.mutation<
+      TakeNextWorkItemResponse,
+      { queueId: string | undefined; tableState: TableState }
+    >({
+      query: ({ queueId, tableState: body }) => ({
+        url: `/work-queues/${queueId}/items/take-next`,
         method: 'POST',
+        body,
       }),
     }),
-    takeWorkItem: builder.mutation<TakeWorkItemResponse, { itemId?: string; workQueueId?: string }>( { query: ({ itemId, workQueueId }) => ({
+    takeWorkItem: builder.mutation<TakeWorkItemResponse, { itemId?: string; workQueueId?: string }>(
+      {
+        query: ({ itemId, workQueueId }) => ({
           url: `/work-queues/${workQueueId}/items/${itemId}/take`,
           method: 'POST',
         }),
       }
     ),
-    submitWorkItem: builder.mutation<SubmitWorkItemResponse, { itemId?: string; workQueueId?: string, body: SubmitWorkItemRequest }>({
+    submitWorkItem: builder.mutation<
+      SubmitWorkItemResponse,
+      { itemId?: string; workQueueId?: string; body: SubmitWorkItemRequest }
+    >({
       query: ({ itemId, body, workQueueId }) => ({
         url: `/work-queues/${workQueueId}/items/${itemId}/submit`,
         method: 'POST',
-        body
+        body,
       }),
     }),
   }),

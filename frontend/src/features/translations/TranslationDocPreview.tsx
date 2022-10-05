@@ -96,7 +96,6 @@ export function SampleTranslationTable(props: { docId: string; form: FormInstanc
   const { data, isFetching } = useTranslateSampleDocumentTablesQuery(config, {
     skip: !config,
   });
-
   const onClick = useCallback(() => {
     setConfig(props.form.getFieldsValue());
   }, [setConfig, props]);
@@ -116,7 +115,13 @@ export function SampleTranslationTable(props: { docId: string; form: FormInstanc
           header: 'Code',
           name: 'code',
           minWidth: 80,
-          maxWidth: 80,
+          width: 80,
+        });
+        cols.push({
+          header: 'RxNorm',
+          name: 'rxcui',
+          minWidth: 100,
+          width: 100,
         });
       } else if (col.field === 'Tier') {
         cols.push({
@@ -141,7 +146,7 @@ export function SampleTranslationTable(props: { docId: string; form: FormInstanc
           minWidth: 62,
           maxWidth: 62,
         });
-        if (col.pattern.includes('*')) {
+        if (col.capture_all || col.pattern.includes('*')) {
           cols.push({
             header: 'ST Note',
             minWidth: 100,
@@ -156,14 +161,29 @@ export function SampleTranslationTable(props: { docId: string; form: FormInstanc
           minWidth: 62,
           maxWidth: 62,
         });
-        if (col.pattern.includes('*')) {
+        if (col.capture_all || col.pattern.includes('*')) {
           cols.push({
             header: 'PA Note',
             minWidth: 100,
             name: 'pan',
           });
         }
-      } else if (col.field === 'QL') {
+      } else if (col.field === 'CPA') {
+        cols.push({
+          header: 'CPA',
+          render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
+          name: 'cpa',
+          minWidth: 62,
+          maxWidth: 62,
+        });
+        if (col.capture_all || col.pattern.includes('*')) {
+          cols.push({
+            header: 'Cond. PA Note',
+            minWidth: 100,
+            name: 'cpan',
+          });
+        }
+      } else if (col.field === 'QL' || col.field == 'QLC') {
         cols.push({
           header: 'QL',
           render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
@@ -171,17 +191,66 @@ export function SampleTranslationTable(props: { docId: string; form: FormInstanc
           minWidth: 63,
           maxWidth: 63,
         });
-        if (col.pattern.includes('*')) {
+        if (col.capture_all || col.pattern.includes('*') || col.field == 'QLC') {
           cols.push({
             header: 'QL Note',
             name: 'qln',
             minWidth: 100,
           });
         }
+      } else if (col.field === 'STPA') {
+        cols.push({
+          header: 'STPA',
+          name: 'stpa',
+          render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
+          minWidth: 62,
+          maxWidth: 62,
+        });
+      } else if (col.field === 'MB') {
+        cols.push({
+          header: 'MB',
+          name: 'mb',
+          render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
+          minWidth: 70,
+          maxWidth: 70,
+        });
+      } else if (col.field === 'SCO') {
+        cols.push({
+          header: 'SCO',
+          name: 'sco',
+          render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
+          minWidth: 100,
+          maxWidth: 100,
+        });
+      } else if (col.field === 'DME') {
+        cols.push({
+          header: 'DME',
+          name: 'dme',
+          render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
+          minWidth: 70,
+        });
       }
       return cols;
     });
-    const order = ['name', 'code', 'tier', 'sp', 'st', 'stn', 'pa', 'pan', 'ql', 'qln'];
+    const order = [
+      'name',
+      'code',
+      'rxcui',
+      'tier',
+      'sp',
+      'st',
+      'stn',
+      'pa',
+      'pan',
+      'cpa',
+      'cpan',
+      'stpa',
+      'mb',
+      'sco',
+      'dme',
+      'ql',
+      'qln',
+    ];
     return sortBy(uniqBy(newColumns, 'name'), (c) => order.indexOf(c.name!));
   }, [config]);
 

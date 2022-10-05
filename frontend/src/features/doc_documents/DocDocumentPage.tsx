@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 
 import { MainLayout } from '../../components';
 import { SiteMenu } from '../sites/SiteMenu';
+
 import { DocDocumentsTable } from './DocDocumentsTable';
 import { AddDocumentModal } from '../collections/addDocumentModal';
 import { DocDocument } from './types';
@@ -35,13 +36,13 @@ export function DocDocumentsPage() {
         </>
       }
     >
-      {newDocumentModalVisible ? (
+      {newDocumentModalVisible && (
         <AddDocumentModal
           oldVersion={oldVersion}
           setVisible={hideNewDocument}
           siteId={params.siteId}
         />
-      ) : null}
+      )}
       <DocDocumentsTable handleNewVersion={handleNewVersion} />
     </MainLayout>
   );

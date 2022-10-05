@@ -2,25 +2,26 @@ import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/t
 import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
 import { Site } from './types';
+import { RetrievedDocument } from '../retrieved_documents/types';
+import { SiteDocDocument } from '../doc_documents/types';
 
 export const sitesApi = createApi({
   reducerPath: 'sitesApi',
   baseQuery: fetchBaseQuery(),
-  tagTypes: ['Site', 'ChangeLog'],
+  tagTypes: ['Site', 'ChangeLog', 'SiteDocDocument', 'RetrievedDocument'],
   endpoints: (builder) => ({
     getSites: builder.query<
       { data: Site[]; total: number },
-      { limit: number; skip: number; sortInfo: TypeSortInfo; filterValue: TypeFilterValue }
+      { limit?: number; skip?: number; sortInfo?: TypeSortInfo; filterValue?: TypeFilterValue }
     >({
       query: ({ limit, skip, sortInfo, filterValue }) => {
         const sorts = sortInfo ? [sortInfo] : [];
-        const args = [
-          `limit=${encodeURIComponent(limit)}`,
-          `skip=${encodeURIComponent(skip)}`,
-          `sorts=${encodeURIComponent(JSON.stringify(sorts))}`,
-          `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
-        ].join('&');
-        return `/sites/?${args}`;
+        const args = [];
+        if (limit) args.push(`limit=${encodeURIComponent(limit)}`);
+        if (skip) args.push(`skip=${encodeURIComponent(skip)}`);
+        if (sorts) args.push(`sorts=${encodeURIComponent(JSON.stringify(sorts))}`);
+        if (filterValue) args.push(`filters=${encodeURIComponent(JSON.stringify(filterValue))}`);
+        return `/sites/?${args.join('&')}`;
       },
       providesTags: (results) => {
         const tags = [{ type: 'Site' as const, id: 'LIST' }];
@@ -28,9 +29,53 @@ export const sitesApi = createApi({
         return tags;
       },
     }),
-    getSite: builder.query<Site, string | undefined>({
+    getSite: builder.query<Site, string | null | undefined>({
       query: (id) => `/sites/${id}`,
+      providesTags: (_r, _e, id) => (id ? [{ type: 'Site' as const, id }] : []),
+    }),
+    getSiteRetrievedDocuments: builder.query<
+      RetrievedDocument[],
+      {
+        siteId: String | undefined;
+        scrapeTaskId: String | null;
+      }
+    >({
+      query: ({ siteId, scrapeTaskId }) => {
+        let url = `/sites/${siteId}/documents`;
+        if (scrapeTaskId) {
+          url += `?scrape_task_id=${scrapeTaskId}`;
+        }
+        return url;
+      },
+      providesTags: (results) => {
+        const tags = [{ type: 'RetrievedDocument' as const, id: 'LIST' }];
+        results?.forEach(({ _id: id }) => tags.push({ type: 'RetrievedDocument', id }));
+        return tags;
+      },
+    }),
+    getSiteDocDocument: builder.query<SiteDocDocument, any>({
+      query: ({ siteId, docId }) => `/sites/${siteId}/doc-documents/${docId}`,
       providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
+    }),
+    getSiteDocDocuments: builder.query<
+      SiteDocDocument[],
+      {
+        siteId: String | undefined;
+        scrapeTaskId: String | null;
+      }
+    >({
+      query: ({ siteId, scrapeTaskId }) => {
+        let url = `/sites/${siteId}/doc-documents`;
+        if (scrapeTaskId) {
+          url += `?scrape_task_id=${scrapeTaskId}`;
+        }
+        return url;
+      },
+      providesTags: (results) => {
+        const tags = [{ type: 'SiteDocDocument' as const, id: 'LIST' }];
+        results?.forEach(({ _id: id }) => tags.push({ type: 'SiteDocDocument', id }));
+        return tags;
+      },
     }),
     addSite: builder.mutation<Site, Partial<Site>>({
       query: (body) => ({ url: '/sites/', method: 'PUT', body }),
@@ -74,4 +119,8 @@ export const {
   useUpdateMultipleSitesMutation,
   useDeleteSiteMutation,
   useGetChangeLogQuery,
+  useGetSiteRetrievedDocumentsQuery,
+  useGetSiteDocDocumentsQuery,
+  useGetSiteDocDocumentQuery,
+  useLazyGetSiteDocDocumentsQuery,
 } = sitesApi;

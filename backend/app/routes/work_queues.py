@@ -12,6 +12,7 @@ from backend.app.routes.table_query import (
     TableFilterInfo,
     TableQueryResponse,
     TableSortInfo,
+    construct_table_query,
     get_query_json_list,
     query_table,
 )
@@ -103,19 +104,20 @@ class IdOnlyDocument(BaseModel):
     id: PydanticObjectId = Field(None, alias="_id")
 
 
+class LocationSubDocument(BaseModel):
+    site_id: PydanticObjectId
+
+
 class IdNameLockOnlyDocument(IdOnlyDocument):
     name: str
+    document_type: str | None = None
+    final_effective_date: datetime | None = None
+    locations: list[LocationSubDocument] = []
     locks: list[TaskLock] = []
 
 
-@router.get("/{id}/items", response_model=TableQueryResponse)
-async def get_work_queue_items(
-    work_queue: WorkQueue = Depends(get_target),
-    current_user: User = Security(get_current_user),
-    limit: int | None = None,
-    skip: int | None = None,
-    sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
-    filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
+def combine_queue_query_with_user_query(
+    work_queue: WorkQueue, sorts: list[TableSortInfo], filters: list[TableFilterInfo]
 ):
     Collection: BaseDocument = getattr(collection_classes, work_queue.collection_name)
     query = (
@@ -129,7 +131,21 @@ async def get_work_queue_items(
             filters.append(
                 TableFilterInfo(name="locks.expires", operator="after", type="date", value=now)
             )
-    return await query_table(query, limit, skip, sorts, filters)
+
+    return construct_table_query(query, sorts, filters)
+
+
+@router.get("/{id}/items", response_model=TableQueryResponse)
+async def get_work_queue_items(
+    work_queue: WorkQueue = Depends(get_target),
+    current_user: User = Security(get_current_user),
+    limit: int | None = None,
+    skip: int | None = None,
+    sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
+    filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
+):
+    query = combine_queue_query_with_user_query(work_queue, sorts, filters)
+    return await query_table(query, limit, skip)
 
 
 class TakeLockResponse(BaseModel):
@@ -231,22 +247,19 @@ async def attempt_lock_acquire(
 
 @router.post("/{id}/items/take-next", response_model=TakeNextWorkQueueResponse)
 async def take_next_work_item(
+    filter: list[TableFilterInfo] = [],
+    sort: list[TableSortInfo] = [],
     work_queue: WorkQueue = Depends(get_target),
     current_user: User = Security(get_current_user),
 ):
-    Collection: Type[BaseDocument] = getattr(collection_classes, work_queue.collection_name)
     now = datetime.now(tz=timezone.utc)
     unclaimed_query = {
         "locks": {"$not": {"$elemMatch": {"work_queue_id": work_queue.id, "expires": {"$gt": now}}}}
     }
     for _ in range(5):
-        item = (
-            await Collection.find(work_queue.document_query)
-            .find(unclaimed_query)
-            .sort(*work_queue.sort_query)
-            .project(IdOnlyDocument)
-            .first_or_none()
-        )
+        query = combine_queue_query_with_user_query(work_queue, sort, filter)
+        query = query.find(unclaimed_query)
+        item = await query.project(IdOnlyDocument).first_or_none()
         if not item or not item.id:
             await asyncio.sleep(0.1)
             continue

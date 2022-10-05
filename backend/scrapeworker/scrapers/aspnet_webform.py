@@ -1,15 +1,17 @@
 import asyncio
+import logging
+import os
 import re
 from functools import cached_property
 
 from playwright._impl._api_structures import SetCookieParam
-from playwright.async_api import ElementHandle, Locator
+from playwright.async_api import Download, ElementHandle, Locator
 from playwright.async_api import Request as RouteRequest
 from playwright.async_api import Route
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
-from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
-from backend.scrapeworker.common.selectors import filter_by_href
+from backend.scrapeworker.common.models import DownloadContext, Metadata, Request, Response
+from backend.scrapeworker.common.selectors import filter_by_href, to_xpath
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 
 
@@ -26,6 +28,16 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
     def css_selector(self) -> str:
         href_selectors = filter_by_href(webform=True)
         return ", ".join(href_selectors)
+
+    @cached_property
+    def xpath_selector(self) -> str:
+        selectors = []
+        for attr_selector in self.config.attr_selectors:
+            if not attr_selector.resource_address:
+                selectors.append(to_xpath(attr_selector))
+        selector_string = "|".join(selectors)
+        self.log.info(selector_string)
+        return selector_string
 
     async def __setup(self):
         cookie: SetCookieParam = {
@@ -53,6 +65,7 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
         self.log.info(f"interacting {self.url}")
 
         async def intercept(route: Route, request: RouteRequest):
+            # Handle post
             if self.url in request.url and request.method == "POST":
                 self.log.info(f"queueing {element_id}")
                 self.requests.append(
@@ -67,6 +80,29 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
                 await route.continue_()
             else:
                 await route.abort()
+
+        async def postprocess_download(download: Download) -> None:
+            accepted_types = [".pdf", ".xls", ".xlsx", ".doc", ".docx"]
+            try:
+                # Response may not always have content-type header.
+                # Use filename ext instead.
+                # suggested_filename='PriorAuthorization.pdf'
+                filename, file_extension = os.path.splitext(download.suggested_filename)
+                if file_extension in accepted_types:
+                    self.log.debug(f"asp -> direct download: {filename}.{file_extension}")
+                    download = DownloadContext(
+                        response=Response(content_type=None),
+                        request=Request(
+                            url=download.url,
+                        ),
+                    )
+                    download.metadata = await self.extract_metadata(link_handle)
+                    self.downloads.append(download)
+                else:
+                    self.log.debug(f"unknown download extension: {file_extension}")
+                    return None
+            except Exception:
+                logging.error("exception", exc_info=True)
 
         async def click_with_backoff(locator: Locator, max_retries: int = 2) -> None:
             for retry in range(0, max_retries + 1):
@@ -86,15 +122,29 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
 
         await self.page.route("**/*", intercept)
 
-        metadata: Metadata
-        for index, metadata in enumerate(self.metadatas):
-            if not metadata.element_id:
-                continue
-            element_id = re.sub(r"(?u)[^-\w.]", "_", metadata.element_id)
-            locator: Locator = self.page.locator(f"#{metadata.element_id}")
-            await click_with_backoff(locator)
+        if self.config.attr_selectors:
+            self.page.on("download", postprocess_download)
+            xpath_locator = self.page.locator(self.xpath_selector)
+            xpath_locator_count = await xpath_locator.count()
+            for index in range(0, xpath_locator_count):
+                try:
+                    link_handle = await xpath_locator.nth(index).element_handle(timeout=1000)
+                    await link_handle.click()
+                    await asyncio.sleep(0.25)
+                except Exception:
+                    logging.error("exception", exc_info=True)
+                    await self.page.goto(self.url)
+        else:
+            self.page.on("download", lambda download: download.cancel())
+            metadata: Metadata
+            for index, metadata in enumerate(self.metadatas):
+                if not metadata.element_id:
+                    continue
+                element_id = re.sub(r"(?u)[^-\w.]", "_", metadata.element_id)
+                locator: Locator = self.page.locator(f"#{metadata.element_id}")
+                await click_with_backoff(locator)
 
-        await self.page.unroute("**/*", intercept)
+            await self.page.unroute("**/*", intercept)
 
     async def __process(self):
         for index, request in enumerate(self.requests):

@@ -9,19 +9,17 @@ import {
 } from './translationSlice';
 import { ButtonLink } from '../../components';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { Site } from '../sites/types';
 import { useGetChangeLogQuery, useLazyGetTranslationConfigsQuery } from './translationApi';
-import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
-import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
+import { useDataTableSort, useDataTableFilter, useDataTablePagination } from '../../common/hooks';
 import { TranslationConfig } from './types';
-import { useDataTablePagination } from '../../common/hooks/use-data-table-pagination';
+import { CopyTranslation } from './CopyTranslation';
 
 const columns = [
   {
     header: 'Name',
     name: 'name',
-    render: ({ data: doc }: { data: TranslationConfig }) => {
-      return <ButtonLink to={`${doc._id}`}>{doc.name}</ButtonLink>;
+    render: ({ data: translation }: { data: TranslationConfig }) => {
+      return <ButtonLink to={`${translation._id}`}>{translation.name}</ButtonLink>;
     },
     defaultFlex: 1,
   },
@@ -29,10 +27,11 @@ const columns = [
     header: 'Actions',
     name: 'action',
     minWidth: 180,
-    render: ({ data: site }: { data: Site }) => {
+    render: ({ data: translation }: { data: TranslationConfig }) => {
       return (
         <>
-          <ChangeLogModal target={site} useChangeLogQuery={useGetChangeLogQuery} />
+          <ChangeLogModal target={translation} useChangeLogQuery={useGetChangeLogQuery} />
+          <CopyTranslation translation={translation} />
         </>
       );
     },
@@ -51,13 +50,13 @@ export function TranslationsDataTable() {
     },
     [getTranslationsFn]
   );
-
   const filterProps = useDataTableFilter(translationTableState, setTranslationTableFilter);
   const sortProps = useDataTableSort(translationTableState, setTranslationTableSort);
   const paginationProps = useDataTablePagination(
     translationTableState,
     setTranslationTableLimit,
-    setTranslationTableSkip
+    setTranslationTableSkip,
+    undefined
   );
 
   return (

@@ -108,6 +108,10 @@ a {
   color: var(--blue-primary);
 }
 
+.ant-form-item-label > label {
+  font-weight: 600; /* semi-bold */
+}
+
 .ant-radio-button-wrapper-checked:not([class*='ant-radio-button-wrapper-disabled']).ant-radio-button-wrapper:first-child {
   border-right-color: var(--blue-primary);
 }
@@ -129,4 +133,17 @@ a {
   display: flex;
   height: 100%;
   flex-direction: column;
+}
+
+.property-grid input[readonly] {
+  border: none;
+  padding: 0;
+  background-color: #fcfcfc;
+}
+
+.property-grid .ant-form-item-label {
+  padding: 0;
+}
+.property-grid .ant-form-item {
+  margin-bottom: 12px;
 }

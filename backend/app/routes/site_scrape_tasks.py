@@ -1,14 +1,22 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import typer
 from beanie import PydanticObjectId
 from beanie.odm.operators.update.general import Set
 from fastapi import APIRouter, Depends, HTTPException, Security, status
+from pydantic import BaseModel
 from pymongo import ReturnDocument
 
+from backend.app.routes.table_query import (
+    TableFilterInfo,
+    TableQueryResponse,
+    TableSortInfo,
+    get_query_json_list,
+    query_table,
+)
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
-from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
+from backend.common.core.enums import BulkScrapeActions, CollectionMethod, SiteStatus, TaskStatus
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import Site
@@ -34,18 +42,18 @@ async def get_target(id: PydanticObjectId):
 
 @router.get(
     "/",
-    response_model=list[SiteScrapeTask],
+    response_model=TableQueryResponse,
     dependencies=[Security(get_current_user)],
 )
 async def read_scrape_tasks_for_site(
     site_id: PydanticObjectId,
+    limit: int | None = None,
+    skip: int | None = None,
+    sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
+    filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
-    scrape_tasks: list[SiteScrapeTask] = (
-        await SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id)
-        .sort("-queued_time")
-        .to_list()
-    )
-    return scrape_tasks
+    query = SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id)
+    return await query_table(query, limit, skip, sorts, filters)
 
 
 @router.get(
@@ -124,65 +132,100 @@ async def start_scrape_task(
     return site_scrape_task
 
 
-@router.post("/bulk-run")
-async def run_bulk_by_type(
-    type: str,
-    logger: Logger = Depends(get_logger),
-    current_user: User = Security(get_current_user),
-):
-    bulk_type = type
-    total_scrapes = 0
-    query = {
+def build_bulk_sites_query(bulk_type: str):
+    find_query = {
         "disabled": False,
         "base_urls": {"$exists": True, "$not": {"$size": 0}},
         "collection_method": {"$ne": CollectionMethod.Manual},
         "status": {"$ne": SiteStatus.INACTIVE},
     }
+    update_query = {Site.last_run_status: TaskStatus.QUEUED}
+
     if bulk_type == "new":
-        query["status"] = SiteStatus.NEW
+        find_query["status"] = SiteStatus.NEW
     elif bulk_type == "failed":
-        query["last_run_status"] = {"$in": [TaskStatus.FAILED, TaskStatus.CANCELED]}
+        find_query["last_run_status"] = {"$in": [TaskStatus.FAILED, TaskStatus.CANCELED]}
     elif bulk_type == "canceled":
-        query["last_run_status"] = TaskStatus.CANCELED
+        find_query["last_run_status"] = TaskStatus.CANCELED
     elif bulk_type == "cancel-active":
-        del query["status"]
-        query["last_run_status"] = {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}
+        del find_query["status"]
+        find_query["last_run_status"] = {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}
     elif bulk_type == "all":
-        query["last_run_status"] = {"$nin": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}
+        find_query["last_run_status"] = {"$nin": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}
+    elif bulk_type == "hold-all":
+        del find_query["status"]
+        hold_ts = datetime.now(tz=timezone.utc) + timedelta(days=1)
+        update_query = {Site.collection_hold: hold_ts}
+    elif bulk_type == "cancel-hold-all":
+        find_query = {"collection_hold": {"$ne": None}}
+        update_query = {Site.collection_hold: None}
 
-    async for site in Site.find_many(query):
-        site_id: PydanticObjectId = site.id  # type: ignore
+    return find_query, update_query
 
-        if bulk_type == "cancel-active":
-            total_scrapes += 1
-            await SiteScrapeTask.get_motor_collection().update_many(
-                {
-                    "site_id": site_id,
-                    "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]},
-                },
-                {"$set": {"status": TaskStatus.CANCELING}},
-            )
-            await site.update(Set({Site.last_run_status: TaskStatus.CANCELING}))
-        else:
-            site_scrape_task = SiteScrapeTask(
-                site_id=site_id, queued_time=datetime.now(tz=timezone.utc)
-            )
-            site_scrape_task = await try_queue_unique_task(site_scrape_task)
-            if site_scrape_task:
-                total_scrapes += 1
-                await logger.background_log_change(current_user, site_scrape_task, "CREATE")
-                await site.update(
-                    Set(
-                        {
-                            Site.last_run_status: site_scrape_task.status,
-                        }
-                    )
-                )
 
-    if bulk_type == "cancel-active":
-        return {"status": True, "canceled_scrapes": total_scrapes}
+class BulkRunResponse(BaseModel):
+    type: str
+    scrapes: int | None = None
+    sites: int | None = None
+
+
+@router.post("/bulk-run", response_model=BulkRunResponse)
+async def run_bulk_by_type(
+    type: str,
+    logger: Logger = Depends(get_logger),
+    current_user: User = Security(get_current_user),
+):
+    async def cancel_site_scrapes(site_id: PydanticObjectId) -> int:
+        query = {
+            "site_id": site_id,
+            "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]},
+        }
+        scrapes = SiteScrapeTask.find_many(query)
+        scrapes_count = await scrapes.count()
+        await scrapes.set({"status": TaskStatus.CANCELING})
+
+        return scrapes_count
+
+    bulk_type = type
+    total_scrapes = 0
+    total_sites = 0
+
+    find_query, update_query = build_bulk_sites_query(bulk_type)
+    sites = Site.find_many(find_query)
+    if bulk_type == "cancel-hold-all":
+        total_sites = await sites.count()
+        await sites.set(update_query)
     else:
-        return {"status": True, "scrapes_launched": total_scrapes}
+        async for site in sites:
+            site_id: PydanticObjectId = site.id  # type: ignore
+            update = {**update_query}
+
+            if bulk_type == "cancel-active" or bulk_type == "hold-all":
+                scrapes_canceled = await cancel_site_scrapes(site_id)
+                total_scrapes += scrapes_canceled
+                if scrapes_canceled > 0:
+                    update[Site.last_run_status] = TaskStatus.CANCELING
+            else:
+                site_scrape_task = SiteScrapeTask(
+                    site_id=site_id, queued_time=datetime.now(tz=timezone.utc)
+                )
+                queued_task = await try_queue_unique_task(site_scrape_task)
+                if queued_task:
+                    total_scrapes += 1
+                    await logger.background_log_change(current_user, site_scrape_task, "CREATE")
+
+            total_sites += 1
+            await site.update(Set(update))
+
+    res_type = BulkScrapeActions.RUN
+    if bulk_type == "cancel-active":
+        res_type = BulkScrapeActions.CANCEL
+    elif bulk_type == "hold-all":
+        res_type = BulkScrapeActions.HOLD
+    elif bulk_type == "cancel-hold-all":
+        res_type = BulkScrapeActions.CANCEL_HOLD
+
+    return BulkRunResponse(type=res_type, sites=total_sites, scrapes=total_scrapes)
 
 
 @router.post("/cancel-all", response_model=SiteScrapeTask)

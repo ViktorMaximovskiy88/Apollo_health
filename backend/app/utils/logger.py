@@ -96,5 +96,6 @@ async def update_and_log_diff(
     await target.update(Set(updates), session=session)
     updated = target.dict()
     patch = get_diff_patch(original, updated)
-    await logger.log_change(current_user, target, "UPDATE", patch)
+    if patch:
+        await logger.log_change(current_user, target, "UPDATE", patch)
     return updated

@@ -1,15 +1,18 @@
 import values from 'lodash/values';
-import { Button, Upload, Dropdown, Space, Menu, notification } from 'antd';
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useRunBulkMutation } from '../collections/siteScrapeTasksApi';
+import { Button, Upload, Dropdown, Space, Menu, notification, Spin } from 'antd';
 import { LoadingOutlined, UploadOutlined, DownOutlined, DownloadOutlined } from '@ant-design/icons';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+
+import { useRunBulkMutation } from '../collections/siteScrapeTasksApi';
 import { SiteDataTable } from './SiteDataTable';
 import { QuickFilter } from './QuickFilter';
 import { baseApiUrl, client, fetchWithAuth } from '../../app/base-api';
 import { MainLayout } from '../../components';
+import { isErrorWithData } from '../../common/helpers';
+import { BulkActionTypes } from '../collections/types';
 
 import { useUpdateMultipleSitesMutation } from './sitesApi';
 import { Site } from './types';
@@ -32,34 +35,59 @@ function Assign({ selected, setSelected }: AssignTypes) {
 
   const assignSites = async () => {
     const sites = values(selected);
-    const resp = await updateMultipleSites(sites);
+    await updateMultipleSites(sites);
   };
   return <Button onClick={assignSites}>Assign to me</Button>;
 }
 
 function BulkActions() {
-  const [runBulk] = useRunBulkMutation();
+  const [runBulk, { isLoading }] = useRunBulkMutation();
   const onMenuSelect = async (key: string) => {
-    const response: any = await runBulk(key);
-    if (response.data.scrapes_launched === 0 || response.data.canceled_scrapes === 0) {
-      notification.error({
-        message: 'Whoops!',
-        description: 'No sites were found!',
-      });
-    } else if (response.data.canceled_scrapes) {
-      notification.success({
-        message: 'Success!',
-        description: `${response.data.canceled_scrapes} site${
-          response.data.canceled_scrapes > 1 ? 's were' : ' was'
-        } canceled from the collection queue!`,
-      });
-    } else {
-      notification.success({
-        message: 'Success!',
-        description: `${response.data.scrapes_launched} site${
-          response.data.scrapes_launched > 1 ? 's have' : ' has'
-        } been added to the collection queue!`,
-      });
+    try {
+      const response = await runBulk(key).unwrap();
+      if (response.type === BulkActionTypes.Hold) {
+        notification.success({
+          message: 'Sites Held From Collections',
+          description: `${response.scrapes} in progress scrape${
+            response.scrapes === 1 ? ' was' : 's were'
+          } canceled. ${response.sites} site${
+            response.sites > 1 ? 's were' : ' was'
+          } held until tomorrow.`,
+        });
+      } else if (response.type === BulkActionTypes.Cancel) {
+        notification.success({
+          message: 'Collections Canceled',
+          description: `Canceled ${response.scrapes} scrape${
+            response.scrapes === 1 ? '' : 's'
+          } with queued or in progress collections.`,
+        });
+      } else if (response.type === BulkActionTypes.CancelHold) {
+        notification.success({
+          message: 'Hold Removed From Sites',
+          description: `Holds removed from ${response.sites} site${
+            response.sites === 1 ? '' : 's'
+          }.`,
+        });
+      } else {
+        notification.success({
+          message: 'Collections Queued',
+          description: `${response.scrapes} scrape${
+            response.scrapes === 1 ? ' has' : 's have'
+          } been added to the collection queue.`,
+        });
+      }
+    } catch (err) {
+      if (isErrorWithData(err)) {
+        notification.error({
+          message: 'Error Running Bulk Action',
+          description: `${err.data.detail}`,
+        });
+      } else {
+        notification.error({
+          message: 'Error Running Bulk Action',
+          description: JSON.stringify(err),
+        });
+      }
     }
   };
   const menu = (
@@ -83,6 +111,15 @@ function BulkActions() {
           label: 'Cancel Active',
         },
         {
+          key: 'cancel-hold-all',
+          label: 'Cancel Hold All',
+        },
+        {
+          key: 'hold-all',
+          label: 'Hold All',
+          danger: true,
+        },
+        {
           key: 'all',
           label: 'Run All',
           danger: true,
@@ -90,12 +127,15 @@ function BulkActions() {
       ]}
     />
   );
+  const icon = isLoading ? (
+    <Spin className="ml-2" size="small" />
+  ) : (
+    <DownOutlined className="text-sm" />
+  );
   return (
     <Dropdown overlay={menu}>
       <Space>
-        <Button>
-          Collection <DownOutlined className="text-sm" />
-        </Button>
+        <Button>Collection {icon}</Button>
       </Space>
     </Dropdown>
   );

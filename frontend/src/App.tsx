@@ -10,13 +10,13 @@ import { SitesHomePage } from './features/sites/SitesHomePage';
 import { UserCreatePage } from './features/users/UserCreatePage';
 import { UserEditPage } from './features/users/UserEditPage';
 import { UsersHomePage } from './features/users/UserHomePage';
-import { DocumentsPage } from './features/collections/DocumentsPage';
+import { SiteRetreivedDocumentsPage } from './features/sites/SiteRetreivedDocumentsPage';
 import { ExtractionsPage } from './features/extractions/ExtractionsPage';
 import { DocExtractionPage } from './features/extractions/DocExtractionPage';
 import { ExtractionEditPage } from './features/extractions/ExtractionEditPage';
 import { WorkQueueHomePage } from './features/work_queue/WorkQueueHomePage';
 import { WorkQueuePage } from './features/work_queue/WorkQueuePage';
-import { DocDocumentsPage } from './features/doc_documents/DocDocumentPage';
+import { SiteDocDocumentsPage } from './features/doc_documents/SiteDocDocumentPage';
 import { DocDocumentEditPage } from './features/doc_documents/DocDocumentEditPage';
 import { ProcessWorkItemPage, ReadonlyWorkItemPage } from './features/work_queue/WorkItemPage';
 import { AppLayout } from './app/AppLayout';
@@ -24,6 +24,10 @@ import { SiteViewPage } from './features/sites/SiteViewPage';
 import { TranslationsHomePage } from './features/translations/TranslationsHomePage';
 import { TranslationsNewPage } from './features/translations/TranslationsNewPage';
 import { TranslationsEditPage } from './features/translations/TranslationsEditPage';
+import { PayerBackbomeHomePage } from './features/payer-backbone/PayerBackboneHomePage';
+import { PayerBackboneNewPage } from './features/payer-backbone/PayerBackboneNewPage';
+import { PayerBackboneEditPage } from './features/payer-backbone/PayerBackboneEditPage';
+import { LineagePage } from './features/lineage/LineagePage';
 
 function AppHomePage() {
   return <>{'Home'}</>;
@@ -60,6 +64,17 @@ function TranslationRoutes() {
   );
 }
 
+function PayerBackboneRoutes() {
+  return (
+    <Routes>
+      <Route path=":payerType" element={<PayerBackbomeHomePage />} />
+      <Route path=":payerType/new" element={<PayerBackboneNewPage />} />
+      <Route path=":payerType/:payerId" element={<PayerBackboneEditPage />} />
+      <Route path="/" element={<Navigate replace to="./plan" />} />
+    </Routes>
+  );
+}
+
 function App() {
   return (
     <Routes>
@@ -80,16 +95,17 @@ function App() {
           <Route path="new" element={<SiteCreatePage />} />
           <Route path=":siteId">
             {/* duped because we want this */}
-            <Route index element={<Navigate to="edit" />} />
+            <Route index element={<Navigate to="edit" replace={true} />} />
             <Route path="view" element={<SiteViewPage />} />
             <Route path="edit" element={<SiteEditPage />} />
             <Route path="scrapes" element={<CollectionsPage />} />
             <Route path="documents">
-              <Route index element={<DocumentsPage />} />
+              <Route index element={<SiteRetreivedDocumentsPage />} />
               <Route path=":docId">
                 <Route path="edit" element={<DocumentEditPage />} />
               </Route>
             </Route>
+            <Route path="lineage" element={<LineagePage />} />
             <Route path="extraction">
               <Route index element={<ExtractionsPage />} />
               <Route path="document/:docId">
@@ -98,7 +114,7 @@ function App() {
               </Route>
             </Route>
             <Route path="doc-documents">
-              <Route index element={<DocDocumentsPage />} />
+              <Route index element={<SiteDocDocumentsPage />} />
               <Route path=":docId">
                 <Route path="edit" element={<DocDocumentEditPage />} />
               </Route>
@@ -108,6 +124,7 @@ function App() {
         <Route path="/users/*" element={<UserRoutes />} />
         <Route path="/documents/*" element={<DocumentRoutes />} />
         <Route path="/translations/*" element={<TranslationRoutes />} />
+        <Route path="/payer-backbone/*" element={<PayerBackboneRoutes />} />
         <Route path="/" element={<Navigate replace to="/sites" />} />
       </Route>
     </Routes>

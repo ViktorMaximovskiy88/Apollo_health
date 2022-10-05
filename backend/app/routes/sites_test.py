@@ -3,10 +3,10 @@ from datetime import datetime, timezone
 import pytest
 from pydantic import HttpUrl
 
-from backend.app.routes.sites import check_for_scrapetask
 from backend.common.db.init import init_db
 from backend.common.models.site import BaseUrl, ScrapeMethodConfiguration, Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.services.site_scrape_task import check_for_scrapetask
 
 
 class TestDeleteSite:

@@ -2,18 +2,13 @@ from beanie import PydanticObjectId, UnionDoc
 from pydantic import BaseModel
 
 from backend.common.models.base_document import BaseDocument
+from backend.common.models.shared import FileMetadata, Location
 
 
 class LinkTaskLog(UnionDoc):
     class Settings:
         name = "LinkTaskLog"
-
-
-class FileMetadata(BaseModel):
-    checksum: str
-    file_size: int
-    mimetype: str
-    file_extension: str
+        use_revision = False
 
 
 class ValidResponse(BaseModel):
@@ -27,13 +22,6 @@ class InvalidResponse(BaseModel):
     proxy_url: str | None
     status: int
     message: str | None
-
-
-class Location(BaseModel):
-    base_url: str
-    url: str
-    link_text: str | None
-    closest_header: str | None
 
 
 class LinkTask(BaseDocument):

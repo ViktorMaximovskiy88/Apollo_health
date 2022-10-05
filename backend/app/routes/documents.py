@@ -2,7 +2,6 @@ import tempfile
 from datetime import datetime, timezone
 
 from beanie import PydanticObjectId
-from beanie.odm.operators.update.general import Set
 from fastapi import APIRouter, Depends, HTTPException, Security, UploadFile, status
 from fastapi.responses import StreamingResponse
 
@@ -10,19 +9,23 @@ from backend.app.utils.logger import Logger, create_and_log, get_logger, update_
 from backend.app.utils.user import get_current_user
 from backend.common.events.event_convert import EventConvert
 from backend.common.events.send_event_client import SendEventClient
-from backend.common.models.doc_document import DocDocument, calc_final_effective_date
+from backend.common.models.doc_document import DocDocument, DocDocumentLocation
 from backend.common.models.document import (
+    NewManualDocument,
     RetrievedDocument,
     RetrievedDocumentLimitTags,
+    RetrievedDocumentLocation,
     UpdateRetrievedDocument,
 )
-from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.models.site_scrape_task import SiteScrapeTask, TaskStatus
 from backend.common.models.user import User
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_handler import TextHandler
+from backend.common.services.document import create_doc_document_service
 from backend.scrapeworker.common.models import DownloadContext, Request
 from backend.scrapeworker.file_parsers import parse_by_type
+
 
 router = APIRouter(
     prefix="/documents",
@@ -48,7 +51,6 @@ async def get_target(id: PydanticObjectId) -> RetrievedDocument:
 async def get_documents(
     scrape_task_id: PydanticObjectId | None = None,
     site_id: PydanticObjectId | None = None,
-    logical_document_id: PydanticObjectId | None = None,
 ):
     query = {}
     if scrape_task_id:
@@ -58,12 +60,10 @@ async def get_documents(
                 status.HTTP_406_NOT_ACCEPTABLE,
                 f"Scrape Task {scrape_task_id} does not exist",
             )
-
         query["_id"] = {"$in": scrape_task.retrieved_document_ids}
+
     if site_id:
-        query["site_id"] = site_id
-    if logical_document_id:
-        query["logical_document_id"] = logical_document_id
+        query["locations.site_id"] = site_id
 
     documents: list[RetrievedDocumentLimitTags] = (
         await RetrievedDocument.find_many(query)
@@ -119,11 +119,9 @@ async def read_document(
     return target
 
 
-@router.post("/upload")
+@router.post("/upload", dependencies=[Security(get_current_user)])
 async def upload_document(
     file: UploadFile,
-    current_user: User = Security(get_current_user),
-    logger: Logger = Depends(get_logger),
 ):
     text_handler = TextHandler()
 
@@ -137,10 +135,7 @@ async def upload_document(
     file_extension = name.split(".")[-1]
     dest_path = f"{checksum}.{file_extension}"
 
-    document = await RetrievedDocument.find_one(
-        RetrievedDocument.checksum == checksum
-        or checksum in RetrievedDocument.file_checksum_aliases
-    )
+    document = await RetrievedDocument.find_one(RetrievedDocument.checksum == checksum)
 
     with tempfile.NamedTemporaryFile(delete=True, suffix="." + file_extension) as tmp:
         tmp.write(content)
@@ -188,6 +183,7 @@ async def update_document(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
+
     updated = await update_and_log_diff(logger, current_user, target, updates)
 
     # Sending Event Bridge Event.  Need to add condition when to send.
@@ -208,97 +204,69 @@ async def delete_document(
     return {"success": True}
 
 
-@router.put("/", status_code=status.HTTP_201_CREATED)
+# One time use case for the PUT request below in order to pass in internal_document
+
+
+@router.put("/", status_code=status.HTTP_201_CREATED, response_model=SiteScrapeTask)
 async def add_document(
-    document: RetrievedDocument,
+    # verify we only want SiteRetrievedDocument
+    document: NewManualDocument,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
     now = datetime.now(tz=timezone.utc)
 
+    link_text = document.metadata.get("link_text", None)
     new_document = RetrievedDocument(
-        base_url=document.base_url,
-        uploader_id=current_user.id,
-        name=document.name,
-        scrape_task_id=document.scrape_task_id,
-        text_checksum=document.text_checksum,
+        checksum=document.checksum,
+        content_type=document.content_type,
         doc_type_confidence=document.doc_type_confidence,
         document_type=document.document_type,
         effective_date=document.effective_date,
-        context_metadata=document.metadata,
         end_date=document.end_date,
-        last_updated_date=document.last_updated_date,
+        file_extension=document.file_extension,
+        identified_dates=document.identified_dates,
+        indication_tags=document.indication_tags,
+        lang_code=document.lang_code,
         last_reviewed_date=document.last_reviewed_date,
+        last_updated_date=document.last_updated_date,
+        metadata=document.metadata,
+        name=document.name,
         next_review_date=document.next_review_date,
         next_update_date=document.next_update_date,
         published_date=document.published_date,
-        file_extension=document.file_extension,
-        content_type=document.content_type,
-        first_collected_date=now,
-        identified_dates=document.identified_dates,
-        lang_code=document.lang_code,
-        last_collected_date=now,
-        metadata=document.metadata,
-        site_id=document.site_id,
-        url=document.url,
+        text_checksum=document.text_checksum,
         therapy_tags=document.therapy_tags,
-        indication_tags=document.indication_tags,
-        file_checksum_aliases=[document.checksum],
-        checksum=document.checksum,
+        uploader_id=current_user.id,
+        first_collected_date=now,
+        last_collected_date=now,
+        locations=[
+            RetrievedDocumentLocation(
+                url=document.url,
+                base_url=document.base_url,
+                first_collected_date=now,
+                last_collected_date=now,
+                site_id=document.site_id,
+                link_text=link_text,
+                context_metadata=document.metadata,
+            )
+        ],
     )
+
     await create_and_log(logger, current_user, new_document)
 
-    doc_document = DocDocument(
+    scrape_task = SiteScrapeTask(
         site_id=document.site_id,
-        retrieved_document_id=new_document.id,  # type: ignore
-        name=document.name,
-        checksum=document.checksum,
-        text_checksum=document.text_checksum,
-        document_type=document.document_type,
-        doc_type_confidence=document.doc_type_confidence,
-        effective_date=document.effective_date,
-        end_date=document.end_date,
-        last_updated_date=document.last_updated_date,
-        last_reviewed_date=document.last_reviewed_date,
-        next_review_date=document.next_review_date,
-        next_update_date=document.next_update_date,
-        published_date=document.published_date,
-        lang_code=document.lang_code,
-        first_collected_date=now,
-        last_collected_date=now,
-        url=document.url,
-        base_url=document.base_url,
-        therapy_tags=document.therapy_tags,
-        indication_tags=document.indication_tags,
-        file_extension=document.file_extension,
-        identified_dates=document.identified_dates,
+        retrieved_document_ids=[new_document.id],
+        status=TaskStatus.FINISHED,
+        queued_time=now,
+        start_time=now,
+        end_time=now,
+        documents_found=1,
     )
 
-    if "link_text" in document.metadata:
-        doc_document.link_text = document.metadata["link_text"]
+    await create_doc_document_service(new_document, current_user)
 
-    doc_document.final_effective_date = calc_final_effective_date(doc_document)
-    await create_and_log(logger, current_user, doc_document)
+    await scrape_task.save()
 
-    if not document.scrape_task_id:
-        raise Exception(f"Document {document.id} does not have scrape_task_id")
-
-    scrape_task = await SiteScrapeTask.get(document.scrape_task_id)
-
-    if not scrape_task:
-        raise Exception(f"Scrape Task Not found for {document.scrape_task_id}")
-
-    if document.id:
-        # get retrieved_document from Doc Document
-        doc_document = await DocDocument.find_one({"_id": document.id})
-        if doc_document:
-            index = scrape_task.retrieved_document_ids.index(doc_document.retrieved_document_id)
-            if index >= 0:
-                await scrape_task.update(Set({f"retrieved_document_ids.{index}": new_document.id}))
-
-    else:
-        await scrape_task.update(
-            {"$inc": {"documents_found": 1}, "$push": {"retrieved_document_ids": new_document.id}}
-        )
-
-    return {"success": True}
+    return scrape_task

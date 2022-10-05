@@ -5,14 +5,17 @@ from backend.common.models.base_document import BaseDocument
 
 
 class TranslationMapping(BaseModel):
-    pattern: str
+    pattern: str = ""
     translation: str
 
 
 class TranslationRule(BaseModel):
     field: str
-    pattern: str
+    pattern: str = ""
     separator: str = ""
+    separator2: str = ""
+    value: str = ""
+    capture_all: bool = False
     mappings: list[TranslationMapping]
 
 
@@ -32,14 +35,20 @@ class TableDetectionConfig(BaseModel):
 
 class TableExtractionConfig(BaseModel):
     required_columns: list[str] = []
+    banned_columns: list[str] = []
     merge_on_missing_columns: list[str] = []
+    start_table_text: str = ""
+    end_table_text: str = ""
     merge_strategy: str = "DOWN"
     snap_tolerance: int = 3
+    intersection_tolerance: int = 3
     table_shape: str = "lines"
     explicit_headers: list[str] = []
     explicit_column_lines: list[str] = []
+    explicit_column_lines_only: bool = False
     skip_rows: int = 0
     skip_rows_first_table_only: bool = False
+    max_font_size: int = 0
 
 
 class TableTranslationConfig(BaseModel):
@@ -71,14 +80,20 @@ class UpdateTableDetectionConfig(BaseModel):
 
 class UpdateTableExtractionConfig(BaseModel):
     required_columns: list[str] | None = None
+    banned_columns: list[str] = []
     merge_on_missing_columns: list[str] | None = None
     merge_strategy: str | None = None
+    start_table_text: str = ""
+    end_table_text: str = ""
     snap_tolerance: int | None = None
+    intersection_tolerance: int | None = None
     table_shape: str | None = None
     explicit_headers: list[str] | None = None
     explicit_column_lines: list[str] | None = None
+    explicit_column_lines_only: bool = False
     skip_rows: int | None = None
     skip_rows_first_table_only: bool | None = None
+    max_font_size: int | None = None
 
 
 class UpdateTableTranslationConfig(BaseModel):

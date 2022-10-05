@@ -145,7 +145,7 @@ crash.*.log
 # password, private keys, and other secrets. These should not be part of version
 # control as they are data points which are potentially sensitive and subject
 # to change depending on the environment.
-# 
+#
 # NOTE: INCLUDING TFVARS, but not with Sensitive Content
 #*.tfvars
 *.tfvars.json
@@ -177,3 +177,5 @@ terragrunt-debug.tfvars.json
 
 .DS_Store
 tmp
+# mongodump by default
+dump

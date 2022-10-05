@@ -1,6 +1,10 @@
+from typing import Type
+
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 
+from backend.app.routes.payer_backbone import payer_class
+from backend.app.services.payer_backbone.payer_backbone_querier import PayerBackboneQuerier
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.models.document_family import (
@@ -8,6 +12,7 @@ from backend.common.models.document_family import (
     NewDocumentFamily,
     UpdateDocumentFamily,
 )
+from backend.common.models.payer_backbone import PayerBackbone
 from backend.common.models.user import User
 
 router = APIRouter(
@@ -25,19 +30,20 @@ async def get_target(id: PydanticObjectId) -> DocumentFamily:
     return document_family
 
 
-@router.get("/", response_model=list[DocumentFamily])
+@router.get(
+    "/",
+    dependencies=[Security(get_current_user)],
+    response_model=list[DocumentFamily],
+)
 async def read_document_families(
-    current_user: User = Security(get_current_user),
-    site_id: str | None = None,
+    site_id: PydanticObjectId | None = None,
     document_type: str | None = None,
 ):
-    query = DocumentFamily.find(
-        {
-            "disabled": False,
-        }
-    )
+    query = DocumentFamily.find({"disabled": False})
+
     if site_id:
-        query = query.find({"site_id": PydanticObjectId(site_id)})
+        query = query.find({"site_id": site_id})
+
     if document_type:
         query = query.find({"document_type": document_type})
 
@@ -46,30 +52,24 @@ async def read_document_families(
 
 @router.get(
     "/search",
+    dependencies=[Security(get_current_user)],
+    response_model=DocumentFamily,
 )
 async def read_document_family_by_name(
+    site_id: PydanticObjectId,
     name: str,
-    site_id: str,
-    current_user: User = Security(get_current_user),
 ):
-    if not site_id:
-        raise HTTPException(
-            detail=f"site_id was not given, instead recieved: {site_id}",
-            status_code=status.HTTP_406_NOT_ACCEPTABLE,
-        )
-    if not name:
-        return None
-    found = await DocumentFamily.find_one({"name": name, "site_id": PydanticObjectId(site_id)})
-    return found
+    document_family = await DocumentFamily.find_one({"name": name, "site_id": site_id})
+    return document_family
 
 
 @router.get(
     "/{id}",
     response_model=DocumentFamily,
+    dependencies=[Security(get_current_user)],
 )
 async def read_document_family(
     target: DocumentFamily = Depends(get_target),
-    current_user: User = Security(get_current_user),
 ):
     return target
 
@@ -86,10 +86,29 @@ async def create_document_family(
         description=document_family.description,
         site_id=document_family.site_id,
         relevance=document_family.relevance,
+        payer_info=document_family.payer_info,
+        field_groups=document_family.field_groups,
+        legacy_relevance=document_family.legacy_relevance,
         disabled=False,
     )
     await create_and_log(logger, current_user, new_document_family)
     return new_document_family
+
+
+@router.get(
+    "/{id}/convert", dependencies=[Security(get_current_user)], response_model=DocumentFamily
+)
+async def document_family_payer_data(
+    effective_date: str | None = None,
+    PayerClass: Type[PayerBackbone] = Depends(payer_class),
+    target: DocumentFamily = Depends(get_target),
+):
+    pbbq = PayerBackboneQuerier(target.payer_info, effective_date)
+    result_ids = await pbbq.relevant_payer_ids_of_type(PayerClass)
+
+    target.payer_info.payer_type = PayerClass.payer_key
+    target.payer_info.payer_ids = [str(id) for id in result_ids]
+    return target
 
 
 @router.post("/{id}", response_model=DocumentFamily)

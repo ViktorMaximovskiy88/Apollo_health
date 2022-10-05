@@ -56,4 +56,6 @@ def to_xpath(attr_selector: AttrSelector) -> str:
         selector = f'contains({base_selector}, "{attr_selector.attr_value}")'
     if attr_selector.has_text:
         selector = f'{selector} and contains(text(), "{attr_selector.has_text}")'
-    return f"//a[{selector}]"
+    if not attr_selector.attr_element:
+        attr_selector.attr_element = "a"
+    return f"//{attr_selector.attr_element}[{selector}]"

@@ -1,27 +1,20 @@
 import { useMemo } from 'react';
 import { Form, FormInstance, Tabs } from 'antd';
-import { DocDocument, IndicationTag, TherapyTag } from './types';
+import { DocDocument, DocumentTag, UIIndicationTag, UITherapyTag } from './types';
 import { DocDocumentTagForm } from './DocDocumentTagForm';
 import { dateToMoment } from '../../common';
 import { useCallback, useEffect, useState } from 'react';
-import { compact, groupBy, isEqual, maxBy } from 'lodash';
+import { isEqual } from 'lodash';
 import { DocDocumentInfoForm } from './DocDocumentInfoForm';
+import { DocDocumentLocations } from './locations/DocDocumentLocations';
 import { useGetDocDocumentQuery } from './docDocumentApi';
+import { DocDocumentExtractionTab } from './DocDocumentExtractionTab';
+import { calculateFinalEffectiveFromValues } from './helpers';
 
 const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   const calculateFinalEffectiveDate = useCallback(() => {
     const values = form.getFieldsValue(true);
-    const computeFromFields = compact([
-      dateToMoment(values.effective_date),
-      dateToMoment(values.last_reviewed_date),
-      dateToMoment(values.last_updated_date),
-    ]);
-
-    const finalEffectiveDate: moment.Moment =
-      computeFromFields.length > 0
-        ? maxBy(computeFromFields, (date) => date.unix())
-        : values.first_collected_date;
-
+    const finalEffectiveDate = calculateFinalEffectiveFromValues(values);
     form.setFieldsValue({
       final_effective_date: finalEffectiveDate.startOf('day'),
     });
@@ -30,23 +23,21 @@ const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   return calculateFinalEffectiveDate;
 };
 
-const useTagsState = (
-  docId: string
-): [Array<TherapyTag | IndicationTag>, (tags: Array<TherapyTag | IndicationTag>) => void] => {
+const useTagsState = (docId: string): [Array<DocumentTag>, (tags: Array<DocumentTag>) => void] => {
   const { data: doc } = useGetDocDocumentQuery(docId);
 
-  const [tags, setTags] = useState<Array<TherapyTag | IndicationTag>>([]);
+  const [tags, setTags] = useState<Array<DocumentTag>>([]);
 
   useEffect(() => {
     if (!doc) return;
 
-    const therapyTags: TherapyTag[] = doc.therapy_tags.map((tag, i) => ({
+    const therapyTags: UITherapyTag[] = doc.therapy_tags.map((tag, i) => ({
       ...tag,
       id: `${i}-therapy`,
       _type: 'therapy',
       _normalized: `${tag.name.toLowerCase()}|${tag.text.toLowerCase()}`,
     }));
-    const indicationTags: IndicationTag[] = doc.indication_tags.map((tag, i) => ({
+    const indicationTags: UIIndicationTag[] = doc.indication_tags.map((tag, i) => ({
       ...tag,
       id: `${i}-indication`,
       _type: 'indication',
@@ -60,7 +51,7 @@ const useTagsState = (
 
 interface UseOnFinishType {
   onSubmit: (doc: Partial<DocDocument>) => Promise<void>;
-  tags: Array<TherapyTag | IndicationTag>;
+  tags: Array<DocumentTag>;
   setIsSaving: (isSaving: boolean) => void;
   docId: string;
 }
@@ -76,12 +67,22 @@ const useOnFinish = ({
     setIsSaving(true);
 
     try {
-      const tagsByType = groupBy(tags, '_type');
+      const indication_tags = [];
+      const therapy_tags = [];
+      for (const tag of tags) {
+        if (tag._type === 'indication') {
+          const { name, text, page, code } = tag as UIIndicationTag;
+          indication_tags.push({ name, text, page, code });
+        } else {
+          const { name, text, page, score, code, focus } = tag as UITherapyTag;
+          therapy_tags.push({ name, text, page, score, code, focus });
+        }
+      }
 
       await onSubmit({
         ...submittedDoc,
-        indication_tags: (tagsByType['indication'] ?? []) as IndicationTag[],
-        therapy_tags: (tagsByType['therapy'] ?? []) as TherapyTag[],
+        indication_tags,
+        therapy_tags,
         _id: docId,
       });
     } catch (error) {
@@ -118,6 +119,7 @@ interface EditFormPropTypes {
   onSubmit: (doc: Partial<DocDocument>) => Promise<void>;
   docId: string;
 }
+
 export function DocDocumentEditForm({
   isSaving,
   setIsSaving,
@@ -138,7 +140,7 @@ export function DocDocumentEditForm({
   const [tags, setTags] = useTagsState(docId);
   const onFinish = useOnFinish({ onSubmit, tags, setIsSaving, docId });
 
-  function handleTagEdit(newTag: TherapyTag | IndicationTag) {
+  function handleTagEdit(newTag: DocumentTag) {
     const update = [...tags];
     const index = update.findIndex((tag) => {
       return tag.id === newTag.id;
@@ -186,7 +188,7 @@ export function DocDocumentEditForm({
           <Tabs.TabPane tab="Tags" key="tags" className="bg-white p-4 h-full">
             <DocDocumentTagForm
               tags={tags}
-              onAddTag={(tag: TherapyTag | IndicationTag) => {
+              onAddTag={(tag: DocumentTag) => {
                 setTags([tag, ...tags]);
                 setHasChanges(true);
               }}
@@ -198,6 +200,14 @@ export function DocDocumentEditForm({
               currentPage={pageNumber}
             />
           </Tabs.TabPane>
+          <Tabs.TabPane tab="Sites" key="sites" className="bg-white p-4 overflow-auto">
+            <DocDocumentLocations locations={doc.locations} docDocument={doc} />
+          </Tabs.TabPane>
+          {doc?.content_extraction_task_id ? (
+            <Tabs.TabPane tab="Extraction" key="extraction">
+              <DocDocumentExtractionTab doc={doc} />
+            </Tabs.TabPane>
+          ) : null}
         </Tabs>
       </Form>
     </div>

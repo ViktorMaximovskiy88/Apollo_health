@@ -2,7 +2,7 @@ resource "aws_cloudwatch_log_group" "dbmigrations" {
   name = format("/%s/%s-%s-dbmigrations", local.app_name, var.environment, local.service_name)
   # TODO: Make this a variable and determine appropriate threshold
   retention_in_days = 30
-  
+
   tags = merge(local.effective_tags, {
     component = "${local.service_name}-dbmigrations"
   })
@@ -14,7 +14,7 @@ resource "aws_ecs_task_definition" "dbmigrations" {
   network_mode             = "awsvpc"
   cpu                      = 512 # 0.5 vCPU
   memory                   = 1024
-  
+
 
   container_definitions = jsonencode([
     {
@@ -27,40 +27,40 @@ resource "aws_ecs_task_definition" "dbmigrations" {
       ]
       environment = [
         {
-          name = "ENV_TYPE"
+          name  = "ENV_TYPE"
           value = var.environment
         },
         {
-          name = "PYTHONUNBUFFERED"
+          name  = "PYTHONUNBUFFERED"
           value = "1"
         },
         {
-          name = "S3_ENDPOINT_URL"
+          name  = "S3_ENDPOINT_URL"
           value = data.aws_service.s3.dns_name
         },
         {
-          name = "MONGO_URL"
-          value = data.aws_ssm_parameter.mongodb-url.value
+          name  = "MONGO_URL"
+          value = local.mongodb_url
         },
         {
-          name = "MONGO_DB"
-          value = data.aws_ssm_parameter.mongodb-db.value
+          name  = "MONGO_DB"
+          value = local.mongodb_db
         },
         {
-          name = "MONGO_USER"
-          value = data.aws_ssm_parameter.mongodb-user.value
-        },
-         {
-          name = "REDIS_URL"
+          name  = "REDIS_URL"
           value = data.aws_ssm_parameter.redis-url.value
         },
         {
-          name = "S3_DOCUMENT_BUCKET"
+          name  = "S3_DOCUMENT_BUCKET"
           value = data.aws_ssm_parameter.docrepo-bucket-name.value
         },
         {
-          name = "SMARTPROXY_USERNAME"
+          name  = "SMARTPROXY_USERNAME"
           value = data.aws_ssm_parameter.smartproxy-username.value
+        },
+        {
+          name = "NEW_RELIC_APP_NAME"
+          value = local.new_relic_app_name
         }
       ]
       essential = true
@@ -68,26 +68,22 @@ resource "aws_ecs_task_definition" "dbmigrations" {
       LogConfiguration = {
         LogDriver = "awslogs"
         Options = {
-          awslogs-region = var.region
-          awslogs-group = aws_cloudwatch_log_group.dbmigrations.name
+          awslogs-region        = var.region
+          awslogs-group         = aws_cloudwatch_log_group.dbmigrations.name
           awslogs-stream-prefix = local.service_name
         }
       }
 
-      secrets = [
+      secrets = concat(local.new_relic_secrets, [
         {
-          name = "MONGO_PASSWORD"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/mongodb_password"
-        },
-        {
-          name = "REDIS_PASSWORD"
+          name      = "REDIS_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_auth_password"
         },
         {
-          name = "SMARTPROXY_PASSWORD"
+          name      = "SMARTPROXY_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/smartproxy_password"
         }
-      ]
+      ])
 
     }
   ])
@@ -98,7 +94,7 @@ resource "aws_ecs_task_definition" "dbmigrations" {
   }
 
   execution_role_arn = data.aws_iam_role.ecs-execution.arn
-  task_role_arn      = aws_iam_role.dbmigrations-task.arn
+  task_role_arn      = aws_iam_role.sourcehub.arn
 
   tags = merge(local.effective_tags, {
     component = "${local.service_name}-dbmigrations"
@@ -159,7 +155,7 @@ resource "aws_iam_role" "dbmigrations-task" {
   ]
 
   tags = merge(local.effective_tags, {
-    Name = format("%s-%s-%s-dbmigrations-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
+    Name      = format("%s-%s-%s-dbmigrations-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
     component = "${local.service_name}-dbmigrations"
   })
 
@@ -169,9 +165,9 @@ resource "aws_security_group" "dbmigrations" {
   name        = format("%s-%s-%s-dbmigrations-%s-mmit-sg-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
   description = "${title(local.app_name)} DB Migrations Security Group"
   vpc_id      = data.aws_subnet.first-app-subnet.vpc_id
-  
+
   ingress = [
-    
+
   ]
   egress = [
     {
@@ -190,7 +186,7 @@ resource "aws_security_group" "dbmigrations" {
   ]
 
   tags = merge(local.effective_tags, {
-    Name = format("%s-%s-%s-dbmigrations-%s-mmit-sg-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
+    Name      = format("%s-%s-%s-dbmigrations-%s-mmit-sg-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
     component = "${local.service_name}-dbmigrations"
   })
 }
@@ -199,7 +195,7 @@ locals {
   network_configuration = {
     awsvpcConfiguration = {
       assignPublicIp = "DISABLED"
-      subnets          = data.aws_subnets.app-subnet-ids.ids
+      subnets        = data.aws_subnets.app-subnet-ids.ids
       securityGroups = [
         aws_security_group.dbmigrations.id
       ]

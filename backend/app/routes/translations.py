@@ -66,6 +66,18 @@ async def read_translations(
 
 
 @router.get(
+    "/search",
+    dependencies=[Security(get_current_user)],
+    response_model=TranslationConfig,
+)
+async def read_translation_config_by_name(
+    name: str,
+):
+    translation_config = await TranslationConfig.find_one({"name": name})
+    return translation_config
+
+
+@router.get(
     "/{id}",
     response_model=TranslationConfig,
     dependencies=[Security(get_current_user)],

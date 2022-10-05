@@ -18,7 +18,7 @@ class IndicationTagger:
             async with self.lock:
                 self.nlp = spacy.blank("en")
                 # saw a value of 20074378... bumping more
-                self.nlp.max_length = 30000000
+                self.nlp.max_length = 300000000
                 ruler = self.nlp.add_pipe(
                     "span_ruler", config={"spans_key": "sc", "phrase_matcher_attr": "LOWER"}
                 )

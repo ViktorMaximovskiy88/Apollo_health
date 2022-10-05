@@ -1,4 +1,4 @@
-import { Button, Table, notification } from 'antd';
+import { Button, notification } from 'antd';
 import { useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
@@ -9,6 +9,10 @@ import {
   useTakeNextWorkItemMutation,
 } from './workQueuesApi';
 import { MainLayout } from '../../components';
+import ReactDataGrid from '@inovua/reactdatagrid-community';
+import { TypeColumn } from '@inovua/reactdatagrid-community/types';
+import { useSelector } from 'react-redux';
+import { workQueueTableState } from './workQueueSlice';
 
 export function WorkQueueHomePage() {
   const { data: workQueues } = useGetWorkQueuesQuery();
@@ -18,10 +22,11 @@ export function WorkQueueHomePage() {
   });
   const [takeNextWorkItem] = useTakeNextWorkItemMutation();
   const navigate = useNavigate();
+  const tableState = useSelector(workQueueTableState);
 
   const takeNext = useCallback(
     async (queueId: string) => {
-      const response = await takeNextWorkItem(queueId);
+      const response = await takeNextWorkItem({ queueId, tableState });
       if ('data' in response) {
         if (!response.data.acquired_lock) {
           notification.success({
@@ -33,29 +38,30 @@ export function WorkQueueHomePage() {
         }
       }
     },
-    [takeNextWorkItem, navigate]
+    [takeNextWorkItem, navigate, tableState]
   );
 
-  const columns = [
+  const columns: TypeColumn[] = [
     {
-      title: 'Name',
-      key: 'name',
-      render: (wq: WorkQueue) => {
+      header: 'Name',
+      name: 'name',
+      defaultFlex: 1,
+      render: ({ data: wq }: { data: WorkQueue }) => {
         return <ButtonLink to={wq._id}>{wq.name}</ButtonLink>;
       },
     },
     {
-      title: 'Count',
-      key: 'count',
-      render: (wq: WorkQueue) => {
+      header: 'Count',
+      name: 'count',
+      render: ({ data: wq }: { data: WorkQueue }) => {
         const count = workQueueCounts?.find((wqc) => wqc.work_queue_id === wq._id)?.count;
         return count;
       },
     },
     {
-      title: 'Actions',
-      key: 'take',
-      render: (wq: WorkQueue) => {
+      header: 'Actions',
+      name: 'take',
+      render: ({ data: wq }: { data: WorkQueue }) => {
         return (
           <Button onClick={() => takeNext(wq._id)} size="small">
             Take Next
@@ -64,6 +70,7 @@ export function WorkQueueHomePage() {
       },
     },
   ];
+  const filters = [{ name: 'name', operator: 'contains', type: 'string', value: '' }];
   return (
     <MainLayout
       sectionToolbar={
@@ -74,7 +81,12 @@ export function WorkQueueHomePage() {
         </>
       }
     >
-      <Table dataSource={workQueues} rowKey="_id" columns={columns} pagination={false} />
+      <ReactDataGrid
+        dataSource={workQueues || []}
+        defaultFilterValue={filters}
+        columns={columns}
+        rowHeight={50}
+      />
     </MainLayout>
   );
 }
