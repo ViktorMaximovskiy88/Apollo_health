@@ -44,6 +44,9 @@ from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
 from backend.scrapeworker.search_crawler import SearchableCrawler
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
+print(logging.DEBUG)
 
 
 class ScrapeWorker:
@@ -93,7 +96,7 @@ class ScrapeWorker:
         key = f"{url}{filename}" if filename else url
         if key in self.seen_urls:
             return False
-        self.log.debug(f"unseen target -> {key}")
+        self.log.info(f"unseen target -> {key}")
         self.seen_urls.add(key)
         return True
 
@@ -101,7 +104,7 @@ class ScrapeWorker:
         # skip if we've already seen this filehash
         if not hash or hash in self.seen_hashes:
             return False
-        self.log.debug(f"unseen target -> {hash}")
+        self.log.info(f"unseen target -> {hash}")
         self.seen_hashes.add(hash)
         return True
 
@@ -147,22 +150,24 @@ class ScrapeWorker:
         link_retrieved_task: LinkRetrievedTask = link_retrieved_task_from_download(
             download, self.scrape_task
         )
-
+        # prob our fail
         async for (temp_path, checksum) in self.downloader.try_download_to_tempfile(
             download, proxies
         ):
+
             # TODO temp until we undo download context
             link_retrieved_task.valid_response = download.valid_response
             link_retrieved_task.invalid_responses = download.invalid_responses
 
             # log response error
+            self.log.info("before i dunno?")
             if not (temp_path and checksum):
-                self.log.warn("Received an unexpected html response")
                 await link_retrieved_task.save()
                 continue
 
             # TODO can we separate the concept of extensions to scrape on
             # and ext we expect to download? for now just html
+            self.log.info(f"before unexpected html {download.file_extension}")
             if download.file_extension == "html" and (
                 "html" not in self.site.scrape_method_configuration.document_extensions
                 and self.site.scrape_method != "HtmlScrape"
@@ -179,23 +184,24 @@ class ScrapeWorker:
                 download,
                 self.site.scrape_method_configuration.focus_therapy_configs,
             )
+            self.log.info("before parsed content")
             if parsed_content is None:
                 await link_retrieved_task.save()
-                self.log.debug(f"{download.request.url} {download.file_extension} cannot be parsed")
+                self.log.info(f"{download.request.url} {download.file_extension} cannot be parsed")
                 # prob not continue anymore...
                 continue
 
             document = None
             dest_path = f"{checksum}.{download.file_extension}"
 
-            self.log.debug(f"dest_path={dest_path}")
-
+            self.log.info("before save object")
             if not self.doc_client.object_exists(dest_path):
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
                 await self.scrape_task.update(Inc({SiteScrapeTask.new_documents_found: 1}))
 
             # TODO i think this needs to not live here... a lambda to do the 'preview' thing
             # right now opt-in to it
+            self.log.info("before html save")
             if download.file_extension == "html" and (
                 "html" in self.site.scrape_method_configuration.document_extensions
                 or self.site.scrape_method == "HtmlScrape"
@@ -210,7 +216,7 @@ class ScrapeWorker:
             document = await RetrievedDocument.find_one(RetrievedDocument.checksum == checksum)
 
             if document:
-                self.log.debug("updating doc")
+                self.log.info("updating doc")
 
                 if document.text_checksum is None:  # Can be removed after text added to older docs
                     text_checksum = await self.text_handler.save_text(parsed_content["text"])
@@ -287,7 +293,7 @@ class ScrapeWorker:
         ):
             i = attempt.retry_state.attempt_number - 1
             proxy, proxy_setting = proxy_settings[i % n_proxies]
-            self.log.debug(
+            self.log.info(
                 f"{i} Trying proxy {proxy and proxy.name} - {proxy_setting and proxy_setting.get('server')}"  # noqa
             )
             yield attempt, proxy_setting
@@ -306,7 +312,7 @@ class ScrapeWorker:
     async def playwright_context(
         self, url: str
     ) -> AsyncGenerator[tuple[Page, BrowserContext], None]:
-        self.log.debug(f"Creating context for {url}")
+        self.log.info(f"Creating context for {url}")
         context: BrowserContext | None = None
         page: Page | None = None
         response: PlaywrightResponse | None = None
@@ -332,17 +338,17 @@ class ScrapeWorker:
                 await stealth_async(page)
                 page.on("dialog", handle_dialog)
 
-                self.log.debug(f"Awaiting response for {url}")
+                self.log.info(f"Awaiting response for {url}")
                 # TODO lets set this timeout lower generally and let exceptions set it higher
                 response = await page.goto(url, timeout=15000, wait_until="domcontentloaded")
-                self.log.debug(f"Received response for {url}")
+                self.log.info(f"Received response for {url}")
 
                 proxy_url = proxy.get("server") if proxy else None
                 if not response:
                     continue
 
                 if not response.ok:
-                    self.log.debug(f"Received invalid response for {url}")
+                    self.log.info(f"Received invalid response for {url}")
                     invalid_response = InvalidResponse(
                         proxy_url=proxy_url,
                         status=response.status,
@@ -373,6 +379,7 @@ class ScrapeWorker:
             yield page, context
         except Exception as ex:
             # NOTE this is a big change in our error handling
+            self.log.error("asldkjaslkdjh")
             self.log.error(ex)
         finally:
             if context:
@@ -449,10 +456,10 @@ class ScrapeWorker:
 
         for url in base_urls:
             # skip the parse step and download
-            self.log.debug(f"Run scrape for {url}")
+            self.log.info(f"Run scrape for {url}")
 
             if self.is_artifact_file(url):
-                self.log.debug(f"Skip scrape & queue download for {url}")
+                self.log.info(f"Skip scrape & queue download for {url}")
                 download = DownloadContext(
                     request=Request(url=url), metadata=Metadata(base_url=url)
                 )
@@ -461,7 +468,7 @@ class ScrapeWorker:
 
             all_downloads += await self.queue_downloads(url, url)
             if self.site.scrape_method_configuration.follow_links:
-                self.log.debug(f"Follow links for {url}")
+                self.log.info(f"Follow links for {url}")
                 for nested_url in await self.follow_links(url):
                     all_downloads += await self.queue_downloads(nested_url, base_url=url)
 
@@ -471,7 +478,7 @@ class ScrapeWorker:
                 await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
                 tasks.append(self.attempt_download(download))
             else:
-                self.log.debug(f"Skip download {download.request.url}")
+                self.log.info(f"Skip download {download.request.url}")
 
         await self.wait_for_completion_or_cancel(tasks)
 
