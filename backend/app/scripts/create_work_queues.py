@@ -4,65 +4,125 @@ from backend.common.db.init import init_db
 from backend.common.models.work_queue import SubmitAction, WorkQueue
 
 
-async def create_default_work_queues():
-    if await WorkQueue.count():
-        return
-
+async def classification_queues():
     await WorkQueue(
         name="Classification",
         collection_name="DocDocument",
         frontend_component="DocDocumentClassificationPage",
-        document_query={ 'classification_status': 'QUEUED' },
-        sort_query=['last_collected_date'],
-        user_query={ 'roles': { '$in': [ "admin", "triage" ] } },
+        document_query={"classification_status": "QUEUED"},
+        sort_query=["final_effective_date"],
+        user_query={"roles": {"$in": ["admin", "classification"]}},
         submit_actions=[
             SubmitAction(
                 label="Submit",
                 reassignable=True,
                 require_comment=True,
-                submit_action={ 'classification_status': 'APPROVED' },
-                primary=True
+                submit_action={"classification_status": "APPROVED"},
+                primary=True,
             ),
-            SubmitAction(label="Hold", submit_action={ 'classification_status': 'HOLD' }),
+            SubmitAction(label="Hold", submit_action={"classification_status": "HOLD"}),
         ],
     ).save()
     await WorkQueue(
         name="Classification Hold",
         collection_name="DocDocument",
         frontend_component="DocDocumentClassificationPage",
-        document_query={ 'classification_status': 'HOLD' },
-        sort_query=['last_collected_date'],
-        user_query={ 'roles': { '$in': [ "admin" ] } },
+        document_query={"classification_status": "HOLD"},
+        sort_query=["final_effective_date"],
+        user_query={"roles": {"$in": ["admin", "classification"]}},
         submit_actions=[
-            SubmitAction(label="Approve", submit_action={ 'classification_status': 'APPROVED' }, primary=True),
-            SubmitAction(label="Back To Queue", submit_action={ 'classification_status': 'QUEUED' }),
+            SubmitAction(
+                label="Approve", submit_action={"classification_status": "APPROVED"}, primary=True
+            ),
+            SubmitAction(label="Back To Queue", submit_action={"classification_status": "QUEUED"}),
         ],
     ).save()
 
+
+async def family_queues():
     await WorkQueue(
-        name="Content Extraction",
+        name="Document & Payer Family",
         collection_name="DocDocument",
-        sort_query=['last_collected_date'],
-        frontend_component="ContentExtractionApprovalPage",
-        document_query={ 'content_extraction_task_id': { '$ne': None }, 'content_extraction_status': 'QUEUED' },
-        user_query={ 'roles': { '$in': [ "admin", "triage" ] } },
+        frontend_component="DocDocumentClassificationPage",
+        document_query={"classification_status": "APPROVED", "family_status": "QUEUED"},
+        sort_query=["final_effective_date"],
+        user_query={"roles": {"$in": ["admin", "family"]}},
         submit_actions=[
-            SubmitAction(label="Submit", submit_action={ 'content_extraction_status': 'APPROVED' }, primary=True),
-            SubmitAction(label="Hold", submit_action={ 'content_extraction_status': 'HOLD' }),
+            SubmitAction(
+                label="Submit",
+                reassignable=True,
+                require_comment=True,
+                submit_action={"family_status": "APPROVED"},
+                primary=True,
+            ),
+            SubmitAction(label="Hold", submit_action={"family_status": "HOLD"}),
         ],
     ).save()
     await WorkQueue(
-        name="Content Extraction Hold",
+        name="Document & Payer Family Hold",
         collection_name="DocDocument",
-        sort_query=['last_collected_date'],
-        frontend_component="ContentExtractionApprovalPage",
-        document_query={ 'content_extraction_task_id': { '$ne': None }, 'content_extraction_status': 'HOLD' },
-        user_query={ 'roles': { '$in': [ "admin" ] } },
+        frontend_component="DocDocumentClassificationPage",
+        document_query={"classification_status": "APPROVED", "family_status": "HOLD"},
+        sort_query=["final_effective_date"],
+        user_query={"roles": {"$in": ["admin", "family"]}},
         submit_actions=[
-            SubmitAction(label="Approve", submit_action={ 'content_extraction_status': 'APPROVED' }, primary=True),
-            SubmitAction(label="Back To Queue", submit_action={ 'content_extraction_status': 'QUEUED' }),
+            SubmitAction(
+                label="Approve", submit_action={"family_status": "APPROVED"}, primary=True
+            ),
+            SubmitAction(label="Back To Queue", submit_action={"family_status": "QUEUED"}),
         ],
     ).save()
+
+
+async def translation_config_queues():
+    await WorkQueue(
+        name="Translation Config",
+        collection_name="DocDocument",
+        sort_query=["final_effective_date"],
+        frontend_component="DocDocumentClassificationPage",
+        document_query={
+            "classification_status": "APPROVED",
+            "family_status": "APPROVED",
+            "content_extraction_status": "QUEUED",
+        },
+        user_query={"roles": {"$in": ["admin", "translation"]}},
+        submit_actions=[
+            SubmitAction(
+                label="Submit",
+                submit_action={"content_extraction_status": "APPROVED"},
+                primary=True,
+            ),
+            SubmitAction(label="Hold", submit_action={"content_extraction_status": "HOLD"}),
+        ],
+    ).save()
+    await WorkQueue(
+        name="Translation Config Hold",
+        collection_name="DocDocument",
+        sort_query=["final_effective_date"],
+        frontend_component="DocDocumentClassificationPage",
+        document_query={"content_extraction_status": "HOLD"},
+        user_query={"roles": {"$in": ["admin", "translation"]}},
+        submit_actions=[
+            SubmitAction(
+                label="Approve",
+                submit_action={"content_extraction_status": "APPROVED"},
+                primary=True,
+            ),
+            SubmitAction(
+                label="Back To Queue", submit_action={"content_extraction_status": "QUEUED"}
+            ),
+        ],
+    ).save()
+
+
+async def create_default_work_queues():
+    await WorkQueue.delete_all()
+    if await WorkQueue.count():
+        return
+
+    await classification_queues()
+    await family_queues()
+    await translation_config_queues()
 
 
 async def execute():

@@ -22,7 +22,15 @@ from backend.common.models.shared import (
 class BaseDocDocument(BaseModel):
     retrieved_document_id: Indexed(PydanticObjectId)  # type: ignore
     classification_status: Indexed(str) = ApprovalStatus.QUEUED  # type: ignore
+    family_status: Indexed(str) = ApprovalStatus.QUEUED  # type: ignore
     content_extraction_status: Indexed(str) = ApprovalStatus.QUEUED  # type: ignore
+
+    # Global Status Field, status: APPROVED means doc is ready for downstream use
+    status: Indexed(str) = ApprovalStatus.QUEUED  # type: ignore
+
+    classification_hold_info: list[str] = []
+    extraction_hold_info: list[str] = []
+
     classification_lock: TaskLock | None = None
 
     name: str
