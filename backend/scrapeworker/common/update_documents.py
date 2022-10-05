@@ -16,10 +16,9 @@ from backend.common.models.shared import DocDocumentLocation
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
+from backend.common.services.document import create_doc_document_service
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.models import DownloadContext
-
-from backend.common.services.document import create_doc_document_service
 
 
 class DocumentUpdater:
@@ -38,7 +37,7 @@ class DocumentUpdater:
         return user
 
     def set_doc_name(self, parsed_content: dict, download: DownloadContext):
-        self.log.info(
+        self.log.debug(
             f"title='{parsed_content['title']}' link_text='{download.metadata.link_text}' file_name='{download.file_name}' request_url='{download.request.url}'"  # noqa
         )
         return (
@@ -146,7 +145,7 @@ class DocumentUpdater:
     async def create_retrieved_document(
         self, parsed_content: dict[str, Any], download: DownloadContext, checksum: str, url: str
     ):
-        self.log.info("creating doc")
+        self.log.debug("creating doc")
         now = datetime.now(tz=timezone.utc)
         name = self.set_doc_name(parsed_content, download)
         text_checksum = await self.text_handler.save_text(parsed_content["text"])

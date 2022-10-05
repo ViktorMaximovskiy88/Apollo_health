@@ -34,18 +34,12 @@ locals {
 
   event_source = "com.mmitnetwork.sourcehub"
 
-  # Will leave the base mongodb-url unchanged in case other apps need a different auth mechanism 
+  # Will leave the base mongodb-url unchanged in case other apps need a different auth mechanism
   # For SourceHub, add the authMechanism
   mongodb_url = "${data.aws_ssm_parameter.mongodb-url.value}&authMechanism=MONGODB-AWS&authSource=$external"
   mongodb_db  = "source-hub"
 
-  new_relic_app_name_lookup = {
-    dev = "SourceHub-Dev"
-    tst = "SourceHub-Test"
-    prd = "SourceHub"
-  }
-
-  new_relic_app_name = local.new_relic_app_name_lookup[var.environment]
+  new_relic_app_name = "${title(local.app_name)}-${title(var.environment)}-${title(local.service_name)}"
 
   new_relic_secrets = [
     {
