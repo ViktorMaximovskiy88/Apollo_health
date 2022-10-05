@@ -32,6 +32,8 @@ const buildInitialValues = () => ({
     focus_therapy_configs: [],
     allow_docdoc_updates: false,
   },
+  doc_type_threshold: 0.75,
+  lineage_threshold: 0.75,
 });
 
 /* eslint-disable no-template-curly-in-string */
