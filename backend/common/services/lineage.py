@@ -25,12 +25,7 @@ from backend.scrapeworker.common.lineage_parser import (
     guess_state_name,
     guess_year_part,
 )
-from backend.scrapeworker.common.utils import (
-    compact,
-    group_by_attr,
-    tokenize_filename,
-    tokenize_url,
-)
+from backend.scrapeworker.common.utils import compact, tokenize_filename, tokenize_url
 
 
 class LineageService:
@@ -112,14 +107,14 @@ class LineageService:
         self, site_id: PydanticObjectId, docs: list[SiteRetrievedDocument]
     ):
         # build the model and save it
+        self.logger.info(f"before doc analysis save len(docs)={len(docs)}")
         for doc in docs:
             await build_doc_analysis(doc)
+        self.logger.info(f"after doc analysis save len(docs)={len(docs)}")
 
         # pick all from DB that are most recent OR no lineage...
         compare_docs = await self.get_comparision_docs(site_id)
-        # TODO prob shouldnt group docs that are already lineage'd?
-        for _key, group in group_by_attr(compare_docs, "document_type"):
-            await self._process_lineage(list(group))
+        await self._process_lineage(compare_docs)
 
     async def _process_lineage(self, items: list[DocumentAnalysis]):
         if len(items) == 0:
@@ -139,10 +134,12 @@ class LineageService:
         first_item = await create_lineage(first_item)
         matched.append(first_item)
 
-        for item in items:
+        self.logger.info(f"'{first_item.filename_text}'")
+        for index, item in enumerate(items):
+
             match = LineageMatcher(first_item, item, logger=self.logger).exec()
             if match:
-                self.logger.info(f"'{first_item.filename_text}' '{item.filename_text}' -> MATCHED")
+                self.logger.debug(f"'{first_item.filename_text}' '{item.filename_text}' -> MATCHED")
 
                 if item.lineage_id:
                     first_item.lineage_id = item.lineage_id
@@ -153,13 +150,11 @@ class LineageService:
                 matched.append(item)
 
             else:
-                self.logger.info(
+                self.logger.debug(
                     f"'{first_item.filename_text}' '{item.filename_text}' -> UNMATCHED"
                 )
                 unmatched.append(item)
 
-        # Theoretically unmatched shouldnt be matched with previous, so lets assign prev doc here
-        # TODO what if we dont have effective date ... last collected :x
         await self._version_matched(matched)
         await self._process_lineage(unmatched)
 

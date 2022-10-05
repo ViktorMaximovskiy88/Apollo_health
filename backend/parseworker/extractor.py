@@ -237,6 +237,14 @@ class TableContentExtractor:
                     t9n.stn = note
                 if rule.field == "SP":
                     t9n.sp = True
+                if rule.field == "STPA":
+                    t9n.stpa = True
+                if rule.field == "MB":
+                    t9n.mb = True
+                if rule.field == "SCO":
+                    t9n.sco = True
+                if rule.field == "DME":
+                    t9n.dme = True
 
         if ql_time and ql_quantity:
             t9n.ql = True

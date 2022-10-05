@@ -3,26 +3,17 @@ import { DocDocument, DocumentTag, UIIndicationTag, UITherapyTag } from './types
 import { DocDocumentTagForm } from './DocDocumentTagForm';
 import { dateToMoment } from '../../common';
 import { useCallback, useEffect, useState } from 'react';
-import { compact, isEqual, maxBy } from 'lodash';
+import { isEqual } from 'lodash';
 import { DocDocumentInfoForm } from './DocDocumentInfoForm';
 import { DocDocumentLocations } from './locations/DocDocumentLocations';
 import { useNavigate } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
+import { calculateFinalEffectiveFromValues } from './helpers';
 
 const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   const calculateFinalEffectiveDate = useCallback(() => {
     const values = form.getFieldsValue(true);
-    const computeFromFields = compact([
-      dateToMoment(values.effective_date),
-      dateToMoment(values.last_reviewed_date),
-      dateToMoment(values.last_updated_date),
-    ]);
-
-    const finalEffectiveDate: moment.Moment =
-      computeFromFields.length > 0
-        ? maxBy(computeFromFields, (date) => date.unix())
-        : values.first_collected_date;
-
+    const finalEffectiveDate = calculateFinalEffectiveFromValues(values);
     form.setFieldsValue({
       final_effective_date: finalEffectiveDate.startOf('day'),
     });

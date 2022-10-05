@@ -33,6 +33,7 @@ sibling_text_expression: str = """
             }
             n = n.parentNode;
         }
+        return '';
     }
 """
 

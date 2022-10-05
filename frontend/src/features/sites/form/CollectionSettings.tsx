@@ -1,4 +1,4 @@
-import { Input, Form, Select, Radio, Switch, Typography } from 'antd';
+import { Input, Form, Select, Radio, Typography } from 'antd';
 
 import { CollectionMethod, ScrapeMethod, Site } from '../types';
 import {
@@ -15,6 +15,7 @@ import { AttrSelectors } from './AttrSelectorField';
 import { FocusTherapyConfig } from './FocusTherapyConfig';
 import { HtmlScrapeConfig } from './HtmlScrapeConfig';
 import { SearchTokens } from './SearchTokens';
+import { FollowLinks } from './FollowLinks';
 
 function CollectionMethodRadio() {
   const collections = [
@@ -56,73 +57,18 @@ function Schedule() {
   );
 }
 
-function FollowLinks() {
-  const form = Form.useFormInstance();
-  const followLinks = Form.useWatch(['scrape_method_configuration', 'follow_links']);
-  function validateFollowLinks(fieldInfo: any, value: string) {
-    if (value.length === 0) {
-      const namePaths = [
-        ['scrape_method_configuration', 'follow_link_keywords'],
-        ['scrape_method_configuration', 'follow_link_url_keywords'],
-      ];
-      const currentNamePath = fieldInfo.field.split('.');
-      const otherNamePath = namePaths
-        .filter((path) => {
-          return !path.every((ele) => currentNamePath.includes(ele));
-        })
-        .flat();
-      const otherValue = form.getFieldValue(otherNamePath);
-
-      if (otherValue.length === 0) {
-        return Promise.reject(
-          new Error('You must provide a Link or URL Keyword with Follow Links enabled')
-        );
-      }
-    }
-
-    return Promise.resolve();
-  }
-
-  return (
-    <div className="flex space-x-5">
-      <Form.Item
-        name={['scrape_method_configuration', 'follow_links']}
-        label="Follow Links"
-        valuePropName="checked"
-      >
-        <Switch />
-      </Form.Item>
-      {followLinks && (
-        <div className="flex grow space-x-5">
-          <Form.Item
-            className="grow"
-            name={['scrape_method_configuration', 'follow_link_keywords']}
-            label="Follow Link Keywords"
-            rules={[
-              {
-                validator: (field, value) => validateFollowLinks(field, value),
-              },
-            ]}
-          >
-            <Select mode="tags" />
-          </Form.Item>
-          <Form.Item
-            className="grow"
-            name={['scrape_method_configuration', 'follow_link_url_keywords']}
-            label="Follow Link URL Keywords"
-            rules={[
-              {
-                validator: (field, value) => validateFollowLinks(field, value),
-              },
-            ]}
-          >
-            <Select mode="tags" />
-          </Form.Item>
-        </div>
-      )}
-    </div>
-  );
-}
+const Playbook = () => (
+  <Form.Item name="playbook" label="Playbook">
+    <Input.TextArea />
+  </Form.Item>
+);
+const CustomSelectors = () => (
+  <AttrSelectors
+    displayIsResource
+    parentName={['scrape_method_configuration', 'attr_selectors']}
+    title={<label className="font-semibold">Custom Selectors</label>}
+  />
+);
 
 interface CollectionSettingsPropTypes {
   initialValues: Partial<Site>;
@@ -142,27 +88,21 @@ export function CollectionSettings({ initialValues }: CollectionSettingsPropType
         {({ getFieldValue }) =>
           getFieldValue('collection_method') === CollectionMethod.Automated ? (
             <>
-              <SearchTokens />
-              <Form.Item name="playbook" label="Playbook">
-                <Input.TextArea />
-              </Form.Item>
               <ScrapeMethodSelect />
-              {currentScrapeMethod === ScrapeMethod.Html && <HtmlScrapeConfig />}
+              {currentScrapeMethod === ScrapeMethod.Html ? <HtmlScrapeConfig /> : null}
               <DocumentExtensions />
               <UrlKeywords />
+              <CustomSelectors />
               <ProxyExclusions />
               <WaitFor />
               <WaitForTimeout />
               <Schedule />
               <FollowLinks />
+              <SearchTokens />
+              <Playbook />
               <SearchInFrames />
               <AllowDocDocUpdate />
               <FocusTherapyConfig initialValues={initialValues} />
-              <AttrSelectors
-                displayIsResource
-                parentName={['scrape_method_configuration', 'attr_selectors']}
-                title={<label className="font-semibold">Custom Selectors</label>}
-              />
             </>
           ) : null
         }
