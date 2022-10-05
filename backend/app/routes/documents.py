@@ -7,9 +7,6 @@ from fastapi.responses import StreamingResponse
 
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
-from backend.common.events.event_convert import EventConvert
-from backend.common.events.send_event_client import SendEventClient
-from backend.common.models.doc_document import DocDocument, DocDocumentLocation
 from backend.common.models.document import (
     NewManualDocument,
     RetrievedDocument,
@@ -19,13 +16,12 @@ from backend.common.models.document import (
 )
 from backend.common.models.site_scrape_task import SiteScrapeTask, TaskStatus
 from backend.common.models.user import User
+from backend.common.services.document import create_doc_document_service
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_handler import TextHandler
-from backend.common.services.document import create_doc_document_service
 from backend.scrapeworker.common.models import DownloadContext, Request
 from backend.scrapeworker.file_parsers import parse_by_type
-
 
 router = APIRouter(
     prefix="/documents",
@@ -185,12 +181,6 @@ async def update_document(
 ):
 
     updated = await update_and_log_diff(logger, current_user, target, updates)
-
-    # Sending Event Bridge Event.  Need to add condition when to send.
-    document_json = EventConvert(document=updated).convert()
-    send_evnt_client = SendEventClient()
-    response = send_evnt_client.send_event("document-details", document_json)  # noqa: F841
-
     return updated
 
 
