@@ -30,7 +30,6 @@ from backend.scrapeworker.scrape_worker import ScrapeWorker
 
 app = typer.Typer()
 log = logging.getLogger(__name__)
-application = newrelic.agent.register_application(timeout=10.0)
 
 accepting_tasks = True
 active_tasks: dict[PydanticObjectId | None, SiteScrapeTask] = {}
