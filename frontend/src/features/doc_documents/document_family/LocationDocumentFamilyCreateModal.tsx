@@ -188,7 +188,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
   );
 };
 
-// asyncValidator because rkt query makes this tough without hooks/dispatch
+// asyncValidator because rtk query makes this tough without hooks/dispatch
 function mustBeUniqueToSite(siteId: string, asyncValidator: Function) {
   return {
     async validator(_rule: Rule, value: string) {

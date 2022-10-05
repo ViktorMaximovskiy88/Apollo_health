@@ -21,11 +21,13 @@ import sitesReducer from '../features/sites/sitesSlice';
 import userReducer from '../features/users/userSlice';
 import collectionsReducer from '../features/collections/collectionsSlice';
 import docDocumentsReducer from '../features/doc_documents/docDocumentsSlice';
+import siteDocDocumentsReducer from '../features/doc_documents/siteDocDocumentsSlice';
 import documentsReducer from '../features/collections/documentsSlice';
 import extractionsReducer from '../features/extractions/extractionsSlice';
 import translationsReducer from '../features/translations/translationSlice';
 import payerBackboneReducer from '../features/payer-backbone/payerBackboneSlice';
 import workQueueReducer from '../features/work_queue/workQueueSlice';
+import lineageReducer from '../features/lineage/lineage-slice';
 
 const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
   history: createBrowserHistory(),
@@ -50,12 +52,14 @@ export const store = configureStore({
     users: userReducer,
     collections: collectionsReducer,
     docDocuments: docDocumentsReducer,
+    siteDocDocuments: siteDocDocumentsReducer,
     documents: documentsReducer,
     extractions: extractionsReducer,
     translations: translationsReducer,
     workQueues: workQueueReducer,
     payerBackbone: payerBackboneReducer,
     router: routerReducer,
+    lineage: lineageReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(

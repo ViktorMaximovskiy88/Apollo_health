@@ -148,6 +148,26 @@ export function ExtractionResultsDataTable({
       name: 't_sp',
       render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
     },
+    {
+      header: 'DME',
+      name: 't_dme',
+      render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
+    },
+    {
+      header: 'SCO',
+      name: 't_sco',
+      render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
+    },
+    {
+      header: 'MB',
+      name: 't_mb',
+      render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
+    },
+    {
+      header: 'STPA',
+      name: 't_stpa',
+      render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
+    },
   ];
   const columns: TypeColumn[] = [
     {

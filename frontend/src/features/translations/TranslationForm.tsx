@@ -11,7 +11,7 @@ import { RemoteSelect } from '../../components/RemoteSelect';
 import { TranslationConfig } from './types';
 
 function TranslationFormContainer(props: { children: ReactNode }) {
-  return <div className="max-w-lg">{props.children}</div>;
+  return <div className="max-w-xl">{props.children}</div>;
 }
 
 export function TableDetectionForm() {
@@ -437,6 +437,10 @@ function TranslationRule(props: {
     { value: 'Brand', label: 'Brand' },
     { value: 'BvG', label: 'Brand vs Generic' },
     { value: 'Tier', label: 'Tier' },
+    { value: 'STPA', label: ' Step in Prior Authorization' },
+    { value: 'MB', label: 'Medical Benefit' },
+    { value: 'SCO', label: 'State Carve Out' },
+    { value: 'DME', label: 'Durable Medical Equipment' },
   ];
   const field = Form.useWatch([
     'translation',
@@ -452,7 +456,7 @@ function TranslationRule(props: {
         <Form.Item className="grow" label="Field" name={[props.name, 'field']} {...props.field}>
           <Select options={options} />
         </Form.Item>
-        {['PA', 'CPA', 'QL', 'ST', 'SP'].includes(field) && (
+        {['PA', 'CPA', 'QL', 'ST', 'SP', 'STPA', 'MB', 'SCO', 'DME'].includes(field) && (
           <PatternTranslationInput name={props.name} field={props.field} />
         )}
         {['Brand', 'Generic'].includes(field) && (

@@ -30,6 +30,14 @@ class FormularyDatum(BaseModel):
 
     sp: bool = False
 
+    stpa: bool = False
+
+    mb: bool = False
+
+    sco: bool = False
+
+    dme: bool = False
+
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, FormularyDatum):
             return False
