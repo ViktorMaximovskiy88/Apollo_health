@@ -1,5 +1,4 @@
 import { Form, Select, DatePicker } from 'antd';
-import { DocCompare } from './DocCompare';
 import { prettyDate } from '../../common';
 import { DocumentTypes } from '../retrieved_documents/types';
 import { DocCompareToPrevious } from './DocCompareToPrevious';
@@ -46,8 +45,6 @@ export function DocumentClassification() {
         <Lineage />
         <DocCompareToPrevious />
       </div>
-
-      <DocCompare />
     </>
   );
 }

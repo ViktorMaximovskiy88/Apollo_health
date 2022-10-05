@@ -2,7 +2,6 @@ from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from pydantic import BaseModel
 
-from backend.app.routes.documents import get_target as get_retrieved_doc
 from backend.app.routes.sites import Site
 from backend.app.routes.table_query import (
     TableFilterInfo,
@@ -21,7 +20,6 @@ from backend.common.models.doc_document import (
     DocDocumentView,
     UpdateDocDocument,
 )
-from backend.common.models.document import RetrievedDocument
 from backend.common.models.document_mixins import calc_final_effective_date
 from backend.common.models.shared import DocDocumentLocationView
 from backend.common.models.site_scrape_task import SiteScrapeTask
@@ -94,60 +92,31 @@ async def read_extraction_task(
     return doc
 
 
-class ComparePreviousResponse(BaseModel):
+class CompareResponse(BaseModel):
     diff: str
     previous_doc: DocDocument
     current_doc: DocDocument
 
 
 @router.post(
-    "/diff-with-previous/{id}",
-    response_model=ComparePreviousResponse,
+    "/{id}/diff",
+    response_model=CompareResponse,
     dependencies=[Security(get_current_user)],
 )
-async def create_diff_with_previous(current_doc: DocDocument = Depends(get_target)):
+async def create_diff(
+    previous_doc_doc_id: PydanticObjectId, current_doc: DocDocument = Depends(get_target)
+):
     text_handler = TextHandler()
-    if current_doc.previous_doc_doc_id is None:
-        raise HTTPException(
-            detail="Current DocDocument does not have an associate Previous DocDocument",
-            status_code=status.HTTP_406_NOT_ACCEPTABLE,
-        )
-    previous_doc: DocDocument = await get_target(current_doc.previous_doc_doc_id)
+    previous_doc: DocDocument = await get_target(previous_doc_doc_id)
     if current_doc.text_checksum is None or previous_doc.text_checksum is None:
         raise HTTPException(
             detail="Current or previous DocDocument does not have an associated text file.",
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
         )
     _, diff = await text_handler.create_diff(previous_doc.text_checksum, current_doc.text_checksum)
-    return ComparePreviousResponse(
+    return CompareResponse(
         diff=diff.decode("utf-8"), previous_doc=previous_doc, current_doc=current_doc
     )
-
-
-class CompareResponse(BaseModel):
-    diff: str
-    org_doc: DocDocument
-    new_doc: RetrievedDocument
-
-
-@router.post(
-    "/diff/{id}",
-    response_model=CompareResponse,
-    dependencies=[Security(get_current_user)],
-)
-async def create_diff(
-    compare_id: PydanticObjectId,
-    target: DocDocument = Depends(get_target),
-):
-    text_handler = TextHandler()
-    compare_doc = await get_retrieved_doc(compare_id)
-    if target.text_checksum is None or compare_doc.text_checksum is None:
-        raise HTTPException(
-            detail="Doc Document or Retreived Document does not have an associated text file.",
-            status_code=status.HTTP_406_NOT_ACCEPTABLE,
-        )
-    _, diff = await text_handler.create_diff(target.text_checksum, compare_doc.text_checksum)
-    return CompareResponse(diff=diff.decode("utf-8"), org_doc=target, new_doc=compare_doc)
 
 
 @router.post("/{id}", response_model=DocDocument)

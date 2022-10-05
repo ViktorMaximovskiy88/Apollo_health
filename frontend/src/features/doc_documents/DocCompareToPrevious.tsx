@@ -7,7 +7,7 @@ import 'react-diff-view/style/index.css';
 
 import { isErrorWithData } from '../../common/helpers';
 import { Hr } from '../../components';
-import { useCreateDiffWithPreviousMutation, useGetDocDocumentQuery } from './docDocumentApi';
+import { useCreateDiffMutation, useGetDocDocumentQuery } from './docDocumentApi';
 
 function CompareModal(props: {
   diff?: string;
@@ -62,11 +62,10 @@ function CompareModal(props: {
 
 export function DocCompareToPrevious() {
   const form = Form.useFormInstance();
-  const currentDocDocId = form.getFieldValue('docId');
+  const currentDocDocId: string = form.getFieldValue('docId');
   const { data: currentDocument } = useGetDocDocumentQuery(currentDocDocId);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [createDiffWithPrevious, { data: diffData, isLoading, isSuccess }] =
-    useCreateDiffWithPreviousMutation();
+  const [createDiff, { data: diffData, isLoading, isSuccess }] = useCreateDiffMutation();
 
   const { previous_doc_doc_id: previousDocDocId } = currentDocument ?? {};
 
@@ -75,8 +74,9 @@ export function DocCompareToPrevious() {
   }
 
   const handleCompare = useCallback(async () => {
+    if (!previousDocDocId) throw new Error('DocDocument has no Previous DocDoc Id');
     try {
-      await createDiffWithPrevious(currentDocDocId).unwrap();
+      await createDiff({ currentDocDocId, previousDocDocId }).unwrap();
       setIsModalVisible(true);
     } catch (err) {
       if (isErrorWithData(err)) {
@@ -91,7 +91,7 @@ export function DocCompareToPrevious() {
         });
       }
     }
-  }, [createDiffWithPrevious, currentDocDocId]);
+  }, [createDiff, currentDocDocId, previousDocDocId]);
 
   return (
     <div className="flex space-x-8 items-center">

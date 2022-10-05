@@ -1,7 +1,7 @@
 import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
 import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
-import { ComparePreviousResponse, CompareRequest, CompareResponse, DocDocument } from './types';
+import { CompareRequest, CompareResponse, DocDocument } from './types';
 
 export const docDocumentsApi = createApi({
   reducerPath: 'docDocumentsApi',
@@ -57,14 +57,8 @@ export const docDocumentsApi = createApi({
       ],
     }),
     createDiff: builder.mutation<CompareResponse, CompareRequest>({
-      query: (compareRequst) => ({
-        url: `/doc-documents/diff/${compareRequst._id}?compare_id=${compareRequst.compareId}`,
-        method: 'POST',
-      }),
-    }),
-    createDiffWithPrevious: builder.mutation<ComparePreviousResponse, string>({
-      query: (id) => ({
-        url: `/doc-documents/diff-with-previous/${id}`,
+      query: (req) => ({
+        url: `/doc-documents/${req.currentDocDocId}/diff?previous_doc_doc_id=${req.previousDocDocId}`,
         method: 'POST',
       }),
     }),
@@ -81,6 +75,5 @@ export const {
   useLazyGetDocDocumentsQuery,
   useUpdateDocDocumentMutation,
   useCreateDiffMutation,
-  useCreateDiffWithPreviousMutation,
   useGetChangeLogQuery,
 } = docDocumentsApi;
