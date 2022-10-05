@@ -1,3 +1,9 @@
+from pathlib import Path
+
+import newrelic.agent
+
+newrelic.agent.initialize(Path(__file__).parent / "newrelic.ini")
+
 import asyncio
 import logging
 import signal
@@ -127,6 +133,7 @@ async def start_worker_async(worker_id):
 
 
 @app.command()
+@newrelic.agent.background_task()
 def start_worker():
     worker_id = uuid4()
     typer.secho(f"Starting Scrape Worker {worker_id}", fg=typer.colors.GREEN)

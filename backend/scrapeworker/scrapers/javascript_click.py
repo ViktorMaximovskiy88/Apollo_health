@@ -32,7 +32,7 @@ class JavascriptClick(PlaywrightBaseScraper):
             if not attr_selector.resource_address:
                 selectors.append(to_xpath(attr_selector))
         selector_string = "|".join(selectors)
-        self.log.info(selector_string)
+        self.log.debug(selector_string)
         return selector_string
 
     # Handle special json responses which contain links to downloadable media.
