@@ -9,7 +9,6 @@ import logging
 import signal
 import sys
 from datetime import datetime, timezone
-from pathlib import Path
 from uuid import UUID, uuid4
 
 import pymongo

@@ -1,9 +1,14 @@
+from pathlib import Path
+
+import newrelic.agent
+
+newrelic.agent.initialize(Path(__file__).parent / "newrelic.ini")
+
 import asyncio
 import logging
 import sys
 import traceback
 from datetime import datetime, timezone
-from pathlib import Path
 from uuid import uuid4
 
 import pymongo

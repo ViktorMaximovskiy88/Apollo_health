@@ -1,10 +1,15 @@
+from pathlib import Path
+
+import newrelic.agent
+
+newrelic.agent.initialize(Path(__file__).parent / "newrelic.ini")
+
 import asyncio
 import logging
 import math
 import signal
 import sys
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 
 import boto3
 import typer
