@@ -14,7 +14,7 @@ from backend.common.models.shared import (
     RetrievedDocumentLocation,
     TherapyTag,
 )
-from backend.common.services.lineage import LineageService
+from backend.common.services.lineage.lineage import LineageService
 
 site_id_a = PydanticObjectId("00000000000000000000000a")
 site_id_b = PydanticObjectId("00000000000000000000000b")

@@ -32,6 +32,7 @@ class BulkScrapeActions(str, Enum):
 
 class ApprovalStatus(str, Enum):
     QUEUED = "QUEUED"
+    PENDING = "PENDING"
     APPROVED = "APPROVED"
     HOLD = "HOLD"
 

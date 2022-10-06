@@ -15,7 +15,7 @@ from tenacity.wait import wait_random_exponential
 
 from backend.common.core.enums import TaskStatus
 from backend.common.core.log import logging
-from backend.common.models.doc_document import IndicationTag, TherapyTag
+from backend.common.models.doc_document import DocDocument, IndicationTag, TherapyTag
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.link_task_log import (
     FileMetadata,
@@ -28,7 +28,8 @@ from backend.common.models.link_task_log import (
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.common.services.lineage import LineageService
+from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleService
+from backend.common.services.lineage.lineage import LineageService
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.aio_downloader import AioDownloader, default_headers
@@ -70,7 +71,8 @@ class ScrapeWorker:
         )
         self.doc_updater = DocumentUpdater(_log, scrape_task, site)
         self.lineage_service = LineageService(logger=_log)
-        self.lineage_tasks = []
+        self.doc_lifecycle_service = DocLifecycleService(logger=_log)
+        self.new_document_pairs: list[tuple[RetrievedDocument, DocDocument]] = []
         self.log = _log
 
     @alru_cache
@@ -237,7 +239,7 @@ class ScrapeWorker:
                     parsed_content, download, checksum, url
                 )
                 doc_document = await self.doc_updater.create_doc_document(document)
-                self.lineage_tasks.append((document, doc_document))
+                self.new_document_pairs.append((document, doc_document))
 
             link_retrieved_task.retrieved_document_id = document.id
 
@@ -475,8 +477,12 @@ class ScrapeWorker:
 
         await self.wait_for_completion_or_cancel(tasks)
 
-        # doc_ids = [doc.id for (doc, doc_doc) in self.lineage_tasks]
-        # await self.lineage_service.process_lineage_for_doc_ids(self.site.id, doc_ids)
+        doc_ids = [doc.id for (doc, _) in self.new_document_pairs]
+        await self.lineage_service.process_lineage_for_doc_ids(self.site.id, doc_ids)
+
+        doc_doc_ids = [doc_doc.id for (_, doc_doc) in self.new_document_pairs]
+        # self.delta_service.compute_document_deltas(doc_doc_ids)
+        await self.doc_lifecycle_service.exec(doc_doc_ids)  # type: ignore
 
         await self.downloader.close()
 

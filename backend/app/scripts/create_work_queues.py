@@ -21,10 +21,8 @@ async def classification_queues():
                 label="Hold",
                 reassignable=True,
                 require_comment=True,
-                submit_action={"classification_status": "APPROVED"},
-                primary=True,
+                submit_action={"classification_status": "HOLD"},
             ),
-            SubmitAction(label="Hold", submit_action={"classification_status": "HOLD"}),
         ],
     ).save()
     await WorkQueue(

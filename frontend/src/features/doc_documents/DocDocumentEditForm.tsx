@@ -157,7 +157,7 @@ export function DocDocumentEditForm({
     setHasChanges(false);
     form.setFieldsValue(initialValues);
     form.resetFields();
-  }, [initialValues]);
+  }, [initialValues, setHasChanges, form]);
 
   if (!doc) return null;
 

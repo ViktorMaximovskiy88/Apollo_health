@@ -94,17 +94,17 @@ class LockableDocument(BaseModel):
     locks: list[TaskLock] = []
 
 
-def get_reference_tags(tags: list[TherapyTag | IndicationTag]):
+def get_reference_tags(tags: list[TherapyTag] | list[IndicationTag]):
     return [tag for tag in tags if not tag.focus]
 
 
-def get_focus_tags(tags: list[TherapyTag | IndicationTag]):
+def get_focus_tags(tags: list[TherapyTag] | list[IndicationTag]):
     return [tag for tag in tags if tag.focus]
 
 
-def get_unique_reference_tags(tags: list[TherapyTag | IndicationTag]):
+def get_unique_reference_tags(tags: list[TherapyTag] | list[IndicationTag]):
     return unique_by_attr(get_reference_tags(tags), "code")
 
 
-def get_unique_focus_tags(tags: list[TherapyTag | IndicationTag]):
+def get_unique_focus_tags(tags: list[TherapyTag] | list[IndicationTag]):
     return unique_by_attr(get_focus_tags(tags), "code")
