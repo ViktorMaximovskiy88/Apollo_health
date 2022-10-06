@@ -14,9 +14,6 @@ export const createColumns = () => {
       name: 'name',
       defaultFlex: 1,
       minWidth: 200,
-      render: ({ data: docFamily }: { data: DocumentFamily }) => {
-        return <>{docFamily.name}</>;
-      },
     },
     {
       header: 'Document Type',
@@ -27,7 +24,6 @@ export const createColumns = () => {
         placeholder: 'All',
         dataSource: DocumentTypes,
       },
-      render: ({ data: docFamily }: { data: DocumentFamily }) => <>{docFamily.document_type}</>,
     },
     {
       header: 'Actions',
