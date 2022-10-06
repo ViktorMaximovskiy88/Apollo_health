@@ -14,6 +14,20 @@ interface DocDocumentLocationFormTypes {
   index: number;
   onShowDocumentFamilyCreate: (location: DocDocumentLocation) => void;
 }
+const useGetDocumentFamiliesBySiteAndDocType = (siteId: string, documentType: string) => {
+  const args = useMemo(() => {
+    return {
+      limit: 1000,
+      skip: 0,
+      sortInfo: { name: 'name', dir: -1 as 1 | -1 | 0 },
+      filterValue: [
+        { name: 'site_id', operator: 'eq', type: 'string', value: siteId },
+        { name: 'document_type', operator: 'eq', type: 'string', value: documentType },
+      ],
+    };
+  }, [siteId, documentType]);
+  return useGetDocumentFamiliesQuery(args);
+};
 export const DocDocumentLocationForm = ({
   documentType,
   location,
@@ -21,21 +35,6 @@ export const DocDocumentLocationForm = ({
   onShowDocumentFamilyCreate,
 }: DocDocumentLocationFormTypes) => {
   const form = Form.useFormInstance();
-
-  const useGetDocumentFamiliesBySiteAndDocType = (siteId: string, documentType: string) => {
-    const args = useMemo(() => {
-      return {
-        limit: 1000,
-        skip: 0,
-        sortInfo: { name: 'name', dir: -1 as 1 | -1 | 0 },
-        filterValue: [
-          { name: 'site_id', operator: 'eq', type: 'string', value: siteId },
-          { name: 'document_type', operator: 'eq', type: 'string', value: documentType },
-        ],
-      };
-    }, [siteId, documentType]);
-    return useGetDocumentFamiliesQuery(args);
-  };
 
   const { data } = useGetDocumentFamiliesBySiteAndDocType(location.site_id, documentType);
   const options = data?.data.map((item: DocumentFamily) => ({ value: item._id, label: item.name }));
