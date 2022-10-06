@@ -19,7 +19,7 @@ import {
 
 interface DocumentFamilyCreateModalPropTypes {
   documentType: string;
-  location: DocDocumentLocation | undefined;
+  location?: DocDocumentLocation | undefined;
   visible?: boolean;
   onClose: () => void;
   onSave: (documentFamilyId: string) => void;
@@ -181,8 +181,6 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
             <Select mode="multiple" options={fieldGroupsOptions} />
           </Form.Item>
         </Input.Group>
-
-        <PayerInfo />
       </Form>
     </Modal>
   );

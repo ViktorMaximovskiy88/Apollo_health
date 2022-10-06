@@ -23,6 +23,7 @@ export function DocumentEditPage() {
     <MainLayout sidebar={<SiteMenu />} pageTitle={doc.name}>
       <div className="flex space-x-4 overflow-auto flex-grow">
         <div className="w-1/2 h-full overflow-auto">
+          sdfsd
           <DocumentForm doc={doc} />
         </div>
         <div className="w-1/2 h-full overflow-auto ant-tabs-h-full">

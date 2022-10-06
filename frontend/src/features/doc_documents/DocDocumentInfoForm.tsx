@@ -7,8 +7,14 @@ import { DateFields } from './DocDocumentDateFields';
 import { DocumentClassification } from './DocDocumentClassificationFields';
 import { ExtractionFields } from './DocDocumentExtractionFields';
 import { Translation } from './TranslationSelector';
+import { DocDocumentInfoFormFamilyField } from './DocDocumentInfoFormFamilyField';
+import { DocDocument } from './types';
 
-export function DocDocumentInfoForm({ onFieldChange }: { onFieldChange: () => void }) {
+interface DocDocumentInfoTypes {
+  docDocument: DocDocument;
+  onFieldChange: () => void;
+}
+export function DocDocumentInfoForm({ onFieldChange, docDocument }: DocDocumentInfoTypes) {
   // bandaid fix; painted into a corner
   const { docDocumentId, itemId } = useParams();
   const docId = docDocumentId ?? itemId;
@@ -28,6 +34,8 @@ export function DocDocumentInfoForm({ onFieldChange }: { onFieldChange: () => vo
       <Hr />
       <DocumentClassification />
       <Translation />
+      <Hr />
+      <DocDocumentInfoFormFamilyField docDocument={docDocument} />
       <Hr />
       <DateFields onFieldChange={onFieldChange} />
       <Hr />

@@ -6,20 +6,25 @@ export const documentFamilyApi = createApi({
   baseQuery: fetchBaseQuery(),
   tagTypes: ['DocumentFamily', 'ChangeLog'],
   endpoints: (builder) => ({
-    getDocumentFamilies: builder.query<DocumentFamily[], { siteId: string; documentType: string }>({
-      query: ({ siteId, documentType }) => {
-        const args = [
-          `site_id=${encodeURIComponent(siteId)}`,
-          `document_type=${encodeURIComponent(documentType)}`,
-        ].join('&');
-        return `/document-family/?${args}`;
-      },
-      providesTags: (results) => {
-        const tags = [{ type: 'DocumentFamily' as const, id: 'LIST' }];
-        results?.forEach(({ _id: id }) => tags.push({ type: 'DocumentFamily', id }));
-        return tags;
-      },
-    }),
+    getDocumentFamilies: builder.query<DocumentFamily[], { siteId?: string; documentType: string }>(
+      {
+        query: ({ siteId, documentType }) => {
+          let args;
+          if (siteId)
+            args = [
+              `site_id=${encodeURIComponent(siteId)}`,
+              `document_type=${encodeURIComponent(documentType)}`,
+            ].join('&');
+          else args = [`document_type=${encodeURIComponent(documentType)}`].join('&');
+          return `/document-family/?${args}`;
+        },
+        providesTags: (results) => {
+          const tags = [{ type: 'DocumentFamily' as const, id: 'LIST' }];
+          results?.forEach(({ _id: id }) => tags.push({ type: 'DocumentFamily', id }));
+          return tags;
+        },
+      }
+    ),
     getDocumentFamily: builder.query<DocumentFamily, string | undefined>({
       query: (id) => `/document-family/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'DocumentFamily' as const, id }],
