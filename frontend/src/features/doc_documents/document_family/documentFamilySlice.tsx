@@ -3,7 +3,7 @@ import { RootState } from '../../../app/store';
 
 export const initialState = {
   table: {
-    sort: { name: 'family_name', dir: -1 as 1 | -1 | 0 },
+    sort: { name: 'name', dir: -1 as 1 | -1 | 0 },
     filter: [
       { name: 'document_type', operator: 'eq', type: 'select', value: '' },
       { name: 'name', operator: 'contains', type: 'string', value: '' },
