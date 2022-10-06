@@ -77,7 +77,7 @@ export function SiteEditPage() {
     ) {
       await cancelAllScrapes(params.siteId);
     }
-    navigate(-1);
+    navigate('../scrapes');
   }
   return (
     <MainLayout
