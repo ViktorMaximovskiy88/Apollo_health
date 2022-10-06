@@ -17,8 +17,7 @@ export function DocExtractionPage() {
   return (
     <MainLayout
       sidebar={<SiteMenu />}
-      pageTitle={`Extractions - ${doc.name}`}
-      pageToolbar={
+      sectionToolbar={
         <Button className="ml-auto" onClick={() => runExtractionForDoc(docId)}>
           Run Extraction
         </Button>
