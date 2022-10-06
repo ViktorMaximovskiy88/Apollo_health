@@ -14,10 +14,9 @@ from backend.app.routes.table_query import (
     get_query_json_list,
     query_table,
 )
-from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
+from backend.app.utils.logger import Logger, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.core.enums import BulkScrapeActions, CollectionMethod, SiteStatus, TaskStatus
-from backend.common.models.doc_document import DocDocument
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import (
     ManualWorkItem,
@@ -25,13 +24,19 @@ from backend.common.models.site_scrape_task import (
     UpdateSiteScrapeTask,
 )
 from backend.common.models.user import User
-from backend.common.services.tasks import SiteTasksService
+from backend.common.services.collection import CollectionResult, CollectionService
 from backend.common.task_queues.unique_task_insert import try_queue_unique_task
 
 router = APIRouter(
     prefix="/site-scrape-tasks",
     tags=["SiteScrapeTasks"],
 )
+
+
+class BulkRunResponse(BaseModel):
+    type: str
+    scrapes: int | None = None
+    sites: int | None = None
 
 
 async def get_target(id: PydanticObjectId):
@@ -67,7 +72,7 @@ async def read_scrape_tasks_for_site(
 )
 async def read_scrape_task(
     target: User = Depends(get_target),
-):
+) -> User:
     return target
 
 
@@ -81,68 +86,28 @@ async def start_scrape_task(
     site_id: PydanticObjectId,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
-):
+) -> CollectionResult:
+    print("starting_scrape_task")
     site = await Site.get(site_id)
     if not site:
         raise HTTPException(
             detail=f"Site {site_id} Not Found",
             status_code=status.HTTP_404_NOT_FOUND,
         )
-    site_scrape_task = await SiteScrapeTask.find_one(
-        {"site_id": site_id, "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]}}
+    site_collection = CollectionService(
+        site=site,
+        current_user=current_user,
+        logger=logger,
     )
-    if site_scrape_task:
+    if site_collection.has_queued():
+        last_queued_task = await site_collection.fetch_last_queued()
         raise HTTPException(
-            detail=f"Scrapetask {site_scrape_task.id} is already queued or in progress.",
+            detail=f"Scrapetask {last_queued_task.id} is already queued or in progress.",
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
         )
-    if site.collection_method == CollectionMethod.Manual:
-        site_scrape_task = SiteScrapeTask(
-            site_id=site_id,
-            initiator_id=current_user.id,
-            start_time=datetime.now(tz=timezone.utc),
-            queued_time=datetime.now(tz=timezone.utc),
-            status=TaskStatus.IN_PROGRESS,
-            collection_method=CollectionMethod.Manual,
-        )
 
-        # get the latest active site_scrape_task id
-        previous_scrape_task = await SiteScrapeTask.find_one(
-            {"site_id": site_id}, sort=[("start_time", -1)]
-        )
-        if previous_scrape_task:
-            site_scrape_task.documents_found = previous_scrape_task.documents_found
-            site_scrape_task.retrieved_document_ids = previous_scrape_task.retrieved_document_ids
-
-            # TODO: When business logic centralized, move to add / remove task to work_item.
-            doc_documents = await DocDocument.find(
-                {"retrieved_document_id": {"$in": site_scrape_task.retrieved_document_ids}}
-            ).to_list()
-
-            site_scrape_task.work_list = [
-                ManualWorkItem(
-                    document_id=doc_document.id,
-                    retrieved_document_id=doc_document.retrieved_document_id,
-                )
-                for doc_document in doc_documents
-            ]
-
-        await create_and_log(logger, current_user, site_scrape_task)
-    else:
-        site_scrape_task = SiteScrapeTask(
-            site_id=site_id, queued_time=datetime.now(tz=timezone.utc)
-        )
-        # NOTE: Could use a transaction here
-        await create_and_log(logger, current_user, site_scrape_task)
-
-    await site.update(
-        Set(
-            {
-                Site.last_run_status: site_scrape_task.status,
-            }
-        )
-    )
-    return site_scrape_task
+    result = await site_collection.start_collecting()
+    return result
 
 
 def build_bulk_sites_query(bulk_type: str):
@@ -176,25 +141,19 @@ def build_bulk_sites_query(bulk_type: str):
     return find_query, update_query
 
 
-class BulkRunResponse(BaseModel):
-    type: str
-    scrapes: int | None = None
-    sites: int | None = None
-
-
 @router.post("/bulk-run", response_model=BulkRunResponse)
 async def run_bulk_by_type(
     type: str,
     logger: Logger = Depends(get_logger),
     current_user: User = Security(get_current_user),
-):
+) -> BulkRunResponse:
     async def cancel_site_scrapes(site_id: PydanticObjectId) -> int:
         query = {
             "site_id": site_id,
             "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]},
         }
         scrapes = SiteScrapeTask.find_many(query)
-        scrapes_count = await scrapes.count()
+        scrapes_count: int = await scrapes.count()
         await scrapes.set({"status": TaskStatus.CANCELING})
 
         return scrapes_count
@@ -241,32 +200,36 @@ async def run_bulk_by_type(
     return BulkRunResponse(type=res_type, sites=total_sites, scrapes=total_scrapes)
 
 
-@router.post("/cancel-all", response_model=SiteScrapeTask)
+@router.post("/cancel-all", response_model=CollectionResult)
 async def cancel_all_site_scrape_task(
     site_id: PydanticObjectId,
-    logger: Logger = Depends(get_logger),
     current_user: User = Depends(get_current_user),
-):
-    # TODO: Lock to current_user.site or check user is admin.
-    # dependencies=[Security(get_current_user)]
-    site = await Site.get(site_id)
+    logger: Logger = Depends(get_logger),
+) -> CollectionResult:
+    # Grab site / check exists and has permission.
+    # TODO: Lock to current_user.sites or check user is admin.
+    site: Site | None = await Site.get(site_id)
     if not site:
         raise HTTPException(
             detail=f"Site {site_id} Not Found",
             status_code=status.HTTP_404_NOT_FOUND,
         )
-    site_tasks = SiteTasksService(site=site)
-    if not site_tasks:
-        print("No site_tasks")
-        return True
-    has_queued_tasks = await site_tasks.has_queued()
+    # Check that site has queued tasks.
+    site_collection = CollectionService(
+        site=site,
+        current_user=current_user,
+        logger=logger,
+    )
+    has_queued_tasks = await site_collection.has_queued()
     if not has_queued_tasks:
-        print("No queued_site_tasks")
-        return True
+        print("No queued site_scrape_tasks")
+        return
 
-    await site_tasks.process_work_lists()
-    collecting_stopped = await site_tasks.stop_collecting()
-    return collecting_stopped
+    # Get all queued site_scrape_tasks waiting for collection and cancel.
+    await site_collection.process_work_lists()
+    # Append to errors list. TODO: How to handle work_list item error?
+    collection_results: CollectionResult = await site_collection.stop_collecting()
+    return collection_results
 
 
 # When work item clicked, update work_item in
@@ -319,8 +282,8 @@ async def update_scrape_task(
 )
 async def cancel_scrape_task(
     target: SiteScrapeTask = Depends(get_target),
-):
-    site = await Site.get(target.site_id)
+) -> SiteScrapeTask:
+    site: Site | None = await Site.get(target.site_id)
     canceled_queued_task = await SiteScrapeTask.get_motor_collection().find_one_and_update(
         {"_id": target.id, "status": TaskStatus.QUEUED},
         {"$set": {"status": TaskStatus.CANCELED}},

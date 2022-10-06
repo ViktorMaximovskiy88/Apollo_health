@@ -13,6 +13,8 @@ from pydantic import BaseModel
 from backend.common.models.change_log import ChangeLog
 from backend.common.models.user import User
 
+T = TypeVar("T", bound=Document)
+
 
 class Logger:
     def __init__(self, background_tasks: BackgroundTasks | None = None) -> None:
@@ -39,9 +41,6 @@ class Logger:
 
 async def get_logger(background_tasks: BackgroundTasks):
     return Logger(background_tasks)
-
-
-T = TypeVar("T", bound=Document)
 
 
 async def create_and_log(
