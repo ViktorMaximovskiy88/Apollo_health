@@ -77,7 +77,7 @@ def simple_site(
 
 def create_document_family(
     site: Site,
-    document_type=DocumentType.Authorization_Policy,
+    document_type=DocumentType.AuthorizationPolicy,
     description="Example description",
     relevance=[],
     payer_info=PayerInfo(),
