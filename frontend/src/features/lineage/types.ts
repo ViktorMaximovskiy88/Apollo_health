@@ -15,4 +15,5 @@ export interface LineageDoc extends BaseDocument {
 export interface LineageGroup {
   lineageId: string;
   items: LineageDoc[];
+  collapsed: boolean;
 }

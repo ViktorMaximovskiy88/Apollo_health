@@ -1,6 +1,5 @@
 import { BaseDocument } from '../../common';
 import { ApprovalStatus } from '../../common/approvalStatus';
-import { RetrievedDocument } from '../retrieved_documents/types';
 import { DocDocumentLocation } from './locations/types';
 
 export interface BaseDocTag {
@@ -35,14 +34,15 @@ export interface TaskLock {
   expires: string;
 }
 
-export interface CompareRequest extends BaseDocument {
-  compareId?: string;
+export interface CompareRequest {
+  currentDocDocId: string;
+  previousDocDocId: string;
 }
 
 export interface CompareResponse extends BaseDocument {
   diff: string;
-  org_doc: DocDocument;
-  new_doc: RetrievedDocument;
+  previous_doc: DocDocument;
+  current_doc: DocDocument;
 }
 
 export interface DocDocument extends BaseDocument {
@@ -75,6 +75,7 @@ export interface DocDocument extends BaseDocument {
   lineage_id: string;
   version: string;
   internal_document: boolean;
+  previous_doc_doc_id: string | null;
 
   locations: DocDocumentLocation[];
 

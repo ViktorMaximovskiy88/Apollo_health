@@ -25,7 +25,7 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
 
         self.selectors = self.selectors + href_selectors + hidden_value_selectors
         selector_string = ", ".join(self.selectors)
-        self.log.info(selector_string)
+        self.log.debug(selector_string)
         return selector_string
 
     @cached_property
@@ -35,7 +35,7 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
             if attr_selector.resource_address:
                 selectors.append(to_xpath(attr_selector))
         selector_string = "|".join(selectors)
-        self.log.info(selector_string)
+        self.log.debug(selector_string)
         return selector_string
 
     def xpath_selectors(self):

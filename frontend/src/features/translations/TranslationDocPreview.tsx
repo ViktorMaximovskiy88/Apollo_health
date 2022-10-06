@@ -96,7 +96,6 @@ export function SampleTranslationTable(props: { docId: string; form: FormInstanc
   const { data, isFetching } = useTranslateSampleDocumentTablesQuery(config, {
     skip: !config,
   });
-
   const onClick = useCallback(() => {
     setConfig(props.form.getFieldsValue());
   }, [setConfig, props]);
@@ -199,6 +198,37 @@ export function SampleTranslationTable(props: { docId: string; form: FormInstanc
             minWidth: 100,
           });
         }
+      } else if (col.field === 'STPA') {
+        cols.push({
+          header: 'STPA',
+          name: 'stpa',
+          render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
+          minWidth: 62,
+          maxWidth: 62,
+        });
+      } else if (col.field === 'MB') {
+        cols.push({
+          header: 'MB',
+          name: 'mb',
+          render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
+          minWidth: 70,
+          maxWidth: 70,
+        });
+      } else if (col.field === 'SCO') {
+        cols.push({
+          header: 'SCO',
+          name: 'sco',
+          render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
+          minWidth: 100,
+          maxWidth: 100,
+        });
+      } else if (col.field === 'DME') {
+        cols.push({
+          header: 'DME',
+          name: 'dme',
+          render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
+          minWidth: 70,
+        });
       }
       return cols;
     });
@@ -214,6 +244,10 @@ export function SampleTranslationTable(props: { docId: string; form: FormInstanc
       'pan',
       'cpa',
       'cpan',
+      'stpa',
+      'mb',
+      'sco',
+      'dme',
       'ql',
       'qln',
     ];

@@ -54,6 +54,14 @@ class FormularyDatum(BaseModel):
 
     sp: bool = False
 
+    stpa: bool = False
+
+    mb: bool = False
+
+    sco: bool = False
+
+    dme: bool = False
+
 
 class ContentExtractionResult(BaseDocument):
     content_extraction_task_id: Indexed(PydanticObjectId) | None = None  # type: ignore
