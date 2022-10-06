@@ -201,7 +201,10 @@ class ScrapeWorker:
                 or self.site.scrape_method == "HtmlScrape"
             ):
                 target_url = url if not download.direct_scrape else f"file://{temp_path}"
-                async with self.playwright_context(target_url) as (page, _context):
+                async with self.playwright_context(target_url, download.request.cookies) as (
+                    page,
+                    _context,
+                ):
                     dest_path = f"{checksum}.{download.file_extension}.pdf"
                     await page.goto(target_url, wait_until="domcontentloaded")
                     pdf_bytes = await page.pdf(display_header_footer=False, print_background=True)
@@ -390,6 +393,7 @@ class ScrapeWorker:
 
         async with self.playwright_context(url, cookies) as (base_page, context):
             async for (page, playbook_context) in self.playbook.run_playbook(base_page):
+                cookies = await context.cookies()
                 scrape_handler = ScrapeHandler(
                     context=context,
                     page=page,

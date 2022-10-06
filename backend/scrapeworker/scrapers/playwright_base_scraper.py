@@ -107,6 +107,7 @@ class PlaywrightBaseScraper(ABC):
             resource_value,
             closest_heading,
             siblings_text,
+            anchor_target,
         ) = await asyncio.gather(
             element.text_content(),
             element.inner_text(),
@@ -114,6 +115,7 @@ class PlaywrightBaseScraper(ABC):
             element.get_attribute(resource_attr),
             element.evaluate(closest_heading_expression),
             element.evaluate(sibling_text_expression),
+            element.get_attribute("target"),
         )
 
         # Use first response for inner_text() text_content() for link_text.
@@ -140,6 +142,7 @@ class PlaywrightBaseScraper(ABC):
             closest_heading=closest_heading,
             playbook_context=self.playbook_context,
             siblings_text=siblings_text,
+            anchor_target=anchor_target,
         )
 
     def convert_proxy(self, proxy: Proxy):

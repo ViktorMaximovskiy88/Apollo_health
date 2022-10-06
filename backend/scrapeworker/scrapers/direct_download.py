@@ -53,13 +53,34 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
         link_handle: ElementHandle
         for link_handle in link_handles:
             metadata: Metadata = await self.extract_metadata(link_handle, resource_attr)
+            # TODO iterate on this logic
+            # cases '../abc' '/abc' 'abc' 'https://a.com/abc' 'http://a.com/abc' '//a.com/abc'
+            # anchor targets can change behavior
+            url = (
+                f"/{metadata.resource_value}"
+                if metadata.anchor_target
+                and metadata.anchor_target == "_blank"
+                and not (
+                    metadata.resource_value.startswith("http")
+                    or metadata.resource_value.startswith("/")
+                )
+                else metadata.resource_value
+            )
+
+            print(
+                url,
+                urljoin(
+                    base_url,
+                    url,
+                ),
+            )
             downloads.append(
                 DownloadContext(
                     metadata=metadata,
                     request=Request(
                         url=urljoin(
                             base_url,
-                            metadata.resource_value,
+                            url,
                         ),
                     ),
                 )
