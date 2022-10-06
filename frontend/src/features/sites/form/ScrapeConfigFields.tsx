@@ -9,6 +9,8 @@ export function DocumentExtensions() {
     { value: 'xlsx', label: 'Excel (.xlsx)' },
     { value: 'docx', label: 'Word (.docx)' },
     { value: 'html', label: 'HTML (.html)' },
+    { value: 'csv', label: 'CSV (.csv)' },
+    { value: 'txt', label: 'TXT (.txt)' },
   ];
 
   return (
