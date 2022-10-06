@@ -27,7 +27,8 @@ class ScrapeMethodConfiguration(BaseModel):
     url_keywords: list[str] = []
     proxy_exclusions: list[PydanticObjectId] = []
     wait_for: list[str] = []
-    wait_for_timeout_ms: int = 0
+    wait_for_timeout_ms: int = 5000
+    base_url_timeout_ms: int = 30000
     search_in_frames: bool = False
     follow_links: bool = False
     follow_link_keywords: list[str] = []

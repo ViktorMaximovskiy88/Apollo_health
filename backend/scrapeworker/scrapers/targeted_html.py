@@ -34,7 +34,7 @@ class TargetedHtmlScraper(PlaywrightBaseScraper):
         for attr_selector in self.config.html_attr_selectors:
             selectors.append(to_xpath(attr_selector))
         selector_string = "|".join(selectors)
-        self.log.debug(selector_string)
+        self.log.info(selector_string)
         return selector_string
 
     def __add_default_tags(self, soup: BeautifulSoup):

@@ -36,7 +36,7 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
             if not attr_selector.resource_address:
                 selectors.append(to_xpath(attr_selector))
         selector_string = "|".join(selectors)
-        self.log.debug(selector_string)
+        self.log.info(selector_string)
         return selector_string
 
     async def __setup(self):
