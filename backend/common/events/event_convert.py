@@ -16,7 +16,7 @@ class EventConvert:
         # refactor into DocumentEvent model which matches api definition.
 
         document_fam: DocumentFamily = []
-        if target.locations[0]:
+        if target.locations[0].document_family_id:
             document_fam = await DocumentFamily.find_one(
                 {"_id": target.locations[0].document_family_id}
             )
