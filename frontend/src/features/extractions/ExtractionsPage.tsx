@@ -4,7 +4,7 @@ import { SiteMenu } from '../sites/SiteMenu';
 
 export function ExtractionsPage() {
   return (
-    <MainLayout pageTitle={'Extracted Documents'} sidebar={<SiteMenu />}>
+    <MainLayout sidebar={<SiteMenu />}>
       <ExtractedDocumentsTable />
     </MainLayout>
   );

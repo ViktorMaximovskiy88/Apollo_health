@@ -126,7 +126,7 @@ class AioDownloader:
             proxy, proxy_settings = (
                 aio_proxies[i % proxy_count] if proxy_count > 0 else (None, None)
             )
-            self.log.info(
+            self.log.debug(
                 f"{i} Using proxy {proxy and proxy.name} ({proxy_settings and proxy_settings.proxy})"  # noqa E501
             )
             yield attempt, proxy_settings
@@ -159,7 +159,7 @@ class AioDownloader:
         await self.set_download_data(download, temp.name)
 
         download.file_hash = hasher.hexdigest()
-        self.log.info(
+        self.log.debug(
             f"content_type={download.content_type} mimetype={download.mimetype} file_hash={download.file_hash}"  # noqa
         )
         return download.file_path, download.file_hash
@@ -170,7 +170,7 @@ class AioDownloader:
         proxies: list[tuple[Proxy | None, ProxySettings | None]] = [],
     ) -> AsyncGenerator[tuple[str | None, str | None], None]:
         url = download.request.url
-        self.log.info(f"Before attempting download {url}")
+        self.log.debug(f"Before attempting download {url}")
 
         if download.direct_scrape:
             doc_client = DocumentStorageClient()
@@ -179,20 +179,20 @@ class AioDownloader:
                 dest_path, suffix=f".{download.file_extension}"
             ) as path:
                 await self.set_download_data(download, path)
-                self.log.info(
+                self.log.debug(
                     f"content_type={download.content_type} mimetype={download.mimetype} file_hash={download.file_hash}"  # noqa
                 )
                 yield download.file_path, download.file_hash
         else:
             async for attempt, proxy in self.proxy_with_backoff(proxies):
                 with attempt:
-                    self.log.info(f"Attempting download {url}")
+                    self.log.debug(f"Attempting download {url}")
                     response: ClientResponse
                     proxy_url = proxy.proxy if proxy else None
                     try:
                         response = await self.send_request(download, proxy)
                         download.response.from_aio_response(response)
-                        self.log.info(f"Attempting download {url} response")
+                        self.log.debug(f"Attempting download {url} response")
                     except ClientHttpProxyError as proxy_error:
                         self.log.error(f"Client Proxy Error AIO {url}")
                         # we catch so we can 'log' on the task and reraise for retry
@@ -205,7 +205,7 @@ class AioDownloader:
                         )
                         raise proxy_error
 
-                    self.log.info(f"Before link log {url} response")
+                    self.log.debug(f"Before link log {url} response")
 
                     if not response.ok:
                         invalid_response = InvalidResponse(

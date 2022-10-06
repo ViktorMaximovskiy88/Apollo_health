@@ -60,7 +60,7 @@ resource "aws_ecs_task_definition" "dbmigrations" {
         },
         {
           name = "NEW_RELIC_APP_NAME"
-          value = local.new_relic_app_name
+          value = "${local.new_relic_app_name}-DBMigrations"
         }
       ]
       essential = true

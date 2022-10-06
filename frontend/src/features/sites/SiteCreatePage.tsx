@@ -20,7 +20,6 @@ export function SiteCreatePage() {
 
   return (
     <MainLayout
-      pageTitle={'Create Site'}
       sectionToolbar={
         <Form.Item className="m-1">
           <Space>

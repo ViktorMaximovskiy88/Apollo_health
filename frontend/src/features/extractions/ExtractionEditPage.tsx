@@ -7,7 +7,7 @@ export function ExtractionEditPage() {
   const { extractionId } = useParams();
 
   return (
-    <MainLayout sidebar={<SiteMenu />} pageTitle="Extraction Results">
+    <MainLayout sidebar={<SiteMenu />}>
       <ExtractionResultsDataTable extractionId={extractionId} />
     </MainLayout>
   );

@@ -126,6 +126,7 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     last_collected_date: datetime | None = None
     published_date: datetime | None = None
     end_date: datetime | None = None
+    first_collected_date: datetime | None = None
 
     lineage_id: PydanticObjectId | None = None
     version: str | None = None

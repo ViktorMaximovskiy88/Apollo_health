@@ -42,7 +42,7 @@ export function TranslationsNewPage() {
     [navigate, create]
   );
   return (
-    <MainLayout pageTitle={'Translations'} sectionToolbar={<SumbitTranslation form={form} />}>
+    <MainLayout sectionToolbar={<SumbitTranslation form={form} />}>
       <div className="flex h-full">
         <div className="w-1/2 h-full">
           <TranslationForm form={form} onFinish={onFinish} />

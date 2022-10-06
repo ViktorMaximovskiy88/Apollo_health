@@ -1,7 +1,7 @@
 import { Form, Select, DatePicker } from 'antd';
-import { DocCompare } from './DocCompare';
 import { prettyDate } from '../../common';
 import { DocumentTypes } from '../retrieved_documents/types';
+import { DocCompareToPrevious } from './DocCompareToPrevious';
 
 const DocumentType = () => (
   <Form.Item className="flex-1" name="document_type" label="Document Type" required={true}>
@@ -43,9 +43,8 @@ export function DocumentClassification() {
       <div className="flex space-x-8">
         <TherapyTagRelevance />
         <Lineage />
+        <DocCompareToPrevious />
       </div>
-
-      <DocCompare />
     </>
   );
 }

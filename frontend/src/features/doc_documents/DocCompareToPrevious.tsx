@@ -1,6 +1,6 @@
-import { Button, Form, Input, Modal, notification, Typography } from 'antd';
+import { Button, Form, Modal, notification, Tooltip, Typography } from 'antd';
 import { LinkOutlined } from '@ant-design/icons';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { parseDiff, Diff, Hunk } from 'react-diff-view';
 import 'react-diff-view/style/index.css';
@@ -8,13 +8,10 @@ import 'react-diff-view/style/index.css';
 import { isErrorWithData } from '../../common/helpers';
 import { Hr } from '../../components';
 import { useCreateDiffMutation, useGetDocDocumentQuery } from './docDocumentApi';
-import { RetrievedDocument } from '../retrieved_documents/types';
-import { DocDocument } from './types';
 
 function CompareModal(props: {
   diff?: string;
-  orgDoc?: DocDocument;
-  newDoc?: RetrievedDocument;
+  previousDocDocId: string;
   isModalVisible: boolean;
   handleCloseModal: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void;
 }) {
@@ -29,6 +26,8 @@ function CompareModal(props: {
     </Diff>
   );
 
+  if (!props.diff || !props.previousDocDocId) return null;
+
   return (
     <Modal
       footer={null}
@@ -41,15 +40,16 @@ function CompareModal(props: {
         Comparison File
       </Title>
       <div className="flex justify-around">
-        <div className="text-lg font-semibold">Current File</div>
         <Link
           className="text-lg font-semibold"
-          to={`/sites/${props.newDoc?.site_id}/documents/${props.newDoc?._id}/edit`}
+          to={`/documents/${props.previousDocDocId}`}
           target="_blank"
           rel="noopener"
         >
-          New File <LinkOutlined />
+          Previous Document
+          <LinkOutlined />
         </Link>
+        <div className="text-lg font-semibold">Current Document</div>
       </div>
       <Hr />
       {files.map(renderFile)}
@@ -60,33 +60,23 @@ function CompareModal(props: {
   );
 }
 
-export function DocCompare() {
+export function DocCompareToPrevious() {
   const form = Form.useFormInstance();
-  const docId = form.getFieldValue('docId');
-  const { data: orgDoc } = useGetDocDocumentQuery(docId);
+  const currentDocDocId: string = form.getFieldValue('docId');
+  const { data: currentDocument } = useGetDocDocumentQuery(currentDocDocId);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [compareId, setCompareId] = useState('');
   const [createDiff, { data: diffData, isLoading, isSuccess }] = useCreateDiffMutation();
+
+  const { previous_doc_doc_id: previousDocDocId } = currentDocument ?? {};
 
   function handleCloseModal() {
     setIsModalVisible(false);
   }
 
-  function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
-    setCompareId(e.target.value);
-  }
-
-  async function handleCompare() {
+  const handleCompare = useCallback(async () => {
+    if (!previousDocDocId) throw new Error('DocDocument has no Previous DocDoc Id');
     try {
-      if (compareId === '') {
-        notification.error({
-          message: 'Document ID Required',
-          description: 'You must provide a Retrieved Document ID to generate a compare file',
-        });
-        return;
-      }
-      const compareInfo = { _id: orgDoc?._id ?? '', compareId: compareId };
-      await createDiff(compareInfo).unwrap();
+      await createDiff({ currentDocDocId, previousDocDocId }).unwrap();
       setIsModalVisible(true);
     } catch (err) {
       if (isErrorWithData(err)) {
@@ -101,26 +91,26 @@ export function DocCompare() {
         });
       }
     }
-  }
+  }, [createDiff, currentDocDocId, previousDocDocId]);
 
   return (
     <div className="flex space-x-8 items-center">
-      <Form.Item
-        className="flex-1"
-        label={'Compare File ID'}
-        tooltip="ID of Retrieved Document to Compare"
-      >
-        <Input onChange={handleInput} />
-      </Form.Item>
-      <Button className="mt-1" loading={isLoading} onClick={handleCompare} type="primary">
-        Compare
-      </Button>
+      {previousDocDocId ? (
+        <Button className="mt-1" loading={isLoading} onClick={handleCompare} type="primary">
+          Compare To Previous
+        </Button>
+      ) : (
+        <Tooltip title={'Previous document ID not found. Comparison is not possible'}>
+          <Button className="mt-1" type="primary" disabled={true}>
+            Compare To Previous
+          </Button>
+        </Tooltip>
+      )}
       {isSuccess && (
         <CompareModal
           isModalVisible={isModalVisible}
           diff={diffData?.diff}
-          orgDoc={orgDoc}
-          newDoc={diffData?.new_doc}
+          previousDocDocId={previousDocDocId ?? ''}
           handleCloseModal={handleCloseModal}
         />
       )}

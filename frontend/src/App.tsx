@@ -28,6 +28,7 @@ import { PayerBackbomeHomePage } from './features/payer-backbone/PayerBackboneHo
 import { PayerBackboneNewPage } from './features/payer-backbone/PayerBackboneNewPage';
 import { PayerBackboneEditPage } from './features/payer-backbone/PayerBackboneEditPage';
 import { LineagePage } from './features/lineage/LineagePage';
+import { DocumentFamilyHomePage } from './features/doc_documents/document_family/DocumentFamilyHomePage';
 
 function AppHomePage() {
   return <>{'Home'}</>;
@@ -121,6 +122,7 @@ function App() {
             </Route>
           </Route>
         </Route>
+        <Route path="/document-family" element={<DocumentFamilyHomePage />} />
         <Route path="/users/*" element={<UserRoutes />} />
         <Route path="/documents/*" element={<DocumentRoutes />} />
         <Route path="/translations/*" element={<TranslationRoutes />} />

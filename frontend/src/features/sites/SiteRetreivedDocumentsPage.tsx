@@ -16,8 +16,7 @@ export function SiteRetreivedDocumentsPage() {
   return (
     <MainLayout
       sidebar={<SiteMenu />}
-      pageTitle={'Retrieved Documents'}
-      pageToolbar={
+      sectionToolbar={
         site &&
         site.collection_method === CollectionMethod.Manual && (
           <Button onClick={() => setNewDocumentModalVisible(true)}>Create Document</Button>

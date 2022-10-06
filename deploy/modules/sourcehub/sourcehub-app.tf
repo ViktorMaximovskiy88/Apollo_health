@@ -85,7 +85,7 @@ resource "aws_ecs_task_definition" "app" {
         },
         {
           name = "NEW_RELIC_APP_NAME"
-          value = local.new_relic_app_name
+          value = "${local.new_relic_app_name}-App"
         },
         {
           name  = "NEW_RELIC_ENVIRONMENT"
