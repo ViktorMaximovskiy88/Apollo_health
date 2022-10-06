@@ -17,6 +17,7 @@ import { lineageApi } from '../features/lineage/lineageApi';
 import { rtkAuth } from '../common/auth-middleware';
 
 import navSlice from './navSlice';
+import documentFamilyReducer from '../features/doc_documents/document_family/documentFamilySlice';
 import sitesReducer from '../features/sites/sitesSlice';
 import userReducer from '../features/users/userSlice';
 import collectionsReducer from '../features/collections/collectionsSlice';
@@ -52,6 +53,7 @@ export const store = configureStore({
     collections: collectionsReducer,
     docDocuments: docDocumentsReducer,
     siteDocDocuments: siteDocDocumentsReducer,
+    documentFamilies: documentFamilyReducer,
     documents: documentsReducer,
     extractions: extractionsReducer,
     translations: translationsReducer,
