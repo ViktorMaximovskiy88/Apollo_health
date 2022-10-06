@@ -46,3 +46,18 @@ class SiteStatus(str, Enum):
 class SearchableType(str, Enum):
     CPTCODES = "CPTCODES"
     JCODES = "JCODES"
+
+
+class DocumentType(str, Enum):
+    Authorization_Policy = "Authorization Policy"
+    Treatment_Request_Form = "Treatment Request Form"
+    Payer_Unlisted_Policy = "Payer Unlisted Policy"
+    Covered_Treatment_List = "Covered Treatment List"
+    Regulatory_Document = "Regulatory Document"
+    Formulary = "Formulary"
+    Internal_Resource = "Internal Resource"
+    Formulary_Update = "Formulary Update"
+    NCCN_Guideline = "NCCN Guideline"
+    Restriction_List = "Restriction List"
+    Review_Committee_Meetings = "Review Committee Meetings"
+    Not_Applicable = "Not Applicable"
