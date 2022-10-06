@@ -193,7 +193,7 @@ export function ExtractionEditPage() {
   ];
 
   return (
-    <MainLayout sidebar={<SiteMenu />} pageTitle="Extraction Results">
+    <MainLayout sidebar={<SiteMenu />}>
       <ReactDataGrid
         dataSource={loadData}
         columns={columns}

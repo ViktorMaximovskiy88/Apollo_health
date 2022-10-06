@@ -15,6 +15,39 @@ import { TaskStatus } from '../../common/scrapeTaskStatus';
 import { MainLayout } from '../../components';
 import { isErrorWithData } from '../../common/helpers';
 
+function ManualCollectionButton(props: any) {
+  const { site, refetch, runScrape } = props;
+  const navigate = useNavigate();
+  const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
+
+  async function handleRunScrape() {
+    let response: any = await runScrape(site!._id);
+    if (response) {
+      refetch();
+      navigate(`../doc-documents?scrape_task_id=${response.data._id}`);
+    }
+  }
+  async function handleCancelScrape() {
+    await cancelAllScrapes(site!._id);
+    refetch();
+  }
+  const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
+
+  if (activeStatuses.includes(site.last_run_status)) {
+    return (
+      <Button className="ml-auto" onClick={handleCancelScrape}>
+        End Manual Collection
+      </Button>
+    );
+  } else {
+    return (
+      <Button className="ml-auto" onClick={handleRunScrape}>
+        Start Manual Collection
+      </Button>
+    );
+  }
+}
+
 export function CollectionsPage() {
   const [newDocumentModalVisible, setNewDocumentModalVisible] = useState(false);
 
@@ -52,8 +85,7 @@ export function CollectionsPage() {
       ) : null}
       <MainLayout
         sidebar={<SiteMenu />}
-        pageTitle={'Collections'}
-        pageToolbar={
+        sectionToolbar={
           <>
             {site.collection_method === CollectionMethod.Automated &&
             site.status !== SiteStatus.Inactive ? (
@@ -74,37 +106,4 @@ export function CollectionsPage() {
       </MainLayout>
     </>
   );
-}
-
-function ManualCollectionButton(props: any) {
-  const { site, refetch, runScrape } = props;
-  const navigate = useNavigate();
-  const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
-
-  async function handleRunScrape() {
-    let response: any = await runScrape(site!._id);
-    if (response) {
-      refetch();
-      navigate(`../doc-documents?scrape_task_id=${response.data._id}`);
-    }
-  }
-  async function handleCancelScrape() {
-    await cancelAllScrapes(site!._id);
-    refetch();
-  }
-  const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
-
-  if (activeStatuses.includes(site.last_run_status)) {
-    return (
-      <Button className="ml-auto" onClick={handleCancelScrape}>
-        End Manual Collection
-      </Button>
-    );
-  } else {
-    return (
-      <Button className="ml-auto" onClick={handleRunScrape}>
-        Start Manual Collection
-      </Button>
-    );
-  }
 }

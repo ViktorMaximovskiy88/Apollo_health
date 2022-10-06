@@ -144,8 +144,7 @@ export function UsersHomePage() {
   const controlledPagination = useControlledPagination();
   return (
     <MainLayout
-      pageTitle="Users"
-      pageToolbar={
+      sectionToolbar={
         <>
           <Link className="ml-auto" to="new">
             <Button>Create User</Button>

@@ -3,7 +3,7 @@ import { MainLayout } from '../../components';
 
 export function DocDocumentsHomePage() {
   return (
-    <MainLayout pageTitle={'Documents'}>
+    <MainLayout>
       <DocDocumentsDataTable />
     </MainLayout>
   );
