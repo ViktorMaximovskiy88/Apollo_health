@@ -14,9 +14,12 @@ class EventConvert:
         # Otherwise, payload to big.
         # TODO: Once event model api defined,
         # refactor into DocumentEvent model which matches api definition.
-        document_fam: DocumentFamily = await DocumentFamily.find_one(
-            {"_id": target.locations[0].document_family_id}
-        )
+
+        document_fam: DocumentFamily = []
+        if target.locations[0]:
+            document_fam = await DocumentFamily.find_one(
+                {"_id": target.locations[0].document_family_id}
+            )
         document_load = {
             "document_id": target.id,
             "document_hash": target.text_checksum,
