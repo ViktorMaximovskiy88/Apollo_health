@@ -27,7 +27,7 @@ export function SiteDocDocumentsPage() {
   return (
     <MainLayout
       sidebar={<SiteMenu />}
-      pageToolbar={
+      sectionToolbar={
         <>
           <Button onClick={() => setNewDocumentModalVisible(true)} className="ml-auto">
             Create Document
