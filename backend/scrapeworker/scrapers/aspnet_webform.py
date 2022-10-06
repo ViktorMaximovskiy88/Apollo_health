@@ -24,6 +24,12 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
     links_found: int = 0
     last_metadata_index: int = 0
 
+    async def is_applicable(self) -> bool:
+        css_handle = await self.page.query_selector(self.css_selector)
+        result = css_handle is not None
+        self.log.info(f"{self.__class__.__name__} is_applicable -> {result}")
+        return result
+
     @cached_property
     def css_selector(self) -> str:
         href_selectors = filter_by_href(webform=True)

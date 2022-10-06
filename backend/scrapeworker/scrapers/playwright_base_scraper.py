@@ -80,7 +80,7 @@ class PlaywrightBaseScraper(ABC):
 
     async def is_applicable(self) -> bool:
 
-        timeout = self.config.wait_for_timeout_ms if self.config.wait_for_timeout_ms else 500
+        timeout = self.config.wait_for_timeout_ms
         await self.page.wait_for_timeout(timeout)
 
         in_parent_frame = await self.find_in_page(self.page)
