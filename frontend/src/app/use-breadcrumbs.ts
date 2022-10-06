@@ -112,7 +112,7 @@ export const useBreadcrumbs = async () => {
         ...asyncResolvers,
       },
       '/document-family': {
-        ' document-family': 'Document Family',
+        'document-family': 'Document Families',
         ...asyncResolvers,
       },
       '/users': {
