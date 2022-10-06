@@ -50,7 +50,6 @@ async def read_document_families(
 ):
 
     query = DocumentFamily.find_many({"disabled": False})
-    print("query", query)
     return await query_table(query, limit, skip, sorts, filters)
 
 
