@@ -3,7 +3,7 @@ import { DocumentFamilyTable } from './DocumentFamilyDataTable';
 
 export function DocumentFamilyHomePage() {
   return (
-    <MainLayout pageTitle={'Document Family'}>
+    <MainLayout>
       <DocumentFamilyTable />
     </MainLayout>
   );
