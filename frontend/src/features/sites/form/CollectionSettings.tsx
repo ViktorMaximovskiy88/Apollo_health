@@ -78,13 +78,13 @@ const formatter = (value?: number) => {
 
 const DocumentTypeThreshold = () => (
   <Form.Item name="doc_type_threshold" label="Document Type Threshold">
-    <Slider min={0} max={1} step={0.01} tipFormatter={formatter} />
+    <Slider min={0} max={1} step={0.01} tipFormatter={formatter} tooltip={{ open: true }} />
   </Form.Item>
 );
 
 const LineageThreshold = () => (
   <Form.Item name="lineage_threshold" label="Lineage Threshold">
-    <Slider min={0} max={1} step={0.01} tipFormatter={formatter} />
+    <Slider min={0} max={1} step={0.01} tipFormatter={formatter} tooltip={{ open: true }} />
   </Form.Item>
 );
 
