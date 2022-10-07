@@ -1,3 +1,5 @@
+from pydantic import BaseModel
+
 from backend.common.models.base_document import BaseDocument
 
 
@@ -12,7 +14,7 @@ class PayerFamily(BaseDocument):
     regions: list[str] = []
 
 
-class NewPayerFamily(BaseDocument):
+class NewPayerFamily(BaseModel):
     name: str
     document_type: str
     payer_type: str = "plan"
@@ -23,7 +25,7 @@ class NewPayerFamily(BaseDocument):
     regions: list[str] = []
 
 
-class UpdatePayerFamily(BaseDocument):
+class UpdatePayerFamily(BaseModel):
     name: str | None = None
     document_type: str | None = None
     payer_type: str | None = None
