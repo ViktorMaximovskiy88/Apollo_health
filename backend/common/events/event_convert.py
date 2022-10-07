@@ -22,7 +22,7 @@ class EventConvert:
             )
         document_load = {
             "document_id": target.id,
-            "document_hash": target.text_checksum,
+            "document_hash": target.checksum,
             "document_extension": target.file_extension,
             "document_legacy_relevance": document_fam.legacy_relevance,
         }
