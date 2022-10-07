@@ -84,6 +84,7 @@ async def read_scrape_task(
 )
 async def start_scrape_task(
     site_id: PydanticObjectId,
+    response_model=CollectionResponse,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ) -> CollectionResponse:
@@ -115,6 +116,7 @@ async def start_scrape_task(
 @router.post("/cancel-all", response_model=CollectionResponse)
 async def cancel_all_site_scrape_task(
     site_id: PydanticObjectId,
+    response_model=CollectionResponse,
     current_user: User = Depends(get_current_user),
     logger: Logger = Depends(get_logger),
 ) -> CollectionResponse:

@@ -29,7 +29,7 @@ export function CollectionsPage() {
     if (site?._id) {
       try {
         let response: any = await runScrape(site._id).unwrap();
-        if (!response.errors) {
+        if (!response.has_error) {
           refetch();
         } else {
           notification.error({
@@ -93,7 +93,7 @@ function ManualCollectionButton(props: any) {
   async function handleRunManualScrape() {
     try {
       let response: any = await runScrape(site!._id);
-      if (!response.errors) {
+      if (!response.has_error) {
         refetch();
         navigate(`../doc-documents?scrape_task_id=${response.data.nav_id}`);
       } else {
@@ -121,7 +121,7 @@ function ManualCollectionButton(props: any) {
     if (site?._id) {
       try {
         let response: any = await cancelAllScrapes(site!._id);
-        if (!response.errors) {
+        if (!response.has_error) {
           refetch();
         } else {
           notification.error({

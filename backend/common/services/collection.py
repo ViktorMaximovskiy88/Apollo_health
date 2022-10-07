@@ -32,7 +32,7 @@ class CollectionResponse(BaseModel):
 
     # Send http status code and object that matches isErrorWithData.
     def raise_error(self, status: status = status.HTTP_406_NOT_ACCEPTABLE) -> Optional:
-        raise HTTPException(status, jsonable_encoder(self.errors))
+        raise HTTPException(status, jsonable_encoder(",".join(self.errors)))
 
 
 class CollectionService:
