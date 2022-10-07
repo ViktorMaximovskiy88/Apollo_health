@@ -22,6 +22,7 @@ export function SiteSubmitButton(props: { form: FormInstance }) {
   const handleVisibleChange = async () => {
     if (isCreateSitePage()) {
       letFormSubmit();
+      return;
     }
     const { data: site } = await getSite(params.siteId);
     if (site?.assignee !== currentUser?._id) {
