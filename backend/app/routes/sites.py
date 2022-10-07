@@ -1,4 +1,5 @@
 import urllib.parse
+from typing import List
 
 from beanie import PydanticObjectId
 from beanie.operators import ElemMatch
@@ -39,7 +40,7 @@ router = APIRouter(
 
 
 async def get_target(id: PydanticObjectId) -> Site:
-    site = await Site.get(id)
+    site: Site | None = await Site.get(id)
     if not site:
         raise HTTPException(detail=f"Site {id} Not Found", status_code=status.HTTP_404_NOT_FOUND)
     return site
@@ -51,13 +52,13 @@ async def read_sites(
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
-):
+) -> TableQueryResponse[Site]:
     query = Site.find({"disabled": False})
     return await query_table(query, limit, skip, sorts, filters)
 
 
 @router.get("/download", response_model=list[NewSite], dependencies=[Security(get_current_user)])
-async def download_sites():
+async def download_sites() -> List[NewSite]:
     return (
         await Site.find({"disabled": False, "status": {"$ne": SiteStatus.INACTIVE}})
         .project(NewSite)
@@ -73,13 +74,12 @@ async def download_sites():
 async def check_url(
     url: str,
     current_site: PydanticObjectId | None = Query(default=None, alias="currentSite"),
-):
-    site = await Site.find_one(
+) -> ActiveUrlResponse:
+    site: Site | None = await Site.find_one(
         ElemMatch(Site.base_urls, {"url": urllib.parse.unquote(url)}),
         Site.id != current_site,
         {"disabled": False},
     )
-
     if site:
         return ActiveUrlResponse(in_use=True, site=site)
     else:
@@ -89,7 +89,7 @@ async def check_url(
 @router.get("/{id}", response_model=Site, dependencies=[Security(get_current_user)])
 async def read_site(
     target: Site = Depends(get_target),
-):
+) -> Site:
     return target
 
 
@@ -98,8 +98,8 @@ async def create_site(
     site: NewSite,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
-):
-    new_site = Site(
+) -> Site:
+    new_site: Site = Site(
         name=site.name,
         creator_id=current_user.id,
         base_urls=site.base_urls,
@@ -119,7 +119,7 @@ async def upload_sites(
     file: UploadFile,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
-):
+) -> list[Site]:
     new_sites: list[Site] = []
     for new_site in get_sites_from_upload(file):
         if await Site.find_one(Site.base_urls == new_site.base_urls):
@@ -127,7 +127,6 @@ async def upload_sites(
         if new_site.base_urls:
             new_sites.append(new_site)
             await create_and_log(logger, current_user, new_site)
-
     return new_sites
 
 
@@ -137,10 +136,10 @@ async def update_multiple_sites(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    site_ids = [update.id for update in updates]
+    site_ids: list[PydanticObjectId] = [update.id for update in updates]
     targets: list[Site] = await Site.find_many({"_id": {"$in": site_ids}}).to_list()
-
     result = []
+
     for target in targets:
         updated = await update_and_log_diff(
             logger, current_user, target, UpdateSite(assignee=current_user.id)
@@ -158,12 +157,14 @@ async def update_site(
 ):
     original: str | None = target.collection_method if target.collection_method else None
     updated = await update_and_log_diff(logger, current_user, target, updates)
+    # If site was automated but then switched to manual,
+    # run stop manual just in case pending manual items are stuck in queue.
     if (
         "collection_method" in updated
         and updated["collection_method"] == CollectionMethod.Manual
         and original != CollectionMethod.Manual
     ):
-        site_collection = CollectionService(
+        site_collection: CollectionService = CollectionService(
             site=target,
             current_user=current_user,
             logger=logger,
@@ -183,10 +184,7 @@ async def delete_site(
     target: Site = Depends(get_target),
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
-):
-    # check for associated collection records, return error if present
-    # - reimplement check at later date.
-    # scrape_task = await SiteScrapeTask.find_many({"site_id": site_id}).to_list()
+) -> dict[str, bool]:
     scrape_task = False
     if scrape_task:
         raise HTTPException(
@@ -205,8 +203,8 @@ async def delete_site(
 )
 async def get_site_docs(
     site_id: PydanticObjectId,
-):
-    docs = (
+) -> list[SiteRetrievedDocument]:
+    docs: List[RetrievedDocumentLimitTags] = (
         await RetrievedDocument.find({"locations.site_id": site_id})
         .project(RetrievedDocumentLimitTags)
         .to_list()
@@ -222,11 +220,12 @@ async def get_site_docs(
 async def get_site_doc_by_id(
     site_id: PydanticObjectId,
     doc_id: PydanticObjectId,
-):
-    doc = await RetrievedDocument.find_one({"_id": doc_id, "locations.site_id": site_id})
+) -> SiteRetrievedDocument:
+    doc: RetrievedDocument | None = await RetrievedDocument.find_one(
+        {"_id": doc_id, "locations.site_id": site_id}
+    )
     if not doc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
     return doc.for_site(site_id)
 
 
@@ -238,15 +237,17 @@ async def get_site_doc_by_id(
 async def get_site_doc_docs(
     site_id: PydanticObjectId,
     scrape_task_id: PydanticObjectId | None = None,
-):
-    query = {"locations.site_id": site_id}
+) -> list[SiteDocDocument]:
+    query: dict[str, PydanticObjectId] = {"locations.site_id": site_id}
 
     if scrape_task_id:
-        scrape_task = await SiteScrapeTask.get(scrape_task_id)
+        scrape_task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
         if scrape_task:
             query["retrieved_document_id"] = {"$in": scrape_task.retrieved_document_ids}
 
-    docs = await DocDocument.find(query).project(DocDocumentLimitTags).to_list()
+    docs: List[DocDocumentLimitTags] = (
+        await DocDocument.find(query).project(DocDocumentLimitTags).to_list()
+    )
     return [doc.for_site(site_id) for doc in docs]
 
 
@@ -258,9 +259,10 @@ async def get_site_doc_docs(
 async def get_site_doc_doc_by_id(
     site_id: PydanticObjectId,
     doc_id: PydanticObjectId,
-):
-    doc = await DocDocument.find_one({"_id": doc_id, "locations.site_id": site_id})
+) -> SiteDocDocument:
+    doc: DocDocument | None = await DocDocument.find_one(
+        {"_id": doc_id, "locations.site_id": site_id}
+    )
     if not doc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
     return doc.for_site(site_id)

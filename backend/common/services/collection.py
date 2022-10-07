@@ -212,13 +212,14 @@ class CollectionService:
         # Do not have queued tasks.
         if not last_queued_task:
             return CollectionResponse(errors=[])
-        # Stop existing tasks from processing and set last collected to now.
-        await self.stop_queued_tasks()
-        await self.set_last_collected(last_queued_task)
         # Unfinished manual collection with some documents already collected.
         # Cancel queued tasks and process all work actions from all queued task.
-        if last_queued_task.documents_found == 0:
-            response = await self.process_work_lists()
+        # if last_queued_task.documents_found > 0:
+        #     response = await self.process_work_lists()
+        response = await self.process_work_lists()
+        await self.set_last_collected(last_queued_task)
+        # Stop existing tasks from processing and set last collected to now.
+        await self.stop_queued_tasks()
 
         return response
 
@@ -234,13 +235,14 @@ class CollectionService:
 
     async def set_last_collected(self, task) -> CollectionResponse:
         """Update last_collected_date for retrieved_docs and retrieved_doc's doc."""
+        response: CollectionResponse = CollectionResponse()
         retrieved_documents: list[RetrievedDocument] = (
             await RetrievedDocument.find_many({"_id": {"$in": task.retrieved_document_ids}})
             .sort("-first_collected_date")
             .to_list()
         )
         if not retrieved_documents:
-            self.logger.info(f"No retrieved_docs for site_scrape_task[{task.id}]")
+            response.add_error("No retrieved_docs for site_scrape_task[{task.id}]")
             return CollectionResponse(errors=[])
 
         for r_doc in retrieved_documents:
@@ -264,28 +266,34 @@ class CollectionService:
         queued_site_tasks: List[SiteScrapeTask] = await self.fetch_all_queued()
 
         for queued_site_task in queued_site_tasks:
-            for work_item in queued_site_task.work_list:
+            for item_index, work_item in enumerate(queued_site_task.work_list):
                 work_item_response: CollectionResponse = await self.process_work_item(
-                    target_task=queued_site_task, work_item=work_item
+                    target_task=queued_site_task, work_item=work_item, item_index=item_index
                 )
-                # TODO: What happens on work item error.
                 if work_item_response.errors:
                     work_list_response.add_error(work_item_response)
 
         return work_list_response
 
     async def process_work_item(
-        self, target_task: SiteScrapeTask, work_item: ManualWorkItem
+        self,
+        target_task: SiteScrapeTask,
+        work_item: ManualWorkItem,
+        item_index: int,
     ) -> CollectionResponse:
         """
         TODO: go through each work_list item, set finished or failed.
         set associations depending on work_list item action.
         """
-        result = CollectionResponse()
+        result: CollectionResponse = CollectionResponse()
         work_item_header_msg = (
-            f"work_item selected: [{work_item.selected}] doc_id: [{work_item.document_id}] "
-            f"retrieved_document_id: [{work_item.retrieved_document_id}] not found."
+            f"work_item selected: task: [{target_task.id}] doc_id: [{work_item.document_id}] "
+            f"retrieved_document_id: [{work_item.retrieved_document_id}]"
         )
+        retr_doc = await RetrievedDocument.get_motor_collection().find_one(
+            {"_id": work_item.retrieved_document_id},
+        )
+
         match work_item.selected:
             case "NOT_FOUND":
                 typer.secho(
@@ -293,6 +301,9 @@ class CollectionService:
                     fg=typer.colors.BRIGHT_GREEN,
                 )
             case "FOUND":
+                self.set_last_collected(retr_doc)
+                target_task.work_list[item_index].action_datetime = datetime.now(tz=timezone.utc)
+                await target_task.save()
                 typer.secho(
                     f"FOUND {work_item_header_msg}",
                     fg=typer.colors.BRIGHT_GREEN,
