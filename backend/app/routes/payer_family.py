@@ -57,8 +57,12 @@ async def create_payer_family(
     new_payer_family = PayerFamily(
         name=payer_family.name,
         document_type=payer_family.document_type,
-        description=payer_family.description,
-        site_id=payer_family.site_id,
+        payer_type=payer_family.payer_type,
+        payer_ids=payer_family.payer_ids,
+        channels=payer_family.channels,
+        benefits=payer_family.benefits,
+        plan_types=payer_family.plan_types,
+        regions=payer_family.regions,
         disabled=False,
     )
     await create_and_log(logger, current_user, new_payer_family)
