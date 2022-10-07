@@ -14,7 +14,7 @@ from backend.app.routes.table_query import (
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.uploads import get_sites_from_upload
 from backend.app.utils.user import get_current_user
-from backend.common.core.enums import SiteStatus
+from backend.common.core.enums import CollectionMethod, SiteStatus
 from backend.common.models.doc_document import DocDocument, DocDocumentLimitTags, SiteDocDocument
 from backend.common.models.document import (
     RetrievedDocument,
@@ -30,6 +30,7 @@ from backend.common.models.site import (
 )
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
+from backend.common.services.collection import CollectionService
 
 router = APIRouter(
     prefix="/sites",
@@ -155,7 +156,15 @@ async def update_site(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
+    original = target.collection_method
     updated = await update_and_log_diff(logger, current_user, target, updates)
+    if updated.collection_method == CollectionMethod.Manual and original != CollectionMethod.Manual:
+        site_collection = CollectionService(
+            site_id=target.id,
+            current_user=current_user,
+            logger=logger,
+        )
+        await site_collection.stop_manual()
     return updated
 
 

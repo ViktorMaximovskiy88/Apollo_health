@@ -28,7 +28,15 @@ export function CollectionsPage() {
   async function handleRunScrape() {
     if (site?._id) {
       try {
-        await runScrape(site._id).unwrap();
+        let response: any = await runScrape(site._id).unwrap();
+        if (response.status == 200) {
+          refetch();
+        } else if (response.error) {
+          notification.error({
+            message: 'Error Running Collection',
+            description: response.error.data.detail,
+          });
+        }
       } catch (err) {
         if (isErrorWithData(err)) {
           notification.error({
@@ -80,12 +88,32 @@ function ManualCollectionButton(props: any) {
   const { site, refetch, runScrape } = props;
   const navigate = useNavigate();
   const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
+  const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
 
   async function handleRunManualScrape() {
-    let response: any = await runScrape(site!._id);
-    if (response) {
-      refetch();
-      navigate(`../doc-documents?scrape_task_id=${response.data._id}`);
+    try {
+      let response: any = await runScrape(site!._id);
+      if (response.status == 200) {
+        refetch();
+        navigate(`../doc-documents?scrape_task_id=${response.data.nav_id}`);
+      } else if (response.error) {
+        notification.error({
+          message: 'Error Running Manual Collection',
+          description: response.error.data.detail,
+        });
+      }
+    } catch (err) {
+      if (isErrorWithData(err)) {
+        notification.error({
+          message: 'Error Running Manual Collection',
+          description: `${err.data.detail}`,
+        });
+      } else {
+        notification.error({
+          message: 'Error Running Manual Collection',
+          description: JSON.stringify(err),
+        });
+      }
     }
   }
 
@@ -93,23 +121,29 @@ function ManualCollectionButton(props: any) {
     if (site?._id) {
       try {
         let response: any = await cancelAllScrapes(site!._id);
+        if (response.status == 200) {
+          refetch();
+        } else if (response.error) {
+          notification.error({
+            message: 'Error Cancelling Collection',
+            description: response.error.data.detail,
+          });
+        }
       } catch (err) {
         if (isErrorWithData(err)) {
           notification.error({
-            message: 'Error Running Collection',
+            message: 'Error Cancelling Collection',
             description: `${err.data.detail}`,
           });
         } else {
           notification.error({
-            message: 'Error Running Collection',
+            message: 'Error Cancelling Collection',
             description: JSON.stringify(err),
           });
         }
       }
     }
   }
-
-  const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
 
   if (activeStatuses.includes(site.last_run_status)) {
     return (

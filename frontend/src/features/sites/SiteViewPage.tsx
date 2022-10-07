@@ -16,7 +16,6 @@ export function SiteViewPage() {
   const params = useParams();
   const { data: site } = useGetSiteQuery(params.siteId);
   const [updateSite] = useUpdateSiteMutation();
-  const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
   const navigate = useNavigate();
   const [readOnly, setReadOnly] = useState(true);
   const [form] = useForm();
@@ -26,12 +25,6 @@ export function SiteViewPage() {
   async function tryUpdateSite(update: Partial<Site>) {
     update._id = params.siteId;
     await updateSite(update);
-    if (
-      site!.collection_method === CollectionMethod.Automated &&
-      update.collection_method === CollectionMethod.Manual
-    ) {
-      await cancelAllScrapes(params.siteId);
-    }
     navigate(-1);
   }
 
