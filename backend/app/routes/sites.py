@@ -156,7 +156,7 @@ async def update_site(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    original = target.collection_method
+    original: str | None = target.collection_method if target.collection_method else None
     updated = await update_and_log_diff(logger, current_user, target, updates)
     if (
         "collection_method" in updated
