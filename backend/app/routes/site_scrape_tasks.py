@@ -107,7 +107,7 @@ async def start_scrape_task(
             response.add_error(
                 f"Scrapetask {last_queued_task.id} is already queued or in progress."
             )
-        return response
+        response.raise_error()
 
     return await site_collection.start_collecting()
 
@@ -136,15 +136,15 @@ async def cancel_all_site_scrape_task(
     has_queued_tasks = await site_collection.has_queued()
     if not has_queued_tasks:
         response.add_error("No queued tasks to cancel.")
-        return response.raise_error()
+        response.raise_error()
 
     # Process manual work_items for all queued site_scrape_tasks.
     response: CollectionResponse = await site_collection.process_work_lists()
     if response.has_error:
-        return response.raise_error()
+        response.raise_error()
     response = await site_collection.stop_collecting()
     if response.has_error:
-        return response.raise_error()
+        response.raise_error()
 
 
 def build_bulk_sites_query(bulk_type: str):
