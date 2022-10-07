@@ -13,8 +13,7 @@ export function DocumentsPage() {
   return (
     <MainLayout
       sidebar={<SiteMenu />}
-      pageTitle={'Retrieved Documents'}
-      pageToolbar={
+      sectionToolbar={
         <>
           <Button onClick={() => setNewDocumentModalVisible(true)} className="ml-auto">
             Create Document

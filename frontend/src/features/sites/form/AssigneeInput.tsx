@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Form, Select } from 'antd';
 import { User } from '../../users/types';
 import { useGetUsersQuery } from '../../users/usersApi';
@@ -22,12 +22,7 @@ const useOptions = (): OptionType[] => {
 };
 
 export function Assignee() {
-  const [assignee, setAssignee] = useState('');
   const options = useOptions();
-
-  const handleSelect = (value: string) => {
-    setAssignee(value);
-  };
 
   const filterOptions = (input: string, option: any) => {
     if (!input || !option) {
@@ -39,8 +34,6 @@ export function Assignee() {
   return (
     <Form.Item label="Assignee" name="assignee">
       <Select
-        value={assignee}
-        onSelect={handleSelect}
         showSearch
         placeholder="Unassigned"
         optionFilterProp="children"

@@ -14,7 +14,7 @@ export function UserCreatePage() {
   }
 
   return (
-    <MainLayout pageTitle={'Create User'}>
+    <MainLayout>
       <UserForm onFinish={tryAddUser} />
     </MainLayout>
   );

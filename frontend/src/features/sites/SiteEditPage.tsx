@@ -1,4 +1,4 @@
-import { Button, Form, Modal, Space } from 'antd';
+import { Button, Form, Modal, Space, Spin } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Site, CollectionMethod } from './types';
 import { SiteForm } from './form/SiteForm';
@@ -16,39 +16,42 @@ import { Link } from 'react-router-dom';
 const { confirm } = Modal;
 
 const useAlreadyAssignedModal = () => {
-  const params = useParams();
+  const { siteId } = useParams();
   const [updateSite] = useUpdateSiteMutation();
-  const { data: site } = useGetSiteQuery(params.siteId);
+  const { data: site } = useGetSiteQuery(siteId);
   const currentUser = useCurrentUser();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!site?._id) return;
+    (async () => {
+      if (!site?._id || !currentUser?._id) return;
 
-    const assignCurrentUser = {
-      _id: site._id,
-      assignee: currentUser?._id,
-    };
+      const assignCurrentUser = {
+        _id: site._id,
+        assignee: currentUser?._id,
+      };
 
-    if (!site.assignee) {
-      updateSite(assignCurrentUser);
-      return;
-    }
+      if (!site.assignee) {
+        await updateSite(assignCurrentUser);
+        return;
+      }
 
-    if (site.assignee !== currentUser?._id) {
-      confirm({
-        title: 'Site Already Assigned',
-        icon: <ExclamationCircleOutlined />,
-        content: 'Site is already assigned. Would you like to take over assignment?',
-        onOk: () => {
-          updateSite(assignCurrentUser);
-        },
-        onCancel: () => {
-          navigate(`/sites/${site._id}/view`);
-        },
-      });
-    }
-  }, [currentUser?._id, navigate, site?._id, site?.assignee, updateSite]);
+      if (site.assignee !== currentUser?._id) {
+        confirm({
+          title: 'Site Already Assigned',
+          icon: <ExclamationCircleOutlined />,
+          content: 'Site is already assigned. Would you like to take over assignment?',
+          onOk: async () => {
+            await updateSite(assignCurrentUser);
+            navigate(`/sites/${site._id}/edit`);
+          },
+          onCancel: () => {
+            navigate(`/sites/${site._id}/view`);
+          },
+        });
+      }
+    })();
+  }, [currentUser, currentUser?._id, navigate, site?._id, site?.assignee, siteId, updateSite]);
 };
 
 export function SiteEditPage() {
@@ -61,11 +64,11 @@ export function SiteEditPage() {
   const currentUser = useCurrentUser();
   useAlreadyAssignedModal();
 
-  if (!site) return null;
+  if (!site || !currentUser) return <Spin size="large" />;
 
   const initialValues = {
     ...site,
-    assignee: currentUser?._id,
+    assignee: currentUser._id,
   };
 
   async function tryUpdateSite(update: Partial<Site>) {
@@ -77,7 +80,7 @@ export function SiteEditPage() {
     ) {
       await cancelAllScrapes(params.siteId);
     }
-    navigate(-1);
+    navigate('../scrapes');
   }
   return (
     <MainLayout

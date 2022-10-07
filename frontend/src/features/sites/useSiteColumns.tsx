@@ -1,7 +1,7 @@
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Popconfirm, Tag, notification } from 'antd';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { EditOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import {
   prettyDateTimeFromISO,
   TaskStatus,
@@ -15,7 +15,6 @@ import { useGetChangeLogQuery } from './sitesApi';
 import { Site } from './types';
 import { SiteStatus, siteStatusDisplayName, siteStatusStyledDisplay } from './siteStatus';
 import { ReactNode, useMemo } from 'react';
-import { EditButtonLink } from './EditButtonLink';
 import { User } from '../users/types';
 import { TypeColumn } from '@inovua/reactdatagrid-community/types';
 
@@ -184,7 +183,9 @@ const createColumns = ({ deleteSite, setDeletedSite, users }: CreateColumnsType)
             <ButtonLink to={`${site._id}/view`}>
               <InfoCircleOutlined />
             </ButtonLink>
-            <EditButtonLink site={site} />
+            <ButtonLink to={`${site._id}/edit`}>
+              <EditOutlined />
+            </ButtonLink>
             <ChangeLogModal target={site} useChangeLogQuery={useGetChangeLogQuery} />
             <Popconfirm
               title={`Are you sure you want to delete '${site.name}'?`}

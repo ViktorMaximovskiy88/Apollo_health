@@ -2,7 +2,6 @@ from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from pydantic import BaseModel
 
-from backend.app.routes.documents import get_target as get_retrieved_doc
 from backend.app.routes.sites import Site
 from backend.app.routes.table_query import (
     TableFilterInfo,
@@ -21,7 +20,6 @@ from backend.common.models.doc_document import (
     DocDocumentView,
     UpdateDocDocument,
 )
-from backend.common.models.document import RetrievedDocument
 from backend.common.models.document_mixins import calc_final_effective_date
 from backend.common.models.shared import DocDocumentLocationView
 from backend.common.models.site_scrape_task import SiteScrapeTask
@@ -96,28 +94,29 @@ async def read_extraction_task(
 
 class CompareResponse(BaseModel):
     diff: str
-    org_doc: DocDocument
-    new_doc: RetrievedDocument
+    previous_doc: DocDocument
+    current_doc: DocDocument
 
 
 @router.post(
-    "/diff/{id}",
+    "/{id}/diff",
     response_model=CompareResponse,
     dependencies=[Security(get_current_user)],
 )
 async def create_diff(
-    compare_id: PydanticObjectId,
-    target: DocDocument = Depends(get_target),
+    previous_doc_doc_id: PydanticObjectId, current_doc: DocDocument = Depends(get_target)
 ):
     text_handler = TextHandler()
-    compare_doc = await get_retrieved_doc(compare_id)
-    if target.text_checksum is None or compare_doc.text_checksum is None:
+    previous_doc: DocDocument = await get_target(previous_doc_doc_id)
+    if current_doc.text_checksum is None or previous_doc.text_checksum is None:
         raise HTTPException(
-            detail="Doc Document or Retreived Document does not have an associated text file.",
+            detail="Current or previous DocDocument does not have an associated text file.",
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
         )
-    _, diff = await text_handler.create_diff(target.text_checksum, compare_doc.text_checksum)
-    return CompareResponse(diff=diff.decode("utf-8"), org_doc=target, new_doc=compare_doc)
+    _, diff = await text_handler.create_diff(previous_doc.text_checksum, current_doc.text_checksum)
+    return CompareResponse(
+        diff=diff.decode("utf-8"), previous_doc=previous_doc, current_doc=current_doc
+    )
 
 
 @router.post("/{id}", response_model=DocDocument)
@@ -131,7 +130,7 @@ async def update_doc_document(
     updated = await update_and_log_diff(logger, current_user, target, updates)
 
     # Sending Event Bridge Event.  Need to add condition when to send.
-    document_json = EventConvert(document=updated).convert()
+    document_json = await EventConvert(document=updated).convert(target)
     send_event_client = SendEventClient()
-    send_event_client.send_event("document-details", document_json)
+    send_event_client.send_event("document-details", document_json)  # noqa: F841
     return updated
