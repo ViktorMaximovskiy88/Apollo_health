@@ -271,7 +271,6 @@ class CollectionService:
                 )
                 if work_item_response.errors:
                     work_list_response.add_error(work_item_response)
-
         return work_list_response
 
     async def process_work_item(
@@ -280,10 +279,7 @@ class CollectionService:
         work_item: ManualWorkItem,
         item_index: int,
     ) -> CollectionResponse:
-        """
-        TODO: go through each work_list item, set finished or failed.
-        set associations depending on work_list item action.
-        """
+        """Process a site_scrape_task work_item action"""
         result: CollectionResponse = CollectionResponse()
         work_item_header_msg = (
             f"work_item selected: task: [{target_task.id}] doc_id: [{work_item.document_id}] "
@@ -292,28 +288,37 @@ class CollectionService:
         retr_doc = await RetrievedDocument.get_motor_collection().find_one(
             {"_id": work_item.retrieved_document_id},
         )
+        target_task.work_list[item_index].action_datetime = datetime.now(tz=timezone.utc)
 
         match work_item.selected:
-            case "NOT_FOUND":
-                # TODO: QA. Remove from work_list or leave in?
-                # If leave in to track, add additional field, 'found' true / false.
-                item_index: int = next(
-                    i
-                    for i, wi in enumerate(target_task.work_list)
-                    if wi.retrieved_document_id == work_item.retrieved_document_id
-                )
-                del target_task.work_list[item_index]
-                await target_task.save()
-                typer.secho(
-                    f"NOT_FOUND {work_item_header_msg}",
-                    fg=typer.colors.BRIGHT_GREEN,
-                )
             case "FOUND":
                 self.set_last_collected(retr_doc)
-                target_task.work_list[item_index].action_datetime = datetime.now(tz=timezone.utc)
                 await target_task.save()
                 typer.secho(
                     f"FOUND {work_item_header_msg}",
+                    fg=typer.colors.BRIGHT_GREEN,
+                )
+            case "NEW_DOCUMENT":
+                self.set_last_collected(retr_doc)
+                await target_task.save()
+                typer.secho(
+                    f"NEW_DOCUMENT {work_item_header_msg}",
+                    fg=typer.colors.BRIGHT_GREEN,
+                )
+            case "NOT_FOUND":
+                doc_index: PydanticObjectId | None = next(
+                    (
+                        i
+                        for i in target_task.retrieved_document_ids
+                        if i == work_item.retrieved_document_id
+                    ),
+                    None,
+                )
+                if doc_index:
+                    del target_task.retrieved_document_ids[doc_index]
+                await target_task.save()
+                typer.secho(
+                    f"NOT_FOUND {work_item_header_msg}",
                     fg=typer.colors.BRIGHT_GREEN,
                 )
             case _:
@@ -321,4 +326,5 @@ class CollectionService:
                     f"OTHER {work_item_header_msg}",
                     fg=typer.colors.BRIGHT_GREEN,
                 )
+
         return result
