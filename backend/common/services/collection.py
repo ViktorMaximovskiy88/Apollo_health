@@ -46,7 +46,6 @@ class CollectionService:
         self.queued_statuses: list[TaskStatus] = [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]
         self.last_queued = None
 
-    # TODO: Ask why TaskStatus.FINISHED would be in legacy query.
     async def has_queued(self) -> SiteScrapeTask | Boolean:
         if self.last_queued:
             return self.last_queued
@@ -79,7 +78,7 @@ class CollectionService:
 
     async def start_collecting(self) -> CollectionResponse:
         """Start collecting / updating all queued tasks."""
-        result = CollectionResponse()
+        result: CollectionResponse = CollectionResponse()
         err_str = f"[site: {self.site.id}] [collection_method: {self.site.collection_method}] "
         match self.site.collection_method:
             case CollectionMethod.Automated:
@@ -121,7 +120,7 @@ class CollectionService:
     async def create_queued_task(self) -> CollectionResponse:
         """Create automated scrape task with queue_time of now"""
         await self.stop_queued_tasks()
-        result = CollectionResponse()
+        result: CollectionResponse = CollectionResponse()
         new_scrape_task: SiteScrapeTask = SiteScrapeTask(
             site_id=self.site.id, queued_time=datetime.now(tz=timezone.utc)
         )
@@ -166,7 +165,7 @@ class CollectionService:
 
     async def start_manual(self) -> CollectionResponse:
         """Start site manual collection."""
-        response = CollectionResponse()
+        response: CollectionResponse = CollectionResponse()
         await self.stop_queued_tasks()
 
         # Create a new in_progress manual task and set queued to now.
@@ -233,7 +232,6 @@ class CollectionService:
         )
         await self.site.update(Set({Site.last_run_status: TaskStatus.CANCELED}))
 
-    # TODO: Add error handling, transaction.
     async def set_last_collected(self, task) -> CollectionResponse:
         """Update last_collected_date for retrieved_docs and retrieved_doc's doc."""
         retrieved_documents: list[RetrievedDocument] = (

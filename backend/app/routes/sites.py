@@ -159,7 +159,8 @@ async def update_site(
     original = target.collection_method
     updated = await update_and_log_diff(logger, current_user, target, updates)
     if (
-        updated["collection_method"] == CollectionMethod.Manual
+        "collection_method" in updated
+        and updated["collection_method"] == CollectionMethod.Manual
         and original != CollectionMethod.Manual
     ):
         site_collection = CollectionService(
