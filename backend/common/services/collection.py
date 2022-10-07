@@ -215,7 +215,6 @@ class CollectionService:
         # Unfinished manual collection with some documents already collected.
         # Cancel queued tasks and process all work actions from all queued task.
         # if last_queued_task.documents_found > 0:
-        #     response = await self.process_work_lists()
         response = await self.process_work_lists()
         await self.set_last_collected(last_queued_task)
         # Stop existing tasks from processing and set last collected to now.
@@ -296,6 +295,15 @@ class CollectionService:
 
         match work_item.selected:
             case "NOT_FOUND":
+                # TODO: QA. Remove from work_list or leave in?
+                # If leave in to track, add additional field, 'found' true / false.
+                item_index: int = next(
+                    i
+                    for i, wi in enumerate(target_task.work_list)
+                    if wi.retrieved_document_id == work_item.retrieved_document_id
+                )
+                del target_task.work_list[item_index]
+                await target_task.save()
                 typer.secho(
                     f"NOT_FOUND {work_item_header_msg}",
                     fg=typer.colors.BRIGHT_GREEN,
@@ -314,21 +322,3 @@ class CollectionService:
                     fg=typer.colors.BRIGHT_GREEN,
                 )
         return result
-        # NOT_FOUND
-        # Remove retrieved_document from target_test.retrieved_documents.
-        # set_retrieved_docs = [
-        #     PydanticObjectId(retrieved_document.id),
-        #     for retrieved_document in target_task.retrieved_document_ids
-        #     if PydanticObjectId(retrieved_document) != work_item.retrieved_document_id
-        # ]
-
-        # FOUND
-        # Update last_collected_date for doc and retrieved_doc.
-        # doc = await DocDocument.get_motor_collection().find_one_and_update(
-        #     {"retrieved_document_id": updates.retrieved_document_id},
-        #     {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
-        # )
-        # retrieved_doc = await RetrievedDocument.get_motor_collection().find_one_and_update(
-        #     {"_id": updates.retrieved_document_id},
-        #     {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
-        # )
