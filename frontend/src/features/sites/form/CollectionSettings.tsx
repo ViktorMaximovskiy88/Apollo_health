@@ -1,4 +1,4 @@
-import { Input, Form, Select, Radio, Typography, Slider } from 'antd';
+import { Input, Form, Select, Radio, Typography } from 'antd';
 
 import { CollectionMethod, ScrapeMethod, Site } from '../types';
 import {
@@ -16,6 +16,7 @@ import { FocusTherapyConfig } from './FocusTherapyConfig';
 import { HtmlScrapeConfig } from './HtmlScrapeConfig';
 import { SearchTokens } from './SearchTokens';
 import { FollowLinks } from './FollowLinks';
+import { DocumentTypeThreshold, LineageThreshold } from './Thresholds';
 
 function CollectionMethodRadio() {
   const collections = [
@@ -68,24 +69,6 @@ const CustomSelectors = () => (
     parentName={['scrape_method_configuration', 'attr_selectors']}
     title={<label className="font-semibold">Custom Selectors</label>}
   />
-);
-
-const formatter = (value?: number) => {
-  if (!value) return;
-  const displayedValue = Math.round(value * 100); // fix floating point math bugs
-  return `${displayedValue}%`;
-};
-
-const DocumentTypeThreshold = () => (
-  <Form.Item name="doc_type_threshold" label="Document Type Threshold">
-    <Slider min={0} max={1} step={0.01} tipFormatter={formatter} tooltip={{ open: true }} />
-  </Form.Item>
-);
-
-const LineageThreshold = () => (
-  <Form.Item name="lineage_threshold" label="Lineage Threshold">
-    <Slider min={0} max={1} step={0.01} tipFormatter={formatter} tooltip={{ open: true }} />
-  </Form.Item>
 );
 
 interface CollectionSettingsPropTypes {
