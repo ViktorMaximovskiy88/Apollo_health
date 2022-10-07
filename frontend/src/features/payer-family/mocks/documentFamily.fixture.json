@@ -1,0 +1,15 @@
+{
+  "name": "Test Family",
+  "document_type": "Treatment Request Form",
+  "description": "Sample Description about the Test Document Family",
+  "site_id": "62bc78771c5e93fce7d5c0cf",
+  "relevance": [],
+  "payer": {
+    "payer_type": "formulary",
+    "payer_ids": ["61898", "61552", "60482"],
+    "channels": ["HEALTH EXCHANGE"],
+    "benefits": ["MEDICAL"],
+    "plan_types": ["ADAP", "GOVERNMENT"],
+    "regions": ["AR", "FL", "ID"]
+  }
+}

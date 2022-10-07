@@ -15,6 +15,7 @@ import {
   MergeCellsOutlined,
   WalletOutlined,
   GroupOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 
 export function AppLayout() {
@@ -91,6 +92,7 @@ function AppMenu() {
 
   const icons: any = {
     '/document-family': <GroupOutlined />,
+    '/payer-family': <TeamOutlined />,
     '/sites': <ProjectTwoTone />,
     '/work-queues': <InboxOutlined />,
     '/documents': <FileTextTwoTone />,
