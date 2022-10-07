@@ -29,9 +29,9 @@ export function CollectionsPage() {
     if (site?._id) {
       try {
         let response: any = await runScrape(site._id).unwrap();
-        if (response.status == 200) {
+        if (!response.errors) {
           refetch();
-        } else if (response.error) {
+        } else {
           notification.error({
             message: 'Error Running Collection',
             description: response.error.data.detail,
@@ -93,10 +93,10 @@ function ManualCollectionButton(props: any) {
   async function handleRunManualScrape() {
     try {
       let response: any = await runScrape(site!._id);
-      if (response.status == 200) {
+      if (!response.errors) {
         refetch();
         navigate(`../doc-documents?scrape_task_id=${response.data.nav_id}`);
-      } else if (response.error) {
+      } else {
         notification.error({
           message: 'Error Running Manual Collection',
           description: response.error.data.detail,
@@ -121,9 +121,9 @@ function ManualCollectionButton(props: any) {
     if (site?._id) {
       try {
         let response: any = await cancelAllScrapes(site!._id);
-        if (response.status == 200) {
+        if (!response.errors) {
           refetch();
-        } else if (response.error) {
+        } else {
           notification.error({
             message: 'Error Cancelling Collection',
             description: response.error.data.detail,
