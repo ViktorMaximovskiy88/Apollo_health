@@ -11,6 +11,7 @@ import {
   Tooltip,
   message,
   Checkbox,
+  notification,
 } from 'antd';
 
 import { useForm } from 'antd/lib/form/Form';
@@ -67,12 +68,14 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
   async function saveDocument(newDocument: any) {
     try {
       newDocument.site_id = siteId;
-      newDocument.base_url = newDocument.base_url ?? newDocument.url;
-      //  we nuked this relationship
-      // if (scrapeTasks) {
-      //   newDocument.scrape_task_id = scrapeTasks[0]._id;
-      // }
-      // used to determine how we handle this request if new_version or new document
+      newDocument.url = form.getFieldValue('url');
+      newDocument.base_url = form.getFieldValue('base_url') ?? newDocument.url;
+      newDocument.link_text = form.getFieldValue('link_text');
+      // For some reason, fileData never updates if browser auto fills.
+      fileData.url = form.getFieldValue('url');
+      fileData.base_url = form.getFieldValue('base_url') ?? newDocument.url;
+      fileData.link_text = form.getFieldValue('link_text');
+
       if (oldVersion) {
         newDocument._id = oldVersion._id;
         newDocument.last_collected_date = oldVersion.last_collected_date;
@@ -81,11 +84,19 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
       fileData.metadata.link_text = newDocument.link_text;
       delete newDocument.link_text;
       delete newDocument.document_file;
+
       await addDoc({
         ...newDocument,
         ...fileData,
-      });
-      setVisible(false);
+      })
+        .unwrap()
+        .then(() => setVisible(false))
+        .catch((error) =>
+          notification.error({
+            message: error.data.detail,
+            description: `Upload a new document or enter a new location.`,
+          })
+        );
     } catch (error) {
       message.error('We could not save this document');
     }
@@ -93,6 +104,13 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
   function onCancel() {
     setVisible(false);
   }
+
+  function setLocationValuesFromResponse(responseData: any) {
+    form.setFieldsValue({ base_url: responseData.base_url });
+    form.setFieldsValue({ url: responseData.url });
+    form.setFieldsValue({ link_text: responseData.link_text });
+  }
+
   return (
     <Modal visible={true} title="Add new document" onCancel={onCancel} width={1000} footer={null}>
       <Form
@@ -104,7 +122,12 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
         onFinish={saveDocument}
       >
         <div className="flex grow space-x-3">
-          <UploadItem form={form} setFileData={setFileData} />
+          <UploadItem
+            form={form}
+            setFileData={setFileData}
+            siteId={siteId}
+            setLocationValuesFromResponse={setLocationValuesFromResponse}
+          />
           <InternalDocument oldVersion={oldVersion} />
         </div>
 
@@ -153,7 +176,7 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
 }
 
 function UploadItem(props: any) {
-  const { setFileData } = props;
+  const { setFileData, siteId, setLocationValuesFromResponse } = props;
   const [token, setToken] = useState('');
   const [fileName, setFileName] = useState('');
   const [uploadStatus, setUploadStatus] = useState('');
@@ -174,7 +197,9 @@ function UploadItem(props: any) {
         setUploadStatus('');
         message.error(response.error);
       } else if (response.success) {
+        console.log('SHOULD SEE ME');
         setUploadStatus('done');
+        setLocationValuesFromResponse(response.data);
         setFileData(response.data);
       }
     }
@@ -190,7 +215,7 @@ function UploadItem(props: any) {
         <Upload
           name="file"
           accept=".pdf,.xlsx,.docx"
-          action={`${baseApiUrl}/documents/upload`}
+          action={`${baseApiUrl}/documents/upload/${siteId}`}
           headers={{
             Authorization: `Bearer ${token}`,
           }}

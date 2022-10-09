@@ -1,4 +1,7 @@
+from typing import List
+
 from beanie import PydanticObjectId
+from beanie.odm.queries.find import FindMany
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from pydantic import BaseModel
 
@@ -26,14 +29,14 @@ from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.storage.text_handler import TextHandler
 
-router = APIRouter(
+router: APIRouter = APIRouter(
     prefix="/doc-documents",
     tags=["DocDocuments"],
 )
 
 
 async def get_target(id: PydanticObjectId) -> DocDocument:
-    task = await DocDocument.get(id)
+    task: DocDocument | None = await DocDocument.get(id)
     if not task:
         raise HTTPException(
             detail=f"Doc Document {id} Not Found",
@@ -54,18 +57,18 @@ async def read_doc_documents(
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
-):
+) -> TableQueryResponse[DocDocumentLimitTags]:
     query = {}
-
     if site_id:
         query["site_id"] = site_id
-
     if scrape_task_id:
-        task = await SiteScrapeTask.get(scrape_task_id)
+        task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
         if task:
             query["retrieved_document_id"] = {"$in": task.retrieved_document_ids}
 
-    document_query = DocDocument.find(query).project(DocDocumentLimitTags)
+    document_query: FindMany[DocDocumentLimitTags] = DocDocument.find(query).project(
+        DocDocumentLimitTags
+    )
     return await query_table(document_query, limit, skip, sorts, filters)
 
 
@@ -76,14 +79,13 @@ async def read_doc_documents(
 )
 async def read_extraction_task(
     target: DocDocument = Depends(get_target),
-):
+) -> DocDocumentView:
     # https://roman-right.github.io/beanie/tutorial/relations/
     # Only top-level fields are fully supported for now
     # cant use relations... yet...
-
-    site_ids = [location.site_id for location in target.locations]
-    sites = await Site.find({"_id": {"$in": site_ids}}).to_list()
-    doc = DocDocumentView(**target.dict())
+    site_ids: list[PydanticObjectId] = [location.site_id for location in target.locations]
+    sites: List[Site] = await Site.find({"_id": {"$in": site_ids}}).to_list()
+    doc: DocDocumentView = DocDocumentView(**target.dict())
 
     for site in sites:
         location: DocDocumentLocationView = doc.get_site_location(site.id)
@@ -105,8 +107,8 @@ class CompareResponse(BaseModel):
 )
 async def create_diff(
     previous_doc_doc_id: PydanticObjectId, current_doc: DocDocument = Depends(get_target)
-):
-    text_handler = TextHandler()
+) -> CompareResponse:
+    text_handler: TextHandler = TextHandler()
     previous_doc: DocDocument = await get_target(previous_doc_doc_id)
     if current_doc.text_checksum is None or previous_doc.text_checksum is None:
         raise HTTPException(
@@ -130,7 +132,7 @@ async def update_doc_document(
     updated = await update_and_log_diff(logger, current_user, target, updates)
 
     # Sending Event Bridge Event.  Need to add condition when to send.
-    document_json = await EventConvert(document=updated).convert(target)
-    send_event_client = SendEventClient()
+    document_json: str = await EventConvert(document=updated).convert(target)
+    send_event_client: SendEventClient = SendEventClient()
     send_event_client.send_event("document-details", document_json)  # noqa: F841
     return updated

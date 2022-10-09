@@ -27,7 +27,7 @@ from backend.common.models.user import User
 from backend.common.services.collection import CollectionResponse, CollectionService
 from backend.common.task_queues.unique_task_insert import try_queue_unique_task
 
-router = APIRouter(
+router: APIRouter = APIRouter(
     prefix="/site-scrape-tasks",
     tags=["SiteScrapeTasks"],
 )
@@ -62,7 +62,8 @@ async def read_scrape_tasks_for_site(
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ) -> TableQueryResponse[SiteScrapeTask]:
     query = SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id)
-    return await query_table(query, limit, skip, sorts, filters)
+    result = await query_table(query, limit, skip, sorts, filters)
+    return result
 
 
 @router.get(
@@ -84,18 +85,18 @@ async def read_scrape_task(
 )
 async def start_scrape_task(
     site_id: PydanticObjectId,
-    response_model=CollectionResponse,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
+    response_model=CollectionResponse,
 ) -> CollectionResponse:
     response: CollectionResponse = CollectionResponse()
-    site = await Site.get(site_id)
+    site: Site | None = await Site.get(site_id)
     if not site:
         raise HTTPException(
             detail=f"Site {site_id} Not Found",
             status_code=status.HTTP_404_NOT_FOUND,
         )
-    site_collection = CollectionService(
+    site_collection: CollectionService = CollectionService(
         site=site,
         current_user=current_user,
         logger=logger,
@@ -116,9 +117,9 @@ async def start_scrape_task(
 @router.post("/cancel-all", response_model=CollectionResponse)
 async def cancel_all_site_scrape_task(
     site_id: PydanticObjectId,
-    response_model=CollectionResponse,
     current_user: User = Depends(get_current_user),
     logger: Logger = Depends(get_logger),
+    response_model=CollectionResponse,
 ) -> CollectionResponse:
     response = CollectionResponse()
     # Grab site / check exists and has permission.
@@ -130,23 +131,24 @@ async def cancel_all_site_scrape_task(
             status_code=status.HTTP_404_NOT_FOUND,
         )
     # Check that site has queued tasks.
-    site_collection = CollectionService(
+    site_collection: CollectionService = CollectionService(
         site=site,
         current_user=current_user,
         logger=logger,
     )
-    has_queued_tasks = await site_collection.has_queued()
+    has_queued_tasks: SiteScrapeTask = await site_collection.has_queued()
     if not has_queued_tasks:
         response.add_error("No queued tasks to cancel.")
         response.raise_error()
 
     # Process manual work_items for all queued site_scrape_tasks.
     response: CollectionResponse = await site_collection.process_work_lists()
-    if response.has_error:
+    if not response.success:
         response.raise_error()
     response = await site_collection.stop_collecting()
-    if response.has_error:
+    if not response.success:
         response.raise_error()
+    return response
 
 
 def build_bulk_sites_query(bulk_type: str):

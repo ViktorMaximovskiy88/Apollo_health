@@ -27,7 +27,7 @@ export const documentsApi = createApi({
       providesTags: (_r, _e, id) => [{ type: 'RetrievedDocument' as const, id }],
     }),
     addDocument: builder.mutation<RetrievedDocument, Partial<RetrievedDocument>>({
-      query: (body) => ({ url: '/documents/', method: 'PUT', body }),
+      query: (body) => ({ url: `/documents/`, method: 'PUT', body }),
       invalidatesTags: (_r, _e, { _id: id }) => [
         { type: 'RetrievedDocument', id },
         { type: 'ChangeLog', id },

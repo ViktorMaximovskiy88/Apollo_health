@@ -23,15 +23,15 @@ from backend.scrapeworker.common.models import DownloadContext
 
 class DocumentUpdater:
     def __init__(self, log: PyLogger, scrape_task: SiteScrapeTask, site: Site) -> None:
-        self.log = log
-        self.logger = Logger()
-        self.text_handler = TextHandler()
-        self.scrape_task = scrape_task
-        self.site = site
+        self.log: Logger = log
+        self.logger: Logger = Logger()
+        self.text_handler: TextHandler = TextHandler()
+        self.scrape_task: SiteScrapeTask = scrape_task
+        self.site: Site = site
 
     @alru_cache
     async def get_user(self) -> User:
-        user = await User.by_email("admin@mmitnetwork.com")
+        user: User | None = await User.by_email("admin@mmitnetwork.com")
         if not user:
             raise Exception("No user found")
         return user
@@ -55,12 +55,13 @@ class DocumentUpdater:
         download: DownloadContext,
         parsed_content: dict,
     ) -> UpdateRetrievedDocument:
-        now = datetime.now(tz=timezone.utc)
+        now: datetime = datetime.now(tz=timezone.utc)
         name = self.set_doc_name(parsed_content, download)
+        print("update_retrieved_doc")
 
         location: RetrievedDocumentLocation = document.get_site_location(self.site.id)
         context_metadata = download.metadata.dict()
-        text_checksum = await self.text_handler.save_text(parsed_content["text"])
+        text_checksum: str = await self.text_handler.save_text(parsed_content["text"])
         if location:
             location.link_text = download.metadata.link_text
             location.siblings_text = download.metadata.siblings_text
@@ -80,7 +81,7 @@ class DocumentUpdater:
                 )
             )
 
-        updated_doc = UpdateRetrievedDocument(
+        updated_doc: UpdateRetrievedDocument = UpdateRetrievedDocument(
             doc_type_confidence=parsed_content["confidence"],
             document_type=parsed_content["document_type"],
             effective_date=parsed_content["effective_date"],
@@ -111,8 +112,8 @@ class DocumentUpdater:
         retrieved_document: RetrievedDocument,
         new_therapy_tags: list[TherapyTag],
         new_indicate_tags: list[IndicationTag],
-    ):
-        doc_document = await DocDocument.find_one(
+    ) -> None:
+        doc_document: DocDocument | None = await DocDocument.find_one(
             DocDocument.retrieved_document_id == retrieved_document.id
         )
         if doc_document:
@@ -158,13 +159,14 @@ class DocumentUpdater:
 
     async def create_retrieved_document(
         self, parsed_content: dict[str, Any], download: DownloadContext, checksum: str, url: str
-    ):
+    ) -> RetrievedDocument:
         self.log.debug("creating doc")
-        now = datetime.now(tz=timezone.utc)
+        now: datetime = datetime.now(tz=timezone.utc)
         name = self.set_doc_name(parsed_content, download)
-        text_checksum = await self.text_handler.save_text(parsed_content["text"])
+        text_checksum: str = await self.text_handler.save_text(parsed_content["text"])
         context_metadata = download.metadata.dict()
-        document = RetrievedDocument(
+
+        document: RetrievedDocument = RetrievedDocument(
             file_size=download.file_size,
             checksum=checksum,
             text_checksum=text_checksum,
@@ -201,9 +203,9 @@ class DocumentUpdater:
                 )
             ],
         )
+
         await create_and_log(self.logger, await self.get_user(), document)
         return document
 
     async def create_doc_document(self, retrieved_document: RetrievedDocument) -> DocDocument:
-
         return await create_doc_document_service(retrieved_document, await self.get_user())

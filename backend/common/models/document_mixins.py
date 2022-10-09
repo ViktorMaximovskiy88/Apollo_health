@@ -4,10 +4,10 @@ from beanie import PydanticObjectId
 
 
 class DocumentMixins:
-    def set_final_effective_date(self):
-        self.final_effective_date = calc_final_effective_date(self)
+    def set_final_effective_date(self) -> None:
+        self.final_effective_date: datetime | None = calc_final_effective_date(self)
 
-    def find_site_index(self, site_id: PydanticObjectId):
+    def find_site_index(self, site_id: PydanticObjectId) -> int:
         return next((i for i, item in enumerate(self.locations) if item.site_id == site_id), -1)
 
     def get_site_location(self, site_id):
@@ -39,10 +39,10 @@ def calc_final_effective_date(doc) -> datetime | None:
     return final_effective_date
 
 
-def find_site_index(document, site_id: PydanticObjectId):
+def find_site_index(document, site_id: PydanticObjectId) -> int:
     return next((i for i, item in enumerate(document.locations) if item.site_id == site_id), -1)
 
 
 def get_site_location(document, site_id: PydanticObjectId):
-    location_index = find_site_index(document, site_id)
+    location_index: int = find_site_index(document, site_id)
     return document.locations[location_index] if location_index > -1 else None

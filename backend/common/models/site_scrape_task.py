@@ -43,7 +43,7 @@ class SiteScrapeTask(BaseDocument):
     retry_if_lost: bool = False
     collection_method: str | None = CollectionMethod.Automated
     scrape_method_configuration: ScrapeMethodConfiguration | None = None
-    work_list: list[ManualWorkItem] = []
+    work_list: list[ManualWorkItem] | None = []
 
 
 class UpdateSiteScrapeTask(BaseModel):

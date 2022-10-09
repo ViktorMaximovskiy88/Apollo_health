@@ -110,6 +110,7 @@ async def create_site(
         disabled=False,
         cron=site.cron,
     )
+
     await create_and_log(logger, current_user, new_site)
     return new_site
 
@@ -121,12 +122,14 @@ async def upload_sites(
     logger: Logger = Depends(get_logger),
 ) -> list[Site]:
     new_sites: list[Site] = []
+
     for new_site in get_sites_from_upload(file):
         if await Site.find_one(Site.base_urls == new_site.base_urls):
             continue
         if new_site.base_urls:
             new_sites.append(new_site)
             await create_and_log(logger, current_user, new_site)
+
     return new_sites
 
 
@@ -145,6 +148,7 @@ async def update_multiple_sites(
             logger, current_user, target, UpdateSite(assignee=current_user.id)
         )
         result.append(updated)
+
     return result
 
 
@@ -155,14 +159,18 @@ async def update_site(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    original: str | None = target.collection_method if target.collection_method else None
+    original_collection_method: str | None = (
+        target.collection_method if target.collection_method else None
+    )
     updated = await update_and_log_diff(logger, current_user, target, updates)
+    updated_collection_method = updated.get("collection_method", False)
+
     # If site was automated but then switched to manual,
-    # run stop manual just in case pending manual items are stuck in queue.
+    # stop manual tasks just in case pending work items are stuck in queue.
     if (
-        "collection_method" in updated
-        and updated["collection_method"] == CollectionMethod.Manual
-        and original != CollectionMethod.Manual
+        updated_collection_method
+        and updated_collection_method == CollectionMethod.Manual
+        and original_collection_method != CollectionMethod.Manual
     ):
         site_collection: CollectionService = CollectionService(
             site=target,
@@ -170,6 +178,7 @@ async def update_site(
             logger=logger,
         )
         await site_collection.stop_manual()
+
     return updated
 
 
@@ -239,7 +248,6 @@ async def get_site_doc_docs(
     scrape_task_id: PydanticObjectId | None = None,
 ) -> list[SiteDocDocument]:
     query: dict[str, PydanticObjectId] = {"locations.site_id": site_id}
-
     if scrape_task_id:
         scrape_task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
         if scrape_task:

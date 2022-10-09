@@ -24,7 +24,7 @@ function ManualCollectionButton(props: any) {
   async function handleRunManualScrape() {
     try {
       let response: any = await runScrape(site!._id);
-      if (!response.has_error) {
+      if (response.data.success) {
         refetch();
         navigate(`../doc-documents?scrape_task_id=${response.data.nav_id}`);
       } else {
@@ -52,9 +52,11 @@ function ManualCollectionButton(props: any) {
     if (site?._id) {
       try {
         let response: any = await cancelAllScrapes(site!._id);
-        if (!response.has_error) {
+        console.log('err', response);
+        if (response.data.success) {
           refetch();
         } else {
+          console.log('HEEEEY');
           notification.error({
             message: 'Error Cancelling Collection',
             description: response.error.data.detail,
@@ -105,7 +107,7 @@ export function CollectionsPage() {
     if (site?._id) {
       try {
         let response: any = await runScrape(site._id).unwrap();
-        if (!response.has_error) {
+        if (response.success) {
           refetch();
         } else {
           notification.error({

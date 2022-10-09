@@ -21,17 +21,17 @@ from backend.common.models.user import User
 
 
 class CollectionResponse(BaseModel):
-    has_error: Boolean | None = False
+    success: Boolean | None = True
     errors: list | None = []
     nav_id: PydanticObjectId | None = None
 
     def add_error(self, error: str) -> None:
         typer.secho(error, fg=typer.colors.RED)
-        self.has_error = True
+        self.success = False
         self.errors.append(error)
 
     # Send http status code and object that matches isErrorWithData.
-    def raise_error(self, status: status = status.HTTP_406_NOT_ACCEPTABLE) -> Optional:
+    def raise_error(self, status: status = status.HTTP_409_CONFLICT) -> Optional:
         raise HTTPException(status, jsonable_encoder(",".join(self.errors)))
 
 
@@ -99,6 +99,7 @@ class CollectionService:
         result = CollectionResponse()
         if not await self.has_queued():
             return result
+
         match self.site.collection_method:
             case CollectionMethod.Automated:
                 result: CollectionResponse = await self.stop_queued_tasks()
@@ -113,6 +114,7 @@ class CollectionService:
                     fg=typer.colors.RED,
                 )
                 return result
+
         if not result.errors:
             await self.site.update(Set({Site.last_run_status: TaskStatus.FINISHED}))
         return result
@@ -185,13 +187,13 @@ class CollectionService:
             doc_documents: List[DocDocument] = await DocDocument.find(
                 {"retrieved_document_id": {"$in": new_task.retrieved_document_ids}}
             ).to_list()
-            new_task.work_list = [
-                ManualWorkItem(
-                    document_id=f"{doc_document.id}",
-                    retrieved_document_id=f"{doc_document.retrieved_document_id}",
+            for doc_document in doc_documents:
+                new_task.work_list.append(
+                    ManualWorkItem(
+                        document_id=f"{doc_document.id}",
+                        retrieved_document_id=f"{doc_document.retrieved_document_id}",
+                    )
                 )
-                for doc_document in doc_documents
-            ]
         # Create the new task with the previous tasks docs / retr_docs.
         created_task: SiteScrapeTask = await create_and_log(
             self.logger, self.current_user, new_task
@@ -211,11 +213,13 @@ class CollectionService:
 
         # Do not have queued tasks.
         if not last_queued_task:
-            return CollectionResponse(errors=[])
+            return CollectionResponse(success=True)
         # Unfinished manual collection with some documents already collected.
         # Cancel queued tasks and process all work actions from all queued task.
         # if last_queued_task.documents_found > 0:
         response = await self.process_work_lists()
+        if not response.success:
+            return response
         await self.set_last_collected(last_queued_task)
         # Stop existing tasks from processing and set last collected to now.
         await self.stop_queued_tasks()
@@ -242,19 +246,19 @@ class CollectionService:
         )
         if not retrieved_documents:
             response.add_error("No retrieved_docs for site_scrape_task[{task.id}]")
-            return CollectionResponse(errors=[])
+            return response
 
         for r_doc in retrieved_documents:
             if datetime.date(r_doc.last_collected_date) < datetime.today().date():
                 await RetrievedDocument.get_motor_collection().find_one_and_update(
                     {"_id": r_doc.id},
-                    {"$set": {"last_collected_date": datetime.now(tz=datetime.timezone.utc)}},
+                    {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
                 )
                 await DocDocument.get_motor_collection().find_one_and_update(
                     {"retrieved_document_id": r_doc.id},
-                    {"$set": {"last_collected_date": datetime.now(tz=datetime.timezone.utc)}},
+                    {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
                 )
-        return CollectionResponse(errors=[])
+        return response
 
     async def process_work_lists(self) -> CollectionResponse:
         """
@@ -281,46 +285,47 @@ class CollectionService:
     ) -> CollectionResponse:
         """Process a site_scrape_task work_item action"""
         result: CollectionResponse = CollectionResponse()
-        work_item_header_msg = (
-            f"work_item selected: task: [{target_task.id}] doc_id: [{work_item.document_id}] "
-            f"retrieved_document_id: [{work_item.retrieved_document_id}]"
+        work_item_header_msg: str = (
+            f"work_item selected: [{work_item.selected}] in task: [{target_task.id}] "
+            "doc_id: [{work_item.document_id}] "
+            "retrieved_document_id: [{work_item.retrieved_document_id}]"
         )
         retr_doc = await RetrievedDocument.get_motor_collection().find_one(
             {"_id": work_item.retrieved_document_id},
         )
+        # Update work_item.action_datetime.
         target_task.work_list[item_index].action_datetime = datetime.now(tz=timezone.utc)
 
         match work_item.selected:
             case "FOUND":
-                self.set_last_collected(retr_doc)
-                await target_task.save()
                 typer.secho(
                     f"FOUND {work_item_header_msg}",
                     fg=typer.colors.BRIGHT_GREEN,
                 )
-            case "NEW_DOCUMENT":
                 self.set_last_collected(retr_doc)
                 await target_task.save()
+            case "NEW_DOCUMENT":
                 typer.secho(
                     f"NEW_DOCUMENT {work_item_header_msg}",
                     fg=typer.colors.BRIGHT_GREEN,
                 )
-            case "NOT_FOUND":
-                doc_index: PydanticObjectId | None = next(
-                    (
-                        i
-                        for i in target_task.retrieved_document_ids
-                        if i == work_item.retrieved_document_id
-                    ),
-                    None,
-                )
-                if doc_index:
-                    del target_task.retrieved_document_ids[doc_index]
+                self.set_last_collected(retr_doc)
                 await target_task.save()
+            case "NOT_FOUND":
                 typer.secho(
                     f"NOT_FOUND {work_item_header_msg}",
                     fg=typer.colors.BRIGHT_GREEN,
                 )
+                doc_index: PydanticObjectId = next(
+                    (
+                        i
+                        for i in target_task.retrieved_document_ids
+                        if i == work_item.retrieved_document_id
+                    )
+                )
+                if doc_index:
+                    del target_task.retrieved_document_ids[doc_index]
+                await target_task.save()
             case _:
                 typer.secho(
                     f"OTHER {work_item_header_msg}",
