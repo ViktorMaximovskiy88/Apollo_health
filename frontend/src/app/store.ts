@@ -76,7 +76,6 @@ export const store = configureStore({
       workQueuesApi.middleware,
       proxiesApi.middleware,
       docDocumentsApi.middleware,
-      payerFamilyApi.middleware,
       translationsApi.middleware,
       documentFamilyApi.middleware,
       payerBackboneApi.middleware,
