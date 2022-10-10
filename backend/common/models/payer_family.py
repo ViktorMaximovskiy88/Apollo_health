@@ -12,7 +12,7 @@ class PayerFamily(BaseDocument):
     benefits: list[str] = []
     plan_types: list[str] = []
     regions: list[str] = []
-    boolean: bool
+    disabled: bool = False
 
 
 class NewPayerFamily(BaseModel):
