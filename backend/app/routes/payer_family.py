@@ -38,6 +38,18 @@ async def read_payer_families(
 
 
 @router.get(
+    "/search",
+    dependencies=[Security(get_current_user)],
+    response_model=PayerFamily,
+)
+async def read_payer_family_by_name(
+    name: str,
+):
+    payer_family = await PayerFamily.find_one({"name": name})
+    return payer_family
+
+
+@router.get(
     "/{id}",
     response_model=PayerFamily,
     dependencies=[Security(get_current_user)],
