@@ -31,11 +31,11 @@ import { SiteDocDocument } from '../doc_documents/types';
 
 interface AddDocumentModalPropTypes {
   oldVersion?: SiteDocDocument;
-  setVisible: (visible: boolean) => void;
+  setOpen: (open: boolean) => void;
   siteId: any;
 }
 
-export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocumentModalPropTypes) {
+export function AddDocumentModal({ oldVersion, setOpen, siteId }: AddDocumentModalPropTypes) {
   const [form] = useForm();
   const [addDoc] = useAddDocumentMutation();
   const [fileData, setFileData] = useState<any>();
@@ -84,16 +84,16 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
         ...newDocument,
         ...fileData,
       });
-      setVisible(false);
+      setOpen(false);
     } catch (error) {
       message.error('We could not save this document');
     }
   }
   function onCancel() {
-    setVisible(false);
+    setOpen(false);
   }
   return (
-    <Modal visible={true} title="Add new document" onCancel={onCancel} width={1000} footer={null}>
+    <Modal open={true} title="Add new document" onCancel={onCancel} width={1000} footer={null}>
       <Form
         layout="vertical"
         form={form}

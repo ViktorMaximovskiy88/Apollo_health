@@ -27,7 +27,7 @@ const nameMustBeUnique = (getTranslationByName: any) => {
 };
 
 export const CopyTranslation = ({ translation }: { translation: TranslationConfig }) => {
-  const [visible, setVisible] = useState(false);
+  const [visible, setOpen] = useState(false);
   const [form] = useForm();
   const navigate = useNavigate();
 
@@ -37,12 +37,12 @@ export const CopyTranslation = ({ translation }: { translation: TranslationConfi
   const [addTranslation, { isLoading: addTranslationLoading }] = useAddTranslationConfigMutation();
 
   const handleCancel = () => {
-    setVisible(false);
+    setOpen(false);
     form.resetFields();
   };
 
   const handleFinish = async ({ name }: { name: string }) => {
-    setVisible(false);
+    setOpen(false);
     const newTranslation = await addTranslation({
       ...translation,
       name,
@@ -56,12 +56,12 @@ export const CopyTranslation = ({ translation }: { translation: TranslationConfi
   return (
     <>
       <Tooltip title="Copy Translation">
-        <ButtonLink onClick={() => setVisible(true)}>
+        <ButtonLink onClick={() => setOpen(true)}>
           <CopyOutlined />
         </ButtonLink>
       </Tooltip>
       <Modal
-        visible={visible}
+        open={visible}
         title={
           <>
             Copy Translation of "{translation.name}" <Spin spinning={isLoading} />

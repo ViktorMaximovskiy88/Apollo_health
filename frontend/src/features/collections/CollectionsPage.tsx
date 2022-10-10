@@ -49,7 +49,7 @@ function ManualCollectionButton(props: any) {
 }
 
 export function CollectionsPage() {
-  const [newDocumentModalVisible, setNewDocumentModalVisible] = useState(false);
+  const [newDocumentModalOpen, setNewDocumentModalOpen] = useState(false);
 
   const params = useParams();
   const siteId = params.siteId;
@@ -80,8 +80,8 @@ export function CollectionsPage() {
 
   return (
     <>
-      {newDocumentModalVisible ? (
-        <AddDocumentModal setVisible={setNewDocumentModalVisible} siteId={siteId} />
+      {newDocumentModalOpen ? (
+        <AddDocumentModal setOpen={setNewDocumentModalOpen} siteId={siteId} />
       ) : null}
       <MainLayout
         sidebar={<SiteMenu />}
@@ -101,7 +101,7 @@ export function CollectionsPage() {
       >
         <CollectionsDataTable
           siteId={siteId}
-          openNewDocumentModal={() => setNewDocumentModalVisible(true)}
+          openNewDocumentModal={() => setNewDocumentModalOpen(true)}
         />
       </MainLayout>
     </>

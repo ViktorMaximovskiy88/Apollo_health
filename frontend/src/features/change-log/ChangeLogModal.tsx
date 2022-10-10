@@ -111,12 +111,12 @@ export function ChangeLogModal(props: {
   target: { _id: string };
   useChangeLogQuery: ChangeLogUseQuery;
 }) {
-  const [visible, setVisible] = useState(false);
+  const [open, setopen] = useState(false);
   function openModal() {
-    setVisible(true);
+    setopen(true);
   }
   function closeModal() {
-    setVisible(false);
+    setopen(false);
   }
   const columns = [
     {
@@ -148,7 +148,7 @@ export function ChangeLogModal(props: {
     },
   ];
   const { data: changeLogs } = props.useChangeLogQuery(props.target._id, {
-    skip: !visible,
+    skip: !open,
   });
   const formattedLogs = changeLogs?.map((log: ChangeLog) => ({
     ...log,
@@ -162,7 +162,7 @@ export function ChangeLogModal(props: {
       </Button>
       <Modal
         title="Change Log"
-        visible={visible}
+        open={open}
         onCancel={closeModal}
         width={1000}
         footer={[

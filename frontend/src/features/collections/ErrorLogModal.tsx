@@ -1,20 +1,20 @@
 import { Button, Modal } from 'antd';
 
 interface ErrorLogModalPropTypes {
-  visible: boolean;
-  setVisible: (visible: boolean) => void;
+  open: boolean;
+  setOpen: (open: boolean) => void;
   errorTraceback: string;
 }
 
-export function ErrorLogModal({ visible, setVisible, errorTraceback }: ErrorLogModalPropTypes) {
+export function ErrorLogModal({ open, setOpen, errorTraceback }: ErrorLogModalPropTypes) {
   return (
     <Modal
-      visible={visible}
+      open={open}
       title="Error Traceback"
-      onCancel={() => setVisible(false)}
+      onCancel={() => setOpen(false)}
       width={1000}
       footer={[
-        <Button className="px-10" type="primary" key="back" onClick={() => setVisible(false)}>
+        <Button className="px-10" type="primary" key="back" onClick={() => setOpen(false)}>
           Ok
         </Button>,
       ]}

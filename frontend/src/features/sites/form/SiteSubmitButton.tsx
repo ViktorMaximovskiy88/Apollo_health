@@ -8,7 +8,7 @@ import { useCurrentUser } from '../../../common/hooks/use-current-user';
 export function SiteSubmitButton(props: { form: FormInstance }) {
   const params = useParams();
   const currentUser = useCurrentUser();
-  const [visible, setVisible] = useState(false);
+  const [visible, setOpen] = useState(false);
   const [getSite] = useLazyGetSiteQuery();
   const navigate = useNavigate();
   const confirm = () => {
@@ -19,13 +19,13 @@ export function SiteSubmitButton(props: { form: FormInstance }) {
   };
   const letFormSubmit = () => props.form.submit();
   const isCreateSitePage = () => !params.siteId;
-  const handleVisibleChange = async () => {
+  const handleOpenChange = async () => {
     if (isCreateSitePage()) {
       letFormSubmit();
     }
     const { data: site } = await getSite(params.siteId);
     if (site?.assignee !== currentUser?._id) {
-      setVisible(true);
+      setOpen(true);
       return;
     }
     letFormSubmit();
@@ -37,8 +37,8 @@ export function SiteSubmitButton(props: { form: FormInstance }) {
       cancelText="Navigate to view page"
       onConfirm={confirm}
       onCancel={cancel}
-      visible={visible}
-      onVisibleChange={handleVisibleChange}
+      open={visible}
+      onOpenChange={handleOpenChange}
     >
       <Button type="primary">Submit</Button>
     </Popconfirm>

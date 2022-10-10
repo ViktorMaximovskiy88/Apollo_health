@@ -1,4 +1,4 @@
-import { Input, Form, Select, Radio, Typography, Slider } from 'antd';
+import { Input, Form, Select, Radio, Typography } from 'antd';
 
 import { CollectionMethod, ScrapeMethod, Site } from '../types';
 import {
@@ -16,6 +16,7 @@ import { FocusTherapyConfig } from './FocusTherapyConfig';
 import { HtmlScrapeConfig } from './HtmlScrapeConfig';
 import { SearchTokens } from './SearchTokens';
 import { FollowLinks } from './FollowLinks';
+import { ThresholdWithOverride } from './ThresholdWithOverride';
 
 function CollectionMethodRadio() {
   const collections = [
@@ -69,23 +70,22 @@ const CustomSelectors = () => (
     title={<label className="font-semibold">Custom Selectors</label>}
   />
 );
-
-const formatter = (value?: number) => {
-  if (!value) return;
-  const displayedValue = Math.round(value * 100); // fix floating point math bugs
-  return `${displayedValue}%`;
-};
-
 const DocumentTypeThreshold = () => (
-  <Form.Item name="doc_type_threshold" label="Document Type Threshold">
-    <Slider min={0} max={1} step={0.01} tipFormatter={formatter} />
-  </Form.Item>
+  <ThresholdWithOverride
+    overrideName="doc_type_threshold_override"
+    overrideLabel="Document Type Threshold Override"
+    thresholdName="doc_type_threshold"
+    thresholdLabel="Document Type Threshold"
+  />
 );
 
 const LineageThreshold = () => (
-  <Form.Item name="lineage_threshold" label="Lineage Threshold">
-    <Slider min={0} max={1} step={0.01} tipFormatter={formatter} />
-  </Form.Item>
+  <ThresholdWithOverride
+    overrideName="lineage_threshold_override"
+    overrideLabel="Lineage Threshold Override"
+    thresholdName="lineage_threshold"
+    thresholdLabel="Lineage Threshold"
+  />
 );
 
 interface CollectionSettingsPropTypes {
