@@ -12,6 +12,20 @@ from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.models import DownloadContext, Metadata
 from backend.scrapeworker.playbook import PlaybookContext
 
+discover_element_modals: str = """
+    () => {
+        const maybeModals = [...document.querySelectorAll("body > div")].filter((el) => {
+            const zIndex = parseInt(getComputedStyle(el).zIndex);
+            return !isNaN(zIndex) && zIndex > 10;
+        });
+        // do we care if they are separate ??
+        for(const modal of maybeModals) {
+            [...modal.querySelectorAll("a, button, input[type=button], [role=button]")]
+        }
+        return maybeModals;
+    }
+"""
+
 closest_heading_expression: str = """
     (node) => {
         let n = node;
@@ -106,6 +120,7 @@ class PlaywrightBaseScraper(ABC):
             resource_value,
             closest_heading,
             siblings_text,
+            modal_elements,
         ) = await asyncio.gather(
             element.text_content(),
             element.inner_text(),
@@ -113,7 +128,9 @@ class PlaywrightBaseScraper(ABC):
             element.get_attribute(resource_attr),
             element.evaluate(closest_heading_expression),
             element.evaluate(sibling_text_expression),
+            element.evaluate(discover_element_modals),
         )
+        print(len(modal_elements))
 
         # Use first response for inner_text() text_content() for link_text.
         # If an element has no text (<p></p>), use url path.
