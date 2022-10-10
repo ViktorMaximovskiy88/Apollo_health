@@ -6,6 +6,7 @@ from backend.common.models.base_document import BaseDocument
 class PayerFamily(BaseDocument):
     name: str
     document_type: str
+    site_id: str
     payer_type: str = "plan"
     payer_ids: list[str] = []
     channels: list[str] = []
@@ -18,6 +19,7 @@ class PayerFamily(BaseDocument):
 class NewPayerFamily(BaseModel):
     name: str
     document_type: str
+    site_id: str
     payer_type: str = "plan"
     payer_ids: list[str] = []
     channels: list[str] = []
@@ -29,6 +31,7 @@ class NewPayerFamily(BaseModel):
 class UpdatePayerFamily(BaseModel):
     name: str | None = None
     document_type: str | None = None
+    site_id: str | None = None
     payer_type: str | None = None
     payer_ids: list[str] | None = None
     channels: list[str] | None = None
