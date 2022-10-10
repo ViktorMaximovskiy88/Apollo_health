@@ -4,7 +4,6 @@ import { setupServer } from 'msw/node';
 import { CollectionsPage } from './CollectionsPage';
 import { db, handlers } from './mocks/collectionsPageHandlers';
 import { DateTime } from 'luxon';
-import { filter } from 'lodash';
 
 jest.mock('react-router-dom');
 
@@ -45,6 +44,9 @@ describe(`CollectionsPage`, () => {
       { zone: 'America/Los_Angeles' }
     ).minus({ days: dateOffset });
 
+    const user = userEvent.setup();
+
+    expect(filterByDate.toLocaleString()).toEqual('6/20/2022');
     render(<CollectionsPage />);
     await act(async () => {
       await dataGridDoneRendering;
@@ -55,7 +57,7 @@ describe(`CollectionsPage`, () => {
     });
     expect(runCollectionButton).toBeInTheDocument();
 
-    userEvent.click(runCollectionButton);
+    await user.click(runCollectionButton);
 
     expect(screen.getByText(/Jun 20, 2022, 2:17 PM/i)).toBeInTheDocument();
     expect(screen.getByText(/3 seconds/i)).toBeInTheDocument();
