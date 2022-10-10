@@ -32,6 +32,8 @@ class UpdateDocumentFamily(BaseModel):
     payer_info: PayerInfo | None = None
     relevance: list[str] = []
     disabled: bool | None = None
+    field_groups: list[str] = []
+    legacy_relevance: list[str] = []
 
 
 class DocumentFamily(BaseDocument, NewDocumentFamily):
