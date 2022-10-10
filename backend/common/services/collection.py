@@ -316,15 +316,11 @@ class CollectionService:
                     f"NOT_FOUND {work_item_header_msg}",
                     fg=typer.colors.BRIGHT_GREEN,
                 )
-                doc_index: PydanticObjectId = next(
-                    (
-                        i
-                        for i in target_task.retrieved_document_ids
-                        if i == work_item.retrieved_document_id
-                    )
-                )
-                if doc_index:
-                    del target_task.retrieved_document_ids[doc_index]
+                target_task.retrieved_document_ids = [
+                    f"{retr_id}"
+                    for retr_id in target_task.retrieved_document_ids
+                    if retr_id != work_item.retrieved_document_id
+                ]
                 await target_task.save()
             case _:
                 typer.secho(

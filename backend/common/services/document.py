@@ -113,7 +113,7 @@ async def create_doc_document_service(
     )
 
     doc_document.set_final_effective_date()
-    logger = Logger()
+    logger: Logger = Logger()
     await create_and_log(logger, user, doc_document)
 
     return doc_document
