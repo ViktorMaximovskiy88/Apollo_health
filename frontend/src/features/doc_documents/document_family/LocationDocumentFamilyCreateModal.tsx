@@ -1,7 +1,9 @@
 import { Form, Input, Select } from 'antd';
-import { useLazyGetDocumentFamilyByNameQuery } from './documentFamilyApi';
+import {
+  useLazyGetDocumentFamilyByNameQuery,
+  useAddDocumentFamilyMutation,
+} from './documentFamilyApi';
 import { DocDocumentLocation } from '../locations/types';
-import { useAddDocumentFamilyMutation } from './documentFamilyApi';
 import { Modal } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
@@ -173,7 +175,12 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
           <Input />
         </Form.Item>
         <Input.Group className="space-x-2 flex">
-          <Form.Item label="Legacy Relevance" name="legacy_relevance" className="w-full">
+          <Form.Item
+            label="Legacy Relevance"
+            name="legacy_relevance"
+            className="w-full"
+            rules={[{ required: true, message: 'Please input a legacy relevance' }]}
+          >
             <Select mode="multiple" options={filteredlegacyRelevanceOptions} />
           </Form.Item>
 
