@@ -53,6 +53,7 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
         link_handle: ElementHandle
         for link_handle in link_handles:
             metadata: Metadata = await self.extract_metadata(link_handle, resource_attr)
+
             # TODO iterate on this logic
             # cases '../abc' '/abc' 'abc' 'https://a.com/abc' 'http://a.com/abc' '//a.com/abc'
             # anchor targets can change behavior
@@ -66,14 +67,10 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
                 )
                 else metadata.resource_value
             )
-
-            print(
-                url,
-                urljoin(
-                    base_url,
-                    url,
-                ),
+            self.log.info(
+                f"metadata.resource_value={metadata.resource_value} base_url={base_url} url={url}"
             )
+
             downloads.append(
                 DownloadContext(
                     metadata=metadata,
