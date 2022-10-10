@@ -10,17 +10,17 @@ import { AddDocumentModal } from '../collections/addDocumentModal';
 import { SiteDocDocument } from './types';
 
 export function SiteDocDocumentsPage() {
-  const [newDocumentModalVisible, setNewDocumentModalVisible] = useState(false);
+  const [newDocumentModalOpen, setNewDocumentModalOpen] = useState(false);
   const [oldVersion, setOldVersion] = useState<any>();
   const { siteId } = useParams();
 
   function handleNewVersion(data: SiteDocDocument) {
     setOldVersion(data);
-    setNewDocumentModalVisible(true);
+    setNewDocumentModalOpen(true);
   }
 
   function hideNewDocument(type: boolean) {
-    setNewDocumentModalVisible(false);
+    setNewDocumentModalOpen(false);
     setOldVersion(null);
   }
 
@@ -29,14 +29,14 @@ export function SiteDocDocumentsPage() {
       sidebar={<SiteMenu />}
       sectionToolbar={
         <>
-          <Button onClick={() => setNewDocumentModalVisible(true)} className="ml-auto">
+          <Button onClick={() => setNewDocumentModalOpen(true)} className="ml-auto">
             Create Document
           </Button>
         </>
       }
     >
-      {newDocumentModalVisible && (
-        <AddDocumentModal oldVersion={oldVersion} setVisible={hideNewDocument} siteId={siteId} />
+      {newDocumentModalOpen && (
+        <AddDocumentModal oldVersion={oldVersion} setOpen={hideNewDocument} siteId={siteId} />
       )}
       <SiteDocDocumentsTable handleNewVersion={handleNewVersion} />
     </MainLayout>
