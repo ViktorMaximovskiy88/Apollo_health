@@ -394,8 +394,6 @@ class ScrapeWorker:
         async with self.playwright_context(url, cookies) as (base_page, context):
             playbook_context: BrowserContext
             async for (page, playbook_context) in self.playbook.run_playbook(base_page):
-                cookies = await playbook_context.cookies()
-                await context.add_cookies(cookies)
 
                 scrape_handler = ScrapeHandler(
                     context=context,
@@ -419,6 +417,7 @@ class ScrapeWorker:
         urls: list[str] = []
         page: Page
         context: BrowserContext
+        cookies: list[Cookie] = []
         async with self.playwright_context(url) as (page, context):
             crawler = FollowLinkScraper(
                 page=page,
@@ -430,7 +429,6 @@ class ScrapeWorker:
             cookies = await context.cookies()
             if await crawler.is_applicable():
                 for dl in await crawler.execute():
-                    self.log.info(f"XXXXXXX {dl.request.url}")
                     urls.append(dl.request.url)
 
         return urls, cookies
