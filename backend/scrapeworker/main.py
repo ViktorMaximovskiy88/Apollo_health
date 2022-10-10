@@ -98,7 +98,7 @@ async def worker_fn(
             )
         )
 
-        browser = await playwright.chromium.launch(channel="chrome", headless=True)
+        browser = await playwright.chromium.launch(channel="chrome")
         worker = ScrapeWorker(playwright, browser, scrape_task, site)
         task = asyncio.create_task(heartbeat_task(scrape_task))
         active_tasks[scrape_task.id] = scrape_task

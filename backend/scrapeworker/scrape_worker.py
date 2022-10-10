@@ -392,8 +392,11 @@ class ScrapeWorker:
         all_downloads: list[DownloadContext] = []
 
         async with self.playwright_context(url, cookies) as (base_page, context):
+            playbook_context: BrowserContext
             async for (page, playbook_context) in self.playbook.run_playbook(base_page):
-                cookies = await context.cookies()
+                cookies = await playbook_context.cookies()
+                await context.add_cookies(cookies)
+
                 scrape_handler = ScrapeHandler(
                     context=context,
                     page=page,
@@ -416,7 +419,6 @@ class ScrapeWorker:
         urls: list[str] = []
         page: Page
         context: BrowserContext
-        cookies: list[Cookie] = []
         async with self.playwright_context(url) as (page, context):
             crawler = FollowLinkScraper(
                 page=page,
@@ -449,6 +451,7 @@ class ScrapeWorker:
         extension = get_extension_from_path_like(url)
         return extension in ["docx", "pdf", "xlsx"]
 
+    # NOTE: this is the effective entryppoint from main.py
     async def run_scrape(self):
         all_downloads: list[DownloadContext] = []
         base_urls: list[str] = [base_url.url for base_url in self.active_base_urls()]
@@ -462,6 +465,8 @@ class ScrapeWorker:
             # skip the parse step and download
             self.log.info(f"Run scrape for {url}")
 
+            # NOTE if the base url ends in a handled file extension,
+            # queue it up for the aiohttp downloader
             if self.is_artifact_file(url):
                 self.log.info(f"Skip scrape & queue download for {url}")
                 download = DownloadContext(

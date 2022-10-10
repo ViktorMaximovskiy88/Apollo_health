@@ -24,11 +24,10 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
     links_found: int = 0
     last_metadata_index: int = 0
 
+    # OPT IN
     async def is_applicable(self) -> bool:
-        css_handle = await self.page.query_selector(self.css_selector)
-        result = css_handle is not None
-        self.log.info(f"{self.__class__.__name__} is_applicable -> {result}")
-        return result
+        self.log.info(f"self.parsed_url.netloc={self.parsed_url.netloc}")
+        return self.parsed_url.netloc in ["www.aultcas.com", "apps.humana.com"]
 
     @cached_property
     def css_selector(self) -> str:
