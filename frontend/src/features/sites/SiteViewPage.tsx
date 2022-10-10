@@ -1,15 +1,10 @@
-import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Site, CollectionMethod } from './types';
 import { SiteForm } from './form/SiteForm';
 import { useGetSiteQuery, useUpdateSiteMutation } from './sitesApi';
 import { useCancelAllSiteScrapeTasksMutation } from '../collections/siteScrapeTasksApi';
-import { MainLayout } from '../../components';
+import { ButtonLink, MainLayout } from '../../components';
 import { SiteMenu } from '../sites/SiteMenu';
-import { ToggleReadOnly } from './form/ToggleReadOnly';
-import { Button, Form, Space } from 'antd';
-import { SiteSubmitButton } from './form/SiteSubmitButton';
-import { Link } from 'react-router-dom';
 import { useForm } from 'antd/lib/form/Form';
 
 export function SiteViewPage() {
@@ -18,7 +13,6 @@ export function SiteViewPage() {
   const [updateSite] = useUpdateSiteMutation();
   const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
   const navigate = useNavigate();
-  const [readOnly, setReadOnly] = useState(true);
   const [form] = useForm();
 
   if (!site) return null;
@@ -39,20 +33,9 @@ export function SiteViewPage() {
     <MainLayout
       sidebar={<SiteMenu />}
       sectionToolbar={
-        <>
-          {readOnly ? (
-            <ToggleReadOnly setReadOnly={setReadOnly} form={form} />
-          ) : (
-            <Form.Item className="m-1">
-              <Space>
-                <SiteSubmitButton form={form} />
-                <Link to="/sites">
-                  <Button htmlType="submit">Cancel</Button>
-                </Link>
-              </Space>
-            </Form.Item>
-          )}
-        </>
+        <ButtonLink type="primary" to={`/sites/${site._id}/edit`}>
+          Edit Site
+        </ButtonLink>
       }
     >
       <SiteForm initialValues={site} onFinish={tryUpdateSite} form={form} />

@@ -17,7 +17,7 @@ export function UserEditPage() {
     navigate('/users');
   }
   return (
-    <MainLayout pageTitle={'Edit User'}>
+    <MainLayout>
       <UserForm onFinish={tryUpdateUser} initialValues={user} />
     </MainLayout>
   );

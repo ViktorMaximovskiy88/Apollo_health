@@ -12,7 +12,7 @@ import { useCreateDiffMutation, useGetDocDocumentQuery } from './docDocumentApi'
 function CompareModal(props: {
   diff?: string;
   previousDocDocId: string;
-  isModalVisible: boolean;
+  modalOpen: boolean;
   handleCloseModal: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void;
 }) {
   const { Title } = Typography;
@@ -32,7 +32,7 @@ function CompareModal(props: {
     <Modal
       footer={null}
       width={1200}
-      visible={props.isModalVisible}
+      open={props.modalOpen}
       onCancel={props.handleCloseModal}
       destroyOnClose={true}
     >
@@ -64,20 +64,20 @@ export function DocCompareToPrevious() {
   const form = Form.useFormInstance();
   const currentDocDocId: string = form.getFieldValue('docId');
   const { data: currentDocument } = useGetDocDocumentQuery(currentDocDocId);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [createDiff, { data: diffData, isLoading, isSuccess }] = useCreateDiffMutation();
 
   const { previous_doc_doc_id: previousDocDocId } = currentDocument ?? {};
 
   function handleCloseModal() {
-    setIsModalVisible(false);
+    setModalOpen(false);
   }
 
   const handleCompare = useCallback(async () => {
     if (!previousDocDocId) throw new Error('DocDocument has no Previous DocDoc Id');
     try {
       await createDiff({ currentDocDocId, previousDocDocId }).unwrap();
-      setIsModalVisible(true);
+      setModalOpen(true);
     } catch (err) {
       if (isErrorWithData(err)) {
         notification.error({
@@ -108,7 +108,7 @@ export function DocCompareToPrevious() {
       )}
       {isSuccess && (
         <CompareModal
-          isModalVisible={isModalVisible}
+          modalOpen={modalOpen}
           diff={diffData?.diff}
           previousDocDocId={previousDocDocId ?? ''}
           handleCloseModal={handleCloseModal}

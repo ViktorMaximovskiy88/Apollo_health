@@ -9,6 +9,8 @@ export function DocumentExtensions() {
     { value: 'xlsx', label: 'Excel (.xlsx)' },
     { value: 'docx', label: 'Word (.docx)' },
     { value: 'html', label: 'HTML (.html)' },
+    { value: 'csv', label: 'CSV (.csv)' },
+    { value: 'txt', label: 'TXT (.txt)' },
   ];
 
   return (
@@ -118,7 +120,7 @@ export function AllowDocDocUpdate() {
       valuePropName="checked"
       label={
         <>
-          <span style={{ marginRight: '5px' }}>Allow Doc Document Updates</span>
+          <span style={{ marginRight: '5px' }}>Allow Document Updates</span>
           <Tooltip
             placement="right"
             title="Overwrite existing Therapy and Indication Tags on Doc Document during collection"

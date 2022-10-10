@@ -20,7 +20,7 @@ export function DocumentEditPage() {
   }
 
   return (
-    <MainLayout sidebar={<SiteMenu />} pageTitle={doc.name}>
+    <MainLayout sidebar={<SiteMenu />}>
       <div className="flex space-x-4 overflow-auto flex-grow">
         <div className="w-1/2 h-full overflow-auto">
           <DocumentForm doc={doc} />

@@ -1,7 +1,9 @@
 import { Form, Input, Select } from 'antd';
-import { useLazyGetDocumentFamilyByNameQuery } from './documentFamilyApi';
+import {
+  useLazyGetDocumentFamilyByNameQuery,
+  useAddDocumentFamilyMutation,
+} from './documentFamilyApi';
 import { DocDocumentLocation } from '../locations/types';
-import { useAddDocumentFamilyMutation } from './documentFamilyApi';
 import { Modal } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
@@ -20,7 +22,7 @@ import {
 interface DocumentFamilyCreateModalPropTypes {
   documentType: string;
   location: DocDocumentLocation | undefined;
-  visible?: boolean;
+  open?: boolean;
   onClose: () => void;
   onSave: (documentFamilyId: string) => void;
 }
@@ -86,7 +88,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
     { label: 'PAR', value: 'PAR' },
     { label: 'N/A', value: 'N/A' },
   ];
-  const { documentType, location, visible, onClose, onSave } = props;
+  const { documentType, location, open, onClose, onSave } = props;
   const [form] = useForm();
   const [getDocumentFamilyByName] = useLazyGetDocumentFamilyByNameQuery();
   const [addDocumentFamily, { isLoading, data, isSuccess }] = useAddDocumentFamilyMutation();
@@ -129,7 +131,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
 
   return (
     <Modal
-      visible={visible}
+      open={open}
       title={<>Add Document Family for {location.site_name}</>}
       width="50%"
       okText="Submit"
@@ -173,7 +175,12 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
           <Input />
         </Form.Item>
         <Input.Group className="space-x-2 flex">
-          <Form.Item label="Legacy Relevance" name="legacy_relevance" className="w-full">
+          <Form.Item
+            label="Legacy Relevance"
+            name="legacy_relevance"
+            className="w-full"
+            rules={[{ required: true, message: 'Please input a legacy relevance' }]}
+          >
             <Select mode="multiple" options={filteredlegacyRelevanceOptions} />
           </Form.Item>
 

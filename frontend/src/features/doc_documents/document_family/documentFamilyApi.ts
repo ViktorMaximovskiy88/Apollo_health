@@ -1,4 +1,6 @@
 import { createApi, fetchBaseQuery } from '../../../app/base-api';
+import { TableInfoType } from '../../../common/types';
+import { ChangeLog } from '../../change-log/types';
 import { DocumentFamily } from './types';
 
 export const documentFamilyApi = createApi({
@@ -6,17 +8,20 @@ export const documentFamilyApi = createApi({
   baseQuery: fetchBaseQuery(),
   tagTypes: ['DocumentFamily', 'ChangeLog'],
   endpoints: (builder) => ({
-    getDocumentFamilies: builder.query<DocumentFamily[], { siteId: string; documentType: string }>({
-      query: ({ siteId, documentType }) => {
+    getDocumentFamilies: builder.query<{ data: DocumentFamily[]; total: number }, TableInfoType>({
+      query: ({ limit, skip, filterValue, sortInfo }) => {
         const args = [
-          `site_id=${encodeURIComponent(siteId)}`,
-          `document_type=${encodeURIComponent(documentType)}`,
-        ].join('&');
-        return `/document-family/?${args}`;
+          `limit=${encodeURIComponent(limit)}`,
+          `skip=${encodeURIComponent(skip)}`,
+          `sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`,
+          `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
+        ];
+
+        return `/document-family/?${args.join('&')}`;
       },
       providesTags: (results) => {
         const tags = [{ type: 'DocumentFamily' as const, id: 'LIST' }];
-        results?.forEach(({ _id: id }) => tags.push({ type: 'DocumentFamily', id }));
+        results?.data.forEach(({ _id: id }) => tags.push({ type: 'DocumentFamily', id }));
         return tags;
       },
     }),
@@ -43,14 +48,18 @@ export const documentFamilyApi = createApi({
         { type: 'ChangeLog', id },
       ],
     }),
+    getChangeLog: builder.query<ChangeLog[], string>({
+      query: (id) => `/change-log/${id}`,
+      providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
+    }),
   }),
 });
 
 export const {
-  useGetDocumentFamilyQuery,
-  useLazyGetDocumentFamilyByNameQuery,
   useGetDocumentFamiliesQuery,
   useLazyGetDocumentFamiliesQuery,
+  useLazyGetDocumentFamilyByNameQuery,
   useAddDocumentFamilyMutation,
   useUpdateDocumentFamilyMutation,
+  useGetChangeLogQuery,
 } = documentFamilyApi;

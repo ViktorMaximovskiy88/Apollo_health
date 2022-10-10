@@ -71,7 +71,7 @@ function TranslationModal({
   siteId: string;
   docId: string;
 }) {
-  const [testModalVisible, setTestModalVisible] = useState(false);
+  const [testModalOpen, setTestModalOpen] = useState(false);
   const [form] = Form.useForm();
 
   const initialValues = useMemo(() => {
@@ -80,22 +80,22 @@ function TranslationModal({
   }, [translation, siteId, docId]);
 
   useEffect(() => {
-    if (testModalVisible) {
+    if (testModalOpen) {
       form.setFieldsValue(initialValues);
     }
-  }, [initialValues, testModalVisible, form]);
+  }, [initialValues, testModalOpen, form]);
 
   return (
     <Form.Item label=" ">
       {translation && (
         <>
-          <Button onClick={() => setTestModalVisible(true)} type="link">
+          <Button onClick={() => setTestModalOpen(true)} type="link">
             Test
           </Button>
           <FullScreenModal
-            visible={testModalVisible}
-            onCancel={() => setTestModalVisible(false)}
-            onOk={() => setTestModalVisible(false)}
+            open={testModalOpen}
+            onCancel={() => setTestModalOpen(false)}
+            onOk={() => setTestModalOpen(false)}
           >
             <div className="flex h-full">
               <div className="w-1/2 h-full">

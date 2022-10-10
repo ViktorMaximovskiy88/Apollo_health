@@ -4,6 +4,13 @@ from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 
 from backend.app.routes.payer_backbone import payer_class
+from backend.app.routes.table_query import (
+    TableFilterInfo,
+    TableQueryResponse,
+    TableSortInfo,
+    get_query_json_list,
+    query_table,
+)
 from backend.app.services.payer_backbone.payer_backbone_querier import PayerBackboneQuerier
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
@@ -33,21 +40,17 @@ async def get_target(id: PydanticObjectId) -> DocumentFamily:
 @router.get(
     "/",
     dependencies=[Security(get_current_user)],
-    response_model=list[DocumentFamily],
+    response_model=TableQueryResponse,
 )
 async def read_document_families(
-    site_id: PydanticObjectId | None = None,
-    document_type: str | None = None,
+    limit: int | None = None,
+    skip: int | None = None,
+    sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
+    filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
-    query = DocumentFamily.find({"disabled": False})
 
-    if site_id:
-        query = query.find({"site_id": site_id})
-
-    if document_type:
-        query = query.find({"document_type": document_type})
-
-    return await query.to_list()
+    query = DocumentFamily.find_many({"disabled": False})
+    return await query_table(query, limit, skip, sorts, filters)
 
 
 @router.get(

@@ -52,6 +52,10 @@ export interface Site extends BaseDocument {
   playbook?: string;
   status: string;
   assignee?: string;
+  doc_type_threshold_override: boolean;
+  doc_type_threshold: number;
+  lineage_threshold_override: boolean;
+  lineage_threshold: number;
 }
 
 export interface Proxy extends BaseDocument {
