@@ -26,8 +26,10 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
 
     # OPT IN
     async def is_applicable(self) -> bool:
-        self.log.info(f"self.parsed_url.netloc={self.parsed_url.netloc}")
-        return self.parsed_url.netloc in ["www.aultcas.com", "apps.humana.com"]
+        self.log.debug(f"self.parsed_url.netloc={self.parsed_url.netloc}")
+        result = self.parsed_url.netloc in ["www.aultcas.com", "apps.humana.com"]
+        self.log.info(f"{self.__class__.__name__} is_applicable -> {result}")
+        return result
 
     @cached_property
     def css_selector(self) -> str:
