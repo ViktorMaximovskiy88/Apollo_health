@@ -130,7 +130,7 @@ export const DocumentFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes
   return (
     <Modal
       visible={visible}
-      title={<>Add Document Family for {location.site_name}</>}
+      title={<>Add Payer Family for {location.site_name}</>}
       width="50%"
       okText="Submit"
       onOk={form.submit}
@@ -165,8 +165,8 @@ export const DocumentFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes
           label="Name"
           name="name"
           rules={[
-            { required: true, message: 'Please input a document family name' },
-            mustBeUniqueToSite(location.site_id, getPayerFamilyByName),
+            { required: true, message: 'Please input a payer family name' },
+            mustBeUnique(getPayerFamilyByName),
           ]}
         >
           <Input />
@@ -188,13 +188,13 @@ export const DocumentFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes
 };
 
 // asyncValidator because rtk query makes this tough without hooks/dispatch
-function mustBeUniqueToSite(siteId: string, asyncValidator: Function) {
+function mustBeUnique(asyncValidator: Function) {
   return {
     async validator(_rule: Rule, value: string) {
-      const { data: payerFamily } = await asyncValidator({ name: value, siteId });
+      const { data: payerFamily } = await asyncValidator({ name: value });
       if (payerFamily) {
         return Promise.reject(
-          `Document family name "${payerFamily.name}" already exists on this site`
+          `Payer family name "${payerFamily.name}" already exists on this site`
         );
       }
       return Promise.resolve();
