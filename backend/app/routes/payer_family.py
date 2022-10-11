@@ -43,10 +43,9 @@ async def read_payer_families(
     response_model=PayerFamily,
 )
 async def read_payer_family_by_name(
-    site_id: PydanticObjectId,
     name: str,
 ):
-    payer_family = await PayerFamily.find_one({"name": name, "site_id": site_id})
+    payer_family = await PayerFamily.find_one({"name": name})
     return payer_family
 
 

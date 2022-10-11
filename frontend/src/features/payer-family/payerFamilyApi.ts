@@ -29,8 +29,8 @@ export const payerFamilyApi = createApi({
       query: (id) => `/payer-family/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'PayerFamily' as const, id }],
     }),
-    getPayerFamilyByName: builder.query<PayerFamily, { name: string; siteId: string }>({
-      query: ({ name, siteId }) => `/payer-family/search?name=${name}&site_id=${siteId}`,
+    getPayerFamilyByName: builder.query<PayerFamily, { name: string }>({
+      query: ({ name }) => `/payer-family/search?name=${name}`,
       providesTags: (_r, _e, name) => [{ type: 'PayerFamily' as const, name }],
     }),
     addPayerFamily: builder.mutation<PayerFamily, Partial<PayerFamily>>({
