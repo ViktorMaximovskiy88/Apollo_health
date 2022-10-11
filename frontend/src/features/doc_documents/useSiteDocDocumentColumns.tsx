@@ -55,6 +55,7 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
       header: 'Document Name',
       name: 'name',
       defaultFlex: 1,
+      minWidth: 300,
       filterSearch: true,
       render: ({ data: doc }: { data: SiteDocDocument }) => {
         return <Link to={`/documents/${doc._id}`}>{doc.name}</Link>;

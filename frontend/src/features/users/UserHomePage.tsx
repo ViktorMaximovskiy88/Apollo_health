@@ -84,6 +84,7 @@ export function UsersHomePage() {
   const newColumns = [
     {
       defaultFlex: 1,
+      minWidth: 300,
       header: 'Name',
       name: 'full_name',
       render: ({ data: user }: { data: User }) => {
@@ -94,11 +95,13 @@ export function UsersHomePage() {
       header: 'Email',
       name: 'email',
       defaultFlex: 1,
+      minWidth: 300,
     },
     {
       header: 'Admin',
       name: 'is_admin',
       defaultFlex: 1,
+      minWidth: 80,
       render: ({ data: user }: { data: User }) => {
         if (user.is_admin) return <Tag>Admin</Tag>;
         return <Tag>Not Admin</Tag>;
