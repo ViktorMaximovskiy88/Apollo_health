@@ -23,6 +23,7 @@ class SiteScrapeTask(BaseDocument):
     worker_id: UUID | None = None
     error_message: str | None = None
     links_found: int = 0
+    follow_links_found: int = 0
     retry_if_lost: bool = False
     collection_method: str | None = CollectionMethod.Automated
     scrape_method_configuration: ScrapeMethodConfiguration | None = None

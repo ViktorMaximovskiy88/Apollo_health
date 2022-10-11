@@ -401,7 +401,6 @@ class ScrapeWorker:
                     playbook_context=playbook_context,
                     log=self.log,
                     config=self.site.scrape_method_configuration,
-                    scrape_task=self.scrape_task,
                 )
 
                 if await self.search_crawler.is_searchable(page):
@@ -479,6 +478,7 @@ class ScrapeWorker:
                 self.log.debug(f"Follow links for {url}")
                 (links_found, cookies) = await self.follow_links(url)
                 for nested_url in links_found:
+                    await self.scrape_task.update(Inc({SiteScrapeTask.follow_links_found: 1}))
                     all_downloads += await self.queue_downloads(
                         nested_url, base_url=url, cookies=cookies
                     )
