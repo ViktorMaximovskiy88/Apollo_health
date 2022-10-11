@@ -3,6 +3,7 @@ import { BaseDocument, TaskStatus } from '../../common';
 export enum WorkItemOption {
   Found = 'FOUND',
   NewDocument = 'NEW_DOCUMENT',
+  NewVersion = 'NEW_VERSION',
   NotFound = 'NOT_FOUND',
   Unhandled = 'UNHANDLED',
 }

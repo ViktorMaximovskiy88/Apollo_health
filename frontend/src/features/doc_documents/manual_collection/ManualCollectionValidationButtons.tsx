@@ -93,11 +93,20 @@ const NewVersion = () => {
   const { workItem } = useContext(ValidationButtonsContext) ?? {};
   if (!workItem || !doc || !handleNewVersion) return null;
 
-  return (
-    <Button>
-      <FileExclamationOutlined onClick={() => handleNewVersion(doc)} />
-    </Button>
-  );
+  switch (workItem.selected) {
+    case Option.NewVersion:
+      return (
+        <Button type="primary">
+          <FileExclamationOutlined onClick={() => handleNewVersion(doc)} />
+        </Button>
+      );
+    default:
+      return (
+        <Button>
+          <FileExclamationOutlined onClick={() => handleNewVersion(doc)} />
+        </Button>
+      );
+  }
 };
 
 const Unhandled = () => {

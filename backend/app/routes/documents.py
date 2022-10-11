@@ -297,8 +297,6 @@ async def add_document(
     # Update old_doc work_item in work_list with new_doc and set prev_doc to old_doc.
     site: Site | None = await Site.find_one({"_id": document.site_id})
     if document.replacing_old_version_id:
-        print("old_version_id is ")
-        print(document.replacing_old_version_id)
         # TODO: Pass current_queue task from frontend instead of fetching.
         current_queued_task: SiteScrapeTask = await SiteScrapeTask.find_one(
             {
@@ -335,6 +333,7 @@ async def add_document(
     # Create new task and work item for new document.
     else:
         scrape_task: SiteScrapeTask = SiteScrapeTask(
+            initiator_id=current_user.id,
             site_id=document.site_id,
             retrieved_document_ids=[new_document.id],
             status=TaskStatus.FINISHED,
