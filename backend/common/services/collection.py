@@ -33,7 +33,7 @@ class CollectionResponse(BaseModel):
 
     # Send http status code and object that matches isErrorWithData.
     def raise_error(self, status: status = status.HTTP_409_CONFLICT) -> Optional:
-        raise HTTPException(status, jsonable_encoder(",".join(self.errors)))
+        raise HTTPException(status, jsonable_encoder("\n".join(self.errors)))
 
 
 class CollectionService:
@@ -275,7 +275,7 @@ class CollectionService:
                     target_task=queued_site_task, work_item=work_item, item_index=item_index
                 )
                 if work_item_response.errors:
-                    work_list_response.add_error(work_item_response)
+                    work_list_response.add_error(work_item_response.errors[0])
         return work_list_response
 
     async def process_work_item(
@@ -286,13 +286,13 @@ class CollectionService:
     ) -> CollectionResponse:
         """Process a site_scrape_task work_item action"""
         result: CollectionResponse = CollectionResponse()
-        work_item_header_msg: str = (
-            f"work_item selected: [{work_item.selected}] in task: [{target_task.id}] "
-            "doc_id: [{work_item.document_id}] "
-            "retrieved_document_id: [{work_item.retrieved_document_id}]"
-        )
         if env_type == "local":
-            typer.secho(work_item_header_msg, fg=typer.colors.BRIGHT_GREEN)
+            work_item_msg: str = (
+                f"work_item selected: [{work_item.selected}] in task: [{target_task.id}] "
+                "doc_id: [{work_item.document_id}] "
+                "retrieved_document_id: [{work_item.retrieved_document_id}]"
+            )
+            typer.secho(work_item_msg, fg=typer.colors.BRIGHT_GREEN)
         retr_doc = await RetrievedDocument.get_motor_collection().find_one(
             {"_id": work_item.retrieved_document_id},
         )
@@ -305,11 +305,9 @@ class CollectionService:
                 await target_task.save()
             case "NEW_DOCUMENT":
                 self.set_last_collected(retr_doc)
-                target_task.retrieved_document_ids = [
-                    f"{retr_id}"
-                    for retr_id in target_task.retrieved_document_ids
-                    if f"{retr_id}" != f"{work_item.retrieved_document_id}"
-                ]
+                await target_task.save()
+            case "NEW_VERSION":
+                self.set_last_collected(retr_doc)
                 await target_task.save()
             case "NOT_FOUND":
                 target_task.retrieved_document_ids = [
@@ -318,7 +316,7 @@ class CollectionService:
                     if f"{retr_id}" != f"{work_item.retrieved_document_id}"
                 ]
                 await target_task.save()
-            case _:
-                pass
+            case "UNHANDLED":
+                result.add_error(retr_doc["name"])
 
         return result

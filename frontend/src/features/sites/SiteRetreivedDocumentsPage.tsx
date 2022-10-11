@@ -25,7 +25,11 @@ export function SiteRetreivedDocumentsPage() {
     >
       <SiteDocumentsTable />
       {newDocumentModalVisible && (
-        <AddDocumentModal setVisible={setNewDocumentModalVisible} siteId={params.siteId} />
+        <AddDocumentModal
+          setVisible={setNewDocumentModalVisible}
+          siteId={params.siteId}
+          addNewDocument={false}
+        />
       )}
     </MainLayout>
   );

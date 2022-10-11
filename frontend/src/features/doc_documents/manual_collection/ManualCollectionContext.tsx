@@ -19,7 +19,7 @@ export const ValidationButtonsContext = createContext<{
   docId: string;
   workList?: WorkItem[];
   workItem?: WorkItem;
-  handleNewVersion: (doc: SiteDocDocument) => void;
+  handleNewVersion: (doc: SiteDocDocument, addNewDocument: boolean) => void;
 } | null>(null);
 
 const useWorkList = (): { workList?: WorkItem[] } => {
@@ -54,7 +54,7 @@ export const ValidationButtonsProvider = ({
   children,
 }: {
   doc: SiteDocDocument;
-  handleNewVersion: (doc: SiteDocDocument) => void;
+  handleNewVersion: (doc: SiteDocDocument, addNewDocument: boolean) => void;
   children: ReactNode;
 }) => {
   const docId = doc._id;

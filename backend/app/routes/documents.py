@@ -285,54 +285,97 @@ async def add_document(
             )
         ],
     )
-    # Is uploading new version from work_item action.
+    # Set lineage_id for both found new document and found new version.
     if document.replacing_old_version_id:
+        old_doc: DocDocument | None = await DocDocument.find_one(
+            {"_id": PydanticObjectId(document.replacing_old_version_id)}
+        )
+        if old_doc.lineage_id:
+            new_document.lineage_id = old_doc.lineage_id
+    # Found new document.
+    if document.add_new_document:
         new_document.is_current_version = True
 
     # Create task and doc_doc with same details as retr_doc (uploaded).
     created_retr_doc: RetrievedDocument = await create_and_log(logger, current_user, new_document)
     created_doc_doc: DocDocument = await create_doc_document_service(new_document, current_user)
 
-    # TODO: This works for new version, but what about add new doc to task?
-    # Update old_doc work_item in work_list with new_doc and set prev_doc to old_doc.
+    # Handle uploading new version or adding a new document.
     site: Site | None = await Site.find_one({"_id": document.site_id})
     if document.replacing_old_version_id:
-        # TODO: Pass current_queue task from frontend instead of fetching.
-        current_queued_task: SiteScrapeTask = await SiteScrapeTask.find_one(
+        current_task: SiteScrapeTask = await SiteScrapeTask.find_one(
             {
                 "initiator_id": current_user.id,
                 "status": f"{TaskStatus.IN_PROGRESS}",
                 "collection_method": f"{CollectionMethod.Manual}",
             }
         )
-        try:
-            doc_index: int = next(
-                i
-                for i, wi in enumerate(current_queued_task.work_list)
-                if f"{wi.document_id}" == document.replacing_old_version_id
+        if created_doc_doc:
+            current_task.work_list.append(
+                ManualWorkItem(
+                    document_id=f"{created_doc_doc.id}",
+                    retrieved_document_id=f"{created_retr_doc.id}",
+                )
             )
-        except StopIteration:
-            msg = "SERVER ERROR: Not able to find old doc in work list"
-            typer.secho(msg, fg=typer.colors.RED)
-            raise HTTPException(
-                status.HTTP_500_INTERNAL_SERVER_ERROR,
-                msg,
-            )
-        work_item = current_queued_task.work_list[doc_index]
-        work_item.retrieved_document_id = new_document.id
-        work_item.prev_doc = document.replacing_old_version_id
-        work_item.selected = WorkItemOption.NEW_VERSION
-        current_queued_task.work_list[doc_index] = work_item
-        await current_queued_task.save()
-        # TODO: Log update
-        # task_updates["work_list"][doc_index]["_id"] = new_document.id
-        # task_updates["work_list"][doc_index]["is_new"] = True
-        # task_updates["work_list"][doc_index]["prev_doc"] = new_document.replacing_old_version_id
-        # task_updates["work_list"][doc_index]["selected"] = WorkItemOption.NEW_VERSION
-        # await update_and_log_diff(logger, current_user, current_queued_task, task_updates)
+
+        # Update new doc and previous doc work items.
+        err_msg = "SERVER ERROR: Not able to find old doc in work list"
+        if document.add_new_document:
+            try:
+                doc_index: int = next(
+                    i
+                    for i, wi in enumerate(current_task.work_list)
+                    if f"{wi.document_id}" == f"{created_doc_doc.id}"
+                )
+            except StopIteration:
+                typer.secho(err_msg, fg=typer.colors.RED)
+                raise HTTPException(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    err_msg,
+                )
+            new_work_item = current_task.work_list[doc_index]
+            new_work_item.selected = WorkItemOption.NEW_DOCUMENT
+            current_task.work_list[doc_index] = new_work_item
+        # Update old version's new_doc to uploaded doc and
+        # new version's prev_doc to old version.
+        else:
+            try:
+                doc_index: int = next(
+                    i
+                    for i, wi in enumerate(current_task.work_list)
+                    if f"{wi.document_id}" == document.replacing_old_version_id
+                )
+            except StopIteration:
+                typer.secho(err_msg, fg=typer.colors.RED)
+                raise HTTPException(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    err_msg,
+                )
+            old_work_item = current_task.work_list[doc_index]
+            old_work_item.prev_doc = created_retr_doc.id
+            current_task.work_list[doc_index] = old_work_item
+            # Update new version's prev_doc to old version.
+            try:
+                doc_index: int = next(
+                    i
+                    for i, wi in enumerate(current_task.work_list)
+                    if f"{wi.document_id}" == f"{created_doc_doc.id}"
+                )
+            except StopIteration:
+                typer.secho(err_msg, fg=typer.colors.RED)
+                raise HTTPException(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    err_msg,
+                )
+            new_work_item = current_task.work_list[doc_index]
+            new_work_item.prev_doc = document.replacing_old_version_id
+            new_work_item.selected = WorkItemOption.NEW_VERSION
+            current_task.work_list[doc_index] = new_work_item
+        await current_task.save()
+
     # Create new task and work item for new document.
     else:
-        scrape_task: SiteScrapeTask = SiteScrapeTask(
+        new_scrape_task: SiteScrapeTask = SiteScrapeTask(
             initiator_id=current_user.id,
             site_id=document.site_id,
             retrieved_document_ids=[new_document.id],
@@ -344,12 +387,12 @@ async def add_document(
             collection_method=site.collection_method,
         )
         if created_doc_doc:
-            scrape_task.work_list.append(
+            new_scrape_task.work_list.append(
                 ManualWorkItem(
                     document_id=f"{created_doc_doc.id}",
                     retrieved_document_id=f"{created_retr_doc.id}",
                 )
             )
-        await scrape_task.save()
+        await new_scrape_task.save()
 
     return CollectionResponse(success=True)

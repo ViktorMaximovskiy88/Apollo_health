@@ -13,7 +13,7 @@ import { SiteStatus } from '../sites/siteStatus';
 import { SiteMenu } from '../sites/SiteMenu';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
 import { MainLayout } from '../../components';
-import { isErrorWithData } from '../../common/helpers';
+import { isCollectionResponseError, isErrorWithData } from '../../common/helpers';
 
 function ManualCollectionButton(props: any) {
   const { site, refetch, runScrape } = props;
@@ -34,10 +34,10 @@ function ManualCollectionButton(props: any) {
         });
       }
     } catch (err) {
-      if (isErrorWithData(err)) {
+      if (isCollectionResponseError(err)) {
         notification.error({
           message: 'Error Running Manual Collection',
-          description: `${err.data.detail}`,
+          description: `${err.error}`,
         });
       } else {
         notification.error({
@@ -53,12 +53,11 @@ function ManualCollectionButton(props: any) {
       try {
         let response: any = await cancelAllScrapes(site!._id);
         console.log('err', response);
-        if (response.data.success) {
+        if (response.data?.success) {
           refetch();
         } else {
-          console.log('HEEEEY');
           notification.error({
-            message: 'Error Cancelling Collection',
+            message: 'Please review and update the following documents',
             description: response.error.data.detail,
           });
         }
@@ -71,7 +70,7 @@ function ManualCollectionButton(props: any) {
         } else {
           notification.error({
             message: 'Error Cancelling Collection',
-            description: JSON.stringify(err),
+            description: 'Unknown error.',
           });
         }
       }
@@ -134,7 +133,11 @@ export function CollectionsPage() {
   return (
     <>
       {newDocumentModalVisible ? (
-        <AddDocumentModal setVisible={setNewDocumentModalVisible} siteId={siteId} />
+        <AddDocumentModal
+          setVisible={setNewDocumentModalVisible}
+          siteId={siteId}
+          addNewDocument={false}
+        />
       ) : null}
       <MainLayout
         sidebar={<SiteMenu />}

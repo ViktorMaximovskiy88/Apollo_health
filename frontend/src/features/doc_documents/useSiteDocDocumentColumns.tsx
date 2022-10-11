@@ -11,7 +11,7 @@ import { DocumentTypes } from '../retrieved_documents/types';
 import { ManualCollectionValidationButtons } from './manual_collection/ManualCollectionValidationButtons';
 
 interface CreateColumnsType {
-  handleNewVersion?: (data: SiteDocDocument) => void;
+  handleNewVersion?: (data: SiteDocDocument, addNewDocument: boolean) => void;
 }
 
 export enum TextAlignType {

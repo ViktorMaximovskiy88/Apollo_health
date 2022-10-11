@@ -29,20 +29,23 @@ import { useAddDocumentMutation } from '../retrieved_documents/documentsApi';
 import { baseApiUrl, client } from '../../app/base-api';
 import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
 import { SiteDocDocument } from '../doc_documents/types';
-import { useUpdateSelected } from '../doc_documents/manual_collection/useUpdateSelected';
-import { WorkItemOption } from './types';
 
 interface AddDocumentModalPropTypes {
   oldVersion?: SiteDocDocument;
   setVisible: (visible: boolean) => void;
   siteId: any;
+  addNewDocument: boolean;
 }
 
-export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocumentModalPropTypes) {
+export function AddDocumentModal({
+  oldVersion,
+  setVisible,
+  siteId,
+  addNewDocument,
+}: AddDocumentModalPropTypes) {
   const [form] = useForm();
   const [addDoc] = useAddDocumentMutation();
   const [fileData, setFileData] = useState<any>();
-  const updateSelected = useUpdateSelected();
 
   let initialValues: any = {
     lang_code: 'en',
@@ -51,15 +54,6 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
 
   // Clicked on new document so copy old document details to form.
   if (oldVersion) {
-    const { site_id, link_text, base_url, url } = oldVersion;
-    initialValues = {
-      lang_code: oldVersion.lang_code,
-      name: oldVersion.name,
-      document_type: oldVersion.document_type,
-      internal_document: oldVersion.internal_document,
-      locations: [{ site_id, link_text, base_url, url }],
-    };
-    // initialValues not working in work_item new_version, so set here.
     form.setFieldsValue({
       ['lang_code']: oldVersion.lang_code,
     });
@@ -71,6 +65,18 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
     });
     form.setFieldsValue({
       ['internal_document']: oldVersion.internal_document,
+    });
+    form.setFieldsValue({
+      ['site_id']: oldVersion.site_id,
+    });
+    form.setFieldsValue({
+      ['link_text']: oldVersion.link_text,
+    });
+    form.setFieldsValue({
+      ['base_url']: oldVersion.base_url,
+    });
+    form.setFieldsValue({
+      ['url']: oldVersion.url,
     });
   }
 
@@ -88,8 +94,9 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
       newDocument.site_id = siteId;
       if (oldVersion) {
         newDocument.replacing_old_version_id = oldVersion._id;
-        // last_collected_date=now in backend. Is this necessary?
-        newDocument.last_collected_date = oldVersion.last_collected_date;
+        if (addNewDocument) {
+          newDocument.add_new_document = true;
+        }
         if (oldVersion.internal_document) {
           newDocument.internal_document = oldVersion.internal_document;
         } else {
@@ -114,9 +121,6 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
         .unwrap()
         .then(() => {
           setVisible(false);
-          if (oldVersion) {
-            updateSelected(WorkItemOption.Unhandled); // does not work
-          }
         })
         .catch((error) =>
           notification.error({

@@ -23,7 +23,11 @@ export function DocumentsPage() {
     >
       <DocumentsTable />
       {newDocumentModalVisible && (
-        <AddDocumentModal setVisible={setNewDocumentModalVisible} siteId={params.siteId} />
+        <AddDocumentModal
+          setVisible={setNewDocumentModalVisible}
+          siteId={params.siteId}
+          addNewDocument={false}
+        />
       )}
     </MainLayout>
   );

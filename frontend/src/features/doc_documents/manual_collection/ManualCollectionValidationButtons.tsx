@@ -41,19 +41,25 @@ const Found = () => {
 };
 
 const NewDocument = () => {
+  const { doc, handleNewVersion } = useContext(ValidationButtonsContext) ?? {};
   const { workItem } = useContext(ValidationButtonsContext) ?? {};
-  if (!workItem) return null;
+  if (!workItem || !doc || !handleNewVersion) return null;
 
   switch (workItem.selected) {
     case Option.NewDocument:
       return (
-        <Button type="primary" disabled>
+        <Button
+          type="primary"
+          onClick={() => {
+            handleNewVersion(doc, true);
+          }}
+        >
           <FileAddOutlined className="text-white" />
         </Button>
       );
     default:
       return (
-        <Button disabled>
+        <Button onClick={() => handleNewVersion(doc, true)}>
           <FileAddOutlined />
         </Button>
       );
@@ -97,13 +103,13 @@ const NewVersion = () => {
     case Option.NewVersion:
       return (
         <Button type="primary">
-          <FileExclamationOutlined onClick={() => handleNewVersion(doc)} />
+          <FileExclamationOutlined onClick={() => handleNewVersion(doc, false)} />
         </Button>
       );
     default:
       return (
         <Button>
-          <FileExclamationOutlined onClick={() => handleNewVersion(doc)} />
+          <FileExclamationOutlined onClick={() => handleNewVersion(doc, false)} />
         </Button>
       );
   }
@@ -149,7 +155,7 @@ export function ManualCollectionValidationButtons({
   handleNewVersion,
 }: {
   doc: SiteDocDocument;
-  handleNewVersion: (doc: SiteDocDocument) => void;
+  handleNewVersion: (doc: SiteDocDocument, addNewDocument: boolean) => void;
 }) {
   return (
     <ValidationButtonsProvider doc={doc} handleNewVersion={handleNewVersion}>

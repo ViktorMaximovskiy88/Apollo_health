@@ -12,10 +12,12 @@ import { SiteDocDocument } from './types';
 export function SiteDocDocumentsPage() {
   const [newDocumentModalVisible, setNewDocumentModalVisible] = useState(false);
   const [oldVersion, setOldVersion] = useState<any>();
+  const [addNewDocument, setAddNewDocument] = useState<boolean>(false);
   const { siteId } = useParams();
 
-  function handleNewVersion(data: SiteDocDocument) {
+  function handleNewVersion(data: SiteDocDocument, addNewDocument: boolean) {
     setOldVersion(data);
+    setAddNewDocument(addNewDocument);
     setNewDocumentModalVisible(true);
   }
 
@@ -36,7 +38,12 @@ export function SiteDocDocumentsPage() {
       }
     >
       {newDocumentModalVisible && (
-        <AddDocumentModal oldVersion={oldVersion} setVisible={hideNewDocument} siteId={siteId} />
+        <AddDocumentModal
+          oldVersion={oldVersion}
+          setVisible={hideNewDocument}
+          siteId={siteId}
+          addNewDocument={addNewDocument}
+        />
       )}
       <SiteDocDocumentsTable handleNewVersion={handleNewVersion} />
     </MainLayout>
