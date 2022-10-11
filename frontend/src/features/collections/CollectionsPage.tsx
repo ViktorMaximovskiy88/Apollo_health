@@ -13,7 +13,7 @@ import { SiteStatus } from '../sites/siteStatus';
 import { SiteMenu } from '../sites/SiteMenu';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
 import { MainLayout } from '../../components';
-import { isCollectionResponseError, isErrorWithData } from '../../common/helpers';
+import { isErrorWithData } from '../../common/helpers';
 
 function ManualCollectionButton(props: any) {
   const { site, refetch, runScrape } = props;
@@ -34,10 +34,10 @@ function ManualCollectionButton(props: any) {
         });
       }
     } catch (err) {
-      if (isCollectionResponseError(err)) {
+      if (isErrorWithData(err)) {
         notification.error({
           message: 'Error Running Manual Collection',
-          description: `${err.error}`,
+          description: `${err.data.detail}`,
         });
       } else {
         notification.error({

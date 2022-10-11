@@ -43,6 +43,7 @@ const Found = () => {
 const NewDocument = () => {
   const { doc, handleNewVersion } = useContext(ValidationButtonsContext) ?? {};
   const { workItem } = useContext(ValidationButtonsContext) ?? {};
+  const updateSelected = useUpdateSelected();
   if (!workItem || !doc || !handleNewVersion) return null;
 
   switch (workItem.selected) {
@@ -59,7 +60,12 @@ const NewDocument = () => {
       );
     default:
       return (
-        <Button onClick={() => handleNewVersion(doc, true)}>
+        <Button
+          onClick={() => {
+            handleNewVersion(doc, false);
+            updateSelected(WorkItemOption.NewDocument);
+          }}
+        >
           <FileAddOutlined />
         </Button>
       );
@@ -97,19 +103,30 @@ const NotFound = () => {
 const NewVersion = () => {
   const { doc, handleNewVersion } = useContext(ValidationButtonsContext) ?? {};
   const { workItem } = useContext(ValidationButtonsContext) ?? {};
+  const updateSelected = useUpdateSelected();
   if (!workItem || !doc || !handleNewVersion) return null;
 
   switch (workItem.selected) {
     case Option.NewVersion:
       return (
         <Button type="primary">
-          <FileExclamationOutlined onClick={() => handleNewVersion(doc, false)} />
+          <FileExclamationOutlined
+            onClick={() => {
+              handleNewVersion(doc, false);
+              updateSelected(WorkItemOption.NewVersion);
+            }}
+          />
         </Button>
       );
     default:
       return (
         <Button>
-          <FileExclamationOutlined onClick={() => handleNewVersion(doc, false)} />
+          <FileExclamationOutlined
+            onClick={() => {
+              handleNewVersion(doc, false);
+              updateSelected(WorkItemOption.NewVersion);
+            }}
+          />
         </Button>
       );
   }
