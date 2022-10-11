@@ -12,17 +12,10 @@ from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.models import DownloadContext, Metadata
 from backend.scrapeworker.playbook import PlaybookContext
 
-discover_element_modals: str = """
-    () => {
-        const maybeModals = [...document.querySelectorAll("body > div")].filter((el) => {
-            const zIndex = parseInt(getComputedStyle(el).zIndex);
-            return !isNaN(zIndex) && zIndex > 10;
-        });
-        // do we care if they are separate ??
-        for(const modal of maybeModals) {
-            [...modal.querySelectorAll("a, button, input[type=button], [role=button]")]
-        }
-        return maybeModals;
+is_maybe_modal: str = """
+    (node) => {
+        const zIndex = parseInt(getComputedStyle(node).zIndex);
+        return !isNaN(zIndex) && zIndex > 10;
     }
 """
 
@@ -91,10 +84,31 @@ class PlaywrightBaseScraper(ABC):
 
         return css_handle is not None or xpath_locator_count > 0
 
+    async def dismiss_modals(self):
+        modal_handles = await self.page.query_selector_all("body > div > div, body > div")
+
+        for modal_handle in modal_handles:
+            visible = await modal_handle.is_visible()
+
+            if not visible:
+                print("not visoibal;e")
+                continue
+
+            print(" I SEE")
+
+            maybe_modal = await modal_handle.evaluate(is_maybe_modal)
+            if maybe_modal:
+                button = await modal_handle.query_selector(
+                    'button:visible:text-matches("(agree|continue|accept|ok)", "i")'
+                )
+                print(button, "button")
+
     async def is_applicable(self) -> bool:
 
         timeout = self.config.wait_for_timeout_ms if self.config.wait_for_timeout_ms else 500
         await self.page.wait_for_timeout(timeout)
+
+        await self.dismiss_modals()
 
         in_parent_frame = await self.find_in_page(self.page)
 
@@ -120,7 +134,6 @@ class PlaywrightBaseScraper(ABC):
             resource_value,
             closest_heading,
             siblings_text,
-            modal_elements,
         ) = await asyncio.gather(
             element.text_content(),
             element.inner_text(),
@@ -128,9 +141,7 @@ class PlaywrightBaseScraper(ABC):
             element.get_attribute(resource_attr),
             element.evaluate(closest_heading_expression),
             element.evaluate(sibling_text_expression),
-            element.evaluate(discover_element_modals),
         )
-        print(len(modal_elements))
 
         # Use first response for inner_text() text_content() for link_text.
         # If an element has no text (<p></p>), use url path.
