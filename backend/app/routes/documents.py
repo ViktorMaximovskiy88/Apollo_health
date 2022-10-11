@@ -305,14 +305,14 @@ async def add_document(
                 "collection_method": f"{CollectionMethod.Manual}",
             }
         )
-        doc_index: int = next(
-            i
-            for i, wi in enumerate(current_queued_task.work_list)
-            if f"{wi.document_id}" == document.replacing_old_version_id
-        )
-
-        if not doc_index:
-            msg = "Error uploading new version. Not able to find old doc in work list"
+        try:
+            doc_index: int = next(
+                i
+                for i, wi in enumerate(current_queued_task.work_list)
+                if f"{wi.document_id}" == document.replacing_old_version_id
+            )
+        except StopIteration:
+            msg = "SERVER ERROR: Not able to find old doc in work list"
             typer.secho(msg, fg=typer.colors.RED)
             raise HTTPException(
                 status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -109,7 +109,9 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
         ...fileData,
       })
         .unwrap()
-        .then(() => setVisible(false))
+        .then(() => {
+          setVisible(false);
+        })
         .catch((error) =>
           notification.error({
             message: error.data.detail,
