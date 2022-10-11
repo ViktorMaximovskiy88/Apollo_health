@@ -22,6 +22,7 @@ const columns = [
       return <ButtonLink to={`${translation._id}`}>{translation.name}</ButtonLink>;
     },
     defaultFlex: 1,
+    minWidth: 300,
   },
   {
     header: 'Actions',

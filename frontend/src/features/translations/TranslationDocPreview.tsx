@@ -110,6 +110,7 @@ export function SampleTranslationTable(props: { docId: string; form: FormInstanc
           header: 'Name',
           name: 'name',
           defaultFlex: 1,
+          minWidth: 300,
         });
         cols.push({
           header: 'Code',
@@ -291,6 +292,7 @@ export function SampleExtractionTable(props: { docId: string; form: FormInstance
           header.push({
             name: h,
             defaultFlex: 1,
+            minWidth: 200,
             header: h,
           });
         });
@@ -301,6 +303,7 @@ export function SampleExtractionTable(props: { docId: string; form: FormInstance
             header.push({
               name: h,
               defaultFlex: 1,
+              minWidth: 200,
               header: h,
             })
           );
