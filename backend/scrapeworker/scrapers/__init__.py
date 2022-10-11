@@ -71,10 +71,10 @@ class ScrapeHandler:
                 url=url,
                 log=self.log,
             )
-
             if not await scraper.is_applicable():
                 continue
 
             for download in await scraper.execute():
+                self.log.info(f"downloads ... {base_url} {download.request.url}")
                 self.__preprocess_download(download, base_url, metadata)
                 downloads.append(download)
