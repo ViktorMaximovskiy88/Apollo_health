@@ -62,3 +62,15 @@ class DocumentType(str, Enum):
     RestrictionList = "Restriction List"
     ReviewCommitteeMeetings = "Review Committee Meetings"
     NotApplicable = "Not Applicable"
+
+
+class SectionType(str, Enum):
+    THERAPY = "THERAPY"
+    INDICATION = "INDICATION"
+    KEY = "KEY"
+
+
+class TagUpdateStatus(str, Enum):
+    CHANGED = "CHANGED"
+    ADDED = "ADDED"
+    REMOVED = "REMOVED"

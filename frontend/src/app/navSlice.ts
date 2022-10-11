@@ -40,6 +40,11 @@ export const navSlice = createSlice({
           shortLabel: 'Translations',
         },
         {
+          url: '/payer-family',
+          label: 'Payer Family',
+          shortLabel: 'Payer Family',
+        },
+        {
           url: '/payer-backbone',
           label: 'Payers',
           shortLabel: 'Payers',

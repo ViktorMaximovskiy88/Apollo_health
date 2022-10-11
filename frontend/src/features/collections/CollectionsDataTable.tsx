@@ -128,21 +128,17 @@ export function CollectionsDataTable({ siteId, openNewDocumentModal }: DataTable
 
   const openErrorModal = (errorTraceback: string): void => {
     setErrorTraceback(errorTraceback);
-    setModalVisible(true);
+    setModalOpen(true);
   };
 
   const columns = useColumns({ cancelScrape, isCanceling, openErrorModal, openNewDocumentModal });
 
-  const [modalVisible, setModalVisible] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [errorTraceback, setErrorTraceback] = useState('');
 
   return (
     <>
-      <ErrorLogModal
-        visible={modalVisible}
-        setVisible={setModalVisible}
-        errorTraceback={errorTraceback}
-      />
+      <ErrorLogModal open={modalOpen} setOpen={setModalOpen} errorTraceback={errorTraceback} />
       <ReactDataGrid
         dataSource={loadData}
         {...filterProps}

@@ -27,7 +27,7 @@ export function SaveAsNew({ form: editTranslationForm }: { form: FormInstance<an
   const [modalForm] = useForm();
   const { translationId } = useParams();
   const { data: translation } = useGetTranslationConfigQuery(translationId);
-  const [visible, setVisible] = useState<boolean>(false);
+  const [visible, setOpen] = useState<boolean>(false);
   const [getTranslationByName, { isFetching: validatorLoading }] =
     useLazyGetTranslationConfigByNameQuery();
   const [addTranslation, { isLoading: addTranslationLoading }] = useAddTranslationConfigMutation();
@@ -44,7 +44,7 @@ export function SaveAsNew({ form: editTranslationForm }: { form: FormInstance<an
       editTranslationForm.getFieldValue('name')
     );
     if (!isTranslationNameUnique) {
-      setVisible(true);
+      setOpen(true);
       return;
     }
     const values = editTranslationForm.getFieldsValue();
@@ -57,7 +57,7 @@ export function SaveAsNew({ form: editTranslationForm }: { form: FormInstance<an
   };
 
   const handleCancel = () => {
-    setVisible(false);
+    setOpen(false);
     modalForm.resetFields();
   };
 
@@ -71,7 +71,7 @@ export function SaveAsNew({ form: editTranslationForm }: { form: FormInstance<an
 
     navigate(`../${newTranslation._id}`);
     editTranslationForm.setFieldsValue({ name }); // does not update name without
-    setVisible(false);
+    setOpen(false);
   };
 
   const isLoading = validatorLoading || addTranslationLoading;
@@ -82,7 +82,7 @@ export function SaveAsNew({ form: editTranslationForm }: { form: FormInstance<an
         Save As New
       </Button>
       <Modal
-        visible={visible}
+        open={visible}
         title={
           <>
             Save As New: Name "{editTranslationForm.getFieldValue('name')}" is not unique

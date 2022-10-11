@@ -12,7 +12,7 @@ interface DocDocumentLocationsPropTypes {
 
 export const DocDocumentLocations = ({ docDocument, locations }: DocDocumentLocationsPropTypes) => {
   const form = Form.useFormInstance();
-  const [isVisible, setIsVisible] = useState<boolean>(false);
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [selectedIndex, setSelectedLocationIndex] = useState<number>(-1);
 
   return (
@@ -25,7 +25,7 @@ export const DocDocumentLocations = ({ docDocument, locations }: DocDocumentLoca
           location={location}
           onShowDocumentFamilyCreate={() => {
             setSelectedLocationIndex(index);
-            setIsVisible(true);
+            setModalOpen(true);
           }}
         />
       ))}
@@ -33,16 +33,16 @@ export const DocDocumentLocations = ({ docDocument, locations }: DocDocumentLoca
       <DocumentFamilyCreateModal
         location={locations[selectedIndex]}
         documentType={docDocument.document_type}
-        visible={isVisible}
+        open={modalOpen}
         onSave={(documentFamilyId: string) => {
           const locations = form.getFieldValue('locations');
           locations[selectedIndex].document_family_id = documentFamilyId;
           form.setFieldsValue({ locations });
-          setIsVisible(false);
+          setModalOpen(false);
           setSelectedLocationIndex(-1);
         }}
         onClose={() => {
-          setIsVisible(false);
+          setModalOpen(false);
           setSelectedLocationIndex(-1);
         }}
       />

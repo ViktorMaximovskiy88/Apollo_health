@@ -1,4 +1,4 @@
-from backend.common.models.site import FocusTherapyConfig
+from backend.common.models.site import FocusSectionConfig
 from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.file_parsers import docx, html, pdf, text, xlsx
 
@@ -8,7 +8,7 @@ __all__ = ["docx", "xlsx", "pdf", "html", "text"]
 async def parse_by_type(
     file_path: str,
     download: DownloadContext,
-    focus_config: list[FocusTherapyConfig] | None = None,
+    focus_config: list[FocusSectionConfig] | None = None,
 ):
     # TODO use content_type
     file_extension = download.file_extension

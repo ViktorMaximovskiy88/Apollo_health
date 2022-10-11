@@ -16,7 +16,7 @@ const siteStatuses = [
 export function SiteStatusRadio() {
   const form = Form.useFormInstance();
   const params = useParams();
-  const [visible, setVisible] = useState(false);
+  const [visible, setOpen] = useState(false);
   const currentUser = useCurrentUser();
   const [updateSite] = useUpdateSiteMutation();
 
@@ -24,7 +24,7 @@ export function SiteStatusRadio() {
   const isAssignedToSelf = (): boolean => !!(currentUser?._id === form.getFieldValue('assignee'));
   const onChange = ({ target: { value } }: RadioChangeEvent) => {
     if (isEditPage() && isAssignedToSelf() && value === SiteStatus.Online) {
-      setVisible(true);
+      setOpen(true);
     }
   };
   const release = async () => {
@@ -37,17 +37,17 @@ export function SiteStatusRadio() {
     };
     await updateSite(update);
     form.setFieldsValue({ assignee: null });
-    setVisible(false);
+    setOpen(false);
   };
   const keep = () => {
-    setVisible(false);
+    setOpen(false);
   };
 
   return (
     <>
       <Popconfirm
         title="Keep site assignment or release?"
-        visible={visible}
+        open={visible}
         onConfirm={release}
         onCancel={keep}
         okText="Release"

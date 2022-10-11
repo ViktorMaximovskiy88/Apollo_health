@@ -18,6 +18,7 @@ from backend.common.services.document import (
     get_site_docs_for_ids,
 )
 from backend.common.services.lineage.lineage_matcher import LineageMatcher
+from backend.common.services.tag_compare import TagCompare
 from backend.scrapeworker.common.lineage_parser import (
     guess_month_abbr,
     guess_month_name,
@@ -33,6 +34,7 @@ class LineageService:
     def __init__(self, logger: Logger) -> None:
         self.logger = logger
         self.pp = pprint.PrettyPrinter(depth=4)
+        self.tag_compare = TagCompare()
 
     async def get_comparision_docs(
         self, site_id: PydanticObjectId | None
@@ -165,6 +167,17 @@ class LineageService:
         items.sort(key=lambda x: x.final_effective_date or x.year_part or 0)
         return items
 
+    async def compare_tags(
+        self, doc: RetrievedDocument, doc_doc: DocDocument, prev_doc: RetrievedDocument
+    ) -> tuple[RetrievedDocument, DocDocument]:
+        ther_tags, indi_tags = self.tag_compare.execute(doc, prev_doc)
+        doc.therapy_tags = ther_tags
+        doc.indication_tags = indi_tags
+        doc_doc.therapy_tags = ther_tags
+        doc_doc.indication_tags = indi_tags
+        doc, doc_doc = await asyncio.gather(doc.save(), doc_doc.save())
+        return doc, doc_doc
+
     async def _version_matched(self, items: list[DocumentAnalysis]):
         matches = self.sort_matched(items)
         prev_doc = None
@@ -175,6 +188,8 @@ class LineageService:
                 version_doc(match, is_last, prev_doc),
                 version_doc_doc(match, is_last, prev_doc_doc),
             )
+            if is_last and prev_doc:
+                doc, doc_doc = await self.compare_tags(doc, doc_doc, prev_doc)
             prev_doc = doc
             prev_doc_doc = doc_doc
 

@@ -90,6 +90,7 @@ function useWorkQueueColumns(
       name: 'name',
       header: 'Name',
       defaultFlex: 1,
+      minWidth: 300,
       render: ({ data: item }: { data: { _id: string; name: string } }) => {
         return <ButtonLink to={`${item._id}/read-only`}>{item.name}</ButtonLink>;
       },
@@ -111,6 +112,7 @@ function useWorkQueueColumns(
       name: 'locks.user_id',
       header: 'Assignee',
       defaultFlex: 1,
+      minWidth: 300,
       filterEditor: SelectFilter,
       filterEditorProps: {
         placeholder: 'All',

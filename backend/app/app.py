@@ -18,6 +18,7 @@ from backend.app.routes import (
     documents,
     lineage,
     payer_backbone,
+    payer_family,
     proxies,
     site_scrape_tasks,
     sites,
@@ -89,6 +90,7 @@ app.include_router(document_family.router, prefix=prefix)
 app.include_router(payer_backbone.router, prefix=prefix)
 app.include_router(app_config.router, prefix=prefix)
 app.include_router(lineage.router, prefix=prefix)
+app.include_router(payer_family.router, prefix=prefix)
 
 
 @app.middleware("http")

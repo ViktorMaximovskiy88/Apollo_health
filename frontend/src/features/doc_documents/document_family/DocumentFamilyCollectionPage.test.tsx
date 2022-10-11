@@ -57,6 +57,5 @@ describe('DocumentFamily Page', () => {
     await act(async () => {
       await dataGridDoneRendering;
     });
-    screen.debug();
   });
 });

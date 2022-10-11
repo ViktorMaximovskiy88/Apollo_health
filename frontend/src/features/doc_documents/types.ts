@@ -2,6 +2,11 @@ import { BaseDocument } from '../../common';
 import { ApprovalStatus } from '../../common/approvalStatus';
 import { DocDocumentLocation } from './locations/types';
 
+export enum TagUpdateStatus {
+  Changed = 'CHANGED',
+  Added = 'ADDED',
+  Removed = 'REMOVED',
+}
 export interface BaseDocTag {
   id: string;
   _type: 'indication' | 'therapy' | 'therapy-group';
@@ -15,13 +20,18 @@ export interface TherapyTag {
   code: string;
   score: number;
   focus: boolean;
+  update_status?: TagUpdateStatus;
+  text_area?: [number, number];
 }
 
 export interface IndicationTag {
   name?: string;
   text: string;
   page: number;
-  code: string;
+  code: number;
+  focus?: boolean; // migrate and update
+  update_status?: TagUpdateStatus;
+  text_area?: [number, number];
 }
 
 export interface UIIndicationTag extends IndicationTag, BaseDocTag {}

@@ -49,7 +49,7 @@ function FieldHeaders({ displayIsResource, fields }: HeaderPropTypes) {
         </Tooltip>
       </div>
       <div className="flex items-center col-span-2 mr-1">
-        <h4 className="mr-1">Contains Text</h4>
+        <h4 className="mr-1">Element Text</h4>
         <Tooltip className="mb-2 ml-px cursor-help" title="Tags that contain the search term">
           <QuestionCircleOutlined />
         </Tooltip>

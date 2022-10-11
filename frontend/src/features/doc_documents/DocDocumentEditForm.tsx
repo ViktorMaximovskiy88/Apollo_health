@@ -71,11 +71,13 @@ const useOnFinish = ({
       const therapy_tags = [];
       for (const tag of tags) {
         if (tag._type === 'indication') {
-          const { name, text, page, code } = tag as UIIndicationTag;
-          indication_tags.push({ name, text, page, code });
+          const { name, text, page, code, focus, update_status, text_area } =
+            tag as UIIndicationTag;
+          indication_tags.push({ name, text, page, code, focus, update_status, text_area });
         } else {
-          const { name, text, page, score, code, focus } = tag as UITherapyTag;
-          therapy_tags.push({ name, text, page, score, code, focus });
+          const { name, text, page, score, code, focus, update_status, text_area } =
+            tag as UITherapyTag;
+          therapy_tags.push({ name, text, page, score, code, focus, update_status, text_area });
         }
       }
 
@@ -188,10 +190,6 @@ export function DocDocumentEditForm({
           <Tabs.TabPane tab="Tags" key="tags" className="bg-white p-4 h-full">
             <DocDocumentTagForm
               tags={tags}
-              onAddTag={(tag: DocumentTag) => {
-                setTags([tag, ...tags]);
-                setHasChanges(true);
-              }}
               onDeleteTag={(tag: any) => {
                 setTags(tags.filter((t) => t.id !== tag.id));
                 setHasChanges(true);

@@ -3,6 +3,7 @@ from datetime import datetime
 from beanie import PydanticObjectId
 from pydantic import BaseModel
 
+from backend.common.core.enums import TagUpdateStatus
 from backend.scrapeworker.common.utils import unique_by_attr
 
 
@@ -26,6 +27,7 @@ class RetrievedDocumentLocation(SiteLocation):
 
 class DocDocumentLocation(SiteLocation):
     document_family_id: PydanticObjectId | None = None
+    payer_family_id: PydanticObjectId | None = None
 
 
 class DocDocumentLocationView(DocDocumentLocation):
@@ -39,11 +41,10 @@ class TherapyTag(BaseModel):
     name: str
     score: float = 0
     focus: bool = False
-    section: str = ""
     rxcui: str | None = None
-    add: bool = False
-    edit: bool = False
-    removed: bool = False
+    key: bool = False
+    update_status: TagUpdateStatus | None = None
+    text_area: tuple[int, int] | None = None
 
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))
@@ -61,27 +62,32 @@ class IndicationTag(BaseModel):
     code: int
     page: int = 0
     focus: bool = False
-    section: bytes = b"\x00"
+    key: bool = False
+    update_status: TagUpdateStatus | None = None
+    text_area: tuple[int, int] | None = None
 
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))
 
 
 class UpdateTherapyTag(BaseModel):
-    name: str | None = None
     text: str | None = None
     page: int | None = None
     code: str | None = None
+    name: str | None = None
     score: float | None = None
     focus: bool | None = None
+    update_status: TagUpdateStatus | None = None
+    text_area: tuple[int, int] | None = None
 
 
 class UpdateIndicationTag(BaseModel):
     text: str | None = None
-    page: int | None = None
     code: str | None = None
-    score: float | None = None
-    relevancy: float | None = None
+    page: int | None = None
+    focus: bool | None = None
+    update_status: TagUpdateStatus | None = None
+    text_area: tuple[int, int] | None = None
 
 
 class TaskLock(BaseModel):

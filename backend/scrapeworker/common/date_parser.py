@@ -26,11 +26,9 @@ class DateMatch:
 class DateParser:
     def __init__(
         self,
-        text: str,
         date_rgxs: list[re.Pattern[str]],
         label_rgxs: tuple[list[re.Pattern[str]], dict[str, str]],
     ) -> None:
-        self.text = text
         self.date_rgxs = date_rgxs
         self.label_rgxs = label_rgxs
         self.whitespace_rgx = re.compile(r"\S")
@@ -177,7 +175,7 @@ class DateParser:
                 setattr(self, label, match)
         return
 
-    def extract_dates(self) -> None:
+    def extract_dates(self, text: str) -> None:
         """
         Extract dates and labels from provided text.
         Set label attributes to extracted dates.
@@ -185,7 +183,7 @@ class DateParser:
 
         prev_line = ""
         prev_line_index = 0
-        for line in self.text.split("\n"):
+        for line in text.split("\n"):
             latest_match = 0  # Latest date match on current line
             if self.exclude_text(line):
                 prev_line = ""
