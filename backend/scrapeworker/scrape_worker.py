@@ -64,7 +64,7 @@ class ScrapeWorker:
         self.seen_hashes = set()
         self.doc_client = DocumentStorageClient()
         self.text_handler = TextHandler()
-        self.downloader = AioDownloader(_log)
+        self.downloader = AioDownloader(self.doc_client, _log)
         self.playbook = ScrapePlaybook(self.site.playbook)
         self.search_crawler = SearchableCrawler(
             config=self.site.scrape_method_configuration, log=_log
@@ -178,7 +178,7 @@ class ScrapeWorker:
             parsed_content = await parse_by_type(
                 temp_path,
                 download,
-                self.site.scrape_method_configuration.focus_therapy_configs,
+                self.site.scrape_method_configuration.focus_section_configs,
             )
 
             if parsed_content is None:
@@ -493,8 +493,8 @@ class ScrapeWorker:
 
         await self.wait_for_completion_or_cancel(tasks)
 
-        # doc_ids = [doc.id for (doc, doc_doc) in self.lineage_tasks]
-        # await self.lineage_service.process_lineage_for_doc_ids(self.site.id, doc_ids)
+        doc_ids = [doc.id for (doc, doc_doc) in self.lineage_tasks]
+        await self.lineage_service.process_lineage_for_doc_ids(self.site.id, doc_ids)
 
         await self.downloader.close()
 

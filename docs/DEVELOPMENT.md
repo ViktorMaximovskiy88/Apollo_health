@@ -202,6 +202,20 @@ If everything has gone well, go to <http://localhost:3000> and you should be red
 
 If that succeeds, try creating a site. I recommend Molina HealthCare OH Drug at <https://www.molinahealthcare.com/providers/oh/duals/drug/formulary.aspx>. Once created, go into it and click the 'Run Collection' button and hope for the best, watching the logs for activity/errors.
 
+### Access to Local Mongo and Minio
+
+Connect to your local mongo using the following info:
+
+- URI: mongodb://localhost:27017
+- Username: admin
+- Password: admin
+
+Access minio console:
+
+- Go to localhost:9001
+- Username: admin
+- Password: adminadmin
+
 ## Testing
 
 ### Frontend Tests

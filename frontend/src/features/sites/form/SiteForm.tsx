@@ -29,7 +29,7 @@ const buildInitialValues = () => ({
     attr_selectors: [],
     html_attr_selectors: [],
     html_exclusion_selectors: [],
-    focus_therapy_configs: [],
+    focus_section_configs: [],
     allow_docdoc_updates: false,
   },
   doc_type_threshold_override: false,

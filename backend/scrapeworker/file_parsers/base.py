@@ -5,7 +5,7 @@ from typing import Any
 
 import aiofiles
 
-from backend.common.models.site import FocusTherapyConfig
+from backend.common.models.site import FocusSectionConfig
 from backend.scrapeworker.common.date_parser import DateParser
 from backend.scrapeworker.common.detect_lang import detect_lang
 from backend.scrapeworker.common.utils import date_rgxs, label_rgxs
@@ -26,7 +26,7 @@ class FileParser(ABC):
         file_path: str,
         url: str,
         link_text: str | None = None,
-        focus_config: list[FocusTherapyConfig] | None = None,
+        focus_config: list[FocusSectionConfig] | None = None,
         taggers: Taggers | None = Taggers(indication=indication_tagger, therapy=therapy_tagger),
     ):
         self.file_path = file_path
@@ -61,8 +61,8 @@ class FileParser(ABC):
         document_type, confidence, doc_vectors = classify_doc_type(self.text)
         lang_code = detect_lang(self.text)
 
-        date_parser = DateParser(self.text, date_rgxs, label_rgxs)
-        date_parser.extract_dates()
+        date_parser = DateParser(date_rgxs, label_rgxs)
+        date_parser.extract_dates(self.text)
         identified_dates = list(date_parser.unclassified_dates)
         identified_dates.sort()
 
@@ -71,7 +71,9 @@ class FileParser(ABC):
             therapy_tags = await self.taggers.therapy.tag_document(
                 self.text, document_type, self.url, self.link_text, self.focus_config
             )
-            indication_tags = await self.taggers.indication.tag_document(self.text)
+            indication_tags = await self.taggers.indication.tag_document(
+                self.text, document_type, self.url, self.link_text, self.focus_config
+            )
 
         self.result = {
             "metadata": self.metadata,

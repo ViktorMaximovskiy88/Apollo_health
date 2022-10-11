@@ -36,7 +36,8 @@ class AioDownloader:
 
     session: ClientSession
 
-    def __init__(self, log):
+    def __init__(self, doc_client: DocumentStorageClient, log):
+        self.doc_client = doc_client
         self.log = log
         self.session = ClientSession(connector=TCPConnector(ssl=self.permissive_ssl_context()))
         self.rate_limiter = RateLimiter()
@@ -171,9 +172,8 @@ class AioDownloader:
         self.log.info(f"Before attempting download {url}")
 
         if download.direct_scrape:
-            doc_client = DocumentStorageClient()
             dest_path = f"{download.file_hash}.{download.file_extension}"
-            with doc_client.read_object_to_tempfile(
+            with self.doc_client.read_object_to_tempfile(
                 dest_path, suffix=f".{download.file_extension}"
             ) as path:
                 await self.set_download_data(download, path)
