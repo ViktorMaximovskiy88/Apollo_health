@@ -9,9 +9,9 @@ from backend.scrapeworker.common.utils import unique_by_attr
 class Location(BaseModel):
     base_url: str
     url: str
-    link_text: str | None
-    closest_heading: str | None
-    siblings_text: str | None
+    link_text: str | None = None
+    closest_heading: str | None = None
+    siblings_text: str | None = None
 
 
 class SiteLocation(Location):

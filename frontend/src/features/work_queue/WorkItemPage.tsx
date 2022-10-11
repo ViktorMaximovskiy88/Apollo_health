@@ -101,6 +101,7 @@ function WorkItemSubmitBar(props: {
 
   return (
     <div className="flex space-x-2 items-center">
+      <Button onClick={() => navigate('../../..')}>Cancel</Button>
       {props.wq.submit_actions.map((action) => (
         <WorkQueueActionButton
           itemId={props.itemId}
@@ -111,7 +112,6 @@ function WorkItemSubmitBar(props: {
           setReassignment={props.setReassignment}
         />
       ))}
-      <Button onClick={() => navigate('../../..')}>Cancel</Button>
       <span>Auto Take</span>
       <Checkbox checked={props.takeNext} onChange={(e) => props.setTakeNext(e.target.checked)} />
     </div>

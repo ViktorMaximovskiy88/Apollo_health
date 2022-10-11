@@ -261,7 +261,6 @@ class TableContentExtractor:
 
         if not bvg or bvg == "generic" or bvg == "both":
             for (score, drugid, rxcui, name) in generics:
-                print("after", line, t9n.qln)
                 yield t9n.copy(
                     update={"score": score, "code": drugid, "rxcui": rxcui, "name": name}, deep=True
                 )
