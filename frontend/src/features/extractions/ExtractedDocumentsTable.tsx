@@ -38,6 +38,7 @@ const columns = [
     header: 'Name',
     name: 'name',
     defaultFlex: 1,
+    minWidth: 300,
     render: ({ data: doc }: { data: RetrievedDocument }) => {
       return <Link to={`document/${doc._id}`}>{doc.name}</Link>;
     },

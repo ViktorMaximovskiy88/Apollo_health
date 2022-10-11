@@ -57,6 +57,7 @@ const createColumns = ({ deleteSite, setDeletedSite, users }: CreateColumnsType)
         return <ButtonLink to={`${site._id}/scrapes`}>{site.name}</ButtonLink>;
       },
       defaultFlex: 1,
+      minWidth: 300,
     },
     {
       header: 'Site Status',

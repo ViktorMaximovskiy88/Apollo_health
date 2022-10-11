@@ -102,6 +102,7 @@ async def worker_fn(
         worker = ScrapeWorker(playwright, browser, scrape_task, site)
         task = asyncio.create_task(heartbeat_task(scrape_task))
         active_tasks[scrape_task.id] = scrape_task
+
         try:
             await worker.run_scrape()
             await log_success(scrape_task, site)

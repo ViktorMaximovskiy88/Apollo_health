@@ -27,6 +27,7 @@ closest_heading_expression: str = """
             if (h) return h.textContent;
             n = n.parentNode;
         }
+        return '';
     }
 """
 
@@ -98,7 +99,7 @@ class PlaywrightBaseScraper(ABC):
 
     async def is_applicable(self) -> bool:
 
-        timeout = self.config.wait_for_timeout_ms if self.config.wait_for_timeout_ms else 500
+        timeout = self.config.wait_for_timeout_ms
         await self.page.wait_for_timeout(timeout)
 
         await self.dismiss_modals()
@@ -127,6 +128,7 @@ class PlaywrightBaseScraper(ABC):
             resource_value,
             closest_heading,
             siblings_text,
+            anchor_target,
         ) = await asyncio.gather(
             element.text_content(),
             element.inner_text(),
@@ -134,21 +136,22 @@ class PlaywrightBaseScraper(ABC):
             element.get_attribute(resource_attr),
             element.evaluate(closest_heading_expression),
             element.evaluate(sibling_text_expression),
+            element.get_attribute("target"),
         )
 
         # Use first response for inner_text() text_content() for link_text.
         # If an element has no text (<p></p>), use url path.
-        if element_content.strip():
+        if element_content and element_content.strip():
             link_text = element_content.strip()
-        elif element_text.strip():
+        elif element_text and element_text.strip():
             link_text = element_text.strip()
-        elif siblings_text.strip():
+        elif siblings_text and siblings_text.strip():
             link_text = siblings_text.strip()
-        elif resource_value.strip():
+        elif resource_value and resource_value.strip():
             parsed_url = urlsplit(resource_value)
             link_text = parsed_url.path
         else:
-            logging.error("Not able to set link_text. No text or url path")
+            link_text = self.parsed_url.path
 
         if closest_heading:
             closest_heading = closest_heading.strip()
@@ -160,6 +163,7 @@ class PlaywrightBaseScraper(ABC):
             closest_heading=closest_heading,
             playbook_context=self.playbook_context,
             siblings_text=siblings_text,
+            anchor_target=anchor_target,
         )
 
     def convert_proxy(self, proxy: Proxy):

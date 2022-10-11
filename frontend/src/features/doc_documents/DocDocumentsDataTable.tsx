@@ -18,7 +18,7 @@ import { Site } from '../sites/types';
 import { useGetChangeLogQuery, useLazyGetDocDocumentsQuery } from './docDocumentApi';
 import { DocDocument } from './types';
 import { useInterval } from '../../common/hooks';
-import { DocumentTypes } from "../retrieved_documents/types"
+import { DocumentTypes } from '../retrieved_documents/types';
 import {
   ApprovalStatus,
   approvalStatusDisplayName,
@@ -38,6 +38,7 @@ const columns = [
       return <ButtonLink to={`${doc._id}`}>{doc.name}</ButtonLink>;
     },
     defaultFlex: 1,
+    minWidth: 300,
   },
   {
     header: 'First Collected Date',

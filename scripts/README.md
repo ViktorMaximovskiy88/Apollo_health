@@ -2,7 +2,7 @@
 
 Because sometimes CLI is better
 
-## Mongo on your host
+## Mongo deps on your host
 
 ```
 brew tap mongodb/brew
