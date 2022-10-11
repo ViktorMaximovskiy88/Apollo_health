@@ -13,11 +13,13 @@ import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { translationsApi } from '../features/translations/translationApi';
 import { payerBackboneApi } from '../features/payer-backbone/payerBackboneApi';
 import { documentFamilyApi } from '../features/doc_documents/document_family/documentFamilyApi';
+import { payerFamilyApi } from '../features/payer-family/payerFamilyApi';
 import { lineageApi } from '../features/lineage/lineageApi';
 import { rtkAuth } from '../common/auth-middleware';
 
 import navSlice from './navSlice';
 import documentFamilyReducer from '../features/doc_documents/document_family/documentFamilySlice';
+import payerFamilyReducer from '../features/payer-family/payerFamilySlice';
 import sitesReducer from '../features/sites/sitesSlice';
 import userReducer from '../features/users/userSlice';
 import collectionsReducer from '../features/collections/collectionsSlice';
@@ -47,6 +49,7 @@ export const store = configureStore({
     [documentFamilyApi.reducerPath]: documentFamilyApi.reducer,
     [payerBackboneApi.reducerPath]: payerBackboneApi.reducer,
     [lineageApi.reducerPath]: lineageApi.reducer,
+    [payerFamilyApi.reducerPath]: payerFamilyApi.reducer,
     nav: navSlice.reducer,
     sites: sitesReducer,
     users: userReducer,
@@ -54,6 +57,7 @@ export const store = configureStore({
     docDocuments: docDocumentsReducer,
     siteDocDocuments: siteDocDocumentsReducer,
     documentFamilies: documentFamilyReducer,
+    payerFamilies: payerFamilyReducer,
     documents: documentsReducer,
     extractions: extractionsReducer,
     translations: translationsReducer,
@@ -67,6 +71,7 @@ export const store = configureStore({
       sitesApi.middleware,
       siteScrapeTasksApi.middleware,
       documentsApi.middleware,
+      payerFamilyApi.middleware,
       extractionTasksApi.middleware,
       workQueuesApi.middleware,
       proxiesApi.middleware,
