@@ -7,7 +7,7 @@ from backend.common.models.base_document import BaseDocument
 class PayerFamily(BaseDocument):
     name: str
     document_type: str
-    site_id: PydanticObjectId = "siteID"
+    site_id: PydanticObjectId | None = None
     payer_type: str = "plan"
     payer_ids: list[str] = []
     channels: list[str] = []
@@ -20,7 +20,7 @@ class PayerFamily(BaseDocument):
 class NewPayerFamily(BaseModel):
     name: str
     document_type: str
-    site_id: PydanticObjectId
+    site_id: PydanticObjectId | None = None
     payer_type: str = "plan"
     payer_ids: list[str] = []
     channels: list[str] = []
