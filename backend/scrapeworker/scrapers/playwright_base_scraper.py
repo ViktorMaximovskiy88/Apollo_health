@@ -85,23 +85,16 @@ class PlaywrightBaseScraper(ABC):
         return css_handle is not None or xpath_locator_count > 0
 
     async def dismiss_modals(self):
-        modal_handles = await self.page.query_selector_all("body > div > div, body > div")
+        modal_handles = await self.page.query_selector_all("div:visible")
 
         for modal_handle in modal_handles:
-            visible = await modal_handle.is_visible()
-
-            if not visible:
-                print("not visoibal;e")
-                continue
-
-            print(" I SEE")
-
             maybe_modal = await modal_handle.evaluate(is_maybe_modal)
             if maybe_modal:
                 button = await modal_handle.query_selector(
-                    'button:visible:text-matches("(agree|continue|accept|ok)", "i")'
+                    'button:text-matches("(yes|agree|continue|accept|ok)", "i")'
                 )
-                print(button, "button")
+                if button:
+                    await button.click()
 
     async def is_applicable(self) -> bool:
 
