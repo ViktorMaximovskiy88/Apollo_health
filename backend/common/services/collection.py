@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from pyparsing import Optional
 
 from backend.app.utils.logger import Logger, create_and_log
+from backend.common.core.config import env_type
 from backend.common.core.enums import CollectionMethod, TaskStatus
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
@@ -290,6 +291,8 @@ class CollectionService:
             "doc_id: [{work_item.document_id}] "
             "retrieved_document_id: [{work_item.retrieved_document_id}]"
         )
+        if env_type == "local":
+            typer.secho(work_item_header_msg, fg=typer.colors.BRIGHT_GREEN)
         retr_doc = await RetrievedDocument.get_motor_collection().find_one(
             {"_id": work_item.retrieved_document_id},
         )
@@ -298,24 +301,17 @@ class CollectionService:
 
         match work_item.selected:
             case "FOUND":
-                typer.secho(
-                    f"FOUND {work_item_header_msg}",
-                    fg=typer.colors.BRIGHT_GREEN,
-                )
                 self.set_last_collected(retr_doc)
                 await target_task.save()
             case "NEW_DOCUMENT":
-                typer.secho(
-                    f"NEW_DOCUMENT {work_item_header_msg}",
-                    fg=typer.colors.BRIGHT_GREEN,
-                )
                 self.set_last_collected(retr_doc)
+                target_task.retrieved_document_ids = [
+                    f"{retr_id}"
+                    for retr_id in target_task.retrieved_document_ids
+                    if retr_id != work_item.retrieved_document_id
+                ]
                 await target_task.save()
             case "NOT_FOUND":
-                typer.secho(
-                    f"NOT_FOUND {work_item_header_msg}",
-                    fg=typer.colors.BRIGHT_GREEN,
-                )
                 target_task.retrieved_document_ids = [
                     f"{retr_id}"
                     for retr_id in target_task.retrieved_document_ids
@@ -323,9 +319,6 @@ class CollectionService:
                 ]
                 await target_task.save()
             case _:
-                typer.secho(
-                    f"OTHER {work_item_header_msg}",
-                    fg=typer.colors.BRIGHT_GREEN,
-                )
+                pass
 
         return result

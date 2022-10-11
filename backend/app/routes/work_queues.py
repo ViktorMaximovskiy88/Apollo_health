@@ -284,7 +284,7 @@ async def submit_work_item(
     logger: Logger = Depends(get_logger),
     work_queue: WorkQueue = Depends(get_target),
     current_user: User = Security(get_current_user),
-):
+) -> SubmitWorkItemResponse:
     Collection: Type[BaseDocument] = getattr(collection_classes, work_queue.collection_name)
 
     lock = await attempt_lock_acquire(work_queue, item_id, current_user)

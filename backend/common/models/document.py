@@ -65,6 +65,7 @@ class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
 
 class NewManualDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
     internal_document: bool
+    replacing_old_version_id: str  # If adding new version, this is original doc id.
 
 
 class UpdateRetrievedDocument(BaseModel, DocumentMixins):

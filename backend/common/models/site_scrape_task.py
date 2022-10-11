@@ -13,6 +13,7 @@ from backend.common.models.site import ScrapeMethodConfiguration
 class WorkItemOption(Enum):
     FOUND = "FOUND"
     NEW_DOCUMENT = "NEW_DOCUMENT"
+    NEW_VERSION = "NEW_VERSION"
     NOT_FOUND = "NOT_FOUND"
     UNHANDLED = "UNHANDLED"
 

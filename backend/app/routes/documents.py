@@ -3,12 +3,14 @@ import tempfile
 from datetime import datetime, timezone
 from typing import Any, List
 
+import typer
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, Security, UploadFile, status
 from fastapi.responses import StreamingResponse
 
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
+from backend.common.core.enums import CollectionMethod
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import (
     NewManualDocument,
@@ -19,7 +21,12 @@ from backend.common.models.document import (
 )
 from backend.common.models.document_mixins import get_site_location
 from backend.common.models.site import Site
-from backend.common.models.site_scrape_task import ManualWorkItem, SiteScrapeTask, TaskStatus
+from backend.common.models.site_scrape_task import (
+    ManualWorkItem,
+    SiteScrapeTask,
+    TaskStatus,
+    WorkItemOption,
+)
 from backend.common.models.user import User
 from backend.common.services.collection import CollectionResponse
 from backend.common.services.document import create_doc_document_service
@@ -278,29 +285,72 @@ async def add_document(
             )
         ],
     )
-    created_retr_doc: RetrievedDocument = await create_and_log(logger, current_user, new_document)
+    # Is uploading new version from work_item action.
+    if document.replacing_old_version_id:
+        new_document.is_current_version = True
 
     # Create task and doc_doc with same details as retr_doc (uploaded).
-    site: Site | None = await Site.find_one({"_id": document.site_id})
-    scrape_task: SiteScrapeTask = SiteScrapeTask(
-        site_id=document.site_id,
-        retrieved_document_ids=[new_document.id],
-        status=TaskStatus.FINISHED,
-        queued_time=now,
-        start_time=now,
-        end_time=now,
-        documents_found=1,
-        collection_method=site.collection_method,
-    )
+    created_retr_doc: RetrievedDocument = await create_and_log(logger, current_user, new_document)
     created_doc_doc: DocDocument = await create_doc_document_service(new_document, current_user)
-    if created_doc_doc:
-        scrape_task.work_list.append(
-            ManualWorkItem(
-                document_id=f"{created_doc_doc.id}",
-                retrieved_document_id=f"{created_retr_doc.id}",
-            )
+
+    # TODO: This works for new version, but what about add new doc to task?
+    # Update old_doc work_item in work_list with new_doc and set prev_doc to old_doc.
+    site: Site | None = await Site.find_one({"_id": document.site_id})
+    if document.replacing_old_version_id:
+        print("old_version_id is ")
+        print(document.replacing_old_version_id)
+        # TODO: Pass current_queue task from frontend instead of fetching.
+        current_queued_task: SiteScrapeTask = await SiteScrapeTask.find_one(
+            {
+                "initiator_id": current_user.id,
+                "status": f"{TaskStatus.IN_PROGRESS}",
+                "collection_method": f"{CollectionMethod.Manual}",
+            }
+        )
+        doc_index: int = next(
+            i
+            for i, wi in enumerate(current_queued_task.work_list)
+            if f"{wi.document_id}" == document.replacing_old_version_id
         )
 
-    await scrape_task.save()
+        if not doc_index:
+            msg = "Error uploading new version. Not able to find old doc in work list"
+            typer.secho(msg, fg=typer.colors.RED)
+            raise HTTPException(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                msg,
+            )
+        work_item = current_queued_task.work_list[doc_index]
+        work_item.retrieved_document_id = new_document.id
+        work_item.prev_doc = document.replacing_old_version_id
+        work_item.selected = WorkItemOption.NEW_VERSION
+        current_queued_task.work_list[doc_index] = work_item
+        await current_queued_task.save()
+        # TODO: Log update
+        # task_updates["work_list"][doc_index]["_id"] = new_document.id
+        # task_updates["work_list"][doc_index]["is_new"] = True
+        # task_updates["work_list"][doc_index]["prev_doc"] = new_document.replacing_old_version_id
+        # task_updates["work_list"][doc_index]["selected"] = WorkItemOption.NEW_VERSION
+        # await update_and_log_diff(logger, current_user, current_queued_task, task_updates)
+    # Create new task and work item for new document.
+    else:
+        scrape_task: SiteScrapeTask = SiteScrapeTask(
+            site_id=document.site_id,
+            retrieved_document_ids=[new_document.id],
+            status=TaskStatus.FINISHED,
+            queued_time=now,
+            start_time=now,
+            end_time=now,
+            documents_found=1,
+            collection_method=site.collection_method,
+        )
+        if created_doc_doc:
+            scrape_task.work_list.append(
+                ManualWorkItem(
+                    document_id=f"{created_doc_doc.id}",
+                    retrieved_document_id=f"{created_retr_doc.id}",
+                )
+            )
+        await scrape_task.save()
 
     return CollectionResponse(success=True)

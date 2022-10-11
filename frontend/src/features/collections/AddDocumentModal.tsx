@@ -46,6 +46,7 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
     internal_document: false,
   };
 
+  // Clicked on new document so copy old document details to form.
   if (oldVersion) {
     const { site_id, link_text, base_url, url } = oldVersion;
     initialValues = {
@@ -55,7 +56,21 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
       internal_document: oldVersion.internal_document,
       locations: [{ site_id, link_text, base_url, url }],
     };
+    // initialValues not working in work_item new_version, so set here.
+    form.setFieldsValue({
+      ['lang_code']: oldVersion.lang_code,
+    });
+    form.setFieldsValue({
+      ['name']: oldVersion.name,
+    });
+    form.setFieldsValue({
+      ['document_type']: oldVersion.document_type,
+    });
+    form.setFieldsValue({
+      ['internal_document']: oldVersion.internal_document,
+    });
   }
+
   /* eslint-disable no-template-curly-in-string */
   const validateMessages = {
     required: '${label} is required!',
@@ -68,6 +83,16 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
   async function saveDocument(newDocument: any) {
     try {
       newDocument.site_id = siteId;
+      if (oldVersion) {
+        newDocument.replacing_old_version_id = oldVersion._id;
+        // last_collected_date=now in backend. Is this necessary?
+        newDocument.last_collected_date = oldVersion.last_collected_date;
+        if (oldVersion.internal_document) {
+          newDocument.internal_document = oldVersion.internal_document;
+        } else {
+          newDocument.internal_document = false;
+        }
+      }
       newDocument.url = form.getFieldValue('url');
       newDocument.base_url = form.getFieldValue('base_url') ?? newDocument.url;
       newDocument.link_text = form.getFieldValue('link_text');
@@ -75,12 +100,6 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
       fileData.url = form.getFieldValue('url');
       fileData.base_url = form.getFieldValue('base_url') ?? newDocument.url;
       fileData.link_text = form.getFieldValue('link_text');
-
-      if (oldVersion) {
-        newDocument._id = oldVersion._id;
-        newDocument.last_collected_date = oldVersion.last_collected_date;
-        newDocument.internal_document = oldVersion.internal_document;
-      }
       fileData.metadata.link_text = newDocument.link_text;
       delete newDocument.link_text;
       delete newDocument.document_file;
@@ -197,7 +216,6 @@ function UploadItem(props: any) {
         setUploadStatus('');
         message.error(response.error);
       } else if (response.success) {
-        console.log('SHOULD SEE ME');
         setUploadStatus('done');
         setLocationValuesFromResponse(response.data);
         setFileData(response.data);
