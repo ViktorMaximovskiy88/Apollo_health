@@ -36,6 +36,8 @@ class BaseDocDocument(BaseModel):
     doc_type_confidence: float | None = None
     internal_document: bool | None = None
 
+    document_family_id: PydanticObjectId | None = None
+
     # Extracted Dates
     effective_date: datetime | None = None
     last_reviewed_date: datetime | None = None
