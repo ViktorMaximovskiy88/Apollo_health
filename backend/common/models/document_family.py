@@ -17,7 +17,7 @@ class NewDocumentFamily(BaseModel):
     name: str
     document_type: str
     description: str | None = None
-    site_id: PydanticObjectId
+    site_id: PydanticObjectId | list[PydanticObjectId] = []
     payer_info: PayerInfo = PayerInfo()
     relevance: list[str] = []
     legacy_relevance: list[str] = []
@@ -28,7 +28,7 @@ class UpdateDocumentFamily(BaseModel):
     name: str | None = None
     document_type: str | None = None
     description: str | None = None
-    site_id: PydanticObjectId | None = None
+    site_id: PydanticObjectId | list[PydanticObjectId] = []
     payer_info: PayerInfo | None = None
     relevance: list[str] = []
     disabled: bool | None = None

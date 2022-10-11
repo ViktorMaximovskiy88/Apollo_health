@@ -29,8 +29,11 @@ export const documentFamilyApi = createApi({
       query: (id) => `/document-family/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'DocumentFamily' as const, id }],
     }),
-    getDocumentFamilyByName: builder.query<DocumentFamily, { name: string; siteId: string }>({
-      query: ({ name, siteId }) => `/document-family/search?name=${name}&site_id=${siteId}`,
+    getDocumentFamilyByName: builder.query<DocumentFamily, { name: string; siteId?: string }>({
+      query: ({ name, siteId }) => {
+        if (siteId) return `/document-family/search?name=${name}&site_id=${siteId}`;
+        else return `/document-family/search?name=${name}`;
+      },
       providesTags: (_r, _e, name) => [{ type: 'DocumentFamily' as const, name }],
     }),
     addDocumentFamily: builder.mutation<DocumentFamily, Partial<DocumentFamily>>({

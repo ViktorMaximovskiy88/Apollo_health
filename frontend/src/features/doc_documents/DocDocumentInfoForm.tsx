@@ -35,7 +35,7 @@ export function DocDocumentInfoForm({ onFieldChange, docDocument }: DocDocumentI
       <DocumentClassification />
       <Translation />
       <Hr />
-      <DocDocumentInfoFormFamilyField docDocument={docDocument} />
+      <DocDocumentInfoFormFamilyField docDocument={docDocument} onFieldChange={onFieldChange} />
       <Hr />
       <DateFields onFieldChange={onFieldChange} />
       <Hr />

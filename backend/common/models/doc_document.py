@@ -103,6 +103,7 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     name: str | None = None
     document_type: str | None = None
     lang_code: LangCode | None = None
+    document_family_id: PydanticObjectId | None = None
 
     final_effective_date: datetime | None = None
     effective_date: datetime | None = None

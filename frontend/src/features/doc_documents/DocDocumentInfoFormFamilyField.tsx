@@ -9,12 +9,12 @@ import { useGetDocumentFamiliesQuery } from './document_family/documentFamilyApi
 
 interface DocDocumentLocationsPropTypes {
   docDocument: DocDocument;
-  locations?: DocDocumentLocation[];
+  onFieldChange: () => void;
 }
 
 export const DocDocumentInfoFormFamilyField = ({
   docDocument,
-  locations,
+  onFieldChange,
 }: DocDocumentLocationsPropTypes) => {
   const form = Form.useFormInstance();
   const [isVisible, setIsVisible] = useState<boolean>(false);
@@ -23,18 +23,16 @@ export const DocDocumentInfoFormFamilyField = ({
     documentType: docDocument.document_type,
   });
   const options = data.map((item: DocumentFamily) => ({ value: item._id, label: item.name }));
-  // const updatedLocation = Form.useWatch(['locations', index]);
-
+  const document_family_id = Form.useWatch('document_family_id');
   return (
     <div>
-      <Form.Item label="Document Family" name="locations">
+      <Form.Item label="Document Family" name="document_family_id">
         <Select
-          // value={updatedLocation?.document_family_id}
-          // onSelect={(documentFamilyId: string) => {
-          //   const locations = form.getFieldValue('locations');
-          //   locations[index].document_family_id = documentFamilyId;
-          //   form.setFieldsValue({ locations });
-          // }}
+          value={document_family_id}
+          onSelect={(documentFamilyId: string) => {
+            form.setFieldsValue({ document_family_id: documentFamilyId });
+            onFieldChange();
+          }}
           options={options}
           style={{ width: 'calc(100% - 96px', marginRight: '8px' }}
         />
@@ -53,11 +51,7 @@ export const DocDocumentInfoFormFamilyField = ({
         documentType={docDocument.document_type}
         visible={isVisible}
         onSave={(documentFamilyId: string) => {
-          const locations = form.getFieldValue('locations');
-          locations[selectedIndex].document_family_id = documentFamilyId;
-          form.setFieldsValue({ locations });
           setIsVisible(false);
-          setSelectedLocationIndex(-1);
         }}
         onClose={() => {
           setIsVisible(false);

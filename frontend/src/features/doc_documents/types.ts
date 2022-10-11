@@ -56,7 +56,7 @@ export interface DocDocument extends BaseDocument {
   document_type: string;
   doc_type_confidence: number;
 
-  document_family_id?: string;
+  document_family_id: string;
 
   effective_date: string;
   last_reviewed_date: string;

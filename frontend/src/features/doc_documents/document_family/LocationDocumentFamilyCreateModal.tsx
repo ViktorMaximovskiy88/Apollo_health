@@ -123,14 +123,10 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
     }
   }, [isSuccess, data]);
 
-  if (!location) {
-    return <></>;
-  }
-
   return (
     <Modal
       visible={visible}
-      title={<>Add Document Family for {location.site_name}</>}
+      title={<>Add Document Family</>}
       width="50%"
       okText="Submit"
       onOk={form.submit}
@@ -146,17 +142,12 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
         onFinish={(values: any) => {
           addDocumentFamily({
             ...values,
-            site_id: location.site_id,
+            site_id: location?.site_id,
             document_type: documentType,
           });
         }}
       >
         <div className="flex">
-          <div className="flex-1 mt-2 mb-4">
-            <h3>Site</h3>
-            <div>{location.site_name}</div>
-          </div>
-
           <div className="flex-1 mt-2 mb-4">
             <h3>Document Type</h3>
             <div>{documentType}</div>
@@ -167,7 +158,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
           name="name"
           rules={[
             { required: true, message: 'Please input a document family name' },
-            mustBeUniqueToSite(location.site_id, getDocumentFamilyByName),
+            mustBeUniqueToSite(getDocumentFamilyByName, location?.site_id),
           ]}
         >
           <Input />
@@ -187,7 +178,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
 };
 
 // asyncValidator because rtk query makes this tough without hooks/dispatch
-function mustBeUniqueToSite(siteId: string, asyncValidator: Function) {
+function mustBeUniqueToSite(asyncValidator: Function, siteId?: string) {
   return {
     async validator(_rule: Rule, value: string) {
       const { data: documentFamily } = await asyncValidator({ name: value, siteId });

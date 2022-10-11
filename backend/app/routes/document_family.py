@@ -36,13 +36,9 @@ async def get_target(id: PydanticObjectId) -> DocumentFamily:
     response_model=list[DocumentFamily],
 )
 async def read_document_families(
-    site_id: PydanticObjectId | None = None,
     document_type: str | None = None,
 ):
     query = DocumentFamily.find({"disabled": False})
-
-    if site_id:
-        query = query.find({"site_id": site_id})
 
     if document_type:
         query = query.find({"document_type": document_type})
@@ -56,10 +52,13 @@ async def read_document_families(
     response_model=DocumentFamily,
 )
 async def read_document_family_by_name(
-    site_id: PydanticObjectId,
     name: str,
+    site_id: PydanticObjectId | None = None,
 ):
-    document_family = await DocumentFamily.find_one({"name": name, "site_id": site_id})
+    document_family: DocumentFamily
+    if site_id:
+        document_family = await DocumentFamily.find_one({"name": name, "site_id": site_id})
+    document_family = await DocumentFamily.find_one({"name": name})
     return document_family
 
 
@@ -86,7 +85,6 @@ async def create_document_family(
         description=document_family.description,
         site_id=document_family.site_id,
         relevance=document_family.relevance,
-        payer_info=document_family.payer_info,
         field_groups=document_family.field_groups,
         legacy_relevance=document_family.legacy_relevance,
         disabled=False,
