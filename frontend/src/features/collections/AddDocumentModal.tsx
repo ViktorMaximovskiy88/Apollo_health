@@ -29,6 +29,8 @@ import { useAddDocumentMutation } from '../retrieved_documents/documentsApi';
 import { baseApiUrl, client } from '../../app/base-api';
 import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
 import { SiteDocDocument } from '../doc_documents/types';
+import { useUpdateSelected } from '../doc_documents/manual_collection/useUpdateSelected';
+import { WorkItemOption } from './types';
 
 interface AddDocumentModalPropTypes {
   oldVersion?: SiteDocDocument;
@@ -40,6 +42,7 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
   const [form] = useForm();
   const [addDoc] = useAddDocumentMutation();
   const [fileData, setFileData] = useState<any>();
+  const updateSelected = useUpdateSelected();
 
   let initialValues: any = {
     lang_code: 'en',
@@ -111,6 +114,9 @@ export function AddDocumentModal({ oldVersion, setVisible, siteId }: AddDocument
         .unwrap()
         .then(() => {
           setVisible(false);
+          if (oldVersion) {
+            updateSelected(WorkItemOption.Unhandled); // does not work
+          }
         })
         .catch((error) =>
           notification.error({

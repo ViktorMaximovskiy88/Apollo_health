@@ -308,14 +308,14 @@ class CollectionService:
                 target_task.retrieved_document_ids = [
                     f"{retr_id}"
                     for retr_id in target_task.retrieved_document_ids
-                    if retr_id != work_item.retrieved_document_id
+                    if f"{retr_id}" != f"{work_item.retrieved_document_id}"
                 ]
                 await target_task.save()
             case "NOT_FOUND":
                 target_task.retrieved_document_ids = [
                     f"{retr_id}"
                     for retr_id in target_task.retrieved_document_ids
-                    if retr_id != work_item.retrieved_document_id
+                    if f"{retr_id}" != f"{work_item.retrieved_document_id}"
                 ]
                 await target_task.save()
             case _:
