@@ -21,6 +21,7 @@ class Metadata(BaseModel):
     siblings_text: str | None = None
     resource_value: str | None = None
     base_url: str | None = None
+    anchor_target: str | None = None
     playbook_context: PlaybookContext | None = None
 
 
@@ -29,6 +30,7 @@ class Request(BaseModel):
     headers: dict[str, str] = {}
     url: str
     data: Any | None = None
+    cookies: list[Any] = []
     # TODO move to response ..
     filename: str | None = None
 

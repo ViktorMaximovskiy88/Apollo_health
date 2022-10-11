@@ -25,7 +25,7 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
 
         self.selectors = self.selectors + href_selectors + hidden_value_selectors
         selector_string = ", ".join(self.selectors)
-        self.log.debug(selector_string)
+        self.log.info(selector_string)
         return selector_string
 
     @cached_property
@@ -35,7 +35,7 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
             if attr_selector.resource_address:
                 selectors.append(to_xpath(attr_selector))
         selector_string = "|".join(selectors)
-        self.log.debug(selector_string)
+        self.log.info(selector_string)
         return selector_string
 
     def xpath_selectors(self):
@@ -53,13 +53,31 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
         link_handle: ElementHandle
         for link_handle in link_handles:
             metadata: Metadata = await self.extract_metadata(link_handle, resource_attr)
+
+            # TODO iterate on this logic
+            # cases '../abc' '/abc' 'abc' 'https://a.com/abc' 'http://a.com/abc' '//a.com/abc'
+            # anchor targets can change behavior
+            url = (
+                f"/{metadata.resource_value}"
+                if metadata.anchor_target
+                and metadata.anchor_target == "_blank"
+                and not (
+                    metadata.resource_value.startswith("http")
+                    or metadata.resource_value.startswith("/")
+                )
+                else metadata.resource_value
+            )
+            self.log.info(
+                f"metadata.resource_value={metadata.resource_value} base_url={base_url} url={url}"
+            )
+
             downloads.append(
                 DownloadContext(
                     metadata=metadata,
                     request=Request(
                         url=urljoin(
                             base_url,
-                            metadata.resource_value,
+                            url,
                         ),
                     ),
                 )

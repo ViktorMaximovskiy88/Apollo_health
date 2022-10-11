@@ -310,7 +310,7 @@ async def add_document(
                 "collection_method": f"{CollectionMethod.Manual}",
             }
         )
-        if created_doc_doc:
+        if created_doc_doc and site.collection_method == CollectionMethod.Manual:
             current_task.work_list.append(
                 ManualWorkItem(
                     document_id=f"{created_doc_doc.id}",
@@ -386,7 +386,7 @@ async def add_document(
             documents_found=1,
             collection_method=site.collection_method,
         )
-        if created_doc_doc:
+        if created_doc_doc and site.collection_method == CollectionMethod.Manual:
             new_scrape_task.work_list.append(
                 ManualWorkItem(
                     document_id=f"{created_doc_doc.id}",

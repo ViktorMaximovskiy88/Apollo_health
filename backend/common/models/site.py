@@ -27,7 +27,8 @@ class ScrapeMethodConfiguration(BaseModel):
     url_keywords: list[str] = []
     proxy_exclusions: list[PydanticObjectId] = []
     wait_for: list[str] = []
-    wait_for_timeout_ms: int = 0
+    wait_for_timeout_ms: int = 500
+    base_url_timeout_ms: int = 30000
     search_in_frames: bool = False
     follow_links: bool = False
     follow_link_keywords: list[str] = []
@@ -81,7 +82,9 @@ class NewSite(BaseModel):
     playbook: str | None = None
     cron: str | None = ""
     status: str | None = SiteStatus.NEW
+    doc_type_threshold_override: bool = False
     doc_type_threshold: float = 0.75
+    lineage_threshold_override: bool = False
     lineage_threshold: float = 0.75
 
 
@@ -99,7 +102,9 @@ class UpdateSite(BaseModel):
     playbook: str | None = None
     status: str | None = None
     assignee: PydanticObjectId | None = None
+    doc_type_threshold_override: bool | None = None
     doc_type_threshold: float | None = None
+    lineage_threshold_override: bool | None = None
     lineage_threshold: float | None = None
 
 

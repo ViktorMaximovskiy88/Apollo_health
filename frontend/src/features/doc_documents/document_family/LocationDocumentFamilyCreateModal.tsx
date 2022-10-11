@@ -22,7 +22,7 @@ import {
 interface DocumentFamilyCreateModalPropTypes {
   documentType: string;
   location: DocDocumentLocation | undefined;
-  visible?: boolean;
+  open?: boolean;
   onClose: () => void;
   onSave: (documentFamilyId: string) => void;
 }
@@ -88,7 +88,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
     { label: 'PAR', value: 'PAR' },
     { label: 'N/A', value: 'N/A' },
   ];
-  const { documentType, location, visible, onClose, onSave } = props;
+  const { documentType, location, open, onClose, onSave } = props;
   const [form] = useForm();
   const [getDocumentFamilyByName] = useLazyGetDocumentFamilyByNameQuery();
   const [addDocumentFamily, { isLoading, data, isSuccess }] = useAddDocumentFamilyMutation();
@@ -131,7 +131,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
 
   return (
     <Modal
-      visible={visible}
+      open={open}
       title={<>Add Document Family for {location.site_name}</>}
       width="50%"
       okText="Submit"

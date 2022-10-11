@@ -9,6 +9,8 @@ from backend.common.models.doc_document import TherapyTag
 from backend.common.models.site import FocusTherapyConfig
 from backend.common.storage.client import ModelStorageClient
 
+TRADEMARK_SYMBOLS = ["\u00AE", "\u2122", "\24C7"]
+
 
 @dataclass
 class FocusArea:
@@ -98,6 +100,11 @@ class TherapyTagger:
         except Exception:
             print("RxNorm Span Ruler Model not found and therefore not loaded")
 
+    def clean_page(self, page: str):
+        for symbol in TRADEMARK_SYMBOLS:
+            page = page.replace(symbol, " ")
+        return page
+
     async def tag_document(
         self,
         full_text: str,
@@ -116,6 +123,7 @@ class TherapyTagger:
         loop = asyncio.get_running_loop()
         char_offset = 0
         for i, page in enumerate(pages):
+            page = self.clean_page(page)
             doc = await loop.run_in_executor(None, self.nlp, page)
             span: Span
             for span in doc.spans.get("sc", []):

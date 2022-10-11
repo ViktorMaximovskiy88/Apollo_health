@@ -32,14 +32,14 @@ import { SiteDocDocument } from '../doc_documents/types';
 
 interface AddDocumentModalPropTypes {
   oldVersion?: SiteDocDocument;
-  setVisible: (visible: boolean) => void;
+  setOpen: (open: boolean) => void;
   siteId: any;
   addNewDocument: boolean;
 }
 
 export function AddDocumentModal({
   oldVersion,
-  setVisible,
+  setOpen,
   siteId,
   addNewDocument,
 }: AddDocumentModalPropTypes) {
@@ -120,7 +120,7 @@ export function AddDocumentModal({
       })
         .unwrap()
         .then(() => {
-          setVisible(false);
+          setOpen(false);
         })
         .catch((error) =>
           notification.error({
@@ -133,17 +133,18 @@ export function AddDocumentModal({
     }
   }
   function onCancel() {
-    setVisible(false);
+    setOpen(false);
   }
 
   function setLocationValuesFromResponse(responseData: any) {
+    console.log('response is');
     form.setFieldsValue({ base_url: responseData.base_url });
     form.setFieldsValue({ url: responseData.url });
     form.setFieldsValue({ link_text: responseData.link_text });
   }
 
   return (
-    <Modal visible={true} title="Add new document" onCancel={onCancel} width={1000} footer={null}>
+    <Modal open={true} title="Add new document" onCancel={onCancel} width={1000} footer={null}>
       <Form
         layout="vertical"
         form={form}

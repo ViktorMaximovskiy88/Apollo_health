@@ -24,7 +24,7 @@ export function DocumentsPage() {
       <DocumentsTable />
       {newDocumentModalVisible && (
         <AddDocumentModal
-          setVisible={setNewDocumentModalVisible}
+          setOpen={setNewDocumentModalVisible}
           siteId={params.siteId}
           addNewDocument={false}
         />

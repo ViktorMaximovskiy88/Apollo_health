@@ -24,6 +24,13 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
     links_found: int = 0
     last_metadata_index: int = 0
 
+    # OPT IN
+    async def is_applicable(self) -> bool:
+        self.log.debug(f"self.parsed_url.netloc={self.parsed_url.netloc}")
+        result = self.parsed_url.netloc in ["www.aultcas.com", "apps.humana.com"]
+        self.log.info(f"{self.__class__.__name__} is_applicable -> {result}")
+        return result
+
     @cached_property
     def css_selector(self) -> str:
         href_selectors = filter_by_href(webform=True)
@@ -36,7 +43,7 @@ class AspNetWebFormScraper(PlaywrightBaseScraper):
             if not attr_selector.resource_address:
                 selectors.append(to_xpath(attr_selector))
         selector_string = "|".join(selectors)
-        self.log.debug(selector_string)
+        self.log.info(selector_string)
         return selector_string
 
     async def __setup(self):
