@@ -3,9 +3,11 @@ from logging import Logger
 from typing import Type
 from urllib.parse import urlparse
 
+from beanie.odm.operators.update.general import Inc
 from playwright.async_api import BrowserContext, Page
 
 from backend.common.models.site import ScrapeMethodConfiguration
+from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.playbook import PlaybookContext
 from backend.scrapeworker.scrapers.aspnet_webform import AspNetWebFormScraper
@@ -32,12 +34,14 @@ class ScrapeHandler:
         playbook_context: PlaybookContext,
         log: Logger,
         config: ScrapeMethodConfiguration,
+        scrape_task: SiteScrapeTask,
     ) -> None:
         self.context = context
         self.page = page
         self.playbook_context = playbook_context
         self.log = log
         self.config = config
+        self.scrape_task = scrape_task
 
     def __is_google(self, url: str) -> bool:
         parsed = urlparse(url)
@@ -77,4 +81,5 @@ class ScrapeHandler:
             for download in await scraper.execute():
                 self.log.info(f"downloads ... {base_url} {download.request.url}")
                 self.__preprocess_download(download, base_url, metadata)
+                await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
                 downloads.append(download)
