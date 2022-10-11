@@ -334,7 +334,7 @@ async def add_document(
                     err_msg,
                 )
             new_work_item = current_task.work_list[doc_index]
-            new_work_item.selected = WorkItemOption.NEW_DOCUMENT
+            new_work_item.selected = WorkItemOption.FOUND
             current_task.work_list[doc_index] = new_work_item
         # Update old version's new_doc to uploaded doc and
         # new version's prev_doc to old version.
@@ -369,7 +369,7 @@ async def add_document(
                 )
             new_work_item = current_task.work_list[doc_index]
             new_work_item.prev_doc = document.replacing_old_version_id
-            new_work_item.selected = WorkItemOption.NEW_VERSION
+            new_work_item.selected = WorkItemOption.FOUND
             current_task.work_list[doc_index] = new_work_item
         await current_task.save()
 
