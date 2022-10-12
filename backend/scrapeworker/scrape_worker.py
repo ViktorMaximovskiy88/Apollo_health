@@ -240,6 +240,10 @@ class ScrapeWorker:
                     parsed_content, download, checksum, url
                 )
                 doc_document = await self.doc_updater.create_doc_document(document)
+                await self.scrape_task.update(
+                    {"$push": {"new_retrieved_document_ids": document.id}}
+                ),
+
                 self.lineage_tasks.append((document, doc_document))
 
             link_retrieved_task.retrieved_document_id = document.id
