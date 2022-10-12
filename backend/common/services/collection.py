@@ -17,7 +17,7 @@ from backend.common.core.enums import CollectionMethod, TaskStatus
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import Site
-from backend.common.models.site_scrape_task import ManualWorkItem, SiteScrapeTask
+from backend.common.models.site_scrape_task import ManualWorkItem, SiteScrapeTask, WorkItemOption
 from backend.common.models.user import User
 
 
@@ -44,7 +44,11 @@ class CollectionService:
 
     def __init__(self, site: Site, current_user: User, logger: Logger) -> None:
         self.site, self.current_user, self.logger = site, current_user, logger
-        self.queued_statuses: list[TaskStatus] = [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]
+        self.queued_statuses: list[TaskStatus] = [
+            TaskStatus.QUEUED,
+            TaskStatus.PENDING,
+            TaskStatus.IN_PROGRESS,
+        ]
         self.last_queued = None
 
     async def has_queued(self) -> SiteScrapeTask | Boolean:
@@ -246,7 +250,7 @@ class CollectionService:
             .to_list()
         )
         if not retrieved_documents:
-            response.add_error("No retrieved_docs for site_scrape_task[{task.id}]")
+            response.add_error(f"No retrieved_docs for site_scrape_task[{task.id}]")
             return response
 
         for r_doc in retrieved_documents:
@@ -288,11 +292,11 @@ class CollectionService:
     ) -> CollectionResponse:
         """Process a site_scrape_task work_item action"""
         result: CollectionResponse = CollectionResponse()
-        if env_type == "local":
+        if env_type == "local" and work_item.selected != WorkItemOption.UNHANDLED:
             work_item_msg: str = (
                 f"work_item selected: [{work_item.selected}] in task: [{target_task.id}] "
-                "doc_id: [{work_item.document_id}] "
-                "retrieved_document_id: [{work_item.retrieved_document_id}]"
+                f"doc_id: [{work_item.document_id}] "
+                f"retrieved_document_id: [{work_item.retrieved_document_id}]"
             )
             typer.secho(work_item_msg, fg=typer.colors.BRIGHT_GREEN)
         # Update work_item.action_datetime.
@@ -303,21 +307,31 @@ class CollectionService:
         )
 
         match work_item.selected:
-            case "FOUND":
+            case WorkItemOption.FOUND:
                 self.set_last_collected(retr_doc)
                 target_task.work_list.pop(item_index)
-            case "NEW_DOCUMENT":
+            case WorkItemOption.NEW_DOCUMENT:
                 self.set_last_collected(retr_doc)
-            case "NEW_VERSION":
+            case WorkItemOption.NEW_VERSION:
                 self.set_last_collected(retr_doc)
-            case "NOT_FOUND":
+            case WorkItemOption.NOT_FOUND:
                 target_task.retrieved_document_ids = [
                     f"{retr_id}"
                     for retr_id in target_task.retrieved_document_ids
                     if f"{retr_id}" != f"{work_item.retrieved_document_id}"
                 ]
-            case "UNHANDLED":
-                result.add_error("Error processing work list. Unhandled selected.")
+                # Should we keep in work_list so no found shows after stop collection?
+                target_task.work_list = [
+                    ManualWorkItem(
+                        document_id=f"{wi.document_id}",
+                        retrieved_document_id=f"{wi.retrieved_document_id}",
+                    )
+                    for wi in target_task.work_list
+                    if f"{wi.retrieved_document_id}" != f"{work_item.retrieved_document_id}"
+                ]
+            case WorkItemOption.UNHANDLED:
+                # Error header says Please review and update the following documents:
+                result.add_error(f"{retr_doc['name']}")
                 return result
         await target_task.save()
 
