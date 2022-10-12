@@ -218,7 +218,6 @@ class ScrapeWorker:
 
             if document:
                 self.log.info("updating doc")
-
                 if document.text_checksum is None:  # Can be removed after text added to older docs
                     text_checksum = await self.text_handler.save_text(parsed_content["text"])
                     document.text_checksum = text_checksum
