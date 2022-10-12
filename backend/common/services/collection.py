@@ -272,7 +272,9 @@ class CollectionService:
         for queued_site_task in queued_site_tasks:
             for item_index, work_item in enumerate(queued_site_task.work_list):
                 work_item_response: CollectionResponse = await self.process_work_item(
-                    target_task=queued_site_task, work_item=work_item, item_index=item_index
+                    target_task=queued_site_task,
+                    work_item=work_item,
+                    item_index=item_index,
                 )
                 if work_item_response.errors:
                     work_list_response.add_error(work_item_response.errors[0])
@@ -293,30 +295,30 @@ class CollectionService:
                 "retrieved_document_id: [{work_item.retrieved_document_id}]"
             )
             typer.secho(work_item_msg, fg=typer.colors.BRIGHT_GREEN)
+        # Update work_item.action_datetime.
+        target_task.work_list[item_index].action_datetime = datetime.now(tz=timezone.utc)
+        # Update retr_doc and doc_doc last_collected.
         retr_doc = await RetrievedDocument.get_motor_collection().find_one(
             {"_id": work_item.retrieved_document_id},
         )
-        # Update work_item.action_datetime.
-        target_task.work_list[item_index].action_datetime = datetime.now(tz=timezone.utc)
 
         match work_item.selected:
             case "FOUND":
                 self.set_last_collected(retr_doc)
-                await target_task.save()
+                target_task.work_list.pop(item_index)
             case "NEW_DOCUMENT":
                 self.set_last_collected(retr_doc)
-                await target_task.save()
             case "NEW_VERSION":
                 self.set_last_collected(retr_doc)
-                await target_task.save()
             case "NOT_FOUND":
                 target_task.retrieved_document_ids = [
                     f"{retr_id}"
                     for retr_id in target_task.retrieved_document_ids
                     if f"{retr_id}" != f"{work_item.retrieved_document_id}"
                 ]
-                await target_task.save()
             case "UNHANDLED":
-                result.add_error(retr_doc["name"])
+                result.add_error("Error processing work list. Unhandled selected.")
+                return result
+        await target_task.save()
 
         return result

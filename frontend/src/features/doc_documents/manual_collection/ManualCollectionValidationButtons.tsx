@@ -21,11 +21,23 @@ const Found = () => {
   switch (workItem.selected) {
     case Option.Found:
       return (
-        <Button type="primary" onClick={() => updateSelected(WorkItemOption.Unhandled)}>
+        <Button type="primary" onClick={() => updateSelected(WorkItemOption.Found)}>
           <FileDoneOutlined className="text-white" />
         </Button>
       );
     case Option.NewDocument:
+      return (
+        <Button disabled>
+          <FileDoneOutlined />
+        </Button>
+      );
+    case Option.NotFound:
+      return (
+        <Button onClick={() => updateSelected(WorkItemOption.Found)}>
+          <FileDoneOutlined />
+        </Button>
+      );
+    case Option.NewVersion:
       return (
         <Button disabled>
           <FileDoneOutlined />
@@ -43,29 +55,36 @@ const Found = () => {
 const NewDocument = () => {
   const { doc, handleNewVersion } = useContext(ValidationButtonsContext) ?? {};
   const { workItem } = useContext(ValidationButtonsContext) ?? {};
-  const updateSelected = useUpdateSelected();
   if (!workItem || !doc || !handleNewVersion) return null;
 
   switch (workItem.selected) {
+    case Option.Found:
+      return (
+        <Button disabled>
+          <FileAddOutlined />
+        </Button>
+      );
     case Option.NewDocument:
       return (
-        <Button
-          type="primary"
-          onClick={() => {
-            handleNewVersion(doc, true);
-          }}
-        >
+        <Button type="primary">
           <FileAddOutlined className="text-white" />
+        </Button>
+      );
+    case Option.NotFound:
+      return (
+        <Button disabled>
+          <FileAddOutlined />
+        </Button>
+      );
+    case Option.NewVersion:
+      return (
+        <Button disabled>
+          <FileAddOutlined />
         </Button>
       );
     default:
       return (
-        <Button
-          onClick={() => {
-            handleNewVersion(doc, false);
-            updateSelected(WorkItemOption.NewDocument);
-          }}
-        >
+        <Button disabled>
           <FileAddOutlined />
         </Button>
       );
@@ -79,13 +98,25 @@ const NotFound = () => {
   if (!workItem) return null;
 
   switch (workItem.selected) {
-    case Option.NotFound:
+    case Option.Found:
       return (
-        <Button type="primary" onClick={() => updateSelected(WorkItemOption.Unhandled)}>
-          <FileExcelOutlined className="text-white" />
+        <Button onClick={() => updateSelected(WorkItemOption.NotFound)}>
+          <FileExcelOutlined />
         </Button>
       );
     case Option.NewDocument:
+      return (
+        <Button disabled>
+          <FileExcelOutlined />
+        </Button>
+      );
+    case Option.NotFound:
+      return (
+        <Button type="primary" onClick={() => updateSelected(WorkItemOption.NotFound)}>
+          <FileExcelOutlined className="text-white" />
+        </Button>
+      );
+    case Option.NewVersion:
       return (
         <Button disabled>
           <FileExcelOutlined />
@@ -107,40 +138,83 @@ const NewVersion = () => {
   if (!workItem || !doc || !handleNewVersion) return null;
 
   switch (workItem.selected) {
+    case Option.Found:
+      return (
+        <Button
+          onClick={() => {
+            handleNewVersion(doc, false);
+            updateSelected(WorkItemOption.NewVersion);
+          }}
+        >
+          <FileExclamationOutlined />
+        </Button>
+      );
+    case Option.NewDocument:
+      return (
+        <Button disabled>
+          <FileExclamationOutlined />
+        </Button>
+      );
+    case Option.NotFound:
+      return (
+        <Button disabled>
+          <FileExclamationOutlined />
+        </Button>
+      );
     case Option.NewVersion:
       return (
-        <Button type="primary">
-          <FileExclamationOutlined
-            onClick={() => {
-              handleNewVersion(doc, false);
-              updateSelected(WorkItemOption.NewVersion);
-            }}
-          />
+        <Button
+          type="primary"
+          onClick={() => {
+            handleNewVersion(doc, false);
+            updateSelected(WorkItemOption.NewVersion);
+          }}
+        >
+          <FileExclamationOutlined className="text-white" />
         </Button>
       );
     default:
       return (
-        <Button>
-          <FileExclamationOutlined
-            onClick={() => {
-              handleNewVersion(doc, false);
-              updateSelected(WorkItemOption.NewVersion);
-            }}
-          />
+        <Button
+          onClick={() => {
+            handleNewVersion(doc, false);
+            updateSelected(WorkItemOption.NewVersion);
+          }}
+        >
+          <FileExclamationOutlined />
         </Button>
       );
   }
 };
 
 const Unhandled = () => {
+  const { doc, handleNewVersion } = useContext(ValidationButtonsContext) ?? {};
   const { workItem } = useContext(ValidationButtonsContext) ?? {};
-  if (!workItem) return null;
+  if (!workItem || !doc || !handleNewVersion) return null;
 
   switch (workItem.selected) {
-    case Option.Unhandled:
+    case Option.Found:
       return (
-        <Button type="primary" className="cursor-not-allowed">
-          <FileUnknownOutlined className="text-white" />
+        <Button disabled>
+          <FileUnknownOutlined />
+        </Button>
+      );
+    case Option.NewDocument:
+      return (
+        <Button disabled>
+          <FileUnknownOutlined />
+        </Button>
+      );
+    case Option.NotFound:
+      return (
+        <Button disabled>
+          <FileUnknownOutlined />
+        </Button>
+      );
+    case Option.NewVersion:
+      return (
+        <Button disabled>
+          <FileUnknownOutlined />
         </Button>
       );
     default:

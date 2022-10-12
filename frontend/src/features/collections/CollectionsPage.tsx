@@ -25,8 +25,10 @@ function ManualCollectionButton(props: any) {
     try {
       let response: any = await runScrape(site!._id);
       if (response.data.success) {
+        setTimeout(function () {
+          navigate(`../doc-documents?scrape_task_id=${response.data.nav_id}`);
+        }, 125); //sometimes worklist changes do not save before nav.
         refetch();
-        navigate(`../doc-documents?scrape_task_id=${response.data.nav_id}`);
       } else {
         notification.error({
           message: 'Error Running Manual Collection',
@@ -54,7 +56,9 @@ function ManualCollectionButton(props: any) {
         let response: any = await cancelAllScrapes(site!._id);
         console.log('err', response);
         if (response.data?.success) {
-          refetch();
+          setTimeout(function () {
+            refetch();
+          }, 125); //sometimes worklist changes do not save before nav.
         } else {
           notification.error({
             message: 'Please review and update the following documents',

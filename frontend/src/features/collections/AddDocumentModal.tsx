@@ -46,11 +46,15 @@ export function AddDocumentModal({
   const [form] = useForm();
   const [addDoc] = useAddDocumentMutation();
   const [fileData, setFileData] = useState<any>();
+  const [docTitle, setDocTitle] = useState('Add new document');
 
   let initialValues: any = {
     lang_code: 'en',
     internal_document: false,
   };
+  if (oldVersion && docTitle !== 'Add new version') {
+    setDocTitle('Add new version');
+  }
 
   // Clicked on new document so copy old document details to form.
   if (oldVersion) {
@@ -137,14 +141,13 @@ export function AddDocumentModal({
   }
 
   function setLocationValuesFromResponse(responseData: any) {
-    console.log('response is');
     form.setFieldsValue({ base_url: responseData.base_url });
     form.setFieldsValue({ url: responseData.url });
     form.setFieldsValue({ link_text: responseData.link_text });
   }
 
   return (
-    <Modal open={true} title="Add new document" onCancel={onCancel} width={1000} footer={null}>
+    <Modal open={true} title={docTitle} onCancel={onCancel} width={1000} footer={null}>
       <Form
         layout="vertical"
         form={form}
