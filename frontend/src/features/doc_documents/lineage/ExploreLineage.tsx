@@ -25,9 +25,11 @@ export function ExploreLineage() {
 
       <Modal
         className="inset-y-1"
+        title="Explore Lineage"
         open={open}
         width="100%"
-        bodyStyle={{ height: 'calc(100vh - 70px)' }}
+        bodyStyle={{ height: 'calc(100vh - 150px)' }}
+        onCancel={() => setOpen(false)}
         footer={[
           <Checkbox
             className="mr-[85%]"
@@ -49,7 +51,10 @@ export function ExploreLineage() {
         ]}
       >
         <div className="flex flex-row h-full">
-          <div className="flex flex-col w-64 mr-2">
+          <div
+            className={classNames('flex flex-col mr-2', showCurrentDocument ? 'w-1/3' : 'w-1/2')}
+          >
+            Documents
             <div className="bg-white mb-1">
               <Input.Search
                 allowClear={true}
@@ -59,7 +64,6 @@ export function ExploreLineage() {
                 }, 250)}
               />
             </div>
-
             <div className="overflow-auto h-full bg-white border-slate-200 border-solid border">
               {displayItems.map((group) => (
                 <div key={group.lineageId} className="p-2 mb-1 border">
@@ -83,7 +87,6 @@ export function ExploreLineage() {
                 </div>
               ))}
             </div>
-
             <div className="p-1">
               {displayItems.length} groups, {domainItems.length} docs
             </div>
@@ -91,15 +94,15 @@ export function ExploreLineage() {
 
           {showCurrentDocument ? (
             <div className="flex flex-1">
-              <div className="w-1/2 h-full overflow-auto">
-                <div>Previous Document</div>
+              <div className="w-1/2 h-full">
+                Previous Document
                 <FileTypeViewer
                   doc={currentDocDocument}
                   docId={currentDocDocument?.retrieved_document_id}
                 />
               </div>
-              <div className="w-1/2 h-full overflow-auto">
-                <div>Current Document</div>
+              <div className="w-1/2 h-full">
+                Current Document
                 <FileTypeViewer
                   doc={currentDocDocument}
                   docId={currentDocDocument?.retrieved_document_id}
@@ -107,7 +110,7 @@ export function ExploreLineage() {
               </div>
             </div>
           ) : (
-            <div className="w-full h-full overflow-auto">
+            <div className="w-1/2 h-full">
               <div>Previous Document</div>
               <FileTypeViewer
                 doc={currentDocDocument}
