@@ -1,5 +1,4 @@
-import { Form, Select, DatePicker, Button } from 'antd';
-import { useState } from 'react';
+import { Form, Select, DatePicker } from 'antd';
 import { prettyDate } from '../../common';
 import { DocumentTypes } from '../retrieved_documents/types';
 import { DocCompareToPrevious } from './DocCompareToPrevious';
