@@ -1,7 +1,9 @@
 import { Form, Select, DatePicker, Button } from 'antd';
+import { useState } from 'react';
 import { prettyDate } from '../../common';
 import { DocumentTypes } from '../retrieved_documents/types';
 import { DocCompareToPrevious } from './DocCompareToPrevious';
+import { ExploreLineage } from './lineage/ExploreLineage';
 
 const DocumentType = () => (
   <Form.Item className="flex-1" name="document_type" label="Document Type" required={true}>
@@ -32,14 +34,6 @@ const Lineage = () => (
   </Form.Item>
 );
 
-const Explore = () => (
-  <div className="flex space-x-8 items-center">
-    <Button className="mt-1" onClick={() => alert('Explore clicked')}>
-      Explore
-    </Button>
-  </div>
-);
-
 export function DocumentClassification() {
   return (
     <>
@@ -51,7 +45,7 @@ export function DocumentClassification() {
       <div className="flex space-x-8">
         <TherapyTagRelevance />
         <Lineage />
-        <Explore />
+        <ExploreLineage />
         <DocCompareToPrevious />
       </div>
     </>
