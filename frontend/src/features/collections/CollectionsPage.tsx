@@ -19,17 +19,21 @@ function ManualCollectionButton(props: any) {
   const { site, refetch, runScrape } = props;
   const navigate = useNavigate();
   const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
+  const [isLoading, setIsLoading] = useState(false);
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
 
   async function handleRunManualScrape() {
     try {
+      setIsLoading(true);
       let response: any = await runScrape(site!._id);
       if (response.data.success) {
         setTimeout(function () {
+          setIsLoading(false);
           navigate(`../doc-documents?scrape_task_id=${response.data.nav_id}`);
         }, 125); //sometimes worklist changes do not save before nav.
         refetch();
       } else {
+        setIsLoading(false);
         notification.error({
           message: 'Error Running Manual Collection',
           description: response.error.data.detail,
@@ -37,11 +41,13 @@ function ManualCollectionButton(props: any) {
       }
     } catch (err) {
       if (isErrorWithData(err)) {
+        setIsLoading(false);
         notification.error({
           message: 'Error Running Manual Collection',
           description: `${err.data.detail}`,
         });
       } else {
+        setIsLoading(false);
         notification.error({
           message: 'Error Running Manual Collection',
           description: JSON.stringify(err),
@@ -53,13 +59,15 @@ function ManualCollectionButton(props: any) {
   async function handleCancelManualScrape() {
     if (site?._id) {
       try {
+        setIsLoading(true);
         let response: any = await cancelAllScrapes(site!._id);
-        console.log('err', response);
         if (response.data?.success) {
           setTimeout(function () {
             refetch();
+            setIsLoading(false);
           }, 125); //sometimes worklist changes do not save before nav.
         } else {
+          setIsLoading(false);
           notification.error({
             message: 'Please review and update the following documents',
             description: response.error.data.detail,
@@ -67,11 +75,13 @@ function ManualCollectionButton(props: any) {
         }
       } catch (err) {
         if (isErrorWithData(err)) {
+          setIsLoading(false);
           notification.error({
             message: 'Error Cancelling Collection',
             description: `${err.data.detail}`,
           });
         } else {
+          setIsLoading(false);
           notification.error({
             message: 'Error Cancelling Collection',
             description: 'Unknown error.',
@@ -83,13 +93,13 @@ function ManualCollectionButton(props: any) {
 
   if (activeStatuses.includes(site.last_run_status)) {
     return (
-      <Button className="ml-auto" onClick={handleCancelManualScrape}>
+      <Button className="ml-auto" disabled={isLoading} onClick={handleCancelManualScrape}>
         End Manual Collection
       </Button>
     );
   } else {
     return (
-      <Button className="ml-auto" onClick={handleRunManualScrape}>
+      <Button className="ml-auto" disabled={isLoading} onClick={handleRunManualScrape}>
         Start Manual Collection
       </Button>
     );
