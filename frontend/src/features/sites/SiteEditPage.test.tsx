@@ -64,7 +64,7 @@ describe(`SiteEditPage`, () => {
     const validationWarning = await screen.findAllByText(
       'You must provide a Link or URL Keyword with Follow Links enabled'
     );
-    expect(validationWarning.length === 2);
+    expect(validationWarning.length).toBe(2);
     for (const warning of validationWarning) {
       expect(warning).toBeInTheDocument();
     }
@@ -119,7 +119,34 @@ describe(`SiteEditPage`, () => {
     const submit = await screen.findByRole('button', { name: /Submit/i });
     await user.click(submit);
     const validationWarning = await screen.findAllByText('Required');
-    expect(validationWarning.length === 5); // Required searchable fields
+    expect(validationWarning.length).toBe(5); // Required searchable fields
+    for (const warning of validationWarning) {
+      expect(warning).toBeInTheDocument();
+    }
+  });
+
+  it(`adds, validates Tagging Focus Separators`, async () => {
+    const user = userEvent.setup();
+
+    render(<SiteEditPage />);
+
+    const docTypeHidden = screen.queryByText(/doc type/i);
+    expect(docTypeHidden).not.toBeInTheDocument();
+
+    const addSeparatorButton = screen.getByText(/add separator/i);
+    await user.click(addSeparatorButton);
+
+    const docType = screen.queryByText(/doc type/i);
+    expect(docType).toBeInTheDocument();
+
+    await user.click(addSeparatorButton);
+    const docTypeFields = await screen.findAllByText('Doc Type');
+    expect(docTypeFields.length).toBe(2); // 2 separators
+
+    const submit = await screen.findByRole('button', { name: /Submit/i });
+    await user.click(submit);
+    const validationWarning = await screen.findAllByText('Required');
+    expect(validationWarning.length).toBe(4); // Required separator fields
     for (const warning of validationWarning) {
       expect(warning).toBeInTheDocument();
     }
