@@ -90,31 +90,6 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
   const [form] = useForm();
   const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
   const [addPayerFamily, { isLoading, data, isSuccess }] = useAddPayerFamilyMutation();
-  const nameValue: string[] = Form.useWatch('legacy_relevance', form);
-  let filteredlegacyRelevanceOptions = legacyRelevanceOptions;
-
-  if (nameValue?.includes('N/A')) {
-    filteredlegacyRelevanceOptions = legacyRelevanceOptions.map((e) => {
-      if (e.value === 'N/A') return e;
-      return { ...e, disabled: true };
-    });
-  } else if (
-    nameValue?.includes('PAR') ||
-    nameValue?.includes('EDITOR_MANUAL') ||
-    nameValue?.includes('EDITOR_AUTOMATED')
-  ) {
-    filteredlegacyRelevanceOptions = legacyRelevanceOptions.map((e) => {
-      if (e.value === 'N/A') {
-        return { ...e, disabled: true };
-      } else if (
-        (nameValue?.includes('EDITOR_MANUAL') && e.value == 'EDITOR_AUTOMATED') ||
-        (nameValue?.includes('EDITOR_AUTOMATED') && e.value == 'EDITOR_MANUAL')
-      ) {
-        return { ...e, disabled: true };
-      }
-      return e;
-    });
-  }
 
   useEffect(() => {
     if (isSuccess && data) {
@@ -171,16 +146,6 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
         >
           <Input />
         </Form.Item>
-        <Input.Group className="space-x-2 flex">
-          <Form.Item label="Legacy Relevance" name="legacy_relevance" className="w-full">
-            <Select mode="multiple" options={filteredlegacyRelevanceOptions} />
-          </Form.Item>
-
-          <Form.Item label="Field Groups" name="field_groups" className="w-full">
-            <Select mode="multiple" options={fieldGroupsOptions} />
-          </Form.Item>
-        </Input.Group>
-
         <PayerInfo />
       </Form>
     </Modal>
