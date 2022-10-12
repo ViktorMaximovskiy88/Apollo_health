@@ -48,7 +48,7 @@ async def get_target(id: PydanticObjectId) -> DocDocument:
     dependencies=[Security(get_current_user)],
 )
 async def read_doc_documents(
-    site_id: PydanticObjectId | None = None,
+    site_ids: list[PydanticObjectId] | None = None,
     scrape_task_id: PydanticObjectId | None = None,
     limit: int | None = None,
     skip: int | None = None,
@@ -57,8 +57,8 @@ async def read_doc_documents(
 ):
     query = {}
 
-    if site_id:
-        query["site_id"] = site_id
+    if site_ids:
+        query["site_id"] = {"$in": site_ids}
 
     if scrape_task_id:
         task = await SiteScrapeTask.get(scrape_task_id)

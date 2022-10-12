@@ -7,6 +7,7 @@ import { LineageDocRow } from './LineageDocRow';
 import classNames from 'classnames';
 import { useState } from 'react';
 import { useGetDocDocumentQuery } from '../docDocumentApi';
+import { LineageDocDocumentsTable } from './LineageDocDocumentsTable';
 
 export function ExploreLineage() {
   const { docDocumentId } = useParams();
@@ -55,41 +56,7 @@ export function ExploreLineage() {
             className={classNames('flex flex-col mr-2', showCurrentDocument ? 'w-1/3' : 'w-1/2')}
           >
             Documents
-            <div className="bg-white mb-1">
-              <Input.Search
-                allowClear={true}
-                placeholder="Search"
-                onChange={debounce((e) => {
-                  actions.onSearch(e.target.value);
-                }, 250)}
-              />
-            </div>
-            <div className="overflow-auto h-full bg-white border-slate-200 border-solid border">
-              {displayItems.map((group) => (
-                <div key={group.lineageId} className="p-2 mb-1 border">
-                  <div
-                    className={classNames('text-slate-500 uppercase mb-1 cursor-pointer')}
-                    onClick={() => {
-                      actions.toggleCollapsed(group);
-                    }}
-                  >
-                    {group.lineageId} ({group.items.length})
-                  </div>
-                  {!group.collapsed &&
-                    group.items.map((item) => (
-                      <LineageDocRow
-                        key={item._id}
-                        doc={item}
-                        isSelected={item._id === rightSideDoc?._id || item._id === leftSideDoc?._id}
-                        {...actions}
-                      />
-                    ))}
-                </div>
-              ))}
-            </div>
-            <div className="p-1">
-              {displayItems.length} groups, {domainItems.length} docs
-            </div>
+            <LineageDocDocumentsTable />
           </div>
 
           {showCurrentDocument ? (

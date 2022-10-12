@@ -15,11 +15,11 @@ export const docDocumentsApi = createApi({
         skip: number;
         sortInfo: TypeSortInfo;
         filterValue: TypeFilterValue;
-        site_id?: string;
+        site_ids?: string[];
         scrape_task_id?: string;
       }
     >({
-      query: ({ limit, skip, sortInfo, filterValue, site_id, scrape_task_id }) => {
+      query: ({ limit, skip, sortInfo, filterValue, site_ids, scrape_task_id }) => {
         const sorts = sortInfo ? [sortInfo] : [];
         const args = [
           `limit=${encodeURIComponent(limit)}`,
@@ -27,8 +27,8 @@ export const docDocumentsApi = createApi({
           `sorts=${encodeURIComponent(JSON.stringify(sorts))}`,
           `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
         ];
-        if (site_id) {
-          args.push(`site_id=${site_id}`);
+        if (site_ids) {
+          args.push(`site_id=${site_ids}`);
         }
         if (scrape_task_id) {
           args.push(`scrape_task_id=${scrape_task_id}`);
