@@ -20,7 +20,7 @@ import {
 interface PayerFamilyCreateModalPropTypes {
   documentType: string;
   location: DocDocumentLocation | undefined;
-  visible?: boolean;
+  open?: boolean;
   onClose: () => void;
   onSave: (payerFamilyId: string) => void;
 }
@@ -79,14 +79,14 @@ function PayerInfo() {
   );
 }
 
-export const DocumentFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) => {
+export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) => {
   let legacyRelevanceOptions = [
     { label: 'Editor Manual', value: 'EDITOR_MANUAL' },
     { label: 'Editor Automated ', value: 'EDITOR_AUTOMATED' },
     { label: 'PAR', value: 'PAR' },
     { label: 'N/A', value: 'N/A' },
   ];
-  const { documentType, location, visible, onClose, onSave } = props;
+  const { documentType, location, onClose, onSave, open } = props;
   const [form] = useForm();
   const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
   const [addPayerFamily, { isLoading, data, isSuccess }] = useAddPayerFamilyMutation();
@@ -129,7 +129,7 @@ export const DocumentFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes
 
   return (
     <Modal
-      visible={visible}
+      open={open}
       title={<>Add Payer Family for {location.site_name}</>}
       width="50%"
       okText="Submit"
