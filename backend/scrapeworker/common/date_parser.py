@@ -183,12 +183,15 @@ class DateParser:
 
         prev_line = ""
         prev_line_index = 0
+        ends_with_comma = False
         for line in text.split("\n"):
             latest_match = 0  # Latest date match on current line
             if self.exclude_text(line):
                 prev_line = ""
                 prev_line_index = 0
                 continue
+            if ends_with_comma:  # append previous line to current line to restore context
+                line = f"{prev_line} {line}"
             for m in self.get_dates(line):
                 end_date = self.extract_date_span(line, m.end)
                 if end_date:
@@ -200,11 +203,16 @@ class DateParser:
                         label = self.get_date_label(line, m.end, m.end + 20, "START")
                     if not label:  # If no match, check previous line
                         label = self.get_date_label(prev_line, prev_line_index, len(prev_line))
+                    if (
+                        ends_with_comma and not label
+                    ):  # if no match and previous line ends with comma, check label from the start
+                        label = self.get_date_label(line, 0, m.last_date_index, "START")
                     if label:
                         self.update_label(m, label)
                 self.unclassified_dates.add(m.date)
                 latest_match = m.end if m.end > latest_match else latest_match
             if line != "":
+                ends_with_comma = True if line[-1] == "," else False
                 prev_line = line
                 prev_line_index = latest_match
 
