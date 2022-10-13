@@ -55,11 +55,6 @@ const createColumns = ({
     },
   },
   {
-    header: 'Link Text',
-    name: 'link_text',
-    render: ({ data: { locations } }: { data: DocDocument }) => <>{locations[0].link_text}</>,
-  },
-  {
     header: 'Final Effective Date',
     name: 'final_effective_date',
     minWidth: 200,
