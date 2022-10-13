@@ -43,11 +43,11 @@ async def get_target(id: PydanticObjectId) -> DocumentFamily:
     response_model=TableQueryResponse,
 )
 async def read_document_families(
-    document_type: str | None = None,
     limit: int | None = None,
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
+    document_type: str | None = None,
 ):
     query = DocumentFamily.find({"disabled": False})
 
