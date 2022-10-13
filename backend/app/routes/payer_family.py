@@ -75,8 +75,8 @@ async def document_family_payer_data(
 
     result_ids = await pbbq.relevant_payer_ids_of_type(PayerClass)
 
-    target = PayerClass.payer_key
-    target = [str(id) for id in result_ids]
+    target.payer_type = PayerClass.payer_key
+    target.payer_ids = [str(id) for id in result_ids]
     return target
 
 
