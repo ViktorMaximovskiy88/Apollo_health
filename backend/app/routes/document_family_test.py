@@ -116,3 +116,25 @@ class TestReadDocumentFamilies:
         await create_document_family(site_one).save()
         docFamilies = await read_document_families(limit, skip, sorts, filters)
         assert docFamilies.total == 5
+
+    async def test_read_all_document_families_based_on_doucment_type(self):
+        limit = 50
+        filters = [
+            TableFilterInfo(name="document_type", operator="eq", type="select", value=None),
+            TableFilterInfo(name="name", operator="contains", type="string", value=None),
+        ]
+        sorts = [TableSortInfo(name="name", dir=-1)]
+        skip = 0
+        site_one = await simple_site().save()
+        await create_document_family(site_one, document_type=DocumentType.Formulary).save()
+        await create_document_family(site_one, document_type=DocumentType.Formulary).save()
+        await create_document_family(site_one, document_type=DocumentType.Formulary).save()
+        await create_document_family(site_one).save()
+        await create_document_family(site_one).save()
+        docFamilies_Formulary = await read_document_families(
+            limit, skip, sorts, filters, document_type=DocumentType.Formulary
+        )
+        docFamilies_AuthorizationPolicy = await read_document_families(
+            limit, skip, sorts, filters, document_type=DocumentType.AuthorizationPolicy
+        )
+        assert docFamilies_Formulary.total == 3 and docFamilies_AuthorizationPolicy.total == 2

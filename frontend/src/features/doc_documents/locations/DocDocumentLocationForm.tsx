@@ -102,28 +102,6 @@ export const DocDocumentLocationForm = ({
         <Form.Item label="Link Text" name={['locations', index, 'link_text']}>
           <Input readOnly={true} />
         </Form.Item>
-
-        <Form.Item label="Document Family" name={['locations', index, 'document_family_id']}>
-          <Select
-            value={updatedLocation?.document_family_id}
-            onSelect={(documentFamilyId: string) => {
-              const locations = form.getFieldValue('locations');
-              locations[index].document_family_id = documentFamilyId;
-              form.setFieldsValue({ locations });
-            }}
-            options={options}
-            style={{ width: 'calc(100% - 96px', marginRight: '8px' }}
-          />
-          <Button
-            type="dashed"
-            onClick={() => {
-              onShowDocumentFamilyCreate(location);
-            }}
-          >
-            <PlusOutlined />
-            New
-          </Button>
-        </Form.Item>
       </div>
     </div>
   );
