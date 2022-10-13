@@ -38,12 +38,20 @@ def as_naive_date(_datetime: datetime) -> date:
     )
 
 
-def calc_final_effective_date(doc) -> datetime | None:
-    computeFromFields: list[datetime] = []
-
+def cast_dates(doc):
     doc.effective_date = as_naive_date(doc.effective_date)
     doc.last_reviewed_date = as_naive_date(doc.last_reviewed_date)
     doc.last_updated_date = as_naive_date(doc.last_updated_date)
+    doc.next_review_date = as_naive_date(doc.next_review_date)
+    doc.next_update_date = as_naive_date(doc.next_update_date)
+    doc.published_date = as_naive_date(doc.published_date)
+    doc.end_date = as_naive_date(doc.end_date)
+
+
+def calc_final_effective_date(doc) -> datetime | None:
+    computeFromFields: list[datetime] = []
+
+    cast_dates(doc)
 
     if doc.effective_date:
         computeFromFields.append(doc.effective_date)

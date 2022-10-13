@@ -7,7 +7,7 @@ import moment from 'moment';
  * @returns
  */
 export function dateToMoment(date?: string) {
-  return date ? moment.utc() : undefined;
+  return date ? moment(date).utc() : undefined;
 }
 
 /**
@@ -66,7 +66,7 @@ export function prettyDateTimeFromISO(value?: string, dateFormat = DateTime.DATE
  * Pretty date renders a date in the default format from a date obj
  */
 export function prettyDate(value: Date, dateFormat = DateTime.DATE_MED): string {
-  return DateTime.fromJSDate(value, { zone: 'utc' }).toLocal().toLocaleString(dateFormat);
+  return DateTime.fromJSDate(value, { zone: 'utc' }).toLocaleString(dateFormat);
 }
 
 export function dateDuration(startDate: string, endDate?: string) {
