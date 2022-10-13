@@ -14,7 +14,7 @@ class BaseRetrievedDocument(BaseModel):
     uploader_id: PydanticObjectId | None = None
     # scrape_task_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     checksum: Indexed(str)  # type: ignore
-    text_checksum: str | None = None
+    text_checksum: Indexed(str) | None = None
     disabled: bool = False
     name: str
     metadata: dict = {}

@@ -55,6 +55,7 @@ class PlaywrightBaseScraper(ABC):
         config: ScrapeMethodConfiguration,
         log: logging.Logger = logging.getLogger(__name__),
         playbook_context: PlaybookContext = [],
+        metadata: dict = {},
     ):
         self.context = context
         self.page = page
@@ -64,6 +65,7 @@ class PlaywrightBaseScraper(ABC):
         self.parsed_url = urlparse(self.url)
         self.selectors = []
         self.log = log
+        self.metadata = metadata
 
     @cached_property
     def css_selector(self) -> str | None:
