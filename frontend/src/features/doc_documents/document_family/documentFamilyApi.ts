@@ -8,15 +8,23 @@ export const documentFamilyApi = createApi({
   baseQuery: fetchBaseQuery(),
   tagTypes: ['DocumentFamily', 'ChangeLog'],
   endpoints: (builder) => ({
-    getDocumentFamilies: builder.query<{ data: DocumentFamily[]; total: number }, TableInfoType>({
-      query: ({ limit, skip, filterValue, sortInfo }) => {
-        const args = [
-          `limit=${encodeURIComponent(limit)}`,
-          `skip=${encodeURIComponent(skip)}`,
-          `sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`,
-          `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
-        ];
-
+    getDocumentFamilies: builder.query<
+      { data: DocumentFamily[]; total: number },
+      Partial<TableInfoType> & { documentType?: string }
+    >({
+      query: ({ limit, skip, filterValue, sortInfo, documentType }) => {
+        const args = [];
+        if (limit && skip != null && filterValue && sortInfo) {
+          args.push(
+            `limit=${encodeURIComponent(limit)}`,
+            `skip=${encodeURIComponent(skip)}`,
+            `sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`,
+            `filters=${encodeURIComponent(JSON.stringify(filterValue))}`
+          );
+        }
+        if (documentType) {
+          args.push(`document_type=${encodeURIComponent(documentType)}`);
+        }
         return `/document-family/?${args.join('&')}`;
       },
       providesTags: (results) => {
@@ -29,8 +37,11 @@ export const documentFamilyApi = createApi({
       query: (id) => `/document-family/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'DocumentFamily' as const, id }],
     }),
-    getDocumentFamilyByName: builder.query<DocumentFamily, { name: string; siteId: string }>({
-      query: ({ name, siteId }) => `/document-family/search?name=${name}&site_id=${siteId}`,
+    getDocumentFamilyByName: builder.query<DocumentFamily, { name: string; siteId?: string }>({
+      query: ({ name, siteId }) => {
+        if (siteId) return `/document-family/search?name=${name}&site_id=${siteId}`;
+        else return `/document-family/search?name=${name}`;
+      },
       providesTags: (_r, _e, name) => [{ type: 'DocumentFamily' as const, name }],
     }),
     addDocumentFamily: builder.mutation<DocumentFamily, Partial<DocumentFamily>>({
