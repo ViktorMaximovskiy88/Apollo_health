@@ -11,10 +11,9 @@ import { DocDocumentInfoFormFamilyField } from './DocDocumentInfoFormFamilyField
 import { DocDocument } from './types';
 
 interface DocDocumentInfoTypes {
-  docDocument: DocDocument;
   onFieldChange: () => void;
 }
-export function DocDocumentInfoForm({ onFieldChange, docDocument }: DocDocumentInfoTypes) {
+export function DocDocumentInfoForm({ onFieldChange }: DocDocumentInfoTypes) {
   // bandaid fix; painted into a corner
   const { docDocumentId, itemId } = useParams();
   const docId = docDocumentId ?? itemId;
@@ -35,7 +34,7 @@ export function DocDocumentInfoForm({ onFieldChange, docDocument }: DocDocumentI
       <DocumentClassification />
       <Translation />
       <Hr />
-      <DocDocumentInfoFormFamilyField docDocument={docDocument} onFieldChange={onFieldChange} />
+      <DocDocumentInfoFormFamilyField onFieldChange={onFieldChange} />
       <Hr />
       <DateFields onFieldChange={onFieldChange} />
       <Hr />

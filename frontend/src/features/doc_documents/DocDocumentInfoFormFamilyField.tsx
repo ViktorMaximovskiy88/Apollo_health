@@ -1,25 +1,26 @@
 import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { Form, Select, Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import { DocDocument } from './types';
 import { DocumentFamily } from './document_family/types';
 import { DocumentFamilyCreateModal } from './document_family/DocumentFamilyCreateModal';
 import { useGetDocumentFamiliesQuery } from './document_family/documentFamilyApi';
+import { useGetDocDocumentQuery } from './docDocumentApi';
 
 interface DocDocumentLocationsPropTypes {
-  docDocument: DocDocument;
   onFieldChange: () => void;
 }
 
 export const DocDocumentInfoFormFamilyField = ({
-  docDocument,
   onFieldChange,
 }: DocDocumentLocationsPropTypes) => {
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
+
   const form = Form.useFormInstance();
   const [isVisible, setIsVisible] = useState<boolean>(false);
-  const [selectedIndex, setSelectedLocationIndex] = useState<number>(-1);
   const { data } = useGetDocumentFamiliesQuery({
-    documentType: docDocument.document_type,
+    documentType: doc?.document_type,
   });
   const options = data?.data.map((item: DocumentFamily) => ({ value: item._id, label: item.name }));
   const document_family_id = Form.useWatch('document_family_id');
@@ -33,7 +34,7 @@ export const DocDocumentInfoFormFamilyField = ({
             onFieldChange();
           }}
           options={options}
-          style={{ width: 'calc(100% - 96px', marginRight: '8px' }}
+          style={{ width: 'calc(100% - 96px)', marginRight: '8px' }}
         />
         <Button
           type="dashed"
@@ -47,14 +48,13 @@ export const DocDocumentInfoFormFamilyField = ({
       </Form.Item>
 
       <DocumentFamilyCreateModal
-        documentType={docDocument.document_type}
+        documentType={doc?.document_type}
         open={isVisible}
         onSave={(documentFamilyId: string) => {
           setIsVisible(false);
         }}
         onClose={() => {
           setIsVisible(false);
-          setSelectedLocationIndex(-1);
         }}
       />
     </div>

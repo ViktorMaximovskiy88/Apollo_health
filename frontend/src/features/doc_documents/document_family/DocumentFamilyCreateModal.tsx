@@ -11,7 +11,7 @@ import { useEffect } from 'react';
 import { fieldGroupsOptions } from './documentFamilyLevels';
 
 interface DocumentFamilyCreateModalPropTypes {
-  documentType: string;
+  documentType?: string;
   location?: DocDocumentLocation | undefined;
   open?: boolean;
   onClose: () => void;
