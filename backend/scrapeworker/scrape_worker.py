@@ -475,10 +475,10 @@ class ScrapeWorker:
 
             all_downloads += await self.queue_downloads(url, url)
             if self.site.scrape_method_configuration.follow_links:
-                self.log.info(f"Follow links for {url}")
-                (nested_urls, cookies) = await self.follow_links(url)
-                for nested_url in nested_urls:
-                    self.log.info(f"Follow links discovered {nested_url}")
+                self.log.debug(f"Follow links for {url}")
+                (links_found, cookies) = await self.follow_links(url)
+                for nested_url in links_found:
+                    await self.scrape_task.update(Inc({SiteScrapeTask.follow_links_found: 1}))
                     all_downloads += await self.queue_downloads(
                         nested_url, base_url=url, cookies=cookies
                     )
