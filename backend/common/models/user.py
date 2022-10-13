@@ -1,9 +1,9 @@
 from typing import Optional
 
 from beanie import Indexed, PydanticObjectId
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import EmailStr, Field
 
-from backend.common.models.base_document import BaseDocument
+from backend.common.models.base_document import BaseDocument, BaseModel
 
 
 class UserAuth(BaseModel):

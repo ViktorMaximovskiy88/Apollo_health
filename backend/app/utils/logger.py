@@ -8,8 +8,8 @@ from bson import json_util
 from fastapi import BackgroundTasks
 from jsonpatch import JsonPatch, JsonPointer
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from pydantic import BaseModel
 
+from backend.common.models.base_document import BaseModel
 from backend.common.models.change_log import ChangeLog
 from backend.common.models.user import User
 

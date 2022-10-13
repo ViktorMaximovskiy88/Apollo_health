@@ -1,7 +1,7 @@
 from typing import Any
 
-from pydantic import BaseModel
-from backend.common.models.base_document import BaseDocument
+from backend.common.models.base_document import BaseDocument, BaseModel
+
 
 class SubmitAction(BaseModel):
     label: str
@@ -11,6 +11,7 @@ class SubmitAction(BaseModel):
     require_comment: bool = False
     dest_queue: str | None = None
 
+
 class SubmitActionUpdate(BaseModel):
     label: str | None = None
     submit_action: Any | None = None
@@ -18,6 +19,7 @@ class SubmitActionUpdate(BaseModel):
     reassignable: bool | None = None
     require_comment: bool | None = None
     dest_queue: str | None = None
+
 
 class WorkQueue(BaseDocument):
     name: str
@@ -29,6 +31,7 @@ class WorkQueue(BaseDocument):
     user_query: dict[Any, Any]
     sort_query: list[str] = []
     submit_actions: list[SubmitAction]
+
 
 class WorkQueueUpdate(BaseDocument):
     name: str | None = None

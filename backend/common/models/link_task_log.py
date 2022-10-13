@@ -1,7 +1,6 @@
 from beanie import PydanticObjectId, UnionDoc
-from pydantic import BaseModel
 
-from backend.common.models.base_document import BaseDocument
+from backend.common.models.base_document import BaseDocument, BaseModel
 from backend.common.models.shared import FileMetadata, Location
 
 
