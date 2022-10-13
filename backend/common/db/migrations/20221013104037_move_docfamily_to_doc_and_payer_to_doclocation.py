@@ -5,14 +5,19 @@ from backend.common.models.document_family import DocumentFamily
 
 
 class Forward:
-    ...
-
     @free_fall_migration(document_models=[DocDocument, DocumentFamily])
-    async def replace_doc_fam_field_with_payer_fam_DocDoc_Location_remove_payer_info_on_doc_family(
-        self, session
-    ):
+    async def move_docfamily_to_doc_and_payer_to_doclocation(self, session):
         await DocDocument.get_motor_collection().update_many(
-            {"locations": {"$exists": True}},
+            {
+                "locations": [
+                    {"$exists": True},
+                    {
+                        "$elemMatch": {
+                            "document_family_id": {"$exists": True},
+                        }
+                    },
+                ]
+            },
             {
                 "$set": {"locations.$[].payer_family_id": None},
                 "$unset": {"locations.$[].document_family_id": ""},
@@ -28,14 +33,19 @@ class Forward:
 
 
 class Backward:
-    ...
-
     @free_fall_migration(document_models=[DocDocument, DocumentFamily])
-    async def replace_payer_fam_field_with_doc_fam_on_DocDoc_Location_set_payer_info_on_doc_family(
-        self, session
-    ):
+    async def move_docfamily_to_doc_and_payer_to_doclocation(self, session):
         await DocDocument.get_motor_collection().update_many(
-            {"locations": {"$exists": True}},
+            {
+                "locations": [
+                    {"$exists": True},
+                    {
+                        "$elemMatch": {
+                            "payer_family_id": {"$exists": True},
+                        }
+                    },
+                ],
+            },
             [
                 {
                     "$set": {"locations.$[].document_family_id": None},
@@ -45,7 +55,7 @@ class Backward:
         )
 
         await DocumentFamily.get_motor_collection().update_many(
-            {"payer_info": {"$exists": True}},
+            {"payer_info": {"$exists": False}},
             [
                 {
                     "$set": {
