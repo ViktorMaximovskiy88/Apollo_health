@@ -17,9 +17,18 @@ export const docDocumentsApi = createApi({
         filterValue: TypeFilterValue;
         site_ids?: string[];
         scrape_task_id?: string;
+        exclude_doc_doc_id?: string;
       }
     >({
-      query: ({ limit, skip, sortInfo, filterValue, site_ids, scrape_task_id }) => {
+      query: ({
+        limit,
+        skip,
+        sortInfo,
+        filterValue,
+        site_ids,
+        scrape_task_id,
+        exclude_doc_doc_id,
+      }) => {
         const sorts = sortInfo ? [sortInfo] : [];
         const args = [
           `limit=${encodeURIComponent(limit)}`,
@@ -28,10 +37,13 @@ export const docDocumentsApi = createApi({
           `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
         ];
         if (site_ids) {
-          args.push(`site_id=${site_ids}`);
+          args.push(`site_ids=${encodeURIComponent(JSON.stringify(site_ids))}`);
         }
         if (scrape_task_id) {
           args.push(`scrape_task_id=${scrape_task_id}`);
+        }
+        if (exclude_doc_doc_id) {
+          args.push(`exclude_doc_doc_id=${exclude_doc_doc_id}`);
         }
         return `/doc-documents/?${args.join('&')}`;
       },

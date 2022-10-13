@@ -25,6 +25,7 @@ import userReducer from '../features/users/userSlice';
 import collectionsReducer from '../features/collections/collectionsSlice';
 import docDocumentsReducer from '../features/doc_documents/docDocumentsSlice';
 import siteDocDocumentsReducer from '../features/doc_documents/siteDocDocumentsSlice';
+import lineageDocDocumentsReducer from '../features/doc_documents/lineage/lineageDocDocumentsSlice';
 import documentsReducer from '../features/collections/documentsSlice';
 import extractionsReducer from '../features/extractions/extractionsSlice';
 import translationsReducer from '../features/translations/translationSlice';
@@ -56,6 +57,7 @@ export const store = configureStore({
     collections: collectionsReducer,
     docDocuments: docDocumentsReducer,
     siteDocDocuments: siteDocDocumentsReducer,
+    lineageDocDocuments: lineageDocDocumentsReducer,
     documentFamilies: documentFamilyReducer,
     payerFamilies: payerFamilyReducer,
     documents: documentsReducer,
