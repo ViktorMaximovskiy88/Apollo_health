@@ -38,6 +38,8 @@ def as_naive_date(_datetime: datetime) -> date:
     )
 
 
+# TODO: i dont love this, but beanie wasnt having `date` (somewhere on the write side)
+# will investigate later, but poor mans date for now
 def cast_dates(doc):
     doc.effective_date = as_naive_date(doc.effective_date)
     doc.last_reviewed_date = as_naive_date(doc.last_reviewed_date)
@@ -51,6 +53,7 @@ def cast_dates(doc):
 def calc_final_effective_date(doc) -> datetime | None:
     computeFromFields: list[datetime] = []
 
+    # abusing the fact that we always call this.. would like to wrap into pydantic/beanie
     cast_dates(doc)
 
     if doc.effective_date:
