@@ -7,7 +7,7 @@ import moment from 'moment';
  * @returns
  */
 export function dateToMoment(date?: string) {
-  return date ? moment(date) : undefined;
+  return date ? moment.utc() : undefined;
 }
 
 /**

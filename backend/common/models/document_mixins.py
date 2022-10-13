@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from beanie import PydanticObjectId
 
@@ -24,8 +24,27 @@ def get_last_collected(doc):
     return max(doc.locations, key=lambda location: location.last_collected_date)
 
 
+def as_naive_date(_datetime: datetime) -> date:
+    return (
+        _datetime.replace(
+            tzinfo=None,
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+        if _datetime
+        else _datetime
+    )
+
+
 def calc_final_effective_date(doc) -> datetime | None:
     computeFromFields: list[datetime] = []
+
+    doc.effective_date = as_naive_date(doc.effective_date)
+    doc.last_reviewed_date = as_naive_date(doc.last_reviewed_date)
+    doc.last_updated_date = as_naive_date(doc.last_updated_date)
+
     if doc.effective_date:
         computeFromFields.append(doc.effective_date)
     if doc.last_reviewed_date:
@@ -36,7 +55,8 @@ def calc_final_effective_date(doc) -> datetime | None:
     final_effective_date = (
         max(computeFromFields) if len(computeFromFields) > 0 else doc.first_collected_date
     )
-    return final_effective_date
+
+    return as_naive_date(final_effective_date)
 
 
 def find_site_index(document, site_id: PydanticObjectId):
