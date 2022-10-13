@@ -14,8 +14,9 @@ export interface AttrSelector {
   resource_address: boolean;
 }
 
-export interface FocusTherapyConfig {
+export interface FocusSectionConfig {
   doc_type: string;
+  section_type: SectionType[];
   start_separator: string;
   end_separator: string;
   all_focus: boolean;
@@ -41,7 +42,7 @@ export interface Site extends BaseDocument {
     attr_selectors: AttrSelector[];
     html_attr_selectors: AttrSelector[];
     html_exclusion_selectors: AttrSelector[];
-    focus_therapy_configs: FocusTherapyConfig[];
+    focus_section_configs: FocusSectionConfig[];
     allow_docdoc_updates: boolean;
   };
   tags: string[];
@@ -52,6 +53,10 @@ export interface Site extends BaseDocument {
   playbook?: string;
   status: string;
   assignee?: string;
+  doc_type_threshold_override: boolean;
+  doc_type_threshold: number;
+  lineage_threshold_override: boolean;
+  lineage_threshold: number;
 }
 
 export interface Proxy extends BaseDocument {
@@ -76,4 +81,10 @@ export enum ScrapeMethod {
 export enum SearchableType {
   CPTCodes = 'CPTCODES',
   JCodes = 'JCODES',
+}
+
+export enum SectionType {
+  Therapy = 'THERAPY',
+  Indication = 'INDICATION',
+  Key = 'KEY',
 }

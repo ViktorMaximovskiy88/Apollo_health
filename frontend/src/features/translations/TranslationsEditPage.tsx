@@ -49,7 +49,7 @@ export function TranslationsEditPage() {
   if (!config) return null;
 
   return (
-    <MainLayout pageTitle={'Translations'} sectionToolbar={<SumbitTranslation form={form} />}>
+    <MainLayout sectionToolbar={<SumbitTranslation form={form} />}>
       <div className="flex h-full">
         <div className="w-1/2 h-full">
           <TranslationForm form={form} initialValues={config} onFinish={onFinish} />

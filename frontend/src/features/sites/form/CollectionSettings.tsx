@@ -12,10 +12,11 @@ import {
 } from './ScrapeConfigFields';
 
 import { AttrSelectors } from './AttrSelectorField';
-import { FocusTherapyConfig } from './FocusTherapyConfig';
+import { FocusTagConfig } from './FocusTagConfig';
 import { HtmlScrapeConfig } from './HtmlScrapeConfig';
 import { SearchTokens } from './SearchTokens';
 import { FollowLinks } from './FollowLinks';
+import { ThresholdWithOverride } from './ThresholdWithOverride';
 
 function CollectionMethodRadio() {
   const collections = [
@@ -69,6 +70,23 @@ const CustomSelectors = () => (
     title={<label className="font-semibold">Custom Selectors</label>}
   />
 );
+const DocumentTypeThreshold = () => (
+  <ThresholdWithOverride
+    overrideName="doc_type_threshold_override"
+    overrideLabel="Document Type Threshold Override"
+    thresholdName="doc_type_threshold"
+    thresholdLabel="Document Type Threshold"
+  />
+);
+
+const LineageThreshold = () => (
+  <ThresholdWithOverride
+    overrideName="lineage_threshold_override"
+    overrideLabel="Lineage Threshold Override"
+    thresholdName="lineage_threshold"
+    thresholdLabel="Lineage Threshold"
+  />
+);
 
 interface CollectionSettingsPropTypes {
   initialValues: Partial<Site>;
@@ -102,7 +120,9 @@ export function CollectionSettings({ initialValues }: CollectionSettingsPropType
               <Playbook />
               <SearchInFrames />
               <AllowDocDocUpdate />
-              <FocusTherapyConfig initialValues={initialValues} />
+              <FocusTagConfig initialValues={initialValues} />
+              <DocumentTypeThreshold />
+              <LineageThreshold />
             </>
           ) : null
         }

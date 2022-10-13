@@ -60,6 +60,7 @@ def compile_label_rgx():
 
 date_rgxs = compile_date_rgx()
 label_rgxs = compile_label_rgx()
+digit_rgx = r"\b\d+\b"
 
 # the builtin mimetype map is lacking some
 mimetype_to_extension_map = {

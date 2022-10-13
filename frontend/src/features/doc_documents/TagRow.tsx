@@ -1,7 +1,7 @@
-import { Button, Input, InputNumber, Switch, Tag } from 'antd';
+import { Button, Input, InputNumber, Select, Switch, Tag } from 'antd';
 import { CheckOutlined, CloseOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { VirtualItem } from '@tanstack/react-virtual';
-import { DocumentTag, TherapyTag } from './types';
+import { DocumentTag, TagUpdateStatus } from './types';
 
 function labelColorMap(type: string) {
   const colorMap: any = {
@@ -10,6 +10,18 @@ function labelColorMap(type: string) {
     'therapy-group': 'purple',
   };
   return colorMap[type];
+}
+
+function getStatusDisplay(type?: TagUpdateStatus) {
+  const displayMap = {
+    ADDED: { color: 'green', name: 'Added' },
+    CHANGED: { color: 'orange', name: 'Changed' },
+    REMOVED: { color: 'red', name: 'Removed' },
+  };
+  if (type) {
+    return displayMap[type];
+  }
+  return { color: undefined, name: undefined };
 }
 
 export function EditTag({
@@ -24,10 +36,12 @@ export function EditTag({
   tag: DocumentTag;
   virtualRow: VirtualItem<unknown>;
 }) {
-  let focus = false;
-  if (tag._type === 'therapy') {
-    focus = (tag as TherapyTag).focus;
-  }
+  const update_status_options = [
+    { label: 'None', value: null },
+    { label: 'Added', value: TagUpdateStatus.Added },
+    { label: 'Changed', value: TagUpdateStatus.Changed },
+    { label: 'Removed', value: TagUpdateStatus.Removed },
+  ];
 
   return (
     <div
@@ -52,6 +66,15 @@ export function EditTag({
           size="small"
           className="flex w-56 max-h-6"
         />
+        <Select
+          className="w-32 mx-5"
+          defaultValue={tag.update_status}
+          id="update_status"
+          options={update_status_options}
+          onChange={(status) => onEditTag(tag.id, 'update_status', status)}
+          placeholder="Status"
+          size="small"
+        />
       </div>
       <div className="flex items-center">
         <Input
@@ -62,17 +85,15 @@ export function EditTag({
           size="small"
           className="flex items-center max-h-6"
         />
-        {tag._type === 'therapy' && (
-          <div className="flex-1 items-center px-5">
-            <Switch
-              defaultChecked={focus}
-              id="focus"
-              onChange={(checked) => onEditTag(tag.id, 'focus', checked)}
-              checkedChildren="Focus"
-              unCheckedChildren="Focus"
-            />
-          </div>
-        )}
+        <div className="flex-1 items-center px-5">
+          <Switch
+            defaultChecked={tag.focus}
+            id="focus"
+            onChange={(checked) => onEditTag(tag.id, 'focus', checked)}
+            checkedChildren="Focus"
+            unCheckedChildren="Focus"
+          />
+        </div>
         <InputNumber
           controls={false}
           defaultValue={tag.page + 1}
@@ -112,10 +133,8 @@ export function ReadTag({
   tag: DocumentTag;
   virtualRow: VirtualItem<unknown>;
 }) {
-  let focus = false;
-  if (tag._type === 'therapy') {
-    focus = (tag as TherapyTag).focus;
-  }
+  const statusDisplay = getStatusDisplay(tag.update_status);
+
   return (
     <div
       className="flex flex-col py-2 justify-center"
@@ -135,8 +154,15 @@ export function ReadTag({
       </div>
       <div className="flex">
         <div className="flex items-center flex-1">{tag.text}</div>
+        <div className="flex items-center">
+          {tag.update_status && (
+            <Tag color={statusDisplay.color} className="select-none cursor-default">
+              {statusDisplay.name}
+            </Tag>
+          )}
+        </div>
         <div className="flex items-center px-5">
-          {focus && (
+          {tag.focus && (
             <Tag color="gold" className="select-none cursor-default">
               Focus
             </Tag>

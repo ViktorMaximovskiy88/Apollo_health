@@ -3,7 +3,7 @@ from datetime import datetime
 from beanie import PydanticObjectId
 from pydantic import BaseModel, Field, HttpUrl
 
-from backend.common.core.enums import CollectionMethod, SearchableType, SiteStatus
+from backend.common.core.enums import CollectionMethod, SearchableType, SectionType, SiteStatus
 from backend.common.models.base_document import BaseDocument
 
 
@@ -15,8 +15,9 @@ class AttrSelector(BaseModel):
     resource_address: bool = False
 
 
-class FocusTherapyConfig(BaseModel):
+class FocusSectionConfig(BaseModel):
     doc_type: str
+    section_type: list[SectionType]
     start_separator: str | None = None
     end_separator: str | None = None
     all_focus: bool = False
@@ -27,7 +28,8 @@ class ScrapeMethodConfiguration(BaseModel):
     url_keywords: list[str] = []
     proxy_exclusions: list[PydanticObjectId] = []
     wait_for: list[str] = []
-    wait_for_timeout_ms: int = 0
+    wait_for_timeout_ms: int = 500
+    base_url_timeout_ms: int = 30000
     search_in_frames: bool = False
     follow_links: bool = False
     follow_link_keywords: list[str] = []
@@ -39,7 +41,7 @@ class ScrapeMethodConfiguration(BaseModel):
     attr_selectors: list[AttrSelector] = []
     html_attr_selectors: list[AttrSelector] = []
     html_exclusion_selectors: list[AttrSelector] = []
-    focus_therapy_configs: list[FocusTherapyConfig] = []
+    focus_section_configs: list[FocusSectionConfig] = []
     allow_docdoc_updates: bool = False
 
 
@@ -60,7 +62,7 @@ class UpdateScrapeMethodConfiguration(BaseModel):
     attr_selectors: list[AttrSelector] | None = None
     html_attr_selectors: list[AttrSelector] = []
     html_exclusion_selectors: list[AttrSelector] = []
-    focus_therapy_configs: list[FocusTherapyConfig] | None = None
+    focus_section_configs: list[FocusSectionConfig] | None = None
     allow_docdoc_updates: bool | None = None
 
 
@@ -81,6 +83,10 @@ class NewSite(BaseModel):
     playbook: str | None = None
     cron: str | None = ""
     status: str | None = SiteStatus.NEW
+    doc_type_threshold_override: bool = False
+    doc_type_threshold: float = 0.75
+    lineage_threshold_override: bool = False
+    lineage_threshold: float = 0.75
 
 
 class UpdateSite(BaseModel):
@@ -97,6 +103,10 @@ class UpdateSite(BaseModel):
     playbook: str | None = None
     status: str | None = None
     assignee: PydanticObjectId | None = None
+    doc_type_threshold_override: bool | None = None
+    doc_type_threshold: float | None = None
+    lineage_threshold_override: bool | None = None
+    lineage_threshold: float | None = None
 
 
 class UpdateSiteAssigne(BaseModel):
@@ -113,13 +123,32 @@ class Site(BaseDocument, NewSite):
 
 
 # Deprecated
-class NoSearchableHtmlConfig(ScrapeMethodConfiguration):
+class FocusTherapyConfig(BaseModel):
+    doc_type: str
+    start_separator: str | None = None
+    end_separator: str | None = None
+    all_focus: bool = False
+
+
+class NoFocusTagConfig(ScrapeMethodConfiguration):
+    focus_section_configs: list[FocusSectionConfig] | None = None
+    focus_therapy_configs: list[FocusTherapyConfig]
+
+
+class NoFocusTagConfigSite(Site):
+    scrape_method_configuration: NoFocusTagConfig
+
+    class Colleciton:
+        name = "Site"
+
+
+class NoSearchableHtmlConfig(NoFocusTagConfig):
     searchable: bool | None = None
     html_attr_selectors: list[AttrSelector] | None = None
     html_exclusion_selectors: list[AttrSelector] | None = None
 
 
-class NoSearchableHtmlSite(Site):
+class NoSearchableHtmlSite(NoFocusTagConfigSite):
     scrape_method_configuration: NoSearchableHtmlConfig
 
     class Collection:

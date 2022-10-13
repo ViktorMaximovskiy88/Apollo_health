@@ -19,10 +19,10 @@ export const DocDocumentInfoFormFamilyField = ({
   const form = Form.useFormInstance();
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [selectedIndex, setSelectedLocationIndex] = useState<number>(-1);
-  const { data = [] } = useGetDocumentFamiliesQuery({
+  const { data } = useGetDocumentFamiliesQuery({
     documentType: docDocument.document_type,
   });
-  const options = data.map((item: DocumentFamily) => ({ value: item._id, label: item.name }));
+  const options = data?.data.map((item: DocumentFamily) => ({ value: item._id, label: item.name }));
   const document_family_id = Form.useWatch('document_family_id');
   return (
     <div>
@@ -49,7 +49,7 @@ export const DocDocumentInfoFormFamilyField = ({
 
       <DocumentFamilyCreateModal
         documentType={docDocument.document_type}
-        visible={isVisible}
+        open={isVisible}
         onSave={(documentFamilyId: string) => {
           setIsVisible(false);
         }}

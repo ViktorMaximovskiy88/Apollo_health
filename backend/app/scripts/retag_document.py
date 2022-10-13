@@ -36,7 +36,7 @@ class ReTagger:
 
         location = next(loc for loc in rdoc.locations if loc.site_id == site.id)
 
-        focus_config = site.scrape_method_configuration.focus_therapy_configs
+        focus_config = site.scrape_method_configuration.focus_section_configs
 
         document_type = rdoc.document_type or "N/A"
         link_text = location.link_text
@@ -47,7 +47,9 @@ class ReTagger:
         therapy_tags = await self.therapy.tag_document(
             doc_text, document_type, url, link_text, focus_config
         )
-        indication_tags = await self.indication.tag_document(doc_text)
+        indication_tags = await self.indication.tag_document(
+            doc_text, document_type, url, link_text, focus_config
+        )
 
         update = {
             "$set": {

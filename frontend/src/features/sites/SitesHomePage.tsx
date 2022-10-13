@@ -203,7 +203,7 @@ export function SitesHomePage() {
   const [selected, setSelected] = useState<{ [id: string]: Site }>({});
   return (
     <MainLayout
-      pageToolbar={
+      sectionToolbar={
         <>
           <QuickFilter isLoading={isLoading} />
           <Assign selected={selected} setSelected={setSelected} />

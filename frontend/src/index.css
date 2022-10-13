@@ -40,6 +40,7 @@ h1.ant-typography {
 /* ant tab helpers */
 .ant-tabs-h-full .ant-tabs-content {
   height: 100%;
+  overflow: auto;
 }
 
 .ant-tabs-scroll .ant-tabs-content-holder {

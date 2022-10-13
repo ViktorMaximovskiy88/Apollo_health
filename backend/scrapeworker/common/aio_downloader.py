@@ -1,5 +1,5 @@
+import os
 import ssl
-import sys
 import tempfile
 from dataclasses import dataclass
 from random import shuffle
@@ -36,7 +36,8 @@ class AioDownloader:
 
     session: ClientSession
 
-    def __init__(self, log):
+    def __init__(self, doc_client: DocumentStorageClient, log):
+        self.doc_client = doc_client
         self.log = log
         self.session = ClientSession(connector=TCPConnector(ssl=self.permissive_ssl_context()))
         self.rate_limiter = RateLimiter()
@@ -126,7 +127,7 @@ class AioDownloader:
             proxy, proxy_settings = (
                 aio_proxies[i % proxy_count] if proxy_count > 0 else (None, None)
             )
-            self.log.debug(
+            self.log.info(
                 f"{i} Using proxy {proxy and proxy.name} ({proxy_settings and proxy_settings.proxy})"  # noqa E501
             )
             yield attempt, proxy_settings
@@ -135,12 +136,10 @@ class AioDownloader:
         download.file_path = path
         if not download.mimetype:
             download.set_mimetype()
-        if not download.file_extension:
-            download.set_extension_from_mimetype()
-        download.file_size = download.response.content_length or 0
-        if download.file_size == 0:
-            async with aiofiles.open(path, "rb") as file:
-                download.file_size = sys.getsizeof(file)
+        # NOTE always set via the file; we cant trust downloads in many cases
+        download.set_extension_from_mimetype()
+        # NOTE always set file size
+        download.file_size = os.path.getsize(download.file_path)
 
     async def write_response_to_file(
         self,
@@ -159,7 +158,7 @@ class AioDownloader:
         await self.set_download_data(download, temp.name)
 
         download.file_hash = hasher.hexdigest()
-        self.log.debug(
+        self.log.info(
             f"content_type={download.content_type} mimetype={download.mimetype} file_hash={download.file_hash}"  # noqa
         )
         return download.file_path, download.file_hash
@@ -170,29 +169,28 @@ class AioDownloader:
         proxies: list[tuple[Proxy | None, ProxySettings | None]] = [],
     ) -> AsyncGenerator[tuple[str | None, str | None], None]:
         url = download.request.url
-        self.log.debug(f"Before attempting download {url}")
+        self.log.info(f"Before attempting download {url}")
 
         if download.direct_scrape:
-            doc_client = DocumentStorageClient()
             dest_path = f"{download.file_hash}.{download.file_extension}"
-            with doc_client.read_object_to_tempfile(
+            with self.doc_client.read_object_to_tempfile(
                 dest_path, suffix=f".{download.file_extension}"
             ) as path:
                 await self.set_download_data(download, path)
-                self.log.debug(
+                self.log.info(
                     f"content_type={download.content_type} mimetype={download.mimetype} file_hash={download.file_hash}"  # noqa
                 )
                 yield download.file_path, download.file_hash
         else:
             async for attempt, proxy in self.proxy_with_backoff(proxies):
                 with attempt:
-                    self.log.debug(f"Attempting download {url}")
+                    self.log.info(f"Attempting download {url}")
                     response: ClientResponse
                     proxy_url = proxy.proxy if proxy else None
                     try:
                         response = await self.send_request(download, proxy)
                         download.response.from_aio_response(response)
-                        self.log.debug(f"Attempting download {url} response")
+                        self.log.info(f"Attempting download {url} response")
                     except ClientHttpProxyError as proxy_error:
                         self.log.error(f"Client Proxy Error AIO {url}")
                         # we catch so we can 'log' on the task and reraise for retry
@@ -205,7 +203,7 @@ class AioDownloader:
                         )
                         raise proxy_error
 
-                    self.log.debug(f"Before link log {url} response")
+                    self.log.info(f"Before link log {url} response")
 
                     if not response.ok:
                         invalid_response = InvalidResponse(

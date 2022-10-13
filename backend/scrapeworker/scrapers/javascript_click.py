@@ -32,7 +32,7 @@ class JavascriptClick(PlaywrightBaseScraper):
             if not attr_selector.resource_address:
                 selectors.append(to_xpath(attr_selector))
         selector_string = "|".join(selectors)
-        self.log.debug(selector_string)
+        self.log.info(selector_string)
         return selector_string
 
     # Handle special json responses which contain links to downloadable media.
@@ -133,8 +133,8 @@ class JavascriptClick(PlaywrightBaseScraper):
                 link_handle = await xpath_locator.nth(index).element_handle(timeout=1000)
                 await link_handle.click()
                 await asyncio.sleep(0.25)
-            except Exception:
-                logging.error("exception", exc_info=True)
+            except Exception as ex:
+                self.log.error(ex, exc_info=True, stack_info=True)
                 await self.page.goto(self.url)
 
         return downloads

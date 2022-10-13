@@ -18,6 +18,7 @@ import { WorkQueueHomePage } from './features/work_queue/WorkQueueHomePage';
 import { WorkQueuePage } from './features/work_queue/WorkQueuePage';
 import { SiteDocDocumentsPage } from './features/doc_documents/SiteDocDocumentPage';
 import { DocDocumentEditPage } from './features/doc_documents/DocDocumentEditPage';
+import { PayerFamilyHomePage } from './features/payer-family/PayerFamilyHomePage';
 import { ProcessWorkItemPage, ReadonlyWorkItemPage } from './features/work_queue/WorkItemPage';
 import { AppLayout } from './app/AppLayout';
 import { SiteViewPage } from './features/sites/SiteViewPage';
@@ -28,6 +29,7 @@ import { PayerBackbomeHomePage } from './features/payer-backbone/PayerBackboneHo
 import { PayerBackboneNewPage } from './features/payer-backbone/PayerBackboneNewPage';
 import { PayerBackboneEditPage } from './features/payer-backbone/PayerBackboneEditPage';
 import { LineagePage } from './features/lineage/LineagePage';
+import { DocumentFamilyHomePage } from './features/doc_documents/document_family/DocumentFamilyHomePage';
 
 function AppHomePage() {
   return <>{'Home'}</>;
@@ -121,6 +123,8 @@ function App() {
             </Route>
           </Route>
         </Route>
+        <Route path="/payer-family" element={<PayerFamilyHomePage />} />
+        <Route path="/document-family" element={<DocumentFamilyHomePage />} />
         <Route path="/users/*" element={<UserRoutes />} />
         <Route path="/documents/*" element={<DocumentRoutes />} />
         <Route path="/translations/*" element={<TranslationRoutes />} />

@@ -130,7 +130,7 @@ async def update_doc_document(
     updated = await update_and_log_diff(logger, current_user, target, updates)
 
     # Sending Event Bridge Event.  Need to add condition when to send.
-    document_json = EventConvert(document=updated).convert()
+    document_json = await EventConvert(document=updated).convert(target)
     send_event_client = SendEventClient()
-    send_event_client.send_event("document-details", document_json)
+    send_event_client.send_event("document-details", document_json)  # noqa: F841
     return updated

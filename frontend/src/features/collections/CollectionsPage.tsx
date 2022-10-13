@@ -15,67 +15,6 @@ import { TaskStatus } from '../../common/scrapeTaskStatus';
 import { MainLayout } from '../../components';
 import { isErrorWithData } from '../../common/helpers';
 
-export function CollectionsPage() {
-  const [newDocumentModalVisible, setNewDocumentModalVisible] = useState(false);
-
-  const params = useParams();
-  const siteId = params.siteId;
-  const { data: site, refetch } = useGetSiteQuery(siteId);
-  const [runScrape] = useRunSiteScrapeTaskMutation();
-
-  if (!siteId || !site) return null;
-
-  async function handleRunScrape() {
-    if (site?._id) {
-      try {
-        await runScrape(site._id).unwrap();
-      } catch (err) {
-        if (isErrorWithData(err)) {
-          notification.error({
-            message: 'Error Running Collection',
-            description: `${err.data.detail}`,
-          });
-        } else {
-          notification.error({
-            message: 'Error Running Collection',
-            description: JSON.stringify(err),
-          });
-        }
-      }
-    }
-  }
-
-  return (
-    <>
-      {newDocumentModalVisible ? (
-        <AddDocumentModal setVisible={setNewDocumentModalVisible} siteId={siteId} />
-      ) : null}
-      <MainLayout
-        sidebar={<SiteMenu />}
-        pageTitle={'Collections'}
-        pageToolbar={
-          <>
-            {site.collection_method === CollectionMethod.Automated &&
-            site.status !== SiteStatus.Inactive ? (
-              <Button onClick={() => handleRunScrape()} className="ml-auto">
-                Run Collection
-              </Button>
-            ) : site.collection_method === CollectionMethod.Manual &&
-              site.status !== SiteStatus.Inactive ? (
-              <ManualCollectionButton site={site} refetch={refetch} runScrape={runScrape} />
-            ) : null}
-          </>
-        }
-      >
-        <CollectionsDataTable
-          siteId={siteId}
-          openNewDocumentModal={() => setNewDocumentModalVisible(true)}
-        />
-      </MainLayout>
-    </>
-  );
-}
-
 function ManualCollectionButton(props: any) {
   const { site, refetch, runScrape } = props;
   const navigate = useNavigate();
@@ -107,4 +46,64 @@ function ManualCollectionButton(props: any) {
       </Button>
     );
   }
+}
+
+export function CollectionsPage() {
+  const [newDocumentModalOpen, setNewDocumentModalOpen] = useState(false);
+
+  const params = useParams();
+  const siteId = params.siteId;
+  const { data: site, refetch } = useGetSiteQuery(siteId);
+  const [runScrape] = useRunSiteScrapeTaskMutation();
+
+  if (!siteId || !site) return null;
+
+  async function handleRunScrape() {
+    if (site?._id) {
+      try {
+        await runScrape(site._id).unwrap();
+      } catch (err) {
+        if (isErrorWithData(err)) {
+          notification.error({
+            message: 'Error Running Collection',
+            description: `${err.data.detail}`,
+          });
+        } else {
+          notification.error({
+            message: 'Error Running Collection',
+            description: JSON.stringify(err),
+          });
+        }
+      }
+    }
+  }
+
+  return (
+    <>
+      {newDocumentModalOpen ? (
+        <AddDocumentModal setOpen={setNewDocumentModalOpen} siteId={siteId} />
+      ) : null}
+      <MainLayout
+        sidebar={<SiteMenu />}
+        sectionToolbar={
+          <>
+            {site.collection_method === CollectionMethod.Automated &&
+            site.status !== SiteStatus.Inactive ? (
+              <Button onClick={() => handleRunScrape()} className="ml-auto">
+                Run Collection
+              </Button>
+            ) : site.collection_method === CollectionMethod.Manual &&
+              site.status !== SiteStatus.Inactive ? (
+              <ManualCollectionButton site={site} refetch={refetch} runScrape={runScrape} />
+            ) : null}
+          </>
+        }
+      >
+        <CollectionsDataTable
+          siteId={siteId}
+          openNewDocumentModal={() => setNewDocumentModalOpen(true)}
+        />
+      </MainLayout>
+    </>
+  );
 }

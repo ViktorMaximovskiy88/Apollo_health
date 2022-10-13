@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Button, Radio, Checkbox, Input } from 'antd';
+import { Radio, Checkbox, Input } from 'antd';
 import { debounce, orderBy } from 'lodash';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { DocumentTag, UITherapyTag } from './types';
@@ -24,7 +24,6 @@ export function DocDocumentTagForm(props: {
   tags: Array<DocumentTag>;
   onDeleteTag: Function;
   onEditTag: Function;
-  onAddTag: Function;
   currentPage: number;
 }) {
   const { tags, onEditTag, onDeleteTag, currentPage } = props;
@@ -101,7 +100,7 @@ export function DocDocumentTagForm(props: {
     setEditTags((prevState) => {
       const update = { ...prevState };
       const target = update[id];
-      if (field === 'name' || field === 'text') {
+      if (field === 'name' || field === 'text' || field === 'update_status') {
         target[field] = value;
       } else if (field === 'page' && value != null) {
         target[field] = value - 1;
@@ -185,7 +184,6 @@ export function DocDocumentTagForm(props: {
           <div>
             Showing {filteredList.length} of {tags.length} Tags
           </div>
-          <Button onClick={(e) => {}}>Add Tag</Button>
         </div>
       </div>
     </>

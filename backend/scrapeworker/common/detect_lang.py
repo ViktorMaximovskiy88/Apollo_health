@@ -1,6 +1,7 @@
 import cld3
-import logging
+
 from backend.common.core.enums import LangCode
+
 
 # detects languages we care about
 # unsupported langs are set to 'other'
@@ -11,6 +12,5 @@ def detect_lang(text: str) -> LangCode:
         language, probability, is_reliable, proportion = cld3.get_language(text)  # type: ignore
 
         return LangCode(language) if language in lang_codes else LangCode.Other
-    except Exception as ex:
-        logging.error(ex)
+    except Exception:
         return LangCode.Unknown

@@ -11,22 +11,21 @@ import { CollectionMethod } from '../sites/types';
 
 export function SiteRetreivedDocumentsPage() {
   const params = useParams();
-  const [newDocumentModalVisible, setNewDocumentModalVisible] = useState(false);
+  const [newDocumentModalOpen, setNewDocumentModalOpen] = useState(false);
   const { data: site } = useGetSiteQuery(params.siteId);
   return (
     <MainLayout
       sidebar={<SiteMenu />}
-      pageTitle={'Retrieved Documents'}
-      pageToolbar={
+      sectionToolbar={
         site &&
         site.collection_method === CollectionMethod.Manual && (
-          <Button onClick={() => setNewDocumentModalVisible(true)}>Create Document</Button>
+          <Button onClick={() => setNewDocumentModalOpen(true)}>Create Document</Button>
         )
       }
     >
       <SiteDocumentsTable />
-      {newDocumentModalVisible && (
-        <AddDocumentModal setVisible={setNewDocumentModalVisible} siteId={params.siteId} />
+      {newDocumentModalOpen && (
+        <AddDocumentModal setOpen={setNewDocumentModalOpen} siteId={params.siteId} />
       )}
     </MainLayout>
   );

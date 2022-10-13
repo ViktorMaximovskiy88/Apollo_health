@@ -115,9 +115,11 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     next_review_date: datetime | None = None
     next_update_date: datetime | None = None
     first_created_date: datetime | None = None
+    first_collected_date: datetime | None = None
     last_collected_date: datetime | None = None
     published_date: datetime | None = None
     end_date: datetime | None = None
+    first_collected_date: datetime | None = None
 
     lineage_id: PydanticObjectId | None = None
     version: str | None = None
