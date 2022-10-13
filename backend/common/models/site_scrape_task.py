@@ -20,6 +20,7 @@ class SiteScrapeTask(BaseDocument):
     documents_found: int = 0
     new_documents_found: int = 0
     retrieved_document_ids: list[PydanticObjectId] = []
+    new_retrieved_document_ids: list[PydanticObjectId] = []
     worker_id: UUID | None = None
     error_message: str | None = None
     links_found: int = 0

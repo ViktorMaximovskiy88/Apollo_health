@@ -67,9 +67,6 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
                 )
                 else metadata.resource_value
             )
-            self.log.info(
-                f"metadata.resource_value={metadata.resource_value} base_url={base_url} url={url}"
-            )
 
             downloads.append(
                 DownloadContext(
