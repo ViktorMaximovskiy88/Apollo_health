@@ -3,7 +3,7 @@ import { Form } from 'antd';
 import { DocDocument } from '../types';
 import { DocDocumentLocation } from './types';
 import { DocDocumentLocationForm } from './DocDocumentLocationForm';
-import { DocumentFamilyCreateModal } from '../document_family/LocationDocumentFamilyCreateModal';
+import { DocumentFamilyCreateModal } from '../document_family/DocumentFamilyCreateModal';
 
 interface DocDocumentLocationsPropTypes {
   docDocument: DocDocument;

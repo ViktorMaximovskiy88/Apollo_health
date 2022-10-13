@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { Form, Select, Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { DocDocument } from './types';
-import { DocDocumentLocation } from './locations/types';
 import { DocumentFamily } from './document_family/types';
-import { DocumentFamilyCreateModal } from './document_family/LocationDocumentFamilyCreateModal';
+import { DocumentFamilyCreateModal } from './document_family/DocumentFamilyCreateModal';
 import { useGetDocumentFamiliesQuery } from './document_family/documentFamilyApi';
 
 interface DocDocumentLocationsPropTypes {
