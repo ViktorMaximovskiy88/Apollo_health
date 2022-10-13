@@ -26,7 +26,6 @@ class RetrievedDocumentLocation(SiteLocation):
 
 
 class DocDocumentLocation(SiteLocation):
-    document_family_id: PydanticObjectId | None = None
     payer_family_id: PydanticObjectId | None = None
 
 
