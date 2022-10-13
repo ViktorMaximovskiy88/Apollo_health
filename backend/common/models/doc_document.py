@@ -2,10 +2,10 @@ from datetime import datetime
 
 import pymongo
 from beanie import Indexed, PydanticObjectId
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from backend.common.core.enums import ApprovalStatus, LangCode, TaskStatus
-from backend.common.models.base_document import BaseDocument
+from backend.common.models.base_document import BaseDocument, BaseModel
 from backend.common.models.document_mixins import DocumentMixins
 from backend.common.models.shared import (
     DocDocumentLocation,

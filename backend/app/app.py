@@ -22,6 +22,7 @@ from backend.app.routes import (
     proxies,
     site_scrape_tasks,
     sites,
+    stats,
     translations,
     users,
     work_queues,
@@ -91,6 +92,7 @@ app.include_router(payer_backbone.router, prefix=prefix)
 app.include_router(app_config.router, prefix=prefix)
 app.include_router(lineage.router, prefix=prefix)
 app.include_router(payer_family.router, prefix=prefix)
+app.include_router(stats.router, prefix=prefix)
 
 
 @app.middleware("http")

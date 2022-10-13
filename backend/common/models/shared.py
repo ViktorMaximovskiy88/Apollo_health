@@ -1,9 +1,9 @@
 from datetime import datetime
 
 from beanie import PydanticObjectId
-from pydantic import BaseModel
 
 from backend.common.core.enums import TagUpdateStatus
+from backend.common.models.base_document import BaseModel
 from backend.scrapeworker.common.utils import unique_by_attr
 
 

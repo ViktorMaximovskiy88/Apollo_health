@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
 
 from beanie import Insert, PydanticObjectId, Replace, before_event
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from backend.common.core.enums import LangCode
-from backend.common.models.base_document import BaseDocument
+from backend.common.models.base_document import BaseDocument, BaseModel
 
 
 class LineageDoc(BaseModel):

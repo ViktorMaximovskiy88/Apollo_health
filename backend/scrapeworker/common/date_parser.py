@@ -185,6 +185,8 @@ class DateParser:
         prev_line_index = 0
         ends_with_comma = False
         for line in text.split("\n"):
+            if re.fullmatch("references?", line.strip(), re.IGNORECASE):
+                break
             latest_match = 0  # Latest date match on current line
             if self.exclude_text(line):
                 prev_line = ""

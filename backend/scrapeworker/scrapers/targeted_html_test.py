@@ -37,30 +37,31 @@ def scraper():
         MagicMock(spec=Page),
         "https://www.example.com",
         simple_scrape_config(),
+        metadata={"file_name": "12345"},
     )
 
     return html_scraper
 
 
 def test_clean_html(mock_s3_client, scraper: TargetedHtmlScraper):  # noqa
-    test_html = "<html><body><div>not me</div></body></html>"
+    test_html = "<html><body><b>Code: 12345</b><div>not me</div></body></html>"
 
     html = '<div delete_me="test"></div><div>not me</div>'
-    clean_html = scraper.clean_html(html)
+    clean_html = scraper._clean_html(html)
     assert test_html == clean_html
 
     html = '<html><div delete_me="test"></div><div>not me</div></html>'
-    clean_html = scraper.clean_html(html)
+    clean_html = scraper._clean_html(html)
     assert test_html == clean_html
 
     html = '<html><body><div delete_me="test"></div><div>not me</div></body></html>'
-    clean_html = scraper.clean_html(html)
+    clean_html = scraper._clean_html(html)
     assert test_html == clean_html
 
 
 def test_multiple_delete_clean_html(mock_s3_client, scraper: TargetedHtmlScraper):  # noqa
-    test_html = "<html><body><div><div>not me</div></div></body></html>"
+    test_html = "<html><body><b>Code: 12345</b><div><div>not me</div></div></body></html>"
 
     html = '<div><span delete="me">byebye</span><div delete_me="test"></div><div>not me</div></div>'
-    clean_html = scraper.clean_html(html)
+    clean_html = scraper._clean_html(html)
     assert test_html == clean_html

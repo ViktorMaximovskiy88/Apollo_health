@@ -12,6 +12,13 @@ from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.models import DownloadContext, Metadata
 from backend.scrapeworker.playbook import PlaybookContext
 
+is_maybe_modal: str = """
+    (node) => {
+        const zIndex = parseInt(getComputedStyle(node).zIndex);
+        return !isNaN(zIndex) && zIndex > 10;
+    }
+"""
+
 closest_heading_expression: str = """
     (node) => {
         let n = node;
@@ -48,6 +55,7 @@ class PlaywrightBaseScraper(ABC):
         config: ScrapeMethodConfiguration,
         log: logging.Logger = logging.getLogger(__name__),
         playbook_context: PlaybookContext = [],
+        metadata: dict = {},
     ):
         self.context = context
         self.page = page
@@ -57,6 +65,7 @@ class PlaywrightBaseScraper(ABC):
         self.parsed_url = urlparse(self.url)
         self.selectors = []
         self.log = log
+        self.metadata = metadata
 
     @cached_property
     def css_selector(self) -> str | None:
@@ -78,10 +87,24 @@ class PlaywrightBaseScraper(ABC):
 
         return css_handle is not None or xpath_locator_count > 0
 
+    async def dismiss_modals(self):
+        modal_handles = await self.page.query_selector_all("div:visible")
+
+        for modal_handle in modal_handles:
+            maybe_modal = await modal_handle.evaluate(is_maybe_modal)
+            if maybe_modal:
+                button = await modal_handle.query_selector(
+                    'button:text-matches("(yes|agree|continue|accept|ok)", "i")'
+                )
+                if button:
+                    await button.click()
+
     async def is_applicable(self) -> bool:
 
         timeout = self.config.wait_for_timeout_ms
         await self.page.wait_for_timeout(timeout)
+
+        await self.dismiss_modals()
 
         in_parent_frame = await self.find_in_page(self.page)
 

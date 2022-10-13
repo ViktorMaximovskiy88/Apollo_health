@@ -2,10 +2,9 @@ from datetime import datetime
 from uuid import UUID
 
 from beanie import Indexed, PydanticObjectId
-from pydantic import BaseModel
 
 from backend.common.core.enums import CollectionMethod, TaskStatus
-from backend.common.models.base_document import BaseDocument
+from backend.common.models.base_document import BaseDocument, BaseModel
 from backend.common.models.site import ScrapeMethodConfiguration
 
 
@@ -20,9 +19,11 @@ class SiteScrapeTask(BaseDocument):
     documents_found: int = 0
     new_documents_found: int = 0
     retrieved_document_ids: list[PydanticObjectId] = []
+    new_retrieved_document_ids: list[PydanticObjectId] = []
     worker_id: UUID | None = None
     error_message: str | None = None
     links_found: int = 0
+    follow_links_found: int = 0
     retry_if_lost: bool = False
     collection_method: str | None = CollectionMethod.Automated
     scrape_method_configuration: ScrapeMethodConfiguration | None = None
