@@ -2,7 +2,8 @@ from enum import Enum
 from typing import Any, AsyncGenerator, Callable, Coroutine
 
 from playwright.async_api import Page, TimeoutError
-from pydantic import BaseModel
+
+from backend.common.models.base_document import BaseModel
 
 
 class PlaybookAction(Enum):

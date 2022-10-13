@@ -1,10 +1,10 @@
 from datetime import datetime
 
 from beanie import PydanticObjectId
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import Field, HttpUrl
 
 from backend.common.core.enums import CollectionMethod, SearchableType, SectionType, SiteStatus
-from backend.common.models.base_document import BaseDocument
+from backend.common.models.base_document import BaseDocument, BaseModel
 
 
 class AttrSelector(BaseModel):

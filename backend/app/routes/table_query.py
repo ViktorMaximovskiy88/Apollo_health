@@ -6,7 +6,8 @@ from beanie import PydanticObjectId
 from beanie.odm.queries.find import FindMany
 from dateutil import parser
 from fastapi import Request
-from pydantic import BaseModel
+
+from backend.common.models.base_document import BaseModel
 
 # Ideally this would be bound to BaseDocument, but beanie type inference
 # chokes when attempting to identify collection

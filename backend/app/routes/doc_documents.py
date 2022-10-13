@@ -1,6 +1,5 @@
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, Security, status
-from pydantic import BaseModel
 
 from backend.app.routes.sites import Site
 from backend.app.routes.table_query import (
@@ -14,6 +13,7 @@ from backend.app.utils.logger import Logger, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.events.event_convert import EventConvert
 from backend.common.events.send_event_client import SendEventClient
+from backend.common.models.base_document import BaseModel
 from backend.common.models.doc_document import (
     DocDocument,
     DocDocumentLimitTags,

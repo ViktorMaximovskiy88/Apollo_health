@@ -4,7 +4,7 @@ from typing import Any, Type
 
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, Security, status
-from pydantic import BaseModel, Field
+from pydantic import Field
 from pymongo import ReturnDocument
 
 import backend.common.models as collection_classes
@@ -17,7 +17,7 @@ from backend.app.routes.table_query import (
 )
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
-from backend.common.models.base_document import BaseDocument
+from backend.common.models.base_document import BaseDocument, BaseModel
 from backend.common.models.comment import Comment
 from backend.common.models.doc_document import LockableDocument, TaskLock
 from backend.common.models.user import User
