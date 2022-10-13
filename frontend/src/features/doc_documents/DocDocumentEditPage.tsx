@@ -44,6 +44,7 @@ export function DocDocumentEditPage() {
             Cancel
           </Button>
           <Button
+            disabled={isSaving}
             loading={isSaving}
             type="primary"
             onClick={() => {
