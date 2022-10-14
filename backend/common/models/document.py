@@ -45,10 +45,14 @@ class BaseRetrievedDocument(BaseModel):
     is_current_version: bool = False
 
 
+class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
+    id: PydanticObjectId = Field(None, alias="_id")
+
+
 class RetrievedDocument(BaseDocument, BaseRetrievedDocument, DocumentMixins):
     locations: list[RetrievedDocumentLocation] = []
 
-    def for_site(self, site_id: PydanticObjectId):
+    def for_site(self, site_id: PydanticObjectId) -> SiteRetrievedDocument:
         location = self.get_site_location(site_id)
         copy = self.dict()
         copy.pop("first_collected_date")
@@ -59,14 +63,10 @@ class RetrievedDocument(BaseDocument, BaseRetrievedDocument, DocumentMixins):
         indexes = [[("locations.site_id", pymongo.ASCENDING)]]
 
 
-class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
-    id: PydanticObjectId = Field(None, alias="_id")
-
-
-class NewManualDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
+class UploadedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
     internal_document: bool
-    replacing_old_version_id: str | None = None  # If adding new version, this is original doc id.
     add_new_document: bool | None = None  # If adding new doc clicked from work item.
+    upload_new_version_for_id: str | None = None  # If adding new version, this is original doc id.
 
 
 class UpdateRetrievedDocument(BaseModel, DocumentMixins):

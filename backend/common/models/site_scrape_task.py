@@ -10,7 +10,7 @@ from backend.common.models.base_document import BaseDocument
 from backend.common.models.site import ScrapeMethodConfiguration
 
 
-class WorkItemOption(Enum):
+class WorkItemOption(str, Enum):
     FOUND = "FOUND"
     NEW_DOCUMENT = "NEW_DOCUMENT"
     NEW_VERSION = "NEW_VERSION"
@@ -22,9 +22,9 @@ class ManualWorkItem(BaseModel):
     document_id: PydanticObjectId
     retrieved_document_id: PydanticObjectId
     selected: str = WorkItemOption.UNHANDLED
-    new_doc: PydanticObjectId | None = None  # TODO: don't implement until lineage is completed
-    prev_doc: PydanticObjectId | None = None  # TODO: don't implement until lineage is completed
+    prev_doc: PydanticObjectId | None = None
     action_datetime: datetime | None = None
+    is_current_version: bool | None = True
 
 
 class SiteScrapeTask(BaseDocument):

@@ -27,11 +27,12 @@ function ManualCollectionButton(props: any) {
       setIsLoading(true);
       let response: any = await runScrape(site!._id);
       if (response.data.success) {
+        refetch();
         setTimeout(function () {
+          refetch();
           setIsLoading(false);
           navigate(`../doc-documents?scrape_task_id=${response.data.nav_id}`);
-        }, 125); //sometimes worklist changes do not save before nav.
-        refetch();
+        }, 1000); // refetch sometimes not working. delay and refetch again.
       } else {
         setIsLoading(false);
         notification.error({
@@ -62,10 +63,11 @@ function ManualCollectionButton(props: any) {
         setIsLoading(true);
         let response: any = await cancelAllScrapes(site!._id);
         if (response.data?.success) {
+          refetch();
           setTimeout(function () {
             refetch();
             setIsLoading(false);
-          }, 125); //sometimes worklist changes do not save before nav.
+          }, 1000); // refetch sometimes not working. delay and refetch again.
         } else {
           setIsLoading(false);
           notification.error({
@@ -147,11 +149,7 @@ export function CollectionsPage() {
   return (
     <>
       {newDocumentModalOpen ? (
-        <AddDocumentModal
-          setOpen={setNewDocumentModalOpen}
-          siteId={siteId}
-          addNewDocument={false}
-        />
+        <AddDocumentModal setOpen={setNewDocumentModalOpen} siteId={siteId} />
       ) : null}
       <MainLayout
         sidebar={<SiteMenu />}

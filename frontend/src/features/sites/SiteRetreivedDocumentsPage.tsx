@@ -25,11 +25,7 @@ export function SiteRetreivedDocumentsPage() {
     >
       <SiteDocumentsTable />
       {newDocumentModalOpen && (
-        <AddDocumentModal
-          setOpen={setNewDocumentModalOpen}
-          siteId={params.siteId}
-          addNewDocument={false}
-        />
+        <AddDocumentModal setOpen={setNewDocumentModalOpen} siteId={params.siteId} />
       )}
     </MainLayout>
   );

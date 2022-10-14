@@ -61,6 +61,7 @@ async def read_scrape_tasks_for_site(
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ) -> TableQueryResponse[SiteScrapeTask]:
+
     query = SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id)
     result = await query_table(query, limit, skip, sorts, filters)
     return result

@@ -34,15 +34,9 @@ interface AddDocumentModalPropTypes {
   oldVersion?: SiteDocDocument;
   setOpen: (open: boolean) => void;
   siteId: any;
-  addNewDocument: boolean;
 }
 
-export function AddDocumentModal({
-  oldVersion,
-  setOpen,
-  siteId,
-  addNewDocument,
-}: AddDocumentModalPropTypes) {
+export function AddDocumentModal({ oldVersion, setOpen, siteId }: AddDocumentModalPropTypes) {
   const [form] = useForm();
   const [addDoc] = useAddDocumentMutation();
   const [fileData, setFileData] = useState<any>();
@@ -97,10 +91,7 @@ export function AddDocumentModal({
     try {
       newDocument.site_id = siteId;
       if (oldVersion) {
-        newDocument.replacing_old_version_id = oldVersion._id;
-        if (addNewDocument) {
-          newDocument.add_new_document = true;
-        }
+        newDocument.upload_new_version_for_id = oldVersion._id;
         if (oldVersion.internal_document) {
           newDocument.internal_document = oldVersion.internal_document;
         } else {

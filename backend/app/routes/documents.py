@@ -1,9 +1,8 @@
 import logging
 import tempfile
 from datetime import datetime, timezone
-from typing import Any, List
+from typing import Any
 
-import typer
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, Security, UploadFile, status
 from fastapi.responses import StreamingResponse
@@ -13,13 +12,12 @@ from backend.app.utils.user import get_current_user
 from backend.common.core.enums import CollectionMethod
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import (
-    NewManualDocument,
     RetrievedDocument,
     RetrievedDocumentLimitTags,
     RetrievedDocumentLocation,
     UpdateRetrievedDocument,
+    UploadedDocument,
 )
-from backend.common.models.document_mixins import get_site_location
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import (
     ManualWorkItem,
@@ -28,8 +26,9 @@ from backend.common.models.site_scrape_task import (
     WorkItemOption,
 )
 from backend.common.models.user import User
-from backend.common.services.collection import CollectionResponse
+from backend.common.services.collection import CollectionResponse, find_work_item_index
 from backend.common.services.document import create_doc_document_service
+from backend.common.services.site import location_exists
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_handler import TextHandler
@@ -174,7 +173,7 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
             "link_text": "",
         }
 
-        # If uploaded doc exists, get location of existing doc and render to user.
+        # If uploaded doc exists in site, store existing location in response.
         if checksum_document:
             checksum_location: RetrievedDocumentLocation = checksum_document.get_site_location(
                 from_site_id
@@ -227,158 +226,110 @@ async def delete_document(
     response_model=CollectionResponse,
 )
 async def add_document(
-    document: NewManualDocument,
+    uploaded_doc: UploadedDocument,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ) -> CollectionResponse:
+    if await location_exists(uploaded_doc, uploaded_doc.site_id):
+        raise HTTPException(status.HTTP_409_CONFLICT, "Doc already exists for that location")
     now: datetime = datetime.now(tz=timezone.utc)
-    link_text = document.metadata.get("link_text", None)
+    link_text = uploaded_doc.metadata.get("link_text", None)
+    site: Site | None = await Site.find_one({"_id": uploaded_doc.site_id})
 
-    # Check if trying to upload a doc which already exists for this site.
-    existing_docs: List[RetrievedDocument] = await RetrievedDocument.find(
-        {"locations.site_id": document.site_id}
-    ).to_list()
-    for existing_doc in existing_docs:
-        existing_doc_location: RetrievedDocumentLocation = get_site_location(
-            existing_doc, site_id=document.site_id
-        )
-        if (
-            existing_doc_location.base_url == document.base_url
-            and existing_doc_location.url == document.url
-            and existing_doc_location.link_text == document.link_text
-        ):
-            raise HTTPException(status.HTTP_409_CONFLICT, "Doc already exists for that location")
-
-    # Add uploaded document to retr_doc.
+    # Create retr_doc and doc_doc from uploaded_doc.
     new_document: RetrievedDocument = RetrievedDocument(
-        checksum=document.checksum,
-        content_type=document.content_type,
-        doc_type_confidence=document.doc_type_confidence,
-        document_type=document.document_type,
-        effective_date=document.effective_date,
-        end_date=document.end_date,
-        file_extension=document.file_extension,
-        identified_dates=document.identified_dates,
-        indication_tags=document.indication_tags,
-        lang_code=document.lang_code,
-        last_reviewed_date=document.last_reviewed_date,
-        last_updated_date=document.last_updated_date,
-        metadata=document.metadata,
-        name=document.name,
-        next_review_date=document.next_review_date,
-        next_update_date=document.next_update_date,
-        published_date=document.published_date,
-        text_checksum=document.text_checksum,
-        therapy_tags=document.therapy_tags,
+        checksum=uploaded_doc.checksum,
+        content_type=uploaded_doc.content_type,
+        doc_type_confidence=uploaded_doc.doc_type_confidence,
+        document_type=uploaded_doc.document_type,
+        effective_date=uploaded_doc.effective_date,
+        end_date=uploaded_doc.end_date,
+        file_extension=uploaded_doc.file_extension,
+        identified_dates=uploaded_doc.identified_dates,
+        indication_tags=uploaded_doc.indication_tags,
+        lang_code=uploaded_doc.lang_code,
+        last_reviewed_date=uploaded_doc.last_reviewed_date,
+        last_updated_date=uploaded_doc.last_updated_date,
+        metadata=uploaded_doc.metadata,
+        name=uploaded_doc.name,
+        next_review_date=uploaded_doc.next_review_date,
+        next_update_date=uploaded_doc.next_update_date,
+        published_date=uploaded_doc.published_date,
+        text_checksum=uploaded_doc.text_checksum,
+        therapy_tags=uploaded_doc.therapy_tags,
         uploader_id=current_user.id,
         first_collected_date=now,
         last_collected_date=now,
         locations=[
             RetrievedDocumentLocation(
-                url=document.url,
-                base_url=document.base_url,
+                url=uploaded_doc.url,
+                base_url=uploaded_doc.base_url,
                 first_collected_date=now,
                 last_collected_date=now,
-                site_id=document.site_id,
+                site_id=uploaded_doc.site_id,
                 link_text=link_text,
-                context_metadata=document.metadata,
+                context_metadata=uploaded_doc.metadata,
             )
         ],
     )
-    # Set lineage_id for both found new document and found new version.
-    if document.replacing_old_version_id:
-        old_doc: DocDocument | None = await DocDocument.find_one(
-            {"_id": PydanticObjectId(document.replacing_old_version_id)}
+    # Set new_document current_version and update lineage.
+    new_document.is_current_version = True
+    if uploaded_doc.upload_new_version_for_id:
+        # New version, set new_doc.previous_doc_id and lineage_id.
+        original_version_doc: RetrievedDocument | None = await RetrievedDocument.find_one(
+            {"_id": PydanticObjectId(uploaded_doc.upload_new_version_for_id)}
         )
-        if old_doc.lineage_id:
-            new_document.lineage_id = old_doc.lineage_id
-    # Found new document.
-    if document.add_new_document:
-        new_document.is_current_version = True
+        new_document.previous_doc_id = original_version_doc.id
+        if original_version_doc.lineage_id:
+            new_document.lineage_id = original_version_doc.lineage_id
+            original_version_doc.is_current_version = False
+        await original_version_doc.save()
 
-    # Create task and doc_doc with same details as retr_doc (uploaded).
     created_retr_doc: RetrievedDocument = await create_and_log(logger, current_user, new_document)
     created_doc_doc: DocDocument = await create_doc_document_service(new_document, current_user)
 
-    # Handle uploading new version or adding a new document.
-    site: Site | None = await Site.find_one({"_id": document.site_id})
-    if document.replacing_old_version_id:
+    # If manual collection, process and update work items.
+    if site.collection_method == CollectionMethod.Manual:
+        # Filtering by TaskStatus.IN_PROGRESS will not work because documents
+        # can still be uploaded if a collection / task has not started.
         current_task: SiteScrapeTask = await SiteScrapeTask.find_one(
             {
+                "site_id": uploaded_doc.site_id,
                 "initiator_id": current_user.id,
-                "status": f"{TaskStatus.IN_PROGRESS}",
                 "collection_method": f"{CollectionMethod.Manual}",
             }
         )
-        if created_doc_doc and site.collection_method == CollectionMethod.Manual:
-            current_task.work_list.append(
-                ManualWorkItem(
-                    document_id=f"{created_doc_doc.id}",
-                    retrieved_document_id=f"{created_retr_doc.id}",
-                )
+        # Create work_item for created_doc.
+        created_work_item: ManualWorkItem = ManualWorkItem(
+            document_id=f"{created_doc_doc.id}",
+            retrieved_document_id=f"{created_retr_doc.id}",
+            selected=WorkItemOption.NEW_DOCUMENT,
+        )
+        # New version has FOUND and stores worklist prev / current_version.
+        if uploaded_doc.upload_new_version_for_id:
+            created_work_item.selected = WorkItemOption.FOUND
+            # Set old version's work_item as not current.
+            original_item_index: int = find_work_item_index(
+                original_version_doc, current_task, raise_exception=True
             )
-
-        # Update new doc and previous doc work items.
-        err_msg = "SERVER ERROR: Not able to find old doc in work list"
-        if document.add_new_document:
-            try:
-                doc_index: int = next(
-                    i
-                    for i, wi in enumerate(current_task.work_list)
-                    if f"{wi.document_id}" == f"{created_doc_doc.id}"
-                )
-            except StopIteration:
-                typer.secho(err_msg, fg=typer.colors.RED)
-                raise HTTPException(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    err_msg,
-                )
-            new_work_item = current_task.work_list[doc_index]
-            new_work_item.selected = WorkItemOption.FOUND
-            current_task.work_list[doc_index] = new_work_item
-        # Update old version's new_doc to uploaded doc and
-        # new version's prev_doc to old version.
-        else:
-            try:
-                doc_index: int = next(
-                    i
-                    for i, wi in enumerate(current_task.work_list)
-                    if f"{wi.document_id}" == document.replacing_old_version_id
-                )
-            except StopIteration:
-                typer.secho(err_msg, fg=typer.colors.RED)
-                raise HTTPException(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    err_msg,
-                )
-            old_work_item = current_task.work_list[doc_index]
-            old_work_item.prev_doc = created_retr_doc.id
-            current_task.work_list[doc_index] = old_work_item
-            # Update new version's prev_doc to old version.
-            try:
-                doc_index: int = next(
-                    i
-                    for i, wi in enumerate(current_task.work_list)
-                    if f"{wi.document_id}" == f"{created_doc_doc.id}"
-                )
-            except StopIteration:
-                typer.secho(err_msg, fg=typer.colors.RED)
-                raise HTTPException(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    err_msg,
-                )
-            new_work_item = current_task.work_list[doc_index]
-            new_work_item.prev_doc = document.replacing_old_version_id
-            new_work_item.selected = WorkItemOption.FOUND
-            current_task.work_list[doc_index] = new_work_item
+            original_item = current_task.work_list[original_item_index]
+            original_item.is_current_version = False
+            current_task.work_list[original_item_index] = original_item
+            # Update new version's prev_doc to old version and set as current.
+            created_item_index: int = find_work_item_index(
+                created_retr_doc, current_task, raise_exception=True
+            )
+            created_item = current_task.work_list[created_item_index]
+            created_item.prev_doc = original_version_doc.id
+            current_task.work_list[created_item_index] = created_item
+        current_task.work_list.append(created_work_item)
         await current_task.save()
-
-    # Create new task and work item for new document.
+    # Automatic: Add document to new task. TODO: Double check business logic.
     else:
         new_scrape_task: SiteScrapeTask = SiteScrapeTask(
             initiator_id=current_user.id,
-            site_id=document.site_id,
-            retrieved_document_ids=[new_document.id],
+            site_id=uploaded_doc.site_id,
+            retrieved_document_ids=[created_retr_doc.id],
             status=TaskStatus.FINISHED,
             queued_time=now,
             start_time=now,
@@ -386,13 +337,6 @@ async def add_document(
             documents_found=1,
             collection_method=site.collection_method,
         )
-        if created_doc_doc and site.collection_method == CollectionMethod.Manual:
-            new_scrape_task.work_list.append(
-                ManualWorkItem(
-                    document_id=f"{created_doc_doc.id}",
-                    retrieved_document_id=f"{created_retr_doc.id}",
-                )
-            )
         await new_scrape_task.save()
 
     return CollectionResponse(success=True)

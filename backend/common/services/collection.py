@@ -50,6 +50,7 @@ class CollectionService:
             TaskStatus.IN_PROGRESS,
         ]
         self.last_queued = None
+        self.not_found_count = 0
 
     async def has_queued(self) -> SiteScrapeTask | Boolean:
         if self.last_queued:
@@ -184,22 +185,39 @@ class CollectionService:
             status=TaskStatus.IN_PROGRESS,
             collection_method=CollectionMethod.Manual,
         )
-        # If site has a previous task, copy doc_doc, retr_doc and work_list.
+        # If site has a previous_task, filter and copy previous_task work_list.
         previous_task: SiteScrapeTask = await self.fetch_previous_task()
         if previous_task:
             new_task.documents_found = previous_task.documents_found
             new_task.retrieved_document_ids = previous_task.retrieved_document_ids
-            doc_documents: List[DocDocument] = await DocDocument.find(
-                {"retrieved_document_id": {"$in": new_task.retrieved_document_ids}}
+            previous_doc_docs: List[DocDocument] = await DocDocument.find(
+                {"retrieved_document_id": {"$in": previous_task.retrieved_document_ids}}
             ).to_list()
-            for doc_document in doc_documents:
-                new_task.work_list.append(
-                    ManualWorkItem(
-                        document_id=f"{doc_document.id}",
-                        retrieved_document_id=f"{doc_document.retrieved_document_id}",
+            for previous_doc_doc in previous_doc_docs:
+                previous_item_index: int = find_work_item_index(previous_doc_doc, previous_task)
+                # Previous task does not have work_item, so create a new one.
+                # Happens when going from collection method auto to manual.
+                if previous_item_index == -1:
+                    new_task.work_list.append(
+                        ManualWorkItem(
+                            document_id=f"{previous_doc_doc.id}",
+                            retrieved_document_id=f"{previous_doc_doc.retrieved_document_id}",
+                        )
                     )
-                )
-        # Create the new task with the previous tasks docs / retr_docs.
+                    continue
+                previous_item = previous_task.work_list[previous_item_index]
+                if previous_item.selected in [
+                    WorkItemOption.NEW_DOCUMENT,
+                    WorkItemOption.NEW_VERSION,
+                ]:
+                    new_task.work_list.append(
+                        ManualWorkItem(
+                            document_id=f"{previous_doc_doc.id}",
+                            retrieved_document_id=f"{previous_doc_doc.retrieved_document_id}",
+                        )
+                    )
+
+        # Create new manual task and respond with nav link.
         created_task: SiteScrapeTask = await create_and_log(
             self.logger, self.current_user, new_task
         )
@@ -207,7 +225,6 @@ class CollectionService:
             response.add_error("Unable to create new scrape task.")
         else:
             response.nav_id = created_task.id
-
         return response
 
     async def stop_manual(self) -> CollectionResponse:
@@ -225,7 +242,6 @@ class CollectionService:
         response = await self.process_work_lists()
         if not response.success:
             return response
-        await self.set_last_collected(last_queued_task)
         # Stop existing tasks from processing and set last collected to now.
         await self.stop_queued_tasks()
 
@@ -241,16 +257,18 @@ class CollectionService:
         )
         await self.site.update(Set({Site.last_run_status: TaskStatus.CANCELED}))
 
-    async def set_last_collected(self, task) -> CollectionResponse:
-        """Update last_collected_date for retrieved_docs and retrieved_doc's doc."""
+    async def set_all_last_collected(self, task) -> CollectionResponse:
+        """Update all task retrieved_docs and doc_docs last_collected_date."""
         response: CollectionResponse = CollectionResponse()
         retrieved_documents: list[RetrievedDocument] = (
-            await RetrievedDocument.find_many({"_id": {"$in": task.retrieved_document_ids}})
+            await RetrievedDocument.find_many({"_id": {"$in": task["retrieved_document_ids"]}})
             .sort("-first_collected_date")
             .to_list()
         )
         if not retrieved_documents:
-            response.add_error(f"No retrieved_docs for site_scrape_task[{task.id}]")
+            response.add_error(
+                f"set_last_collected: No retrieved_docs for site_scrape_task[{task.id}]"
+            )
             return response
 
         for r_doc in retrieved_documents:
@@ -263,6 +281,20 @@ class CollectionService:
                     {"retrieved_document_id": r_doc.id},
                     {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
                 )
+        return response
+
+    async def set_last_collected(self, retr_doc) -> CollectionResponse:
+        """Update all task retrieved_docs and doc_docs last_collected_date."""
+        response: CollectionResponse = CollectionResponse()
+        if datetime.date(retr_doc.last_collected_date) < datetime.today().date():
+            await RetrievedDocument.get_motor_collection().find_one_and_update(
+                {"_id": retr_doc.id},
+                {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
+            )
+            await DocDocument.get_motor_collection().find_one_and_update(
+                {"retrieved_document_id": retr_doc.id},
+                {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
+            )
         return response
 
     async def process_work_lists(self) -> CollectionResponse:
@@ -292,6 +324,10 @@ class CollectionService:
     ) -> CollectionResponse:
         """Process a site_scrape_task work_item action"""
         result: CollectionResponse = CollectionResponse()
+        target_task.work_list[item_index].action_datetime = datetime.now(tz=timezone.utc)
+        retr_doc: RetrievedDocument | None = await RetrievedDocument.find_one(
+            {"_id": work_item.retrieved_document_id},
+        )
         if env_type == "local" and work_item.selected != WorkItemOption.UNHANDLED:
             work_item_msg: str = (
                 f"work_item selected: [{work_item.selected}] in task: [{target_task.id}] "
@@ -299,40 +335,59 @@ class CollectionService:
                 f"retrieved_document_id: [{work_item.retrieved_document_id}]"
             )
             typer.secho(work_item_msg, fg=typer.colors.BRIGHT_GREEN)
-        # Update work_item.action_datetime.
-        target_task.work_list[item_index].action_datetime = datetime.now(tz=timezone.utc)
-        # Update retr_doc and doc_doc last_collected.
-        retr_doc = await RetrievedDocument.get_motor_collection().find_one(
-            {"_id": work_item.retrieved_document_id},
-        )
 
         match work_item.selected:
             case WorkItemOption.FOUND:
-                self.set_last_collected(retr_doc)
-                target_task.work_list.pop(item_index)
+                await self.set_last_collected(retr_doc)
+                target_task.work_list.pop(item_index)  # TODO: Test this, seems flaky
             case WorkItemOption.NEW_DOCUMENT:
-                self.set_last_collected(retr_doc)
+                await self.set_last_collected(retr_doc)
             case WorkItemOption.NEW_VERSION:
-                self.set_last_collected(retr_doc)
+                await self.set_last_collected(retr_doc)
             case WorkItemOption.NOT_FOUND:
                 target_task.retrieved_document_ids = [
                     f"{retr_id}"
                     for retr_id in target_task.retrieved_document_ids
                     if f"{retr_id}" != f"{work_item.retrieved_document_id}"
                 ]
-                # Should we keep in work_list so no found shows after stop collection?
-                target_task.work_list = [
-                    ManualWorkItem(
-                        document_id=f"{wi.document_id}",
-                        retrieved_document_id=f"{wi.retrieved_document_id}",
-                    )
-                    for wi in target_task.work_list
-                    if f"{wi.retrieved_document_id}" != f"{work_item.retrieved_document_id}"
-                ]
+                target_task.documents_found = (
+                    target_task.documents_found - (self.not_found_count - 1)
+                    if target_task.documents_found > 0
+                    else 0
+                )
+                self.not_found_count += 1
             case WorkItemOption.UNHANDLED:
-                # Error header says Please review and update the following documents:
-                result.add_error(f"{retr_doc['name']}")
+                # Error header: Please review and update the following documents:
+                result.add_error(f"{retr_doc.name}")
                 return result
         await target_task.save()
 
         return result
+
+
+def find_work_item_index(doc, task, raise_exception=False, err_msg="") -> int:
+    if not err_msg:
+        err_msg = f"ERROR: Not able to find retr_doc_id in work list for task[{task.id}]"
+    # Is doc_doc.
+    if hasattr(doc, "retrieved_document_id"):
+        work_item_index: int = next(
+            (i for i, item in enumerate(task.work_list) if f"{item.document_id}" == f"{doc.id}"),
+            -1,
+        )
+    # Is retr_doc
+    else:
+        work_item_index: int = next(
+            (
+                i
+                for i, item in enumerate(task.work_list)
+                if f"{item.retrieved_document_id}" == f"{doc.id}"
+            ),
+            -1,
+        )
+    if work_item_index == -1 and raise_exception:
+        typer.secho(err_msg, fg=typer.colors.RED)
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            err_msg,
+        )
+    return work_item_index

@@ -9,10 +9,11 @@ export enum WorkItemOption {
 }
 export interface WorkItem {
   document_id: string;
+  retrieved_document_id: string;
   selected: WorkItemOption;
-  new_doc?: string;
   prev_doc?: string;
   action_datetime?: string;
+  is_current_version?: boolean;
 }
 export interface SiteScrapeTask extends BaseDocument {
   site_id: string;

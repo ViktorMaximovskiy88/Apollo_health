@@ -142,7 +142,7 @@ const NewVersion = () => {
       return (
         <Button
           onClick={() => {
-            handleNewVersion(doc, false);
+            handleNewVersion(doc);
             updateSelected(WorkItemOption.NewVersion);
           }}
         >
@@ -166,7 +166,7 @@ const NewVersion = () => {
         <Button
           type="primary"
           onClick={() => {
-            handleNewVersion(doc, false);
+            handleNewVersion(doc);
             updateSelected(WorkItemOption.NewVersion);
           }}
         >
@@ -177,7 +177,7 @@ const NewVersion = () => {
       return (
         <Button
           onClick={() => {
-            handleNewVersion(doc, false);
+            handleNewVersion(doc);
             updateSelected(WorkItemOption.NewVersion);
           }}
         >
@@ -246,7 +246,7 @@ export function ManualCollectionValidationButtons({
   handleNewVersion,
 }: {
   doc: SiteDocDocument;
-  handleNewVersion: (doc: SiteDocDocument, addNewDocument: boolean) => void;
+  handleNewVersion: (doc: SiteDocDocument) => void;
 }) {
   return (
     <ValidationButtonsProvider doc={doc} handleNewVersion={handleNewVersion}>

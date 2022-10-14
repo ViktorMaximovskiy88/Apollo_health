@@ -13,7 +13,7 @@ import { useSiteDocDocumentColumns } from './useSiteDocDocumentColumns';
 import { SiteDocDocument } from './types';
 
 interface DataTablePropTypes {
-  handleNewVersion: (data: SiteDocDocument, addNewDocument: boolean) => void;
+  handleNewVersion: (data: SiteDocDocument) => void;
 }
 
 export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) {

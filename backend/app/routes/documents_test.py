@@ -14,9 +14,9 @@ from backend.app.routes.documents import add_document, get_documents, upload_doc
 from backend.common.core.enums import CollectionMethod, LangCode, SiteStatus, TaskStatus
 from backend.common.db.init import init_db
 from backend.common.models.document import (
-    NewManualDocument,
     RetrievedDocument,
     RetrievedDocumentLimitTags,
+    UploadedDocument,
 )
 from backend.common.models.shared import RetrievedDocumentLocation
 from backend.common.models.site import BaseUrl, ScrapeMethodConfiguration, Site
@@ -108,7 +108,7 @@ def simple_manual_retrieved_document(
     identified_dates=[],
 ) -> RetrievedDocument:
     now = datetime.now(tz=timezone.utc)
-    return NewManualDocument(
+    return UploadedDocument(
         name="test",
         lang_code=LangCode.English,
         document_type="Authorization Policy",
