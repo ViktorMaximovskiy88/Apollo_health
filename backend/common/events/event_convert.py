@@ -16,10 +16,8 @@ class EventConvert:
         # refactor into DocumentEvent model which matches api definition.
 
         legacy_relevance = []
-        if target.locations[0].document_family_id:
-            document_fam = await DocumentFamily.find_one(
-                {"_id": target.locations[0].document_family_id}
-            )
+        if target.document_family_id:
+            document_fam = await DocumentFamily.find_one({"_id": target.document_family_id})
             if document_fam:
                 legacy_relevance = document_fam.legacy_relevance
 
