@@ -141,6 +141,14 @@ const createColumns = ({ deleteSite, setDeletedSite, users }: CreateColumnsType)
       },
     },
     {
+      header: 'Last Run Document Count',
+      name: 'last_run_documents',
+      minWidth: 200,
+      render: ({ value: last_run_documents }: { value: number }) => {
+        return <>{last_run_documents}</>;
+      },
+    },
+    {
       header: 'Assignee',
       name: 'assignee',
       minWidth: 200,

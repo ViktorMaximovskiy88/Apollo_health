@@ -8,6 +8,7 @@ export const initialState = {
       { name: 'name', operator: 'contains', type: 'string', value: '' },
       { name: 'status', operator: 'eq', type: 'select', value: null },
       { name: 'last_run_time', operator: 'before', type: 'date', value: '' },
+      { name: 'last_run_documents', operator: 'contains', type: 'number', value: '' },
       {
         name: 'last_run_status',
         operator: 'eq',
