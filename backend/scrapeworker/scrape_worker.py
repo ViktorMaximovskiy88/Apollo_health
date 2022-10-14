@@ -179,7 +179,8 @@ class ScrapeWorker:
             parsed_content = await parse_by_type(
                 temp_path,
                 download,
-                self.site.scrape_method_configuration.focus_section_configs,
+                focus_config=self.site.scrape_method_configuration.focus_section_configs,
+                scrape_method_config=self.site.scrape_method_configuration,
             )
 
             if parsed_content is None:
