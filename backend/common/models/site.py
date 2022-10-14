@@ -1,4 +1,5 @@
 from datetime import datetime
+from xmlrpc.client import boolean
 
 from beanie import PydanticObjectId
 from pydantic import BaseModel, Field, HttpUrl
@@ -86,6 +87,7 @@ class NewSite(BaseModel):
     doc_type_threshold: float = 0.75
     lineage_threshold_override: bool = False
     lineage_threshold: float = 0.75
+    has_created_manual_collection: boolean = False
 
 
 class UpdateSite(BaseModel):

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 import typer
 from beanie import PydanticObjectId
 from beanie.odm.operators.update.general import Set
+from beanie.odm.queries.find import FindMany
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from pydantic import BaseModel
 from pymongo import ReturnDocument
@@ -61,9 +62,13 @@ async def read_scrape_tasks_for_site(
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ) -> TableQueryResponse[SiteScrapeTask]:
-
-    query = SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id)
-    result = await query_table(query, limit, skip, sorts, filters)
+    query = {"site_id": site_id}
+    if site_id:
+        site: Site | None = await Site.find_one({"_id": site_id})
+        if not site:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve tasks from site.")
+    query: FindMany[SiteScrapeTask] = SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id)
+    result: TableQueryResponse = await query_table(query, limit, skip, sorts, filters)
     return result
 
 
@@ -102,14 +107,14 @@ async def start_scrape_task(
         current_user=current_user,
         logger=logger,
     )
+    # Check that a task is not already queued or running.
+    # TODO: Check and see if timing issue causing this to not render work items.
     if await site_collection.has_queued():
         last_queued_task: SiteScrapeTask = await site_collection.fetch_last_queued()
         if not last_queued_task:
-            response.add_error("has_queued true, but cannot find last_queued_task")
+            response.add_error("Cannot Find Last Queued Task.")
         else:
-            response.add_error(
-                f"Scrapetask {last_queued_task.id} is already queued or in progress."
-            )
+            response.add_error(f"Task[{last_queued_task.id}] is already queued or in progress.")
         response.raise_error()
 
     return await site_collection.start_collecting()
@@ -123,8 +128,6 @@ async def cancel_all_site_scrape_task(
     response_model=CollectionResponse,
 ) -> CollectionResponse:
     response = CollectionResponse()
-    # Grab site / check exists and has permission.
-    # TODO: Lock to current_user.sites or check user is admin.
     site: Site | None = await Site.get(site_id)
     if not site:
         raise HTTPException(
@@ -139,6 +142,7 @@ async def cancel_all_site_scrape_task(
     )
     has_queued_tasks: SiteScrapeTask = await site_collection.has_queued()
     if not has_queued_tasks:
+        # TODO: Try just returning ok response to see if that fixes blank work item.
         response.add_error("No queued tasks to cancel.")
         response.raise_error()
 

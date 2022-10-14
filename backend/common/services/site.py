@@ -8,6 +8,7 @@ from backend.common.models.document import RetrievedDocument, UploadedDocument
 from backend.common.models.document_mixins import get_site_location
 from backend.common.models.shared import RetrievedDocumentLocation
 from backend.common.models.site import Site
+from backend.common.models.site_scrape_task import SiteScrapeTask
 
 
 def find_sites_eligible_for_scraping(crons, now=datetime.now(tz=timezone.utc)):
@@ -50,3 +51,12 @@ async def location_exists(uploaded_doc: UploadedDocument, site_id: PydanticObjec
         ):
             return True
     return False
+
+
+async def site_last_started_task(site_id: PydanticObjectId) -> bool:
+    return await SiteScrapeTask.find_one(
+        {
+            "site_id": site_id,
+        },
+        sort=[("start_time", -1)],
+    )

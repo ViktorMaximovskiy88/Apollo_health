@@ -85,15 +85,13 @@ class CollectionService:
     async def start_collecting(self) -> CollectionResponse:
         """Start collecting / updating all queued tasks."""
         result: CollectionResponse = CollectionResponse()
-        err_str = f"[site: {self.site.id}] [collection_method: {self.site.collection_method}] "
         match self.site.collection_method:
             case CollectionMethod.Automated:
                 result = await self.create_queued_task()
             case CollectionMethod.Manual:
                 result = await self.start_manual()
             case _:
-                err_str: str = f"Unknown collection_method: {err_str}"
-                result.add_error(err_str)
+                result.add_error(f"Collection Method Invalid: {self.site.collection_method}")
                 return result
         if not result.errors:
             await self.site.update(Set({Site.last_run_status: TaskStatus.QUEUED}))
@@ -136,14 +134,11 @@ class CollectionService:
             self.logger, self.current_user, new_scrape_task
         )
         if not scrape_task:
-            err_msg: str = (
-                f"Not able to create site_scrape_task for [worker_id: "
-                "{new_scrape_task.worker_id} site: {self.site.id}] "
-                f"collection_method: {self.site.collection_method}]"
+            result.add_error(
+                f"Not able to create site_scrape_task for worker_id"
+                f"[{new_scrape_task.worker_id}] site[{self.site.id}]"
             )
-            result.add_error(err_msg)
             return result
-
         # Set site last_run status to created task status.
         # and id to navigate to newly created site_task_id.
         result.nav_id = scrape_task.id
@@ -154,6 +149,7 @@ class CollectionService:
                 }
             )
         )
+
         return result
 
     async def stop_queued_tasks(self) -> Boolean:
@@ -185,7 +181,8 @@ class CollectionService:
             status=TaskStatus.IN_PROGRESS,
             collection_method=CollectionMethod.Manual,
         )
-        # If site has a previous_task, filter and copy previous_task work_list.
+        # Starting manual collections should not include docs with work_items
+        # since work_items are docs from a current or completed manual collection.
         previous_task: SiteScrapeTask = await self.fetch_previous_task()
         if previous_task:
             new_task.documents_found = previous_task.documents_found
@@ -195,8 +192,6 @@ class CollectionService:
             ).to_list()
             for previous_doc_doc in previous_doc_docs:
                 previous_item_index: int = find_work_item_index(previous_doc_doc, previous_task)
-                # Previous task does not have work_item, so create a new one.
-                # Happens when going from collection method auto to manual.
                 if previous_item_index == -1:
                     new_task.work_list.append(
                         ManualWorkItem(
@@ -204,19 +199,6 @@ class CollectionService:
                             retrieved_document_id=f"{previous_doc_doc.retrieved_document_id}",
                         )
                     )
-                    continue
-                previous_item = previous_task.work_list[previous_item_index]
-                if previous_item.selected in [
-                    WorkItemOption.NEW_DOCUMENT,
-                    WorkItemOption.NEW_VERSION,
-                ]:
-                    new_task.work_list.append(
-                        ManualWorkItem(
-                            document_id=f"{previous_doc_doc.id}",
-                            retrieved_document_id=f"{previous_doc_doc.retrieved_document_id}",
-                        )
-                    )
-
         # Create new manual task and respond with nav link.
         created_task: SiteScrapeTask = await create_and_log(
             self.logger, self.current_user, new_task
@@ -225,6 +207,7 @@ class CollectionService:
             response.add_error("Unable to create new scrape task.")
         else:
             response.nav_id = created_task.id
+
         return response
 
     async def stop_manual(self) -> CollectionResponse:
@@ -339,25 +322,29 @@ class CollectionService:
         match work_item.selected:
             case WorkItemOption.FOUND:
                 await self.set_last_collected(retr_doc)
-                target_task.work_list.pop(item_index)  # TODO: Test this, seems flaky
+                # Instead of removing from work_list, save as FOUND so state is stored.
+                # target_task.work_list.pop(item_index)
             case WorkItemOption.NEW_DOCUMENT:
                 await self.set_last_collected(retr_doc)
             case WorkItemOption.NEW_VERSION:
                 await self.set_last_collected(retr_doc)
             case WorkItemOption.NOT_FOUND:
+                # Remove doc.id from retrieved_document_ids so
+                # future tasks will not add this doc's id.
                 target_task.retrieved_document_ids = [
                     f"{retr_id}"
                     for retr_id in target_task.retrieved_document_ids
                     if f"{retr_id}" != f"{work_item.retrieved_document_id}"
                 ]
+                self.not_found_count += 1
+                total_docs_found: int = target_task.documents_found - self.not_found_count
                 target_task.documents_found = (
-                    target_task.documents_found - (self.not_found_count - 1)
-                    if target_task.documents_found > 0
+                    total_docs_found
+                    if target_task.documents_found > 0 and total_docs_found > 0
                     else 0
                 )
-                self.not_found_count += 1
             case WorkItemOption.UNHANDLED:
-                # Error header: Please review and update the following documents:
+                # Error header: Please review and update the following documents.
                 result.add_error(f"{retr_doc.name}")
                 return result
         await target_task.save()
@@ -367,7 +354,7 @@ class CollectionService:
 
 def find_work_item_index(doc, task, raise_exception=False, err_msg="") -> int:
     if not err_msg:
-        err_msg = f"ERROR: Not able to find retr_doc_id in work list for task[{task.id}]"
+        err_msg = f"ERROR: Not able to find doc.id in work list for task[{task.id}]"
     # Is doc_doc.
     if hasattr(doc, "retrieved_document_id"):
         work_item_index: int = next(

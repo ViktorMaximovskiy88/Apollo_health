@@ -28,7 +28,7 @@ from backend.common.models.site_scrape_task import (
 from backend.common.models.user import User
 from backend.common.services.collection import CollectionResponse, find_work_item_index
 from backend.common.services.document import create_doc_document_service
-from backend.common.services.site import location_exists
+from backend.common.services.site import location_exists, site_last_started_task
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_handler import TextHandler
@@ -232,9 +232,11 @@ async def add_document(
 ) -> CollectionResponse:
     if await location_exists(uploaded_doc, uploaded_doc.site_id):
         raise HTTPException(status.HTTP_409_CONFLICT, "Doc already exists for that location")
+    site: Site | None = await Site.find_one({"_id": uploaded_doc.site_id})
+    if not site:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Not able to upload document to site.")
     now: datetime = datetime.now(tz=timezone.utc)
     link_text = uploaded_doc.metadata.get("link_text", None)
-    site: Site | None = await Site.find_one({"_id": uploaded_doc.site_id})
 
     # Create retr_doc and doc_doc from uploaded_doc.
     new_document: RetrievedDocument = RetrievedDocument(
@@ -284,7 +286,6 @@ async def add_document(
             new_document.lineage_id = original_version_doc.lineage_id
             original_version_doc.is_current_version = False
         await original_version_doc.save()
-
     created_retr_doc: RetrievedDocument = await create_and_log(logger, current_user, new_document)
     created_doc_doc: DocDocument = await create_doc_document_service(new_document, current_user)
 
@@ -292,13 +293,7 @@ async def add_document(
     if site.collection_method == CollectionMethod.Manual:
         # Filtering by TaskStatus.IN_PROGRESS will not work because documents
         # can still be uploaded if a collection / task has not started.
-        current_task: SiteScrapeTask = await SiteScrapeTask.find_one(
-            {
-                "site_id": uploaded_doc.site_id,
-                "initiator_id": current_user.id,
-                "collection_method": f"{CollectionMethod.Manual}",
-            }
-        )
+        current_task: SiteScrapeTask = await site_last_started_task(site.id)
         # Create work_item for created_doc.
         created_work_item: ManualWorkItem = ManualWorkItem(
             document_id=f"{created_doc_doc.id}",
@@ -322,8 +317,15 @@ async def add_document(
             created_item = current_task.work_list[created_item_index]
             created_item.prev_doc = original_version_doc.id
             current_task.work_list[created_item_index] = created_item
+        # Save updated work_list and add to task.retr_doc_ids for querying.
         current_task.work_list.append(created_work_item)
+        current_task.retrieved_document_ids.append(f"{created_retr_doc.id}")
         await current_task.save()
+        # Set site.has_created_manual_collection. Used to toggle work_item filters
+        # when fetching scrape_site_tasks and doc_docs.
+        if not site.has_created_manual_collection:
+            site.has_created_manual_collection = True
+            await site.save()
     # Automatic: Add document to new task. TODO: Double check business logic.
     else:
         new_scrape_task: SiteScrapeTask = SiteScrapeTask(
