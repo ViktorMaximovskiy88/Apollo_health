@@ -16,7 +16,6 @@ import {
   setLineageDocDocumentTableLimit,
   setLineageDocDocumentTableSkip,
   setLineageDocDocumentTableSort,
-  setPreviousDocDocumentId,
 } from './lineageDocDocumentsSlice';
 import { useLineageDocDocumentColumns } from './useLineageDocDocumentColumns';
 
@@ -107,9 +106,6 @@ export function LineageDocDocumentsTable() {
       });
       const docDocuments = data?.data ?? [];
       const count = data?.total ?? 0;
-      if (!previousDocDocumentId) {
-        dispatch(setPreviousDocDocumentId(docDocuments[0]._id));
-      }
       return { data: docDocuments, count };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
