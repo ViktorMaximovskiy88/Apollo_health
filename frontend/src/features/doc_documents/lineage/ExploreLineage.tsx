@@ -29,7 +29,11 @@ const CurrentDocDocument = () => {
   );
 };
 
-export function ExploreLineage() {
+export function ExploreLineage({
+  onFinish = () => alert('TODO: save previous DocDocument'),
+}: {
+  onFinish?: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [showCurrentDocument, setShowCurrentDocument] = useState(true);
 
@@ -48,23 +52,24 @@ export function ExploreLineage() {
           bodyStyle={{ height: 'calc(100vh - 150px)' }}
           onCancel={() => setOpen(false)}
           footer={[
-            <Checkbox
-              className="mr-[85%]"
-              checked={showCurrentDocument}
-              onChange={(e) => setShowCurrentDocument(e.target.checked)}
-            >
-              Show Current Document
-            </Checkbox>,
-            <Button key="cancel" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>,
-            <Button
-              key="submit"
-              type="primary"
-              onClick={() => alert('TODO: update previous document id')}
-            >
-              Submit
-            </Button>,
+            <div className="flex">
+              <div className="mr-auto">
+                <Checkbox
+                  checked={showCurrentDocument}
+                  onChange={(e) => setShowCurrentDocument(e.target.checked)}
+                >
+                  Show Current Document
+                </Checkbox>
+              </div>
+              <div>
+                <Button key="cancel" onClick={() => setOpen(false)}>
+                  Cancel
+                </Button>
+                <Button key="submit" type="primary" onClick={() => onFinish()}>
+                  Submit
+                </Button>
+              </div>
+            </div>,
           ]}
         >
           <div className="flex flex-row h-full">
