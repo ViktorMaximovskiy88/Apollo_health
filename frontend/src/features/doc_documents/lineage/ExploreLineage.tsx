@@ -31,10 +31,12 @@ const CurrentDocDocument = () => {
 };
 
 export function ExploreLineage({
-  onFinish = () => alert('TODO: save previous DocDocument'),
+  onFinish = (previousDocDocumentId: string) =>
+    alert(`TODO: save previous DocDocument: ${previousDocDocumentId}`),
 }: {
-  onFinish?: () => void;
+  onFinish?: (previousDocDocumentId: string) => void;
 }) {
+  const previousDocDocumentId = useSelector(previousDocDocumentIdState);
   const [open, setOpen] = useState(false);
   const [showCurrentDocument, setShowCurrentDocument] = useState(true);
 
@@ -65,7 +67,7 @@ export function ExploreLineage({
               <Button key="cancel" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button key="submit" type="primary" onClick={() => onFinish()}>
+              <Button key="submit" type="primary" onClick={() => onFinish(previousDocDocumentId)}>
                 Submit
               </Button>
             </div>
