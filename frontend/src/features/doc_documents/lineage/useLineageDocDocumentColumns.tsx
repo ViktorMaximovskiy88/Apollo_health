@@ -1,18 +1,19 @@
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
-import { Dispatch, SetStateAction, useContext, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { prettyDateFromISO } from '../../../common';
 import { ButtonLink } from '../../../components';
 import { DocDocument } from '../types';
 import { DocumentTypes } from '../../retrieved_documents/types';
-import { PreviousDocDocContext } from './PreviousDocDocContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { previousDocDocumentIdState, setPreviousDocDocumentId } from './lineageDocDocumentsSlice';
 
 const createColumns = ({
   previousDocDocumentId,
-  setPreviousDocDocumentId,
+  handlePreviousDocDocumentChange,
 }: {
   previousDocDocumentId: string;
-  setPreviousDocDocumentId: Dispatch<SetStateAction<string>>;
+  handlePreviousDocDocumentChange: (id: string) => { payload: any; type: string };
 }) => [
   {
     header: 'Name',
@@ -21,7 +22,9 @@ const createColumns = ({
       if (doc._id === previousDocDocumentId) {
         return <div className="ml-2">{doc.name}</div>;
       }
-      return <ButtonLink onClick={() => setPreviousDocDocumentId(doc._id)}>{doc.name}</ButtonLink>;
+      return (
+        <ButtonLink onClick={() => handlePreviousDocDocumentChange(doc._id)}>{doc.name}</ButtonLink>
+      );
     },
     defaultFlex: 1,
     minWidth: 300,
@@ -66,10 +69,14 @@ const createColumns = ({
 ];
 
 export const useLineageDocDocumentColumns = () => {
-  const [previousDocDocumentId, setPreviousDocDocumentId] = useContext(PreviousDocDocContext);
-
+  const dispatch = useDispatch();
+  const previousDocDocumentId = useSelector(previousDocDocumentIdState);
+  const handlePreviousDocDocumentChange = useCallback(
+    (id: string) => dispatch(setPreviousDocDocumentId(id)),
+    [dispatch]
+  );
   return useMemo(
-    () => createColumns({ previousDocDocumentId, setPreviousDocDocumentId }),
-    [previousDocDocumentId, setPreviousDocDocumentId]
+    () => createColumns({ previousDocDocumentId, handlePreviousDocDocumentChange }),
+    [handlePreviousDocDocumentChange, previousDocDocumentId]
   );
 };

@@ -1,5 +1,5 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
-import { useCallback, useContext } from 'react';
+import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { GridPaginationToolbar } from '../../../components';
 import { useGetDocDocumentQuery, useLazyGetDocDocumentsQuery } from '../docDocumentApi';
@@ -11,12 +11,13 @@ import { useDataTableFilter } from '../../../common/hooks/use-data-table-filter'
 import { useParams } from 'react-router-dom';
 import {
   lineageDocDocumentTableState,
+  previousDocDocumentIdState,
   setLineageDocDocumentTableFilter,
   setLineageDocDocumentTableLimit,
   setLineageDocDocumentTableSkip,
   setLineageDocDocumentTableSort,
+  setPreviousDocDocumentId,
 } from './lineageDocDocumentsSlice';
-import { PreviousDocDocContext } from './PreviousDocDocContext';
 import { useLineageDocDocumentColumns } from './useLineageDocDocumentColumns';
 
 const useControlledPagination = ({
@@ -92,7 +93,8 @@ export function LineageDocDocumentsTable() {
   const { isActive, setActive, watermark } = useInterval(10000);
   const { docDocumentId: currentDocDocumentId } = useParams();
   const { data: currentDocDocument } = useGetDocDocumentQuery(currentDocDocumentId ?? '');
-  const [previousDocDocumentId, setPreviousDocDocumentId] = useContext(PreviousDocDocContext);
+  const previousDocDocumentId = useSelector(previousDocDocumentIdState);
+  const dispatch = useDispatch();
 
   const [getDocDocumentsFn] = useLazyGetDocDocumentsQuery();
 
@@ -106,18 +108,12 @@ export function LineageDocDocumentsTable() {
       const docDocuments = data?.data ?? [];
       const count = data?.total ?? 0;
       if (!previousDocDocumentId) {
-        setPreviousDocDocumentId(docDocuments[0]._id);
+        dispatch(setPreviousDocDocumentId(docDocuments[0]._id));
       }
       return { data: docDocuments, count };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      currentDocDocument,
-      getDocDocumentsFn,
-      previousDocDocumentId,
-      setPreviousDocDocumentId,
-      watermark,
-    ]
+    [currentDocDocument, dispatch, getDocDocumentsFn, previousDocDocumentId, watermark]
   );
   const columns = useLineageDocDocumentColumns();
   const filterProps = useDataTableFilter(

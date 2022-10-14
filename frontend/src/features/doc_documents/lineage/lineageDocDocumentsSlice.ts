@@ -12,6 +12,7 @@ export const initialState = {
     ],
     pagination: { limit: 50, skip: 0 },
   },
+  previousDocDocumentId: '',
 };
 
 export const lineageDocDocuments = createSlice({
@@ -30,6 +31,9 @@ export const lineageDocDocuments = createSlice({
     setLineageDocDocumentTableSkip: (state, action: PayloadAction<any>) => {
       state.table.pagination.skip = action.payload;
     },
+    setPreviousDocDocumentId: (state, action: PayloadAction<any>) => {
+      state.previousDocDocumentId = action.payload;
+    },
   },
 });
 
@@ -38,11 +42,17 @@ export const lineageDocDocumentTableState = createSelector(
   (tableState) => tableState
 );
 
+export const previousDocDocumentIdState = createSelector(
+  (state: RootState) => state.lineageDocDocuments.previousDocDocumentId,
+  (previousDocDocumentId): string => previousDocDocumentId
+);
+
 export const {
   setLineageDocDocumentTableFilter,
   setLineageDocDocumentTableSort,
   setLineageDocDocumentTableLimit,
   setLineageDocDocumentTableSkip,
+  setPreviousDocDocumentId,
 } = lineageDocDocuments.actions;
 
 export default lineageDocDocuments.reducer;
