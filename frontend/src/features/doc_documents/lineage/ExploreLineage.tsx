@@ -6,7 +6,8 @@ import { useState } from 'react';
 import { useGetDocDocumentQuery } from '../docDocumentApi';
 import { LineageDocDocumentsTable } from './LineageDocDocumentsTable';
 import { useSelector } from 'react-redux';
-import { previousDocDocumentIdState } from './lineageDocDocumentsSlice';
+import { previousDocDocumentIdState, setPreviousDocDocumentId } from './lineageDocDocumentsSlice';
+import { useAppDispatch } from '../../../app/store';
 
 const PreviousDocDocument = () => {
   const previousDocDocumentId = useSelector(previousDocDocumentIdState);
@@ -30,19 +31,25 @@ const CurrentDocDocument = () => {
   );
 };
 
-export function ExploreLineage({
-  onFinish = (previousDocDocumentId: string) =>
-    alert(`TODO: save previous DocDocument: ${previousDocDocumentId}`),
-}: {
+export function ExploreLineage(props: {
   onFinish?: (previousDocDocumentId: string) => void;
+  previousDocDocumentId?: string;
 }) {
+  const dispatch = useAppDispatch();
   const previousDocDocumentId = useSelector(previousDocDocumentIdState);
   const [open, setOpen] = useState(false);
   const [showCurrentDocument, setShowCurrentDocument] = useState(true);
 
+  const handleModalOpen = () => {
+    if (props.previousDocDocumentId) {
+      dispatch(setPreviousDocDocumentId(props.previousDocDocumentId));
+    }
+    setOpen(true);
+  };
+
   return (
     <div className="flex space-x-8 items-center">
-      <Button className="mt-1" onClick={() => setOpen(true)}>
+      <Button className="mt-1" onClick={handleModalOpen}>
         Explore
       </Button>
 
@@ -67,7 +74,14 @@ export function ExploreLineage({
               <Button key="cancel" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button key="submit" type="primary" onClick={() => onFinish(previousDocDocumentId)}>
+              <Button
+                key="submit"
+                type="primary"
+                onClick={() =>
+                  props.onFinish?.(previousDocDocumentId) ??
+                  alert(`Submitted previousDocDocumentId: ${previousDocDocumentId}`)
+                }
+              >
                 Submit
               </Button>
             </div>
