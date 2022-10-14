@@ -163,6 +163,11 @@ class AioDownloader:
         )
         return download.file_path, download.file_hash
 
+    def open_direct_scrape(self, key: str, temp: tempfile._TemporaryFileWrapper):
+        doc = self.doc_client.read_object(key)
+        temp.write(doc)
+        temp.seek(0)
+
     async def try_download_to_tempfile(
         self,
         download: DownloadContext,
@@ -173,10 +178,9 @@ class AioDownloader:
 
         if download.direct_scrape:
             dest_path = f"{download.file_hash}.{download.file_extension}"
-            with self.doc_client.read_object_to_tempfile(
-                dest_path, suffix=f".{download.file_extension}"
-            ) as path:
-                await self.set_download_data(download, path)
+            with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
+                self.open_direct_scrape(dest_path, temp)
+                await self.set_download_data(download, temp.name)
                 self.log.info(
                     f"content_type={download.content_type} mimetype={download.mimetype} file_hash={download.file_hash}"  # noqa
                 )
