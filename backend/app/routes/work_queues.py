@@ -20,9 +20,19 @@ from backend.app.utils.logger import Logger, create_and_log, get_logger, update_
 from backend.app.utils.user import get_current_user
 from backend.common.models.base_document import BaseDocument
 from backend.common.models.comment import Comment
-from backend.common.models.doc_document import LockableDocument, TaskLock
+from backend.common.models.doc_document import (
+    DocDocument,
+    LockableDocument,
+    TaskLock,
+    UpdateDocDocument,
+)
 from backend.common.models.user import User
 from backend.common.models.work_queue import WorkQueue, WorkQueueUpdate
+from backend.common.services.doc_lifecycle.hooks import (
+    ChangeInfo,
+    doc_document_save_hook,
+    get_doc_change_info,
+)
 
 router = APIRouter(
     prefix="/work-queues",
@@ -325,7 +335,17 @@ async def submit_work_item(
         await comment.save()
 
     updates = UpdateModel.parse_obj(body.updates)
+
+    change_info = ChangeInfo()
+    if isinstance(updates, UpdateDocDocument) and isinstance(item, DocDocument):
+        change_info = get_doc_change_info(updates, item)
+    print(change_info)
+
     await update_and_log_diff(logger, current_user, item, updates)
+
+    if isinstance(item, DocDocument):
+        await doc_document_save_hook(item, change_info)
+
     await Collection.find_one({"_id": item_id}).update(
         {"$pull": {"locks": {"work_queue_id": work_queue.id}}}
     )

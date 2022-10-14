@@ -2,6 +2,8 @@ from pathlib import Path
 
 import newrelic.agent
 
+from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleService
+
 newrelic.agent.initialize(Path(__file__).parent / "newrelic.ini")
 
 import asyncio
@@ -80,20 +82,24 @@ async def start_worker_async():
                         )
                     ),
                 )
+                await DocLifecycleService().assess_document_status(doc_document)
             except Exception as ex:
                 logging.error(ex)
                 message = traceback.format_exc()
                 traceback.print_exc()
                 now = datetime.now(tz=timezone.utc)
                 typer.secho(f"Task Failed {extract_task.id}", fg=typer.colors.RED)
-                await extract_task.update(
-                    Set(
-                        {
-                            ContentExtractionTask.status: TaskStatus.FAILED,
-                            ContentExtractionTask.end_time: now,
-                            ContentExtractionTask.error_message: message,
-                        }
-                    )
+                await asyncio.gather(
+                    doc_document.update(Set({"content_extraction_task_id": extract_task.id})),
+                    extract_task.update(
+                        Set(
+                            {
+                                ContentExtractionTask.status: TaskStatus.FAILED,
+                                ContentExtractionTask.end_time: now,
+                                ContentExtractionTask.error_message: message,
+                            }
+                        )
+                    ),
                 )
         await asyncio.sleep(5)
 

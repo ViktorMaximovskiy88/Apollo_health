@@ -1,4 +1,4 @@
-import { Form, Select, DatePicker } from 'antd';
+import { Form, Select, DatePicker, Checkbox, Switch } from 'antd';
 import { prettyDate } from '../../common';
 import { DocumentTypes } from '../retrieved_documents/types';
 import { DocCompareToPrevious } from './DocCompareToPrevious';
@@ -36,6 +36,9 @@ export function DocumentClassification() {
   return (
     <>
       <div className="flex space-x-8">
+        <Form.Item label="Internal" valuePropName="checked" name="internal_document">
+          <Switch />
+        </Form.Item>
         <DocumentType />
         <FinalEffectiveDate />
       </div>

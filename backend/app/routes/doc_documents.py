@@ -24,6 +24,7 @@ from backend.common.models.document_mixins import calc_final_effective_date
 from backend.common.models.shared import DocDocumentLocationView
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
+from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook, get_doc_change_info
 from backend.common.storage.text_handler import TextHandler
 
 router = APIRouter(
@@ -86,8 +87,9 @@ async def read_extraction_task(
     doc = DocDocumentView(**target.dict())
 
     for site in sites:
-        location: DocDocumentLocationView = doc.get_site_location(site.id)
-        location.site_name = site.name
+        location: DocDocumentLocationView | None = doc.get_site_location(site.id)
+        if location:
+            location.site_name = site.name
 
     return doc
 
@@ -122,16 +124,18 @@ async def create_diff(
 @router.post("/{id}", response_model=DocDocument)
 async def update_doc_document(
     updates: UpdateDocDocument,
-    target: DocDocument = Depends(get_target),
+    doc: DocDocument = Depends(get_target),
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
 
     updates.final_effective_date = calc_final_effective_date(updates)
-    updated = await update_and_log_diff(logger, current_user, target, updates)
+    change_info = get_doc_change_info(updates, doc)
+    updated = await update_and_log_diff(logger, current_user, doc, updates)
+    await doc_document_save_hook(doc, change_info)
 
     # Sending Event Bridge Event.  Need to add condition when to send.
-    document_json = await EventConvert(document=updated).convert(target)
+    document_json = await EventConvert(document=updated).convert(doc)
     send_event_client = SendEventClient()
     send_event_client.send_event("document-details", document_json)  # noqa: F841
     return updated

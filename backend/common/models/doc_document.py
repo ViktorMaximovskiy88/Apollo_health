@@ -63,7 +63,7 @@ class BaseDocDocument(BaseModel):
 
     # Lineage
     lineage_id: PydanticObjectId | None = None
-    previous_doc_doc_id: PydanticObjectId | None = None
+    previous_doc_doc_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     is_current_version: bool = False
 
     therapy_tags: list[TherapyTag] = []
@@ -109,11 +109,15 @@ class DocDocumentLimitTags(DocDocument):
 
 
 class UpdateDocDocument(BaseModel, DocumentMixins):
-    classification_status: ApprovalStatus = ApprovalStatus.QUEUED
-    classification_lock: TaskLock | None = None
     name: str | None = None
     document_type: str | None = None
     lang_code: LangCode | None = None
+
+    classification_status: ApprovalStatus | None = None
+    classification_lock: TaskLock | None = None
+    family_status: ApprovalStatus | None = None
+    content_extraction_status: ApprovalStatus | None = None
+    content_extraction_lock: TaskLock | None = None
 
     final_effective_date: datetime | None = None
     effective_date: datetime | None = None
@@ -130,7 +134,8 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     first_collected_date: datetime | None = None
 
     lineage_id: PydanticObjectId | None = None
-    version: str | None = None
+    previous_doc_doc_id: PydanticObjectId | None = None
+    is_current_version: bool = False
 
     therapy_tags: list[UpdateTherapyTag] | None = None
     indication_tags: list[UpdateIndicationTag] | None = None
@@ -138,8 +143,6 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     internal_document: bool | None = None
     translation_id: PydanticObjectId | None = None
     content_extraction_task_id: PydanticObjectId | None = None
-    content_extraction_status: ApprovalStatus = ApprovalStatus.QUEUED
-    content_extraction_lock: TaskLock | None = None
 
     locations: list[DocDocumentLocation] | None
 

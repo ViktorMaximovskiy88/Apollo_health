@@ -499,9 +499,8 @@ class ScrapeWorker:
         site_id = self.site.id
         await self.lineage_service.process_lineage_for_doc_ids(site_id, doc_ids)  # type: ignore
 
-        doc_doc_ids = [doc_doc.id for (_, doc_doc) in self.new_document_pairs]
+        # doc_doc_ids = [doc_doc.id for (_, doc_doc) in self.new_document_pairs]
         # self.delta_service.compute_document_deltas(doc_doc_ids)
-        await self.doc_lifecycle_service.exec(doc_doc_ids)  # type: ignore
 
         await self.downloader.close()
 

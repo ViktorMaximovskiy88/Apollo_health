@@ -4,7 +4,7 @@ from random import random
 import pytest_asyncio
 from beanie import PydanticObjectId
 
-from backend.common.core.enums import ApprovalStatus, DocumentType
+from backend.common.core.enums import ApprovalStatus, DocumentType, TaskStatus
 from backend.common.db.init import init_db
 from backend.common.models.content_extraction_task import ContentExtractionTask, DeltaStats
 from backend.common.models.doc_document import DocDocument
@@ -92,22 +92,26 @@ async def test_assess_classification():
         final_effective_date=datetime.now(),
     )
     await prev_doc.save()
+
+    site = Site(name="site", doc_type_threshold=0.7)
+    await site.save()
+
     doc = BasicDoc(
         previous_doc_doc_id=prev_doc.id,
         document_type=DocumentType.AuthorizationPolicy,
         doc_type_confidence=0.9,
         final_effective_date=datetime.now() + timedelta(weeks=1),
+        locations=[BasicLocation(site_id=site.id)],
     )
-    site = Site(name="site", doc_type_threshold=0.7)
 
-    status, _ = await service.assess_classification_status(doc, site)
+    status, _ = await service.assess_classification_status(doc)
     assert status == ApprovalStatus.APPROVED
 
     doc.classification_status = ApprovalStatus.PENDING
     doc.doc_type_confidence = 0.2
     doc.final_effective_date = datetime.now() + timedelta(weeks=100)
     doc.previous_doc_doc_id = None
-    await service.assess_classification_status(doc, site)
+    await service.assess_classification_status(doc)
     assert doc.classification_hold_info == ["DOC_TYPE", "EFFECTIVE_DATE", "LINEAGE"]
 
 
@@ -141,34 +145,43 @@ async def test_assess_content_extraction():
     doc = BasicDoc(locations=[BasicLocation(site_id=site.id, document_family_id=doc_family.id)])
 
     # No extraction needed, nothing to do
-    status, _ = await service.assess_content_extraction_status(doc, site)
+    status, _ = await service.assess_content_extraction_status(doc)
     assert status == ApprovalStatus.APPROVED
 
     # No translation set but selected for automated editor extraction
     doc.content_extraction_status = ApprovalStatus.PENDING
     doc_family.legacy_relevance.append("EDITOR_AUTOMATED")
     await doc_family.save()
-    status, _ = await service.assess_content_extraction_status(doc, site)
+    status, _ = await service.assess_content_extraction_status(doc)
     assert doc.extraction_hold_info == ["NO_TRANSLATION"]
 
     # Translation is set but no content_extraction_task_id means translation in progress, do nothing
     doc.content_extraction_status = ApprovalStatus.PENDING
     doc.translation_id = PydanticObjectId()
-    status, _ = await service.assess_content_extraction_status(doc, site)
+    status, _ = await service.assess_content_extraction_status(doc)
     assert status == ApprovalStatus.PENDING
 
-    # Translation is set but no content_extraction_task_id means translation in progress, do nothing
+    # content_extraction_task_id is set but extraction failed, queue
+    extraction = ContentExtractionTask(queued_time=datetime.now(), status=TaskStatus.FAILED)
+    await extraction.save()
+    doc.content_extraction_task_id = extraction.id
+    status, _ = await service.assess_content_extraction_status(doc)
+    assert doc.extraction_hold_info == ["FAILED"]
+
+    # extraction is set but delta is bad, queue
+    doc.content_extraction_status = ApprovalStatus.PENDING
     extraction = ContentExtractionTask(queued_time=datetime.now(), delta=DeltaStats(total=100))
     extraction.delta.removed = 10
     await extraction.save()
     doc.content_extraction_task_id = extraction.id
-    status, _ = await service.assess_content_extraction_status(doc, site)
+    status, _ = await service.assess_content_extraction_status(doc)
     assert doc.extraction_hold_info == ["EXTRACT_DELTA"]
 
+    # Extraction is good, approve
     extraction.delta.removed = 4
     await extraction.save()
     doc.content_extraction_status = ApprovalStatus.PENDING
-    status, _ = await service.assess_content_extraction_status(doc, site)
+    status, _ = await service.assess_content_extraction_status(doc)
     assert status == ApprovalStatus.APPROVED and doc.extraction_hold_info == []
 
 
@@ -181,7 +194,7 @@ async def test_intermediate_statuses():
     await extraction.save()
     doc = BasicDoc(locations=[BasicLocation(site_id=site.id)])
 
-    fully_approved, _ = await service.assess_intermediate_statuses(doc, site)
+    fully_approved, _ = await service.assess_intermediate_statuses(doc)
     assert not fully_approved
 
     prev_doc = BasicDoc(
@@ -195,14 +208,14 @@ async def test_intermediate_statuses():
     doc.final_effective_date = datetime.now()
     doc.classification_status = ApprovalStatus.PENDING
 
-    fully_approved, _ = await service.assess_intermediate_statuses(doc, site)
+    fully_approved, _ = await service.assess_intermediate_statuses(doc)
     assert doc.classification_status == ApprovalStatus.APPROVED
     assert not fully_approved
 
     doc.family_status = ApprovalStatus.PENDING
     doc.locations[0].document_family_id = doc_family.id
 
-    fully_approved, _ = await service.assess_intermediate_statuses(doc, site)
+    fully_approved, _ = await service.assess_intermediate_statuses(doc)
     assert doc.family_status == ApprovalStatus.APPROVED
     assert not fully_approved
 
@@ -210,6 +223,6 @@ async def test_intermediate_statuses():
     doc.translation_id = PydanticObjectId()
     doc.content_extraction_task_id = extraction.id
 
-    fully_approved, _ = await service.assess_intermediate_statuses(doc, site)
+    fully_approved, _ = await service.assess_intermediate_statuses(doc)
     assert doc.content_extraction_status == ApprovalStatus.APPROVED
     assert fully_approved

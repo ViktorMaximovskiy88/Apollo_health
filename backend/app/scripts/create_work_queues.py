@@ -52,14 +52,13 @@ async def family_queues():
         sort_query=["final_effective_date"],
         user_query={"roles": {"$in": ["admin", "family"]}},
         submit_actions=[
-            SubmitAction(label="Hold", submit_action={"family_status": "HOLD"}),
             SubmitAction(
-                label="Submit",
+                label="Hold",
                 reassignable=True,
                 require_comment=True,
-                submit_action={"family_status": "APPROVED"},
-                primary=True,
+                submit_action={"family_status": "HOLD"},
             ),
+            SubmitAction(label="Submit", submit_action={"family_status": "APPROVED"}, primary=True),
         ],
     ).save()
     await WorkQueue(
@@ -93,7 +92,12 @@ async def translation_config_queues():
         },
         user_query={"roles": {"$in": ["admin", "translation"]}},
         submit_actions=[
-            SubmitAction(label="Hold", submit_action={"content_extraction_status": "HOLD"}),
+            SubmitAction(
+                label="Hold",
+                reassignable=True,
+                require_comment=True,
+                submit_action={"content_extraction_status": "HOLD"},
+            ),
             SubmitAction(
                 label="Submit",
                 submit_action={"content_extraction_status": "APPROVED"},

@@ -4,10 +4,11 @@ from logging import Logger
 
 from beanie import PydanticObjectId
 
-from backend.common.core.enums import ApprovalStatus
+from backend.common.core.enums import ApprovalStatus, TaskStatus
 from backend.common.models.content_extraction_task import ContentExtractionTask
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document_family import DocumentFamily
+from backend.common.models.shared import IndicationTag, TherapyTag
 from backend.common.models.site import Site
 
 
@@ -16,12 +17,12 @@ class DocLifecycleService:
         self.logger = logger
 
     def doc_type_needs_review(
-        self, doc: DocDocument, prev_doc: DocDocument | None, site: Site
+        self, doc: DocDocument, prev_doc: DocDocument | None, site: Site | None
     ) -> bool:
         if prev_doc and doc.document_type != prev_doc.document_type:
             return True
 
-        if doc.doc_type_confidence and doc.doc_type_confidence < site.doc_type_threshold:
+        if site and doc.doc_type_confidence and doc.doc_type_confidence < site.doc_type_threshold:
             return True
 
         return False
@@ -44,8 +45,30 @@ class DocLifecycleService:
 
         return False
 
+    def tag_delta(self, tags: list[TherapyTag] | list[IndicationTag]):
+        total = len(tags)
+        if total == 0:
+            return 0, 0, 0
+
+        updated, added, removed = 0, 0, 0
+        for tag in tags:
+            if tag.update_status == "REMOVED":
+                removed += 1
+            elif tag.update_status == "UPDATED":
+                updated += 1
+            elif tag.update_status == "ADDED":
+                added += 1
+        return updated / total, added / total, removed / total
+
     def tags_need_review(self, doc: DocDocument) -> bool:
-        # TODO: more than X% changes
+        tupdated, tadded, tremoved = self.tag_delta(doc.therapy_tags)
+        if tupdated > 0.1 or tadded > 0.1 or tremoved > 0.1:
+            return True
+
+        iupdated, iadded, iremoved = self.tag_delta(doc.indication_tags)
+        if iupdated > 0.1 or iadded > 0.1 or iremoved > 0.1:
+            return True
+
         return False
 
     def extraction_delta_needs_review(self, task: ContentExtractionTask | None) -> bool:
@@ -60,13 +83,12 @@ class DocLifecycleService:
 
         return False
 
-    async def assess_classification_status(
-        self, doc: DocDocument, site: Site
-    ) -> tuple[ApprovalStatus, bool]:
+    async def assess_classification_status(self, doc: DocDocument) -> tuple[ApprovalStatus, bool]:
         if doc.classification_status != ApprovalStatus.PENDING:
             return doc.classification_status, False
 
         prev_doc = await DocDocument.get(doc.previous_doc_doc_id or PydanticObjectId())
+        site = await Site.get(doc.locations[0].site_id)
 
         info: list[str] = []
 
@@ -105,7 +127,7 @@ class DocLifecycleService:
         return doc.family_status, True
 
     async def assess_content_extraction_status(
-        self, doc: DocDocument, site: Site
+        self, doc: DocDocument
     ) -> tuple[ApprovalStatus, bool]:
         if doc.content_extraction_status != ApprovalStatus.PENDING:
             return doc.content_extraction_status, False
@@ -128,7 +150,12 @@ class DocLifecycleService:
             doc.extraction_hold_info = ["NO_TRANSLATION"]
             return doc.content_extraction_status, True
 
-        task = await ContentExtractionTask.get(doc.content_extraction_task_id or PydanticObjectId())
+        task = await ContentExtractionTask.get(doc.content_extraction_task_id)  # type: ignore
+        if task and task.status == TaskStatus.FAILED:
+            doc.extraction_hold_info = ["FAILED"]
+            doc.content_extraction_status = ApprovalStatus.QUEUED
+            return doc.content_extraction_status, True
+
         if self.extraction_delta_needs_review(task):
             doc.extraction_hold_info = ["EXTRACT_DELTA"]
             doc.content_extraction_status = ApprovalStatus.QUEUED
@@ -138,8 +165,8 @@ class DocLifecycleService:
         doc.content_extraction_status = ApprovalStatus.APPROVED
         return doc.content_extraction_status, True
 
-    async def assess_intermediate_statuses(self, doc: DocDocument, site: Site):
-        edit = await self.assess_classification_status(doc, site)
+    async def assess_intermediate_statuses(self, doc: DocDocument):
+        edit = await self.assess_classification_status(doc)
         if doc.classification_status != ApprovalStatus.APPROVED:
             return False, edit
 
@@ -147,14 +174,14 @@ class DocLifecycleService:
         if doc.family_status != ApprovalStatus.APPROVED:
             return False, edit
 
-        edit = await self.assess_content_extraction_status(doc, site) or edit
+        edit = await self.assess_content_extraction_status(doc) or edit
         if doc.content_extraction_status != ApprovalStatus.APPROVED:
             return False, edit
 
         return True, edit
 
-    async def assess_document_status(self, doc: DocDocument, site: Site):
-        fully_approved, edit = await self.assess_intermediate_statuses(doc, site)
+    async def assess_document_status(self, doc: DocDocument):
+        fully_approved, edit = await self.assess_intermediate_statuses(doc)
         if fully_approved:
             doc.status = ApprovalStatus.APPROVED
 
@@ -174,11 +201,16 @@ class DocLifecycleService:
                     }
                 },
             )
+            if fully_approved:
+                pass
+                # TODO: Send Event
+
+        return doc
 
     async def exec(self, doc_doc_ids: list[PydanticObjectId], site: Site):
         updates = []
         query = {"_id": {"$in": doc_doc_ids}, "status": {"$ne": ApprovalStatus.APPROVED}}
         async for doc in DocDocument.find(query):
-            updates.append(self.assess_document_status(doc, site))
+            updates.append(self.assess_document_status(doc))
 
         asyncio.gather(*updates)

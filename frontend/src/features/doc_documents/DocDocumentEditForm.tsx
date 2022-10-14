@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { Form, FormInstance, Tabs } from 'antd';
+import { Form, FormInstance, Modal, Steps, Tabs } from 'antd';
 import { DocDocument, DocumentTag, UIIndicationTag, UITherapyTag } from './types';
 import { DocDocumentTagForm } from './DocDocumentTagForm';
-import { dateToMoment } from '../../common';
+import { dateToMoment, prettyDateUTCFromISO } from '../../common';
 import { useCallback, useEffect, useState } from 'react';
 import { isEqual } from 'lodash';
 import { DocDocumentInfoForm } from './DocDocumentInfoForm';
@@ -10,6 +10,8 @@ import { DocDocumentLocations } from './locations/DocDocumentLocations';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 import { DocDocumentExtractionTab } from './DocDocumentExtractionTab';
 import { calculateFinalEffectiveFromValues } from './helpers';
+import { ButtonLink } from '../../components';
+import { ApprovalStatus } from '../../common/approvalStatus';
 
 const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   const calculateFinalEffectiveDate = useCallback(() => {
@@ -122,6 +124,55 @@ interface EditFormPropTypes {
   docId: string;
 }
 
+function toStepStatus(status: ApprovalStatus) {
+  if (status === ApprovalStatus.Approved) {
+    return 'finish';
+  }
+  if (status === ApprovalStatus.Queued) {
+    return 'process';
+  }
+  return 'wait';
+}
+
+function holdInfo(holdInfo: string[]) {
+  return <>{holdInfo.map((i) => i)}</>;
+}
+
+export function DocStatusModal({ doc }: { doc: DocDocument }) {
+  const [isOpen, setOpen] = useState(false);
+  return (
+    <>
+      <ButtonLink onClick={() => setOpen(true)}>View Doc Status</ButtonLink>
+      <Modal open={isOpen} onCancel={() => setOpen(false)} onOk={() => setOpen(false)}>
+        <Steps direction="vertical" size="small">
+          <Steps.Step
+            title="Collection"
+            subTitle={prettyDateUTCFromISO(doc.first_collected_date)}
+            status="finish"
+            description=""
+          />
+          <Steps.Step
+            title="Classification"
+            status={toStepStatus(doc.classification_status)}
+            description={holdInfo(doc.classification_hold_info)}
+          />
+          <Steps.Step
+            title="Doc & Payer Family"
+            status={toStepStatus(doc.family_status)}
+            description=""
+          />
+          <Steps.Step
+            title="Translation & Extraction"
+            status={toStepStatus(doc.content_extraction_status)}
+            description={holdInfo(doc.extraction_hold_info)}
+          />
+          <Steps.Step title="Approval" status={toStepStatus(doc.status)} />
+        </Steps>
+      </Modal>
+    </>
+  );
+}
+
 export function DocDocumentEditForm({
   isSaving,
   setIsSaving,
@@ -178,7 +229,7 @@ export function DocDocumentEditForm({
         initialValues={initialValues}
         onFinish={onFinish}
       >
-        <Tabs className="h-full ant-tabs-h-full">
+        <Tabs tabBarExtraContent={<DocStatusModal doc={doc} />} className="h-full ant-tabs-h-full">
           <Tabs.TabPane tab="Info" key="info" className="bg-white p-4 overflow-auto">
             <DocDocumentInfoForm
               onFieldChange={() => {

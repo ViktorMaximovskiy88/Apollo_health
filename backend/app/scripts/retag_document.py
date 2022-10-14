@@ -23,7 +23,7 @@ class ReTagger:
         self.indication = IndicationTagger()
         self.therapy = TherapyTagger()
 
-    async def retag_docs_on_site(self, site: Site, total: int):
+    async def retag_docs_on_site(self, site: Site, total: int = 0):
         async for doc in DocDocument.find({"locations.site_id": site.id}):
             await self.retag_document(doc, site, total)
             total += 1
@@ -75,7 +75,7 @@ class ReTagger:
         file_extension = rdoc.file_extension
         txt_key = f"{rdoc.text_checksum}.txt"
         if text_client.object_exists(txt_key):
-            return str(text_client.read_object(txt_key))
+            return text_client.read_utf8_object(txt_key)
 
         doc_client = DocumentStorageClient()
         doc_key = f"{rdoc.checksum}.{file_extension}"

@@ -12,6 +12,7 @@ from backend.common.models.document_mixins import calc_final_effective_date
 from backend.common.models.lineage import DocumentAnalysis, DocumentAttrs
 from backend.common.models.shared import get_unique_focus_tags, get_unique_reference_tags
 from backend.common.models.site import Site
+from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook
 from backend.common.services.document import (
     SiteRetrievedDocument,
     get_site_docs,
@@ -190,6 +191,7 @@ class LineageService:
             )
             if is_last and prev_doc:
                 doc, doc_doc = await self.compare_tags(doc, doc_doc, prev_doc)
+            await doc_document_save_hook(doc_doc)
             prev_doc = doc
             prev_doc_doc = doc_doc
 
@@ -227,11 +229,14 @@ def inherit_prev_doc_fields(
     if prev_doc.internal_document:
         doc.internal_document = prev_doc.internal_document
 
+    if prev_doc.document_family_id:
+        doc.document_family_id = prev_doc.document_family_id
+
     loc = next(loc for loc in doc.locations if site_id == loc.site_id)
     prev_loc = next(loc for loc in prev_doc.locations if site_id == loc.site_id)
 
-    if prev_loc.document_family_id:
-        loc.document_family_id = prev_loc.document_family_id
+    if prev_loc.payer_family_id:
+        loc.payer_family_id = prev_loc.payer_family_id
 
 
 async def version_doc_doc(

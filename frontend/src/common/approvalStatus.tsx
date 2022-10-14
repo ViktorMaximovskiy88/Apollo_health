@@ -3,6 +3,7 @@ export enum ApprovalStatus {
   InProgress = 'IN_PROGRESS',
   Hold = 'HOLD',
   Approved = 'APPROVED',
+  Pending = 'PENDING',
 }
 
 export function approvalStatusDisplayName(status: ApprovalStatus): string {
