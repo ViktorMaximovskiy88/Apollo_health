@@ -11,7 +11,6 @@ import { useDataTableFilter } from '../../../common/hooks/use-data-table-filter'
 import { useParams } from 'react-router-dom';
 import {
   lineageDocDocumentTableState,
-  previousDocDocumentIdState,
   setLineageDocDocumentTableFilter,
   setLineageDocDocumentTableLimit,
   setLineageDocDocumentTableSkip,
@@ -93,8 +92,6 @@ export function LineageDocDocumentsTable() {
   const { isActive, setActive, watermark } = useInterval(10000);
   const { docDocumentId: currentDocDocumentId } = useParams();
   const { data: currentDocDocument } = useGetDocDocumentQuery(currentDocDocumentId ?? '');
-  const previousDocDocumentId = useSelector(previousDocDocumentIdState);
-  const dispatch = useAppDispatch();
 
   const [getDocDocumentsFn] = useLazyGetDocDocumentsQuery();
 
@@ -110,7 +107,7 @@ export function LineageDocDocumentsTable() {
       return { data: docDocuments, count };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentDocDocument, dispatch, getDocDocumentsFn, previousDocDocumentId, watermark]
+    [currentDocDocument, getDocDocumentsFn, watermark]
   );
   const columns = useLineageDocDocumentColumns();
   const filterProps = useDataTableFilter(
