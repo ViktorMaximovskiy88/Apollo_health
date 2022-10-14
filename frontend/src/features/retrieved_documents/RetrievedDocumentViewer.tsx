@@ -22,7 +22,7 @@ const columns = [
 
 interface PropTypes {
   doc: any;
-  docId: any;
+  docId?: string; // RetrievedDocument ID
   showMetadata?: boolean;
   onPageChange?: Function;
 }
