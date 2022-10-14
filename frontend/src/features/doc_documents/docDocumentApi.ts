@@ -15,9 +15,7 @@ export const docDocumentsApi = createApi({
         skip: number;
         sortInfo: TypeSortInfo;
         filterValue: TypeFilterValue;
-        site_ids?: string[];
         scrape_task_id?: string;
-        exclude_doc_doc_id?: string;
       }
     >({
       query: ({ limit, skip, sortInfo, filterValue, scrape_task_id }) => {
