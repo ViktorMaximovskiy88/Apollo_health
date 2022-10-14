@@ -75,7 +75,7 @@ class ReTagger:
         file_extension = rdoc.file_extension
         txt_key = f"{rdoc.text_checksum}.txt"
         if text_client.object_exists(txt_key):
-            return str(text_client.read_object(txt_key))
+            return text_client.read_utf8_object(txt_key)
 
         doc_client = DocumentStorageClient()
         doc_key = f"{rdoc.checksum}.{file_extension}"

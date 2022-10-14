@@ -34,9 +34,9 @@ export const DocDocumentLocations = ({ docDocument, locations }: DocDocumentLoca
         location={locations[selectedIndex]}
         documentType={docDocument.document_type}
         open={modalOpen}
-        onSave={(documentFamilyId: string) => {
+        onSave={(payerFamilyId: string) => {
           const locations = form.getFieldValue('locations');
-          locations[selectedIndex].document_family_id = documentFamilyId;
+          locations[selectedIndex].payer_family_id = payerFamilyId;
           form.setFieldsValue({ locations });
           setModalOpen(false);
           setSelectedLocationIndex(-1);
