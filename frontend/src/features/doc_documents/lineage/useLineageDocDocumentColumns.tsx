@@ -5,8 +5,9 @@ import { prettyDateFromISO } from '../../../common';
 import { ButtonLink } from '../../../components';
 import { DocDocument } from '../types';
 import { DocumentTypes } from '../../retrieved_documents/types';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { previousDocDocumentIdState, setPreviousDocDocumentId } from './lineageDocDocumentsSlice';
+import { useAppDispatch } from '../../../app/store';
 
 const createColumns = ({
   previousDocDocumentId,
@@ -69,7 +70,7 @@ const createColumns = ({
 ];
 
 export const useLineageDocDocumentColumns = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const previousDocDocumentId = useSelector(previousDocDocumentIdState);
   const handlePreviousDocDocumentChange = useCallback(
     (id: string) => dispatch(setPreviousDocDocumentId(id)),

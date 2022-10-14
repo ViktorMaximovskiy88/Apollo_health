@@ -1,6 +1,6 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { GridPaginationToolbar } from '../../../components';
 import { useGetDocDocumentQuery, useLazyGetDocDocumentsQuery } from '../docDocumentApi';
 import { DocDocument } from '../types';
@@ -18,6 +18,7 @@ import {
   setLineageDocDocumentTableSort,
 } from './lineageDocDocumentsSlice';
 import { useLineageDocDocumentColumns } from './useLineageDocDocumentColumns';
+import { useAppDispatch } from '../../../app/store';
 
 const useControlledPagination = ({
   isActive,
@@ -27,7 +28,7 @@ const useControlledPagination = ({
   setActive: (active: boolean) => void;
 }) => {
   const tableState = useSelector(lineageDocDocumentTableState);
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const onLimitChange = useCallback(
     (limit: number) => dispatch(setLineageDocDocumentTableLimit(limit)),
@@ -93,7 +94,7 @@ export function LineageDocDocumentsTable() {
   const { docDocumentId: currentDocDocumentId } = useParams();
   const { data: currentDocDocument } = useGetDocDocumentQuery(currentDocDocumentId ?? '');
   const previousDocDocumentId = useSelector(previousDocDocumentIdState);
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const [getDocDocumentsFn] = useLazyGetDocDocumentsQuery();
 
