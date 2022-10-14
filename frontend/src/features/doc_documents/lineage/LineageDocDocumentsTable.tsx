@@ -21,56 +21,7 @@ import {
   setLineageDocDocumentTableSort,
 } from './lineageDocDocumentsSlice';
 import { PreviousDocDocContext } from './PreviousDocDocContext';
-
-const createColumns = ({
-  previousDocDocumentId,
-  setPreviousDocDocumentId,
-}: {
-  previousDocDocumentId: string;
-  setPreviousDocDocumentId: Dispatch<SetStateAction<string>>;
-}) => [
-  {
-    header: 'Name',
-    name: 'name',
-    render: ({ data: doc }: { data: DocDocument }) => {
-      if (doc._id === previousDocDocumentId) {
-        return <div className="ml-2">{doc.name}</div>;
-      }
-      return <ButtonLink onClick={() => setPreviousDocDocumentId(doc._id)}>{doc.name}</ButtonLink>;
-    },
-    defaultFlex: 1,
-    minWidth: 300,
-  },
-  {
-    header: 'Document Type',
-    name: 'document_type',
-    minWidth: 200,
-    filterEditor: SelectFilter,
-    filterEditorProps: {
-      placeholder: 'All',
-      dataSource: DocumentTypes,
-    },
-    render: ({ value: document_type }: { value: string }) => {
-      return <>{document_type}</>;
-    },
-  },
-  {
-    header: 'Final Effective Date',
-    name: 'final_effective_date',
-    minWidth: 200,
-    filterEditor: DateFilter,
-    filterEditorProps: () => {
-      return {
-        dateFormat: 'YYYY-MM-DD',
-        highlightWeekends: false,
-        placeholder: 'Select Date',
-      };
-    },
-    render: ({ value: final_effective_date }: { value: string }) => (
-      <>{prettyDateFromISO(final_effective_date)}</>
-    ),
-  },
-];
+import { useLineageDocDocumentColumns } from './useLineageDocDocumentColumns';
 
 const useControlledPagination = ({
   isActive,
@@ -115,13 +66,29 @@ const useControlledPagination = ({
   return controlledPaginationProps;
 };
 
-const useColumns = () => {
-  const [previousDocDocumentId, setPreviousDocDocumentId] = useContext(PreviousDocDocContext);
+const buildFilterValue = ({
+  tableInfo,
+  currentDocDocument,
+}: {
+  tableInfo: any;
+  currentDocDocument?: DocDocument;
+}) => {
+  const filterBySites =
+    currentDocDocument?.locations.map(({ site_id }: { site_id: string }) => ({
+      name: 'locations.site_id',
+      operator: 'eq',
+      type: 'string',
+      value: site_id,
+    })) ?? [];
 
-  return useMemo(
-    () => createColumns({ previousDocDocumentId, setPreviousDocDocumentId }),
-    [previousDocDocumentId, setPreviousDocDocumentId]
-  );
+  const filterOutCurrentDocDocument = {
+    name: '_id',
+    operator: 'neq',
+    type: 'string',
+    value: currentDocDocument?._id,
+  };
+
+  return [...tableInfo.filterValue, ...filterBySites, filterOutCurrentDocDocument];
 };
 
 export function LineageDocDocumentsTable() {
@@ -133,17 +100,12 @@ export function LineageDocDocumentsTable() {
 
   const [getDocDocumentsFn] = useLazyGetDocDocumentsQuery();
 
-  const site_ids = useMemo(
-    () => currentDocDocument?.locations.map((location) => location.site_id) ?? [],
-    [currentDocDocument?.locations]
-  );
-
   const loadData = useCallback(
     async (tableInfo: any) => {
+      const filterValue = buildFilterValue({ tableInfo, currentDocDocument });
       const { data } = await getDocDocumentsFn({
         ...tableInfo,
-        site_ids,
-        exclude_doc_doc_id: currentDocDocumentId,
+        filterValue,
       });
       const docDocuments = data?.data ?? [];
       const count = data?.total ?? 0;
@@ -154,15 +116,14 @@ export function LineageDocDocumentsTable() {
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
+      currentDocDocument,
       getDocDocumentsFn,
-      site_ids,
-      currentDocDocumentId,
       previousDocDocumentId,
       setPreviousDocDocumentId,
       watermark,
     ]
   );
-  const columns = useColumns();
+  const columns = useLineageDocDocumentColumns();
   const filterProps = useDataTableFilter(
     lineageDocDocumentTableState,
     setLineageDocDocumentTableFilter

@@ -1,7 +1,5 @@
-import json
-
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, HTTPException, Request, Security, status
+from fastapi import APIRouter, Depends, HTTPException, Security, status
 
 from backend.app.routes.sites import Site
 from backend.app.routes.table_query import (
@@ -44,44 +42,24 @@ async def get_target(id: PydanticObjectId) -> DocDocument:
     return task
 
 
-def get_query_json_list_of_ids(arg: str):
-    def func(request: Request):
-        value_str = request.query_params.get(arg, None)
-        if value_str:
-            values: list[PydanticObjectId] = json.loads(value_str)
-            return [PydanticObjectId(v) for v in values]
-        else:
-            return []
-
-    return func
-
-
 @router.get(
     "/",
     response_model=TableQueryResponse,
     dependencies=[Security(get_current_user)],
 )
 async def read_doc_documents(
-    site_ids: list[PydanticObjectId] = Depends(get_query_json_list_of_ids("site_ids")),
     scrape_task_id: PydanticObjectId | None = None,
     limit: int | None = None,
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
-    exclude_doc_doc_id: PydanticObjectId | None = None,
 ):
     query = {}
-
-    if site_ids:
-        query["locations"] = {"$elemMatch": {"site_id": {"$in": site_ids}}}
 
     if scrape_task_id:
         task = await SiteScrapeTask.get(scrape_task_id)
         if task:
             query["retrieved_document_id"] = {"$in": task.retrieved_document_ids}
-
-    if exclude_doc_doc_id:
-        query["_id"] = {"$ne": exclude_doc_doc_id}
 
     document_query = DocDocument.find(query).project(DocDocumentLimitTags)
     return await query_table(document_query, limit, skip, sorts, filters)
