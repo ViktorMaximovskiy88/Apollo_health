@@ -1,12 +1,11 @@
-import { Button, Input, Radio, notification } from 'antd';
-import { FilterTwoTone, FilterOutlined } from '@ant-design/icons';
+import { Button, Input, notification } from 'antd';
 import { MainLayout } from '../../components';
 import { useParams } from 'react-router-dom';
 import { useGetSiteLineageQuery, useLazyProcessSiteLineageQuery } from './lineageApi';
 import useLineageSlice from './use-lineage-slice';
 import { SiteMenu } from '../sites/SiteMenu';
 import { FileTypeViewer } from '../retrieved_documents/RetrievedDocumentViewer';
-import _, { debounce } from 'lodash';
+import { debounce } from 'lodash';
 import { LineageDocRow } from './LineageDocRow';
 import classNames from 'classnames';
 
@@ -19,8 +18,7 @@ export function LineagePage() {
 
   const [processSiteLineage] = useLazyProcessSiteLineageQuery();
   const { state, actions } = useLineageSlice();
-  const { displayItems, domainItems, leftSideDoc, rightSideDoc, filters } = state;
-  const hasFilters = filters.multipleLineage || filters.missingLineage || filters.singularLineage;
+  const { displayItems, domainItems, leftSideDoc, rightSideDoc } = state;
 
   const openNotification = () => {
     notification.success({
@@ -73,7 +71,7 @@ export function LineagePage() {
                     <LineageDocRow
                       key={item._id}
                       doc={item}
-                      isSelected={item._id == rightSideDoc?._id || item._id == leftSideDoc?._id}
+                      isSelected={item._id === rightSideDoc?._id || item._id === leftSideDoc?._id}
                       {...actions}
                     />
                   ))}
