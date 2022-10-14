@@ -1,6 +1,12 @@
 import { Viewer, PageChangeEvent } from '@react-pdf-viewer/core';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
-import { OfficeFileLoader, TextFileLoader, CsvFileLoader, HtmlFileLoader } from '../../components';
+import {
+  OfficeFileLoader,
+  TextFileLoader,
+  CsvFileLoader,
+  HtmlFileLoader,
+  GoogleDocLoader,
+} from '../../components';
 
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
@@ -42,8 +48,10 @@ export function FileTypeViewer({ docId, doc, onPageChange = () => {} }: PropType
         Authorization: `Bearer ${token}`,
       }}
     />
-  ) : ['xlsx', 'docx'].includes(doc.file_extension) ? (
+  ) : doc.file_extension === 'xlsx' ? (
     <OfficeFileLoader docId={docId} />
+  ) : doc.file_extension === 'docx' ? (
+    <GoogleDocLoader docId={docId} />
   ) : doc.file_extension === 'csv' ? (
     <CsvFileLoader docId={docId} />
   ) : doc.file_extension === 'html' ? (

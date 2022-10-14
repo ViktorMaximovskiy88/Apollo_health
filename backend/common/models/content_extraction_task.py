@@ -3,10 +3,9 @@ from typing import Any
 from uuid import UUID
 
 from beanie import Indexed, PydanticObjectId
-from pydantic import BaseModel
 
 from backend.common.core.enums import TaskStatus
-from backend.common.models.base_document import BaseDocument
+from backend.common.models.base_document import BaseDocument, BaseModel
 
 
 class FormularyDatum(BaseModel):

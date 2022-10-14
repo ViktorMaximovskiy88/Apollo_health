@@ -31,6 +31,7 @@ from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleService
 from backend.common.services.lineage.lineage import LineageService
 from backend.common.storage.client import DocumentStorageClient
+from backend.common.storage.hash import hash_full_text
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.aio_downloader import AioDownloader, default_headers
 from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocsCollectedException
@@ -194,10 +195,7 @@ class ScrapeWorker:
 
             if not self.doc_client.object_exists(dest_path):
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
-                await self.scrape_task.update(Inc({SiteScrapeTask.new_documents_found: 1}))
 
-            # TODO i think this needs to not live here... a lambda to do the 'preview' thing
-            # right now opt-in to it
             if download.file_extension == "html" and (
                 "html" in self.site.scrape_method_configuration.document_extensions
                 or self.site.scrape_method == "HtmlScrape"
@@ -212,11 +210,16 @@ class ScrapeWorker:
                     pdf_bytes = await page.pdf(display_header_footer=False, print_background=True)
                     self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
 
-            document = await RetrievedDocument.find_one(RetrievedDocument.checksum == checksum)
+            if download.file_extension == "html":
+                text_checksum = hash_full_text(parsed_content["text"])
+                document = await RetrievedDocument.find_one(
+                    RetrievedDocument.text_checksum == text_checksum
+                )
+            else:
+                document = await RetrievedDocument.find_one(RetrievedDocument.checksum == checksum)
 
             if document:
                 self.log.info("updating doc")
-
                 if document.text_checksum is None:  # Can be removed after text added to older docs
                     text_checksum = await self.text_handler.save_text(parsed_content["text"])
                     document.text_checksum = text_checksum
@@ -242,6 +245,12 @@ class ScrapeWorker:
                     parsed_content, download, checksum, url
                 )
                 doc_document = await self.doc_updater.create_doc_document(document)
+                await self.scrape_task.update(
+                    {
+                        "$inc": {"new_documents_found": 1},
+                        "$push": {"new_retrieved_document_ids": document.id},
+                    }
+                )
                 self.new_document_pairs.append((document, doc_document))
 
             link_retrieved_task.retrieved_document_id = document.id
@@ -477,10 +486,10 @@ class ScrapeWorker:
 
             all_downloads += await self.queue_downloads(url, url)
             if self.site.scrape_method_configuration.follow_links:
-                self.log.info(f"Follow links for {url}")
-                (nested_urls, cookies) = await self.follow_links(url)
-                for nested_url in nested_urls:
-                    self.log.info(f"Follow links discovered {nested_url}")
+                self.log.debug(f"Follow links for {url}")
+                (links_found, cookies) = await self.follow_links(url)
+                for nested_url in links_found:
+                    await self.scrape_task.update(Inc({SiteScrapeTask.follow_links_found: 1}))
                     all_downloads += await self.queue_downloads(
                         nested_url, base_url=url, cookies=cookies
                     )

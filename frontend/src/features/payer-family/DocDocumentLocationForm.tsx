@@ -1,43 +1,43 @@
 import { Form, Select, Button, Input, Row, Col } from 'antd';
 import { Link } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
-import { DocDocumentLocation } from './types';
-import { DocumentFamily } from '../document_family/types';
-import { useGetDocumentFamiliesQuery } from '../document_family/documentFamilyApi';
-import { TextEllipsis } from '../../../components';
-import { LinkIcon } from '../../../components/LinkIcon';
+import { DocDocumentLocation } from '../doc_documents/locations/types';
+import { PayerFamily } from '../payer-family/types';
+import { useGetPayerFamiliesQuery } from '../payer-family/payerFamilyApi';
+import { TextEllipsis } from '../../components';
+import { LinkIcon } from '../../components/LinkIcon';
 import { useMemo } from 'react';
 
 interface DocDocumentLocationFormTypes {
   documentType: string;
   location: DocDocumentLocation;
   index: number;
-  onShowDocumentFamilyCreate: (location: DocDocumentLocation) => void;
+  onShowPayerFamilyCreate: (location: DocDocumentLocation) => void;
 }
-const useGetDocumentFamiliesBySiteAndDocType = (siteId: string, documentType: string) => {
+const useGetPayerFamilies = () => {
   const args = useMemo(() => {
     return {
       limit: 1000,
       skip: 0,
       sortInfo: { name: 'name', dir: -1 as 1 | -1 | 0 },
       filterValue: [
-        { name: 'site_id', operator: 'eq', type: 'string', value: siteId },
-        { name: 'document_type', operator: 'eq', type: 'string', value: documentType },
+        { name: 'name', operator: 'eq', type: 'string', value: '' },
+        { name: 'document_type', operator: 'eq', type: 'string', value: '' },
       ],
     };
-  }, [siteId, documentType]);
-  return useGetDocumentFamiliesQuery(args);
+  }, []);
+  return useGetPayerFamiliesQuery(args);
 };
 export const DocDocumentLocationForm = ({
   documentType,
   location,
   index,
-  onShowDocumentFamilyCreate,
+  onShowPayerFamilyCreate,
 }: DocDocumentLocationFormTypes) => {
   const form = Form.useFormInstance();
 
-  const { data } = useGetDocumentFamiliesBySiteAndDocType(location.site_id, documentType);
-  const options = data?.data.map((item: DocumentFamily) => ({ value: item._id, label: item.name }));
+  const { data } = useGetPayerFamilies();
+  const options = data?.data.map((item: PayerFamily) => ({ value: item._id, label: item.name }));
   const updatedLocation = Form.useWatch(['locations', index]);
   const baseUrl = Form.useWatch(['locations', index, 'base_url']);
   const url = Form.useWatch(['locations', index, 'url']);
@@ -101,6 +101,28 @@ export const DocDocumentLocationForm = ({
 
         <Form.Item label="Link Text" name={['locations', index, 'link_text']}>
           <Input readOnly={true} />
+        </Form.Item>
+
+        <Form.Item label="Payer Family" name={['locations', index, 'payer_family_id']}>
+          <Select
+            value={updatedLocation?.payer_family_id}
+            onSelect={(payerFamilyId: string) => {
+              const locations = form.getFieldValue('locations');
+              locations[index].payer_family_id = payerFamilyId;
+              form.setFieldsValue({ locations });
+            }}
+            options={options}
+            style={{ width: 'calc(100% - 96px', marginRight: '8px' }}
+          />
+          <Button
+            type="dashed"
+            onClick={() => {
+              onShowPayerFamilyCreate(location);
+            }}
+          >
+            <PlusOutlined />
+            New
+          </Button>
         </Form.Item>
       </div>
     </div>

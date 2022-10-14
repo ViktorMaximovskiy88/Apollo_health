@@ -2,10 +2,10 @@ from datetime import datetime
 
 import pymongo
 from beanie import Indexed, PydanticObjectId
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from backend.common.core.enums import LangCode
-from backend.common.models.base_document import BaseDocument
+from backend.common.models.base_document import BaseDocument, BaseModel
 from backend.common.models.document_mixins import DocumentMixins
 from backend.common.models.shared import IndicationTag, RetrievedDocumentLocation, TherapyTag
 
@@ -14,7 +14,7 @@ class BaseRetrievedDocument(BaseModel):
     uploader_id: PydanticObjectId | None = None
     # scrape_task_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     checksum: Indexed(str)  # type: ignore
-    text_checksum: str | None = None
+    text_checksum: Indexed(str) | None = None
     disabled: bool = False
     name: str
     metadata: dict = {}

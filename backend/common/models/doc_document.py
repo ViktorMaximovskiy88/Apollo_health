@@ -2,10 +2,10 @@ from datetime import datetime
 
 import pymongo
 from beanie import Indexed, PydanticObjectId
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from backend.common.core.enums import ApprovalStatus, LangCode
-from backend.common.models.base_document import BaseDocument
+from backend.common.models.base_document import BaseDocument, BaseModel
 from backend.common.models.document_mixins import DocumentMixins
 from backend.common.models.shared import (
     DocDocumentLocation,
@@ -43,6 +43,8 @@ class BaseDocDocument(BaseModel):
     document_type: str | None = None
     doc_type_confidence: float | None = None
     internal_document: bool | None = None
+
+    document_family_id: PydanticObjectId | None = None
 
     # Extracted Dates
     effective_date: datetime | None = None
@@ -112,6 +114,7 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     name: str | None = None
     document_type: str | None = None
     lang_code: LangCode | None = None
+    document_family_id: PydanticObjectId | None = None
 
     classification_status: ApprovalStatus | None = None
     classification_lock: TaskLock | None = None

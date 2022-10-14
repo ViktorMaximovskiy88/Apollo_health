@@ -213,6 +213,48 @@ export function DocDocumentEditForm({
   }, [initialValues, setHasChanges, form]);
 
   if (!doc) return null;
+  const tabs = [
+    {
+      label: 'Info',
+      key: 'info',
+      children: (
+        <DocDocumentInfoForm
+          onFieldChange={() => {
+            setHasChanges(true);
+            calculateFinalEffectiveDate();
+          }}
+        />
+      ),
+    },
+    {
+      label: 'Tags',
+      key: 'tags',
+      children: (
+        <DocDocumentTagForm
+          tags={tags}
+          onDeleteTag={(tag: any) => {
+            setTags(tags.filter((t) => t.id !== tag.id));
+            setHasChanges(true);
+          }}
+          onEditTag={handleTagEdit}
+          currentPage={pageNumber}
+        />
+      ),
+    },
+    {
+      label: 'Sites',
+      key: 'sites',
+      children: <DocDocumentLocations locations={doc.locations} docDocument={doc} />,
+    },
+  ];
+
+  if (doc?.content_extraction_task_id) {
+    tabs.push({
+      label: 'Extraction',
+      key: 'extraction',
+      children: <DocDocumentExtractionTab doc={doc} />,
+    });
+  }
 
   return (
     <div className="flex-1 h-full overflow-hidden">
@@ -229,35 +271,11 @@ export function DocDocumentEditForm({
         initialValues={initialValues}
         onFinish={onFinish}
       >
-        <Tabs tabBarExtraContent={<DocStatusModal doc={doc} />} className="h-full ant-tabs-h-full">
-          <Tabs.TabPane tab="Info" key="info" className="bg-white p-4 overflow-auto">
-            <DocDocumentInfoForm
-              onFieldChange={() => {
-                setHasChanges(true);
-                calculateFinalEffectiveDate();
-              }}
-            />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="Tags" key="tags" className="bg-white p-4 h-full">
-            <DocDocumentTagForm
-              tags={tags}
-              onDeleteTag={(tag: any) => {
-                setTags(tags.filter((t) => t.id !== tag.id));
-                setHasChanges(true);
-              }}
-              onEditTag={handleTagEdit}
-              currentPage={pageNumber}
-            />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="Sites" key="sites" className="bg-white p-4 overflow-auto">
-            <DocDocumentLocations locations={doc.locations} docDocument={doc} />
-          </Tabs.TabPane>
-          {doc?.content_extraction_task_id ? (
-            <Tabs.TabPane tab="Extraction" key="extraction">
-              <DocDocumentExtractionTab doc={doc} />
-            </Tabs.TabPane>
-          ) : null}
-        </Tabs>
+        <Tabs
+          tabBarExtraContent={<DocStatusModal doc={doc} />}
+          items={tabs}
+          className="h-full ant-tabs-h-full"
+        ></Tabs>
       </Form>
     </div>
   );

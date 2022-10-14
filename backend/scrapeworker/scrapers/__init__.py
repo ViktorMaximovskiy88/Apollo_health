@@ -70,6 +70,7 @@ class ScrapeHandler:
                 playbook_context=self.playbook_context,
                 url=url,
                 log=self.log,
+                metadata=metadata,
             )
             if not await scraper.is_applicable():
                 continue

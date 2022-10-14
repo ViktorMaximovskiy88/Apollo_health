@@ -37,7 +37,7 @@ class TargetedHtmlScraper(PlaywrightBaseScraper):
         self.log.info(selector_string)
         return selector_string
 
-    def __add_default_tags(self, soup: BeautifulSoup):
+    def _add_default_tags(self, soup: BeautifulSoup):
         """Add <html> and <body> tags to soup if either are absent."""
 
         def add_children(parent: list[PageElement], target: PageElement):
@@ -64,7 +64,20 @@ class TargetedHtmlScraper(PlaywrightBaseScraper):
 
         return new_soup
 
-    def clean_html(self, html: str) -> str:
+    def _add_code(self, soup: BeautifulSoup) -> None:
+        if "file_name" in self.metadata and soup.body is not None:
+            code = soup.new_tag("b")
+            code.append(f"Code: {self.metadata['file_name']}")
+            soup.body.insert(0, code)
+
+    async def _extract_html(self, html_locator: Locator) -> str:
+        html_content = await html_locator.inner_html()
+        if not html_content:
+            await asyncio.sleep(0.2)
+            html_content = await html_locator.inner_html()
+        return html_content
+
+    def _clean_html(self, html: str) -> str:
         soup = BeautifulSoup(html, features="html.parser")
         for selector in self.config.html_exclusion_selectors:
             attrs = {}
@@ -77,7 +90,8 @@ class TargetedHtmlScraper(PlaywrightBaseScraper):
             for element in remove_elements:
                 element.extract()
 
-        clean_soup = self.__add_default_tags(soup)
+        clean_soup = self._add_default_tags(soup)
+        self._add_code(clean_soup)
         return str(clean_soup)
 
     async def extract_metadata(self, element: Locator) -> Metadata:
@@ -103,10 +117,10 @@ class TargetedHtmlScraper(PlaywrightBaseScraper):
 
         for index in range(0, xpath_locator_count):
             try:
-                html_locator = xpath_locator.nth(index)
+                html_locator: Locator = xpath_locator.nth(index)
                 metadata = await self.extract_metadata(html_locator)
-                html_content = await html_locator.inner_html()
-                cleaned_html = self.clean_html(html_content)
+                html_content = await self._extract_html(html_locator)
+                cleaned_html = self._clean_html(html_content)
 
                 checksum = hash_full_text(cleaned_html)
                 dest_path = f"{checksum}.html"

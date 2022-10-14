@@ -8,5 +8,5 @@ export interface DocDocumentLocation {
   first_collected_date: string;
   last_collected_date: string;
   previous_doc_doc_id: string;
-  document_family_id: string;
+  payer_family_id: string;
 }
