@@ -3,10 +3,11 @@ import { RootState } from '../../../app/store';
 
 export const initialState = {
   table: {
-    sort: { name: 'final_effective_date', dir: -1 as 1 | -1 | 0 },
+    sort: { name: 'locations.link_text', dir: -1 as 1 | -1 | 0 },
     filter: [
       { name: 'name', operator: 'contains', type: 'string', value: '' },
       { name: 'document_type', operator: 'eq', type: 'select', value: null },
+      { name: 'locations.link_text', operator: 'contains', type: 'string', value: '' },
       { name: 'final_effective_date', operator: 'before', type: 'date', value: '' },
     ],
     pagination: { limit: 50, skip: 0 },

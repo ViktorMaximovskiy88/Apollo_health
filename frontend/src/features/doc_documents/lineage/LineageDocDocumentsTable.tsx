@@ -1,14 +1,10 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
-import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
-import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
-import { Dispatch, SetStateAction, useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { prettyDateFromISO } from '../../../common';
-import { ButtonLink, GridPaginationToolbar } from '../../../components';
+import { GridPaginationToolbar } from '../../../components';
 import { useGetDocDocumentQuery, useLazyGetDocDocumentsQuery } from '../docDocumentApi';
 import { DocDocument } from '../types';
 import { useInterval } from '../../../common/hooks';
-import { DocumentTypes } from '../../retrieved_documents/types';
 import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
 import { useDataTableSort } from '../../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../../common/hooks/use-data-table-filter';

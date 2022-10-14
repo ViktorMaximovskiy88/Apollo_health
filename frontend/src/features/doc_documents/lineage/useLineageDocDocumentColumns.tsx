@@ -1,25 +1,10 @@
-import ReactDataGrid from '@inovua/reactdatagrid-community';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
-import { Dispatch, SetStateAction, useCallback, useContext, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { Dispatch, SetStateAction, useContext, useMemo } from 'react';
 import { prettyDateFromISO } from '../../../common';
-import { ButtonLink, GridPaginationToolbar } from '../../../components';
-import { useGetDocDocumentQuery, useLazyGetDocDocumentsQuery } from '../docDocumentApi';
+import { ButtonLink } from '../../../components';
 import { DocDocument } from '../types';
-import { useInterval } from '../../../common/hooks';
 import { DocumentTypes } from '../../retrieved_documents/types';
-import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
-import { useDataTableSort } from '../../../common/hooks/use-data-table-sort';
-import { useDataTableFilter } from '../../../common/hooks/use-data-table-filter';
-import { useParams } from 'react-router-dom';
-import {
-  lineageDocDocumentTableState,
-  setLineageDocDocumentTableFilter,
-  setLineageDocDocumentTableLimit,
-  setLineageDocDocumentTableSkip,
-  setLineageDocDocumentTableSort,
-} from './lineageDocDocumentsSlice';
 import { PreviousDocDocContext } from './PreviousDocDocContext';
 
 const createColumns = ({
@@ -52,6 +37,14 @@ const createColumns = ({
     },
     render: ({ value: document_type }: { value: string }) => {
       return <>{document_type}</>;
+    },
+  },
+  {
+    header: 'Link Text',
+    name: 'locations.link_text',
+    render: ({ data: docDocument }: { data: DocDocument }) => {
+      const linkTexts = docDocument.locations.map((location) => location.link_text);
+      return <>{linkTexts.join(', ')}</>;
     },
   },
   {
