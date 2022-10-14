@@ -1,4 +1,5 @@
 import { Form, Select, DatePicker } from 'antd';
+import { useCallback } from 'react';
 import { prettyDate } from '../../common';
 import { DocumentTypes } from '../retrieved_documents/types';
 import { DocCompareToPrevious } from './DocCompareToPrevious';
@@ -34,6 +35,12 @@ const Lineage = () => (
 );
 
 export function DocumentClassification() {
+  const form = Form.useFormInstance();
+  const previousDocDocumentId = Form.useWatch('previous_doc_doc_id');
+  const onFinish = useCallback(
+    (previous_doc_doc_id: string) => form.setFieldsValue({ previous_doc_doc_id }),
+    [form]
+  );
   return (
     <>
       <div className="flex space-x-8">
@@ -44,7 +51,7 @@ export function DocumentClassification() {
       <div className="flex space-x-8">
         <TherapyTagRelevance />
         <Lineage />
-        <ExploreLineage />
+        <ExploreLineage onFinish={onFinish} previousDocDocumentId={previousDocDocumentId} />
         <DocCompareToPrevious />
       </div>
     </>

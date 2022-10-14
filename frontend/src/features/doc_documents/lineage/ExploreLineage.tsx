@@ -32,7 +32,7 @@ const CurrentDocDocument = () => {
 };
 
 export function ExploreLineage(props: {
-  onFinish?: (previousDocDocumentId: string) => void;
+  onFinish: (previousDocDocumentId: string) => void;
   previousDocDocumentId?: string;
 }) {
   const dispatch = useAppDispatch();
@@ -77,10 +77,7 @@ export function ExploreLineage(props: {
               <Button
                 key="submit"
                 type="primary"
-                onClick={() =>
-                  props.onFinish?.(previousDocDocumentId) ??
-                  alert(`Submitted previousDocDocumentId: ${previousDocDocumentId}`)
-                }
+                onClick={() => props.onFinish(previousDocDocumentId)}
               >
                 Submit
               </Button>
