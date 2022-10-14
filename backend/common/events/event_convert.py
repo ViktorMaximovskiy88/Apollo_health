@@ -23,6 +23,11 @@ class EventConvert:
             if document_fam:
                 legacy_relevance = document_fam.legacy_relevance
 
+        if target.document_family_id:
+            document_fam = await DocumentFamily.find_one({"_id": target.document_family_id})
+            if document_fam:
+                legacy_relevance = document_fam.legacy_relevance
+
         document_load = {
             "document_id": target.id,
             "document_hash": target.checksum,
