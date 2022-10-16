@@ -1,7 +1,6 @@
 import classNames from 'classnames';
 import { Button } from 'antd';
 import { TextEllipsis } from '../../components';
-import _ from 'lodash';
 import { prettyDateUTCFromISO } from '../../common/date';
 import { LineageDoc } from './types';
 

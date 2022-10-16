@@ -505,6 +505,9 @@ class ScrapeWorker:
         doc_ids = [doc.id for (doc, doc_doc) in self.lineage_tasks]
         await self.lineage_service.process_lineage_for_doc_ids(self.site.id, doc_ids)
 
+        self.site.last_run_documents = self.scrape_task.documents_found
+        await self.site.save()
+
         await self.downloader.close()
 
         if not self.scrape_task.documents_found:

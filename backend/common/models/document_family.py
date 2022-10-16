@@ -16,7 +16,7 @@ class NewDocumentFamily(BaseModel):
     name: str
     document_type: str
     description: str | None = None
-    site_id: PydanticObjectId
+    site_id: PydanticObjectId | None = None
     relevance: list[str] = []
     legacy_relevance: list[str] = []
     field_groups: list[str] = []

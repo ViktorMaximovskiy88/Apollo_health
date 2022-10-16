@@ -27,10 +27,10 @@ interface PayerFamilyCreateModalPropTypes {
 function PayerInfo() {
   const [getPayers] = useLazyGetPayerBackbonesQuery();
   const form = Form.useFormInstance();
-  const payerType = Form.useWatch(['payer_info', 'payer_type']);
+  const payerType = Form.useWatch('payer_type');
 
   useEffect(() => {
-    form.setFieldsValue({ payer_info: { payer_ids: [] } });
+    form.setFieldsValue({ payer_ids: [] });
   }, [form, payerType]);
 
   const payerOptions = useCallback(
@@ -48,29 +48,28 @@ function PayerInfo() {
     },
     [getPayers, payerType]
   );
-
   return (
     <div className="mt-4">
       <h2>Payer</h2>
       <Input.Group className="space-x-2 flex">
-        <Form.Item label="Payer Type" name={['payer_info', 'payer_type']} className="w-48">
+        <Form.Item label="Payer Type" name={'payer_type'} className="w-48">
           <Select options={payerTypeOptions} />
         </Form.Item>
-        <Form.Item label="Payers" name={['payer_info', 'payer_ids']} className="grow">
+        <Form.Item label="Payers" name={'payer_ids'} className="grow">
           <RemoteSelect mode="multiple" className="w-full" fetchOptions={payerOptions} />
         </Form.Item>
       </Input.Group>
       <Input.Group className="space-x-2 flex">
-        <Form.Item label="Channel" name={['payer_info', 'channels']} className="w-full">
+        <Form.Item label="Channel" name={'channels'} className="w-full">
           <Select mode="multiple" options={channelOptions} />
         </Form.Item>
-        <Form.Item label="Benefit" name={['payer_info', 'benefits']} className="w-full">
+        <Form.Item label="Benefit" name={'benefits'} className="w-full">
           <Select mode="multiple" options={benefitOptions} />
         </Form.Item>
-        <Form.Item label="Plan Types" name={['payer_info', 'plan_types']} className="w-full">
+        <Form.Item label="Plan Types" name={'plan_types'} className="w-full">
           <Select mode="multiple" options={planTypeOptions} />
         </Form.Item>
-        <Form.Item label="Region" name={['payer_info', 'regions']} className="w-full">
+        <Form.Item label="Region" name={'regions'} className="w-full">
           <Select mode="multiple" options={regionOptions} />
         </Form.Item>
       </Input.Group>
@@ -153,9 +152,7 @@ function mustBeUnique(asyncValidator: Function) {
     async validator(_rule: Rule, value: string) {
       const { data: payerFamily } = await asyncValidator({ name: value });
       if (payerFamily) {
-        return Promise.reject(
-          `Payer family name "${payerFamily.name}" already exists on this site`
-        );
+        return Promise.reject(`Payer family name "${payerFamily.name}" already exists`);
       }
       return Promise.resolve();
     },
