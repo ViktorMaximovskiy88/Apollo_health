@@ -29,6 +29,7 @@ import { PayerBackbomeHomePage } from './features/payer-backbone/PayerBackboneHo
 import { PayerBackboneNewPage } from './features/payer-backbone/PayerBackboneNewPage';
 import { PayerBackboneEditPage } from './features/payer-backbone/PayerBackboneEditPage';
 import { LineagePage } from './features/lineage/LineagePage';
+import { StatsRoutes } from './features/stats';
 import { DocumentFamilyHomePage } from './features/doc_documents/document_family/DocumentFamilyHomePage';
 
 function AppHomePage() {
@@ -129,6 +130,7 @@ function App() {
         <Route path="/documents/*" element={<DocumentRoutes />} />
         <Route path="/translations/*" element={<TranslationRoutes />} />
         <Route path="/payer-backbone/*" element={<PayerBackboneRoutes />} />
+        <Route path="/stats/*" element={<StatsRoutes />} />
         <Route path="/" element={<Navigate replace to="/sites" />} />
       </Route>
     </Routes>

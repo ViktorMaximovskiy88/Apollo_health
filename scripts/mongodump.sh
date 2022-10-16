@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
 # assuming local to not create oops scenario
-rm -rf ./dump
-mongodump --uri="mongodb://localhost:27017/source-hub" -u admin -p admin --authenticationDatabase=admin
+# rm -rf ./dump
+# mongodump --uri="mongodb://localhost:27017/source-hub" -u admin -p admin --authenticationDatabase=admin
 
 # careful
-# mongodump --uri="mongodb+srv://apollo-tst-use1-mmit-01.3qm7h.mongodb.net/source-hub?&authSource=%24external" --authenticationMechanism=MONGODB-AWS --awsSessionToken=$AWS_SESSION_TOKEN -u $AWS_ACCESS_KEY -p $AWS_SECRET_TOKEN --excludeCollection ChangeLog
+AWS_ACCESS_KEY_ID="ASIAUPJYFUWUQ3T37Y77"
+AWS_SECRET_ACCESS_KEY="ve/aw3i/A+DLpZxEGfNmwy9/G9X/467Qq4IDmpfo"
+AWS_SESSION_TOKEN="IQoJb3JpZ2luX2VjEC0aCXVzLWVhc3QtMSJHMEUCIQDLMubUeYARKIJNQnkLA/8AXW7se2Ku2bgz4YSOVqnLQwIgeFWBJkKK/yvp5XJmstXKXJvD2FiCfcmLUJ4Fk8v+aM8qoAMI9f//////////ARAAGgwzMDc3NDQ4NDMxNzciDKyFSIKVI5eJgtbxlir0Ard9YMI0GNfNGgtEmkwx6KHXvClBfbP2TbQtTMeNzRaMqnJzG5y8iB7mlzTsIav2PhFDuth4qUVoUOo1iSThSfKbW1oNgQiQJ9RVQ8Inaf9puhxe/7+X2lqeev8sU2933wqyJaH++GpqiTY+fx8Emfy0zQ6f/KOrte4OqE36p1PCNl1Zuf4Tpt0oSv5ULCrfBWFXAV97cej4nIOp1WM7+eaxrBoHOuIXvb+xNP7k8oBk/PxGegfzQajnfXI0Hg4sNNcjLyQcovhwRleaAMXS19f9HZInzEm407f9Ap8u8OALIEAkY1Wp6aGJEeex2C04XV7EPqvxrE4TUkpRZZpU80JIOfODTUu9DmnaK81ycUMWoBW8NPmLK1rBNWNzNJX4iCKRE307pr+02aECPViCk1oDtYsw1x1wrA3wSTngBVF5hEKCN2oiii9XY5Yr7J6Ynt3AVlwYMZBeHEf0BIzPhULJqoh7ZlNYkL2EwGyUJMTsWD7QezDIyrGaBjqmAdxP9JtCURdPG+Rw5kLzbh8cB4cvj1+LJZvzhNIh+h7orq4PoNZ5SNIcjHLOMtgJL52VKHbTKmTqSYPY1/SGbI2sZXUBkJQg6H1XmtS6WA9mfA7/KfdsLtishC7U1no583omYnjYmhJtxhWVb63WJ2X2N/tdUM81hp1ZAmUqjjnsEWYL/73Wn9p/+Sef7KsT1JJKqoK6EVlDvSDIrUG/pxtWLXRQTx8="
+mongodump --uri="mongodb+srv://apollo-dev-use1-mmit-01.3qm7h.mongodb.net/source-hub?&authSource=%24external" --authenticationMechanism=MONGODB-AWS --awsSessionToken=$AWS_SESSION_TOKEN -u $AWS_ACCESS_KEY_ID -p $AWS_SECRET_ACCESS_KEY --excludeCollection ChangeLog --excludeCollection LinkTaskLog

@@ -24,6 +24,7 @@
     "react-redux": "^7.2.0",
     "react-router-dom": "6",
     "react-scripts": "5.0.0",
+    "recharts": "^2.1.15",
     "redux-first-history": "^5.0.8",
     "urlpattern-polyfill": "^5.0.5"
   },

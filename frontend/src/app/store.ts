@@ -15,6 +15,7 @@ import { payerBackboneApi } from '../features/payer-backbone/payerBackboneApi';
 import { documentFamilyApi } from '../features/doc_documents/document_family/documentFamilyApi';
 import { payerFamilyApi } from '../features/payer-family/payerFamilyApi';
 import { lineageApi } from '../features/lineage/lineageApi';
+import { statsApi } from '../features/stats/statsApi';
 import { rtkAuth } from '../common/auth-middleware';
 
 import navSlice from './navSlice';
@@ -31,6 +32,7 @@ import extractionsReducer from '../features/extractions/extractionsSlice';
 import translationsReducer from '../features/translations/translationSlice';
 import payerBackboneReducer from '../features/payer-backbone/payerBackboneSlice';
 import lineageReducer from '../features/lineage/lineage-slice';
+import statsReducer from '../features/stats/stats-slice';
 
 const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
   history: createBrowserHistory(),
@@ -50,6 +52,7 @@ export const store = configureStore({
     [documentFamilyApi.reducerPath]: documentFamilyApi.reducer,
     [payerBackboneApi.reducerPath]: payerBackboneApi.reducer,
     [lineageApi.reducerPath]: lineageApi.reducer,
+    [statsApi.reducerPath]: statsApi.reducer,
     [payerFamilyApi.reducerPath]: payerFamilyApi.reducer,
     nav: navSlice.reducer,
     sites: sitesReducer,
@@ -66,6 +69,7 @@ export const store = configureStore({
     payerBackbone: payerBackboneReducer,
     router: routerReducer,
     lineage: lineageReducer,
+    stats: statsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
