@@ -276,14 +276,13 @@ async def add_document(
     # Set new_document current_version and update lineage.
     new_document.is_current_version = True
     if uploaded_doc.upload_new_version_for_id:
-        # New version, set new_doc.previous_doc_id and lineage_id.
         original_version_doc: DocDocument | None = await DocDocument.find_one(
             {"_id": PydanticObjectId(uploaded_doc.upload_new_version_for_id)}
         )
         new_document.previous_doc_id = original_version_doc.id
+        original_version_doc.is_current_version = False
         if original_version_doc.lineage_id:
             new_document.lineage_id = original_version_doc.lineage_id
-            original_version_doc.is_current_version = False
         await original_version_doc.save()
     created_retr_doc: RetrievedDocument = await create_and_log(logger, current_user, new_document)
     created_doc_doc: DocDocument = await create_doc_document_service(new_document, current_user)
