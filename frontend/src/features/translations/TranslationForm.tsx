@@ -1,6 +1,7 @@
 import { DeleteFilled, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Checkbox, Collapse, Form, Input, Select, Tabs } from 'antd';
+import { Button, Checkbox, Collapse, Form, Input, Select } from 'antd';
 import { FormInstance } from 'antd/lib/form/Form';
+import { Tab } from 'rc-tabs/lib/interface';
 import { ReactNode, useCallback, useState } from 'react';
 import {
   useGetDocDocumentQuery,
@@ -9,6 +10,8 @@ import {
 import { useGetSiteQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
 import { RemoteSelect } from '../../components/RemoteSelect';
 import { TranslationConfig } from './types';
+import { CommentWall } from '../comments/CommentWall';
+import { HashRoutedTabs } from '../../components/HashRoutedTabs';
 
 function TranslationFormContainer(props: { children: ReactNode }) {
   return <div className="max-w-xl">{props.children}</div>;
@@ -176,6 +179,9 @@ export function TableExtractionForm() {
         </Form.Item>
         <Form.Item className="grow" name={['extraction', 'end_table_text']} label="End Table Text">
           <Input />
+        </Form.Item>
+        <Form.Item className="grow" name={['extraction', 'max_font_size']} label="Max Font Size">
+          <Input type="number" />
         </Form.Item>
       </div>
       <Form.Item name={['extraction', 'table_shape']} label="Table Defined By">
@@ -371,9 +377,14 @@ function TierTranslationInput(props: { name: number; field: any }) {
 
 function CodeTranslationInput(props: { name: number; field: any }) {
   return (
-    <Form.Item name={[props.name, 'separator']} label="Strength Seperators">
-      <Input />
-    </Form.Item>
+    <>
+      <Form.Item name={[props.name, 'separator']} label="Strength Sep" className="w-24">
+        <Input />
+      </Form.Item>
+      <Form.Item name={[props.name, 'separator2']} label="Form Sep" className="w-24">
+        <Input />
+      </Form.Item>
+    </>
   );
 }
 
@@ -390,10 +401,6 @@ function QLCTranslationInput(props: { name: number; field: any }) {
 }
 
 function BvGTranslationInput(props: { name: number; field: any }) {
-  const options = [
-    { value: 'time', label: 'Time' },
-    { value: 'quantity', label: 'Quantity' },
-  ];
   return (
     <Form.List name={[props.name, 'mappings']}>
       {(fields, { add, remove }, { errors }) => (
@@ -554,6 +561,39 @@ export function TranslationForm(props: {
   onFinish: (t: Partial<TranslationConfig>) => void;
   initialValues?: TranslationConfig;
 }) {
+  const tabs: Tab[] = [
+    {
+      key: 'basic',
+      label: 'Basic',
+      forceRender: true,
+      children: <TableBasicInfoForm />,
+    },
+    {
+      label: 'Detection',
+      key: 'detection',
+      forceRender: true,
+      children: <TableDetectionForm />,
+    },
+    {
+      label: 'Extraction',
+      key: 'extraction',
+      forceRender: true,
+      children: <TableExtractionForm />,
+    },
+    {
+      label: 'Translation',
+      key: 'translation',
+      forceRender: true,
+      children: <TableTranslationForm initialValues={props.initialValues} />,
+    },
+  ];
+  if (props.initialValues?._id) {
+    tabs.push({
+      key: 'comments',
+      label: 'Notes',
+      children: <CommentWall targetId={props.initialValues._id} />,
+    });
+  }
   return (
     <Form
       className="h-full"
@@ -563,20 +603,7 @@ export function TranslationForm(props: {
       onFinish={props.onFinish}
       initialValues={props.initialValues}
     >
-      <Tabs className="h-full ant-tabs-scroll">
-        <Tabs.TabPane tab="Basic" key="basic" forceRender>
-          <TableBasicInfoForm />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="Detection" key="detection" forceRender>
-          <TableDetectionForm />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="Extraction" key="extraction" forceRender>
-          <TableExtractionForm />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="Translation" key="translation" forceRender>
-          <TableTranslationForm initialValues={props.initialValues} />
-        </Tabs.TabPane>
-      </Tabs>
+      <HashRoutedTabs className="h-full ant-tabs-scroll" items={tabs} />
     </Form>
   );
 }

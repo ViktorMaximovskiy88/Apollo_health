@@ -6,6 +6,7 @@ import { CollectionSettings } from './CollectionSettings';
 import { SiteStatus } from '../siteStatus';
 import { Assignee } from './AssigneeInput';
 import { SiteStatusRadio as Status } from './SiteStatusRadio';
+import { CommentWall } from '../../comments/CommentWall';
 
 const buildInitialValues = () => ({
   scrape_method: 'SimpleDocumentScrape',
@@ -85,10 +86,16 @@ export function SiteForm(props: {
       validateMessages={validateMessages}
     >
       <Row gutter={16} className="flex pb-[20%]">
-        <Col span={12}>
+        <Col span={12} className="space-y-4">
           <Card>
             <SiteInformation {...props} />
           </Card>
+          {initialValues._id ? (
+            <Card>
+              <Typography.Title level={3}>Notes</Typography.Title>
+              <CommentWall targetId={initialValues._id} />
+            </Card>
+          ) : null}
         </Col>
         <Col span={12}>
           <Card>

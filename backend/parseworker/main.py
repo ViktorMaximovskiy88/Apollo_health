@@ -2,6 +2,8 @@ from pathlib import Path
 
 import newrelic.agent
 
+from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook
+
 newrelic.agent.initialize(Path(__file__).parent / "newrelic.ini")
 
 import asyncio
@@ -67,6 +69,8 @@ async def start_worker_async():
             worker = TableContentExtractor(doc_document, config)
             try:
                 await worker.run_extraction(extract_task)
+                await worker.calculate_delta(extract_task)
+
                 typer.secho(f"Finished Task {extract_task.id}", fg=typer.colors.BLUE)
                 now = datetime.now(tz=timezone.utc)
                 await asyncio.gather(
@@ -86,15 +90,19 @@ async def start_worker_async():
                 traceback.print_exc()
                 now = datetime.now(tz=timezone.utc)
                 typer.secho(f"Task Failed {extract_task.id}", fg=typer.colors.RED)
-                await extract_task.update(
-                    Set(
-                        {
-                            ContentExtractionTask.status: TaskStatus.FAILED,
-                            ContentExtractionTask.end_time: now,
-                            ContentExtractionTask.error_message: message,
-                        }
-                    )
+                await asyncio.gather(
+                    doc_document.update(Set({"content_extraction_task_id": extract_task.id})),
+                    extract_task.update(
+                        Set(
+                            {
+                                ContentExtractionTask.status: TaskStatus.FAILED,
+                                ContentExtractionTask.end_time: now,
+                                ContentExtractionTask.error_message: message,
+                            }
+                        )
+                    ),
                 )
+            await doc_document_save_hook(doc_document)
         await asyncio.sleep(5)
 
 

@@ -184,7 +184,7 @@ export function SampleTranslationTable(props: { docId: string; form: FormInstanc
             name: 'cpan',
           });
         }
-      } else if (col.field === 'QL' || col.field == 'QLC') {
+      } else if (col.field === 'QL' || col.field === 'QLC') {
         cols.push({
           header: 'QL',
           render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
@@ -192,7 +192,7 @@ export function SampleTranslationTable(props: { docId: string; form: FormInstanc
           minWidth: 63,
           maxWidth: 63,
         });
-        if (col.capture_all || col.pattern.includes('*') || col.field == 'QLC') {
+        if (col.capture_all || col.pattern.includes('*') || col.field === 'QLC') {
           cols.push({
             header: 'QL Note',
             name: 'qln',

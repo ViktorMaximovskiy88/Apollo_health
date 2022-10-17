@@ -15,6 +15,7 @@ import { payerBackboneApi } from '../features/payer-backbone/payerBackboneApi';
 import { documentFamilyApi } from '../features/doc_documents/document_family/documentFamilyApi';
 import { payerFamilyApi } from '../features/payer-family/payerFamilyApi';
 import { lineageApi } from '../features/lineage/lineageApi';
+import { commentsApi } from '../features/comments/commentsApi';
 import { rtkAuth } from '../common/auth-middleware';
 
 import navSlice from './navSlice';
@@ -30,6 +31,7 @@ import documentsReducer from '../features/collections/documentsSlice';
 import extractionsReducer from '../features/extractions/extractionsSlice';
 import translationsReducer from '../features/translations/translationSlice';
 import payerBackboneReducer from '../features/payer-backbone/payerBackboneSlice';
+import workQueueReducer from '../features/work_queue/workQueueSlice';
 import lineageReducer from '../features/lineage/lineage-slice';
 
 const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
@@ -51,6 +53,7 @@ export const store = configureStore({
     [payerBackboneApi.reducerPath]: payerBackboneApi.reducer,
     [lineageApi.reducerPath]: lineageApi.reducer,
     [payerFamilyApi.reducerPath]: payerFamilyApi.reducer,
+    [commentsApi.reducerPath]: commentsApi.reducer,
     nav: navSlice.reducer,
     sites: sitesReducer,
     users: userReducer,
@@ -63,6 +66,7 @@ export const store = configureStore({
     documents: documentsReducer,
     extractions: extractionsReducer,
     translations: translationsReducer,
+    workQueues: workQueueReducer,
     payerBackbone: payerBackboneReducer,
     router: routerReducer,
     lineage: lineageReducer,
@@ -81,6 +85,7 @@ export const store = configureStore({
       translationsApi.middleware,
       documentFamilyApi.middleware,
       payerBackboneApi.middleware,
+      commentsApi.middleware,
       routerMiddleware,
       rtkAuth
     ),

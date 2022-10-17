@@ -8,12 +8,14 @@ import { DocDocumentClassificationPage } from './DocDocumentClassificationPage';
 import { ContentExtractionApprovalPage } from '../extractions/ContentExtractionApprovalPage';
 import { useGetUsersQuery } from '../users/usersApi';
 import { SubmitAction, WorkQueue } from './types';
+import { useGetWorkQueueQuery } from './workQueuesApi';
+import { useSelector } from 'react-redux';
+import { workQueueTableState } from './workQueueSlice';
 import {
-  useGetWorkQueueQuery,
   useSubmitWorkItemMutation,
   useTakeNextWorkItemMutation,
   useTakeWorkItemMutation,
-} from './workQueuesApi';
+} from '../doc_documents/docDocumentApi';
 
 function notifyFailedLock() {
   notification.open({
@@ -25,20 +27,24 @@ function notifyFailedLock() {
 
 function workItemPage(
   wq: WorkQueue,
-  itemId: string,
+  docDocumentId: string,
   form: FormInstance,
   onSubmit: (u: any) => Promise<void>
 ) {
   switch (wq.frontend_component) {
     case 'DocDocumentClassificationPage':
-      return <DocDocumentClassificationPage docId={itemId} form={form} onSubmit={onSubmit} />;
+      return (
+        <DocDocumentClassificationPage docId={docDocumentId} form={form} onSubmit={onSubmit} />
+      );
     case 'ContentExtractionApprovalPage':
-      return <ContentExtractionApprovalPage docId={itemId} form={form} onSubmit={onSubmit} />;
+      return (
+        <ContentExtractionApprovalPage docId={docDocumentId} form={form} onSubmit={onSubmit} />
+      );
   }
 }
 
 function WorkQueueActionButton(props: {
-  itemId: string;
+  docDocumentId: string;
   action: SubmitAction;
   setAction: (a: SubmitAction) => void;
   setComment: (a: string) => void;
@@ -84,7 +90,7 @@ function WorkQueueActionButton(props: {
 }
 
 function WorkItemSubmitBar(props: {
-  itemId: string;
+  docDocumentId: string;
   readonly: boolean;
   wq: WorkQueue;
   takeNext: boolean;
@@ -99,24 +105,28 @@ function WorkItemSubmitBar(props: {
 
   return (
     <div className="flex space-x-2 items-center">
+      <Button onClick={() => navigate('../../..')}>Cancel</Button>
       {props.wq.submit_actions.map((action) => (
         <WorkQueueActionButton
-          itemId={props.itemId}
-          key={props.itemId + action.label}
+          docDocumentId={props.docDocumentId}
+          key={props.docDocumentId + action.label}
           action={action}
           setAction={props.setAction}
           setComment={props.setComment}
           setReassignment={props.setReassignment}
         />
       ))}
-      <Button onClick={() => navigate('../../..')}>Cancel</Button>
       <span>Auto Take</span>
       <Checkbox checked={props.takeNext} onChange={(e) => props.setTakeNext(e.target.checked)} />
     </div>
   );
 }
 
-export function WorkQueueWorkItem(props: { wq: WorkQueue; itemId: string; readonly: boolean }) {
+export function WorkQueueWorkItem(props: {
+  wq: WorkQueue;
+  docDocumentId: string;
+  readonly: boolean;
+}) {
   const [form] = useForm();
   const [action, setAction] = useState<SubmitAction>();
   const [takeNext, setTakeNext] = useState(true);
@@ -125,6 +135,7 @@ export function WorkQueueWorkItem(props: { wq: WorkQueue; itemId: string; readon
   const navigate = useNavigate();
   const [submitWorkItem] = useSubmitWorkItemMutation();
   const [takeNextWorkItem] = useTakeNextWorkItemMutation();
+  const tableState = useSelector(workQueueTableState);
 
   useEffect(() => {
     if (action) {
@@ -147,9 +158,9 @@ export function WorkQueueWorkItem(props: { wq: WorkQueue; itemId: string; readon
         reassignment,
         updates,
       };
-      await submitWorkItem({ itemId: props.itemId, workQueueId: props.wq._id, body });
+      await submitWorkItem({ docDocumentId: props.docDocumentId, workQueueId: props.wq._id, body });
       if (takeNext) {
-        const response = await takeNextWorkItem(props.wq._id);
+        const response = await takeNextWorkItem({ queueId: props.wq._id, tableState });
         if ('data' in response) {
           if (!response.data.acquired_lock) {
             notification.success({
@@ -165,14 +176,24 @@ export function WorkQueueWorkItem(props: { wq: WorkQueue; itemId: string; readon
         navigate('../../..');
       }
     },
-    [props, action, takeNext, navigate, reassignment, comment, submitWorkItem, takeNextWorkItem]
+    [
+      props,
+      action,
+      takeNext,
+      navigate,
+      tableState,
+      reassignment,
+      comment,
+      submitWorkItem,
+      takeNextWorkItem,
+    ]
   );
 
   return (
     <MainLayout
       sectionToolbar={
         <WorkItemSubmitBar
-          itemId={props.itemId}
+          docDocumentId={props.docDocumentId}
           readonly={props.readonly}
           wq={props.wq}
           setAction={setAction}
@@ -183,7 +204,7 @@ export function WorkQueueWorkItem(props: { wq: WorkQueue; itemId: string; readon
         />
       }
     >
-      {workItemPage(props.wq, props.itemId, form, onSubmit)}
+      {workItemPage(props.wq, props.docDocumentId, form, onSubmit)}
     </MainLayout>
   );
 }
@@ -191,7 +212,7 @@ export function WorkQueueWorkItem(props: { wq: WorkQueue; itemId: string; readon
 export function ProcessWorkItemPage() {
   const params = useParams();
   const navigate = useNavigate();
-  const itemId = params.itemId;
+  const docDocumentId = params.docDocumentId;
   const workQueueId = params.queueId;
   const [takeWorkItem] = useTakeWorkItemMutation();
   const { data: wq } = useGetWorkQueueQuery(workQueueId);
@@ -199,25 +220,25 @@ export function ProcessWorkItemPage() {
 
   useEffect(() => {
     (async () => {
-      const response = await takeWorkItem({ itemId, workQueueId });
+      const response = await takeWorkItem({ docDocumentId, workQueueId });
       if ('error' in response || !response.data.acquired_lock) {
         navigate(-1);
         notifyFailedLock();
       }
     })();
-  }, [watermark, itemId, workQueueId, navigate, takeWorkItem]);
+  }, [watermark, docDocumentId, workQueueId, navigate, takeWorkItem]);
 
-  if (!wq || !itemId) return null;
+  if (!wq || !docDocumentId) return null;
 
-  return <WorkQueueWorkItem wq={wq} itemId={itemId} readonly={false} />;
+  return <WorkQueueWorkItem wq={wq} docDocumentId={docDocumentId} readonly={false} />;
 }
 
 export function ReadonlyWorkItemPage() {
   const params = useParams();
   const workQueueId = params.queueId;
-  const itemId = params.itemId;
+  const docDocumentId = params.docDocumentId;
   const { data: wq } = useGetWorkQueueQuery(workQueueId);
-  if (!wq || !itemId) return null;
+  if (!wq || !docDocumentId) return null;
 
-  return <WorkQueueWorkItem wq={wq} itemId={itemId} readonly />;
+  return <WorkQueueWorkItem wq={wq} docDocumentId={docDocumentId} readonly />;
 }

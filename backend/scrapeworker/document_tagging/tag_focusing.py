@@ -59,14 +59,19 @@ class FocusChecker:
             is_key_area = SectionType.KEY in config.section_type
             last_match = 0
             start = 0
+            start_sep_is_new_page = config.start_separator == "\f"
             while True:
-                if config.start_separator:
+                # if at start of doc and separator is new page, match start of doc
+                if last_match == 0 and start_sep_is_new_page:
+                    match = 0
+                elif config.start_separator:
                     match = text_lower.find(config.start_separator.lower(), last_match)
                 else:
                     match = 0
+
                 if match > -1:
                     if config.start_separator:
-                        start = match + len(config.start_separator or "")
+                        start = match + len(config.start_separator)
                     end = doc_end
                     if config.end_separator:
                         end_match = text_lower.find(config.end_separator.lower(), start)

@@ -1,4 +1,5 @@
-import { Form, FormInstance, Tabs } from 'antd';
+import { useMemo } from 'react';
+import { Form, FormInstance } from 'antd';
 import { DocDocument, DocumentTag, UIIndicationTag, UITherapyTag } from './types';
 import { DocDocumentTagForm } from './DocDocumentTagForm';
 import { dateToMoment } from '../../common';
@@ -6,9 +7,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { isEqual } from 'lodash';
 import { DocDocumentInfoForm } from './DocDocumentInfoForm';
 import { DocDocumentLocations } from './locations/DocDocumentLocations';
-import { useNavigate } from 'react-router-dom';
 import { useGetDocDocumentQuery } from './docDocumentApi';
+import { DocDocumentExtractionTab } from './DocDocumentExtractionTab';
 import { calculateFinalEffectiveFromValues } from './helpers';
+import { DocStatusModal } from './DocStatusModal';
+import { HashRoutedTabs } from '../../components/HashRoutedTabs';
+import { CommentWall } from '../comments/CommentWall';
 
 const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   const calculateFinalEffectiveDate = useCallback(() => {
@@ -60,8 +64,6 @@ const useOnFinish = ({
   setIsSaving,
   docId,
 }: UseOnFinishType): ((doc: Partial<DocDocument>) => void) => {
-  const navigate = useNavigate();
-
   const onFinish = async (submittedDoc: Partial<DocDocument>): Promise<void> => {
     if (!submittedDoc) return;
 
@@ -88,12 +90,11 @@ const useOnFinish = ({
         therapy_tags,
         _id: docId,
       });
-      navigate(-1);
     } catch (error) {
       //  TODO real errors please
       console.error(error);
-      setIsSaving(false);
     }
+    setIsSaving(false);
   };
 
   return onFinish;
@@ -156,8 +157,62 @@ export function DocDocumentEditForm({
     setTags(update);
   }
 
+  const initialValues = useMemo(() => (doc ? buildInitialValues(doc) : {}), [doc]);
+  useEffect(() => {
+    setHasChanges(false);
+    form.setFieldsValue(initialValues);
+    form.resetFields();
+  }, [initialValues, setHasChanges, form]);
+
   if (!doc) return null;
-  const initialValues = buildInitialValues(doc);
+  const tabs = [
+    {
+      label: 'Info',
+      key: 'info',
+      children: (
+        <DocDocumentInfoForm
+          onFieldChange={() => {
+            setHasChanges(true);
+            calculateFinalEffectiveDate();
+          }}
+        />
+      ),
+    },
+    {
+      label: 'Tags',
+      key: 'tags',
+      children: (
+        <DocDocumentTagForm
+          tags={tags}
+          onDeleteTag={(tag: any) => {
+            setTags(tags.filter((t) => t.id !== tag.id));
+            setHasChanges(true);
+          }}
+          onEditTag={handleTagEdit}
+          currentPage={pageNumber}
+        />
+      ),
+    },
+    {
+      label: 'Sites',
+      key: 'sites',
+      children: <DocDocumentLocations locations={doc.locations} docDocument={doc} />,
+    },
+  ];
+
+  if (doc?.content_extraction_task_id) {
+    tabs.push({
+      label: 'Extraction',
+      key: 'extraction',
+      children: <DocDocumentExtractionTab doc={doc} />,
+    });
+  }
+
+  tabs.push({
+    label: 'Notes',
+    key: 'comments',
+    children: <CommentWall targetId={doc._id} />,
+  });
 
   return (
     <div className="flex-1 h-full overflow-hidden">
@@ -174,43 +229,11 @@ export function DocDocumentEditForm({
         initialValues={initialValues}
         onFinish={onFinish}
       >
-        <Tabs
-          items={[
-            {
-              label: 'Info',
-              key: 'info',
-              children: (
-                <DocDocumentInfoForm
-                  onFieldChange={() => {
-                    setHasChanges(true);
-                    calculateFinalEffectiveDate();
-                  }}
-                />
-              ),
-            },
-            {
-              label: 'Tags',
-              key: 'tags',
-              children: (
-                <DocDocumentTagForm
-                  tags={tags}
-                  onDeleteTag={(tag: any) => {
-                    setTags(tags.filter((t) => t.id !== tag.id));
-                    setHasChanges(true);
-                  }}
-                  onEditTag={handleTagEdit}
-                  currentPage={pageNumber}
-                />
-              ),
-            },
-            {
-              label: 'Sites',
-              key: 'sites',
-              children: <DocDocumentLocations locations={doc.locations} docDocument={doc} />,
-            },
-          ]}
+        <HashRoutedTabs
+          tabBarExtraContent={<DocStatusModal doc={doc} />}
+          items={tabs}
           className="h-full ant-tabs-h-full"
-        ></Tabs>
+        />
       </Form>
     </div>
   );

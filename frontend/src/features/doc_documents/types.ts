@@ -58,6 +58,12 @@ export interface CompareResponse extends BaseDocument {
 export interface DocDocument extends BaseDocument {
   retrieved_document_id: string;
   classification_status: ApprovalStatus;
+  family_status: ApprovalStatus;
+  content_extraction_status: ApprovalStatus;
+  status: ApprovalStatus;
+  classification_hold_info: string[];
+  extraction_hold_info: string[];
+  family_hold_info: string[];
   classification_lock: TaskLock;
   name: string;
   checksum: string;
@@ -95,6 +101,7 @@ export interface DocDocument extends BaseDocument {
   indication_tags: IndicationTag[];
 
   translation_id?: string;
+  content_extraction_task_id?: string;
 
   tags: string[];
 }

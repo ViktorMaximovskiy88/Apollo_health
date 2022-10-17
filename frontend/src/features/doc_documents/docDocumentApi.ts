@@ -1,6 +1,13 @@
 import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
 import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
+import {
+  TakeNextWorkItemResponse,
+  TakeWorkItemResponse,
+  SubmitWorkItemResponse,
+  SubmitWorkItemRequest,
+} from '../work_queue/types';
+import { TableState } from '../work_queue/workQueueSlice';
 import { CompareRequest, CompareResponse, DocDocument } from './types';
 
 export const docDocumentsApi = createApi({
@@ -62,6 +69,60 @@ export const docDocumentsApi = createApi({
       query: (id) => `/change-log/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
     }),
+
+    getWorkQueueItems: builder.query<
+      { data: DocDocument[]; total: number },
+      {
+        id: string | undefined;
+        limit: number;
+        skip: number;
+        sortInfo: TypeSortInfo;
+        filterValue: TypeFilterValue;
+      }
+    >({
+      query: ({ id, limit, skip, sortInfo, filterValue }) => {
+        const sorts = sortInfo ? [sortInfo] : [];
+        const filters = filterValue ?? [];
+        const args = [
+          `limit=${encodeURIComponent(limit)}`,
+          `skip=${encodeURIComponent(skip)}`,
+          `sorts=${encodeURIComponent(JSON.stringify(sorts))}`,
+          `filters=${encodeURIComponent(JSON.stringify(filters))}`,
+        ].join('&');
+        return `/work-queues/${id}/items?${args}`;
+      },
+      providesTags: (_r, _e, { id }) => [{ type: 'DocDocument' as const, id }],
+    }),
+    takeNextWorkItem: builder.mutation<
+      TakeNextWorkItemResponse,
+      { queueId: string | undefined; tableState: TableState }
+    >({
+      query: ({ queueId, tableState: body }) => ({
+        url: `/work-queues/${queueId}/items/take-next`,
+        method: 'POST',
+        body,
+      }),
+    }),
+    takeWorkItem: builder.mutation<
+      TakeWorkItemResponse,
+      { docDocumentId?: string; workQueueId?: string }
+    >({
+      query: ({ docDocumentId, workQueueId }) => ({
+        url: `/work-queues/${workQueueId}/items/${docDocumentId}/take`,
+        method: 'POST',
+      }),
+    }),
+    submitWorkItem: builder.mutation<
+      SubmitWorkItemResponse,
+      { docDocumentId?: string; workQueueId?: string; body: SubmitWorkItemRequest }
+    >({
+      query: ({ docDocumentId, body, workQueueId }) => ({
+        url: `/work-queues/${workQueueId}/items/${docDocumentId}/submit`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: (_r, _e, { docDocumentId: id }) => [{ type: 'DocDocument', id }],
+    }),
   }),
 });
 
@@ -72,4 +133,9 @@ export const {
   useUpdateDocDocumentMutation,
   useCreateDiffMutation,
   useGetChangeLogQuery,
+  useGetWorkQueueItemsQuery,
+  useLazyGetWorkQueueItemsQuery,
+  useTakeWorkItemMutation,
+  useTakeNextWorkItemMutation,
+  useSubmitWorkItemMutation,
 } = docDocumentsApi;

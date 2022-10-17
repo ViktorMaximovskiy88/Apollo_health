@@ -21,6 +21,7 @@ export function OfficeFileViewer({ url }: OfficeFileViewerPropTypes) {
   return (
     <iframe
       style={{ padding: 0, margin: 0, width: '99%', height: '99%', border: '1px solid #ccc' }}
+      title="Office File Viewer"
       frameBorder="0"
       src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`}
     />
