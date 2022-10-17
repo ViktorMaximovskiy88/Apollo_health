@@ -14,6 +14,7 @@ export interface WorkItem {
   prev_doc?: string;
   action_datetime?: string;
   is_current_version?: boolean;
+  is_new: boolean;
 }
 export interface SiteScrapeTask extends BaseDocument {
   site_id: string;

@@ -8,7 +8,7 @@ import {
 } from '@ant-design/icons';
 import { SiteDocDocument } from '../types';
 import { WorkItemOption } from '../../collections/types';
-import { useContext } from 'react';
+import { useCallback, useContext } from 'react';
 import { ValidationButtonsContext, ValidationButtonsProvider } from './ManualCollectionContext';
 import { useUpdateSelected } from './useUpdateSelected';
 
@@ -19,7 +19,11 @@ const Found = () => {
 
   switch (workItem.selected) {
     case WorkItemOption.Found:
-      return null;
+      return (
+        <Button type="primary" onClick={() => updateSelected(WorkItemOption.Found)}>
+          <FileDoneOutlined className="text-white" />
+        </Button>
+      );
     case WorkItemOption.NewDocument:
       return (
         <Button disabled>
@@ -49,12 +53,17 @@ const Found = () => {
 
 const NewDocument = () => {
   const { doc, handleNewVersion } = useContext(ValidationButtonsContext) ?? {};
+  const updateSelected = useUpdateSelected();
   const { workItem } = useContext(ValidationButtonsContext) ?? {};
   if (!workItem || !doc || !handleNewVersion) return null;
 
   switch (workItem.selected) {
     case WorkItemOption.Found:
-      return null;
+      return (
+        <Button disabled>
+          <FileAddOutlined />
+        </Button>
+      );
     case WorkItemOption.NewDocument:
       return (
         <Button type="primary">
@@ -89,7 +98,11 @@ const NotFound = () => {
 
   switch (workItem.selected) {
     case WorkItemOption.Found:
-      return null;
+      return (
+        <Button onClick={() => updateSelected(WorkItemOption.NotFound)}>
+          <FileExcelOutlined />
+        </Button>
+      );
     case WorkItemOption.NewDocument:
       return (
         <Button disabled>
@@ -125,7 +138,22 @@ const NewVersion = () => {
 
   switch (workItem.selected) {
     case WorkItemOption.Found:
-      return null;
+      return (
+        <Button
+          onClick={() => {
+            handleNewVersion(doc);
+            updateSelected(WorkItemOption.NewVersion);
+          }}
+        >
+          <FileExclamationOutlined />
+        </Button>
+      );
+    case WorkItemOption.Found:
+      return (
+        <Button disabled>
+          <FileExclamationOutlined />
+        </Button>
+      );
     case WorkItemOption.NewDocument:
       return (
         <Button disabled>
@@ -167,11 +195,16 @@ const NewVersion = () => {
 const Unhandled = () => {
   const { doc, handleNewVersion } = useContext(ValidationButtonsContext) ?? {};
   const { workItem } = useContext(ValidationButtonsContext) ?? {};
+  const updateSelected = useUpdateSelected();
   if (!workItem || !doc || !handleNewVersion) return null;
 
   switch (workItem.selected) {
     case WorkItemOption.Found:
-      return null;
+      return (
+        <Button disabled>
+          <FileUnknownOutlined />
+        </Button>
+      );
     case WorkItemOption.NewDocument:
       return (
         <Button disabled>
@@ -201,17 +234,22 @@ const Unhandled = () => {
 
 function ValidationButtons() {
   const { isLoading } = useContext(ValidationButtonsContext) ?? {};
-
-  return (
-    <div className="flex space-x-1">
-      <Found />
-      <NewDocument />
-      <NotFound />
-      <NewVersion />
-      <Unhandled />
-      <Spin spinning={isLoading} size="small" className="pl-3 pt-2" />
-    </div>
-  );
+  const { workItem } = useContext(ValidationButtonsContext) ?? {};
+  if (!workItem) return null;
+  if (workItem.selected == WorkItemOption.Found && workItem.is_new === false) {
+    return null;
+  } else {
+    return (
+      <div className="flex space-x-1">
+        <Found />
+        <NewDocument />
+        <NotFound />
+        <NewVersion />
+        <Unhandled />
+        <Spin spinning={isLoading} size="small" className="pl-3 pt-2" />
+      </div>
+    );
+  }
 }
 
 export function ManualCollectionValidationButtons({

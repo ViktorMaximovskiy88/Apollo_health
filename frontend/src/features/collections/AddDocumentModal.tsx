@@ -46,7 +46,7 @@ export function AddDocumentModal({ oldVersion, setOpen, siteId }: AddDocumentMod
     lang_code: 'en',
     internal_document: false,
   };
-  if (oldVersion && docTitle !== 'Add new version') {
+  if (docTitle !== 'Add new version' && oldVersion) {
     setDocTitle('Add new version');
   }
 

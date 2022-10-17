@@ -27,9 +27,7 @@ function ManualCollectionButton(props: any) {
       setIsLoading(true);
       let response: any = await runScrape(site!._id);
       if (response.data.success) {
-        refetch();
         setTimeout(function () {
-          refetch();
           setIsLoading(false);
           navigate(`../doc-documents?scrape_task_id=${response.data.nav_id}`);
         }, 1000); // refetch sometimes not working. delay and refetch again.
@@ -65,7 +63,6 @@ function ManualCollectionButton(props: any) {
         if (response.data?.success) {
           refetch();
           setTimeout(function () {
-            refetch();
             setIsLoading(false);
           }, 1000); // refetch sometimes not working. delay and refetch again.
         } else {

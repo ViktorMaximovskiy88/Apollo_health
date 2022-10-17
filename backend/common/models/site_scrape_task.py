@@ -25,6 +25,7 @@ class ManualWorkItem(BaseModel):
     prev_doc: PydanticObjectId | None = None
     action_datetime: datetime | None = None
     is_current_version: bool | None = True
+    is_new: bool | None = True
 
 
 class SiteScrapeTask(BaseDocument):

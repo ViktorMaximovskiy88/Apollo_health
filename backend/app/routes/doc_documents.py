@@ -60,19 +60,15 @@ async def read_doc_documents(
 ) -> TableQueryResponse[DocDocumentLimitTags]:
     query = {}
     if site_id:
+        query["site_id"] = site_id
         site: Site | None = await Site.find_one({"_id": site_id})
         if not site:
-            raise HTTPException(
-                status.HTTP_404_NOT_FOUND, "Not able to retrieve documents from site."
-            )
-        query["site_id"] = site_id
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve documents.")
     if scrape_task_id:
         task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
         if not task:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve tasks from site.")
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve tasks.")
         query["retrieved_document_id"] = {"$in": task.retrieved_document_ids}
-    if site.has_created_manual_collection:
-        query["work_list"]["work_item"]["selected"] = {"$ne": "NOT_FOUND"}
     document_query: FindMany[DocDocumentLimitTags] = DocDocument.find(query).project(
         DocDocumentLimitTags
     )

@@ -62,11 +62,12 @@ async def read_scrape_tasks_for_site(
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ) -> TableQueryResponse[SiteScrapeTask]:
-    query = {"site_id": site_id}
+    query = {}
     if site_id:
+        query["site_id"] = site_id
         site: Site | None = await Site.find_one({"_id": site_id})
         if not site:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve tasks from site.")
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve tasks.")
     query: FindMany[SiteScrapeTask] = SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id)
     result: TableQueryResponse = await query_table(query, limit, skip, sorts, filters)
     return result
@@ -108,7 +109,6 @@ async def start_scrape_task(
         logger=logger,
     )
     # Check that a task is not already queued or running.
-    # TODO: Check and see if timing issue causing this to not render work items.
     if await site_collection.has_queued():
         last_queued_task: SiteScrapeTask = await site_collection.fetch_last_queued()
         if not last_queued_task:
@@ -134,6 +134,7 @@ async def cancel_all_site_scrape_task(
             detail=f"Site {site_id} Not Found",
             status_code=status.HTTP_404_NOT_FOUND,
         )
+
     # Check that site has queued tasks.
     site_collection: CollectionService = CollectionService(
         site=site,
@@ -142,10 +143,9 @@ async def cancel_all_site_scrape_task(
     )
     has_queued_tasks: SiteScrapeTask = await site_collection.has_queued()
     if not has_queued_tasks:
-        # TODO: Try just returning ok response to see if that fixes blank work item.
+        site_collection.stop_queued_tasks()  # Just in case previous is stuck.
         response.add_error("No queued tasks to cancel.")
         response.raise_error()
-
     # Process manual work_items for all queued site_scrape_tasks.
     response: CollectionResponse = await site_collection.process_work_lists()
     if not response.success:
@@ -153,6 +153,7 @@ async def cancel_all_site_scrape_task(
     response = await site_collection.stop_collecting()
     if not response.success:
         response.raise_error()
+
     return response
 
 
@@ -201,7 +202,6 @@ async def run_bulk_by_type(
         scrapes = SiteScrapeTask.find_many(query)
         scrapes_count: int = await scrapes.count()
         await scrapes.set({"status": TaskStatus.CANCELING})
-
         return scrapes_count
 
     bulk_type = type

@@ -50,7 +50,6 @@ class CollectionService:
             TaskStatus.IN_PROGRESS,
         ]
         self.last_queued = None
-        self.not_found_count = 0
 
     async def has_queued(self) -> SiteScrapeTask | Boolean:
         if self.last_queued:
@@ -94,7 +93,14 @@ class CollectionService:
                 result.add_error(f"Collection Method Invalid: {self.site.collection_method}")
                 return result
         if not result.errors:
-            await self.site.update(Set({Site.last_run_status: TaskStatus.QUEUED}))
+            await self.site.update(
+                Set(
+                    {
+                        Site.last_run_status: TaskStatus.QUEUED,
+                        Site.has_created_manual_collection: True,
+                    }
+                )
+            )
         return result
 
     async def stop_collecting(self) -> CollectionResponse:
@@ -149,7 +155,6 @@ class CollectionService:
                 }
             )
         )
-
         return result
 
     async def stop_queued_tasks(self) -> Boolean:
@@ -181,11 +186,11 @@ class CollectionService:
             status=TaskStatus.IN_PROGRESS,
             collection_method=CollectionMethod.Manual,
         )
-        # Starting manual collections should not include docs with work_items
-        # since work_items are docs from a current or completed manual collection.
+        # Since work_items are required to be finished before canceling manual collect,
+        # docs without work_items were generated outside manual process.
         previous_task: SiteScrapeTask = await self.fetch_previous_task()
         if previous_task:
-            new_task.documents_found = previous_task.documents_found
+            new_task.documents_found = len(previous_task.retrieved_document_ids)
             new_task.retrieved_document_ids = previous_task.retrieved_document_ids
             previous_doc_docs: List[DocDocument] = await DocDocument.find(
                 {"retrieved_document_id": {"$in": previous_task.retrieved_document_ids}}
@@ -199,6 +204,7 @@ class CollectionService:
                             retrieved_document_id=f"{previous_doc_doc.retrieved_document_id}",
                         )
                     )
+
         # Create new manual task and respond with nav link.
         created_task: SiteScrapeTask = await create_and_log(
             self.logger, self.current_user, new_task
@@ -221,7 +227,6 @@ class CollectionService:
             return CollectionResponse(success=True)
         # Unfinished manual collection with some documents already collected.
         # Cancel queued tasks and process all work actions from all queued task.
-        # if last_queued_task.documents_found > 0:
         response = await self.process_work_lists()
         if not response.success:
             return response
@@ -297,6 +302,8 @@ class CollectionService:
                 )
                 if work_item_response.errors:
                     work_list_response.add_error(work_item_response.errors[0])
+            queued_site_task.documents_found = len(queued_site_task.retrieved_document_ids)
+            await queued_site_task.save()
         return work_list_response
 
     async def process_work_item(
@@ -308,6 +315,7 @@ class CollectionService:
         """Process a site_scrape_task work_item action"""
         result: CollectionResponse = CollectionResponse()
         target_task.work_list[item_index].action_datetime = datetime.now(tz=timezone.utc)
+        target_task.work_list[item_index].is_new = False
         retr_doc: RetrievedDocument | None = await RetrievedDocument.find_one(
             {"_id": work_item.retrieved_document_id},
         )
@@ -336,13 +344,11 @@ class CollectionService:
                     for retr_id in target_task.retrieved_document_ids
                     if f"{retr_id}" != f"{work_item.retrieved_document_id}"
                 ]
-                self.not_found_count += 1
-                total_docs_found: int = target_task.documents_found - self.not_found_count
-                target_task.documents_found = (
-                    total_docs_found
-                    if target_task.documents_found > 0 and total_docs_found > 0
-                    else 0
+                doc_doc: DocDocument | None = await DocDocument.find_one(
+                    {"_id": work_item.document_id}
                 )
+                doc_doc.not_found = True
+                await doc_doc.save()
             case WorkItemOption.UNHANDLED:
                 # Error header: Please review and update the following documents.
                 result.add_error(f"{retr_doc.name}")

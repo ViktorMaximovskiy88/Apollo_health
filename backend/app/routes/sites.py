@@ -248,6 +248,12 @@ async def get_site_doc_docs(
     scrape_task_id: PydanticObjectId | None = None,
 ) -> list[SiteDocDocument]:
     query: dict[str, PydanticObjectId] = {"locations.site_id": site_id}
+    if site_id:
+        site: Site | None = await Site.find_one({"_id": site_id})
+        if not site:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve docs.")
+        if site.has_created_manual_collection:
+            query["not_found"] = {"$ne": True}
     if scrape_task_id:
         scrape_task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
         if scrape_task:

@@ -1,7 +1,7 @@
 import logging
 import tempfile
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, List
 
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, Security, UploadFile, status
@@ -146,7 +146,6 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
     with tempfile.NamedTemporaryFile(delete=True, suffix="." + file_extension) as tmp:
         tmp.write(content)
         temp_path: str = tmp.name
-
         download: DownloadContext = DownloadContext(
             request=Request(url=temp_path), file_extension=file_extension
         )
@@ -223,13 +222,13 @@ async def delete_document(
 @router.put(
     "/",
     status_code=status.HTTP_201_CREATED,
-    response_model=CollectionResponse,
+    response_model=List[DocDocument] | CollectionResponse,
 )
 async def add_document(
     uploaded_doc: UploadedDocument,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
-) -> CollectionResponse:
+) -> RetrievedDocument | CollectionResponse:
     if await location_exists(uploaded_doc, uploaded_doc.site_id):
         raise HTTPException(status.HTTP_409_CONFLICT, "Doc already exists for that location")
     site: Site | None = await Site.find_one({"_id": uploaded_doc.site_id})
@@ -289,45 +288,8 @@ async def add_document(
     created_retr_doc: RetrievedDocument = await create_and_log(logger, current_user, new_document)
     created_doc_doc: DocDocument = await create_doc_document_service(new_document, current_user)
 
-    # If manual collection, process and update work items.
-    if site.collection_method == CollectionMethod.Manual:
-        # Filtering by TaskStatus.IN_PROGRESS will not work because documents
-        # can still be uploaded if a collection / task has not started.
-        current_task: SiteScrapeTask = await site_last_started_task(site.id)
-        # Create work_item for created_doc.
-        created_work_item: ManualWorkItem = ManualWorkItem(
-            document_id=f"{created_doc_doc.id}",
-            retrieved_document_id=f"{created_retr_doc.id}",
-            selected=WorkItemOption.NEW_DOCUMENT,
-        )
-        # New version has FOUND and stores worklist prev / current_version.
-        if uploaded_doc.upload_new_version_for_id:
-            created_work_item.selected = WorkItemOption.FOUND
-            # Set old version's work_item as not current.
-            original_item_index: int = find_work_item_index(
-                original_version_doc, current_task, raise_exception=True
-            )
-            original_item = current_task.work_list[original_item_index]
-            original_item.is_current_version = False
-            current_task.work_list[original_item_index] = original_item
-            # Update new version's prev_doc to old version and set as current.
-            created_item_index: int = find_work_item_index(
-                created_retr_doc, current_task, raise_exception=True
-            )
-            created_item = current_task.work_list[created_item_index]
-            created_item.prev_doc = original_version_doc.id
-            current_task.work_list[created_item_index] = created_item
-        # Save updated work_list and add to task.retr_doc_ids for querying.
-        current_task.work_list.append(created_work_item)
-        current_task.retrieved_document_ids.append(f"{created_retr_doc.id}")
-        await current_task.save()
-        # Set site.has_created_manual_collection. Used to toggle work_item filters
-        # when fetching scrape_site_tasks and doc_docs.
-        if not site.has_created_manual_collection:
-            site.has_created_manual_collection = True
-            await site.save()
-    # Automatic: Add document to new task. TODO: Double check business logic.
-    else:
+    # Automatic: Add document to new task.
+    if site.collection_method == CollectionMethod.Automated:
         new_scrape_task: SiteScrapeTask = SiteScrapeTask(
             initiator_id=current_user.id,
             site_id=uploaded_doc.site_id,
@@ -340,5 +302,36 @@ async def add_document(
             collection_method=site.collection_method,
         )
         await new_scrape_task.save()
+        return created_retr_doc
 
-    return CollectionResponse(success=True)
+    # Manual: Process and update work items.
+    current_task: SiteScrapeTask = await site_last_started_task(site.id)
+    # Create work_item for created_doc.
+    created_work_item: ManualWorkItem = ManualWorkItem(
+        document_id=f"{created_doc_doc.id}",
+        retrieved_document_id=f"{created_retr_doc.id}",
+        selected=WorkItemOption.NEW_DOCUMENT,
+    )
+    # New version has FOUND and stores worklist prev / current_version.
+    if uploaded_doc.upload_new_version_for_id:
+        created_work_item.selected = WorkItemOption.FOUND
+        # Set old version's work_item as not current.
+        original_item_index: int = find_work_item_index(
+            original_version_doc, current_task, raise_exception=True
+        )
+        original_item = current_task.work_list[original_item_index]
+        original_item.is_current_version = False
+        current_task.work_list[original_item_index] = original_item
+        # Update new version's prev_doc to old version and set as current.
+        created_item_index: int = find_work_item_index(
+            created_retr_doc, current_task, raise_exception=True
+        )
+        created_item = current_task.work_list[created_item_index]
+        created_item.prev_doc = original_version_doc.id
+        current_task.work_list[created_item_index] = created_item
+    # Save updated work_list and add to task.retr_doc_ids for querying.
+    current_task.work_list.append(created_work_item)
+    current_task.retrieved_document_ids.append(f"{created_retr_doc.id}")
+    await current_task.save()
+
+    return created_retr_doc
