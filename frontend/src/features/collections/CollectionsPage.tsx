@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, notification } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   useRunSiteScrapeTaskMutation,
   useCancelAllSiteScrapeTasksMutation,
+  useLazyGetScrapeTasksForSiteQuery,
 } from './siteScrapeTasksApi';
-import { useGetSiteQuery } from '../sites/sitesApi';
+import { useGetSiteQuery, useLazyGetSiteDocDocumentsQuery } from '../sites/sitesApi';
 import { CollectionsDataTable } from './CollectionsDataTable';
 import { CollectionMethod } from '../sites/types';
 import { AddDocumentModal } from './AddDocumentModal';
@@ -14,6 +15,8 @@ import { SiteMenu } from '../sites/SiteMenu';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
 import { MainLayout } from '../../components';
 import { isErrorWithData } from '../../common/helpers';
+import { useSiteScrapeTaskId } from '../doc_documents/manual_collection/useUpdateSelected';
+import { initialState } from './collectionsSlice';
 
 function ManualCollectionButton(props: any) {
   const { site, refetch, runScrape } = props;
@@ -21,16 +24,44 @@ function ManualCollectionButton(props: any) {
   const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
   const [isLoading, setIsLoading] = useState(false);
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
+  const scrapeTaskId = useSiteScrapeTaskId();
+  const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
+  const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
+  const [refreshSiteDocs, setRefreshSiteDocs] = useState(false);
+
+  const mostRecentTask = {
+    limit: 1,
+    skip: 0,
+    sortInfo: initialState.table.sort,
+    filterValue: initialState.table.filter,
+  };
+
+  const refreshDocs = async () => {
+    if (!scrapeTaskId) return;
+    if (!site) return;
+    const siteId = site._id;
+    await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
+    await getDocDocumentsQuery({ siteId, scrapeTaskId });
+  };
+
+  useEffect(() => {
+    if (refreshSiteDocs) {
+      refreshDocs();
+      setRefreshSiteDocs(false);
+    }
+  });
 
   async function handleRunManualScrape() {
     try {
       setIsLoading(true);
       let response: any = await runScrape(site!._id);
       if (response.data.success) {
+        refetch();
+        setRefreshSiteDocs(true);
         setTimeout(function () {
           setIsLoading(false);
           navigate(`../doc-documents?scrape_task_id=${response.data.nav_id}`);
-        }, 1000); // refetch sometimes not working. delay and refetch again.
+        }, 500); // refetch sometimes not working. delay and refetch again.
       } else {
         setIsLoading(false);
         notification.error({
@@ -62,9 +93,10 @@ function ManualCollectionButton(props: any) {
         let response: any = await cancelAllScrapes(site!._id);
         if (response.data?.success) {
           refetch();
+          setRefreshSiteDocs(true);
           setTimeout(function () {
             setIsLoading(false);
-          }, 1000); // refetch sometimes not working. delay and refetch again.
+          }, 500); // refetch sometimes not working. delay and refetch again.
         } else {
           setIsLoading(false);
           notification.error({

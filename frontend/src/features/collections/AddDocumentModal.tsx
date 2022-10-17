@@ -29,18 +29,26 @@ import { useAddDocumentMutation } from '../retrieved_documents/documentsApi';
 import { baseApiUrl, client } from '../../app/base-api';
 import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
 import { SiteDocDocument } from '../doc_documents/types';
+import { useSiteScrapeTaskId } from '../doc_documents/manual_collection/useUpdateSelected';
 
 interface AddDocumentModalPropTypes {
   oldVersion?: SiteDocDocument;
   setOpen: (open: boolean) => void;
   siteId: any;
+  setRefreshSiteDocs?: (refreshSiteDocs: boolean) => void;
 }
 
-export function AddDocumentModal({ oldVersion, setOpen, siteId }: AddDocumentModalPropTypes) {
+export function AddDocumentModal({
+  oldVersion,
+  setOpen,
+  siteId,
+  setRefreshSiteDocs,
+}: AddDocumentModalPropTypes) {
   const [form] = useForm();
   const [addDoc] = useAddDocumentMutation();
   const [fileData, setFileData] = useState<any>();
   const [docTitle, setDocTitle] = useState('Add new document');
+  const scrapeTaskId = useSiteScrapeTaskId();
 
   let initialValues: any = {
     lang_code: 'en',
@@ -88,6 +96,7 @@ export function AddDocumentModal({ oldVersion, setOpen, siteId }: AddDocumentMod
   /* eslint-enable no-template-curly-in-string */
 
   async function saveDocument(newDocument: any) {
+    if (!scrapeTaskId) return;
     try {
       newDocument.site_id = siteId;
       if (oldVersion) {
@@ -115,6 +124,9 @@ export function AddDocumentModal({ oldVersion, setOpen, siteId }: AddDocumentMod
       })
         .unwrap()
         .then(() => {
+          if (setRefreshSiteDocs) {
+            setRefreshSiteDocs(true);
+          }
           setOpen(false);
         })
         .catch((error) =>

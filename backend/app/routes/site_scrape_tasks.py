@@ -143,9 +143,8 @@ async def cancel_all_site_scrape_task(
     )
     has_queued_tasks: SiteScrapeTask = await site_collection.has_queued()
     if not has_queued_tasks:
-        site_collection.stop_queued_tasks()  # Just in case previous is stuck.
-        response.add_error("No queued tasks to cancel.")
-        response.raise_error()
+        response.success = True
+        return response
     # Process manual work_items for all queued site_scrape_tasks.
     response: CollectionResponse = await site_collection.process_work_lists()
     if not response.success:

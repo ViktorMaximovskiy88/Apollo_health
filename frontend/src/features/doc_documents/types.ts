@@ -87,6 +87,7 @@ export interface DocDocument extends BaseDocument {
   translation_id?: string;
 
   tags: string[];
+  is_new: boolean;
 }
 
 export type SiteDocDocument = Omit<

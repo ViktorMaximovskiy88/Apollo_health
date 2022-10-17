@@ -18,7 +18,7 @@ const mostRecentTask = {
   filterValue: initialState.table.filter,
 };
 
-const useSiteScrapeTaskId = () => {
+export const useSiteScrapeTaskId = () => {
   const { siteId } = useParams();
   const { data }: { data?: { data?: SiteScrapeTask[] } } = useGetScrapeTasksForSiteQuery({
     ...mostRecentTask,

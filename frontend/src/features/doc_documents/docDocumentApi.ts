@@ -52,6 +52,7 @@ export const docDocumentsApi = createApi({
         body,
       }),
       invalidatesTags: (_r, _e, { _id: id }) => [
+        { type: 'DocDocument', id: 'LIST' },
         { type: 'DocDocument', id },
         { type: 'ChangeLog', id },
       ],

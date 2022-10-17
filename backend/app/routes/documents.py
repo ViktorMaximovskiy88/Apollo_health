@@ -277,7 +277,7 @@ async def add_document(
     new_document.is_current_version = True
     if uploaded_doc.upload_new_version_for_id:
         # New version, set new_doc.previous_doc_id and lineage_id.
-        original_version_doc: RetrievedDocument | None = await RetrievedDocument.find_one(
+        original_version_doc: DocDocument | None = await DocDocument.find_one(
             {"_id": PydanticObjectId(uploaded_doc.upload_new_version_for_id)}
         )
         new_document.previous_doc_id = original_version_doc.id
@@ -306,21 +306,26 @@ async def add_document(
 
     # Manual: Process and update work items.
     current_task: SiteScrapeTask = await site_last_started_task(site.id)
-    # Create work_item for created_doc.
     created_work_item: ManualWorkItem = ManualWorkItem(
         document_id=f"{created_doc_doc.id}",
         retrieved_document_id=f"{created_retr_doc.id}",
-        selected=WorkItemOption.NEW_DOCUMENT,
     )
+    if uploaded_doc.upload_new_version_for_id:  # new version
+        created_work_item.selected = WorkItemOption.NEW_VERSION
+        created_work_item.is_new = False
+    else:
+        created_work_item.selected = WorkItemOption.NEW_DOCUMENT
+    current_task.work_list.append(created_work_item)
     # New version has FOUND and stores worklist prev / current_version.
     if uploaded_doc.upload_new_version_for_id:
-        created_work_item.selected = WorkItemOption.FOUND
         # Set old version's work_item as not current.
         original_item_index: int = find_work_item_index(
             original_version_doc, current_task, raise_exception=True
         )
         original_item = current_task.work_list[original_item_index]
         original_item.is_current_version = False
+        original_item.selected = WorkItemOption.FOUND
+        original_item.is_new = False
         current_task.work_list[original_item_index] = original_item
         # Update new version's prev_doc to old version and set as current.
         created_item_index: int = find_work_item_index(
@@ -329,8 +334,10 @@ async def add_document(
         created_item = current_task.work_list[created_item_index]
         created_item.prev_doc = original_version_doc.id
         current_task.work_list[created_item_index] = created_item
+        current_task.retrieved_document_ids.append(
+            PydanticObjectId(uploaded_doc.upload_new_version_for_id)
+        )
     # Save updated work_list and add to task.retr_doc_ids for querying.
-    current_task.work_list.append(created_work_item)
     current_task.retrieved_document_ids.append(f"{created_retr_doc.id}")
     await current_task.save()
 

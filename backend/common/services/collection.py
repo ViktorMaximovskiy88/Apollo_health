@@ -50,6 +50,7 @@ class CollectionService:
             TaskStatus.IN_PROGRESS,
         ]
         self.last_queued = None
+        self.added_docs = 0
 
     async def has_queued(self) -> SiteScrapeTask | Boolean:
         if self.last_queued:
@@ -302,7 +303,9 @@ class CollectionService:
                 )
                 if work_item_response.errors:
                     work_list_response.add_error(work_item_response.errors[0])
-            queued_site_task.documents_found = len(queued_site_task.retrieved_document_ids)
+            queued_site_task.documents_found = (
+                len(queued_site_task.retrieved_document_ids) + self.added_docs
+            )
             await queued_site_task.save()
         return work_list_response
 
@@ -314,8 +317,9 @@ class CollectionService:
     ) -> CollectionResponse:
         """Process a site_scrape_task work_item action"""
         result: CollectionResponse = CollectionResponse()
-        target_task.work_list[item_index].action_datetime = datetime.now(tz=timezone.utc)
-        target_task.work_list[item_index].is_new = False
+        work_item.is_new = False
+        work_item.action_datetime = datetime.now(tz=timezone.utc)
+        target_task.work_list[item_index] = work_item
         retr_doc: RetrievedDocument | None = await RetrievedDocument.find_one(
             {"_id": work_item.retrieved_document_id},
         )
@@ -330,15 +334,12 @@ class CollectionService:
         match work_item.selected:
             case WorkItemOption.FOUND:
                 await self.set_last_collected(retr_doc)
-                # Instead of removing from work_list, save as FOUND so state is stored.
-                # target_task.work_list.pop(item_index)
             case WorkItemOption.NEW_DOCUMENT:
+                self.added_docs += 1
                 await self.set_last_collected(retr_doc)
             case WorkItemOption.NEW_VERSION:
                 await self.set_last_collected(retr_doc)
             case WorkItemOption.NOT_FOUND:
-                # Remove doc.id from retrieved_document_ids so
-                # future tasks will not add this doc's id.
                 target_task.retrieved_document_ids = [
                     f"{retr_id}"
                     for retr_id in target_task.retrieved_document_ids
