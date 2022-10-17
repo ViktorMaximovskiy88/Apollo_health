@@ -19,7 +19,7 @@ const useGetPayerFamilies = () => {
     return {
       limit: 1000,
       skip: 0,
-      sortInfo: { name: 'name', dir: -1 as 1 | -1 | 0 },
+      sortInfo: { name: 'name', dir: 1 as 1 | -1 | 0 },
       filterValue: [
         { name: 'name', operator: 'eq', type: 'string', value: '' },
         { name: 'document_type', operator: 'eq', type: 'string', value: '' },
@@ -37,7 +37,10 @@ export const DocDocumentLocationForm = ({
   const form = Form.useFormInstance();
 
   const { data } = useGetPayerFamilies();
-  const options = data?.data.map((item: PayerFamily) => ({ value: item._id, label: item.name }));
+  console.log(data);
+  const options = data?.data
+    .map((item: PayerFamily) => ({ value: item._id, label: item.name }))
+    .sort();
   const updatedLocation = Form.useWatch(['locations', index]);
   const baseUrl = Form.useWatch(['locations', index, 'base_url']);
   const url = Form.useWatch(['locations', index, 'url']);

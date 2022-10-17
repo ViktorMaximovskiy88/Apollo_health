@@ -23,6 +23,7 @@ export const DocDocumentInfoFormFamilyField = ({
     documentType: doc?.document_type,
   });
   const options = data?.data.map((item: DocumentFamily) => ({ value: item._id, label: item.name }));
+  options?.sort((a, b) => a.label.localeCompare(b.label));
   const document_family_id = Form.useWatch('document_family_id');
   return (
     <div>
@@ -51,6 +52,8 @@ export const DocDocumentInfoFormFamilyField = ({
         documentType={doc?.document_type}
         open={isVisible}
         onSave={(documentFamilyId: string) => {
+          form.setFieldsValue({ document_family_id: documentFamilyId });
+          onFieldChange();
           setIsVisible(false);
         }}
         onClose={() => {

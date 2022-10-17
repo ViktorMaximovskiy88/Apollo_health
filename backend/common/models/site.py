@@ -107,6 +107,7 @@ class UpdateSite(BaseModel):
     doc_type_threshold: float | None = None
     lineage_threshold_override: bool | None = None
     lineage_threshold: float | None = None
+    last_run_documents: int | None = None
 
 
 class UpdateSiteAssigne(BaseModel):
@@ -120,6 +121,7 @@ class Site(BaseDocument, NewSite):
     collection_hold: datetime | None = None
     last_run_time: datetime | None = None
     assignee: PydanticObjectId | None = None
+    last_run_documents: int | None = None
 
 
 # Deprecated
