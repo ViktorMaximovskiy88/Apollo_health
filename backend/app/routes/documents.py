@@ -283,6 +283,8 @@ async def add_document(
         original_version_doc.is_current_version = False
         if original_version_doc.lineage_id:
             new_document.lineage_id = original_version_doc.lineage_id
+        else:
+            new_document.lineage_id = original_version_doc.id
         await original_version_doc.save()
     created_retr_doc: RetrievedDocument = await create_and_log(logger, current_user, new_document)
     created_doc_doc: DocDocument = await create_doc_document_service(new_document, current_user)
