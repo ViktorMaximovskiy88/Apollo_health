@@ -108,7 +108,7 @@ class DateParser:
             maybe_day = int(datetext[2:4])
             maybe_year = int(datetext[:4])
             # assuming we have no `day part` and YYYYmmdd
-            if self.valid_range(month=maybe_month, year=maybe_year):
+            if self.valid_range(month=maybe_month, year=maybe_year, day=maybe_day):
                 return f"{maybe_year}-{maybe_day}-{maybe_month}"
 
         # if all else fails not a date and we skip
