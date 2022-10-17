@@ -161,7 +161,7 @@ class ScrapeWorker:
             # log response error
             if not (temp_path and checksum):
                 await link_retrieved_task.save()
-                continue
+                break
 
             # TODO can we separate the concept of extensions to scrape on
             # and ext we expect to download? for now just html
@@ -169,24 +169,23 @@ class ScrapeWorker:
                 "html" not in self.site.scrape_method_configuration.document_extensions
                 and self.site.scrape_method != "HtmlScrape"
             ):
-                self.log.warn("Received an unexpected html response")
+                self.log.error("Received an unexpected html response")
                 await link_retrieved_task.save()
-                continue
+                break
 
             link_retrieved_task.file_metadata = FileMetadata(checksum=checksum, **download.dict())
 
-            # log no file parser found error
             parsed_content = await parse_by_type(
                 temp_path,
                 download,
-                self.site.scrape_method_configuration.focus_section_configs,
+                focus_config=self.site.scrape_method_configuration.focus_section_configs,
+                scrape_method_config=self.site.scrape_method_configuration,
             )
 
             if parsed_content is None:
                 await link_retrieved_task.save()
-                self.log.info(f"{download.request.url} {download.file_extension} cannot be parsed")
-                # prob not continue anymore...
-                continue
+                self.log.error(f"{download.request.url} {download.file_extension} cannot be parsed")
+                break
 
             document = None
             dest_path = f"{checksum}.{download.file_extension}"

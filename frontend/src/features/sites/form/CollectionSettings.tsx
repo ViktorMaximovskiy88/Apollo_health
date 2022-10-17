@@ -107,11 +107,10 @@ export function CollectionSettings({ initialValues }: CollectionSettingsPropType
           getFieldValue('collection_method') === CollectionMethod.Automated ? (
             <>
               <ScrapeMethodSelect />
-              {currentScrapeMethod === ScrapeMethod.Html ? <HtmlScrapeConfig /> : null}
               <DocumentExtensions />
               <UrlKeywords />
+              <HtmlScrapeConfig scrapeMethod={currentScrapeMethod} />
               <CustomSelectors />
-              <ProxyExclusions />
               <WaitFor />
               <WaitForTimeout />
               <Schedule />
@@ -120,6 +119,7 @@ export function CollectionSettings({ initialValues }: CollectionSettingsPropType
               <Playbook />
               <SearchInFrames />
               <AllowDocDocUpdate />
+              <ProxyExclusions />
               <FocusTagConfig initialValues={initialValues} />
               <DocumentTypeThreshold />
               <LineageThreshold />
