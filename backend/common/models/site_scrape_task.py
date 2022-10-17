@@ -23,6 +23,7 @@ class ManualWorkItem(BaseModel):
     retrieved_document_id: PydanticObjectId
     selected: str = WorkItemOption.UNHANDLED
     prev_doc: PydanticObjectId | None = None
+    new_doc: PydanticObjectId | None = None
     action_datetime: datetime | None = None
     is_current_version: bool | None = True
     is_new: bool | None = True

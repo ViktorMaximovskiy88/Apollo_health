@@ -325,6 +325,7 @@ async def add_document(
         original_item = current_task.work_list[original_item_index]
         original_item.is_current_version = False
         original_item.selected = WorkItemOption.FOUND
+        original_item.new_doc = created_doc_doc.id
         original_item.is_new = False
         current_task.work_list[original_item_index] = original_item
         # Update new version's prev_doc to old version and set as current.
