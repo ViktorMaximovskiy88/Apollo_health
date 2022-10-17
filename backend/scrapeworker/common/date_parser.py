@@ -77,7 +77,7 @@ class DateParser:
     def valid_range(self, year: int, month: int, day: int | None) -> bool:
         return (
             (month >= 1 and month <= 12)
-            and (year > 1900 and year < 2100)
+            and (year > 1900 and year < 2030)
             and (not day or (day >= 1 and day <= 31))
         )
 
