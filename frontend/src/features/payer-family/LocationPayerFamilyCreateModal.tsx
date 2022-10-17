@@ -78,7 +78,7 @@ function PayerInfo() {
 }
 
 export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) => {
-  const { documentType, location, onClose, onSave, open } = props;
+  const { location, onClose, onSave, open } = props;
   const [form] = useForm();
   const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
   const [addPayerFamily, { isLoading, data, isSuccess }] = useAddPayerFamilyMutation();
@@ -113,7 +113,6 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
         onFinish={(values: any) => {
           addPayerFamily({
             ...values,
-            document_type: documentType,
           });
         }}
       >
@@ -121,11 +120,6 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
           <div className="flex-1 mt-2 mb-4">
             <h3>Site</h3>
             <div>{location.site_name}</div>
-          </div>
-
-          <div className="flex-1 mt-2 mb-4">
-            <h3>Document Type</h3>
-            <div>{documentType}</div>
           </div>
         </div>
         <Form.Item
