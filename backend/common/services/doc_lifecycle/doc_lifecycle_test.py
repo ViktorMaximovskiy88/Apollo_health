@@ -119,6 +119,11 @@ async def test_assess_document_family():
     service = DocLifecycleService()
     doc = BasicDoc(locations=[BasicLocation(payer_family_id=PydanticObjectId())])
     status, _ = service.assess_doc_family_status(doc)
+    assert status == ApprovalStatus.QUEUED
+
+    doc.family_status = ApprovalStatus.PENDING
+    doc.document_family_id = PydanticObjectId()
+    status, _ = service.assess_doc_family_status(doc)
     assert status == ApprovalStatus.APPROVED
 
     doc.locations.append(BasicLocation())
