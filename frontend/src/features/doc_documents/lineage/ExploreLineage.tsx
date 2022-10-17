@@ -63,7 +63,7 @@ export function ExploreLineage(props: {
   const handleSubmit = useCallback(() => {
     props.onChange?.(previousDocDocumentId);
     closeModal();
-  }, [props, previousDocDocumentId, setOpen, closeModal]);
+  }, [props, previousDocDocumentId, closeModal]);
 
   return (
     <div className="flex space-x-8 items-center">
