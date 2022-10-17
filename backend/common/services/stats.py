@@ -4,12 +4,17 @@ from backend.common.models.base_document import BaseModel
 from backend.common.models.doc_document import DocDocument
 
 
-class StatCount(BaseModel):
+class LastCollectionStats(BaseModel):
     last_collected_date: date
     count: int
 
 
-async def docs_by_last_collected(lookback_days: int) -> list[StatCount]:
+class FirstCollectionStats(BaseModel):
+    first_collected_date: date
+    count: int
+
+
+async def docs_by_last_collected(lookback_days: int) -> list[LastCollectionStats]:
     lookback_date = datetime.today() - timedelta(days=lookback_days)
     docs = await DocDocument.aggregate(
         aggregation_pipeline=[
@@ -25,13 +30,13 @@ async def docs_by_last_collected(lookback_days: int) -> list[StatCount]:
             {"$addFields": {"last_collected_date": "$_id"}},
             {"$sort": {"_id": -1}},
         ],
-        projection_model=StatCount,
+        projection_model=LastCollectionStats,
     ).to_list()
 
     return docs
 
 
-async def docs_by_first_collected(lookback_days: int) -> list[StatCount]:
+async def docs_by_first_collected(lookback_days: int) -> list[FirstCollectionStats]:
     lookback_date = datetime.today() - timedelta(days=lookback_days)
     docs = await DocDocument.aggregate(
         aggregation_pipeline=[
@@ -47,7 +52,7 @@ async def docs_by_first_collected(lookback_days: int) -> list[StatCount]:
             {"$addFields": {"first_collected_date": "$_id"}},
             {"$sort": {"_id": -1}},
         ],
-        projection_model=StatCount,
+        projection_model=FirstCollectionStats,
     ).to_list()
 
     return docs
