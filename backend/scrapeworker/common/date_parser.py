@@ -81,6 +81,10 @@ class DateParser:
             for m in match:
                 try:
                     datetext = m.group()
+                    if i == 0:
+                        if len(datetext) == 6:
+                            datetext = f"01{datetext}"
+                        datetext = "/".join([datetext[:2], datetext[2:4], datetext[4:]])
                     if i + 1 == len(self.date_rgxs):
                         month, year = re.split(r"[/\-|\.]", datetext)
                         datetext = f"{year}-{month}-01"
