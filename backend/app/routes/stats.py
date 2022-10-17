@@ -26,7 +26,7 @@ def collection_recharts(
             (d for d in first_collected if d.first_collected_date.strftime("%Y-%m-%d") == date_key),
             None,
         )
-        updated_doc = next(
+        total_doc = next(
             (d for d in last_collected if d.last_collected_date.strftime("%Y-%m-%d") == date_key),
             None,
         )
@@ -35,7 +35,7 @@ def collection_recharts(
             {
                 "name": date_key,
                 "new": new_doc.count if new_doc else 0,
-                "updated": updated_doc.count if updated_doc else 0,
+                "total": total_doc.count if total_doc else 0,
             }
         )
 
