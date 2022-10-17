@@ -10,7 +10,7 @@ import magic
 
 def compile_date_rgx():
     date_formats = [
-        r"(?<![0-9a-z])(\d{6,8})(?<![0-9a-z])",  # mmYYYY or YYYYmm or yyyyddMM or MMddyyyy w/o alpha-numeric bookends | # noqa
+        r"[0-9]{6,8}",  # mmYYYY or YYYYmm or yyyyddMM or MMddyyyy w/o alpha-numeric bookends | # noqa
         r"(?<!\d|\/)[0-9]{4}[\/\-\.\|][0-9][0-9]?[\/\-\.\|][0-9][0-9]?(?!\d|\/)",  # yyyy-MM-dd with -, /, . or | # noqa
         r"(?<!\d|\/)[0-9][0-9]?[\/\-\.\|][0-9][0-9]?[\/\-\.\|](?:\d{4}|\d{2})(?!\d|\/)",  # dd-MM-yyyy, dd-mm-yy. With -, /, . or | # noqa
         r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).? [0-9][0-9]?(?:st|nd|rd|th)?,? [0-9][0-9][0-9][0-9]",  # M d, yyyy # noqa

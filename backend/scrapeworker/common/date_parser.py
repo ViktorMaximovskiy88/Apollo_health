@@ -75,39 +75,46 @@ class DateParser:
         return matched_label
 
     def valid_range(self, year: int, month: int, day: int | None) -> bool:
+        lookahead_year = datetime.now(tz=timezone.utc).year + 5
         return (
             (month >= 1 and month <= 12)
-            and (year > 1900 and year < 2030)
+            and (year > 1980 and year < lookahead_year)
             and (not day or (day >= 1 and day <= 31))
         )
 
     def pick_valid_parts(self, datetext: str):
         if len(datetext) == 6:
-            maybe_month = int(datetext[:2])
-            maybe_year = int(datetext[4:])
             # assuming we have no `day part` and mmYYYY
+            maybe_month = int(datetext[:2])
+            maybe_year = int(datetext[4:])
             if self.valid_range(month=maybe_month, year=maybe_year):
-                return f"{maybe_year}-01-{maybe_month}"
+                return f"{maybe_year}-{maybe_month}-01"
 
+            # assuming we have no `day part` and YYYYmm
             maybe_month = int(datetext[2:])
             maybe_year = int(datetext[:4])
-            # assuming we have no `day part` and YYYYmm
             if self.valid_range(month=maybe_month, year=maybe_year):
-                return f"{maybe_year}-01-{maybe_month}"
-        elif len(datetext) == 8:
+                return f"{maybe_year}-{maybe_month}-01"
 
+            # assuming we have no `day part` and mmddYY
+            maybe_month = int(datetext[:2])
+            maybe_day = int(datetext[2:4])
+            maybe_year = int(datetext[4:]) + 2000
+            if self.valid_range(month=maybe_month, year=maybe_year, day=maybe_day):
+                return f"{maybe_year}-{maybe_month}-{maybe_day}"
+
+        elif len(datetext) == 8:
+            # assuming we have no `day part` and mmddYYYY
             maybe_month = int(datetext[:2])
             maybe_day = int(datetext[2:4])
             maybe_year = int(datetext[4:])
-
-            # assuming we have no `day part` and mmddYYYY
             if self.valid_range(month=maybe_month, year=maybe_year, day=maybe_day):
-                return f"{maybe_year}-{maybe_day}-{maybe_month}"
+                return f"{maybe_year}-{maybe_month}-{maybe_day}"
 
+            # assuming we have no `day part` and YYYYmmdd
             maybe_month = int(datetext[2:])
             maybe_day = int(datetext[2:4])
             maybe_year = int(datetext[:4])
-            # assuming we have no `day part` and YYYYmmdd
             if self.valid_range(month=maybe_month, year=maybe_year, day=maybe_day):
                 return f"{maybe_year}-{maybe_day}-{maybe_month}"
 
