@@ -2,8 +2,6 @@ from pathlib import Path
 
 import newrelic.agent
 
-from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook
-
 newrelic.agent.initialize(Path(__file__).parent / "newrelic.ini")
 
 import asyncio
@@ -25,6 +23,7 @@ from backend.common.models.content_extraction_task import ContentExtractionTask
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.translation_config import TranslationConfig
 from backend.common.models.user import User
+from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook
 from backend.parseworker.extractor import TableContentExtractor
 
 app = typer.Typer()
