@@ -57,8 +57,8 @@ class BaseDocDocument(BaseModel):
     first_created_date: datetime | None = None
     published_date: datetime | None = None
     identified_dates: list[datetime] | None = None
-    first_collected_date: datetime | None = None
-    last_collected_date: datetime | None = None
+    first_collected_date: Indexed(datetime, pymongo.DESCENDING) | None = None
+    last_collected_date: Indexed(datetime, pymongo.DESCENDING) | None = None
 
     # Manual/Calculated Dates
     final_effective_date: Indexed(datetime, pymongo.DESCENDING) | None = None  # type: ignore

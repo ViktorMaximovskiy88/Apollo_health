@@ -19,7 +19,7 @@ def collection_recharts(
 
     today = datetime.now()
     data = []
-    for day in range(1, 31):
+    for day in range(0, 30):
         date_key = (today - timedelta(days=day)).strftime("%Y-%m-%d")
 
         new_doc = next(
