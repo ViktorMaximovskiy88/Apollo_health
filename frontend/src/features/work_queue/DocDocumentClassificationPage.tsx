@@ -18,7 +18,7 @@ export function DocDocumentClassificationPage({
   const { data: doc } = useGetDocDocumentQuery(docId);
 
   const [isSaving, setIsSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+  const [, setHasChanges] = useState(false);
   const [pageNumber, setPageNumber] = useState(0);
 
   if (!doc) return null;

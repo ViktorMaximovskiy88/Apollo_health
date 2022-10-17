@@ -72,7 +72,7 @@ class DocLifecycleService:
         return False
 
     def extraction_delta_needs_review(self, task: ContentExtractionTask | None) -> bool:
-        if not task:
+        if not task or not task.delta.total:
             return True
 
         added_pct = task.delta.added / task.delta.total

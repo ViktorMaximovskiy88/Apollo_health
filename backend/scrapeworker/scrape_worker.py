@@ -509,7 +509,7 @@ class ScrapeWorker:
 
         doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
         change_info = ChangeInfo(translation_change=True, lineage_change=True)
-        async for doc in DocDocument.find(DocDocument.id in doc_doc_ids):
+        async for doc in DocDocument.find({"_id": {"$in": doc_doc_ids}}):
             await doc_document_save_hook(doc, change_info)
 
         self.site.last_run_documents = self.scrape_task.documents_found

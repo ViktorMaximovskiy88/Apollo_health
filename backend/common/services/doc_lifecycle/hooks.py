@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from backend.common.core.enums import ApprovalStatus
 from backend.common.models.base_document import BaseModel
@@ -48,8 +48,9 @@ async def enqueue_translation_task(doc: DocDocument):
             }
         },
     )
-    task = ContentExtractionTask(doc_document_id=doc.id, queued_time=datetime.now())
-    await try_queue_unique_task(task, uniqueness_key="document_id")
+    task = ContentExtractionTask(doc_document_id=doc.id, queued_time=datetime.now(tz=timezone.utc))
+    inserted = await try_queue_unique_task(task, uniqueness_key="doc_document_id")
+    print(inserted)
 
 
 async def recompare_extractions(doc: DocDocument, prev_doc: DocDocument):
@@ -88,13 +89,13 @@ async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = Cha
 def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
     change_info = ChangeInfo()
     if (
-        isinstance(updates, (UpdateDocDocument or TranslationUpdateDocDocument))
+        isinstance(updates, (UpdateDocDocument, TranslationUpdateDocDocument))
         and updates.translation_id
     ):
         change_info.translation_change = updates.translation_id != doc.translation_id
 
     if (
-        isinstance(updates, (UpdateDocDocument or ClassificationUpdateDocDocument))
+        isinstance(updates, (UpdateDocDocument, ClassificationUpdateDocDocument))
         and updates.previous_doc_doc_id
     ):
         change_info.lineage_change = updates.previous_doc_doc_id != doc.previous_doc_doc_id

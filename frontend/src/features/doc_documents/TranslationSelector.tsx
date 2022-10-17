@@ -1,6 +1,6 @@
-import { Form, Button, ModalProps, Modal } from 'antd';
+import { Form, Button } from 'antd';
 import { useCallback, useState, useMemo, useEffect } from 'react';
-import tw from 'twin.macro';
+import { FullScreenModal } from '../../components/FullScreenModal';
 import { RemoteSelect } from '../../components/RemoteSelect';
 import {
   useLazyGetTranslationConfigsQuery,
@@ -109,19 +109,5 @@ function TranslationModal({
         </>
       )}
     </Form.Item>
-  );
-}
-
-export function FullScreenModal({ children, ...props }: ModalProps) {
-  return (
-    <Modal
-      width={'97vw'}
-      className="p-0 ant-modal-full-screen"
-      style={{ top: '3vh', height: '94vh' }}
-      bodyStyle={tw`h-full overflow-auto`}
-      {...props}
-    >
-      {children}
-    </Modal>
   );
 }

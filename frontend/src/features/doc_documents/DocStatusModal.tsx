@@ -29,6 +29,10 @@ function displayItem(item: string) {
       return 'Document Family Not Set';
     case 'PAYER_FAMILY':
       return 'Not Every Location has a Payer Family';
+    case 'NO_TRANSLATION':
+      return 'Translation Configuration Not Set';
+    case 'EXTRACT_DELTA':
+      return 'Large Number of Extraction Changes Compared to Previous Version';
     default:
       return item;
   }
@@ -55,7 +59,6 @@ function statusSelect(name: string) {
 
 export function DocStatusModal({ doc }: { doc: DocDocument }) {
   const [isOpen, setOpen] = useState(false);
-  const form = Form.useFormInstance();
   return (
     <>
       <ButtonLink onClick={() => setOpen(true)}>Status</ButtonLink>

@@ -24,7 +24,6 @@ export function DocDocumentExtractionTab(props: { doc: DocDocument }) {
   );
 
   const { data: extraction } = useGetExtractionTaskQuery(props.doc.content_extraction_task_id);
-  console.log(extraction?.delta);
   const options = extraction
     ? [
         { label: `Add (${extraction.delta?.added})`, value: 'add' },

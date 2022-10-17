@@ -8,7 +8,7 @@ import { useSelector } from 'react-redux';
 import { previousDocDocumentIdState, setPreviousDocDocumentId } from './lineageDocDocumentsSlice';
 import { useAppDispatch } from '../../../app/store';
 import { DocDocument } from '../types';
-import { FullScreenModal } from '../TranslationSelector';
+import { FullScreenModal } from '../../../components/FullScreenModal';
 
 const LineageDocViewer = ({ doc, label }: { doc?: DocDocument; label: string }) => {
   return (
@@ -43,8 +43,8 @@ const LineageModalBody = ({ showCurrentDocument }: { showCurrentDocument: boolea
 };
 
 export function ExploreLineage(props: {
-  onFinish: (previousDocDocumentId: string) => void;
-  previousDocDocumentId?: string;
+  onChange?: (previousDocDocumentId: string) => void;
+  value?: string;
 }) {
   const dispatch = useAppDispatch();
   const previousDocDocumentId = useSelector(previousDocDocumentIdState);
@@ -54,16 +54,16 @@ export function ExploreLineage(props: {
   const closeModal = useCallback(() => setOpen(false), [setOpen]);
 
   const handleModalOpen = useCallback(() => {
-    if (props.previousDocDocumentId) {
-      dispatch(setPreviousDocDocumentId(props.previousDocDocumentId));
+    if (props.value) {
+      dispatch(setPreviousDocDocumentId(props.value));
     }
     setOpen(true);
-  }, [dispatch, setOpen, props, setPreviousDocDocumentId]);
+  }, [dispatch, setOpen, props]);
 
   const handleSubmit = useCallback(() => {
-    props.onFinish(previousDocDocumentId);
+    props.onChange?.(previousDocDocumentId);
     closeModal();
-  }, [props, previousDocDocumentId, setOpen]);
+  }, [props, previousDocDocumentId, setOpen, closeModal]);
 
   return (
     <div className="flex space-x-8 items-center">

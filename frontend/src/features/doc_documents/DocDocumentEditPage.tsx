@@ -12,7 +12,7 @@ import { DocDocument } from './types';
 export function DocDocumentEditPage() {
   const navigate = useNavigate();
   const { docDocumentId: docId } = useParams();
-  const { data: doc } = useGetDocDocumentQuery(docId);
+  const { data: doc } = useGetDocDocumentQuery(docId, { refetchOnMountOrArgChange: true });
 
   const [form] = useForm();
   const [isSaving, setIsSaving] = useState(false);

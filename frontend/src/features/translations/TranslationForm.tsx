@@ -401,10 +401,6 @@ function QLCTranslationInput(props: { name: number; field: any }) {
 }
 
 function BvGTranslationInput(props: { name: number; field: any }) {
-  const options = [
-    { value: 'time', label: 'Time' },
-    { value: 'quantity', label: 'Quantity' },
-  ];
   return (
     <Form.List name={[props.name, 'mappings']}>
       {(fields, { add, remove }, { errors }) => (
@@ -593,7 +589,7 @@ export function TranslationForm(props: {
   ];
   if (props.initialValues?._id) {
     tabs.push({
-      key: 'notes',
+      key: 'comments',
       label: 'Notes',
       children: <CommentWall targetId={props.initialValues._id} />,
     });

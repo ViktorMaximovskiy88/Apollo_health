@@ -40,8 +40,8 @@ class TherapyTag(BaseModel):
     name: str
     score: float = 0
     focus: bool = False
-    rxcui: str | None = None
     key: bool = False
+    rxcui: str | None = None
     update_status: TagUpdateStatus | None = None
     text_area: tuple[int, int] | None = None
 

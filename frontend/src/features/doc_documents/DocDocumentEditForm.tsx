@@ -10,9 +10,9 @@ import { DocDocumentLocations } from './locations/DocDocumentLocations';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 import { DocDocumentExtractionTab } from './DocDocumentExtractionTab';
 import { calculateFinalEffectiveFromValues } from './helpers';
-import { DocDocumentCommentsTab } from './DocDocumentCommentsTab';
 import { DocStatusModal } from './DocStatusModal';
 import { HashRoutedTabs } from '../../components/HashRoutedTabs';
+import { CommentWall } from '../comments/CommentWall';
 
 const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   const calculateFinalEffectiveDate = useCallback(() => {
@@ -211,7 +211,7 @@ export function DocDocumentEditForm({
   tabs.push({
     label: 'Notes',
     key: 'comments',
-    children: <DocDocumentCommentsTab doc={doc} />,
+    children: <CommentWall targetId={doc._id} />,
   });
 
   return (

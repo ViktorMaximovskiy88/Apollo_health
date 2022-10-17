@@ -33,7 +33,7 @@ export function AuthoredComment({ comment }: { comment: Comment }) {
   const [onDeleteMutation] = useDeleteCommentMutation();
   const onDelete = useCallback(async () => {
     await onDeleteMutation(comment);
-  }, [onDeleteMutation]);
+  }, [onDeleteMutation, comment]);
   const actions: ReactNode[] = [];
   if (author?._id === user?._id) {
     actions.push(

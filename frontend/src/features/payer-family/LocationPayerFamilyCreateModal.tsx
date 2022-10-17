@@ -88,7 +88,7 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
       onSave(data._id);
       form.resetFields();
     }
-  }, [isSuccess, data]);
+  }, [isSuccess, onSave, form, data]);
 
   if (!location) {
     return <></>;

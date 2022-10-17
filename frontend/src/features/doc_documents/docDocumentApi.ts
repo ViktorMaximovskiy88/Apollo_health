@@ -111,7 +111,6 @@ export const docDocumentsApi = createApi({
         url: `/work-queues/${workQueueId}/items/${docDocumentId}/take`,
         method: 'POST',
       }),
-      invalidatesTags: (_r, _e, { docDocumentId: id }) => [{ type: 'DocDocument', id }],
     }),
     submitWorkItem: builder.mutation<
       SubmitWorkItemResponse,
