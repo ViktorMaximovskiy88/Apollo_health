@@ -66,7 +66,7 @@ function ManualCollectionButton(props: any) {
         setIsLoading(false);
         notification.error({
           message: 'Error Running Manual Collection',
-          description: response.error.data.detail,
+          description: response.data.errors[0],
         });
       }
     } catch (err) {

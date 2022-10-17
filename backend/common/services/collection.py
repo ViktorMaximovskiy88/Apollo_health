@@ -51,6 +51,7 @@ class CollectionService:
         ]
         self.last_queued = None
         self.added_docs = 0
+        self.new_version_docs = 0
 
     async def has_queued(self) -> SiteScrapeTask | Boolean:
         if self.last_queued:
@@ -206,6 +207,11 @@ class CollectionService:
                         )
                     )
 
+        # Since a doc work_list is suppose to be completed, the only docs to collect
+        # would be those without a work_list.
+        if not new_task.work_list:
+            response.add_error("No avaliable docs to collect.")
+            return response
         # Create new manual task and respond with nav link.
         created_task: SiteScrapeTask = await create_and_log(
             self.logger, self.current_user, new_task
@@ -214,7 +220,6 @@ class CollectionService:
             response.add_error("Unable to create new scrape task.")
         else:
             response.nav_id = created_task.id
-
         return response
 
     async def stop_manual(self) -> CollectionResponse:
@@ -304,7 +309,9 @@ class CollectionService:
                 if work_item_response.errors:
                     work_list_response.add_error(work_item_response.errors[0])
             queued_site_task.documents_found = (
-                len(queued_site_task.retrieved_document_ids) + self.added_docs
+                len(queued_site_task.retrieved_document_ids)
+                + self.added_docs
+                - self.new_version_docs
             )
             await queued_site_task.save()
         return work_list_response
@@ -339,6 +346,7 @@ class CollectionService:
                 await self.set_last_collected(retr_doc)
             case WorkItemOption.NEW_VERSION:
                 await self.set_last_collected(retr_doc)
+                self.new_version_docs += 1
             case WorkItemOption.NOT_FOUND:
                 target_task.retrieved_document_ids = [
                     f"{retr_id}"
