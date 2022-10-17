@@ -14,11 +14,7 @@ import {
 import { ButtonLink } from '../../components/ButtonLink';
 import { DocDocument, TaskLock } from '../doc_documents/types';
 import { useGetUsersQuery } from '../users/usersApi';
-import {
-  useGetWorkQueueQuery,
-  useLazyGetWorkQueueItemsQuery,
-  useTakeNextWorkItemMutation,
-} from './workQueuesApi';
+import { useGetWorkQueueQuery } from './workQueuesApi';
 import { MainLayout } from '../../components';
 import { DocumentTypes } from '../retrieved_documents/types';
 import { useGetSiteQuery, useGetSitesQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
@@ -31,6 +27,10 @@ import {
   setWorkQueueTableSkip,
 } from './workQueueSlice';
 import { useSelector } from 'react-redux';
+import {
+  useLazyGetWorkQueueItemsQuery,
+  useTakeNextWorkItemMutation,
+} from '../doc_documents/docDocumentApi';
 
 function useSiteSelectOptions() {
   const [getSites] = useLazyGetSitesQuery();

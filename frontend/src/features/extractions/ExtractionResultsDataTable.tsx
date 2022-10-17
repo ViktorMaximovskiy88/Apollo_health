@@ -22,9 +22,9 @@ function rowStyle({ data }: { data: any }) {
 
 export function ExtractionResultsDataTable({
   extractionId,
-  deltaSubset = [],
-  fullSubset = [],
-  delta = false,
+  deltaSubset,
+  fullSubset,
+  delta,
 }: {
   extractionId?: string;
   delta?: boolean;

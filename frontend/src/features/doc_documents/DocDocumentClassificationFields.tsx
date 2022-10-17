@@ -36,7 +36,7 @@ const Lineage = () => (
 
 export function DocumentClassification() {
   const form = Form.useFormInstance();
-  const previousDocDocumentId = Form.useWatch('previous_doc_doc_id');
+  const previousDocDocumentId = form.getFieldValue('previous_doc_doc_id');
   const onFinish = useCallback(
     (previous_doc_doc_id: string) => form.setFieldsValue({ previous_doc_doc_id }),
     [form]

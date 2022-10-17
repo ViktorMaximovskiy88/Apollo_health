@@ -1,10 +1,15 @@
 from datetime import datetime
 
-from pydantic import BaseModel
-
 from backend.common.core.enums import ApprovalStatus
+from backend.common.models.base_document import BaseModel
 from backend.common.models.content_extraction_task import ContentExtractionTask
-from backend.common.models.doc_document import DocDocument, UpdateDocDocument
+from backend.common.models.doc_document import (
+    ClassificationUpdateDocDocument,
+    DocDocument,
+    PartialDocDocumentUpdate,
+    TranslationUpdateDocDocument,
+    UpdateDocDocument,
+)
 from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleService
 from backend.common.services.extraction.extraction_delta import DeltaCreator
 from backend.common.services.tag_compare import TagCompare
@@ -62,23 +67,36 @@ async def recompare_extractions(doc: DocDocument, prev_doc: DocDocument):
 
 
 async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = ChangeInfo()):
-    if change_info.translation_change:
+    if change_info.translation_change and doc.translation_id:
         await enqueue_translation_task(doc)
 
-    if change_info.lineage_change and doc.previous_doc_doc_id:
-        prev_doc = await DocDocument.get(doc.previous_doc_doc_id)
-        if prev_doc:
-            await recompare_tags(doc, prev_doc)
-            await recompare_extractions(doc, prev_doc)
+    if change_info.lineage_change:
+        if doc.previous_doc_doc_id:
+            prev_doc = await DocDocument.get(doc.previous_doc_doc_id)
+            if prev_doc:
+                await recompare_tags(doc, prev_doc)
+                await recompare_extractions(doc, prev_doc)
+
+        next_doc = await DocDocument.find_one(DocDocument.previous_doc_doc_id == doc.id)
+        if next_doc:
+            await recompare_tags(next_doc, doc)
+            await recompare_extractions(next_doc, doc)
 
     await DocLifecycleService().assess_document_status(doc)
 
 
-def get_doc_change_info(updates: UpdateDocDocument, doc: DocDocument):
+def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
     change_info = ChangeInfo()
-    if updates.translation_id:
+    if (
+        isinstance(updates, (UpdateDocDocument or TranslationUpdateDocDocument))
+        and updates.translation_id
+    ):
         change_info.translation_change = updates.translation_id != doc.translation_id
-    if updates.previous_doc_doc_id:
+
+    if (
+        isinstance(updates, (UpdateDocDocument or ClassificationUpdateDocDocument))
+        and updates.previous_doc_doc_id
+    ):
         change_info.lineage_change = updates.previous_doc_doc_id != doc.previous_doc_doc_id
 
     return change_info

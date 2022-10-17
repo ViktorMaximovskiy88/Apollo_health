@@ -2,7 +2,7 @@ from pathlib import Path
 
 import newrelic.agent
 
-from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleService
+from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook
 
 newrelic.agent.initialize(Path(__file__).parent / "newrelic.ini")
 
@@ -69,6 +69,8 @@ async def start_worker_async():
             worker = TableContentExtractor(doc_document, config)
             try:
                 await worker.run_extraction(extract_task)
+                await worker.calculate_delta(extract_task)
+
                 typer.secho(f"Finished Task {extract_task.id}", fg=typer.colors.BLUE)
                 now = datetime.now(tz=timezone.utc)
                 await asyncio.gather(
@@ -82,7 +84,6 @@ async def start_worker_async():
                         )
                     ),
                 )
-                await DocLifecycleService().assess_document_status(doc_document)
             except Exception as ex:
                 logging.error(ex)
                 message = traceback.format_exc()
@@ -101,6 +102,7 @@ async def start_worker_async():
                         )
                     ),
                 )
+            await doc_document_save_hook(doc_document)
         await asyncio.sleep(5)
 
 

@@ -12,7 +12,6 @@ from backend.common.models.document_mixins import calc_final_effective_date
 from backend.common.models.lineage import DocumentAnalysis, DocumentAttrs
 from backend.common.models.shared import get_unique_focus_tags, get_unique_reference_tags
 from backend.common.models.site import Site
-from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook
 from backend.common.services.document import (
     SiteRetrievedDocument,
     get_site_docs,
@@ -191,7 +190,6 @@ class LineageService:
             )
             if is_last and prev_doc:
                 doc, doc_doc = await self.compare_tags(doc, doc_doc, prev_doc)
-            await doc_document_save_hook(doc_doc)
             prev_doc = doc
             prev_doc_doc = doc_doc
 

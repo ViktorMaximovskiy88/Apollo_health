@@ -8,7 +8,7 @@ async def classification_queues():
     await WorkQueue(
         name="Classification",
         collection_name="DocDocument",
-        update_model_name="UpdateDocDocument",
+        update_model_name="ClassificationUpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
         document_query={"classification_status": "QUEUED"},
         sort_query=["final_effective_date"],
@@ -21,14 +21,16 @@ async def classification_queues():
                 submit_action={"classification_status": "HOLD"},
             ),
             SubmitAction(
-                label="Submit", submit_action={"classification_status": "APPROVED"}, primary=True
+                label="Submit",
+                submit_action={"classification_status": "APPROVED", "classification_hold_info": []},
+                primary=True,
             ),
         ],
     ).save()
     await WorkQueue(
         name="Classification Hold",
         collection_name="DocDocument",
-        update_model_name="UpdateDocDocument",
+        update_model_name="ClassificationUpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
         document_query={"classification_status": "HOLD"},
         sort_query=["final_effective_date"],
@@ -36,7 +38,9 @@ async def classification_queues():
         submit_actions=[
             SubmitAction(label="Back To Queue", submit_action={"classification_status": "QUEUED"}),
             SubmitAction(
-                label="Approve", submit_action={"classification_status": "APPROVED"}, primary=True
+                label="Approve",
+                submit_action={"classification_status": "APPROVED", "classification_hold_info": []},
+                primary=True,
             ),
         ],
     ).save()
@@ -46,7 +50,7 @@ async def family_queues():
     await WorkQueue(
         name="Document & Payer Family",
         collection_name="DocDocument",
-        update_model_name="UpdateDocDocument",
+        update_model_name="FamilyUpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
         document_query={"classification_status": "APPROVED", "family_status": "QUEUED"},
         sort_query=["final_effective_date"],
@@ -58,13 +62,17 @@ async def family_queues():
                 require_comment=True,
                 submit_action={"family_status": "HOLD"},
             ),
-            SubmitAction(label="Submit", submit_action={"family_status": "APPROVED"}, primary=True),
+            SubmitAction(
+                label="Submit",
+                submit_action={"family_status": "APPROVED", "family_hold_info": []},
+                primary=True,
+            ),
         ],
     ).save()
     await WorkQueue(
         name="Document & Payer Family Hold",
         collection_name="DocDocument",
-        update_model_name="UpdateDocDocument",
+        update_model_name="FamilyUpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
         document_query={"classification_status": "APPROVED", "family_status": "HOLD"},
         sort_query=["final_effective_date"],
@@ -72,7 +80,9 @@ async def family_queues():
         submit_actions=[
             SubmitAction(label="Back To Queue", submit_action={"family_status": "QUEUED"}),
             SubmitAction(
-                label="Approve", submit_action={"family_status": "APPROVED"}, primary=True
+                label="Approve",
+                submit_action={"family_status": "APPROVED", "family_hold_info": []},
+                primary=True,
             ),
         ],
     ).save()
@@ -82,7 +92,7 @@ async def translation_config_queues():
     await WorkQueue(
         name="Translation Config",
         collection_name="DocDocument",
-        update_model_name="UpdateDocDocument",
+        update_model_name="TranslationUpdateDocDocument",
         sort_query=["final_effective_date"],
         frontend_component="DocDocumentClassificationPage",
         document_query={
@@ -100,7 +110,7 @@ async def translation_config_queues():
             ),
             SubmitAction(
                 label="Submit",
-                submit_action={"content_extraction_status": "APPROVED"},
+                submit_action={"content_extraction_status": "APPROVED", "extraction_hold_info": []},
                 primary=True,
             ),
         ],
@@ -108,7 +118,7 @@ async def translation_config_queues():
     await WorkQueue(
         name="Translation Config Hold",
         collection_name="DocDocument",
-        update_model_name="UpdateDocDocument",
+        update_model_name="TranslationUpdateDocDocument",
         sort_query=["final_effective_date"],
         frontend_component="DocDocumentClassificationPage",
         document_query={"content_extraction_status": "HOLD"},
@@ -119,7 +129,7 @@ async def translation_config_queues():
             ),
             SubmitAction(
                 label="Approve",
-                submit_action={"content_extraction_status": "APPROVED"},
+                submit_action={"content_extraction_status": "APPROVED", "extraction_hold_info": []},
                 primary=True,
             ),
         ],

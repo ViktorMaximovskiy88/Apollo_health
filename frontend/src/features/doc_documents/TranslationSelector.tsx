@@ -112,7 +112,7 @@ function TranslationModal({
   );
 }
 
-function FullScreenModal({ children, ...props }: ModalProps) {
+export function FullScreenModal({ children, ...props }: ModalProps) {
   return (
     <Modal
       width={'97vw'}

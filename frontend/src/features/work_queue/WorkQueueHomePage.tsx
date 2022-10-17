@@ -3,16 +3,13 @@ import { useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
 import { WorkQueue } from './types';
-import {
-  useGetWorkQueueCountsQuery,
-  useGetWorkQueuesQuery,
-  useTakeNextWorkItemMutation,
-} from './workQueuesApi';
+import { useGetWorkQueueCountsQuery, useGetWorkQueuesQuery } from './workQueuesApi';
 import { MainLayout } from '../../components';
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { TypeColumn } from '@inovua/reactdatagrid-community/types';
 import { useSelector } from 'react-redux';
 import { workQueueTableState } from './workQueueSlice';
+import { useTakeNextWorkItemMutation } from '../doc_documents/docDocumentApi';
 
 export function WorkQueueHomePage() {
   const { data: workQueues } = useGetWorkQueuesQuery();

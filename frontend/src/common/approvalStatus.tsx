@@ -41,3 +41,10 @@ function statusDisplayAndStyle(status: ApprovalStatus): StatusDisplay {
       return {};
   }
 }
+
+export const statusOptions = [
+  { value: ApprovalStatus.Pending, label: 'Pending' },
+  { value: ApprovalStatus.Queued, label: 'Queued' },
+  { value: ApprovalStatus.Hold, label: 'Hold' },
+  { value: ApprovalStatus.Approved, label: 'Approved' },
+];

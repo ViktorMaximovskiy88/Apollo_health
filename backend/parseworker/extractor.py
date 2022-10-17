@@ -9,6 +9,7 @@ from beanie.odm.operators.update.general import Inc, Set
 from pdfplumber.page import Page
 
 from backend.app.routes.document_sample_creator import DocumentSampleCreator
+from backend.common.core.enums import TaskStatus
 from backend.common.models.content_extraction_task import (
     ContentExtractionResult,
     ContentExtractionTask,
@@ -16,6 +17,7 @@ from backend.common.models.content_extraction_task import (
 )
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.translation_config import TranslationConfig
+from backend.common.services.extraction.extraction_delta import DeltaCreator
 from backend.common.storage.client import DocumentStorageClient
 from backend.parseworker.rxnorm_entity_linker_model import rxnorm_linker
 
@@ -345,6 +347,29 @@ class TableContentExtractor:
                         return
                     else:
                         yield page
+
+    async def calculate_delta(self, extraction_task: ContentExtractionTask):
+        if not self.doc.previous_doc_doc_id:
+            return
+        prev_doc = await DocDocument.get(self.doc.previous_doc_doc_id)
+        if not prev_doc:
+            return
+        if not prev_doc.content_extraction_task_id:
+            return
+        prev_task = await ContentExtractionTask.get(prev_doc.content_extraction_task_id)
+        if not prev_task or prev_task.status != TaskStatus.FINISHED:
+            return
+        await DeltaCreator().compute_delta(extraction_task, prev_task)
+
+        next_doc = await DocDocument.find_one(DocDocument.previous_doc_doc_id == self.doc.id)
+        if not next_doc:
+            return
+        if not next_doc.content_extraction_task_id:
+            return
+        next_task = await ContentExtractionTask.get(next_doc.content_extraction_task_id)
+        if not next_task or next_task.status != TaskStatus.FINISHED:
+            return
+        await DeltaCreator().compute_delta(next_task, extraction_task)
 
     async def run_extraction(self, extraction_task: ContentExtractionTask):
         filename = f"{self.doc.checksum}.pdf"

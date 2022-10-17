@@ -3,7 +3,14 @@ from backend.common.models.content_extraction_task import (
     ContentExtractionResult,
     ContentExtractionTask,
 )
-from backend.common.models.doc_document import DocDocument, DocDocumentLimitTags, UpdateDocDocument
+from backend.common.models.doc_document import (
+    ClassificationUpdateDocDocument,
+    DocDocument,
+    DocDocumentLimitTags,
+    FamilyUpdateDocDocument,
+    TranslationUpdateDocDocument,
+    UpdateDocDocument,
+)
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.indication import Indication
 from backend.common.models.proxy import Proxy
@@ -20,6 +27,9 @@ __all__ = [
     "DocDocument",
     "DocDocumentLimitTags",
     "UpdateDocDocument",
+    "ClassificationUpdateDocDocument",
+    "TranslationUpdateDocDocument",
+    "FamilyUpdateDocDocument",
     "RetrievedDocument",
     "Indication",
     "Proxy",

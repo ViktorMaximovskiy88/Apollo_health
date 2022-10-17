@@ -30,13 +30,19 @@ export const extractionTasksApi = createApi({
           `extraction_id=${encodeURIComponent(id)}`,
           `limit=${encodeURIComponent(limit)}`,
           `skip=${encodeURIComponent(skip)}`,
-          `delta=${encodeURIComponent(delta)}`,
-          `delta_subset=${encodeURIComponent(JSON.stringify(deltaSubset))}`,
-          `full_subset=${encodeURIComponent(JSON.stringify(fullSubset))}`,
           `sorts=${encodeURIComponent(JSON.stringify(sortInfo))}`,
           `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
-        ].join('&');
-        return `/extraction-tasks/results/?${args}`;
+        ];
+        if (delta) {
+          args.push(`delta=${encodeURIComponent(delta)}`);
+        }
+        if (deltaSubset) {
+          args.push(`delta_subset=${encodeURIComponent(JSON.stringify(deltaSubset))}`);
+        }
+        if (fullSubset) {
+          args.push(`full_subset=${encodeURIComponent(JSON.stringify(fullSubset))}`);
+        }
+        return `/extraction-tasks/results/?${args.join('&')}`;
       },
       providesTags: (_r, _e, { id }) => [{ type: 'ExtractionTaskResult' as const, id }],
     }),

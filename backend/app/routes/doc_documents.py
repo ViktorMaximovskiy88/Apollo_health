@@ -1,5 +1,5 @@
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, HTTPException, Security, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
 
 from backend.app.routes.sites import Site
 from backend.app.routes.table_query import (
@@ -120,6 +120,7 @@ async def create_diff(
 @router.post("/{id}", response_model=DocDocument)
 async def update_doc_document(
     updates: UpdateDocDocument,
+    background_tasks: BackgroundTasks,
     doc: DocDocument = Depends(get_target),
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),

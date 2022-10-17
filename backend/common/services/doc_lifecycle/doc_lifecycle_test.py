@@ -117,7 +117,7 @@ async def test_assess_classification():
 
 async def test_assess_document_family():
     service = DocLifecycleService()
-    doc = BasicDoc(locations=[BasicLocation(document_family_id=PydanticObjectId())])
+    doc = BasicDoc(locations=[BasicLocation(payer_family_id=PydanticObjectId())])
     status, _ = service.assess_doc_family_status(doc)
     assert status == ApprovalStatus.APPROVED
 
@@ -142,7 +142,7 @@ async def test_assess_content_extraction():
     site = Site(id=PydanticObjectId(), name="s")
     doc_family = BasicDocFamily(site_id=site.id, legacy_relevance=["PAR"])
     await doc_family.save()
-    doc = BasicDoc(locations=[BasicLocation(site_id=site.id, document_family_id=doc_family.id)])
+    doc = BasicDoc(document_family_id=doc_family.id)
 
     # No extraction needed, nothing to do
     status, _ = await service.assess_content_extraction_status(doc)
@@ -213,7 +213,8 @@ async def test_intermediate_statuses():
     assert not fully_approved
 
     doc.family_status = ApprovalStatus.PENDING
-    doc.locations[0].document_family_id = doc_family.id
+    doc.document_family_id = doc_family.id
+    doc.locations[0].payer_family_id = PydanticObjectId()
 
     fully_approved, _ = await service.assess_intermediate_statuses(doc)
     assert doc.family_status == ApprovalStatus.APPROVED

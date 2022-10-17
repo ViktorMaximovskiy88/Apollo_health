@@ -117,12 +117,21 @@ class DocLifecycleService:
         if doc.family_status not in [ApprovalStatus.PENDING, ApprovalStatus.APPROVED]:
             return doc.family_status, False
 
-        if any(loc for loc in doc.locations if not loc.document_family_id):
+        info: list[str] = []
+        if not doc.document_family_id:
+            info.append("DOC_FAMILY")
+
+        if any(loc for loc in doc.locations if not loc.payer_family_id):
+            info.append("PAYER_FAMILY")
+
+        if info:
             doc.family_status = ApprovalStatus.QUEUED
+            doc.family_hold_info = info
             return doc.family_status, True
         elif doc.family_status == ApprovalStatus.APPROVED:
             return doc.family_status, False
 
+        doc.family_hold_info = []
         doc.family_status = ApprovalStatus.APPROVED
         return doc.family_status, True
 
@@ -132,8 +141,7 @@ class DocLifecycleService:
         if doc.content_extraction_status != ApprovalStatus.PENDING:
             return doc.content_extraction_status, False
 
-        location = doc.locations[0]
-        doc_family_id = location.document_family_id or PydanticObjectId()
+        doc_family_id = doc.document_family_id or PydanticObjectId()
         doc_family = await DocumentFamily.get(doc_family_id)
         if not doc_family:
             raise Exception(f"Doc Family {doc_family_id} Not Found")
@@ -166,24 +174,26 @@ class DocLifecycleService:
         return doc.content_extraction_status, True
 
     async def assess_intermediate_statuses(self, doc: DocDocument):
-        edit = await self.assess_classification_status(doc)
-        if doc.classification_status != ApprovalStatus.APPROVED:
-            return False, edit
+        class_status, class_edit = await self.assess_classification_status(doc)
+        if class_status != ApprovalStatus.APPROVED:
+            return False, class_edit
 
-        edit = self.assess_doc_family_status(doc) or edit
-        if doc.family_status != ApprovalStatus.APPROVED:
-            return False, edit
+        fam_status, fam_edit = self.assess_doc_family_status(doc)
+        if fam_status != ApprovalStatus.APPROVED:
+            return False, class_edit or fam_edit
 
-        edit = await self.assess_content_extraction_status(doc) or edit
-        if doc.content_extraction_status != ApprovalStatus.APPROVED:
-            return False, edit
+        extract_status, extract_edit = await self.assess_content_extraction_status(doc)
+        if extract_status != ApprovalStatus.APPROVED:
+            return False, class_edit or fam_edit or extract_edit
 
-        return True, edit
+        return True, class_edit or fam_edit or extract_edit
 
     async def assess_document_status(self, doc: DocDocument):
         fully_approved, edit = await self.assess_intermediate_statuses(doc)
         if fully_approved:
             doc.status = ApprovalStatus.APPROVED
+        else:
+            doc.status = ApprovalStatus.PENDING
 
         if edit:
             await DocDocument.get_motor_collection().update_one(
@@ -198,6 +208,7 @@ class DocLifecycleService:
                         "content_extraction_status": doc.content_extraction_status,
                         "extraction_hold_info": doc.extraction_hold_info,
                         "family_status": doc.family_status,
+                        "family_hold_info": doc.family_hold_info,
                     }
                 },
             )

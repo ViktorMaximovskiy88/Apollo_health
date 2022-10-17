@@ -63,6 +63,7 @@ export interface DocDocument extends BaseDocument {
   status: ApprovalStatus;
   classification_hold_info: string[];
   extraction_hold_info: string[];
+  family_hold_info: string[];
   classification_lock: TaskLock;
   name: string;
   checksum: string;

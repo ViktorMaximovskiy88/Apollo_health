@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Type
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, HTTPException, Security, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
 from pydantic import Field
 from pymongo import ReturnDocument
 
@@ -23,8 +23,8 @@ from backend.common.models.comment import Comment
 from backend.common.models.doc_document import (
     DocDocument,
     LockableDocument,
+    PartialDocDocumentUpdate,
     TaskLock,
-    UpdateDocDocument,
 )
 from backend.common.models.user import User
 from backend.common.models.work_queue import WorkQueue, WorkQueueUpdate
@@ -305,6 +305,7 @@ class SubmitWorkItemRequest(BaseModel):
 async def submit_work_item(
     body: SubmitWorkItemRequest,
     item_id: PydanticObjectId,
+    background_tasks: BackgroundTasks,
     logger: Logger = Depends(get_logger),
     work_queue: WorkQueue = Depends(get_target),
     current_user: User = Security(get_current_user),
@@ -337,9 +338,8 @@ async def submit_work_item(
     updates = UpdateModel.parse_obj(body.updates)
 
     change_info = ChangeInfo()
-    if isinstance(updates, UpdateDocDocument) and isinstance(item, DocDocument):
+    if isinstance(item, DocDocument) and isinstance(updates, PartialDocDocumentUpdate):
         change_info = get_doc_change_info(updates, item)
-    print(change_info)
 
     await update_and_log_diff(logger, current_user, item, updates)
 

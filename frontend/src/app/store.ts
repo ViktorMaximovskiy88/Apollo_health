@@ -15,6 +15,7 @@ import { payerBackboneApi } from '../features/payer-backbone/payerBackboneApi';
 import { documentFamilyApi } from '../features/doc_documents/document_family/documentFamilyApi';
 import { payerFamilyApi } from '../features/payer-family/payerFamilyApi';
 import { lineageApi } from '../features/lineage/lineageApi';
+import { commentsApi } from '../features/comments/commentsApi';
 import { rtkAuth } from '../common/auth-middleware';
 
 import navSlice from './navSlice';
@@ -52,6 +53,7 @@ export const store = configureStore({
     [payerBackboneApi.reducerPath]: payerBackboneApi.reducer,
     [lineageApi.reducerPath]: lineageApi.reducer,
     [payerFamilyApi.reducerPath]: payerFamilyApi.reducer,
+    [commentsApi.reducerPath]: commentsApi.reducer,
     nav: navSlice.reducer,
     sites: sitesReducer,
     users: userReducer,
@@ -83,6 +85,7 @@ export const store = configureStore({
       translationsApi.middleware,
       documentFamilyApi.middleware,
       payerBackboneApi.middleware,
+      commentsApi.middleware,
       routerMiddleware,
       rtkAuth
     ),

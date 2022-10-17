@@ -29,6 +29,7 @@ from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleService
+from backend.common.services.doc_lifecycle.hooks import ChangeInfo, doc_document_save_hook
 from backend.common.services.lineage.lineage import LineageService
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_full_text
@@ -341,7 +342,7 @@ class ScrapeWorker:
                     proxy=proxy,  # type: ignore
                     ignore_https_errors=True,
                 )
-                await context.add_cookies(cookies)
+                await context.add_cookies(cookies)  # type: ignore
 
                 page = await context.new_page()
                 await stealth_async(page)
@@ -403,7 +404,6 @@ class ScrapeWorker:
         all_downloads: list[DownloadContext] = []
 
         async with self.playwright_context(url, cookies) as (base_page, context):
-            playbook_context: BrowserContext
             async for (page, playbook_context) in self.playbook.run_playbook(base_page):
 
                 scrape_handler = ScrapeHandler(
@@ -508,8 +508,10 @@ class ScrapeWorker:
         site_id = self.site.id
         await self.lineage_service.process_lineage_for_doc_ids(site_id, doc_ids)  # type: ignore
 
-        # doc_doc_ids = [doc_doc.id for (_, doc_doc) in self.new_document_pairs]
-        # self.delta_service.compute_document_deltas(doc_doc_ids)
+        doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
+        change_info = ChangeInfo(translation_change=True, lineage_change=True)
+        async for doc in DocDocument.find(DocDocument.id in doc_doc_ids):
+            await doc_document_save_hook(doc, change_info)
 
         await self.downloader.close()
 

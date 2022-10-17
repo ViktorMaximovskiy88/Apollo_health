@@ -50,7 +50,7 @@ export function TranslationsEditPage() {
 
   return (
     <MainLayout sectionToolbar={<SumbitTranslation form={form} />}>
-      <div className="flex h-full">
+      <div className="flex h-full space-x-2">
         <div className="w-1/2 h-full">
           <TranslationForm form={form} initialValues={config} onFinish={onFinish} />
         </div>

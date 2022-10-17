@@ -30,6 +30,7 @@ class BaseDocDocument(BaseModel):
 
     classification_hold_info: list[str] = []
     extraction_hold_info: list[str] = []
+    family_hold_info: list[str] = []
 
     classification_lock: TaskLock | None = None
 
@@ -134,11 +135,10 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     last_collected_date: datetime | None = None
     published_date: datetime | None = None
     end_date: datetime | None = None
-    first_collected_date: datetime | None = None
 
     lineage_id: PydanticObjectId | None = None
     previous_doc_doc_id: PydanticObjectId | None = None
-    is_current_version: bool = False
+    is_current_version: bool | None = None
 
     therapy_tags: list[UpdateTherapyTag] | None = None
     indication_tags: list[UpdateIndicationTag] | None = None
@@ -148,6 +148,56 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     content_extraction_task_id: PydanticObjectId | None = None
 
     locations: list[DocDocumentLocation] | None
+
+
+class ClassificationUpdateDocDocument(BaseModel):
+    name: str | None = None
+
+    therapy_tags: list[TherapyTag] | None
+    indication_tags: list[IndicationTag] | None
+
+    lineage_id: PydanticObjectId | None = None
+    previous_doc_doc_id: PydanticObjectId | None = None
+    is_current_version: bool | None = None
+
+    classification_status: ApprovalStatus | None = None
+    classification_hold_info: list[str] = []
+    document_type: str | None = None
+
+    lang_code: LangCode | None = None
+
+    final_effective_date: datetime | None = None
+    effective_date: datetime | None = None
+    last_reviewed_date: datetime | None = None
+    last_updated_date: datetime | None = None
+    last_reviewed_date: datetime | None = None
+    next_review_date: datetime | None = None
+    next_update_date: datetime | None = None
+    first_created_date: datetime | None = None
+    published_date: datetime | None = None
+    end_date: datetime | None = None
+
+
+class FamilyUpdateDocDocument(BaseModel):
+    family_status: ApprovalStatus | None = None
+    family_hold_info: list[str] | None = None
+    document_family_id: PydanticObjectId | None = None
+    locations: list[DocDocumentLocation] | None = None
+
+
+class TranslationUpdateDocDocument(BaseModel):
+    translation_id: PydanticObjectId | None = None
+    content_extraction_task_id: PydanticObjectId | None = None
+    content_extraction_status: ApprovalStatus | None = None
+    extraction_hold_info: list[str] | None = None
+
+
+PartialDocDocumentUpdate = (
+    UpdateDocDocument
+    | ClassificationUpdateDocDocument
+    | FamilyUpdateDocDocument
+    | TranslationUpdateDocDocument
+)
 
 
 # Deprecated
