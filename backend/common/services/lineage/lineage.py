@@ -5,6 +5,7 @@ from logging import Logger
 from beanie import PydanticObjectId
 
 from backend.app.scripts.retag_document import ReTagger
+from backend.common.core.enums import ApprovalStatus
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.document_mixins import calc_final_effective_date
@@ -16,7 +17,7 @@ from backend.common.services.document import (
     get_site_docs,
     get_site_docs_for_ids,
 )
-from backend.common.services.lineage_matcher import LineageMatcher
+from backend.common.services.lineage.lineage_matcher import LineageMatcher
 from backend.common.services.tag_compare import TagCompare
 from backend.scrapeworker.common.lineage_parser import (
     guess_month_abbr,
@@ -84,11 +85,13 @@ class LineageService:
         retagger = ReTagger()
         await retagger.indication.model()
         site = await Site.get(site_id)
+        if not site:
+            raise Exception(f"Site Id {site_id} does not exists")
         await retagger.retag_docs_on_site(site, 0)
 
     async def process_all_sites(self):
         async for site in Site.find():
-            await self.process_lineage_for_site(site.id)
+            await self.process_lineage_for_site(site.id)  # type: ignore
 
     async def process_lineage_for_site(self, site_id: PydanticObjectId):
         docs = await get_site_docs(site_id)
@@ -139,7 +142,7 @@ class LineageService:
         self.logger.info(f"'{first_item.filename_text}'")
         for index, item in enumerate(items):
 
-            match = LineageMatcher(first_item, item, logger=self.logger).exec()
+            match = LineageMatcher(first_item, item, logger=self.logger).exec()  # type: ignore
             if match:
                 self.logger.debug(f"'{first_item.filename_text}' '{item.filename_text}' -> MATCHED")
 
@@ -202,6 +205,9 @@ async def version_doc(
     doc_analysis: DocumentAnalysis, is_last: bool, prev_doc: RetrievedDocument | None
 ):
     doc = await RetrievedDocument.get(doc_analysis.retrieved_document_id)
+    if not doc:
+        raise Exception(f"RetrievedDocument {doc_analysis.retrieved_document_id} does not exists")
+
     doc.lineage_id = doc_analysis.lineage_id
     doc.is_current_version = is_last
     doc.previous_doc_id = prev_doc.id if prev_doc else None
@@ -209,18 +215,48 @@ async def version_doc(
     return doc
 
 
+def inherit_prev_doc_fields(
+    doc: DocDocument, prev_doc: DocDocument | None, site_id: PydanticObjectId
+):
+    if not prev_doc:  # Nothing to inherit
+        return
+
+    if prev_doc.translation_id:
+        doc.translation_id = prev_doc.translation_id
+
+    if prev_doc.internal_document:
+        doc.internal_document = prev_doc.internal_document
+
+    if prev_doc.document_family_id:
+        doc.document_family_id = prev_doc.document_family_id
+
+    loc = next(loc for loc in doc.locations if site_id == loc.site_id)
+    prev_loc = next(loc for loc in prev_doc.locations if site_id == loc.site_id)
+
+    if prev_loc.payer_family_id:
+        loc.payer_family_id = prev_loc.payer_family_id
+
+
 async def version_doc_doc(
     doc_analysis: DocumentAnalysis, is_last: bool, prev_doc: DocDocument | None
 ):
     doc = await DocDocument.find_one({"retrieved_document_id": doc_analysis.retrieved_document_id})
+    if not doc:
+        raise Exception(f"DocDocument {doc_analysis.retrieved_document_id} does not exists")
+
+    # Don't modify DocDocument Lineage if Lineage is Already Approved
+    if doc.classification_status == ApprovalStatus.APPROVED:
+        return doc
+
     doc.lineage_id = doc_analysis.lineage_id
     doc.is_current_version = is_last
     doc.previous_doc_doc_id = prev_doc.id if prev_doc else None
+    inherit_prev_doc_fields(doc, prev_doc, doc_analysis.site_id)
     doc = await doc.save()
     return doc
 
 
-def build_attr_model(input: str) -> DocumentAttrs:
+def build_attr_model(input: str | None) -> DocumentAttrs:
     return DocumentAttrs(
         state_abbr=guess_state_abbr(input),
         state_name=guess_state_name(input),
@@ -287,7 +323,9 @@ async def build_doc_analysis(doc: SiteRetrievedDocument) -> DocumentAnalysis:
     doc_analysis.state_name = consensus_attr(doc_analysis, "state_name")
     doc_analysis.month_abbr = consensus_attr(doc_analysis, "month_abbr")
     doc_analysis.month_name = consensus_attr(doc_analysis, "month_name")
-    doc_analysis.year_part = consensus_attr(doc_analysis, "year_part")
+    doc_analysis.year_part = (
+        int(year_part) if (year_part := consensus_attr(doc_analysis, "year_part")) else 0
+    )
 
     doc_analysis = await doc_analysis.save()
 

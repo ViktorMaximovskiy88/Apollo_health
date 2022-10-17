@@ -87,7 +87,7 @@ function App() {
           <Route index element={<WorkQueueHomePage />} />
           <Route path=":queueId">
             <Route index element={<WorkQueuePage />} />
-            <Route path=":itemId">
+            <Route path=":docDocumentId">
               <Route path="process" element={<ProcessWorkItemPage />} />
               <Route path="read-only" element={<ReadonlyWorkItemPage />} />
             </Route>

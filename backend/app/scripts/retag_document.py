@@ -23,7 +23,7 @@ class ReTagger:
         self.indication = IndicationTagger()
         self.therapy = TherapyTagger()
 
-    async def retag_docs_on_site(self, site: Site, total: int):
+    async def retag_docs_on_site(self, site: Site, total: int = 0):
         async for doc in DocDocument.find({"locations.site_id": site.id}):
             await self.retag_document(doc, site, total)
             total += 1

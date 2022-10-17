@@ -20,6 +20,7 @@ export function GoogleDocViewer({ url }: GoogleDocViewerPropTypes) {
 
   return (
     <iframe
+      title="Google Doc Viewer"
       style={{ padding: 0, margin: 0, width: '99%', height: '99%', border: '1px solid #ccc' }}
       frameBorder="0"
       src={`https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(url)}`}

@@ -1,7 +1,6 @@
 from datetime import date, datetime, timedelta
 
-from pydantic import BaseModel
-
+from backend.common.models.base_document import BaseModel
 from backend.common.models.doc_document import DocDocument
 
 

@@ -21,11 +21,13 @@
     "react": "^18.0.0",
     "react-diff-view": "^2.4.10",
     "react-dom": "^18.0.0",
+    "react-markdown": "^8.0.3",
     "react-redux": "^7.2.0",
     "react-router-dom": "6",
     "react-scripts": "5.0.0",
     "recharts": "^2.1.15",
     "redux-first-history": "^5.0.8",
+    "remark-gfm": "^3.0.1",
     "urlpattern-polyfill": "^5.0.5"
   },
   "scripts": {

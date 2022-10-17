@@ -46,9 +46,9 @@ export const DocDocumentLocationForm = ({
   const url = Form.useWatch(['locations', index, 'url']);
 
   return (
-    <div className="property-grid mb-4">
+    <div className="property-grid bg-white p-2 mb-4">
       {/* Our header is separate due to styles */}
-      <div className="p-2 bg-slate-50">
+      <div className="p-2">
         <Link className="text-lg" target="_blank" to={`/sites/${location.site_id}/view`}>
           <TextEllipsis text={location.site_name ?? ''} />
         </Link>

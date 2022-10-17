@@ -20,6 +20,7 @@ export function HtmlFileViewer({ url }: HtmlFileViewerPropTypes) {
 
   return (
     <iframe
+      title="HTML File Viewer"
       style={{ padding: 0, margin: 0, width: '99%', height: '99%', border: '1px solid #ccc' }}
       frameBorder="0"
       src={url}

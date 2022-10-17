@@ -46,8 +46,8 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
       if (e.value === 'N/A') {
         return { ...e, disabled: true };
       } else if (
-        (nameValue?.includes('EDITOR_MANUAL') && e.value == 'EDITOR_AUTOMATED') ||
-        (nameValue?.includes('EDITOR_AUTOMATED') && e.value == 'EDITOR_MANUAL')
+        (nameValue?.includes('EDITOR_MANUAL') && e.value === 'EDITOR_AUTOMATED') ||
+        (nameValue?.includes('EDITOR_AUTOMATED') && e.value === 'EDITOR_MANUAL')
       ) {
         return { ...e, disabled: true };
       }
@@ -60,7 +60,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
       onSave(data._id);
       form.resetFields();
     }
-  }, [isSuccess, data]);
+  }, [isSuccess, data, onSave, form]);
 
   return (
     <Modal
