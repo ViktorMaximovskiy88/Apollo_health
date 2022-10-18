@@ -256,7 +256,7 @@ export function SampleTranslationTable(props: { docId: string; form: FormInstanc
   }, [config]);
 
   return (
-    <div className="flex px-4 flex-col h-full">
+    <div className="flex px-4 flex-col min-h-[90vh]">
       <SampleActionButton onClick={onClick} text="Translate" />
       {<ReactDataGrid loading={isFetching} dataSource={data || []} columns={columns} />}
     </div>
@@ -326,7 +326,7 @@ export function SampleExtractionTable(props: { docId: string; form: FormInstance
   }, [setConfig, props]);
 
   return (
-    <div className="flex flex-col h-full px-4">
+    <div className="flex flex-col min-h-[90vh] px-4">
       <SampleActionButton onClick={onClick} text="Extract" />
       {tables.length > 0 && (
         <ReactDataGrid loading={isFetching} dataSource={tables[0]} columns={columns[0]} />
