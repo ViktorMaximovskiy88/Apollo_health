@@ -30,7 +30,7 @@ const LineageModalBody = ({ showCurrentDocument }: { showCurrentDocument: boolea
 
   return (
     <div className="flex flex-row h-full">
-      <div className="flex-grow flex flex-col mr-2">
+      <div className="flex-grow flex flex-col mr-2 z-10">
         <h3>Documents</h3>
         <LineageDocDocumentsTable />
       </div>

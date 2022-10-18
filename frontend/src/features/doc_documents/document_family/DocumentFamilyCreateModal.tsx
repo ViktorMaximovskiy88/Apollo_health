@@ -28,7 +28,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
   const { documentType, location, open, onClose, onSave } = props;
   const [form] = useForm();
   const [getDocumentFamilyByName] = useLazyGetDocumentFamilyByNameQuery();
-  const [addDocumentFamily, { isLoading, data, isSuccess }] = useAddDocumentFamilyMutation();
+  const [addDocumentFamily, { isLoading, data, isSuccess, reset }] = useAddDocumentFamilyMutation();
   const nameValue: string[] = Form.useWatch('legacy_relevance', form);
   let filteredlegacyRelevanceOptions = legacyRelevanceOptions;
 
@@ -59,6 +59,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
     if (isSuccess && data) {
       onSave(data._id);
       form.resetFields();
+      reset();
     }
   }, [isSuccess, data, onSave, form]);
 
@@ -70,11 +71,11 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
       okText="Submit"
       onOk={form.submit}
       onCancel={onClose}
+      confirmLoading={isLoading}
     >
       <Form
         form={form}
         layout="vertical"
-        disabled={isLoading}
         autoComplete="off"
         requiredMark={false}
         validateTrigger={['onBlur']}

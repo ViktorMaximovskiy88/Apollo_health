@@ -74,6 +74,53 @@ class DateParser:
 
         return matched_label
 
+    def valid_range(self, year: int, month: int, day: int | None) -> bool:
+        lookahead_year = datetime.now(tz=timezone.utc).year + 5
+        return (
+            (month >= 1 and month <= 12)
+            and (year > 1980 and year < lookahead_year)
+            and (not day or (day >= 1 and day <= 31))
+        )
+
+    def pick_valid_parts(self, datetext: str):
+        if len(datetext) == 6:
+            # assuming we have no `day part` and mmYYYY
+            maybe_month = int(datetext[:2])
+            maybe_year = int(datetext[4:])
+            if self.valid_range(month=maybe_month, year=maybe_year):
+                return f"{maybe_year}-{maybe_month}-01"
+
+            # assuming we have no `day part` and YYYYmm
+            maybe_month = int(datetext[2:])
+            maybe_year = int(datetext[:4])
+            if self.valid_range(month=maybe_month, year=maybe_year):
+                return f"{maybe_year}-{maybe_month}-01"
+
+            # assuming we have no `day part` and mmddYY
+            maybe_month = int(datetext[:2])
+            maybe_day = int(datetext[2:4])
+            maybe_year = int(datetext[4:]) + 2000
+            if self.valid_range(month=maybe_month, year=maybe_year, day=maybe_day):
+                return f"{maybe_year}-{maybe_month}-{maybe_day}"
+
+        elif len(datetext) == 8:
+            # assuming we have no `day part` and mmddYYYY
+            maybe_month = int(datetext[:2])
+            maybe_day = int(datetext[2:4])
+            maybe_year = int(datetext[4:])
+            if self.valid_range(month=maybe_month, year=maybe_year, day=maybe_day):
+                return f"{maybe_year}-{maybe_month}-{maybe_day}"
+
+            # assuming we have no `day part` and YYYYmmdd
+            maybe_month = int(datetext[2:])
+            maybe_day = int(datetext[2:4])
+            maybe_year = int(datetext[:4])
+            if self.valid_range(month=maybe_month, year=maybe_year, day=maybe_day):
+                return f"{maybe_year}-{maybe_month}-{maybe_day}"
+
+        # if all else fails not a date and we skip
+        raise Exception("Invalid date range")
+
     def get_dates(self, text: str) -> Generator[DateMatch, None, None]:
         for i, rgx in enumerate(self.date_rgxs):
             match = rgx.finditer(text)
@@ -82,9 +129,7 @@ class DateParser:
                 try:
                     datetext = m.group()
                     if i == 0:
-                        if len(datetext) == 6:
-                            datetext = f"01{datetext}"
-                        datetext = "/".join([datetext[:2], datetext[2:4], datetext[4:]])
+                        datetext = self.pick_valid_parts(datetext)
                     if i + 1 == len(self.date_rgxs):
                         month, year = re.split(r"[/\-|\.]", datetext)
                         datetext = f"{year}-{month}-01"

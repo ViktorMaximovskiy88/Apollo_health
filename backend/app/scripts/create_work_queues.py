@@ -137,7 +137,6 @@ async def translation_config_queues():
 
 
 async def create_default_work_queues():
-    await WorkQueue.delete_all()
     if await WorkQueue.count():
         return
 

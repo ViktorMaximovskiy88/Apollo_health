@@ -65,6 +65,7 @@ class FileParser(ABC):
 
         date_parser = DateParser(date_rgxs, label_rgxs)
         date_parser.extract_dates(self.text)
+
         identified_dates = list(date_parser.unclassified_dates)
         identified_dates.sort()
 
