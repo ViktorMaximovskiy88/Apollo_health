@@ -37,7 +37,6 @@ export const DocDocumentLocationForm = ({
   const form = Form.useFormInstance();
 
   const { data } = useGetPayerFamilies();
-  console.log(data);
   const options = data?.data
     .map((item: PayerFamily) => ({ value: item._id, label: item.name }))
     .sort();
@@ -111,6 +110,7 @@ export const DocDocumentLocationForm = ({
             value={updatedLocation?.payer_family_id}
             onSelect={(payerFamilyId: string) => {
               const locations = form.getFieldValue('locations');
+              console.log(updatedLocation);
               locations[index].payer_family_id = payerFamilyId;
               form.setFieldsValue({ locations });
             }}

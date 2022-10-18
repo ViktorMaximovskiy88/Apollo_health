@@ -30,22 +30,24 @@ export const DocDocumentLocations = ({ docDocument, locations }: DocDocumentLoca
         />
       ))}
 
-      <PayerFamilyCreateModal
-        location={locations[selectedIndex]}
-        documentType={docDocument.document_type}
-        open={modalOpen}
-        onSave={(payerFamilyId: string) => {
-          const locations = form.getFieldValue('locations');
-          locations[selectedIndex].payer_family_id = payerFamilyId;
-          form.setFieldsValue({ locations });
-          setModalOpen(false);
-          setSelectedLocationIndex(-1);
-        }}
-        onClose={() => {
-          setModalOpen(false);
-          setSelectedLocationIndex(-1);
-        }}
-      />
+      {modalOpen ? (
+        <PayerFamilyCreateModal
+          location={locations[selectedIndex]}
+          documentType={docDocument.document_type}
+          open={modalOpen}
+          onSave={(payerFamilyId: string) => {
+            const locations = form.getFieldValue('locations');
+            locations[selectedIndex].payer_family_id = payerFamilyId;
+            form.setFieldsValue({ locations });
+            setModalOpen(false);
+            setSelectedLocationIndex(0);
+          }}
+          onClose={() => {
+            setModalOpen(false);
+            setSelectedLocationIndex(-1);
+          }}
+        />
+      ) : null}
     </div>
   );
 };
