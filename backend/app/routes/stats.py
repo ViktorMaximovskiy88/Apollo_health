@@ -4,7 +4,12 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Security
 
 from backend.app.utils.user import get_current_user
-from backend.common.services.stats import docs_by_first_collected, docs_by_last_collected
+from backend.common.services.stats import (
+    FirstCollectionStats,
+    LastCollectionStats,
+    get_created_docs,
+    get_updated_docs,
+)
 
 router = APIRouter(
     prefix="/stats",
@@ -13,29 +18,30 @@ router = APIRouter(
 
 
 def collection_recharts(
-    last_collected: list[any],
-    first_collected: list[any],
+    lookback_days: int,
+    created_docs: list[FirstCollectionStats],
+    updated_docs: list[LastCollectionStats],
 ):
 
     today = datetime.now()
     data = []
-    for day in range(0, 30):
+    for day in range(0, lookback_days):
         date_key = (today - timedelta(days=day)).strftime("%Y-%m-%d")
 
-        new_doc = next(
-            (d for d in first_collected if d.first_collected_date.strftime("%Y-%m-%d") == date_key),
+        created_doc = next(
+            (d for d in created_docs if d.first_collected_date.strftime("%Y-%m-%d") == date_key),
             None,
         )
-        total_doc = next(
-            (d for d in last_collected if d.last_collected_date.strftime("%Y-%m-%d") == date_key),
+        updated_doc = next(
+            (d for d in updated_docs if d.last_collected_date.strftime("%Y-%m-%d") == date_key),
             None,
         )
 
         data.append(
             {
                 "name": date_key,
-                "new": new_doc.count if new_doc else 0,
-                "total": total_doc.count if total_doc else 0,
+                "created": created_doc.count if created_doc else 0,
+                "updated": updated_doc.count if updated_doc else 0,
             }
         )
 
@@ -46,9 +52,9 @@ def collection_recharts(
     "/collection",
     dependencies=[Security(get_current_user)],
 )
-async def report_docs_by_last_collected(lookback_days: int = 30):
-    [last_collected, first_collected] = await asyncio.gather(
-        docs_by_last_collected(lookback_days),
-        docs_by_first_collected(lookback_days),
+async def collection_stats(lookback_days: int = 30):
+    [created_docs, updated_docs] = await asyncio.gather(
+        get_created_docs(lookback_days),
+        get_updated_docs(lookback_days),
     )
-    return collection_recharts(last_collected, first_collected)
+    return collection_recharts(lookback_days, created_docs, updated_docs)
