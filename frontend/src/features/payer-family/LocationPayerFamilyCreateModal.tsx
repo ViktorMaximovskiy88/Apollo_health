@@ -18,7 +18,6 @@ import {
 import { PayerFamily } from './types';
 
 interface PayerFamilyCreateModalPropTypes {
-  documentType: string;
   location: DocDocumentLocation | undefined;
   open?: boolean;
   onClose: () => void;
@@ -79,7 +78,7 @@ function PayerInfo() {
 }
 
 export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) => {
-  const { documentType, location, onClose, onSave, open } = props;
+  const { location, onClose, onSave, open } = props;
   const [form] = useForm();
   const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
   const [addPayerFamily, { isLoading }] = useAddPayerFamilyMutation();
@@ -90,7 +89,7 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
       onSave(payerFamily._id);
       form.resetFields();
     },
-    [addPayerFamily, documentType, onSave, form]
+    [addPayerFamily, onSave, form]
   );
 
   if (!location) {
@@ -119,11 +118,6 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
           <div className="flex-1 mt-2 mb-4">
             <h3>Site</h3>
             <div>{location.site_name}</div>
-          </div>
-
-          <div className="flex-1 mt-2 mb-4">
-            <h3>Document Type</h3>
-            <div>{documentType}</div>
           </div>
         </div>
         <Form.Item
