@@ -37,7 +37,6 @@ export const DocDocumentLocationForm = ({
   const form = Form.useFormInstance();
 
   const { data } = useGetPayerFamilies();
-  console.log(data);
   const options = data?.data
     .map((item: PayerFamily) => ({ value: item._id, label: item.name }))
     .sort();
