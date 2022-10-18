@@ -116,7 +116,7 @@ class DateParser:
             maybe_day = int(datetext[2:4])
             maybe_year = int(datetext[:4])
             if self.valid_range(month=maybe_month, year=maybe_year, day=maybe_day):
-                return f"{maybe_year}-{maybe_day}-{maybe_month}"
+                return f"{maybe_year}-{maybe_month}-{maybe_day}"
 
         # if all else fails not a date and we skip
         raise Exception("Invalid date range")
