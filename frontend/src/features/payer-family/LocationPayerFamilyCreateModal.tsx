@@ -15,6 +15,7 @@ import {
   planTypeOptions,
   regionOptions,
 } from './payerLevels';
+import { PayerFamily } from './types';
 
 interface PayerFamilyCreateModalPropTypes {
   documentType: string;
@@ -81,14 +82,16 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
   const { documentType, location, onClose, onSave, open } = props;
   const [form] = useForm();
   const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
-  const [addPayerFamily, { isLoading, data, isSuccess }] = useAddPayerFamilyMutation();
+  const [addPayerFamily, { isLoading }] = useAddPayerFamilyMutation();
 
-  useEffect(() => {
-    if (isSuccess && data) {
-      onSave(data._id);
+  const onFinish = useCallback(
+    async (values: Partial<PayerFamily>) => {
+      const payerFamily = await addPayerFamily({ ...values, document_type: documentType }).unwrap();
+      onSave(payerFamily._id);
       form.resetFields();
-    }
-  }, [isSuccess, onSave, form, data]);
+    },
+    [addPayerFamily, documentType, onSave, form]
+  );
 
   if (!location) {
     return <></>;
@@ -110,12 +113,7 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
         autoComplete="off"
         requiredMark={false}
         validateTrigger={['onBlur']}
-        onFinish={(values: any) => {
-          addPayerFamily({
-            ...values,
-            document_type: documentType,
-          });
-        }}
+        onFinish={onFinish}
       >
         <div className="flex">
           <div className="flex-1 mt-2 mb-4">

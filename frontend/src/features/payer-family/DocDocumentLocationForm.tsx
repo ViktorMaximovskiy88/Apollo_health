@@ -110,7 +110,6 @@ export const DocDocumentLocationForm = ({
             value={updatedLocation?.payer_family_id}
             onSelect={(payerFamilyId: string) => {
               const locations = form.getFieldValue('locations');
-              console.log(updatedLocation);
               locations[index].payer_family_id = payerFamilyId;
               form.setFieldsValue({ locations });
             }}
