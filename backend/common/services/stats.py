@@ -14,11 +14,16 @@ class FirstCollectionStats(BaseModel):
     count: int
 
 
-async def docs_by_last_collected(lookback_days: int) -> list[LastCollectionStats]:
+async def get_updated_docs(lookback_days: int) -> list[LastCollectionStats]:
     lookback_date = datetime.today() - timedelta(days=lookback_days)
     docs = await DocDocument.aggregate(
         aggregation_pipeline=[
-            {"$match": {"last_collected_date": {"$gte": lookback_date}}},
+            {
+                "$match": {
+                    "last_collected_date": {"$gte": lookback_date},
+                    "$expr": {"$ne": ["$last_collected_date", "$first_collected_date"]},
+                }
+            },
             {
                 "$group": {
                     "_id": {
@@ -36,11 +41,16 @@ async def docs_by_last_collected(lookback_days: int) -> list[LastCollectionStats
     return docs
 
 
-async def docs_by_first_collected(lookback_days: int) -> list[FirstCollectionStats]:
+async def get_created_docs(lookback_days: int) -> list[FirstCollectionStats]:
     lookback_date = datetime.today() - timedelta(days=lookback_days)
     docs = await DocDocument.aggregate(
         aggregation_pipeline=[
-            {"$match": {"first_collected_date": {"$gte": lookback_date}}},
+            {
+                "$match": {
+                    "first_collected_date": {"$gte": lookback_date},
+                    "$expr": {"$eq": ["$last_collected_date", "$first_collected_date"]},
+                }
+            },
             {
                 "$group": {
                     "_id": {

@@ -1,5 +1,5 @@
 export interface CollectionStats {
   name: string;
-  new: number;
-  total: number;
+  created: number;
+  updated: number;
 }
