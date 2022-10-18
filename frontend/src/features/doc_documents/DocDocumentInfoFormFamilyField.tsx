@@ -23,7 +23,7 @@ export const DocDocumentInfoFormFamilyField = ({
     documentType: doc?.document_type,
   });
   const options = data?.data.map((item: DocumentFamily) => ({ value: item._id, label: item.name }));
-  options?.sort((a, b) => a.label.localeCompare(b.label));
+  options?.sort((a: { label: string }, b: { label: string }) => a.label.localeCompare(b.label));
   const document_family_id = Form.useWatch('document_family_id');
   return (
     <div>

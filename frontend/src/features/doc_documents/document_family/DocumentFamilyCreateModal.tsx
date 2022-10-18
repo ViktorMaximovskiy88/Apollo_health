@@ -8,24 +8,17 @@ import { Modal } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
 import { useEffect } from 'react';
-import { fieldGroupsOptions } from './documentFamilyLevels';
+import { fieldGroupsOptions, legacyRelevanceOptions } from './documentFamilyLevels';
 
 interface DocumentFamilyCreateModalPropTypes {
   documentType?: string;
-  location?: DocDocumentLocation | undefined;
   open?: boolean;
   onClose: () => void;
   onSave: (documentFamilyId: string) => void;
 }
 
 export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTypes) => {
-  let legacyRelevanceOptions = [
-    { label: 'Editor Manual', value: 'EDITOR_MANUAL' },
-    { label: 'Editor Automated ', value: 'EDITOR_AUTOMATED' },
-    { label: 'PAR', value: 'PAR' },
-    { label: 'N/A', value: 'N/A' },
-  ];
-  const { documentType, location, open, onClose, onSave } = props;
+  const { documentType, open, onClose, onSave } = props;
   const [form] = useForm();
   const [getDocumentFamilyByName] = useLazyGetDocumentFamilyByNameQuery();
   const [addDocumentFamily, { isLoading, data, isSuccess }] = useAddDocumentFamilyMutation();
@@ -81,7 +74,6 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
         onFinish={(values: any) => {
           addDocumentFamily({
             ...values,
-            site_id: location?.site_id,
             document_type: documentType,
           });
         }}
@@ -97,7 +89,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
           name="name"
           rules={[
             { required: true, message: 'Please input a document family name' },
-            mustBeUniqueToSite(getDocumentFamilyByName, location?.site_id),
+            mustBeUniqueName(getDocumentFamilyByName),
           ]}
         >
           <Input />
@@ -122,14 +114,12 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
 };
 
 // asyncValidator because rtk query makes this tough without hooks/dispatch
-function mustBeUniqueToSite(asyncValidator: Function, siteId?: string) {
+function mustBeUniqueName(asyncValidator: Function) {
   return {
     async validator(_rule: Rule, value: string) {
-      const { data: documentFamily } = await asyncValidator({ name: value, siteId });
+      const { data: documentFamily } = await asyncValidator({ name: value });
       if (documentFamily) {
-        return Promise.reject(
-          `Document family name "${documentFamily.name}" already exists on this site`
-        );
+        return Promise.reject(`Document family name "${documentFamily.name}" already exists`);
       }
       return Promise.resolve();
     },

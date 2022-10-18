@@ -10,11 +10,13 @@ import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { workQueuesApi } from '../features/work_queue/workQueuesApi';
 import { translationsApi } from '../features/translations/translationApi';
 import { payerBackboneApi } from '../features/payer-backbone/payerBackboneApi';
+import { documentFamilyApi } from '../features/doc_documents/document_family/documentFamilyApi';
 
 const routes = [
   '/documents',
   '/documents/:docDocId',
   '/document-family',
+  '/document-family/:docFamilyId',
   '/sites',
   '/sites/:siteId',
   '/sites/:siteId/doc-documents',
@@ -65,6 +67,12 @@ export const useBreadcrumbs = async () => {
       ':docDocId': async (docDocId: string, url: string) => {
         const result: any = await dispatch(
           docDocumentsApi.endpoints.getDocDocument.initiate(docDocId)
+        );
+        return { url, label: result.data.name } as any;
+      },
+      ':docFamilyId': async (docFamilyId: string, url: string) => {
+        const result: any = await dispatch(
+          documentFamilyApi.endpoints.getDocumentFamily.initiate(docFamilyId)
         );
         return { url, label: result.data.name } as any;
       },

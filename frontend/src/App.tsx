@@ -30,6 +30,7 @@ import { PayerBackboneNewPage } from './features/payer-backbone/PayerBackboneNew
 import { PayerBackboneEditPage } from './features/payer-backbone/PayerBackboneEditPage';
 import { LineagePage } from './features/lineage/LineagePage';
 import { DocumentFamilyHomePage } from './features/doc_documents/document_family/DocumentFamilyHomePage';
+import { DocumentFamilyEditPage } from './features/doc_documents/document_family/documentFamilyEditPage';
 
 function AppHomePage() {
   return <>{'Home'}</>;
@@ -52,6 +53,14 @@ function DocumentRoutes() {
     <Routes>
       <Route index element={<DocDocumentsHomePage />} />
       <Route path=":docDocumentId" element={<DocDocumentEditPage />} />
+    </Routes>
+  );
+}
+function DocumentFamilyRoutes() {
+  return (
+    <Routes>
+      <Route index element={<DocumentFamilyHomePage />} />
+      <Route path=":documentFamilyId" element={<DocumentFamilyEditPage />} />
     </Routes>
   );
 }
@@ -124,7 +133,7 @@ function App() {
           </Route>
         </Route>
         <Route path="/payer-family" element={<PayerFamilyHomePage />} />
-        <Route path="/document-family" element={<DocumentFamilyHomePage />} />
+        <Route path="/document-family/*" element={<DocumentFamilyRoutes />} />
         <Route path="/users/*" element={<UserRoutes />} />
         <Route path="/documents/*" element={<DocumentRoutes />} />
         <Route path="/translations/*" element={<TranslationRoutes />} />
