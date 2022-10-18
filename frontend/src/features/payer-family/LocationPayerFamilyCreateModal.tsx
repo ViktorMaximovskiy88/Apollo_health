@@ -86,7 +86,7 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
 
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
-      const payerFamily = await addPayerFamily({ ...values, document_type: documentType }).unwrap();
+      const payerFamily = await addPayerFamily(values).unwrap();
       onSave(payerFamily._id);
       form.resetFields();
     },
