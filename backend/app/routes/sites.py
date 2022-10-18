@@ -252,7 +252,7 @@ async def get_site_doc_docs(
         site: Site | None = await Site.find_one({"_id": site_id})
         if not site:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve docs.")
-        if site.has_created_manual_collection:
+        if site.has_not_found_documents:
             query["not_found"] = {"$ne": True}
     if scrape_task_id:
         scrape_task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)

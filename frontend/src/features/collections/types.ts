@@ -12,6 +12,7 @@ export interface WorkItem {
   retrieved_document_id: string;
   selected: WorkItemOption;
   prev_doc?: string;
+  new_doc?: string;
   action_datetime?: string;
   is_current_version?: boolean;
   is_new: boolean;

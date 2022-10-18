@@ -13,7 +13,6 @@ export function SiteViewPage() {
   const [updateSite] = useUpdateSiteMutation();
   const navigate = useNavigate();
   const [form] = useForm();
-
   if (!site) return null;
 
   async function tryUpdateSite(update: Partial<Site>) {

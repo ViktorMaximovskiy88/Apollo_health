@@ -134,7 +134,6 @@ async def cancel_all_site_scrape_task(
             detail=f"Site {site_id} Not Found",
             status_code=status.HTTP_404_NOT_FOUND,
         )
-
     # Check that site has queued tasks.
     site_collection: CollectionService = CollectionService(
         site=site,

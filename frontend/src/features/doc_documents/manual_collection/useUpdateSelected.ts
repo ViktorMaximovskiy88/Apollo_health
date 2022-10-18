@@ -39,7 +39,6 @@ export const useUpdateSelected = () => {
 
   return async (selected: WorkItemOption) => {
     if (!scrapeTaskId || !workItem || !setIsLoading) return;
-
     const newWorkItem = { ...workItem, selected, action_datetime: DateTime.now().toISO() };
 
     setIsLoading(true);

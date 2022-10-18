@@ -99,7 +99,6 @@ class CollectionService:
                 Set(
                     {
                         Site.last_run_status: TaskStatus.QUEUED,
-                        Site.has_created_manual_collection: True,
                     }
                 )
             )
@@ -207,11 +206,6 @@ class CollectionService:
                         )
                     )
 
-        # Since a doc work_list is suppose to be completed, the only docs to collect
-        # would be those without a work_list.
-        if not new_task.work_list:
-            response.add_error("No avaliable docs to collect.")
-            return response
         # Create new manual task and respond with nav link.
         created_task: SiteScrapeTask = await create_and_log(
             self.logger, self.current_user, new_task
@@ -219,6 +213,7 @@ class CollectionService:
         if not created_task:
             response.add_error("Unable to create new scrape task.")
         else:
+            await self.site.update(Set({Site.is_running_manual_collection: True}))
             response.nav_id = created_task.id
         return response
 
@@ -238,6 +233,7 @@ class CollectionService:
             return response
         # Stop existing tasks from processing and set last collected to now.
         await self.stop_queued_tasks()
+        await self.site.update(Set({Site.is_running_manual_collection: False}))
 
         return response
 
@@ -358,6 +354,8 @@ class CollectionService:
                 )
                 doc_doc.not_found = True
                 await doc_doc.save()
+                if not self.site.has_not_found_documents:
+                    await self.site.update(Set({Site.has_not_found_documents: True}))
             case WorkItemOption.UNHANDLED:
                 # Error header: Please review and update the following documents.
                 result.add_error(f"{retr_doc.name}")

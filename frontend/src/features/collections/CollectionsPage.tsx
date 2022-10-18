@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Button, notification } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -17,6 +17,7 @@ import { MainLayout } from '../../components';
 import { isErrorWithData } from '../../common/helpers';
 import { useSiteScrapeTaskId } from '../doc_documents/manual_collection/useUpdateSelected';
 import { initialState } from './collectionsSlice';
+import { ValidationButtonsContext } from '../doc_documents/manual_collection/ManualCollectionContext';
 
 function ManualCollectionButton(props: any) {
   const { site, refetch, runScrape } = props;
@@ -139,20 +140,18 @@ function ManualCollectionButton(props: any) {
 
 export function CollectionsPage() {
   const [newDocumentModalOpen, setNewDocumentModalOpen] = useState(false);
-
+  const [runScrape] = useRunSiteScrapeTaskMutation();
   const params = useParams();
   const siteId = params.siteId;
   const { data: site, refetch } = useGetSiteQuery(siteId);
-  const [runScrape] = useRunSiteScrapeTaskMutation();
-
-  if (!siteId || !site) return null;
+  if (!site) return null;
 
   async function handleRunScrape() {
     if (site?._id) {
       try {
         let response: any = await runScrape(site._id).unwrap();
         if (response.success) {
-          refetch();
+          if (refetch) refetch();
         } else {
           notification.error({
             message: 'Error Running Collection',
@@ -178,7 +177,7 @@ export function CollectionsPage() {
   return (
     <>
       {newDocumentModalOpen ? (
-        <AddDocumentModal setOpen={setNewDocumentModalOpen} siteId={siteId} />
+        <AddDocumentModal setOpen={setNewDocumentModalOpen} siteId={site._id} />
       ) : null}
       <MainLayout
         sidebar={<SiteMenu />}
@@ -197,7 +196,7 @@ export function CollectionsPage() {
         }
       >
         <CollectionsDataTable
-          siteId={siteId}
+          siteId={site._id}
           openNewDocumentModal={() => setNewDocumentModalOpen(true)}
         />
       </MainLayout>

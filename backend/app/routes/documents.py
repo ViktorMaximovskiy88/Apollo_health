@@ -273,7 +273,7 @@ async def add_document(
             )
         ],
     )
-    # Set new_document current_version and update lineage.
+    # Set new_document current_version and lineage.
     new_document.is_current_version = True
     if uploaded_doc.upload_new_version_for_id:
         original_version_doc: DocDocument | None = await DocDocument.find_one(
@@ -317,7 +317,7 @@ async def add_document(
     else:
         created_work_item.selected = WorkItemOption.NEW_DOCUMENT
     current_task.work_list.append(created_work_item)
-    # New version has FOUND and stores worklist prev / current_version.
+    # Set work_item current_version and lineage.
     if uploaded_doc.upload_new_version_for_id:
         # Set old version's work_item as not current.
         original_item_index: int = find_work_item_index(
@@ -325,9 +325,9 @@ async def add_document(
         )
         original_item = current_task.work_list[original_item_index]
         original_item.is_current_version = False
-        original_item.selected = WorkItemOption.FOUND
-        original_item.new_doc = created_doc_doc.id
         original_item.is_new = False
+        original_item.selected = WorkItemOption.NOT_FOUND
+        original_item.new_doc = created_doc_doc.id
         current_task.work_list[original_item_index] = original_item
         # Update new version's prev_doc to old version and set as current.
         created_item_index: int = find_work_item_index(
@@ -336,6 +336,7 @@ async def add_document(
         created_item = current_task.work_list[created_item_index]
         created_item.prev_doc = original_version_doc.id
         created_item.is_current_version = True
+        created_item.is_new = False
         current_task.work_list[created_item_index] = created_item
     # Save updated work_list and add to task.retr_doc_ids for querying.
     current_task.retrieved_document_ids.append(f"{created_retr_doc.id}")

@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import BoolFilter from '@inovua/reactdatagrid-community/BoolFilter';
-import { Button } from 'antd';
 import { LinkOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { prettyDateFromISO, prettyDateTimeFromISO } from '../../common';
 import { SiteDocDocument } from './types';

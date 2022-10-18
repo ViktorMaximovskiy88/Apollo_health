@@ -11,6 +11,8 @@ import { WorkItemOption } from '../../collections/types';
 import { useContext } from 'react';
 import { ValidationButtonsContext, ValidationButtonsProvider } from './ManualCollectionContext';
 import { useUpdateSelected } from './useUpdateSelected';
+import { useParams } from 'react-router-dom';
+import { useGetSiteQuery } from '../../sites/sitesApi';
 
 const Found = () => {
   const updateSelected = useUpdateSelected();
@@ -19,7 +21,7 @@ const Found = () => {
 
   switch (workItem.selected) {
     case WorkItemOption.Found:
-      if (workItem.is_new) {
+      if (workItem.is_new || workItem.new_doc) {
         return (
           <Button type="primary" onClick={() => updateSelected(WorkItemOption.Found)}>
             <FileDoneOutlined className="text-white" />
@@ -39,7 +41,7 @@ const Found = () => {
         </Button>
       );
     case WorkItemOption.NotFound:
-      if (workItem.is_new) {
+      if (workItem.is_new || workItem.new_doc) {
         return (
           <Button onClick={() => updateSelected(WorkItemOption.Found)}>
             <FileDoneOutlined />
@@ -76,8 +78,7 @@ const Found = () => {
 };
 
 const NewDocument = () => {
-  const { doc, handleNewVersion } = useContext(ValidationButtonsContext) ?? {};
-  const { workItem } = useContext(ValidationButtonsContext) ?? {};
+  const { doc, handleNewVersion, workItem } = useContext(ValidationButtonsContext) ?? {};
   if (!workItem || !doc || !handleNewVersion) return null;
 
   switch (workItem.selected) {
@@ -121,7 +122,7 @@ const NotFound = () => {
 
   switch (workItem.selected) {
     case WorkItemOption.Found:
-      if (workItem.is_new) {
+      if (workItem.is_new || workItem.new_doc) {
         return (
           <Button onClick={() => updateSelected(WorkItemOption.NotFound)}>
             <FileExcelOutlined />
@@ -141,7 +142,7 @@ const NotFound = () => {
         </Button>
       );
     case WorkItemOption.NotFound:
-      if (workItem.is_new) {
+      if (workItem.is_new || workItem.new_doc) {
         return (
           <Button type="primary" onClick={() => updateSelected(WorkItemOption.NotFound)}>
             <FileExcelOutlined className="text-white" />
@@ -178,14 +179,13 @@ const NotFound = () => {
 };
 
 const NewVersion = () => {
-  const { doc, handleNewVersion } = useContext(ValidationButtonsContext) ?? {};
-  const { workItem } = useContext(ValidationButtonsContext) ?? {};
+  const { doc, handleNewVersion, workItem } = useContext(ValidationButtonsContext) ?? {};
   const updateSelected = useUpdateSelected();
   if (!workItem || !doc || !handleNewVersion) return null;
 
   switch (workItem.selected) {
     case WorkItemOption.Found:
-      if (workItem.is_new) {
+      if (workItem.is_new && workItem.is_current_version) {
         return (
           <Button
             onClick={() => {
@@ -198,17 +198,11 @@ const NewVersion = () => {
         );
       } else {
         return (
-          <Button>
+          <Button disabled>
             <FileExclamationOutlined />
           </Button>
         );
       }
-    case WorkItemOption.Found:
-      return (
-        <Button disabled>
-          <FileExclamationOutlined />
-        </Button>
-      );
     case WorkItemOption.NewDocument:
       return (
         <Button disabled>
@@ -216,13 +210,26 @@ const NewVersion = () => {
         </Button>
       );
     case WorkItemOption.NotFound:
-      return (
-        <Button disabled>
-          <FileExclamationOutlined />
-        </Button>
-      );
+      if (workItem.is_new && workItem.is_current_version) {
+        return (
+          <Button
+            onClick={() => {
+              handleNewVersion(doc);
+              updateSelected(WorkItemOption.NewVersion);
+            }}
+          >
+            <FileExclamationOutlined />
+          </Button>
+        );
+      } else {
+        return (
+          <Button disabled>
+            <FileExclamationOutlined />
+          </Button>
+        );
+      }
     case WorkItemOption.NewVersion:
-      if (workItem.is_new) {
+      if (workItem.is_new && workItem.is_current_version) {
         return (
           <Button
             type="primary"
@@ -264,8 +271,7 @@ const NewVersion = () => {
 };
 
 const Unhandled = () => {
-  const { doc, handleNewVersion } = useContext(ValidationButtonsContext) ?? {};
-  const { workItem } = useContext(ValidationButtonsContext) ?? {};
+  const { doc, handleNewVersion, workItem } = useContext(ValidationButtonsContext) ?? {};
   if (!workItem || !doc || !handleNewVersion) return null;
 
   switch (workItem.selected) {
@@ -295,7 +301,7 @@ const Unhandled = () => {
       );
     default:
       return (
-        <Button disabled>
+        <Button type="primary">
           <FileUnknownOutlined />
         </Button>
       );
@@ -304,9 +310,12 @@ const Unhandled = () => {
 
 function ValidationButtons() {
   const { isLoading } = useContext(ValidationButtonsContext) ?? {};
-  const { workItem } = useContext(ValidationButtonsContext) ?? {};
-  if (!workItem) return null;
-  if (workItem.selected == WorkItemOption.Found && workItem.is_new === false) {
+  const params = useParams();
+  const siteId = params.siteId;
+  const { data: site, refetch } = useGetSiteQuery(siteId);
+  if (!site) return null;
+
+  if (!site.is_running_manual_collection) {
     return null;
   } else {
     return (

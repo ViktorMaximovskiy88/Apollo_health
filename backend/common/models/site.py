@@ -87,7 +87,6 @@ class NewSite(BaseModel):
     doc_type_threshold: float = 0.75
     lineage_threshold_override: bool = False
     lineage_threshold: float = 0.75
-    has_created_manual_collection: boolean = False
 
 
 class UpdateSite(BaseModel):
@@ -121,6 +120,10 @@ class Site(BaseDocument, NewSite):
     collection_hold: datetime | None = None
     last_run_time: datetime | None = None
     assignee: PydanticObjectId | None = None
+    is_running_manual_collection: boolean = False
+    # Instead of always filtering out not_found on doc docs requiring an index,
+    # only filter when a site has manually collected and selected NOT_FOUND.
+    has_not_found_documents: boolean = False
 
 
 # Deprecated
