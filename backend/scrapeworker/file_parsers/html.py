@@ -12,6 +12,9 @@ class HtmlParser(FileParser):
     # that SO answer was from a decade ago. BS has been updated since then..
     # docs say https://www.crummy.com/software/BeautifulSoup/bs4/doc/#get-text
     async def get_text(self) -> str:
+        # TODO: getting the text here causes tagging issues
+        # taggers assign tags by page, but html lacks pages
+        # when converted to pdf later, all tags are marked as page 1
         document_bytes = await self.read_text_file(encoding="iso-8859-1")
         self.soup = bs4.BeautifulSoup(document_bytes, features="html.parser")
 

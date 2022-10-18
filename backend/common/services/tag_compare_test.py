@@ -1,7 +1,9 @@
+import os
 from datetime import datetime
 from random import random
 from unittest.mock import Mock
 
+import aiofiles
 import pytest
 import pytest_asyncio
 
@@ -14,6 +16,9 @@ from backend.common.models.site import ScrapeMethodConfiguration, Site
 from backend.common.services.tag_compare import TagCompare
 from backend.common.storage.client import BaseS3Client
 from backend.common.test.test_utils import mock_s3_client  # noqa
+
+current_path = os.path.dirname(os.path.realpath(__file__))
+fixture_path = os.path.join(current_path, "__fixtures__")
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -521,8 +526,6 @@ class TestTagAddRemove:
         assert group_tags[TagUpdateStatus.ADDED][0].code == indi_ref_added.code
         assert len(group_tags[TagUpdateStatus.CHANGED]) == 2
 
-    # key tags
-
     async def test_key_areas(
         self,
         mock_s3_client,  # noqa
@@ -551,3 +554,40 @@ class TestTagAddRemove:
         assert len(therapy_tags) == 2
         group_tags = group_by_status(therapy_tags)
         assert len(group_tags[TagUpdateStatus.ADDED]) == 2
+
+
+class TestTextCleaning:
+    @pytest.mark.asyncio
+    async def test_remove_footers(self, mock_s3_client, tag_compare: TagCompare):  # noqa
+        file_path = os.path.join(fixture_path, "test_text.txt")
+        expected_path = os.path.join(fixture_path, "expected_test_text.txt")
+
+        async with aiofiles.open(file_path, mode="r") as file:
+            test_text = await file.read()
+
+        clean = tag_compare._remove_footers(test_text)
+
+        async with aiofiles.open(expected_path, mode="r") as file:
+            expected_text = await file.read()
+            assert clean == expected_text
+
+    def test_preprocess_diff(self, mock_s3_client, tag_compare: TagCompare):  # noqa
+        """
+        Should whiteout
+            - page numbers
+            - repeated identical line diffs
+            - repeated lines appearing once on every page
+            - dates and date keywords
+        """
+        a_text = "string 1\nthis is a footer\n\fstring 2\nthis is a footer\n updated 12/20/20"
+        b_text = (
+            "string 1\ndifferent footer here\n\fstring 2\ndifferent footer here\n updated 12/20/21"
+        )
+        expected_a = "string  \n                \n string  \n                \n                 "
+        expected_b = (
+            "string  \n                     \n string  \n                     \n                 "
+        )
+
+        cleaned_a, cleaned_b = tag_compare._preprocess_diff(a_text, b_text)
+        assert expected_a == cleaned_a
+        assert expected_b == cleaned_b

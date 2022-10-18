@@ -1,11 +1,9 @@
-import tempfile
+import os
 from datetime import datetime, timedelta, timezone
 from random import random
 
-import aiofiles
 import pytest
 import pytest_asyncio
-import requests
 from beanie import Document, PydanticObjectId
 from fastapi import UploadFile
 from pydantic import HttpUrl
@@ -25,6 +23,9 @@ from backend.common.models.user import User
 from backend.common.test.test_utils import mock_s3_client  # noqa
 
 RetrievedDocumentLimitTags.Settings.projection = None  # type: ignore
+
+current_path = os.path.dirname(os.path.realpath(__file__))
+fixture_path = os.path.join(current_path, "mocks")
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -263,56 +264,44 @@ class TestGetDocuments:
 class TestUploadFile:
     @pytest.mark.asyncio
     async def test_upload_file(self, user, logger, mock_s3_client):  # noqa
-        URL = "https://parprdusemmitst01.blob.core.windows.net/autohunteddocs/7c8418d4-054b-4fa4-9b97-d3f75c353dd1/7c8418d4-054b-4fa4-9b97-d3f75c353dd1.pdf"  # noqa
-        response = requests.get(URL)
-        with tempfile.NamedTemporaryFile() as temp:
-            async with aiofiles.open(temp.name, "wb") as fd:
-                await fd.write(response.content)
+        file_path = os.path.join(fixture_path, "pdf_fixture.pdf")
+        with open(file_path, "rb") as file:
+            upload_file = UploadFile(filename="test.pdf", file=file, content_type="application/pdf")
+            uploaded_document = await upload_document(upload_file)
 
-                upload_file = UploadFile(
-                    filename="test.pdf", file=temp, content_type="application/pdf"
-                )
-                uploaded_document = await upload_document(upload_file)
-
-                assert uploaded_document["success"] is True
-                assert uploaded_document["data"]["checksum"] is not None  # type: ignore
-                assert uploaded_document["data"]["text_checksum"] is not None  # type: ignore
-                assert uploaded_document["data"]["metadata"] is not None  # type: ignore
-                assert uploaded_document["data"]["doc_type_confidence"] is not None  # type: ignore
+            assert uploaded_document["success"] is True
+            assert uploaded_document["data"]["checksum"] is not None  # type: ignore
+            assert uploaded_document["data"]["text_checksum"] is not None  # type: ignore
+            assert uploaded_document["data"]["metadata"] is not None  # type: ignore
+            assert uploaded_document["data"]["doc_type_confidence"] is not None  # type: ignore
 
     @pytest.mark.asyncio
     async def test_upload_create_document(self, user, logger, mock_s3_client):  # noqa
-        URL = "https://parprdusemmitst01.blob.core.windows.net/autohunteddocs/7c8418d4-054b-4fa4-9b97-d3f75c353dd1/7c8418d4-054b-4fa4-9b97-d3f75c353dd1.pdf"  # noqa
-        response = requests.get(URL)
-        with tempfile.NamedTemporaryFile() as temp:
-            async with aiofiles.open(temp.name, "wb") as fd:
-                await fd.write(response.content)
+        file_path = os.path.join(fixture_path, "pdf_fixture.pdf")
+        with open(file_path, "rb") as file:
+            upload_file = UploadFile(filename="test.pdf", file=file, content_type="application/pdf")
+            uploaded_document = await upload_document(upload_file)
 
-                upload_file = UploadFile(
-                    filename="test.pdf", file=temp, content_type="application/pdf"
-                )
-                uploaded_document = await upload_document(upload_file)
+            assert uploaded_document["success"] is True
+            site_one = await simple_site(collection_method=CollectionMethod.Manual).save()
+            doc = simple_manual_retrieved_document(
+                site_one,
+                checksum=uploaded_document["data"]["checksum"],  # type: ignore
+                text_checksum=uploaded_document["data"]["text_checksum"],  # type: ignore
+                content_type=uploaded_document["data"]["content_type"],  # type: ignore
+                file_extension=uploaded_document["data"]["file_extension"],  # type: ignore
+                metadata=uploaded_document["data"]["metadata"],  # type: ignore
+                doc_type_confidence=uploaded_document["data"]["doc_type_confidence"],  # type: ignore # noqa: E501
+                therapy_tags=uploaded_document["data"]["therapy_tags"],  # type: ignore
+                indication_tags=uploaded_document["data"]["indication_tags"],  # type: ignore
+                identified_dates=uploaded_document["data"]["identified_dates"],  # type: ignore
+            )
 
-                assert uploaded_document["success"] is True
-                site_one = await simple_site(collection_method=CollectionMethod.Manual).save()
-                doc = simple_manual_retrieved_document(
-                    site_one,
-                    checksum=uploaded_document["data"]["checksum"],  # type: ignore
-                    text_checksum=uploaded_document["data"]["text_checksum"],  # type: ignore
-                    content_type=uploaded_document["data"]["content_type"],  # type: ignore
-                    file_extension=uploaded_document["data"]["file_extension"],  # type: ignore
-                    metadata=uploaded_document["data"]["metadata"],  # type: ignore
-                    doc_type_confidence=uploaded_document["data"]["doc_type_confidence"],  # type: ignore # noqa: E501
-                    therapy_tags=uploaded_document["data"]["therapy_tags"],  # type: ignore
-                    indication_tags=uploaded_document["data"]["indication_tags"],  # type: ignore
-                    identified_dates=uploaded_document["data"]["identified_dates"],  # type: ignore
-                )
+            result = await add_document(doc, user, logger)
+            assert result.id is not None
+            uploaded_document_2 = await upload_document(upload_file)
 
-                result = await add_document(doc, user, logger)
-                assert result.id is not None
-                uploaded_document_2 = await upload_document(upload_file)
-
-                assert uploaded_document_2["error"] == "The document already exists!"
+            assert uploaded_document_2["error"] == "The document already exists!"
 
 
 class TestCreateDocuments:
