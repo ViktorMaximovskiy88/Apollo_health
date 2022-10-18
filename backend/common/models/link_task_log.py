@@ -1,4 +1,6 @@
-from beanie import PydanticObjectId, UnionDoc
+from datetime import datetime, timezone
+
+from beanie import Insert, PydanticObjectId, Replace, UnionDoc, before_event
 
 from backend.common.models.base_document import BaseDocument, BaseModel
 from backend.common.models.shared import FileMetadata, Location
@@ -26,6 +28,19 @@ class InvalidResponse(BaseModel):
 class LinkTask(BaseDocument):
     site_id: PydanticObjectId
     scrape_task_id: PydanticObjectId
+
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+    @before_event(Insert)
+    def insert_dates(self):
+        now = datetime.now(tz=timezone.utc)
+        self.created_at = now
+        self.updated_at = now
+
+    @before_event(Replace)
+    def replace_dates(self):
+        self.updated_at = datetime.now(tz=timezone.utc)
 
 
 class LinkBaseTask(LinkTask):
