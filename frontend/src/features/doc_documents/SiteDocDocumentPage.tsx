@@ -32,19 +32,18 @@ export function SiteDocDocumentsPage() {
     setOldVersion(null);
   }
 
+  // Refresh site docs when adding new doc or adding new version.
   const mostRecentTask = {
     limit: 1,
     skip: 0,
     sortInfo: initialState.table.sort,
     filterValue: initialState.table.filter,
   };
-
   const refreshDocs = async () => {
     if (!scrapeTaskId) return;
     await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
     await getDocDocumentsQuery({ siteId, scrapeTaskId });
   };
-
   useEffect(() => {
     if (refreshSiteDocs) {
       refreshDocs();

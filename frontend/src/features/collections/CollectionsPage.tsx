@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button, notification } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -17,7 +17,6 @@ import { MainLayout } from '../../components';
 import { isErrorWithData } from '../../common/helpers';
 import { useSiteScrapeTaskId } from '../doc_documents/manual_collection/useUpdateSelected';
 import { initialState } from './collectionsSlice';
-import { ValidationButtonsContext } from '../doc_documents/manual_collection/ManualCollectionContext';
 
 function ManualCollectionButton(props: any) {
   const { site, refetch, runScrape } = props;
@@ -28,15 +27,14 @@ function ManualCollectionButton(props: any) {
   const scrapeTaskId = useSiteScrapeTaskId();
   const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
   const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
-  const [refreshSiteDocs, setRefreshSiteDocs] = useState(false);
 
+  // Refresh site docs whe starting / stopping collection.
   const mostRecentTask = {
     limit: 1,
     skip: 0,
     sortInfo: initialState.table.sort,
     filterValue: initialState.table.filter,
   };
-
   const refreshDocs = async () => {
     if (!scrapeTaskId) return;
     if (!site) return;
@@ -45,22 +43,15 @@ function ManualCollectionButton(props: any) {
     await getDocDocumentsQuery({ siteId, scrapeTaskId });
   };
 
-  useEffect(() => {
-    if (refreshSiteDocs) {
-      refreshDocs();
-      setRefreshSiteDocs(false);
-    }
-  });
-
   async function handleRunManualScrape() {
     try {
       setIsLoading(true);
       let response: any = await runScrape(site!._id);
       if (response.data.success) {
         refetch();
-        setRefreshSiteDocs(true);
+        refreshDocs();
         setTimeout(function () {
-          setIsLoading(false);
+          refreshDocs();
           navigate(`../doc-documents?scrape_task_id=${response.data.nav_id}`);
         }, 500); // refetch sometimes not working. delay and refetch again.
       } else {
@@ -94,8 +85,9 @@ function ManualCollectionButton(props: any) {
         let response: any = await cancelAllScrapes(site!._id);
         if (response.data?.success) {
           refetch();
-          setRefreshSiteDocs(true);
+          refreshDocs();
           setTimeout(function () {
+            refreshDocs();
             setIsLoading(false);
           }, 500); // refetch sometimes not working. delay and refetch again.
         } else {

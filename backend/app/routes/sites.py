@@ -247,14 +247,26 @@ async def get_site_doc_docs(
     site_id: PydanticObjectId,
     scrape_task_id: PydanticObjectId | None = None,
 ) -> list[SiteDocDocument]:
+    if not site_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve docs.")
     query: dict[str, PydanticObjectId] = {"locations.site_id": site_id}
-    if site_id:
-        site: Site | None = await Site.find_one({"_id": site_id})
-        if not site:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve docs.")
-        if site.has_not_found_documents:
-            query["not_found"] = {"$ne": True}
-    if scrape_task_id:
+    site: Site | None = await Site.find_one({"_id": site_id})
+    if not site:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve docs.")
+    # Has at one point manually collected docs selected as not_found.
+    if site.has_not_found_documents:
+        query["not_found"] = {"$ne": True}
+    if site.is_running_manual_collection:
+        scrape_task = await SiteScrapeTask.find_one(
+            {
+                "site_id": site_id,
+                "status": {"$in": CollectionService.queued_statuses},
+            },
+            sort=[("start_time", -1)],
+        )
+        if scrape_task:
+            query["retrieved_document_id"] = {"$in": scrape_task.retrieved_document_ids}
+    elif scrape_task_id:
         scrape_task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
         if scrape_task:
             query["retrieved_document_id"] = {"$in": scrape_task.retrieved_document_ids}
