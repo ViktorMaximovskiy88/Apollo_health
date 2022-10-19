@@ -14,7 +14,7 @@ from backend.common.models.shared import (
     RetrievedDocumentLocation,
     TherapyTag,
 )
-from backend.common.services.lineage.lineage import LineageService
+from backend.common.services.lineage.core import LineageService
 from backend.common.test.test_utils import mock_s3_client  # noqa
 
 site_id_a = PydanticObjectId("00000000000000000000000a")
