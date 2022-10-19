@@ -1,26 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from 'antd';
 import { useParams } from 'react-router-dom';
-import { useLazyGetSiteDocDocumentsQuery } from '../sites/sitesApi';
 
 import { MainLayout } from '../../components';
 import { SiteMenu } from '../sites/SiteMenu';
-
+import { ManualCollectionButton } from '../collections/CollectionsPage';
+import { SiteStatus } from '../sites/siteStatus';
+import { CollectionMethod } from '../sites/types';
 import { SiteDocDocumentsTable } from './SiteDocDocumentsTable';
 import { AddDocumentModal } from '../collections/AddDocumentModal';
 import { SiteDocDocument } from './types';
-import { useSiteScrapeTaskId } from '../doc_documents/manual_collection/useUpdateSelected';
-import { useLazyGetScrapeTasksForSiteQuery } from '../collections/siteScrapeTasksApi';
-import { initialState } from '../collections/collectionsSlice';
+import { useGetSiteQuery } from '../sites/sitesApi';
+import { useRunSiteScrapeTaskMutation } from '../collections/siteScrapeTasksApi';
 
 export function SiteDocDocumentsPage() {
   const [newDocumentModalOpen, setNewDocumentModalOpen] = useState(false);
-  const [refreshSiteDocs, setRefreshSiteDocs] = useState(false);
   const [oldVersion, setOldVersion] = useState<any>();
   const { siteId } = useParams();
-  const scrapeTaskId = useSiteScrapeTaskId();
-  const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
-  const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
+  const [runScrape] = useRunSiteScrapeTaskMutation();
+  const { data: site, refetch } = useGetSiteQuery(siteId);
+  if (!site) return null;
 
   function handleNewVersion(data: SiteDocDocument) {
     setOldVersion(data);
@@ -32,30 +31,17 @@ export function SiteDocDocumentsPage() {
     setOldVersion(null);
   }
 
-  // Refresh site docs when adding new doc or adding new version.
-  const mostRecentTask = {
-    limit: 1,
-    skip: 0,
-    sortInfo: initialState.table.sort,
-    filterValue: initialState.table.filter,
-  };
-  const refreshDocs = async () => {
-    if (!scrapeTaskId) return;
-    await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
-    await getDocDocumentsQuery({ siteId, scrapeTaskId });
-  };
-  useEffect(() => {
-    if (refreshSiteDocs) {
-      refreshDocs();
-      setRefreshSiteDocs(false);
-    }
-  });
-
   return (
     <MainLayout
       sidebar={<SiteMenu />}
       sectionToolbar={
         <>
+          {site.collection_method === CollectionMethod.Manual &&
+          site.status !== SiteStatus.Inactive &&
+          site.is_running_manual_collection ? (
+            <ManualCollectionButton site={site} refetch={refetch} runScrape={runScrape} />
+          ) : null}
+
           <Button onClick={() => setNewDocumentModalOpen(true)} className="ml-auto">
             Create Document
           </Button>
@@ -63,12 +49,7 @@ export function SiteDocDocumentsPage() {
       }
     >
       {newDocumentModalOpen && (
-        <AddDocumentModal
-          oldVersion={oldVersion}
-          setOpen={hideNewDocument}
-          siteId={siteId}
-          setRefreshSiteDocs={setRefreshSiteDocs}
-        />
+        <AddDocumentModal oldVersion={oldVersion} setOpen={hideNewDocument} siteId={siteId} />
       )}
       <SiteDocDocumentsTable handleNewVersion={handleNewVersion} />
     </MainLayout>

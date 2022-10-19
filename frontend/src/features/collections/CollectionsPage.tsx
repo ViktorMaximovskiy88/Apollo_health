@@ -5,6 +5,7 @@ import {
   useRunSiteScrapeTaskMutation,
   useCancelAllSiteScrapeTasksMutation,
   useLazyGetScrapeTasksForSiteQuery,
+  siteScrapeTasksApi,
 } from './siteScrapeTasksApi';
 import { useGetSiteQuery, useLazyGetSiteDocDocumentsQuery } from '../sites/sitesApi';
 import { CollectionsDataTable } from './CollectionsDataTable';
@@ -18,7 +19,7 @@ import { isErrorWithData } from '../../common/helpers';
 import { useSiteScrapeTaskId } from '../doc_documents/manual_collection/useUpdateSelected';
 import { initialState } from './collectionsSlice';
 
-function ManualCollectionButton(props: any) {
+export function ManualCollectionButton(props: any) {
   const { site, refetch, runScrape } = props;
   const navigate = useNavigate();
   const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
@@ -39,8 +40,10 @@ function ManualCollectionButton(props: any) {
     if (!scrapeTaskId) return;
     if (!site) return;
     const siteId = site._id;
+    refetch();
     await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
     await getDocDocumentsQuery({ siteId, scrapeTaskId });
+    refetch();
   };
 
   async function handleRunManualScrape() {
@@ -48,10 +51,8 @@ function ManualCollectionButton(props: any) {
       setIsLoading(true);
       let response: any = await runScrape(site!._id);
       if (response.data.success) {
-        refetch();
         refreshDocs();
         setTimeout(function () {
-          refreshDocs();
           navigate(`../doc-documents?scrape_task_id=${response.data.nav_id}`);
         }, 500); // refetch sometimes not working. delay and refetch again.
       } else {
@@ -84,10 +85,8 @@ function ManualCollectionButton(props: any) {
         setIsLoading(true);
         let response: any = await cancelAllScrapes(site!._id);
         if (response.data?.success) {
-          refetch();
           refreshDocs();
           setTimeout(function () {
-            refreshDocs();
             setIsLoading(false);
           }, 500); // refetch sometimes not working. delay and refetch again.
         } else {

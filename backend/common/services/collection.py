@@ -165,7 +165,7 @@ class CollectionService:
                 "site_id": self.site.id,
                 "status": {"$in": self.queued_statuses},
             },
-            {"$set": {"status": TaskStatus.CANCELED}},  # TODO: back to TaskStatus.CANCELING?
+            {"$set": {"status": TaskStatus.CANCELED}},
         )
         if not err:
             await self.site.update(Set({Site.last_run_status: TaskStatus.CANCELED}))
@@ -224,17 +224,25 @@ class CollectionService:
         """Cancel all manual tasks. Manual tasks have work_items
         which may need processed before canceling."""
         response: CollectionResponse = CollectionResponse()
-        last_queued_task: SiteScrapeTask = await self.fetch_last_queued()
 
-        # Do not have queued tasks.
+        # Make sure there is a queued task with no unfinished work_items.
+        last_queued_task: SiteScrapeTask = await self.fetch_last_queued()
         if not last_queued_task:
             return CollectionResponse(success=True)
-        # Unfinished manual collection with some documents already collected.
-        # Cancel queued tasks and process all work actions from all queued task.
+        for work_item in last_queued_task.work_list:
+            if work_item.selected == WorkItemOption.UNHANDLED:
+                retr_doc: RetrievedDocument | None = await RetrievedDocument.find_one(
+                    {"_id": work_item.retrieved_document_id},
+                )
+                response.success = False
+                response.add_error(f"{retr_doc.name}")
+        if not response.success:
+            response.raise_error()
+
+        # Process all work actions from current manual collection task.
         response = await self.process_work_lists()
         if not response.success:
-            return response
-        # Stop existing tasks from processing and set last collected to now.
+            response.raise_error()
         await self.stop_queued_tasks()
         await self.site.update(Set({Site.is_running_manual_collection: False}))
 
@@ -307,13 +315,13 @@ class CollectionService:
                 )
                 if work_item_response.errors:
                     work_list_response.add_error(work_item_response.errors[0])
-            print(queued_site_task.retrieved_document_ids)
             queued_site_task.documents_found = (
                 len(queued_site_task.retrieved_document_ids)
                 + self.new_version_docs
                 - self.not_found_docs
             )
             await queued_site_task.save()
+
         return work_list_response
 
     async def process_work_item(
@@ -361,7 +369,6 @@ class CollectionService:
                     await self.site.update(Set({Site.has_not_found_documents: True}))
                 self.not_found_docs = self.not_found_docs - 1
             case WorkItemOption.UNHANDLED:
-                # Error header: Please review and update the following documents.
                 result.add_error(f"{retr_doc.name}")
                 return result
         await target_task.save()

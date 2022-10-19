@@ -127,32 +127,18 @@ async def cancel_all_site_scrape_task(
     logger: Logger = Depends(get_logger),
     response_model=CollectionResponse,
 ) -> CollectionResponse:
-    response = CollectionResponse()
     site: Site | None = await Site.get(site_id)
     if not site:
         raise HTTPException(
             detail=f"Site {site_id} Not Found",
             status_code=status.HTTP_404_NOT_FOUND,
         )
-    # Check that site has queued tasks.
     site_collection: CollectionService = CollectionService(
         site=site,
         current_user=current_user,
         logger=logger,
     )
-    has_queued_tasks: SiteScrapeTask = await site_collection.has_queued()
-    if not has_queued_tasks:
-        response.success = True
-        return response
-    # Process manual work_items for all queued site_scrape_tasks.
-    response: CollectionResponse = await site_collection.process_work_lists()
-    if not response.success:
-        response.raise_error()
-    response = await site_collection.stop_collecting()
-    if not response.success:
-        response.raise_error()
-
-    return response
+    return await site_collection.stop_collecting()
 
 
 def build_bulk_sites_query(bulk_type: str):

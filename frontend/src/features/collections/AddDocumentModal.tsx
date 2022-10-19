@@ -35,15 +35,9 @@ interface AddDocumentModalPropTypes {
   oldVersion?: SiteDocDocument;
   setOpen: (open: boolean) => void;
   siteId: any;
-  setRefreshSiteDocs?: (refreshSiteDocs: boolean) => void;
 }
 
-export function AddDocumentModal({
-  oldVersion,
-  setOpen,
-  siteId,
-  setRefreshSiteDocs,
-}: AddDocumentModalPropTypes) {
+export function AddDocumentModal({ oldVersion, setOpen, siteId }: AddDocumentModalPropTypes) {
   const [form] = useForm();
   const [addDoc] = useAddDocumentMutation();
   const [fileData, setFileData] = useState<any>();
@@ -124,9 +118,6 @@ export function AddDocumentModal({
       })
         .unwrap()
         .then(() => {
-          if (setRefreshSiteDocs) {
-            setRefreshSiteDocs(true);
-          }
           setOpen(false);
         })
         .catch((error) =>

@@ -12,7 +12,7 @@ interface BulkRunResponse {
 export const siteScrapeTasksApi = createApi({
   reducerPath: 'siteScrapeTasksApi',
   baseQuery: fetchBaseQuery(),
-  tagTypes: ['SiteScrapeTask', 'ChangeLog'],
+  tagTypes: ['SiteScrapeTask', 'ChangeLog', 'DocDocument', 'SiteDocDocument'],
   endpoints: (builder) => ({
     getCollectionConfig: builder.query<{ data: CollectionConfig }, void>({
       query: () => `/app-config/?key=collections`,
@@ -42,7 +42,7 @@ export const siteScrapeTasksApi = createApi({
         url: `/site-scrape-tasks/?site_id=${siteId}`,
         method: 'PUT',
       }),
-      invalidatesTags: (_r, _e, id) => [{ type: 'SiteScrapeTask', id }],
+      invalidatesTags: (_r, _e, id) => ['SiteScrapeTask', 'DocDocument', 'SiteDocDocument'],
     }),
     updateSiteScrapeTask: builder.mutation<SiteScrapeTask, Partial<SiteScrapeTask>>({
       query: (body) => ({
@@ -51,7 +51,9 @@ export const siteScrapeTasksApi = createApi({
         body,
       }),
       invalidatesTags: (_r, _e, { _id: id }) => [
-        { type: 'SiteScrapeTask', id },
+        'SiteScrapeTask',
+        'DocDocument',
+        'SiteDocDocument',
         { type: 'ChangeLog', id },
       ],
     }),
@@ -64,7 +66,9 @@ export const siteScrapeTasksApi = createApi({
         method: 'DELETE',
       }),
       invalidatesTags: (_r, _e, { _id: id }) => [
-        { type: 'SiteScrapeTask', id },
+        'SiteScrapeTask',
+        'DocDocument',
+        'SiteDocDocument',
         { type: 'ChangeLog', id },
       ],
     }),
@@ -74,7 +78,9 @@ export const siteScrapeTasksApi = createApi({
         method: 'POST',
       }),
       invalidatesTags: (_r, _e, id) => [
-        { type: 'SiteScrapeTask', id },
+        'SiteScrapeTask',
+        'DocDocument',
+        'SiteDocDocument',
         { type: 'ChangeLog', id },
       ],
     }),
@@ -83,7 +89,7 @@ export const siteScrapeTasksApi = createApi({
         url: `/site-scrape-tasks/cancel-all?site_id=${siteId}`,
         method: 'POST',
       }),
-      invalidatesTags: (_r, _e, id) => [{ type: 'SiteScrapeTask', id }],
+      invalidatesTags: (_r, _e, id) => ['SiteScrapeTask', 'DocDocument', 'SiteDocDocument'],
     }),
     updateWorkItem: builder.mutation<SiteScrapeTask, WorkItem & { scrapeTaskId: string }>({
       query: (body) => ({
