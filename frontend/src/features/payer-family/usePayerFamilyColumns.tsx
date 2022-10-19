@@ -6,6 +6,7 @@ import { DocumentTypes } from '../retrieved_documents/types';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './payerFamilyApi';
 import { TypeColumn } from '@inovua/reactdatagrid-community/types';
+import { Link } from 'react-router-dom';
 
 export const createColumns = () => {
   return [
@@ -14,6 +15,9 @@ export const createColumns = () => {
       name: 'name',
       defaultFlex: 1,
       minWidth: 200,
+      render: ({ data: payerFamily }: { data: PayerFamily }) => {
+        return <Link to={`${payerFamily._id}`}>{payerFamily.name}</Link>;
+      },
     },
     {
       header: 'Document Type',
