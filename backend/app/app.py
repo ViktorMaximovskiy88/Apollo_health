@@ -24,6 +24,7 @@ from backend.app.routes import (
     site_scrape_tasks,
     sites,
     stats,
+    therapy_master,
     translations,
     users,
     work_queues,
@@ -95,6 +96,7 @@ app.include_router(lineage.router, prefix=prefix)
 app.include_router(payer_family.router, prefix=prefix)
 app.include_router(stats.router, prefix=prefix)
 app.include_router(comments.router, prefix=prefix)
+app.include_router(therapy_master.router, prefix=prefix)
 
 
 @app.middleware("http")
