@@ -1,6 +1,6 @@
 import { Form, Select, Button, Input, Row, Col } from 'antd';
 import { Link } from 'react-router-dom';
-import { PlusOutlined } from '@ant-design/icons';
+import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
 import { PayerFamily } from '../payer-family/types';
 import { useGetPayerFamiliesQuery } from '../payer-family/payerFamilyApi';
@@ -13,6 +13,8 @@ interface DocDocumentLocationFormTypes {
   location: DocDocumentLocation;
   index: number;
   onShowPayerFamilyCreate: (location: DocDocumentLocation) => void;
+  onShowPayerFamilyEdit: (location: DocDocumentLocation) => void;
+  setEditPayerFamilyId: (payerFamilyId: string) => void;
 }
 const useGetPayerFamilies = () => {
   const args = useMemo(() => {
@@ -29,10 +31,11 @@ const useGetPayerFamilies = () => {
   return useGetPayerFamiliesQuery(args);
 };
 export const DocDocumentLocationForm = ({
-  documentType,
   location,
   index,
+  setEditPayerFamilyId,
   onShowPayerFamilyCreate,
+  onShowPayerFamilyEdit,
 }: DocDocumentLocationFormTypes) => {
   const form = Form.useFormInstance();
 
@@ -111,16 +114,28 @@ export const DocDocumentLocationForm = ({
             onSelect={(payerFamilyId: string) => {
               const locations = form.getFieldValue('locations');
               locations[index].payer_family_id = payerFamilyId;
+              setEditPayerFamilyId(payerFamilyId);
               form.setFieldsValue({ locations });
             }}
             options={options}
             style={{ width: 'calc(100% - 96px', marginRight: '8px' }}
           />
+          {form.getFieldValue('locations')[index].payer_family_id ? (
+            <Button
+              onClick={() => {
+                onShowPayerFamilyEdit(updatedLocation);
+              }}
+              type="dashed"
+            >
+              <EditOutlined />
+              Edit
+            </Button>
+          ) : null}
           <Button
-            type="dashed"
             onClick={() => {
               onShowPayerFamilyCreate(location);
             }}
+            type="dashed"
           >
             <PlusOutlined />
             New
