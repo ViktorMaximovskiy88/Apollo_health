@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Button, Radio, Checkbox, Input } from 'antd';
+import { Radio, Checkbox, Input } from 'antd';
 import { debounce, orderBy } from 'lodash';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { DocumentTag, UITherapyTag } from './types';
@@ -24,7 +24,6 @@ export function DocDocumentTagForm(props: {
   tags: Array<DocumentTag>;
   onDeleteTag: Function;
   onEditTag: Function;
-  onAddTag: Function;
   currentPage: number;
 }) {
   const { tags, onEditTag, onDeleteTag, currentPage } = props;
@@ -101,7 +100,7 @@ export function DocDocumentTagForm(props: {
     setEditTags((prevState) => {
       const update = { ...prevState };
       const target = update[id];
-      if (field === 'name' || field === 'text') {
+      if (field === 'name' || field === 'text' || field === 'update_status') {
         target[field] = value;
       } else if (field === 'page' && value != null) {
         target[field] = value - 1;
@@ -113,7 +112,7 @@ export function DocDocumentTagForm(props: {
   };
 
   return (
-    <>
+    <div className="flex flex-col h-full">
       <div className="flex flex-col bg-white">
         <div className="flex flex-1 items-center">
           <Input.Search allowClear={true} placeholder="Search" onChange={debounce(onSearch, 250)} />
@@ -144,7 +143,7 @@ export function DocDocumentTagForm(props: {
         </div>
       </div>
 
-      <div className="flex flex-col p-2 pr-4 overflow-auto h-[calc(100%_-_136px)]" ref={parentRef}>
+      <div className="flex flex-col p-2 pr-4 overflow-auto bg-white flex-grow" ref={parentRef}>
         <div
           style={{
             height: `${rowVirtualizer.getTotalSize()}px`,
@@ -180,14 +179,13 @@ export function DocDocumentTagForm(props: {
         </div>
       </div>
 
-      <div className="flex flex-col bg-white">
-        <div className="flex flex-1 pt-4 items-center justify-between">
+      <div className="flex flex-col p-2 bg-white">
+        <div className="flex flex-1 items-center justify-between">
           <div>
             Showing {filteredList.length} of {tags.length} Tags
           </div>
-          <Button onClick={(e) => {}}>Add Tag</Button>
         </div>
       </div>
-    </>
+    </div>
   );
 }

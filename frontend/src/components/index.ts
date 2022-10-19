@@ -7,6 +7,7 @@ export * from './Layout';
 export * from './ListDatePicker';
 export * from './MainLayout';
 export * from './OfficeFileViewer';
+export * from './GoogleDocViewer';
 export * from './TextFileViewer';
 export * from './RemoteSelect';
 export * from './TextEllipsis';

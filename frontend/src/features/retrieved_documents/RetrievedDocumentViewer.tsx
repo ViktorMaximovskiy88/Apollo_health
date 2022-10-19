@@ -1,6 +1,12 @@
 import { Viewer, PageChangeEvent } from '@react-pdf-viewer/core';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
-import { OfficeFileLoader, TextFileLoader, CsvFileLoader, HtmlFileLoader } from '../../components';
+import {
+  OfficeFileLoader,
+  TextFileLoader,
+  CsvFileLoader,
+  HtmlFileLoader,
+  GoogleDocLoader,
+} from '../../components';
 
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
@@ -16,7 +22,7 @@ const columns = [
 
 interface PropTypes {
   doc: any;
-  docId: any;
+  docId?: string; // RetrievedDocument ID
   showMetadata?: boolean;
   onPageChange?: Function;
 }
@@ -42,8 +48,10 @@ export function FileTypeViewer({ docId, doc, onPageChange = () => {} }: PropType
         Authorization: `Bearer ${token}`,
       }}
     />
-  ) : ['xlsx', 'docx'].includes(doc.file_extension) ? (
+  ) : doc.file_extension === 'xlsx' ? (
     <OfficeFileLoader docId={docId} />
+  ) : doc.file_extension === 'docx' ? (
+    <GoogleDocLoader docId={docId} />
   ) : doc.file_extension === 'csv' ? (
     <CsvFileLoader docId={docId} />
   ) : doc.file_extension === 'html' ? (
@@ -67,14 +75,23 @@ export function RetrievedDocumentViewer({
 
   if (showMetadata) {
     return (
-      <Tabs className="h-full">
-        <Tabs.TabPane tab="Document" key="document" className="h-full overflow-auto">
-          <FileTypeViewer doc={doc} onPageChange={onPageChange} docId={docId} />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="Metadata" key="properties">
-          <Table dataSource={dataSource} columns={columns} pagination={false} />
-        </Tabs.TabPane>
-      </Tabs>
+      <Tabs
+        className="h-full"
+        items={[
+          {
+            key: 'document',
+            label: 'Document',
+            className: 'h-full overflow-auto',
+            children: <FileTypeViewer doc={doc} onPageChange={onPageChange} docId={docId} />,
+          },
+          {
+            key: 'properties',
+            label: 'Metadata',
+            className: 'h-full overflow-auto',
+            children: <Table dataSource={dataSource} columns={columns} pagination={false} />,
+          },
+        ]}
+      />
     );
   } else {
     return <FileTypeViewer doc={doc} onPageChange={onPageChange} docId={docId} />;

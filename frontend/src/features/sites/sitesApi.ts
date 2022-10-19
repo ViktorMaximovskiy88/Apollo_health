@@ -12,17 +12,16 @@ export const sitesApi = createApi({
   endpoints: (builder) => ({
     getSites: builder.query<
       { data: Site[]; total: number },
-      { limit: number; skip: number; sortInfo: TypeSortInfo; filterValue: TypeFilterValue }
+      { limit?: number; skip?: number; sortInfo?: TypeSortInfo; filterValue?: TypeFilterValue }
     >({
       query: ({ limit, skip, sortInfo, filterValue }) => {
         const sorts = sortInfo ? [sortInfo] : [];
-        const args = [
-          `limit=${encodeURIComponent(limit)}`,
-          `skip=${encodeURIComponent(skip)}`,
-          `sorts=${encodeURIComponent(JSON.stringify(sorts))}`,
-          `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
-        ].join('&');
-        return `/sites/?${args}`;
+        const args = [];
+        if (limit) args.push(`limit=${encodeURIComponent(limit)}`);
+        if (skip) args.push(`skip=${encodeURIComponent(skip)}`);
+        if (sorts) args.push(`sorts=${encodeURIComponent(JSON.stringify(sorts))}`);
+        if (filterValue) args.push(`filters=${encodeURIComponent(JSON.stringify(filterValue))}`);
+        return `/sites/?${args.join('&')}`;
       },
       providesTags: (results) => {
         const tags = [{ type: 'Site' as const, id: 'LIST' }];
@@ -30,9 +29,9 @@ export const sitesApi = createApi({
         return tags;
       },
     }),
-    getSite: builder.query<Site, string | undefined>({
+    getSite: builder.query<Site, string | null | undefined>({
       query: (id) => `/sites/${id}`,
-      providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
+      providesTags: (_r, _e, id) => (id ? [{ type: 'Site' as const, id }] : []),
     }),
     getSiteRetrievedDocuments: builder.query<
       RetrievedDocument[],

@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Form } from 'antd';
 import { DocDocument } from '../types';
 import { DocDocumentLocation } from './types';
-import { DocDocumentLocationForm } from './DocDocumentLocationForm';
-import { DocumentFamilyCreateModal } from '../document_family/LocationDocumentFamilyCreateModal';
+import { DocDocumentLocationForm } from '../../payer-family/DocDocumentLocationForm';
+import { PayerFamilyCreateModal } from '../../payer-family/LocationPayerFamilyCreateModal';
 
 interface DocDocumentLocationsPropTypes {
   docDocument: DocDocument;
@@ -23,21 +23,18 @@ export const DocDocumentLocations = ({ docDocument, locations }: DocDocumentLoca
           index={index}
           documentType={docDocument.document_type}
           location={location}
-          onShowDocumentFamilyCreate={() => {
+          onShowPayerFamilyCreate={() => {
             setSelectedLocationIndex(index);
             setModalOpen(true);
           }}
         />
       ))}
 
-      <DocumentFamilyCreateModal
+      <PayerFamilyCreateModal
         location={locations[selectedIndex]}
-        documentType={docDocument.document_type}
         open={modalOpen}
-        onSave={(documentFamilyId: string) => {
-          const locations = form.getFieldValue('locations');
-          locations[selectedIndex].document_family_id = documentFamilyId;
-          form.setFieldsValue({ locations });
+        onSave={(payerFamilyId: string) => {
+          form.setFieldValue(['locations', selectedIndex, 'payer_family_id'], payerFamilyId);
           setModalOpen(false);
           setSelectedLocationIndex(-1);
         }}

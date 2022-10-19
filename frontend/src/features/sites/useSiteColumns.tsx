@@ -57,6 +57,7 @@ const createColumns = ({ deleteSite, setDeletedSite, users }: CreateColumnsType)
         return <ButtonLink to={`${site._id}/scrapes`}>{site.name}</ButtonLink>;
       },
       defaultFlex: 1,
+      minWidth: 300,
     },
     {
       header: 'Site Status',
@@ -138,6 +139,11 @@ const createColumns = ({ deleteSite, setDeletedSite, users }: CreateColumnsType)
       render: ({ value: status }: { value: TaskStatus }) => {
         return styledDisplay(status);
       },
+    },
+    {
+      header: 'Last Run Document Count',
+      name: 'last_run_documents',
+      minWidth: 200,
     },
     {
       header: 'Assignee',

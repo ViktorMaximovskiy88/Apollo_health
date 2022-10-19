@@ -15,7 +15,7 @@ async def try_queue_unique_task(task: T, uniqueness_key: str = "site_id") -> T |
     to_insert = task.dict()
     update_result = await task.get_motor_collection().update_one(
         {
-            "site_id": to_insert[uniqueness_key],
+            uniqueness_key: to_insert[uniqueness_key],
             "status": {
                 "$in": [
                     TaskStatus.QUEUED,

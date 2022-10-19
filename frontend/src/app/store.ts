@@ -13,21 +13,28 @@ import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { translationsApi } from '../features/translations/translationApi';
 import { payerBackboneApi } from '../features/payer-backbone/payerBackboneApi';
 import { documentFamilyApi } from '../features/doc_documents/document_family/documentFamilyApi';
+import { payerFamilyApi } from '../features/payer-family/payerFamilyApi';
 import { lineageApi } from '../features/lineage/lineageApi';
+import { statsApi } from '../features/stats/statsApi';
+import { commentsApi } from '../features/comments/commentsApi';
 import { rtkAuth } from '../common/auth-middleware';
 
 import navSlice from './navSlice';
 import documentFamilyReducer from '../features/doc_documents/document_family/documentFamilySlice';
+import payerFamilyReducer from '../features/payer-family/payerFamilySlice';
 import sitesReducer from '../features/sites/sitesSlice';
 import userReducer from '../features/users/userSlice';
 import collectionsReducer from '../features/collections/collectionsSlice';
 import docDocumentsReducer from '../features/doc_documents/docDocumentsSlice';
 import siteDocDocumentsReducer from '../features/doc_documents/siteDocDocumentsSlice';
+import lineageDocDocumentsReducer from '../features/doc_documents/lineage/lineageDocDocumentsSlice';
 import documentsReducer from '../features/collections/documentsSlice';
 import extractionsReducer from '../features/extractions/extractionsSlice';
 import translationsReducer from '../features/translations/translationSlice';
 import payerBackboneReducer from '../features/payer-backbone/payerBackboneSlice';
+import workQueueReducer from '../features/work_queue/workQueueSlice';
 import lineageReducer from '../features/lineage/lineage-slice';
+import statsReducer from '../features/stats/stats-slice';
 
 const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
   history: createBrowserHistory(),
@@ -47,19 +54,26 @@ export const store = configureStore({
     [documentFamilyApi.reducerPath]: documentFamilyApi.reducer,
     [payerBackboneApi.reducerPath]: payerBackboneApi.reducer,
     [lineageApi.reducerPath]: lineageApi.reducer,
+    [statsApi.reducerPath]: statsApi.reducer,
+    [payerFamilyApi.reducerPath]: payerFamilyApi.reducer,
+    [commentsApi.reducerPath]: commentsApi.reducer,
     nav: navSlice.reducer,
     sites: sitesReducer,
     users: userReducer,
     collections: collectionsReducer,
     docDocuments: docDocumentsReducer,
     siteDocDocuments: siteDocDocumentsReducer,
+    lineageDocDocuments: lineageDocDocumentsReducer,
     documentFamilies: documentFamilyReducer,
+    payerFamilies: payerFamilyReducer,
     documents: documentsReducer,
     extractions: extractionsReducer,
     translations: translationsReducer,
+    workQueues: workQueueReducer,
     payerBackbone: payerBackboneReducer,
     router: routerReducer,
     lineage: lineageReducer,
+    stats: statsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -67,6 +81,7 @@ export const store = configureStore({
       sitesApi.middleware,
       siteScrapeTasksApi.middleware,
       documentsApi.middleware,
+      payerFamilyApi.middleware,
       extractionTasksApi.middleware,
       workQueuesApi.middleware,
       proxiesApi.middleware,
@@ -74,6 +89,7 @@ export const store = configureStore({
       translationsApi.middleware,
       documentFamilyApi.middleware,
       payerBackboneApi.middleware,
+      commentsApi.middleware,
       routerMiddleware,
       rtkAuth
     ),

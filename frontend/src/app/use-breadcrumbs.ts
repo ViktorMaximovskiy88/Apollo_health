@@ -45,6 +45,7 @@ const routes = [
   '/payer-backbone/:payerType',
   '/payer-backbone/:payerType/new',
   '/payer-backbone/:payerType/:payerId',
+  '/stats/collection',
 ];
 
 export const useBreadcrumbs = async () => {
@@ -150,6 +151,10 @@ export const useBreadcrumbs = async () => {
           return Promise.resolve({ url, label } as any);
         },
         ...asyncResolvers,
+      },
+      '/stats': {
+        stats: 'Stats',
+        collection: 'Doc Collection Last 30 Days',
       },
     };
   }, [dispatch]);

@@ -84,6 +84,9 @@ class BaseS3Client:
         for line in self.read_object_stream(relative_key).iter_lines():
             yield line.decode("utf-8")
 
+    def read_utf8_object(self, relative_key: str):
+        return self.read_object(relative_key).decode("utf-8")
+
     def object_exists(self, relative_key):
         try:
             self.bucket.Object(self.get_full_path(relative_key)).load()
@@ -99,6 +102,14 @@ class BaseS3Client:
                 "Bucket": settings.document_bucket,
                 "Key": key,
             },
+            ExpiresIn=expires_in_seconds,
+        )
+
+    def get_signed_upload_url(self, relative_key, expires_in_seconds=60):
+        key = self.get_full_path(relative_key)
+        return self.s3.meta.client.generate_presigned_post(
+            settings.document_bucket,
+            key,
             ExpiresIn=expires_in_seconds,
         )
 

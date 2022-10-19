@@ -14,7 +14,8 @@ from backend.common.models.shared import (
     RetrievedDocumentLocation,
     TherapyTag,
 )
-from backend.common.services.lineage import LineageService
+from backend.common.services.lineage.lineage import LineageService
+from backend.common.test.test_utils import mock_s3_client  # noqa
 
 site_id_a = PydanticObjectId("00000000000000000000000a")
 site_id_b = PydanticObjectId("00000000000000000000000b")
@@ -155,7 +156,7 @@ async def load_retrieved_docs() -> list[RetrievedDocument]:
 
 
 @pytest.mark.asyncio()
-async def test_this():
+async def test_this(mock_s3_client):  # noqa
     random_name = str(random())
     await init_db(mock=True, database_name=random_name)
     await load_retrieved_docs()

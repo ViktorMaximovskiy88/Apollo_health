@@ -3,6 +3,7 @@ export enum ApprovalStatus {
   InProgress = 'IN_PROGRESS',
   Hold = 'HOLD',
   Approved = 'APPROVED',
+  Pending = 'PENDING',
 }
 
 export function approvalStatusDisplayName(status: ApprovalStatus): string {
@@ -40,3 +41,10 @@ function statusDisplayAndStyle(status: ApprovalStatus): StatusDisplay {
       return {};
   }
 }
+
+export const statusOptions = [
+  { value: ApprovalStatus.Pending, label: 'Pending' },
+  { value: ApprovalStatus.Queued, label: 'Queued' },
+  { value: ApprovalStatus.Hold, label: 'Hold' },
+  { value: ApprovalStatus.Approved, label: 'Approved' },
+];

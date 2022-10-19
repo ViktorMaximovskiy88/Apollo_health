@@ -22,6 +22,7 @@ const columns = [
       return <ButtonLink to={`${translation._id}`}>{translation.name}</ButtonLink>;
     },
     defaultFlex: 1,
+    minWidth: 300,
   },
   {
     header: 'Actions',
@@ -55,7 +56,8 @@ export function TranslationsDataTable() {
   const paginationProps = useDataTablePagination(
     translationTableState,
     setTranslationTableLimit,
-    setTranslationTableSkip
+    setTranslationTableSkip,
+    undefined
   );
 
   return (

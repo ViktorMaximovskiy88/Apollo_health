@@ -1,9 +1,6 @@
-from typing import Type
-
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 
-from backend.app.routes.payer_backbone import payer_class
 from backend.app.routes.table_query import (
     TableFilterInfo,
     TableQueryResponse,
@@ -11,7 +8,6 @@ from backend.app.routes.table_query import (
     get_query_json_list,
     query_table,
 )
-from backend.app.services.payer_backbone.payer_backbone_querier import PayerBackboneQuerier
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.models.document_family import (
@@ -19,7 +15,6 @@ from backend.common.models.document_family import (
     NewDocumentFamily,
     UpdateDocumentFamily,
 )
-from backend.common.models.payer_backbone import PayerBackbone
 from backend.common.models.user import User
 
 router = APIRouter(
@@ -47,9 +42,13 @@ async def read_document_families(
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
+    document_type: str | None = None,
 ):
+    query = DocumentFamily.find({"disabled": False})
 
-    query = DocumentFamily.find_many({"disabled": False})
+    if document_type:
+        query = query.find({"document_type": document_type})
+
     return await query_table(query, limit, skip, sorts, filters)
 
 
@@ -59,10 +58,13 @@ async def read_document_families(
     response_model=DocumentFamily,
 )
 async def read_document_family_by_name(
-    site_id: PydanticObjectId,
     name: str,
+    site_id: PydanticObjectId | None = None,
 ):
-    document_family = await DocumentFamily.find_one({"name": name, "site_id": site_id})
+    document_family: DocumentFamily
+    if site_id:
+        document_family = await DocumentFamily.find_one({"name": name, "site_id": site_id})
+    document_family = await DocumentFamily.find_one({"name": name})
     return document_family
 
 
@@ -89,29 +91,12 @@ async def create_document_family(
         description=document_family.description,
         site_id=document_family.site_id,
         relevance=document_family.relevance,
-        payer_info=document_family.payer_info,
         field_groups=document_family.field_groups,
         legacy_relevance=document_family.legacy_relevance,
         disabled=False,
     )
     await create_and_log(logger, current_user, new_document_family)
     return new_document_family
-
-
-@router.get(
-    "/{id}/convert", dependencies=[Security(get_current_user)], response_model=DocumentFamily
-)
-async def document_family_payer_data(
-    effective_date: str | None = None,
-    PayerClass: Type[PayerBackbone] = Depends(payer_class),
-    target: DocumentFamily = Depends(get_target),
-):
-    pbbq = PayerBackboneQuerier(target.payer_info, effective_date)
-    result_ids = await pbbq.relevant_payer_ids_of_type(PayerClass)
-
-    target.payer_info.payer_type = PayerClass.payer_key
-    target.payer_info.payer_ids = [str(id) for id in result_ids]
-    return target
 
 
 @router.post("/{id}", response_model=DocumentFamily)

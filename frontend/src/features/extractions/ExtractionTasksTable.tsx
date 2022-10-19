@@ -44,6 +44,7 @@ const columns = [
     header: 'Elapsed',
     name: 'elapsed',
     defaultFlex: 1,
+    minWidth: 200,
     render: ({ data: task }: { data: ExtractionTask }) =>
       prettyDateDistance(task.queued_time, task.end_time),
   },
@@ -84,6 +85,7 @@ const columns = [
     header: 'Extracted Count',
     name: 'extraction_count',
     defaultFlex: 1,
+    minWidth: 200,
     render: ({ data: task }: { data: ExtractionTask }) => {
       return (
         <ButtonLink to={`${task._id}/results`}>{task.extraction_count} Extractions</ButtonLink>

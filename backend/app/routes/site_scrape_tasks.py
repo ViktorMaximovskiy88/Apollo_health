@@ -5,7 +5,6 @@ from beanie import PydanticObjectId
 from beanie.odm.operators.update.general import Set
 from beanie.odm.queries.find import FindMany
 from fastapi import APIRouter, Depends, HTTPException, Security, status
-from pydantic import BaseModel
 from pymongo import ReturnDocument
 
 from backend.app.routes.table_query import (
@@ -18,6 +17,7 @@ from backend.app.routes.table_query import (
 from backend.app.utils.logger import Logger, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.core.enums import BulkScrapeActions, CollectionMethod, SiteStatus, TaskStatus
+from backend.common.models.base_document import BaseModel
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import (
     ManualWorkItem,

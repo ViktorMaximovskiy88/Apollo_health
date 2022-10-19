@@ -82,13 +82,13 @@ const processScrape = async (scrapeTaskId: string): Promise<void> => {
 
 export const handlers = [
   rest.get('http://localhost/api/v1/app-config', async (req, res, ctx) => {
-    return res(ctx.json(db.appConfig.getAll()));
+    return res(ctx.json({ data: db.appConfig.getAll() }));
   }),
   rest.get('http://localhost/api/v1/sites/site-id1', async (req, res, ctx) => {
     return res(ctx.json(site));
   }),
   rest.get('http://localhost/api/v1/site-scrape-tasks/', async (req, res, ctx) => {
-    return res(ctx.json(db.scrapeTask.getAll().reverse()));
+    return res(ctx.json({ data: db.scrapeTask.getAll().reverse() }));
   }),
   rest.put('http://localhost/api/v1/site-scrape-tasks/', async (req, res, ctx) => {
     const newScrape = db.scrapeTask.create({

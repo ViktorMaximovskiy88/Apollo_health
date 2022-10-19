@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Tuple
+from typing import Any, Tuple
 
 import gensim
 import numpy as np
@@ -32,7 +32,7 @@ doc_types = [
 ]
 
 
-def classify_doc_type(text: str) -> Tuple[str, float, any]:
+def classify_doc_type(text: str) -> Tuple[str, float, Any]:
     tokens = gensim.utils.simple_preprocess(text)
     vector = vector_model.infer_vector(tokens).reshape((1, vector_size))
     probabilities = xgb_model.predict_proba(vector)[0]

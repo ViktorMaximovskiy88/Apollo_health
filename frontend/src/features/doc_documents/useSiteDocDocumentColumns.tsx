@@ -3,7 +3,7 @@ import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import BoolFilter from '@inovua/reactdatagrid-community/BoolFilter';
 import { LinkOutlined, CheckCircleFilled } from '@ant-design/icons';
-import { prettyDateFromISO, prettyDateTimeFromISO } from '../../common';
+import { prettyDateUTCFromISO } from '../../common';
 import { SiteDocDocument } from './types';
 import { Link } from 'react-router-dom';
 import { DocumentTypes } from '../retrieved_documents/types';
@@ -42,7 +42,7 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
       },
       render: ({ data: doc }: { data: SiteDocDocument }) => {
         if (!doc.last_collected_date) return null;
-        return prettyDateTimeFromISO(doc.last_collected_date);
+        return prettyDateUTCFromISO(doc.last_collected_date);
       },
     },
     {
@@ -55,6 +55,7 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
       header: 'Document Name',
       name: 'name',
       defaultFlex: 1,
+      minWidth: 300,
       filterSearch: true,
       render: ({ data: doc }: { data: SiteDocDocument }) => {
         return <Link to={`/documents/${doc._id}`}>{doc.name}</Link>;
@@ -101,7 +102,7 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
       },
       render: ({ data: doc }: { data: SiteDocDocument }) => {
         if (doc.final_effective_date) {
-          return prettyDateFromISO(doc.final_effective_date);
+          return prettyDateUTCFromISO(doc.final_effective_date);
         }
       },
     },

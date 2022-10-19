@@ -12,7 +12,7 @@ import {
 } from './ScrapeConfigFields';
 
 import { AttrSelectors } from './AttrSelectorField';
-import { FocusTherapyConfig } from './FocusTherapyConfig';
+import { FocusTagConfig } from './FocusTagConfig';
 import { HtmlScrapeConfig } from './HtmlScrapeConfig';
 import { SearchTokens } from './SearchTokens';
 import { FollowLinks } from './FollowLinks';
@@ -107,11 +107,10 @@ export function CollectionSettings({ initialValues }: CollectionSettingsPropType
           getFieldValue('collection_method') === CollectionMethod.Automated ? (
             <>
               <ScrapeMethodSelect />
-              {currentScrapeMethod === ScrapeMethod.Html ? <HtmlScrapeConfig /> : null}
               <DocumentExtensions />
               <UrlKeywords />
+              <HtmlScrapeConfig scrapeMethod={currentScrapeMethod} />
               <CustomSelectors />
-              <ProxyExclusions />
               <WaitFor />
               <WaitForTimeout />
               <Schedule />
@@ -120,7 +119,8 @@ export function CollectionSettings({ initialValues }: CollectionSettingsPropType
               <Playbook />
               <SearchInFrames />
               <AllowDocDocUpdate />
-              <FocusTherapyConfig initialValues={initialValues} />
+              <ProxyExclusions />
+              <FocusTagConfig initialValues={initialValues} />
               <DocumentTypeThreshold />
               <LineageThreshold />
             </>

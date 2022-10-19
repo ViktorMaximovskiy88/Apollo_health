@@ -2,6 +2,11 @@ import { BaseDocument } from '../../common';
 import { ApprovalStatus } from '../../common/approvalStatus';
 import { DocDocumentLocation } from './locations/types';
 
+export enum TagUpdateStatus {
+  Changed = 'CHANGED',
+  Added = 'ADDED',
+  Removed = 'REMOVED',
+}
 export interface BaseDocTag {
   id: string;
   _type: 'indication' | 'therapy' | 'therapy-group';
@@ -15,13 +20,18 @@ export interface TherapyTag {
   code: string;
   score: number;
   focus: boolean;
+  update_status?: TagUpdateStatus;
+  text_area?: [number, number];
 }
 
 export interface IndicationTag {
   name?: string;
   text: string;
   page: number;
-  code: string;
+  code: number;
+  focus?: boolean; // migrate and update
+  update_status?: TagUpdateStatus;
+  text_area?: [number, number];
 }
 
 export interface UIIndicationTag extends IndicationTag, BaseDocTag {}
@@ -48,6 +58,12 @@ export interface CompareResponse extends BaseDocument {
 export interface DocDocument extends BaseDocument {
   retrieved_document_id: string;
   classification_status: ApprovalStatus;
+  family_status: ApprovalStatus;
+  content_extraction_status: ApprovalStatus;
+  status: ApprovalStatus;
+  classification_hold_info: string[];
+  extraction_hold_info: string[];
+  family_hold_info: string[];
   classification_lock: TaskLock;
   name: string;
   checksum: string;
@@ -85,6 +101,7 @@ export interface DocDocument extends BaseDocument {
   indication_tags: IndicationTag[];
 
   translation_id?: string;
+  content_extraction_task_id?: string;
 
   tags: string[];
   is_new: boolean;

@@ -33,6 +33,7 @@ export function PayerBackboneDataTable() {
         header: 'Name',
         name: 'name',
         defaultFlex: 1,
+        minWidth: 300,
         render: ({ data: payer }: { data: PayerBackbone }) => {
           return <ButtonLink to={`${payer._id}`}>{payer.name}</ButtonLink>;
         },
@@ -45,7 +46,8 @@ export function PayerBackboneDataTable() {
   const paginationProps = useDataTablePagination(
     payerBackboneTableState,
     setPayerBackboneTableLimit,
-    setPayerBackboneTableSkip
+    setPayerBackboneTableSkip,
+    undefined
   );
 
   if (!payerType) return null;

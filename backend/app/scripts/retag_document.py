@@ -23,7 +23,7 @@ class ReTagger:
         self.indication = IndicationTagger()
         self.therapy = TherapyTagger()
 
-    async def retag_docs_on_site(self, site: Site, total: int):
+    async def retag_docs_on_site(self, site: Site, total: int = 0):
         async for doc in DocDocument.find({"locations.site_id": site.id}):
             await self.retag_document(doc, site, total)
             total += 1
@@ -36,7 +36,7 @@ class ReTagger:
 
         location = next(loc for loc in rdoc.locations if loc.site_id == site.id)
 
-        focus_config = site.scrape_method_configuration.focus_therapy_configs
+        focus_config = site.scrape_method_configuration.focus_section_configs
 
         document_type = rdoc.document_type or "N/A"
         link_text = location.link_text
@@ -47,7 +47,9 @@ class ReTagger:
         therapy_tags = await self.therapy.tag_document(
             doc_text, document_type, url, link_text, focus_config
         )
-        indication_tags = await self.indication.tag_document(doc_text)
+        indication_tags = await self.indication.tag_document(
+            doc_text, document_type, url, link_text, focus_config
+        )
 
         update = {
             "$set": {
@@ -73,7 +75,7 @@ class ReTagger:
         file_extension = rdoc.file_extension
         txt_key = f"{rdoc.text_checksum}.txt"
         if text_client.object_exists(txt_key):
-            return str(text_client.read_object(txt_key))
+            return text_client.read_utf8_object(txt_key)
 
         doc_client = DocumentStorageClient()
         doc_key = f"{rdoc.checksum}.{file_extension}"

@@ -2,8 +2,8 @@ import re
 from typing import Any
 
 from aiohttp import ClientResponse
-from pydantic import BaseModel
 
+from backend.common.models.base_document import BaseModel
 from backend.common.models.link_task_log import InvalidResponse, ValidResponse
 from backend.scrapeworker.common.utils import (
     get_extension_from_content_type,

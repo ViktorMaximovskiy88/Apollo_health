@@ -2,10 +2,10 @@ from datetime import datetime
 from xmlrpc.client import boolean
 
 from beanie import PydanticObjectId
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import Field, HttpUrl
 
-from backend.common.core.enums import CollectionMethod, SearchableType, SiteStatus
-from backend.common.models.base_document import BaseDocument
+from backend.common.core.enums import CollectionMethod, SearchableType, SectionType, SiteStatus
+from backend.common.models.base_document import BaseDocument, BaseModel
 
 
 class AttrSelector(BaseModel):
@@ -16,8 +16,9 @@ class AttrSelector(BaseModel):
     resource_address: bool = False
 
 
-class FocusTherapyConfig(BaseModel):
+class FocusSectionConfig(BaseModel):
     doc_type: str
+    section_type: list[SectionType]
     start_separator: str | None = None
     end_separator: str | None = None
     all_focus: bool = False
@@ -41,7 +42,7 @@ class ScrapeMethodConfiguration(BaseModel):
     attr_selectors: list[AttrSelector] = []
     html_attr_selectors: list[AttrSelector] = []
     html_exclusion_selectors: list[AttrSelector] = []
-    focus_therapy_configs: list[FocusTherapyConfig] = []
+    focus_section_configs: list[FocusSectionConfig] = []
     allow_docdoc_updates: bool = False
 
 
@@ -62,7 +63,7 @@ class UpdateScrapeMethodConfiguration(BaseModel):
     attr_selectors: list[AttrSelector] | None = None
     html_attr_selectors: list[AttrSelector] = []
     html_exclusion_selectors: list[AttrSelector] = []
-    focus_therapy_configs: list[FocusTherapyConfig] | None = None
+    focus_section_configs: list[FocusSectionConfig] | None = None
     allow_docdoc_updates: bool | None = None
 
 
@@ -107,6 +108,7 @@ class UpdateSite(BaseModel):
     doc_type_threshold: float | None = None
     lineage_threshold_override: bool | None = None
     lineage_threshold: float | None = None
+    last_run_documents: int | None = None
 
 
 class UpdateSiteAssigne(BaseModel):
@@ -124,16 +126,36 @@ class Site(BaseDocument, NewSite):
     # Instead of always filtering out not_found on doc docs requiring an index,
     # only filter when a site has manually collected and selected NOT_FOUND.
     has_not_found_documents: boolean = False
+    last_run_documents: int | None = None
 
 
 # Deprecated
-class NoSearchableHtmlConfig(ScrapeMethodConfiguration):
+class FocusTherapyConfig(BaseModel):
+    doc_type: str
+    start_separator: str | None = None
+    end_separator: str | None = None
+    all_focus: bool = False
+
+
+class NoFocusTagConfig(ScrapeMethodConfiguration):
+    focus_section_configs: list[FocusSectionConfig] | None = None
+    focus_therapy_configs: list[FocusTherapyConfig]
+
+
+class NoFocusTagConfigSite(Site):
+    scrape_method_configuration: NoFocusTagConfig
+
+    class Colleciton:
+        name = "Site"
+
+
+class NoSearchableHtmlConfig(NoFocusTagConfig):
     searchable: bool | None = None
     html_attr_selectors: list[AttrSelector] | None = None
     html_exclusion_selectors: list[AttrSelector] | None = None
 
 
-class NoSearchableHtmlSite(Site):
+class NoSearchableHtmlSite(NoFocusTagConfigSite):
     scrape_method_configuration: NoSearchableHtmlConfig
 
     class Collection:

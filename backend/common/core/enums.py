@@ -32,6 +32,7 @@ class BulkScrapeActions(str, Enum):
 
 class ApprovalStatus(str, Enum):
     QUEUED = "QUEUED"
+    PENDING = "PENDING"
     APPROVED = "APPROVED"
     HOLD = "HOLD"
 
@@ -61,3 +62,15 @@ class DocumentType(str, Enum):
     RestrictionList = "Restriction List"
     ReviewCommitteeMeetings = "Review Committee Meetings"
     NotApplicable = "Not Applicable"
+
+
+class SectionType(str, Enum):
+    THERAPY = "THERAPY"
+    INDICATION = "INDICATION"
+    KEY = "KEY"
+
+
+class TagUpdateStatus(str, Enum):
+    CHANGED = "CHANGED"
+    ADDED = "ADDED"
+    REMOVED = "REMOVED"

@@ -12,15 +12,19 @@ from backend.app.routes import (
     app_config,
     auth,
     change_log,
+    comments,
     content_extraction_tasks,
     doc_documents,
     document_family,
     documents,
     lineage,
     payer_backbone,
+    payer_family,
     proxies,
     site_scrape_tasks,
     sites,
+    stats,
+    therapy_master,
     translations,
     users,
     work_queues,
@@ -89,6 +93,10 @@ app.include_router(document_family.router, prefix=prefix)
 app.include_router(payer_backbone.router, prefix=prefix)
 app.include_router(app_config.router, prefix=prefix)
 app.include_router(lineage.router, prefix=prefix)
+app.include_router(payer_family.router, prefix=prefix)
+app.include_router(stats.router, prefix=prefix)
+app.include_router(comments.router, prefix=prefix)
+app.include_router(therapy_master.router, prefix=prefix)
 
 
 @app.middleware("http")
