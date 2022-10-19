@@ -119,49 +119,36 @@ class LineageService:
 
         # pick all from DB that are most recent OR no lineage...
         compare_docs = await self.get_comparision_docs(site_id)
-        await self._process_lineage(compare_docs)
+        await self.process_lineage(compare_docs)
 
-    async def _process_lineage(self, items: list[DocumentAnalysis]):
-        if len(items) == 0:
-            self.logger.info("no items remain")
-            return
+    async def process_lineage(self, items: list[DocumentAnalysis]):
 
-        missing_lineage = [item for item in items if not item.lineage_id]
-        if len(missing_lineage) == 0:
-            self.logger.info("all lineage assigned")
-            return
+        pending_items = [item for item in items if not item.lineage_id]
+        lineaged_items = [item for item in items if item.lineage_id]
 
-        matched = []
-        unmatched = []
-        item: DocumentAnalysis
+        self.logger.info(f"pending_items={len(pending_items)} lineaged_items={len(lineaged_items)}")
 
-        first_item: DocumentAnalysis = missing_lineage.pop()
-        first_item = await create_lineage(first_item)
-        matched.append(first_item)
+        while len(pending_items) > 0:
+            pending_item: DocumentAnalysis = pending_items.pop()
 
-        self.logger.info(f"'{first_item.filename_text}'")
-        for index, item in enumerate(items):
+            matched_item = None
+            for lineaged_item in lineaged_items:
+                match = LineageMatcher(pending_item, lineaged_item, logger=self.logger).exec()
+                if match:
+                    matched_item = lineaged_item
+                    break
 
-            match = LineageMatcher(first_item, item, logger=self.logger).exec()  # type: ignore
-            if match:
-                self.logger.debug(f"'{first_item.filename_text}' '{item.filename_text}' -> MATCHED")
-
-                if item.lineage_id:
-                    first_item.lineage_id = item.lineage_id
-                else:
-                    item.lineage_id = first_item.lineage_id
-
-                await asyncio.gather(first_item.save(), item.save())
-                matched.append(item)
-
+            if matched_item:
+                self.logger.debug(f"'{pending_item.filename}' '{matched_item.filename}' -> MATCHED")
+                pending_item.lineage_id = matched_item.lineage_id
+                await pending_item.save()
+                lineaged_items.append(pending_item)
             else:
-                self.logger.debug(
-                    f"'{first_item.filename_text}' '{item.filename_text}' -> UNMATCHED"
-                )
-                unmatched.append(item)
+                self.logger.debug(f"'{pending_item.filename_text}' -> UNMATCHED")
+                pending_item = await create_lineage(pending_item)
+                lineaged_items.append(pending_item)
 
-        await self._version_matched(matched)
-        await self._process_lineage(unmatched)
+        await self._version_matched(lineaged_items)
 
     def sort_matched(self, items: list[DocumentAnalysis]):
         items.sort(key=lambda x: x.final_effective_date or x.year_part or 0)
@@ -206,7 +193,7 @@ async def version_doc(
 ):
     doc = await RetrievedDocument.get(doc_analysis.retrieved_document_id)
     if not doc:
-        raise Exception(f"RetrievedDocument {doc_analysis.retrieved_document_id} does not exists")
+        raise Exception(f"RetrievedDocument {doc_analysis.retrieved_document_id} does not exist")
 
     doc.lineage_id = doc_analysis.lineage_id
     doc.is_current_version = is_last

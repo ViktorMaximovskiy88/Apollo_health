@@ -78,8 +78,9 @@ class DocumentAnalysis(BaseDocument):
 
     @before_event(Insert)
     def insert_dates(self):
-        self.created_at = datetime.now(tz=timezone.utc)
-        self.updated_at = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=timezone.utc)
+        self.created_at = now
+        self.updated_at = now
 
     @before_event(Replace)
     def replace_dates(self):

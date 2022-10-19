@@ -8,7 +8,7 @@ from beanie import PydanticObjectId
 
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 from backend.common.db.init import init_db
-from backend.common.services.lineage import LineageService
+from backend.common.services.lineage.core import LineageService
 
 app = typer.Typer()
 log = logging.getLogger(__name__)

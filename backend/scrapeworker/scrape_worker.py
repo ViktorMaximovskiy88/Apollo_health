@@ -30,7 +30,7 @@ from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleService
 from backend.common.services.doc_lifecycle.hooks import ChangeInfo, doc_document_save_hook
-from backend.common.services.lineage.lineage import LineageService
+from backend.common.services.lineage.core import LineageService
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_full_text
 from backend.common.storage.text_handler import TextHandler
