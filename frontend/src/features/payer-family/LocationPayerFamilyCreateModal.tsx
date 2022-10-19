@@ -1,11 +1,11 @@
-import { Form, Input } from 'antd';
+import { Form, Input, Switch } from 'antd';
 import { useLazyGetPayerFamilyByNameQuery } from './payerFamilyApi';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
 import { useAddPayerFamilyMutation } from './payerFamilyApi';
 import { Modal } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { PayerFamily } from './types';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
 
@@ -21,6 +21,7 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
   const [form] = useForm();
   const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
   const [addPayerFamily, { isLoading }] = useAddPayerFamilyMutation();
+  const [customNameChecked, setCustomNameChecked] = useState<boolean>(false);
 
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
@@ -69,7 +70,16 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
         >
           <Input />
         </Form.Item>
-        <Input.Group className="space-x-2 flex"></Input.Group>
+        <Input.Group className="space-x-2 flex">
+          Custom Name
+          <br />
+          <Switch
+            checked={customNameChecked}
+            onChange={setCustomNameChecked}
+            checkedChildren="On"
+            unCheckedChildren="Off"
+          />
+        </Input.Group>
 
         <PayerFamilyInfoForm />
       </Form>
