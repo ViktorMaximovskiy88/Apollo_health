@@ -10,13 +10,21 @@ import { CollectionMethod } from '../sites/types';
 import { SiteDocDocumentsTable } from './SiteDocDocumentsTable';
 import { AddDocumentModal } from '../collections/AddDocumentModal';
 import { SiteDocDocument } from './types';
-import { useGetSiteQuery } from '../sites/sitesApi';
-import { useRunSiteScrapeTaskMutation } from '../collections/siteScrapeTasksApi';
+import { useGetSiteQuery, useLazyGetSiteDocDocumentsQuery } from '../sites/sitesApi';
+import {
+  useLazyGetScrapeTasksForSiteQuery,
+  useRunSiteScrapeTaskMutation,
+} from '../collections/siteScrapeTasksApi';
+import { useSiteScrapeTaskId } from './manual_collection/useUpdateSelected';
+import { initialState } from '../collections/collectionsSlice';
 
 export function SiteDocDocumentsPage() {
   const [newDocumentModalOpen, setNewDocumentModalOpen] = useState(false);
   const [oldVersion, setOldVersion] = useState<any>();
   const { siteId } = useParams();
+  const scrapeTaskId = useSiteScrapeTaskId();
+  const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
+  const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
   const [runScrape] = useRunSiteScrapeTaskMutation();
   const { data: site, refetch } = useGetSiteQuery(siteId);
   if (!site) return null;
@@ -30,6 +38,18 @@ export function SiteDocDocumentsPage() {
     setNewDocumentModalOpen(false);
     setOldVersion(null);
   }
+
+  const mostRecentTask = {
+    limit: 1,
+    skip: 0,
+    sortInfo: initialState.table.sort,
+    filterValue: initialState.table.filter,
+  };
+  const refreshDocs = async () => {
+    if (!scrapeTaskId) return;
+    await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
+    await getDocDocumentsQuery({ siteId, scrapeTaskId });
+  };
 
   return (
     <MainLayout
@@ -49,7 +69,12 @@ export function SiteDocDocumentsPage() {
       }
     >
       {newDocumentModalOpen && (
-        <AddDocumentModal oldVersion={oldVersion} setOpen={hideNewDocument} siteId={siteId} />
+        <AddDocumentModal
+          oldVersion={oldVersion}
+          setOpen={hideNewDocument}
+          siteId={siteId}
+          refetch={refreshDocs}
+        />
       )}
       <SiteDocDocumentsTable handleNewVersion={handleNewVersion} />
     </MainLayout>

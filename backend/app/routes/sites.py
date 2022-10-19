@@ -15,7 +15,7 @@ from backend.app.routes.table_query import (
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.uploads import get_sites_from_upload
 from backend.app.utils.user import get_current_user
-from backend.common.core.enums import CollectionMethod, SiteStatus
+from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
 from backend.common.models.doc_document import DocDocument, DocDocumentLimitTags, SiteDocDocument
 from backend.common.models.document import (
     RetrievedDocument,
@@ -268,7 +268,7 @@ async def get_site_doc_docs(
             query["retrieved_document_id"] = {"$in": scrape_task.retrieved_document_ids}
     elif scrape_task_id:
         scrape_task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
-        if scrape_task:
+        if scrape_task and scrape_task.status != TaskStatus.CANCELED:
             query["retrieved_document_id"] = {"$in": scrape_task.retrieved_document_ids}
 
     docs: List[DocDocumentLimitTags] = (

@@ -29,7 +29,7 @@ export function ManualCollectionButton(props: any) {
   const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
   const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
 
-  // Refresh site docs whe starting / stopping collection.
+  // Refresh site docs when starting / stopping collection.
   const mostRecentTask = {
     limit: 1,
     skip: 0,
@@ -43,7 +43,6 @@ export function ManualCollectionButton(props: any) {
     refetch();
     await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
     await getDocDocumentsQuery({ siteId, scrapeTaskId });
-    refetch();
   };
 
   async function handleRunManualScrape() {
@@ -52,9 +51,7 @@ export function ManualCollectionButton(props: any) {
       let response: any = await runScrape(site!._id);
       if (response.data.success) {
         refreshDocs();
-        setTimeout(function () {
-          navigate(`../doc-documents?scrape_task_id=${response.data.nav_id}`);
-        }, 500); // refetch sometimes not working. delay and refetch again.
+        navigate(`../doc-documents?scrape_task_id=${response.data.nav_id}`);
       } else {
         setIsLoading(false);
         notification.error({
@@ -86,9 +83,7 @@ export function ManualCollectionButton(props: any) {
         let response: any = await cancelAllScrapes(site!._id);
         if (response.data?.success) {
           refreshDocs();
-          setTimeout(function () {
-            setIsLoading(false);
-          }, 500); // refetch sometimes not working. delay and refetch again.
+          setIsLoading(false);
         } else {
           setIsLoading(false);
           notification.error({
