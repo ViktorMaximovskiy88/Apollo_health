@@ -25,7 +25,7 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
     const fetchCurrentPayerFamilyVals = async () => {
       const { data } = await getPayerFamily(payerFamilyId);
       if (data && open) {
-        // used to address: Warning: Instance created by `useForm` is not connected to any Form element. Forget to pass `form` prop?
+        //conditional used to address: Warning: Instance created by `useForm` is not connected to any Form element. Forget to pass `form` prop?
         form.setFieldsValue({
           name: data?.name,
           payer_type: data.payer_type,
@@ -93,5 +93,3 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
     </Modal>
   );
 };
-
-// asyncValidator because rtk query makes this tough without hooks/dispatch
