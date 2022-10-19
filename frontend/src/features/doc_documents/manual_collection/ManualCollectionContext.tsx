@@ -45,6 +45,7 @@ const useWorkItem = (docId: string): WorkItem | undefined => {
   const siteScrapeTasks = data?.data;
   if (!siteScrapeTasks) return;
   const [siteScrapeTask] = siteScrapeTasks;
+  if (!('work_list' in siteScrapeTask)) return;
   const { work_list: workList } = siteScrapeTask;
   const workItem = workList.find((item) => item.document_id === docId);
   return workItem;

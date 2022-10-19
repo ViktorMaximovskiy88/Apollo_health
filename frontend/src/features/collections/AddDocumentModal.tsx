@@ -13,7 +13,6 @@ import {
   Checkbox,
   notification,
 } from 'antd';
-
 import { useForm } from 'antd/lib/form/Form';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
@@ -29,7 +28,6 @@ import { useAddDocumentMutation } from '../retrieved_documents/documentsApi';
 import { baseApiUrl, client } from '../../app/base-api';
 import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
 import { SiteDocDocument } from '../doc_documents/types';
-import { useSiteScrapeTaskId } from '../doc_documents/manual_collection/useUpdateSelected';
 
 interface AddDocumentModalPropTypes {
   oldVersion?: SiteDocDocument;
@@ -48,7 +46,6 @@ export function AddDocumentModal({
   const [addDoc] = useAddDocumentMutation();
   const [fileData, setFileData] = useState<any>();
   const [docTitle, setDocTitle] = useState('Add new document');
-  const scrapeTaskId = useSiteScrapeTaskId();
 
   let initialValues: any = {
     lang_code: 'en',
@@ -96,7 +93,6 @@ export function AddDocumentModal({
   /* eslint-enable no-template-curly-in-string */
 
   async function saveDocument(newDocument: any) {
-    if (!scrapeTaskId) return;
     try {
       newDocument.site_id = siteId;
       if (oldVersion) {
