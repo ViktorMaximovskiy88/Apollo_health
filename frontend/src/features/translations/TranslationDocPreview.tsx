@@ -338,29 +338,42 @@ export function SampleExtractionTable(props: { docId: string; form: FormInstance
 export function TranslationDocPreview(props: { form: FormInstance<any> }) {
   const docId = Form.useWatch(['sample', 'doc_id'], props.form);
 
-  return (
-    <Tabs className="h-full ant-tabs-h-full">
-      <Tabs.TabPane tab="Document" key="document">
+  const items = [
+    {
+      label: 'Document',
+      key: 'document',
+      children: (
         <div className="flex flex-col h-full">
           <TranslationTestingDocumentPreview docId={docId} />
         </div>
-      </Tabs.TabPane>
-      {docId && (
-        <>
-          <Tabs.TabPane tab="Document Sample" key="sample">
-            <TranslationDocumentSampler form={props.form} docId={docId} />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="Table Identification" key="table-ident">
-            <TranslationTableExtractionSample form={props.form} docId={docId} />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="Extraction" key="extraction">
-            <SampleExtractionTable docId={docId} form={props.form} />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="Translation" key="translation">
-            <SampleTranslationTable docId={docId} form={props.form} />
-          </Tabs.TabPane>
-        </>
-      )}
-    </Tabs>
-  );
+      ),
+    },
+  ];
+
+  if (docId) {
+    items.push(
+      {
+        label: 'Document Sample',
+        key: 'sample',
+        children: <TranslationDocumentSampler form={props.form} docId={docId} />,
+      },
+      {
+        label: 'Table Identification',
+        key: 'table-ident',
+        children: <TranslationTableExtractionSample form={props.form} docId={docId} />,
+      },
+      {
+        label: 'Extraction',
+        key: 'extraction',
+        children: <SampleExtractionTable docId={docId} form={props.form} />,
+      },
+      {
+        label: 'Translation',
+        key: 'translation',
+        children: <SampleTranslationTable docId={docId} form={props.form} />,
+      }
+    );
+  }
+
+  return <Tabs className="h-full ant-tabs-h-full" items={items} />;
 }
