@@ -27,7 +27,12 @@ from backend.scrapeworker.common.lineage_parser import (
     guess_state_name,
     guess_year_part,
 )
-from backend.scrapeworker.common.utils import compact, tokenize_filename, tokenize_url
+from backend.scrapeworker.common.utils import (
+    compact,
+    group_by_attr,
+    tokenize_filename,
+    tokenize_url,
+)
 
 
 class LineageService:
@@ -166,19 +171,26 @@ class LineageService:
         return doc, doc_doc
 
     async def _version_matched(self, items: list[DocumentAnalysis]):
-        matches = self.sort_matched(items)
-        prev_doc = None
-        prev_doc_doc = None
-        for index, match in enumerate(matches):
-            is_last = index == len(matches) - 1
-            doc, doc_doc = await asyncio.gather(
-                version_doc(match, is_last, prev_doc),
-                version_doc_doc(match, is_last, prev_doc_doc),
-            )
-            if is_last and prev_doc:
-                doc, doc_doc = await self.compare_tags(doc, doc_doc, prev_doc)
-            prev_doc = doc
-            prev_doc_doc = doc_doc
+        for _key, group in group_by_attr(items, "lineage_id"):
+            matches = self.sort_matched(list(group))
+            prev_doc = None
+            prev_doc_doc = None
+            for index, match in enumerate(matches):
+                print(
+                    match.final_effective_date,
+                    match.year_part,
+                    match.id,
+                    match.retrieved_document_id,
+                )
+                is_last = index == len(matches) - 1
+                doc, doc_doc = await asyncio.gather(
+                    version_doc(match, is_last, prev_doc),
+                    version_doc_doc(match, is_last, prev_doc_doc),
+                )
+                if is_last and prev_doc:
+                    doc, doc_doc = await self.compare_tags(doc, doc_doc, prev_doc)
+                prev_doc = doc
+                prev_doc_doc = doc_doc
 
 
 async def create_lineage(item: DocumentAnalysis):
