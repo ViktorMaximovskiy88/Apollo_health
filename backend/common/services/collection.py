@@ -282,31 +282,50 @@ class CollectionService:
                 )
         return response
 
-    async def set_first_collected(self, retr_doc) -> CollectionResponse:
+    async def set_first_collected(self, doc) -> CollectionResponse:
         """Update all task retrieved_docs and doc_docs last_collected_date."""
         response: CollectionResponse = CollectionResponse()
-        await RetrievedDocument.get_motor_collection().find_one_and_update(
-            {"_id": retr_doc.id},
-            {"$set": {"first_collected_date": datetime.now(tz=timezone.utc)}},
+        retr_doc = await RetrievedDocument.find_one(
+            {"_id": doc.id},
         )
-        # TODO: Update location collected.
-        await DocDocument.get_motor_collection().find_one_and_update(
+        retr_doc.first_collected_date = datetime.now(tz=timezone.utc)
+        if retr_doc.locations:
+            loc = retr_doc.locations[-1]
+            loc.first_collected_date = datetime.now(tz=timezone.utc)
+            retr_doc.locations[-1] = loc
+        doc_doc = await DocDocument.find_one(
             {"retrieved_document_id": retr_doc.id},
-            {"$set": {"first_collected_date": datetime.now(tz=timezone.utc)}},
         )
+        doc_doc.last_collected_date = datetime.now(tz=timezone.utc)
+        if doc_doc.locations:
+            loc = doc_doc.locations[-1]
+            loc.first_collected_date = datetime.now(tz=timezone.utc)
+            doc_doc.locations[-1] = loc
+        await retr_doc.save()
+        await doc_doc.save()
         return response
 
-    async def set_last_collected(self, retr_doc) -> CollectionResponse:
+    async def set_last_collected(self, doc) -> CollectionResponse:
         """Update all task retrieved_docs and doc_docs last_collected_date."""
         response: CollectionResponse = CollectionResponse()
-        await RetrievedDocument.get_motor_collection().find_one_and_update(
-            {"_id": retr_doc.id},
-            {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
+        retr_doc = await RetrievedDocument.find_one(
+            {"_id": doc.id},
         )
-        await DocDocument.get_motor_collection().find_one_and_update(
+        retr_doc.last_collected_date = datetime.now(tz=timezone.utc)
+        if retr_doc.locations:
+            loc = retr_doc.locations[-1]
+            loc.last_collected_date = datetime.now(tz=timezone.utc)
+            retr_doc.locations[-1] = loc
+        doc_doc = await DocDocument.find_one(
             {"retrieved_document_id": retr_doc.id},
-            {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
         )
+        doc_doc.last_collected_date = datetime.now(tz=timezone.utc)
+        if doc_doc.locations:
+            loc = doc_doc.locations[-1]
+            loc.last_collected_date = datetime.now(tz=timezone.utc)
+            doc_doc.locations[-1] = loc
+        await retr_doc.save()
+        await doc_doc.save()
         return response
 
     async def process_work_lists(self) -> CollectionResponse:
