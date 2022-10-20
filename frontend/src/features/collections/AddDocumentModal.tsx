@@ -36,6 +36,25 @@ interface AddDocumentModalPropTypes {
   refetch?: any;
 }
 
+const buildInitialValues = (oldVersion?: SiteDocDocument) => {
+  if (!oldVersion) {
+    return {
+      lang_code: 'en',
+      internal_document: false,
+    };
+  }
+  return {
+    lang_code: oldVersion.lang_code,
+    name: oldVersion.name,
+    document_type: oldVersion.document_type,
+    internal_document: oldVersion.internal_document,
+    site_id: oldVersion.site_id,
+    link_text: oldVersion.link_text,
+    base_url: oldVersion.base_url,
+    url: oldVersion.url,
+  };
+};
+
 export function AddDocumentModal({
   oldVersion,
   setOpen,
@@ -47,40 +66,9 @@ export function AddDocumentModal({
   const [fileData, setFileData] = useState<any>();
   const [docTitle, setDocTitle] = useState('Add new document');
 
-  let initialValues: any = {
-    lang_code: 'en',
-    internal_document: false,
-  };
+  const initialValues = buildInitialValues(oldVersion);
   if (docTitle !== 'Add new version' && oldVersion) {
     setDocTitle('Add new version');
-  }
-
-  // Clicked on new document so copy old document details to form.
-  if (oldVersion) {
-    form.setFieldsValue({
-      ['lang_code']: oldVersion.lang_code,
-    });
-    form.setFieldsValue({
-      ['name']: oldVersion.name,
-    });
-    form.setFieldsValue({
-      ['document_type']: oldVersion.document_type,
-    });
-    form.setFieldsValue({
-      ['internal_document']: oldVersion.internal_document,
-    });
-    form.setFieldsValue({
-      ['site_id']: oldVersion.site_id,
-    });
-    form.setFieldsValue({
-      ['link_text']: oldVersion.link_text,
-    });
-    form.setFieldsValue({
-      ['base_url']: oldVersion.base_url,
-    });
-    form.setFieldsValue({
-      ['url']: oldVersion.url,
-    });
   }
 
   /* eslint-disable no-template-curly-in-string */
@@ -106,6 +94,7 @@ export function AddDocumentModal({
       newDocument.url = form.getFieldValue('url');
       newDocument.base_url = form.getFieldValue('base_url') ?? newDocument.url;
       newDocument.link_text = form.getFieldValue('link_text');
+
       // For some reason, fileData never updates if browser auto fills.
       fileData.url = form.getFieldValue('url');
       fileData.base_url = form.getFieldValue('base_url') ?? newDocument.url;
@@ -114,23 +103,21 @@ export function AddDocumentModal({
       delete newDocument.link_text;
       delete newDocument.document_file;
 
-      await addDoc({
-        ...newDocument,
-        ...fileData,
-      })
-        .unwrap()
-        .then(() => {
-          if (refetch) {
-            refetch();
-          }
-          setOpen(false);
-        })
-        .catch((error) =>
-          notification.error({
-            message: error.data.detail,
-            description: `Upload a new document or enter a new location.`,
-          })
-        );
+      try {
+        await addDoc({
+          ...newDocument,
+          ...fileData,
+        });
+        if (refetch) {
+          refetch();
+        }
+        setOpen(false);
+      } catch (error: any) {
+        notification.error({
+          message: error.data.detail,
+          description: `Upload a new document or enter a new location.`,
+        });
+      }
     } catch (error) {
       message.error('We could not save this document');
     }
@@ -140,9 +127,11 @@ export function AddDocumentModal({
   }
 
   function setLocationValuesFromResponse(responseData: any) {
-    form.setFieldsValue({ base_url: responseData.base_url });
-    form.setFieldsValue({ url: responseData.url });
-    form.setFieldsValue({ link_text: responseData.link_text });
+    form.setFieldsValue({
+      base_url: responseData.base_url,
+      url: responseData.url,
+      link_text: responseData.link_text,
+    });
   }
 
   return (

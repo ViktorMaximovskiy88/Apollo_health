@@ -1,8 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { Site, CollectionMethod } from './types';
+import { Site } from './types';
 import { SiteForm } from './form/SiteForm';
 import { useGetSiteQuery, useUpdateSiteMutation } from './sitesApi';
-import { useCancelAllSiteScrapeTasksMutation } from '../collections/siteScrapeTasksApi';
 import { ButtonLink, MainLayout } from '../../components';
 import { SiteMenu } from '../sites/SiteMenu';
 import { useForm } from 'antd/lib/form/Form';
