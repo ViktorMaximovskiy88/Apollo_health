@@ -74,8 +74,8 @@ export function AddDocumentModal({
   const [docTitle, setDocTitle] = useState('Add new document');
 
   const initialValues = buildInitialValues(oldVersion);
-  if (docTitle !== 'Add new version' && oldVersion) {
-    setDocTitle('Add new version');
+  if (docTitle !== 'Add New Version' && oldVersion) {
+    setDocTitle('Add New Version');
   }
 
   /* eslint-disable no-template-curly-in-string */
