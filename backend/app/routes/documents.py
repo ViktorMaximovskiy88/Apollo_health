@@ -29,7 +29,7 @@ from backend.common.models.site_scrape_task import (
 from backend.common.models.user import User
 from backend.common.services.collection import CollectionResponse, find_work_item_index
 from backend.common.services.document import create_doc_document_service
-from backend.common.services.site import location_exists, site_last_started_task
+from backend.common.services.site import site_last_started_task
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_handler import TextHandler
@@ -146,7 +146,7 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
     )
     with tempfile.NamedTemporaryFile(delete=True, suffix="." + file_extension) as tmp:
         tmp.write(content)
-        temp_path: str = tmp.name
+        temp_path = tmp.name
         download: DownloadContext = DownloadContext(
             request=Request(url=temp_path), file_extension=file_extension
         )
@@ -158,6 +158,9 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
         text_checksum_document: RetrievedDocument | None = await RetrievedDocument.find_one(
             RetrievedDocument.text_checksum == text_checksum
         )
+        # use first hash to see if their is a retrieved document
+        if checksum_document or text_checksum_document:
+            return {"error": "The document already exists!"}
         response["data"] = {
             "checksum": checksum,
             "text_checksum": text_checksum,
@@ -230,8 +233,8 @@ async def add_document(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ) -> RetrievedDocument | CollectionResponse:
-    if await location_exists(uploaded_doc, uploaded_doc.site_id):
-        raise HTTPException(status.HTTP_409_CONFLICT, "Doc already exists for that location")
+    # if await location_exists(uploaded_doc, uploaded_doc.site_id):
+    #     raise HTTPException(status.HTTP_409_CONFLICT, "Doc already exists for that location")
     site: Site | None = await Site.find_one({"_id": uploaded_doc.site_id})
     if not site:
         raise HTTPException(status.HTTP_409_CONFLICT, "Not able to upload document to site.")
