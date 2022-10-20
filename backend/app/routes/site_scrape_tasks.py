@@ -80,7 +80,7 @@ async def read_scrape_tasks_for_site(
 )
 async def read_scrape_task(
     target: User = Depends(get_target),
-) -> User:
+):
     return target
 
 
@@ -177,14 +177,14 @@ async def run_bulk_by_type(
     type: str,
     logger: Logger = Depends(get_logger),
     current_user: User = Security(get_current_user),
-) -> BulkRunResponse:
+):
     async def cancel_site_scrapes(site_id: PydanticObjectId) -> int:
         query = {
             "site_id": site_id,
             "status": {"$in": [TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]},
         }
         scrapes = SiteScrapeTask.find_many(query)
-        scrapes_count: int = await scrapes.count()
+        scrapes_count = await scrapes.count()
         await scrapes.set({"status": TaskStatus.CANCELING})
         return scrapes_count
 

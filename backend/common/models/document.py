@@ -52,7 +52,7 @@ class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
 class RetrievedDocument(BaseDocument, BaseRetrievedDocument, DocumentMixins):
     locations: list[RetrievedDocumentLocation] = []
 
-    def for_site(self, site_id: PydanticObjectId) -> SiteRetrievedDocument:
+    def for_site(self, site_id: PydanticObjectId):
         location = self.get_site_location(site_id)
         copy = self.dict()
         copy.pop("first_collected_date")

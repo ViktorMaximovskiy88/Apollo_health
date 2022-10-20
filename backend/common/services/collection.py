@@ -282,6 +282,20 @@ class CollectionService:
                 )
         return response
 
+    async def set_first_collected(self, retr_doc) -> CollectionResponse:
+        """Update all task retrieved_docs and doc_docs last_collected_date."""
+        response: CollectionResponse = CollectionResponse()
+        await RetrievedDocument.get_motor_collection().find_one_and_update(
+            {"_id": retr_doc.id},
+            {"$set": {"first_collected_date": datetime.now(tz=timezone.utc)}},
+        )
+        # TODO: Update location collected.
+        await DocDocument.get_motor_collection().find_one_and_update(
+            {"retrieved_document_id": retr_doc.id},
+            {"$set": {"first_collected_date": datetime.now(tz=timezone.utc)}},
+        )
+        return response
+
     async def set_last_collected(self, retr_doc) -> CollectionResponse:
         """Update all task retrieved_docs and doc_docs last_collected_date."""
         response: CollectionResponse = CollectionResponse()
@@ -341,12 +355,15 @@ class CollectionService:
 
         match work_item.selected:
             case WorkItemOption.FOUND:
+                await self.set_first_collected(retr_doc)
                 await self.set_last_collected(retr_doc)
                 self.found_docs_total += 1
             case WorkItemOption.NEW_DOCUMENT:
+                await self.set_first_collected(retr_doc)
                 await self.set_last_collected(retr_doc)
                 self.found_docs_total += 1
             case WorkItemOption.NEW_VERSION:
+                await self.set_first_collected(retr_doc)
                 await self.set_last_collected(retr_doc)
                 self.found_docs_total += 1
             case WorkItemOption.NOT_FOUND:

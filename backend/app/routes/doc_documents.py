@@ -106,7 +106,7 @@ class CompareResponse(BaseModel):
 )
 async def create_diff(
     previous_doc_doc_id: PydanticObjectId, current_doc: DocDocument = Depends(get_target)
-) -> CompareResponse:
+):
     text_handler: TextHandler = TextHandler()
     previous_doc: DocDocument = await get_target(previous_doc_doc_id)
     if current_doc.text_checksum is None or previous_doc.text_checksum is None:

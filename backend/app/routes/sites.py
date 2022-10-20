@@ -40,7 +40,7 @@ router = APIRouter(
 
 
 async def get_target(id: PydanticObjectId) -> Site:
-    site: Site | None = await Site.get(id)
+    site = await Site.get(id)
     if not site:
         raise HTTPException(detail=f"Site {id} Not Found", status_code=status.HTTP_404_NOT_FOUND)
     return site
@@ -52,13 +52,13 @@ async def read_sites(
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
-) -> TableQueryResponse[Site]:
+):
     query = Site.find({"disabled": False})
     return await query_table(query, limit, skip, sorts, filters)
 
 
 @router.get("/download", response_model=list[NewSite], dependencies=[Security(get_current_user)])
-async def download_sites() -> List[NewSite]:
+async def download_sites():
     return (
         await Site.find({"disabled": False, "status": {"$ne": SiteStatus.INACTIVE}})
         .project(NewSite)
@@ -74,8 +74,8 @@ async def download_sites() -> List[NewSite]:
 async def check_url(
     url: str,
     current_site: PydanticObjectId | None = Query(default=None, alias="currentSite"),
-) -> ActiveUrlResponse:
-    site: Site | None = await Site.find_one(
+):
+    site = await Site.find_one(
         ElemMatch(Site.base_urls, {"url": urllib.parse.unquote(url)}),
         Site.id != current_site,
         {"disabled": False},
@@ -89,7 +89,7 @@ async def check_url(
 @router.get("/{id}", response_model=Site, dependencies=[Security(get_current_user)])
 async def read_site(
     target: Site = Depends(get_target),
-) -> Site:
+):
     return target
 
 
@@ -99,7 +99,7 @@ async def create_site(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ) -> Site:
-    new_site: Site = Site(
+    new_site = Site(
         name=site.name,
         creator_id=current_user.id,
         base_urls=site.base_urls,
@@ -120,7 +120,7 @@ async def upload_sites(
     file: UploadFile,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
-) -> list[Site]:
+):
     new_sites: list[Site] = []
 
     for new_site in get_sites_from_upload(file):
@@ -193,7 +193,7 @@ async def delete_site(
     target: Site = Depends(get_target),
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
-) -> dict[str, bool]:
+):
     scrape_task = False
     if scrape_task:
         raise HTTPException(
@@ -212,8 +212,8 @@ async def delete_site(
 )
 async def get_site_docs(
     site_id: PydanticObjectId,
-) -> list[SiteRetrievedDocument]:
-    docs: List[RetrievedDocumentLimitTags] = (
+):
+    docs = (
         await RetrievedDocument.find({"locations.site_id": site_id})
         .project(RetrievedDocumentLimitTags)
         .to_list()
@@ -229,7 +229,7 @@ async def get_site_docs(
 async def get_site_doc_by_id(
     site_id: PydanticObjectId,
     doc_id: PydanticObjectId,
-) -> SiteRetrievedDocument:
+):
     doc: RetrievedDocument | None = await RetrievedDocument.find_one(
         {"_id": doc_id, "locations.site_id": site_id}
     )
@@ -253,10 +253,10 @@ async def get_site_doc_docs(
     site: Site | None = await Site.find_one({"_id": site_id})
     if not site:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve docs.")
-    # Has at one point manually collected docs selected as not_found.
-    if site.has_not_found_documents:
-        query["not_found"] = {"$ne": True}
     if site.is_running_manual_collection:
+        # Has at one point manually collected docs selected as not_found.
+        if site.has_not_found_documents:
+            query["not_found"] = {"$ne": True}
         scrape_task = await SiteScrapeTask.find_one(
             {
                 "site_id": site_id,
@@ -285,10 +285,8 @@ async def get_site_doc_docs(
 async def get_site_doc_doc_by_id(
     site_id: PydanticObjectId,
     doc_id: PydanticObjectId,
-) -> SiteDocDocument:
-    doc: DocDocument | None = await DocDocument.find_one(
-        {"_id": doc_id, "locations.site_id": site_id}
-    )
+):
+    doc = await DocDocument.find_one({"_id": doc_id, "locations.site_id": site_id})
     if not doc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return doc.for_site(site_id)

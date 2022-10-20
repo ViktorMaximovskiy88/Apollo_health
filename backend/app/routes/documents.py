@@ -348,6 +348,8 @@ async def add_document(
 
     # Manual: Process and update work items.
     current_task: SiteScrapeTask = await site_last_started_task(site.id)
+    if not current_task:
+        return created_retr_doc
     created_work_item: ManualWorkItem = ManualWorkItem(
         document_id=f"{created_doc_doc.id}",
         retrieved_document_id=f"{created_retr_doc.id}",

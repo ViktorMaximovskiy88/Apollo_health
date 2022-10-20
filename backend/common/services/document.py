@@ -42,8 +42,8 @@ async def get_site_docs_for_ids(
     return docs
 
 
-async def get_site_lineage(site_id: PydanticObjectId) -> List[LineageDoc]:
-    docs: List[LineageDoc] = await RetrievedDocument.aggregate(
+async def get_site_lineage(site_id: PydanticObjectId):
+    docs = await RetrievedDocument.aggregate(
         aggregation_pipeline=[
             {"$match": {"locations.site_id": site_id}},
             {
