@@ -2,26 +2,30 @@ import { Form, Input, Select } from 'antd';
 import {
   useLazyGetDocumentFamilyByNameQuery,
   useAddDocumentFamilyMutation,
+  useUpdateDocumentFamilyMutation,
 } from './documentFamilyApi';
-import { DocDocumentLocation } from '../locations/types';
 import { Modal } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
 import { useEffect } from 'react';
 import { fieldGroupsOptions, legacyRelevanceOptions } from './documentFamilyLevels';
+import { DocumentFamily } from './types';
 
 interface DocumentFamilyCreateModalPropTypes {
   documentType?: string;
   open?: boolean;
   onClose: () => void;
   onSave: (documentFamilyId: string) => void;
+  documentFamilyData?: DocumentFamily;
 }
 
 export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTypes) => {
-  const { documentType, open, onClose, onSave } = props;
+  const { documentType, open, documentFamilyData, onClose, onSave } = props;
   const [form] = useForm();
   const [getDocumentFamilyByName] = useLazyGetDocumentFamilyByNameQuery();
   const [addDocumentFamily, { isLoading, data, isSuccess }] = useAddDocumentFamilyMutation();
+  const [update, { isLoading: isUpdateLoading, data: updateData, isSuccess: isUpdateSuccess }] =
+    useUpdateDocumentFamilyMutation();
   const nameValue: string[] = Form.useWatch('legacy_relevance', form);
   let filteredlegacyRelevanceOptions = legacyRelevanceOptions;
 
@@ -55,27 +59,42 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
     }
   }, [isSuccess, data]);
 
+  useEffect(() => {
+    if (isUpdateSuccess && updateData) {
+      onSave(updateData._id);
+      form.resetFields();
+    }
+  }, [isUpdateSuccess, updateData]);
+
+  useEffect(() => {
+    form.setFieldsValue(documentFamilyData);
+  }, [documentFamilyData]);
   return (
     <Modal
       open={open}
-      title={<>Add Document Family</>}
+      title={documentFamilyData ? <>Edit Document Family</> : <>Add Document Family</>}
       width="50%"
       okText="Submit"
       onOk={form.submit}
       onCancel={onClose}
+      confirmLoading={isLoading || isUpdateLoading}
     >
       <Form
         form={form}
         layout="vertical"
-        disabled={isLoading}
         autoComplete="off"
         requiredMark={false}
         validateTrigger={['onBlur']}
         onFinish={(values: any) => {
-          addDocumentFamily({
-            ...values,
-            document_type: documentType,
-          });
+          if (documentFamilyData) {
+            update({ body: values, _id: documentFamilyData._id });
+            form.resetFields();
+          } else {
+            addDocumentFamily({
+              ...values,
+              document_type: documentType,
+            });
+          }
         }}
       >
         <div className="flex">
@@ -89,7 +108,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
           name="name"
           rules={[
             { required: true, message: 'Please input a document family name' },
-            mustBeUniqueName(getDocumentFamilyByName),
+            mustBeUniqueName(getDocumentFamilyByName, documentFamilyData?.name),
           ]}
         >
           <Input />
@@ -114,9 +133,12 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
 };
 
 // asyncValidator because rtk query makes this tough without hooks/dispatch
-function mustBeUniqueName(asyncValidator: Function) {
+export function mustBeUniqueName(asyncValidator: Function, name: string = '') {
   return {
     async validator(_rule: Rule, value: string) {
+      if (value === name) {
+        return Promise.resolve();
+      }
       const { data: documentFamily } = await asyncValidator({ name: value });
       if (documentFamily) {
         return Promise.reject(`Document family name "${documentFamily.name}" already exists`);

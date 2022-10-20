@@ -14,6 +14,7 @@ import { DocumentFamily } from './types';
 import { DocumentTypes } from '../../retrieved_documents/types';
 
 import { fieldGroupsOptions, legacyRelevanceOptions } from './documentFamilyLevels';
+import { mustBeUniqueName } from './DocumentFamilyCreateModal';
 
 export function DocumentFamilyEditPage() {
   const [form] = useForm();
@@ -84,7 +85,7 @@ export function DocumentFamilyEditPage() {
                 className="w-1/2"
                 rules={[
                   { required: true, message: 'Please input a document family name' },
-                  mustBeUniqueNewName(getDocumentFamilyByName, original),
+                  mustBeUniqueName(getDocumentFamilyByName, original),
                 ]}
               >
                 <Input />
@@ -118,19 +119,4 @@ export function DocumentFamilyEditPage() {
       </div>
     </MainLayout>
   );
-}
-
-function mustBeUniqueNewName(asyncValidator: Function, name: string = '') {
-  return {
-    async validator(_rule: Rule, value: string) {
-      if (value === name) {
-        return Promise.resolve();
-      }
-      const { data: documentFamily } = await asyncValidator({ name: value });
-      if (documentFamily) {
-        return Promise.reject(`Document family name "${documentFamily.name}" already exists`);
-      }
-      return Promise.resolve();
-    },
-  };
 }

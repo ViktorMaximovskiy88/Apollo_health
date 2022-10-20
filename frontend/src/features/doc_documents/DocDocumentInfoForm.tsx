@@ -7,7 +7,7 @@ import { DateFields } from './DocDocumentDateFields';
 import { DocumentClassification } from './DocDocumentClassificationFields';
 import { ExtractionFields } from './DocDocumentExtractionFields';
 import { Translation } from './TranslationSelector';
-import { DocDocumentInfoFormFamilyField } from './DocDocumentInfoFormFamilyField';
+import { DocDocumentDocumentFamilyField } from './DocDocumentDocumentFamilyField';
 import { DocDocument } from './types';
 
 interface DocDocumentInfoTypes {
@@ -34,7 +34,7 @@ export function DocDocumentInfoForm({ onFieldChange }: DocDocumentInfoTypes) {
       <DocumentClassification />
       <Translation />
       <Hr />
-      <DocDocumentInfoFormFamilyField onFieldChange={onFieldChange} />
+      <DocDocumentDocumentFamilyField onFieldChange={onFieldChange} />
       <Hr />
       <DateFields onFieldChange={onFieldChange} />
       <Hr />
