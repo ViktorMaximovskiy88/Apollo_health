@@ -3,6 +3,7 @@ import tempfile
 from datetime import datetime, timezone
 from typing import Any, List
 
+import typer
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, Security, UploadFile, status
 from fastapi.responses import StreamingResponse
@@ -59,7 +60,7 @@ async def get_target(id: PydanticObjectId) -> RetrievedDocument:
 async def get_documents(
     scrape_task_id: PydanticObjectId | None = None,
     site_id: PydanticObjectId | None = None,
-):
+) -> List[RetrievedDocumentLimitTags]:
     query = {}
     if scrape_task_id:
         scrape_task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
@@ -238,7 +239,7 @@ async def add_document(
     link_text = uploaded_doc.metadata.get("link_text", None)
 
     # Create retr_doc and doc_doc from uploaded_doc.
-    new_document: RetrievedDocument = RetrievedDocument(
+    new_retr_document: RetrievedDocument = RetrievedDocument(
         checksum=uploaded_doc.checksum,
         content_type=uploaded_doc.content_type,
         doc_type_confidence=uploaded_doc.doc_type_confidence,
@@ -273,21 +274,61 @@ async def add_document(
             )
         ],
     )
+
     # Set new_document current_version and lineage.
-    new_document.is_current_version = True
+    # previous_doc_doc_id (a field on DocDocument) is a DocDocument id,
+    # previous_doc_id (a field on RetrievedDocument) is a RetrievedDocument id.
+    # lineage_id (a field on both DocDocument and RetrievedDocument) is a Lineage id,
+    # from the Lineage table. a given pair of DocDocuments and RetrievedDocuments
+    # will have the same lineage_id.
+    new_retr_document.is_current_version = True
     if uploaded_doc.upload_new_version_for_id:
-        original_version_doc: DocDocument | None = await DocDocument.find_one(
+        original_doc_doc: DocDocument | None = await DocDocument.find_one(
             {"_id": PydanticObjectId(uploaded_doc.upload_new_version_for_id)}
         )
-        new_document.previous_doc_id = original_version_doc.id
-        original_version_doc.is_current_version = False
-        if original_version_doc.lineage_id:
-            new_document.lineage_id = original_version_doc.lineage_id
+        original_doc_doc.is_current_version = False
+        original_retr_doc: DocDocument | None = await RetrievedDocument.find_one(
+            {"_id": PydanticObjectId(original_doc_doc.retrieved_document_id)}
+        )
+        original_retr_doc.is_current_version = False
+        new_retr_document.previous_doc_id = original_retr_doc.id
+        if original_retr_doc.lineage_id:
+            new_retr_document.lineage_id = original_retr_doc.lineage_id
+        elif original_doc_doc.lineage_id:
+            new_retr_document.lineage_id = original_doc_doc.lineage_id
         else:
-            new_document.lineage_id = original_version_doc.id
-        await original_version_doc.save()
-    created_retr_doc: RetrievedDocument = await create_and_log(logger, current_user, new_document)
-    created_doc_doc: DocDocument = await create_doc_document_service(new_document, current_user)
+            err_msg: str = (
+                f"New version error: not able to find lineage from original documents. "
+                f"retr_doc_id: [{original_retr_doc.id}] doc_doc_id: [{original_doc_doc.id}] "
+            )
+            typer.secho(err_msg, fg=typer.colors.BRIGHT_RED)
+        await original_retr_doc.save()
+        await original_doc_doc.save()
+
+    created_retr_doc: RetrievedDocument = await create_and_log(
+        logger, current_user, new_retr_document
+    )
+    created_doc_doc: DocDocument = await create_doc_document_service(
+        new_retr_document, current_user
+    )
+    # Need to update previous_doc_doc_id since new_retr_doc is retr_doc which does not have
+    # a previous_doc_doc_id. New retr_document.previous_doc_id is set before create.
+    if uploaded_doc.upload_new_version_for_id:
+        created_doc_doc.previous_doc_doc_id = original_doc_doc.id
+        await created_doc_doc.save()
+    # New document. Set lineage.
+    else:
+        if not created_retr_doc.lineage_id and not created_doc_doc.lineage_id:
+            created_retr_doc.lineage_id = PydanticObjectId()
+            created_doc_doc.lineage_id = created_retr_doc.lineage_id
+        # These two conditions should not happen since pair should be blank.
+        # Handle just in case.
+        elif not created_retr_doc.lineage_id and created_doc_doc.lineage_id:
+            created_retr_doc.lineage_id = created_doc_doc.lineage_id
+        elif created_retr_doc.lineage_id and not created_doc_doc.lineage_id:
+            created_doc_doc.lineage_id = created_retr_doc.lineage_id
+        await created_retr_doc.save()
+        await created_doc_doc.save()
 
     # Automatic: Add document to new task.
     if site.collection_method == CollectionMethod.Automated:
@@ -321,20 +362,20 @@ async def add_document(
     if uploaded_doc.upload_new_version_for_id:
         # Set old version's work_item as not current.
         original_item_index: int = find_work_item_index(
-            original_version_doc, current_task, raise_exception=True
+            original_retr_doc, current_task, raise_exception=True
         )
         original_item = current_task.work_list[original_item_index]
         original_item.is_current_version = False
         original_item.is_new = False
         original_item.selected = WorkItemOption.NOT_FOUND
-        original_item.new_doc = created_doc_doc.id
+        original_item.new_doc = created_retr_doc.id
         current_task.work_list[original_item_index] = original_item
         # Update new version's prev_doc to old version and set as current.
         created_item_index: int = find_work_item_index(
             created_retr_doc, current_task, raise_exception=True
         )
         created_item = current_task.work_list[created_item_index]
-        created_item.prev_doc = original_version_doc.id
+        created_item.prev_doc = original_retr_doc.id
         created_item.is_current_version = True
         created_item.is_new = False
         current_task.work_list[created_item_index] = created_item

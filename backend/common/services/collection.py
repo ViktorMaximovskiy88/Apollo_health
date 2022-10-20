@@ -50,7 +50,7 @@ class CollectionService:
 
     def __init__(self, site: Site, current_user: User, logger: Logger) -> None:
         self.site, self.current_user, self.logger = site, current_user, logger
-        self.new_version_docs = self.not_found_docs = 0
+        self.found_docs_total = 0
         self.last_queued = None
 
     async def has_queued(self) -> SiteScrapeTask | Boolean:
@@ -67,7 +67,8 @@ class CollectionService:
             {
                 "site_id": self.site.id,
                 "status": {"$in": self.queued_statuses},
-            }
+            },
+            sort=[("start_time", -1)],
         )
 
     async def fetch_all_queued(self) -> Union[SiteScrapeTask, Boolean]:
@@ -165,10 +166,10 @@ class CollectionService:
                 "site_id": self.site.id,
                 "status": {"$in": self.queued_statuses},
             },
-            {"$set": {"status": TaskStatus.CANCELED}},
+            {"$set": {"status": TaskStatus.FINISHED}},
         )
         if not err:
-            await self.site.update(Set({Site.last_run_status: TaskStatus.CANCELED}))
+            await self.site.update(Set({Site.last_run_status: TaskStatus.FINISHED}))
             return True
         else:
             return False
@@ -192,22 +193,19 @@ class CollectionService:
         # docs without work_items were generated outside manual process.
         previous_task: SiteScrapeTask = await self.fetch_previous_task()
         if previous_task:
-            previous_doc_docs: List[DocDocument] = await DocDocument.find(
+            typer.secho("last_queued", fg=typer.colors.BRIGHT_GREEN)
+            print(previous_task.retrieved_document_ids)
+            doc_docs: List[DocDocument] = await DocDocument.find(
                 {"retrieved_document_id": {"$in": previous_task.retrieved_document_ids}}
             ).to_list()
-            for previous_doc_doc in previous_doc_docs:
-                previous_item_index: int = find_work_item_index(previous_doc_doc, previous_task)
-                if previous_item_index == -1:
-                    new_task.retrieved_document_ids.append(
-                        f"{previous_doc_doc.retrieved_document_id}"
+            for doc_doc in doc_docs:
+                new_task.retrieved_document_ids.append(f"{doc_doc.retrieved_document_id}")
+                new_task.work_list.append(
+                    ManualWorkItem(
+                        document_id=f"{doc_doc.id}",
+                        retrieved_document_id=f"{doc_doc.retrieved_document_id}",
                     )
-                    new_task.documents_found += 1
-                    new_task.work_list.append(
-                        ManualWorkItem(
-                            document_id=f"{previous_doc_doc.id}",
-                            retrieved_document_id=f"{previous_doc_doc.retrieved_document_id}",
-                        )
-                    )
+                )
 
         # Create new manual task and respond with nav link.
         created_task: SiteScrapeTask = await create_and_log(
@@ -287,15 +285,14 @@ class CollectionService:
     async def set_last_collected(self, retr_doc) -> CollectionResponse:
         """Update all task retrieved_docs and doc_docs last_collected_date."""
         response: CollectionResponse = CollectionResponse()
-        if datetime.date(retr_doc.last_collected_date) < datetime.today().date():
-            await RetrievedDocument.get_motor_collection().find_one_and_update(
-                {"_id": retr_doc.id},
-                {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
-            )
-            await DocDocument.get_motor_collection().find_one_and_update(
-                {"retrieved_document_id": retr_doc.id},
-                {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
-            )
+        await RetrievedDocument.get_motor_collection().find_one_and_update(
+            {"_id": retr_doc.id},
+            {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
+        )
+        await DocDocument.get_motor_collection().find_one_and_update(
+            {"retrieved_document_id": retr_doc.id},
+            {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
+        )
         return response
 
     async def process_work_lists(self) -> CollectionResponse:
@@ -315,11 +312,7 @@ class CollectionService:
                 )
                 if work_item_response.errors:
                     work_list_response.add_error(work_item_response.errors[0])
-            queued_site_task.documents_found = (
-                len(queued_site_task.retrieved_document_ids)
-                + self.new_version_docs
-                - self.not_found_docs
-            )
+            queued_site_task.documents_found = self.found_docs_total
             await queued_site_task.save()
 
         return work_list_response
@@ -349,11 +342,13 @@ class CollectionService:
         match work_item.selected:
             case WorkItemOption.FOUND:
                 await self.set_last_collected(retr_doc)
+                self.found_docs_total += 1
             case WorkItemOption.NEW_DOCUMENT:
                 await self.set_last_collected(retr_doc)
+                self.found_docs_total += 1
             case WorkItemOption.NEW_VERSION:
                 await self.set_last_collected(retr_doc)
-                self.new_version_docs = self.new_version_docs + 1
+                self.found_docs_total += 1
             case WorkItemOption.NOT_FOUND:
                 target_task.retrieved_document_ids = [
                     f"{retr_id}"
@@ -367,7 +362,6 @@ class CollectionService:
                 await doc_doc.save()
                 if not self.site.has_not_found_documents:
                     await self.site.update(Set({Site.has_not_found_documents: True}))
-                self.not_found_docs = self.not_found_docs - 1
             case WorkItemOption.UNHANDLED:
                 result.add_error(f"{retr_doc.name}")
                 return result
