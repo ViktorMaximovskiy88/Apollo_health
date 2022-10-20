@@ -6,10 +6,14 @@ import { MainLayout } from '../../components';
 import { DocumentsTable } from './DocumentsTable';
 import { AddDocumentModal } from './AddDocumentModal';
 import { SiteMenu } from '../sites/SiteMenu';
+import { useGetSiteQuery } from '../sites/sitesApi';
+import { CollectionMethod } from '../sites/types';
 
 export function DocumentsPage() {
   const { siteId } = useParams();
   if (!siteId) return null;
+  const { data: site, refetch } = useGetSiteQuery(siteId);
+  if (!site) return null;
   const [newDocumentModalVisible, setNewDocumentModalVisible] = useState(false);
 
   return (
@@ -17,9 +21,11 @@ export function DocumentsPage() {
       sidebar={<SiteMenu />}
       sectionToolbar={
         <>
-          <Button onClick={() => setNewDocumentModalVisible(true)} className="ml-auto">
-            Create Document
-          </Button>
+          {site.collection_method === CollectionMethod.Manual ? (
+            <Button onClick={() => setNewDocumentModalVisible(true)} className="ml-auto">
+              Create Document
+            </Button>
+          ) : null}
         </>
       }
     >

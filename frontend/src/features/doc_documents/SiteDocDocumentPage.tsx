@@ -62,9 +62,11 @@ export function SiteDocDocumentsPage() {
             <ManualCollectionButton site={site} refetch={refetch} runScrape={runScrape} />
           ) : null}
 
-          <Button onClick={() => setNewDocumentModalOpen(true)} className="ml-auto">
-            Create Document
-          </Button>
+          {site.collection_method === CollectionMethod.Manual ? (
+            <Button onClick={() => setNewDocumentModalOpen(true)} className="ml-auto">
+              Create Document
+            </Button>
+          ) : null}
         </>
       }
     >

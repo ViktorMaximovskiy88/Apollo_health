@@ -300,9 +300,6 @@ class TestUploadFile:
             result = await add_document(doc, user, logger)
             assert result.id is not None
 
-            uploaded_document_2 = await upload_document(upload_file, from_site_id=site_one.id)
-            assert uploaded_document_2["error"] == "The document already exists!"
-
 
 class TestCreateDocuments:
     @pytest.mark.asyncio
@@ -312,6 +309,3 @@ class TestCreateDocuments:
 
         result = await add_document(doc, user, logger)
         assert result.id is not None
-
-        first_ret_docs = await get_documents(scrape_task_id=result.id)
-        assert len(first_ret_docs) == 1
