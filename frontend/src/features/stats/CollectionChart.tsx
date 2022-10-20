@@ -68,7 +68,7 @@ export function CollectionChart({ collectionStats }: PropTypes) {
       >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" />
-        <YAxis />
+        <YAxis type="number" domain={[0, 'dataMax + 250']} />
         <Tooltip content={<CustomTooltip />} />
         <Legend />
         <Bar dataKey="created" stackId="a" fill="#1A365D" />
