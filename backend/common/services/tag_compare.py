@@ -176,11 +176,13 @@ class TagCompare:
         return sections, unmatched_ref
 
     def _collect_final_tags(self, paired: list[SectionLineage], unpaired: list[DocumentSection]):
-        final_tags: TagList = []
+        final_tags: set[IndicationTag | TherapyTag] = set()
         for section in unpaired:
-            final_tags += section.tags_to_list()
+            tags = section.tags_to_list()
+            final_tags.update(tags)
         for lineage in paired:
-            final_tags += lineage.a_section.tags_to_list()
+            tags = lineage.a_section.tags_to_list()
+            final_tags.update(tags)
         return final_tags
 
     def _get_doc_text(self, doc: RetrievedDocument | DocDocument):
@@ -201,6 +203,11 @@ class TagCompare:
         match = next(dates, None)
         if not match:
             match = re.match(digit_rgx, strp_text)
+        if not match:
+            for rgx in label_rgxs[0]:
+                match = re.match(rgx, strp_text)
+                if match:
+                    break
         return bool(match)
 
     def _clean_line(self, line: str):
@@ -219,7 +226,51 @@ class TagCompare:
 
         return "\n".join(cleaned_a), "\n".join(cleaned_b)
 
-    def _remove_repeat_lines(self, a_text, b_text):
+    def _remove_footers(self, text: str) -> str:
+        repeat_lines: dict[str, list[int]] = {}
+        exclude_lines: dict[str, bool] = {}
+
+        pages = text.split("\f")
+        page_count = len(pages)
+        if page_count < 2:
+            return text
+        lines_by_page = list(map(lambda page: page.split("\n"), pages))
+
+        def parse_page(lines: list[str], is_first: bool = False):
+            current_page_lines: dict[str, bool] = {}
+            for line_num, line in enumerate(lines):
+                if line in current_page_lines:
+                    exclude_lines[line] = True
+                    continue
+                else:
+                    current_page_lines[line] = True
+
+                if line in repeat_lines:
+                    repeat_lines[line].append(line_num)
+                elif is_first:
+                    repeat_lines[line] = [line_num]
+
+        def remove_lines():
+            for line in repeat_lines:
+                line_nums = repeat_lines[line]
+                if line in exclude_lines or len(line_nums) < page_count:
+                    continue
+                for page_num, line_num in enumerate(line_nums):
+                    old_line = lines_by_page[page_num][line_num]
+                    lines_by_page[page_num][line_num] = "".join([" " for _ in old_line])
+
+        for i, lines in enumerate(lines_by_page):
+            if i == 0:
+                parse_page(lines, is_first=True)
+            else:
+                parse_page(lines)
+
+        remove_lines()
+
+        final_pages = map(lambda page: "\n".join(page), lines_by_page)
+        return "\f".join(final_pages)
+
+    def _remove_repeat_lines(self, a_text: str, b_text: str) -> tuple[str, str]:
         dmp = Dmp()
         lines = dmp.diff_linesToChars(a_text, b_text)
         diffs = dmp.diff_main(lines[0], lines[1], False)
@@ -228,7 +279,7 @@ class TagCompare:
         return dmp.remove_diffs(deletes, inserts, a_text, b_text)
 
     def _preprocess_diff(self, a_text: str, b_text: str) -> tuple[str, str]:
-        cleaned_a, cleaned_b = a_text, b_text
+        cleaned_a, cleaned_b = self._remove_footers(a_text), self._remove_footers(b_text)
         cleaned_a, cleaned_b = self._remove_repeat_lines(cleaned_a, cleaned_b)
         cleaned_a, cleaned_b = self._remove_exclude_text(cleaned_a, cleaned_b)
         return cleaned_a, cleaned_b
@@ -273,11 +324,13 @@ class TagCompare:
 
     def compare_tags(
         self, doc_tags: TagList, prev_tags: TagList, doc_text: str, prev_text: str
-    ) -> TagList:
+    ) -> set[IndicationTag | TherapyTag]:
         paired, unpaired, unmatched_ref = self.match_tags(doc_tags, prev_tags)
         self.compare_sections(doc_text, prev_text, paired)
         self._mark_changed(paired)
-        return self._collect_final_tags(paired, unpaired) + unmatched_ref
+        final_tags = self._collect_final_tags(paired, unpaired)
+        final_tags.update(unmatched_ref)
+        return final_tags
 
     def execute(
         self, doc: RetrievedDocument | DocDocument, prev_doc: RetrievedDocument | DocDocument
@@ -286,11 +339,11 @@ class TagCompare:
         prev_doc_text = self._get_doc_text(prev_doc)
         clean_doc_text, clean_prev_text = self._preprocess_diff(doc_text, prev_doc_text)
 
-        final_therapy_tags: list[TherapyTag] = self.compare_tags(
+        final_therapy_tags: set[TherapyTag] = self.compare_tags(
             doc.therapy_tags, prev_doc.therapy_tags, clean_doc_text, clean_prev_text
         )
-        final_indication_tags: list[IndicationTag] = self.compare_tags(
+        final_indication_tags: set[IndicationTag] = self.compare_tags(
             doc.indication_tags, prev_doc.indication_tags, clean_doc_text, clean_prev_text
         )
 
-        return final_therapy_tags, final_indication_tags
+        return list(final_therapy_tags), list(final_indication_tags)

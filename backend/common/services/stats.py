@@ -1,54 +1,43 @@
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
-from pydantic import BaseModel
-
-from backend.common.models.doc_document import DocDocument
-
-
-class StatCount(BaseModel):
-    last_collected_date: date
-    count: int
+from backend.common.core.enums import TaskStatus
+from backend.common.models.base_document import BaseModel
+from backend.common.models.site_scrape_task import SiteScrapeTask
 
 
-async def docs_by_last_collected(lookback_days: int) -> list[StatCount]:
+class DailyCollectionStat(BaseModel):
+    name: str
+    updated: int
+    created: int
+    total: int
+
+
+async def get_collection_stats(lookback_days: int) -> list[DailyCollectionStat]:
     lookback_date = datetime.today() - timedelta(days=lookback_days)
-    docs = await DocDocument.aggregate(
+    docs = await SiteScrapeTask.aggregate(
         aggregation_pipeline=[
-            {"$match": {"last_collected_date": {"$gte": lookback_date}}},
             {
-                "$group": {
-                    "_id": {
-                        "$dateToString": {"format": "%Y-%m-%d", "date": "$last_collected_date"}
-                    },
-                    "count": {"$sum": 1},
+                "$match": {
+                    "start_time": {"$gte": lookback_date},
+                    "status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.FINISHED]},
                 }
             },
-            {"$addFields": {"last_collected_date": "$_id"}},
-            {"$sort": {"_id": -1}},
-        ],
-        projection_model=StatCount,
-    ).to_list()
-
-    return docs
-
-
-async def docs_by_first_collected(lookback_days: int) -> list[StatCount]:
-    lookback_date = datetime.today() - timedelta(days=lookback_days)
-    docs = await DocDocument.aggregate(
-        aggregation_pipeline=[
-            {"$match": {"first_collected_date": {"$gte": lookback_date}}},
+            {"$sort": {"start_time": -1}},
+            {"$group": {"_id": "$site_id", "item": {"$first": "$$ROOT"}}},
+            {"$replaceRoot": {"newRoot": "$item"}},
             {
                 "$group": {
-                    "_id": {
-                        "$dateToString": {"format": "%Y-%m-%d", "date": "$first_collected_date"}
+                    "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$start_time"}},
+                    "created": {"$sum": "$new_documents_found"},
+                    "updated": {
+                        "$sum": {"$subtract": ["$documents_found", "$new_documents_found"]}
                     },
-                    "count": {"$sum": 1},
+                    "total": {"$sum": "$documents_found"},
                 }
             },
-            {"$addFields": {"first_collected_date": "$_id"}},
-            {"$sort": {"_id": -1}},
+            {"$addFields": {"name": "$_id"}},
         ],
-        projection_model=StatCount,
+        projection_model=DailyCollectionStat,
     ).to_list()
 
     return docs

@@ -88,7 +88,6 @@ async def create_payer_family(
 ):
     new_payer_family = PayerFamily(
         name=payer_family.name,
-        document_type=payer_family.document_type,
         payer_type=payer_family.payer_type,
         payer_ids=payer_family.payer_ids,
         channels=payer_family.channels,

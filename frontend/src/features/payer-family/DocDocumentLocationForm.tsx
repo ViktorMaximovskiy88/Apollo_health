@@ -1,6 +1,6 @@
 import { Form, Select, Button, Input, Row, Col } from 'antd';
 import { Link } from 'react-router-dom';
-import { PlusOutlined } from '@ant-design/icons';
+import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
 import { PayerFamily } from '../payer-family/types';
 import { useGetPayerFamiliesQuery } from '../payer-family/payerFamilyApi';
@@ -13,6 +13,8 @@ interface DocDocumentLocationFormTypes {
   location: DocDocumentLocation;
   index: number;
   onShowPayerFamilyCreate: (location: DocDocumentLocation) => void;
+  onShowPayerFamilyEdit: (location: DocDocumentLocation) => void;
+  setEditPayerFamilyId: (payerFamilyId: string) => void;
 }
 const useGetPayerFamilies = () => {
   const args = useMemo(() => {
@@ -29,15 +31,15 @@ const useGetPayerFamilies = () => {
   return useGetPayerFamiliesQuery(args);
 };
 export const DocDocumentLocationForm = ({
-  documentType,
   location,
   index,
+  setEditPayerFamilyId,
   onShowPayerFamilyCreate,
+  onShowPayerFamilyEdit,
 }: DocDocumentLocationFormTypes) => {
   const form = Form.useFormInstance();
 
   const { data } = useGetPayerFamilies();
-  console.log(data);
   const options = data?.data
     .map((item: PayerFamily) => ({ value: item._id, label: item.name }))
     .sort();
@@ -46,9 +48,9 @@ export const DocDocumentLocationForm = ({
   const url = Form.useWatch(['locations', index, 'url']);
 
   return (
-    <div className="property-grid mb-4">
+    <div className="property-grid bg-white p-2 mb-4">
       {/* Our header is separate due to styles */}
-      <div className="p-2 bg-slate-50">
+      <div className="p-2">
         <Link className="text-lg" target="_blank" to={`/sites/${location.site_id}/view`}>
           <TextEllipsis text={location.site_name ?? ''} />
         </Link>
@@ -112,16 +114,28 @@ export const DocDocumentLocationForm = ({
             onSelect={(payerFamilyId: string) => {
               const locations = form.getFieldValue('locations');
               locations[index].payer_family_id = payerFamilyId;
+              setEditPayerFamilyId(payerFamilyId);
               form.setFieldsValue({ locations });
             }}
             options={options}
             style={{ width: 'calc(100% - 96px', marginRight: '8px' }}
           />
+          {form.getFieldValue('locations')[index].payer_family_id ? (
+            <Button
+              onClick={() => {
+                onShowPayerFamilyEdit(updatedLocation);
+              }}
+              type="dashed"
+            >
+              <EditOutlined />
+              Edit
+            </Button>
+          ) : null}
           <Button
-            type="dashed"
             onClick={() => {
               onShowPayerFamilyCreate(location);
             }}
+            type="dashed"
           >
             <PlusOutlined />
             New

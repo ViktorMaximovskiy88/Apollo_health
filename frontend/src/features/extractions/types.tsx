@@ -1,3 +1,10 @@
+export interface DeltaStats {
+  added: number;
+  removed: number;
+  updated: number;
+  total: number;
+}
+
 export interface ExtractionTask {
   _id: string;
   site_id: string;
@@ -8,6 +15,8 @@ export interface ExtractionTask {
   end_time?: string;
   status: string;
   extraction_count?: number;
+  untranslated_count?: number;
+  delta?: DeltaStats;
   header?: string[];
 }
 
@@ -30,4 +39,7 @@ export interface ContentExtractionResult {
   };
   page: number;
   row: number;
+  add: boolean;
+  remove: boolean;
+  edit: string;
 }

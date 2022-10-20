@@ -12,7 +12,7 @@ import { DocDocument } from './types';
 export function DocDocumentEditPage() {
   const navigate = useNavigate();
   const { docDocumentId: docId } = useParams();
-  const { data: doc } = useGetDocDocumentQuery(docId);
+  const { data: doc } = useGetDocDocumentQuery(docId, { refetchOnMountOrArgChange: true });
 
   const [form] = useForm();
   const [isSaving, setIsSaving] = useState(false);
@@ -21,6 +21,7 @@ export function DocDocumentEditPage() {
   const [updateDocDocumentMutation] = useUpdateDocDocumentMutation();
   const updateDocDocument = async (doc: Partial<DocDocument>): Promise<void> => {
     await updateDocDocumentMutation(doc);
+    navigate(-1);
   };
 
   if (!doc || !docId) return null;

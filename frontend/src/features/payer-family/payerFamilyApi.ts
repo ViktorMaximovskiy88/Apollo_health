@@ -57,6 +57,8 @@ export const payerFamilyApi = createApi({
 
 export const {
   useGetPayerFamiliesQuery,
+  useGetPayerFamilyQuery,
+  useLazyGetPayerFamilyQuery,
   useLazyGetPayerFamiliesQuery,
   useLazyGetPayerFamilyByNameQuery,
   useAddPayerFamilyMutation,

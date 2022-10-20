@@ -15,7 +15,7 @@ from tenacity.wait import wait_random_exponential
 
 from backend.common.core.enums import TaskStatus
 from backend.common.core.log import logging
-from backend.common.models.doc_document import IndicationTag, TherapyTag
+from backend.common.models.doc_document import DocDocument, IndicationTag, TherapyTag
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.link_task_log import (
     FileMetadata,
@@ -28,7 +28,9 @@ from backend.common.models.link_task_log import (
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.common.services.lineage import LineageService
+from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleService
+from backend.common.services.doc_lifecycle.hooks import ChangeInfo, doc_document_save_hook
+from backend.common.services.lineage.core import LineageService
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_full_text
 from backend.common.storage.text_handler import TextHandler
@@ -72,7 +74,8 @@ class ScrapeWorker:
         )
         self.doc_updater = DocumentUpdater(_log, scrape_task, site)
         self.lineage_service = LineageService(logger=_log)
-        self.lineage_tasks = []
+        self.doc_lifecycle_service = DocLifecycleService(logger=_log)
+        self.new_document_pairs: list[tuple[RetrievedDocument, DocDocument]] = []
         self.log = _log
 
     @alru_cache
@@ -161,7 +164,7 @@ class ScrapeWorker:
             # log response error
             if not (temp_path and checksum):
                 await link_retrieved_task.save()
-                continue
+                break
 
             # TODO can we separate the concept of extensions to scrape on
             # and ext we expect to download? for now just html
@@ -169,24 +172,23 @@ class ScrapeWorker:
                 "html" not in self.site.scrape_method_configuration.document_extensions
                 and self.site.scrape_method != "HtmlScrape"
             ):
-                self.log.warn("Received an unexpected html response")
+                self.log.error("Received an unexpected html response")
                 await link_retrieved_task.save()
-                continue
+                break
 
             link_retrieved_task.file_metadata = FileMetadata(checksum=checksum, **download.dict())
 
-            # log no file parser found error
             parsed_content = await parse_by_type(
                 temp_path,
                 download,
-                self.site.scrape_method_configuration.focus_section_configs,
+                focus_config=self.site.scrape_method_configuration.focus_section_configs,
+                scrape_method_config=self.site.scrape_method_configuration,
             )
 
             if parsed_content is None:
                 await link_retrieved_task.save()
-                self.log.info(f"{download.request.url} {download.file_extension} cannot be parsed")
-                # prob not continue anymore...
-                continue
+                self.log.error(f"{download.request.url} {download.file_extension} cannot be parsed")
+                break
 
             document = None
             dest_path = f"{checksum}.{download.file_extension}"
@@ -248,9 +250,8 @@ class ScrapeWorker:
                         "$inc": {"new_documents_found": 1},
                         "$push": {"new_retrieved_document_ids": document.id},
                     }
-                ),
-
-                self.lineage_tasks.append((document, doc_document))
+                )
+                self.new_document_pairs.append((document, doc_document))
 
             link_retrieved_task.retrieved_document_id = document.id
 
@@ -340,7 +341,7 @@ class ScrapeWorker:
                     proxy=proxy,  # type: ignore
                     ignore_https_errors=True,
                 )
-                await context.add_cookies(cookies)
+                await context.add_cookies(cookies)  # type: ignore
 
                 page = await context.new_page()
                 await stealth_async(page)
@@ -402,7 +403,6 @@ class ScrapeWorker:
         all_downloads: list[DownloadContext] = []
 
         async with self.playwright_context(url, cookies) as (base_page, context):
-            playbook_context: BrowserContext
             async for (page, playbook_context) in self.playbook.run_playbook(base_page):
 
                 scrape_handler = ScrapeHandler(
@@ -503,8 +503,14 @@ class ScrapeWorker:
 
         await self.wait_for_completion_or_cancel(tasks)
 
-        doc_ids = [doc.id for (doc, doc_doc) in self.lineage_tasks]
-        await self.lineage_service.process_lineage_for_doc_ids(self.site.id, doc_ids)
+        doc_ids = [doc.id for (doc, _) in self.new_document_pairs]
+        site_id = self.site.id
+        await self.lineage_service.process_lineage_for_doc_ids(site_id, doc_ids)  # type: ignore
+
+        doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
+        change_info = ChangeInfo(translation_change=True, lineage_change=True)
+        async for doc in DocDocument.find({"_id": {"$in": doc_doc_ids}}):
+            await doc_document_save_hook(doc, change_info)
 
         self.site.last_run_documents = self.scrape_task.documents_found
         await self.site.save()

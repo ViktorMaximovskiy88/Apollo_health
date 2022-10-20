@@ -21,7 +21,7 @@ export function PayerBackboneEditPage() {
       await update({ body: { ...res, _id: payerId }, payerType });
       navigate('..');
     },
-    [navigate, update, payerId]
+    [navigate, update, payerId, payerType]
   );
 
   return (
