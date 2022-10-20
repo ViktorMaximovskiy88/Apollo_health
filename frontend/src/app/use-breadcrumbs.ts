@@ -10,7 +10,7 @@ import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { workQueuesApi } from '../features/work_queue/workQueuesApi';
 import { translationsApi } from '../features/translations/translationApi';
 import { payerBackboneApi } from '../features/payer-backbone/payerBackboneApi';
-
+import { payerFamilyApi } from '../features/payer-family/payerFamilyApi';
 const routes = [
   '/documents',
   '/documents/:docDocId',
@@ -41,6 +41,8 @@ const routes = [
   '/work-queues/:workQueueId/:docDocumentId/process',
   '/work-queues/:workQueueId/:docDocumentId/read-only',
   '/work-queues/new',
+  '/payer-family',
+  '/payer-family/:payerFamilyId',
   '/payer-backbone',
   '/payer-backbone/:payerType',
   '/payer-backbone/:payerType/new',
@@ -90,6 +92,13 @@ export const useBreadcrumbs = async () => {
         );
         return { url, label: result.data.name } as any;
       },
+      ':payerFamilyId': async (payerFamilyId: string, url: string) => {
+        const result: any = await dispatch(
+          payerFamilyApi.endpoints.getPayerFamily.initiate(payerFamilyId)
+        );
+        console.log(result);
+        return { url, label: result.data.name } as any;
+      },
     };
 
     // Mapping paths to display labels based on the root menu item; many are shared...
@@ -116,6 +125,12 @@ export const useBreadcrumbs = async () => {
         'document-family': 'Document Families',
         ...asyncResolvers,
       },
+      '/payer-family': {
+        'payer-family': 'Payer Families',
+        edit: 'Edit',
+        ...asyncResolvers,
+      },
+
       '/users': {
         users: 'Users',
         new: 'Create',
