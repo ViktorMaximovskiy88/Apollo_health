@@ -55,6 +55,13 @@ const buildInitialValues = (oldVersion?: SiteDocDocument) => {
   };
 };
 
+const displayDuplicateError = (error: any) => {
+  notification.error({
+    message: 'Document already exists',
+    description: `Upload a new document or enter a new location.`,
+  });
+};
+
 export function AddDocumentModal({
   oldVersion,
   setOpen,
@@ -104,14 +111,18 @@ export function AddDocumentModal({
       delete newDocument.document_file;
 
       try {
-        await addDoc({
+        const response = await addDoc({
           ...newDocument,
           ...fileData,
         });
         if (refetch) {
           refetch();
         }
-        setOpen(false);
+        if ('error' in response && response.error) {
+          displayDuplicateError(response);
+        } else {
+          setOpen(false);
+        }
       } catch (error: any) {
         notification.error({
           message: error.data.detail,
