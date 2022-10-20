@@ -176,12 +176,6 @@ class LineageService:
             prev_doc = None
             prev_doc_doc = None
             for index, match in enumerate(matches):
-                print(
-                    match.final_effective_date,
-                    match.year_part,
-                    match.id,
-                    match.retrieved_document_id,
-                )
                 is_last = index == len(matches) - 1
                 doc, doc_doc = await asyncio.gather(
                     version_doc(match, is_last, prev_doc),
