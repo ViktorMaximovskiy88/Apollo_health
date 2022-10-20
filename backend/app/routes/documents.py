@@ -311,7 +311,7 @@ async def add_document(
     created_doc_doc: DocDocument = await create_doc_document_service(
         new_retr_document, current_user
     )
-    if original_doc_doc.document_family_id:
+    if uploaded_doc.upload_new_version_for_id and original_doc_doc.document_family_id:
         created_doc_doc.document_family_id = original_doc_doc.document_family_id
     # Need to update previous_doc_doc_id since new_retr_doc is retr_doc which does not have
     # a previous_doc_doc_id. New retr_document.previous_doc_id is set before create.
