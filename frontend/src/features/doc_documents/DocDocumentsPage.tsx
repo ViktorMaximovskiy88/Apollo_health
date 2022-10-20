@@ -1,4 +1,4 @@
-import { DocDocumentsDataTable } from './DocDocumentsTable';
+import { DocDocumentsDataTable } from './DocDocumentsDataTable';
 import { MainLayout } from '../../components';
 
 export function DocDocumentsPage() {
