@@ -45,7 +45,6 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
       let elem = values.payer_ids?.slice(0, 1);
-      console.log(elem);
       // @ts-ignore
       if (elem[0]?.label) {
         // @ts-ignore

@@ -39,6 +39,12 @@ export const PayerFamilyEditPage = () => {
 
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
+      let elem = values.payer_ids?.slice(0, 1);
+      // @ts-ignore
+      if (elem[0]?.label) {
+        // @ts-ignore
+        values.payer_ids = values.payer_ids?.map((val) => val.value);
+      }
       await updatePayerFamily({ ...values, _id: payerFamilyId }).unwrap();
       form.resetFields();
       navigate('/payer-family');
