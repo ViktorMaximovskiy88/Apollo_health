@@ -14,8 +14,13 @@ from backend.app.routes.table_query import (
 from backend.app.services.payer_backbone.payer_backbone_querier import PayerBackboneQuerier
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
-from backend.common.models.payer_backbone import PayerBackbone
-from backend.common.models.payer_family import NewPayerFamily, PayerFamily, UpdatePayerFamily
+from backend.common.models.payer_backbone import PayerBackbone, PayerBackboneUnionDoc
+from backend.common.models.payer_family import (
+    NewPayerFamily,
+    PayerFamily,
+    PayerFamilyEditView,
+    UpdatePayerFamily,
+)
 from backend.common.models.user import User
 
 router = APIRouter(prefix="/payer-family", tags=["Payer Family"])
@@ -56,12 +61,48 @@ async def read_payer_family_by_name(
 
 @router.get(
     "/{id}",
-    response_model=PayerFamily,
+    response_model=PayerFamilyEditView,
     dependencies=[Security(get_current_user)],
 )
 async def read_payer_family(
-    target: PayerFamily = Depends(get_target),
+    target: PayerFamilyEditView = Depends(get_target),
 ):
+    payers = []
+
+    for payer_id in target.payer_ids:
+        if target.payer_type == "plan":
+            payer = await PayerBackboneUnionDoc.find_one(
+                {"l_id": int(payer_id), "_class_id": "Plan"}
+            )
+            payers.append({"label": payer.name, "value": payer.l_id})
+        elif target.payer_type == "formulary":
+            payer = await PayerBackboneUnionDoc.find_one(
+                {"l_id": int(payer_id), "_class_id": "Formulary"}
+            )
+            payers.append({"label": payer.name, "value": payer.l_id})
+        elif target.payer_type == "ump":
+            payer = await PayerBackboneUnionDoc.find_one(
+                {"l_id": int(payer_id), "_class_id": "UMP"}
+            )
+            payers.append({"label": payer.name, "value": payer.l_id})
+        elif target.payer_type == "mco":
+            payer = await PayerBackboneUnionDoc.find_one(
+                {"l_id": int(payer_id), "_class_id": "MCO"}
+            )
+            payers.append({"label": payer.name, "value": payer.l_id})
+        elif target.payer_type == "benefit manager":
+            payer = await PayerBackboneUnionDoc.find_one(
+                {"l_id": int(payer_id), "_class_id": "BenefitManager"}
+            )
+            payers.append({"label": payer.name, "value": payer.l_id})
+        elif target.payer_type == "parent":
+            payer = await PayerBackboneUnionDoc.find_one(
+                {"l_id": int(payer_id), "_class_id": "PayerParent"}
+            )
+            payers.append({"label": payer.name, "value": payer.l_id})
+
+    target.payer_ids = payers
+
     return target
 
 
