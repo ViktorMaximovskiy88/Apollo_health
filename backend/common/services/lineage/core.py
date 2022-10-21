@@ -103,8 +103,8 @@ class LineageService:
         await self.process_lineage_for_docs(site_id, docs)
 
     async def reprocess_lineage_for_site(self, site_id: PydanticObjectId):
-        await self.update_site_docs(site_id)
         await self.clear_lineage_for_site(site_id)
+        # await self.update_site_docs(site_id)
         await self.process_lineage_for_site(site_id)
 
     async def process_lineage_for_doc_ids(
