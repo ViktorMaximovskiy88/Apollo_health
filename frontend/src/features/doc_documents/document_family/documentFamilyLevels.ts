@@ -12,3 +12,10 @@ export const fieldGroupsOptions = [
   { label: 'Coverage Notes', value: 'COVERAGE_NOTES' },
   { label: 'Site of Care', value: 'SITE_OF_CARE' },
 ];
+
+export const legacyRelevanceOptions = [
+  { label: 'Editor Manual', value: 'EDITOR_MANUAL' },
+  { label: 'Editor Automated ', value: 'EDITOR_AUTOMATED' },
+  { label: 'PAR', value: 'PAR' },
+  { label: 'N/A', value: 'N/A' },
+];
