@@ -49,11 +49,13 @@ class TherapyTagger:
         url: str,
         link_text: str | None,
         focus_configs: list[FocusSectionConfig],
-    ) -> list[TherapyTag]:
+    ) -> tuple[list[TherapyTag], list[TherapyTag], list[TherapyTag]]:
         if not self.nlp:
-            return []
+            return ([], [], [])
 
         tags: set[TherapyTag] = set()
+        url_tags = set()
+        link_tags = set()
         focus_configs = self.__get_focus_configs(focus_configs, doc_type)
         focus_checker = FocusChecker(full_text, focus_configs, url, link_text)
         pages = full_text.split("\f")
@@ -75,6 +77,22 @@ class TherapyTagger:
                     drugid, rxcui, display_name = splits
                 if not rxcui:
                     rxcui = None
+
+                if focus_state.is_in_link_text or focus_state.is_in_url:
+                    context_tag = TherapyTag(
+                        text=text.lower(),
+                        code=drugid,
+                        rxcui=rxcui,
+                        name=display_name,
+                        page=-1,
+                        focus=focus_state.focus,
+                    )
+
+                    if focus_state.is_in_link_text:
+                        link_tags.add(context_tag)
+                    if focus_state.is_in_url:
+                        url_tags.add(context_tag)
+
                 tag = TherapyTag(
                     text=text,
                     code=drugid,
@@ -88,7 +106,7 @@ class TherapyTagger:
                 tags.add(tag)
             char_offset += len(page) + 1
 
-        return list(tags)
+        return list(tags), list(url_tags), list(link_tags)
 
 
 therapy_tagger = TherapyTagger()

@@ -7,32 +7,6 @@ from backend.common.models.base_document import BaseModel
 from backend.scrapeworker.common.utils import unique_by_attr
 
 
-class Location(BaseModel):
-    base_url: str
-    url: str
-    link_text: str | None = None
-    closest_heading: str | None = None
-    siblings_text: str | None = None
-
-
-class SiteLocation(Location):
-    site_id: PydanticObjectId
-    first_collected_date: datetime | None = None
-    last_collected_date: datetime | None = None
-
-
-class RetrievedDocumentLocation(SiteLocation):
-    context_metadata: dict = {}
-
-
-class DocDocumentLocation(SiteLocation):
-    payer_family_id: PydanticObjectId | None = None
-
-
-class DocDocumentLocationView(DocDocumentLocation):
-    site_name: str | None = None
-
-
 class TherapyTag(BaseModel):
     text: str
     page: int = 0
@@ -97,6 +71,36 @@ class TaskLock(BaseModel):
 
 class LockableDocument(BaseModel):
     locks: list[TaskLock] = []
+
+
+class Location(BaseModel):
+    base_url: str
+    url: str
+    link_text: str | None = None
+    closest_heading: str | None = None
+    siblings_text: str | None = None
+    url_therapy_tags: list[TherapyTag] = []
+    url_indication_tags: list[IndicationTag] = []
+    link_therapy_tags: list[TherapyTag] = []
+    link_indication_tags: list[IndicationTag] = []
+
+
+class SiteLocation(Location):
+    site_id: PydanticObjectId
+    first_collected_date: datetime | None = None
+    last_collected_date: datetime | None = None
+
+
+class RetrievedDocumentLocation(SiteLocation):
+    context_metadata: dict = {}
+
+
+class DocDocumentLocation(SiteLocation):
+    payer_family_id: PydanticObjectId | None = None
+
+
+class DocDocumentLocationView(DocDocumentLocation):
+    site_name: str | None = None
 
 
 def get_reference_tags(tags: list[TherapyTag] | list[IndicationTag]):
