@@ -3,27 +3,27 @@ import { DocDocumentLocation } from '../doc_documents/locations/types';
 import { useUpdatePayerFamilyMutation, useLazyGetPayerFamilyQuery } from './payerFamilyApi';
 import { Modal } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
 import { PayerFamily } from './types';
 
 interface PayerFamilyCreateModalPropTypes {
   location: DocDocumentLocation | undefined;
-  payerFamilyId: string;
+  payer_family_id: string;
   open?: boolean;
   onClose: () => void;
-  onSave: (payerFamilyId: string) => void;
+  onSave: (payer_family_id: string) => void;
 }
 
 export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => {
-  const { location, onClose, onSave, open, payerFamilyId } = props;
+  const { location, onClose, onSave, open, payer_family_id } = props;
   const [form] = useForm();
   const [getPayerFamily] = useLazyGetPayerFamilyQuery();
   const [updatePayerFamily, { isLoading }] = useUpdatePayerFamilyMutation();
 
   useEffect(() => {
     const fetchCurrentPayerFamilyVals = async () => {
-      const { data } = await getPayerFamily(payerFamilyId);
+      const { data } = await getPayerFamily(payer_family_id);
       if (data && open) {
         //conditional used to address: Warning: Instance created by `useForm` is not connected to any Form element. Forget to pass `form` prop?
         form.setFieldsValue({
@@ -35,18 +35,19 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
           plan_types: data.plan_types,
           regions: data.regions,
         });
+        console.log(data.payer_ids);
       }
     };
     fetchCurrentPayerFamilyVals();
-  }, [form, getPayerFamily, payerFamilyId, open]);
+  }, [form, getPayerFamily, payer_family_id, open]);
 
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
-      const payerFamily = await updatePayerFamily({ ...values, _id: payerFamilyId }).unwrap();
+      const payerFamily = await updatePayerFamily({ ...values, _id: payer_family_id }).unwrap();
       onSave(payerFamily._id);
       form.resetFields();
     },
-    [updatePayerFamily, onSave, form, payerFamilyId]
+    [updatePayerFamily, onSave, form, payer_family_id]
   );
 
   if (!location) {

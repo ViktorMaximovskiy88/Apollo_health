@@ -10,14 +10,24 @@ import {
   regionOptions,
 } from './payerLevels';
 
-export const PayerFamilyInfoForm = () => {
+interface PayerFamilyInfoFormProps {
+  initialPayerOptions?: [Payer];
+}
+
+interface Payer {
+  label: string;
+  value: number;
+}
+
+export const PayerFamilyInfoForm = (props: PayerFamilyInfoFormProps) => {
+  const { initialPayerOptions } = props;
   const [getPayers] = useLazyGetPayerBackbonesQuery();
   const form = Form.useFormInstance();
   const payerType = Form.useWatch('payer_type');
 
   useEffect(() => {
-    form.setFieldsValue({ payer_ids: [] });
-  }, [form, payerType]);
+    form.setFieldsValue({ payer_ids: initialPayerOptions });
+  }, [form, payerType, initialPayerOptions]);
 
   const payerOptions = useCallback(
     async (search: string) => {
@@ -34,6 +44,7 @@ export const PayerFamilyInfoForm = () => {
     },
     [getPayers, payerType]
   );
+
   return (
     <div className="mt-4">
       <h2>Payer</h2>
@@ -41,21 +52,21 @@ export const PayerFamilyInfoForm = () => {
         <Form.Item label="Payer Type" name={'payer_type'} className="w-48">
           <Select options={payerTypeOptions} />
         </Form.Item>
-        <Form.Item label="Payers" name={'payer_ids'} className="grow">
+        <Form.Item label="Payers" name={'payer_ids'} className="w-80">
           <RemoteSelect mode="multiple" className="w-full" fetchOptions={payerOptions} />
         </Form.Item>
       </Input.Group>
-      <Input.Group className="space-x-2 flex">
-        <Form.Item label="Channel" name={'channels'} className="w-full">
+      <Input.Group className="space-x-2 flex flex-wrap">
+        <Form.Item label="Channel" name={'channels'} className="w-80">
           <Select mode="multiple" options={channelOptions} />
         </Form.Item>
-        <Form.Item label="Benefit" name={'benefits'} className="w-full">
+        <Form.Item label="Benefit" name={'benefits'} className="w-80">
           <Select mode="multiple" options={benefitOptions} />
         </Form.Item>
-        <Form.Item label="Plan Types" name={'plan_types'} className="w-full">
+        <Form.Item label="Plan Types" name={'plan_types'} className="w-72">
           <Select mode="multiple" options={planTypeOptions} />
         </Form.Item>
-        <Form.Item label="Region" name={'regions'} className="w-full">
+        <Form.Item label="Region" name={'regions'} className="w-40">
           <Select mode="multiple" options={regionOptions} />
         </Form.Item>
       </Input.Group>

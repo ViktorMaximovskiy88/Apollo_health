@@ -1,6 +1,6 @@
 import { Form, Input } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '../../components';
 import { PayerEditSubmitComponent } from './PayerEditSubmitComponent';
@@ -16,6 +16,7 @@ export const PayerFamilyEditPage = () => {
   const navigate = useNavigate();
   const [getPayerFamily] = useLazyGetPayerFamilyQuery();
   const [updatePayerFamily, { isLoading }] = useUpdatePayerFamilyMutation();
+  const [initialPayerOptions, setInitialPayerOptions] = useState<any>([]);
 
   useEffect(() => {
     const fetchCurrentPayerFamilyVals = async () => {
@@ -25,16 +26,18 @@ export const PayerFamilyEditPage = () => {
         form.setFieldsValue({
           name: data?.name,
           payer_type: data.payer_type,
-          payer_ids: data.payer_ids,
           channels: data.channels,
           benefits: data.benefits,
           plan_types: data.plan_types,
           regions: data.regions,
         });
+        setInitialPayerOptions(data.payer_ids);
       }
     };
     fetchCurrentPayerFamilyVals();
   }, [form, getPayerFamily, payerFamilyId]);
+
+  console.log(form.getFieldsValue(true));
 
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
@@ -51,7 +54,7 @@ export const PayerFamilyEditPage = () => {
 
   return (
     <MainLayout sectionToolbar={<PayerEditSubmitComponent form={form} />}>
-      <div className="flex space-x-4 overflow-auto flex-grow">
+      <div className="flex ml-5 space-x-4 overflow-auto flex-grow">
         <Form
           form={form}
           layout="vertical"
@@ -61,17 +64,17 @@ export const PayerFamilyEditPage = () => {
           validateTrigger={['onBlur']}
           onFinish={onFinish}
         >
-          <div className="flex"></div>
           <Form.Item
             label="Name"
             name="name"
+            className="w-96"
             rules={[{ required: true, message: 'Please input a payer family name' }]}
           >
             <Input />
           </Form.Item>
           <Input.Group className="space-x-2 flex"></Input.Group>
-
-          <PayerFamilyInfoForm />
+          <div className="flex"></div>
+          <PayerFamilyInfoForm initialPayerOptions={initialPayerOptions} />
         </Form>
         <div className="w-1/2 h-full overflow-auto"></div>
         <div className="w-1/2 h-full overflow-auto ant-tabs-h-full"></div>
