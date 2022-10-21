@@ -52,12 +52,14 @@ class IndicationTagger:
         url: str,
         link_text: str | None,
         focus_configs: list[FocusSectionConfig],
-    ) -> list[IndicationTag]:
+    ) -> tuple[list[IndicationTag], list[IndicationTag], list[IndicationTag]]:
         nlp = await self.model()
         if not nlp:
             return []
 
         tags = set()
+        url_tags = set()
+        link_tags = set()
         focus_configs = self.__get_focus_configs(focus_configs, doc_type)
         focus_checker = FocusChecker(text, focus_configs, url, link_text)
         pages = text.split("\f")
@@ -71,6 +73,19 @@ class IndicationTagger:
                 text = span.text
                 lexeme = span.vocab[span.label]
                 term, indication_number = lexeme.text.split("|")
+
+                if focus_state.is_in_link_text or focus_state.is_in_url:
+                    context_tag = IndicationTag(
+                        text=term.lower(),
+                        page=-1,
+                        code=int(indication_number),
+                        focus=focus_state.focus,
+                    )
+                    if focus_state.is_in_link_text:
+                        link_tags.add(context_tag)
+                    if focus_state.is_in_url:
+                        url_tags.add(context_tag)
+
                 tag = IndicationTag(
                     text=term,
                     page=i,
@@ -82,7 +97,7 @@ class IndicationTagger:
                 tags.add(tag)
             char_offset += len(page) + 1
 
-        return list(tags)
+        return list(tags), list(url_tags), list(link_tags)
 
 
 indication_tagger = IndicationTagger()

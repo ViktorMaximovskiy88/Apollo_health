@@ -19,6 +19,8 @@ class FocusState:
     focus: bool
     key: bool
     section: tuple[int, int] | None
+    is_in_url: bool = False
+    is_in_link_text: bool = False
 
 
 class FocusChecker:
@@ -131,7 +133,6 @@ class FocusChecker:
         key_area, focus_area, section = self._get_sections(span, offset)
         end_char = span.end_char + offset
         text = span.text.lower()
-
         focus_state = FocusState(focus=False, key=False, section=section)
 
         if key_area and end_char < key_area.end:
@@ -141,9 +142,13 @@ class FocusChecker:
             focus_state.focus = True
         elif self.all_focus:
             focus_state.focus = True
-        elif self.link_text and text in self.link_text.lower():
+
+        if self.link_text and text in self.link_text.lower():
+            focus_state.is_in_link_text = True
             focus_state.focus = True
-        elif text in self.url.lower():
+
+        if text in self.url.lower():
+            focus_state.is_in_url = True
             focus_state.focus = True
 
         return focus_state
