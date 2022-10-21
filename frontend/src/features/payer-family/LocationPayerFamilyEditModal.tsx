@@ -20,6 +20,7 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
   const [form] = useForm();
   const [getPayerFamily] = useLazyGetPayerFamilyQuery();
   const [updatePayerFamily, { isLoading }] = useUpdatePayerFamilyMutation();
+  const [initialPayerOptions, setInitialPayerOptions] = useState<any>([]);
 
   useEffect(() => {
     const fetchCurrentPayerFamilyVals = async () => {
@@ -35,6 +36,7 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
           plan_types: data.plan_types,
           regions: data.regions,
         });
+        setInitialPayerOptions(data.payer_ids);
       }
     };
     fetchCurrentPayerFamilyVals();
@@ -88,7 +90,7 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
         </Form.Item>
         <Input.Group className="space-x-2 flex"></Input.Group>
 
-        <PayerFamilyInfoForm />
+        <PayerFamilyInfoForm initialPayerOptions={initialPayerOptions} />
       </Form>
     </Modal>
   );
