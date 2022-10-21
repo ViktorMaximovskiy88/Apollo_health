@@ -21,6 +21,7 @@ async def reprocess_lineage_for_site(
     background_tasks: BackgroundTasks,
 ):
     await lineage_service.reprocess_lineage_for_site(site_id)
+    background_tasks.add_task(lineage_service.reprocess_lineage_for_site, site_id)
     return {"message": "Lineage task queued"}
 
 
