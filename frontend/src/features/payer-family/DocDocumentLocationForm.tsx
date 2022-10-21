@@ -118,10 +118,11 @@ export const DocDocumentLocationForm = ({
               form.setFieldsValue({ locations });
             }}
             options={options}
-            style={{ width: 'calc(100% - 96px', marginRight: '8px' }}
+            style={{ width: 'calc(100% - 296px', marginRight: '8px' }}
           />
           {form.getFieldValue('locations')[index].payer_family_id ? (
             <Button
+              className="mr-3"
               onClick={() => {
                 onShowPayerFamilyEdit(updatedLocation);
               }}

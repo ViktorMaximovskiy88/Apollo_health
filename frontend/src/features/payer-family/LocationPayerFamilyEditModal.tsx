@@ -35,7 +35,6 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
           plan_types: data.plan_types,
           regions: data.regions,
         });
-        console.log(data.payer_ids);
       }
     };
     fetchCurrentPayerFamilyVals();
