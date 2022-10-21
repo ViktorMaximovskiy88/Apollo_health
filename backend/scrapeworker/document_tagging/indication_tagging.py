@@ -55,7 +55,7 @@ class IndicationTagger:
     ) -> tuple[list[IndicationTag], list[IndicationTag], list[IndicationTag]]:
         nlp = await self.model()
         if not nlp:
-            return []
+            return ([], [], [])
 
         tags = set()
         url_tags = set()

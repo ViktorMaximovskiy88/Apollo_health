@@ -51,7 +51,7 @@ class TherapyTagger:
         focus_configs: list[FocusSectionConfig],
     ) -> tuple[list[TherapyTag], list[TherapyTag], list[TherapyTag]]:
         if not self.nlp:
-            return []
+            return ([], [], [])
 
         tags: set[TherapyTag] = set()
         url_tags = set()
