@@ -133,9 +133,9 @@ class LineageMatcher:
         return (
             # same name or url exact match
             (self.name_text_match == 1 or (self.filename_match == 1 and self.pathname_match == 1))
-            # focus exact match
-            and self.focus_therapy_match == 1
-            and self.focus_indication_match == 1
+            # focus exact match on link or url
+            and self.url_therapy_match_rule(1)
+            and self.link_therapy_match_rule(1)
             and self.state_abbr_rule()
             and self.state_name_rule()
         )
@@ -143,8 +143,8 @@ class LineageMatcher:
     # strict context with less tag assuredness
     def updated_document_a(self):
         return (
-            (self.filename_match >= 0.90 or self.element_text_match >= 0.90)
-            and self.ref_indication_match >= 0.75
+            self.url_therapy_match_rule(1)
+            and self.link_therapy_match_rule(1)
             and self.state_abbr_rule()
             and self.state_name_rule()
         )
@@ -153,8 +153,8 @@ class LineageMatcher:
     def updated_document_b(self):
         return (
             (self.filename_match >= 0.60 or self.element_text_match >= 0.90)
-            and self.ref_indication_match >= 0.85
-            and self.focus_therapy_match == 1
+            and self.url_therapy_match_rule(1)
+            and self.link_therapy_match_rule(1)
             and self.state_abbr_rule()
             and self.state_name_rule()
         )
@@ -167,6 +167,38 @@ class LineageMatcher:
             and self.state_abbr_rule()
             and self.state_name_rule()
         )
+
+    def require_url_indication_match(self):
+        return len(self.doc_a.url_focus_indication_tags) > 0 or len(
+            self.doc_b.url_focus_indication_tags
+        )
+
+    def require_url_therapy_match(self):
+        return len(self.doc_a.url_focus_therapy_tags) > 0 or len(self.doc_b.url_focus_therapy_tags)
+
+    def require_link_indication_match(self):
+        return len(self.doc_a.link_focus_indication_tags) > 0 or len(
+            self.doc_b.link_focus_indication_tags
+        )
+
+    def require_link_therapy_match(self):
+        return len(self.doc_a.link_focus_therapy_tags) > 0 or len(
+            self.doc_b.link_focus_therapy_tags
+        )
+
+    def link_therapy_match_rule(self, threshhold: int = 1):
+        return self.require_link_therapy_match() and self.link_focus_therapy_match == threshhold
+
+    def link_indication_match_rule(self, threshhold: int = 1):
+        return (
+            self.require_link_indication_match() and self.link_focus_indication_match == threshhold
+        )
+
+    def url_therapy_match_rule(self, threshhold: int = 1):
+        return self.require_url_therapy_match() and self.url_focus_therapy_match == threshhold
+
+    def url_indication_match_rule(self, threshhold: int = 1):
+        return self.require_url_indication_match() and self.url_focus_indication_match == threshhold
 
     def require_state_name(self):
         return self.doc_a.state_name or self.doc_a.state_name
