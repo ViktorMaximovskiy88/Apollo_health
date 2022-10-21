@@ -115,9 +115,12 @@ class LineageService:
         site_ids = await self.get_shared_lineage_sites(site_id)
 
         for site_id in site_ids:
-            self.logger.info(f"reprocessing for site {site_id}")
+            self.logger.info(f"clear/update for site {site_id}")
             await self.clear_lineage_for_site(site_id)
             await self.update_site_docs(site_id)
+
+        for site_id in site_ids:
+            self.logger.info(f"reprocessing for site {site_id}")
             await self.process_lineage_for_site(site_id)
 
     async def process_lineage_for_doc_ids(
@@ -292,7 +295,9 @@ def consensus_attr(model: DocumentAnalysis, attr: str):
 
 async def build_doc_analysis(doc: SiteRetrievedDocument) -> DocumentAnalysis:
 
-    doc_analysis = await DocumentAnalysis.find_one({"retrieved_document_id": doc.id})
+    doc_analysis = await DocumentAnalysis.find_one(
+        {"retrieved_document_id": doc.id, "site_id": doc.site_id}
+    )
 
     if doc_analysis is None:
         doc_analysis = DocumentAnalysis(
