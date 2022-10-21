@@ -56,14 +56,14 @@ export const PayerFamilyInfoForm = (props: PayerFamilyInfoFormProps) => {
           <RemoteSelect mode="multiple" className="w-full" fetchOptions={payerOptions} />
         </Form.Item>
       </Input.Group>
-      <Input.Group className="space-x-2 flex flex-wrap">
+      <Input.Group className="space-x-1 flex flex-wrap">
         <Form.Item label="Channel" name={'channels'} className="w-80">
           <Select mode="multiple" options={channelOptions} />
         </Form.Item>
-        <Form.Item label="Benefit" name={'benefits'} className="w-80">
+        <Form.Item label="Benefit" name={'benefits'} className="w-64">
           <Select mode="multiple" options={benefitOptions} />
         </Form.Item>
-        <Form.Item label="Plan Types" name={'plan_types'} className="w-72">
+        <Form.Item label="Plan Types" name={'plan_types'} className="w-30">
           <Select mode="multiple" options={planTypeOptions} />
         </Form.Item>
         <Form.Item label="Region" name={'regions'} className="w-40">
