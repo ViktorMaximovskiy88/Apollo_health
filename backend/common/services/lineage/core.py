@@ -59,7 +59,7 @@ class LineageService:
         docs = await query.to_list()
         return docs
 
-    async def clear_lineage_for_site(self, site_id: PydanticObjectId | None):
+    async def clear_lineage_for_site(self, site_id: PydanticObjectId):
         await asyncio.gather(
             RetrievedDocument.get_motor_collection().update_many(
                 {"locations.site_id": site_id},
@@ -102,10 +102,23 @@ class LineageService:
         docs = await get_site_docs(site_id)
         await self.process_lineage_for_docs(site_id, docs)
 
+    async def get_shared_lineage_sites(self, site_id: PydanticObjectId):
+        docs = await RetrievedDocument.find_many({"locations.site_id": site_id}).to_list()
+        site_ids = set()
+        for doc in docs:
+            for location in doc.locations:
+                site_ids.add(location.site_id)
+        return list(site_ids)
+
     async def reprocess_lineage_for_site(self, site_id: PydanticObjectId):
-        await self.clear_lineage_for_site(site_id)
-        await self.update_site_docs(site_id)
-        await self.process_lineage_for_site(site_id)
+        # we also want to clear for shared lineage sites
+        site_ids = await self.get_shared_lineage_sites(site_id)
+
+        for site_id in site_ids:
+            self.logger.info(f"reprocessing for site {site_id}")
+            await self.clear_lineage_for_site(site_id)
+            await self.update_site_docs(site_id)
+            await self.process_lineage_for_site(site_id)
 
     async def process_lineage_for_doc_ids(
         self, site_id: PydanticObjectId, doc_ids: list[PydanticObjectId]
