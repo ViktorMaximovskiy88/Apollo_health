@@ -29,28 +29,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
   const nameValue: string[] = Form.useWatch('legacy_relevance', form);
   let filteredlegacyRelevanceOptions = legacyRelevanceOptions;
 
-  if (nameValue?.includes('N/A')) {
-    filteredlegacyRelevanceOptions = legacyRelevanceOptions.map((e) => {
-      if (e.value === 'N/A') return e;
-      return { ...e, disabled: true };
-    });
-  } else if (
-    nameValue?.includes('PAR') ||
-    nameValue?.includes('EDITOR_MANUAL') ||
-    nameValue?.includes('EDITOR_AUTOMATED')
-  ) {
-    filteredlegacyRelevanceOptions = legacyRelevanceOptions.map((e) => {
-      if (e.value === 'N/A') {
-        return { ...e, disabled: true };
-      } else if (
-        (nameValue?.includes('EDITOR_MANUAL') && e.value === 'EDITOR_AUTOMATED') ||
-        (nameValue?.includes('EDITOR_AUTOMATED') && e.value === 'EDITOR_MANUAL')
-      ) {
-        return { ...e, disabled: true };
-      }
-      return e;
-    });
-  }
+  filteredlegacyRelevanceOptions = filterLegacyRelevanceOptions(legacyRelevanceOptions, nameValue);
 
   useEffect(() => {
     if (isSuccess && data) {
@@ -147,4 +126,34 @@ export function mustBeUniqueName(asyncValidator: Function, name: string = '') {
       return Promise.resolve();
     },
   };
+}
+
+export function filterLegacyRelevanceOptions(
+  legacyRelevanceOptions: { label: string; value: string }[],
+  nameValue: string[]
+) {
+  let filtered = legacyRelevanceOptions;
+  if (nameValue?.includes('N/A')) {
+    filtered = legacyRelevanceOptions.map((e) => {
+      if (e.value === 'N/A') return e;
+      return { ...e, disabled: true };
+    });
+  } else if (
+    nameValue?.includes('PAR') ||
+    nameValue?.includes('EDITOR_MANUAL') ||
+    nameValue?.includes('EDITOR_AUTOMATED')
+  ) {
+    filtered = legacyRelevanceOptions.map((e) => {
+      if (e.value === 'N/A') {
+        return { ...e, disabled: true };
+      } else if (
+        (nameValue?.includes('EDITOR_MANUAL') && e.value == 'EDITOR_AUTOMATED') ||
+        (nameValue?.includes('EDITOR_AUTOMATED') && e.value == 'EDITOR_MANUAL')
+      ) {
+        return { ...e, disabled: true };
+      }
+      return e;
+    });
+  }
+  return filtered;
 }
