@@ -37,8 +37,6 @@ export const PayerFamilyEditPage = () => {
     fetchCurrentPayerFamilyVals();
   }, [form, getPayerFamily, payerFamilyId]);
 
-  console.log(form.getFieldsValue(true));
-
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
       await updatePayerFamily({ ...values, _id: payerFamilyId }).unwrap();
