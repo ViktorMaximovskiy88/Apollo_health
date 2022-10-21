@@ -295,10 +295,15 @@ async def build_doc_analysis(doc: SiteRetrievedDocument) -> DocumentAnalysis:
     doc_analysis.doc_vectors = doc.doc_vectors
 
     doc_analysis.focus_therapy_tags = get_unique_focus_tags(doc.therapy_tags)
-    doc_analysis.ref_therapy_tags = get_unique_reference_tags(doc.therapy_tags)
-
     doc_analysis.focus_indication_tags = get_unique_focus_tags(doc.indication_tags)
+    doc_analysis.ref_therapy_tags = get_unique_reference_tags(doc.therapy_tags)
     doc_analysis.ref_indication_tags = get_unique_reference_tags(doc.indication_tags)
+
+    doc_analysis.url_focus_therapy_tags = get_unique_focus_tags(doc.url_therapy_tags)
+    doc_analysis.url_focus_indication_tags = get_unique_focus_tags(doc.url_indication_tags)
+
+    doc_analysis.link_focus_therapy_tags = get_unique_focus_tags(doc.link_therapy_tags)
+    doc_analysis.link_focus_indication_tags = get_unique_focus_tags(doc.link_indication_tags)
 
     [*path_parts, filename] = tokenize_url(doc.url)
     doc_analysis.filename_text = filename

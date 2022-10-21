@@ -60,6 +60,12 @@ class DocumentAnalysis(BaseDocument):
     focus_indication_tags: list[int] = []
     ref_indication_tags: list[int] = []
 
+    url_focus_therapy_tags: list[int] = []
+    url_focus_indication_tags: list[int] = []
+
+    link_focus_therapy_tags: list[int] = []
+    link_focus_indication_tags: list[int] = []
+
     # tokens
     filename_tokens: list[str] = []
     pathname_tokens: list[str] = []

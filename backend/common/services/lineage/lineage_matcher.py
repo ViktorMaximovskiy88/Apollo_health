@@ -66,6 +66,20 @@ class LineageMatcher:
             f"'{self.doc_a.name}' '{self.doc_b.name}' focus_therapy_match={self.focus_therapy_match}"
         )
 
+        self.url_focus_therapy_match = jaccard(
+            doc_a.url_focus_therapy_tags, doc_b.url_focus_therapy_tags
+        )
+        self.url_focus_indication_match = jaccard(
+            doc_a.url_focus_indication_tags, doc_b.url_focus_indication_tags
+        )
+
+        self.link_focus_therapy_match = jaccard(
+            doc_a.link_focus_therapy_tags, doc_b.link_focus_therapy_tags
+        )
+        self.link_focus_indication_match = jaccard(
+            doc_a.link_focus_indication_tags, doc_b.link_focus_indication_tags
+        )
+
         if len(self.doc_a.doc_vectors) == 0 or len(self.doc_b.doc_vectors) == 0:
             self.logger.debug(f"'{self.doc_a.name}' len(doc_vectors)={len(self.doc_a.doc_vectors)}")
             self.logger.debug(f"'{self.doc_b.name}' len(doc_vectors)={len(self.doc_b.doc_vectors)}")
