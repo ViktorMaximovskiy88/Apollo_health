@@ -6,6 +6,7 @@ export const initialState = {
     sort: { name: 'final_effective_date', dir: -1 as 1 | -1 | 0 },
     filter: [
       { name: 'name', operator: 'contains', type: 'string', value: '' },
+      { name: 'locations.site_id', operator: 'eq', type: 'select', value: '' },
       { name: 'first_collected_date', operator: 'before', type: 'date', value: '' },
       { name: 'last_collected_date', operator: 'before', type: 'date', value: '' },
       { name: 'classification_status', operator: 'eq', type: 'select', value: null },

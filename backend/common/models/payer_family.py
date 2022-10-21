@@ -15,6 +15,18 @@ class PayerFamily(BaseDocument):
     disabled: bool = False
 
 
+class PayerFamilyEditView(BaseModel):
+    name: str
+    site_id: PydanticObjectId | None = None
+    payer_type: str = "plan"
+    payer_ids: list[dict] | list[str]
+    channels: list[str] = []
+    benefits: list[str] = []
+    plan_types: list[str] = []
+    regions: list[str] = []
+    disabled: bool = False
+
+
 class NewPayerFamily(BaseModel):
     name: str
     site_id: PydanticObjectId | None = None

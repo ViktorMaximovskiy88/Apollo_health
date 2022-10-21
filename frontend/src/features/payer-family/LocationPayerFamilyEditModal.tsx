@@ -7,7 +7,7 @@ import {
 } from './payerFamilyApi';
 import { Modal } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
 import { PayerFamily } from './types';
 
@@ -26,6 +26,7 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
   const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
 
   const [updatePayerFamily, { isLoading }] = useUpdatePayerFamilyMutation();
+  const [initialPayerOptions, setInitialPayerOptions] = useState<any>([]);
 
   useEffect(() => {
     const fetchCurrentPayerFamilyVals = async () => {
@@ -41,6 +42,7 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
           plan_types: data.plan_types,
           regions: data.regions,
         });
+        setInitialPayerOptions(data.payer_ids);
       }
     };
     fetchCurrentPayerFamilyVals();
@@ -48,6 +50,13 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
 
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
+      let elem = values.payer_ids?.slice(0, 1);
+      // @ts-ignore
+      if (elem[0]?.label) {
+        // @ts-ignore
+        values.payer_ids = values.payer_ids?.map((val) => val.value);
+      }
+      console.log(values.payer_ids);
       const payerFamily = await updatePayerFamily({ ...values, _id: payer_family_id }).unwrap();
       onSave(payerFamily._id);
       form.resetFields();
@@ -97,7 +106,7 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
         </Form.Item>
         <Input.Group className="space-x-2 flex"></Input.Group>
 
-        <PayerFamilyInfoForm />
+        <PayerFamilyInfoForm initialPayerOptions={initialPayerOptions} />
       </Form>
     </Modal>
   );
