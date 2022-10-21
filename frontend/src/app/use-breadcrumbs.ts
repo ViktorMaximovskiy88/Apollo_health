@@ -96,7 +96,6 @@ export const useBreadcrumbs = async () => {
         const result: any = await dispatch(
           payerFamilyApi.endpoints.getPayerFamily.initiate(payerFamilyId)
         );
-        console.log(result);
         return { url, label: result.data.name } as any;
       },
     };
