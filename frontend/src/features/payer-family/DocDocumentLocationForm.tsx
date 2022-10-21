@@ -47,6 +47,8 @@ export const DocDocumentLocationForm = ({
   const baseUrl = Form.useWatch(['locations', index, 'base_url']);
   const url = Form.useWatch(['locations', index, 'url']);
 
+  setEditPayerFamilyId(form.getFieldValue(['locations', 0, 'payer_family_id']));
+
   return (
     <div className="property-grid bg-white p-2 mb-4">
       {/* Our header is separate due to styles */}
@@ -55,7 +57,6 @@ export const DocDocumentLocationForm = ({
           <TextEllipsis text={location.site_name ?? ''} />
         </Link>
       </div>
-
       {/* Our body */}
       <div className="pl-2 mt-2">
         <Form.Item name={['locations', index, 'site_id']} noStyle={true}>
