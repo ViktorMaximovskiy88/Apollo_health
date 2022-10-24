@@ -321,13 +321,6 @@ function ValidationButtons() {
   const { data: site, refetch } = useGetSiteQuery(siteId);
   if (!site) return null;
 
-  const mostRecentTask = {
-    limit: 1,
-    skip: 0,
-    sortInfo: initialState.table.sort,
-    filterValue: initialState.table.filter,
-  };
-
   if (site.collection_method == 'MANUAL' && activeStatuses.includes(site.last_run_status)) {
     return (
       <div className="flex space-x-1">
