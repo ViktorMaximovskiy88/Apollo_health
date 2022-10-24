@@ -30,7 +30,7 @@ from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleService
 from backend.common.services.doc_lifecycle.hooks import ChangeInfo, doc_document_save_hook
-from backend.common.services.lineage.lineage import LineageService
+from backend.common.services.lineage.core import LineageService
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_full_text
 from backend.common.storage.text_handler import TextHandler
@@ -503,9 +503,10 @@ class ScrapeWorker:
 
         await self.wait_for_completion_or_cancel(tasks)
 
-        doc_ids = [doc.id for (doc, _) in self.new_document_pairs]
+        # doc_ids = [doc.id for (doc, _) in self.new_document_pairs]
         site_id = self.site.id
-        await self.lineage_service.process_lineage_for_doc_ids(site_id, doc_ids)  # type: ignore
+        # TEMPORARY: lets see how the scrapeworker fares at this (vs our webapp...)
+        await self.lineage_service.process_lineage_for_site(site_id)  # type: ignore
 
         doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
         change_info = ChangeInfo(translation_change=True, lineage_change=True)

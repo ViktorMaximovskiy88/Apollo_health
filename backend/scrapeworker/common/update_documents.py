@@ -57,16 +57,20 @@ class DocumentUpdater:
     ) -> UpdateRetrievedDocument:
         now: datetime = datetime.now(tz=timezone.utc)
         name = self.set_doc_name(parsed_content, download)
-        print("update_retrieved_doc")
 
         location: RetrievedDocumentLocation = document.get_site_location(self.site.id)
         context_metadata = download.metadata.dict()
-        text_checksum: str = await self.text_handler.save_text(parsed_content["text"])
+        text_checksum = await self.text_handler.save_text(parsed_content["text"])
+
         if location:
             location.link_text = download.metadata.link_text
             location.siblings_text = download.metadata.siblings_text
             location.context_metadata = context_metadata
             location.last_collected_date = now
+            location.url_therapy_tags = parsed_content["url_therapy_tags"]
+            location.url_indication_tags = parsed_content["url_indication_tags"]
+            location.link_therapy_tags = parsed_content["link_therapy_tags"]
+            location.link_indication_tags = parsed_content["link_indication_tags"]
         else:
             document.locations.append(
                 RetrievedDocumentLocation(
@@ -78,6 +82,10 @@ class DocumentUpdater:
                     context_metadata=context_metadata,
                     link_text=download.metadata.link_text,
                     siblings_text=download.metadata.siblings_text,
+                    url_therapy_tags=parsed_content["url_therapy_tags"],
+                    url_indication_tags=parsed_content["url_indication_tags"],
+                    link_therapy_tags=parsed_content["link_therapy_tags"],
+                    link_indication_tags=parsed_content["link_indication_tags"],
                 )
             )
 
@@ -112,10 +120,11 @@ class DocumentUpdater:
         retrieved_document: RetrievedDocument,
         new_therapy_tags: list[TherapyTag],
         new_indicate_tags: list[IndicationTag],
-    ) -> None:
+    ):
         doc_document: DocDocument | None = await DocDocument.find_one(
             DocDocument.retrieved_document_id == retrieved_document.id
         )
+
         if doc_document:
             self.log.debug(f"doc doc update -> {doc_document.id}")
             rt_doc_location = retrieved_document.get_site_location(self.site.id)
@@ -159,14 +168,14 @@ class DocumentUpdater:
 
     async def create_retrieved_document(
         self, parsed_content: dict[str, Any], download: DownloadContext, checksum: str, url: str
-    ) -> RetrievedDocument:
+    ):
         self.log.debug("creating doc")
         now: datetime = datetime.now(tz=timezone.utc)
         name = self.set_doc_name(parsed_content, download)
         text_checksum: str = await self.text_handler.save_text(parsed_content["text"])
         context_metadata = download.metadata.dict()
 
-        document: RetrievedDocument = RetrievedDocument(
+        document = RetrievedDocument(
             file_size=download.file_size,
             checksum=checksum,
             text_checksum=text_checksum,
@@ -200,6 +209,10 @@ class DocumentUpdater:
                     context_metadata=context_metadata,
                     link_text=download.metadata.link_text,
                     siblings_text=download.metadata.siblings_text,
+                    url_therapy_tags=parsed_content["url_therapy_tags"],
+                    url_indication_tags=parsed_content["url_indication_tags"],
+                    link_therapy_tags=parsed_content["link_therapy_tags"],
+                    link_indication_tags=parsed_content["link_indication_tags"],
                 )
             ],
         )

@@ -232,6 +232,7 @@ class DateParser:
 
         prev_line = ""
         prev_line_index = 0
+        prev_label = ""
         ends_with_comma = False
         for line in text.split("\n"):
             if re.fullmatch("references?", line.strip(), re.IGNORECASE):
@@ -258,7 +259,11 @@ class DateParser:
                         ends_with_comma and not label
                     ):  # if no match and previous line ends with comma, check label from the start
                         label = self.get_date_label(line, 0, m.last_date_index, "START")
+                    if not label and prev_label:
+                        self.update_label(m, prev_label)
                     if label:
+                        # custom logic for saving labels in adjacent cells ahca.myflorida.com
+                        prev_label = label if prev_line and prev_line[-1] == ":" else None
                         self.update_label(m, label)
                 self.unclassified_dates.add(m.date)
                 latest_match = m.end if m.end > latest_match else latest_match

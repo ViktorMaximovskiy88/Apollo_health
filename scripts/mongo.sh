@@ -1,25 +1,14 @@
 #!/usr/bin/env bash
 
-# todo format later
-COLLECTIONS=$(cat <<-END
-    db.ChangeLog.drop();
-    db.Comment.drop();
-    db.ContentExtractionResult.drop();
-    db.ContentExtractionTask.drop();
-    db.DocDocument.drop();
-    db.DocumentAnalysis.drop();
-    db.LinkTaskLog.drop();
-    db.RetrievedDocument.drop();
-    db.SiteScrapeTask.drop();
-END
-)
+
+SCRIPT_NAME=${1:?please provide script name}
 
 mongosh \
     -u "admin" \
     -p "admin" \
     --authenticationDatabase="admin" \
     "mongodb://localhost:27017/source-hub" \
-    --eval "${COLLECTIONS}"
+    "${SCRIPT_NAME}"
 
 # AWS_ACCESS_KEY_ID=""
 # AWS_SECRET_ACCESS_KEY=""

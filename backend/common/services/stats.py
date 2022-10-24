@@ -1,68 +1,43 @@
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
+from backend.common.core.enums import TaskStatus
 from backend.common.models.base_document import BaseModel
-from backend.common.models.doc_document import DocDocument
+from backend.common.models.site_scrape_task import SiteScrapeTask
 
 
-class LastCollectionStats(BaseModel):
-    last_collected_date: date
-    count: int
+class DailyCollectionStat(BaseModel):
+    name: str
+    updated: int
+    created: int
+    total: int
 
 
-class FirstCollectionStats(BaseModel):
-    first_collected_date: date
-    count: int
-
-
-async def get_updated_docs(lookback_days: int) -> list[LastCollectionStats]:
+async def get_collection_stats(lookback_days: int) -> list[DailyCollectionStat]:
     lookback_date = datetime.today() - timedelta(days=lookback_days)
-    docs = await DocDocument.aggregate(
+    docs = await SiteScrapeTask.aggregate(
         aggregation_pipeline=[
             {
                 "$match": {
-                    "last_collected_date": {"$gte": lookback_date},
-                    "$expr": {"$ne": ["$last_collected_date", "$first_collected_date"]},
+                    "start_time": {"$gte": lookback_date},
+                    "status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.FINISHED]},
                 }
             },
+            {"$sort": {"start_time": -1}},
+            {"$group": {"_id": "$site_id", "item": {"$first": "$$ROOT"}}},
+            {"$replaceRoot": {"newRoot": "$item"}},
             {
                 "$group": {
-                    "_id": {
-                        "$dateToString": {"format": "%Y-%m-%d", "date": "$last_collected_date"}
+                    "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$start_time"}},
+                    "created": {"$sum": "$new_documents_found"},
+                    "updated": {
+                        "$sum": {"$subtract": ["$documents_found", "$new_documents_found"]}
                     },
-                    "count": {"$sum": 1},
+                    "total": {"$sum": "$documents_found"},
                 }
             },
-            {"$addFields": {"last_collected_date": "$_id"}},
-            {"$sort": {"_id": -1}},
+            {"$addFields": {"name": "$_id"}},
         ],
-        projection_model=LastCollectionStats,
-    ).to_list()
-
-    return docs
-
-
-async def get_created_docs(lookback_days: int) -> list[FirstCollectionStats]:
-    lookback_date = datetime.today() - timedelta(days=lookback_days)
-    docs = await DocDocument.aggregate(
-        aggregation_pipeline=[
-            {
-                "$match": {
-                    "first_collected_date": {"$gte": lookback_date},
-                    "$expr": {"$eq": ["$last_collected_date", "$first_collected_date"]},
-                }
-            },
-            {
-                "$group": {
-                    "_id": {
-                        "$dateToString": {"format": "%Y-%m-%d", "date": "$first_collected_date"}
-                    },
-                    "count": {"$sum": 1},
-                }
-            },
-            {"$addFields": {"first_collected_date": "$_id"}},
-            {"$sort": {"_id": -1}},
-        ],
-        projection_model=FirstCollectionStats,
+        projection_model=DailyCollectionStat,
     ).to_list()
 
     return docs

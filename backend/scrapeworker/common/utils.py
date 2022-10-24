@@ -2,8 +2,10 @@
 import os
 import pathlib
 import re
+import unicodedata
+from html import unescape
 from itertools import groupby
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 import magic
 
@@ -153,3 +155,45 @@ def jaccard(a: list, b: list):
     intersection = len(list(set(a).intersection(b)))
     union = (len(a) + len(b)) - intersection
     return intersection / union
+
+
+def deburr(input: str = "") -> str:
+    if input is None:
+        return ""
+    return unicodedata.normalize("NFKD", input).encode("ascii", "ignore").decode()
+
+
+def normalize_spaces(input: str = "") -> str:
+    if input is None:
+        return ""
+    return re.sub(r" +", " ", input).strip()
+
+
+# return meaningful chars
+def scrub_string(input: str = "") -> str:
+    if input is None:
+        return ""
+    return re.sub(r"[^A-Za-z0-9 ]+", " ", input).strip()
+
+
+# maybe too much but we can break it out without boolean gating too
+def normalize_string(input: str = "", html=False, url=True, lower=True, strip=True) -> str:
+    # so much for types...
+    if input is None:
+        return ""
+    # order matters, html can contain urls
+    if html:
+        input = unescape(input)
+    if url:
+        input = unquote(input)
+    # remove or replace non-ascii; ® gets removed while ö is the is replaced by o
+    input = deburr(input)
+    # replace non meaningful chars with space; the space keeps word boundaries
+    if strip:
+        input = scrub_string(input)
+        input = normalize_spaces(input)
+
+    if lower:
+        input = input.lower()
+    # always trim
+    return input.strip()

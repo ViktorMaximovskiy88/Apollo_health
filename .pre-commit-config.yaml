@@ -42,7 +42,7 @@ repos:
     rev: "v8.17.0"
     hooks:
       - id: eslint
-        exclude: ^frontend/public
+        exclude: ^(frontend/public|scripts/)
         additional_dependencies:
           - eslint@8.0.0
           - eslint-config-react-app@7.0.1

@@ -8,7 +8,7 @@ import aiofiles
 from backend.common.models.site import FocusSectionConfig, ScrapeMethodConfiguration
 from backend.scrapeworker.common.date_parser import DateParser
 from backend.scrapeworker.common.detect_lang import detect_lang
-from backend.scrapeworker.common.utils import date_rgxs, label_rgxs
+from backend.scrapeworker.common.utils import date_rgxs, label_rgxs, normalize_string
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.document_tagging.indication_tagging import indication_tagger
 from backend.scrapeworker.document_tagging.taggers import Taggers
@@ -70,12 +70,23 @@ class FileParser(ABC):
         identified_dates.sort()
 
         therapy_tags, indication_tags = [], []
+        scrubbed_link_text = normalize_string(self.link_text)
+        scrubbed_url = normalize_string(self.url)
+
         if self.taggers:
-            therapy_tags = await self.taggers.therapy.tag_document(
-                self.text, document_type, self.url, self.link_text, self.focus_config
+            (
+                therapy_tags,
+                url_therapy_tags,
+                link_therapy_tags,
+            ) = await self.taggers.therapy.tag_document(
+                self.text, document_type, scrubbed_url, scrubbed_link_text, self.focus_config
             )
-            indication_tags = await self.taggers.indication.tag_document(
-                self.text, document_type, self.url, self.link_text, self.focus_config
+            (
+                indication_tags,
+                url_indication_tags,
+                link_indication_tags,
+            ) = await self.taggers.indication.tag_document(
+                self.text, document_type, scrubbed_url, scrubbed_link_text, self.focus_config
             )
 
         self.result = {
@@ -96,6 +107,10 @@ class FileParser(ABC):
             "therapy_tags": therapy_tags,
             "indication_tags": indication_tags,
             "doc_vectors": doc_vectors.tolist(),
+            "url_therapy_tags": url_therapy_tags,
+            "url_indication_tags": url_indication_tags,
+            "link_therapy_tags": link_therapy_tags,
+            "link_indication_tags": link_indication_tags,
         }
 
         return self.result

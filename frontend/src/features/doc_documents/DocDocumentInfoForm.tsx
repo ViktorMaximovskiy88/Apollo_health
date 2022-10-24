@@ -4,7 +4,8 @@ import { Hr } from '../../components';
 import { DateFields } from './DocDocumentDateFields';
 import { DocumentClassification } from './DocDocumentClassificationFields';
 import { Translation } from './TranslationSelector';
-import { DocDocumentInfoFormFamilyField } from './DocDocumentInfoFormFamilyField';
+import { DocDocumentDocumentFamilyField } from './DocDocumentDocumentFamilyField';
+import { DocDocument } from './types';
 
 interface DocDocumentInfoTypes {
   onFieldChange: () => void;
@@ -21,7 +22,7 @@ export function DocDocumentInfoForm({ onFieldChange }: DocDocumentInfoTypes) {
       <Hr />
       <DateFields onFieldChange={onFieldChange} />
       <Hr />
-      <DocDocumentInfoFormFamilyField onFieldChange={onFieldChange} />
+      <DocDocumentDocumentFamilyField onFieldChange={onFieldChange} />
       <Translation />
     </div>
   );
