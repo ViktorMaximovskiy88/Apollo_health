@@ -308,6 +308,8 @@ async def add_document(
         await original_retr_doc.save()
         await original_doc_doc.save()
 
+    if not new_retr_document.lineage_id:
+        new_retr_document.lineage_id = PydanticObjectId()
     created_retr_doc: RetrievedDocument = await create_and_log(
         logger, current_user, new_retr_document
     )
@@ -320,19 +322,6 @@ async def add_document(
     # a previous_doc_doc_id. New retr_document.previous_doc_id is set before create.
     if uploaded_doc.upload_new_version_for_id:
         created_doc_doc.previous_doc_doc_id = original_doc_doc.id
-        await created_doc_doc.save()
-    # New document. Set lineage.
-    else:
-        if not created_retr_doc.lineage_id and not created_doc_doc.lineage_id:
-            created_retr_doc.lineage_id = PydanticObjectId()
-            created_doc_doc.lineage_id = created_retr_doc.lineage_id
-        # These two conditions should not happen since pair should be blank.
-        # Handle just in case.
-        elif not created_retr_doc.lineage_id and created_doc_doc.lineage_id:
-            created_retr_doc.lineage_id = created_doc_doc.lineage_id
-        elif created_retr_doc.lineage_id and not created_doc_doc.lineage_id:
-            created_doc_doc.lineage_id = created_retr_doc.lineage_id
-        await created_retr_doc.save()
         await created_doc_doc.save()
 
     # Automatic: Add document to new task.
