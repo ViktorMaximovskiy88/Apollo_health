@@ -80,7 +80,6 @@ class BaseDocDocument(BaseModel):
 
 class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixins):
     locations: list[DocDocumentLocation] = []
-    not_found: bool | None = False
 
     def for_site(self, site_id: PydanticObjectId):
         location = self.get_site_location(site_id)

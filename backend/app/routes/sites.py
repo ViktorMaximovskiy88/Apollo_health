@@ -263,9 +263,6 @@ async def get_site_doc_docs(
     )
     if current_task and current_task.collection_method == CollectionMethod.Manual:
         query["retrieved_document_id"] = {"$in": current_task.retrieved_document_ids}
-        # Has at one point manually collected docs selected as not_found.
-        if site.has_not_found_documents:
-            query["not_found"] = {"$ne": True}
     elif scrape_task_id:
         scrape_task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
         if scrape_task and scrape_task.status != TaskStatus.CANCELED:

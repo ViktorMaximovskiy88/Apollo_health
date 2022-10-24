@@ -389,13 +389,6 @@ class CollectionService:
                     for retr_id in target_task.retrieved_document_ids
                     if f"{retr_id}" != f"{work_item.retrieved_document_id}"
                 ]
-                doc_doc: DocDocument | None = await DocDocument.find_one(
-                    {"_id": work_item.document_id}
-                )
-                doc_doc.not_found = True
-                await doc_doc.save()
-                if not self.site.has_not_found_documents:
-                    await self.site.update(Set({Site.has_not_found_documents: True}))
             case WorkItemOption.UNHANDLED:
                 result.add_error(f"{retr_doc.name}")
                 return result

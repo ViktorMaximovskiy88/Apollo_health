@@ -121,9 +121,6 @@ class Site(BaseDocument, NewSite):
     collection_hold: datetime | None = None
     last_run_time: datetime | None = None
     assignee: PydanticObjectId | None = None
-    # Instead of always filtering out not_found on doc docs requiring an index,
-    # only filter when a site has manually collected and selected NOT_FOUND.
-    has_not_found_documents: bool = False
     last_run_documents: int | None = None
 
 
