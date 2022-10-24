@@ -91,6 +91,14 @@ resource "aws_ecs_task_definition" "scrapeworker" {
         }
       ])
 
+      ulimits = [
+        {
+          name = "nofile"
+          softLimit = 2048
+          hardLimit = 8192
+        }
+      ]
+
     }
   ])
 
