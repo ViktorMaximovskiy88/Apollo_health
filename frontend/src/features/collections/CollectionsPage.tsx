@@ -5,7 +5,6 @@ import {
   useRunSiteScrapeTaskMutation,
   useCancelAllSiteScrapeTasksMutation,
   useLazyGetScrapeTasksForSiteQuery,
-  siteScrapeTasksApi,
 } from './siteScrapeTasksApi';
 import { useGetSiteQuery, useLazyGetSiteDocDocumentsQuery } from '../sites/sitesApi';
 import { CollectionsDataTable } from './CollectionsDataTable';
