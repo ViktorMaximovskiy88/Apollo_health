@@ -109,7 +109,7 @@ export function ManualCollectionButton(props: any) {
     }
   }
 
-  if (activeStatuses.includes(site.last_run_status)) {
+  if (site.collection_method == 'MANUAL' && activeStatuses.includes(site.last_run_status)) {
     return (
       <Button className="ml-auto" disabled={isLoading} onClick={handleCancelManualScrape}>
         End Manual Collection

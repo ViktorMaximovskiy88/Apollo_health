@@ -16,12 +16,12 @@ import {
 } from '../collections/siteScrapeTasksApi';
 import { useSiteScrapeTaskId } from './manual_collection/useUpdateSelected';
 import { initialState } from '../collections/collectionsSlice';
+import { TaskStatus } from '../../common/scrapeTaskStatus';
 
 export function SiteDocDocumentsPage() {
   const [newDocumentModalOpen, setNewDocumentModalOpen] = useState(false);
-  const [hasToggledShowManual, setHasToggledShowManual] = useState(false);
-  const [showManual, setShowManual] = useState(false);
   const [oldVersion, setOldVersion] = useState<any>();
+  const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
   const { siteId } = useParams();
   const scrapeTaskId = useSiteScrapeTaskId();
   const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
@@ -49,32 +49,20 @@ export function SiteDocDocumentsPage() {
 
   const refreshDocs = async () => {
     if (!scrapeTaskId) return;
-    setHasToggledShowManual(true);
-    const lastTask = await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
-    if (
-      lastTask.data &&
-      site.collection_method === CollectionMethod.Manual &&
-      ['IN_PROGRESS', 'QUEUED', 'PENDING'].includes(lastTask.data?.data[0].status)
-    ) {
-      setShowManual(true);
-    }
+    await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
     await getDocDocumentsQuery({ siteId, scrapeTaskId });
   };
-
-  if (site.collection_method === CollectionMethod.Manual && !hasToggledShowManual) {
-    refreshDocs();
-  }
 
   return (
     <MainLayout
       sidebar={<SiteMenu />}
       sectionToolbar={
         <>
-          {showManual ? (
+          {site.collection_method == 'MANUAL' && activeStatuses.includes(site.last_run_status) ? (
             <ManualCollectionButton site={site} refetch={refetch} runScrape={runScrape} />
           ) : null}
 
-          {showManual ? (
+          {site.collection_method == 'MANUAL' && activeStatuses.includes(site.last_run_status) ? (
             <Button onClick={() => setNewDocumentModalOpen(true)} className="ml-auto">
               Create Document
             </Button>

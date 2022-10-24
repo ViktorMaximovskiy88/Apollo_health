@@ -16,6 +16,8 @@ import { useGetSiteQuery } from '../../sites/sitesApi';
 import { initialState } from '../../collections/collectionsSlice';
 import { useLazyGetScrapeTasksForSiteQuery } from '../../collections/siteScrapeTasksApi';
 import { CollectionMethod } from '../../sites/types';
+import useInterval from '../../../common/hooks/use-interval';
+import { TaskStatus } from '../../../common/scrapeTaskStatus';
 
 const Found = () => {
   const updateSelected = useUpdateSelected();
@@ -314,11 +316,8 @@ const Unhandled = () => {
 function ValidationButtons() {
   const { isLoading } = useContext(ValidationButtonsContext) ?? {};
   const params = useParams();
-  const [hasToggledShowManual, setHasToggledShowManual] = useState(false);
-  const [showManual, setShowManual] = useState(false);
   const siteId = params.siteId;
-  const scrapeTaskId = useSiteScrapeTaskId();
-  const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
+  const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
   const { data: site, refetch } = useGetSiteQuery(siteId);
   if (!site) return null;
 
@@ -329,31 +328,7 @@ function ValidationButtons() {
     filterValue: initialState.table.filter,
   };
 
-  const refreshShowManual = async () => {
-    if (!scrapeTaskId) return;
-    setHasToggledShowManual(true);
-    const lastTask = await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
-    if (
-      lastTask &&
-      lastTask.data &&
-      site.collection_method === CollectionMethod.Manual &&
-      ['IN_PROGRESS', 'QUEUED', 'PENDING'].includes(lastTask.data?.data[0].status)
-    ) {
-      setShowManual(true);
-    } else {
-      if (showManual === true) {
-        setShowManual(false);
-      }
-    }
-  };
-
-  setInterval(() => {
-    refreshShowManual();
-  }, 3000);
-
-  if (!showManual) {
-    return null;
-  } else {
+  if (site.collection_method == 'MANUAL' && activeStatuses.includes(site.last_run_status)) {
     return (
       <div className="flex space-x-1">
         <Found />
@@ -364,6 +339,8 @@ function ValidationButtons() {
         <Spin spinning={isLoading} size="small" className="pl-3 pt-2" />
       </div>
     );
+  } else {
+    return null;
   }
 }
 
