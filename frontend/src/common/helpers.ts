@@ -14,3 +14,11 @@ export function isErrorWithData(
     typeof (error as any).status === 'number'
   );
 }
+
+export function makeActionDispatch(actions: object, dispatch: any) {
+  const dispatchFunctions: { [key: string]: any } = {};
+  for (const [name, func] of Object.entries(actions)) {
+    dispatchFunctions[name] = (...args: any[]) => dispatch(func(...args));
+  }
+  return dispatchFunctions;
+}

@@ -26,6 +26,7 @@ repos:
       - id: check-symlinks
       - id: debug-statements
       - id: trailing-whitespace
+        exclude: .txt
       - id: check-yaml
       - id: mixed-line-ending
       - id: name-tests-test
@@ -41,7 +42,7 @@ repos:
     rev: "v8.17.0"
     hooks:
       - id: eslint
-        exclude: ^frontend/public
+        exclude: ^(frontend/public|scripts/)
         additional_dependencies:
           - eslint@8.0.0
           - eslint-config-react-app@7.0.1

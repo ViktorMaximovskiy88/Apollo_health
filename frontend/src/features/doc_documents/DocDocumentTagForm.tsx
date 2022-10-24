@@ -112,7 +112,7 @@ export function DocDocumentTagForm(props: {
   };
 
   return (
-    <>
+    <div className="flex flex-col h-full">
       <div className="flex flex-col bg-white">
         <div className="flex flex-1 items-center">
           <Input.Search allowClear={true} placeholder="Search" onChange={debounce(onSearch, 250)} />
@@ -143,7 +143,7 @@ export function DocDocumentTagForm(props: {
         </div>
       </div>
 
-      <div className="flex flex-col p-2 pr-4 overflow-auto h-[calc(100%_-_136px)]" ref={parentRef}>
+      <div className="flex flex-col p-2 pr-4 overflow-auto bg-white flex-grow" ref={parentRef}>
         <div
           style={{
             height: `${rowVirtualizer.getTotalSize()}px`,
@@ -179,13 +179,13 @@ export function DocDocumentTagForm(props: {
         </div>
       </div>
 
-      <div className="flex flex-col bg-white">
-        <div className="flex flex-1 pt-4 items-center justify-between">
+      <div className="flex flex-col p-2 bg-white">
+        <div className="flex flex-1 items-center justify-between">
           <div>
             Showing {filteredList.length} of {tags.length} Tags
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

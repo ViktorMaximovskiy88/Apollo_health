@@ -10,11 +10,13 @@ import { docDocumentsApi } from '../features/doc_documents/docDocumentApi';
 import { workQueuesApi } from '../features/work_queue/workQueuesApi';
 import { translationsApi } from '../features/translations/translationApi';
 import { payerBackboneApi } from '../features/payer-backbone/payerBackboneApi';
-
+import { documentFamilyApi } from '../features/doc_documents/document_family/documentFamilyApi';
+import { payerFamilyApi } from '../features/payer-family/payerFamilyApi';
 const routes = [
   '/documents',
   '/documents/:docDocId',
   '/document-family',
+  '/document-family/:docFamilyId',
   '/sites',
   '/sites/:siteId',
   '/sites/:siteId/doc-documents',
@@ -41,10 +43,13 @@ const routes = [
   '/work-queues/:workQueueId/:docDocumentId/process',
   '/work-queues/:workQueueId/:docDocumentId/read-only',
   '/work-queues/new',
+  '/payer-family',
+  '/payer-family/:payerFamilyId',
   '/payer-backbone',
   '/payer-backbone/:payerType',
   '/payer-backbone/:payerType/new',
   '/payer-backbone/:payerType/:payerId',
+  '/stats/collection',
 ];
 
 export const useBreadcrumbs = async () => {
@@ -68,6 +73,12 @@ export const useBreadcrumbs = async () => {
         );
         return { url, label: result.data.name } as any;
       },
+      ':docFamilyId': async (docFamilyId: string, url: string) => {
+        const result: any = await dispatch(
+          documentFamilyApi.endpoints.getDocumentFamily.initiate(docFamilyId)
+        );
+        return { url, label: result.data.name } as any;
+      },
       ':userId': async (userId: string, url: string) => {
         const result: any = await dispatch(usersApi.endpoints.getUser.initiate(userId));
         return { url, label: result.data.full_name } as any;
@@ -86,6 +97,12 @@ export const useBreadcrumbs = async () => {
         const payerType = url.split('/')[2];
         const result: any = await dispatch(
           payerBackboneApi.endpoints.getPayerBackbone.initiate({ payerType, id: payerId })
+        );
+        return { url, label: result.data.name } as any;
+      },
+      ':payerFamilyId': async (payerFamilyId: string, url: string) => {
+        const result: any = await dispatch(
+          payerFamilyApi.endpoints.getPayerFamily.initiate(payerFamilyId)
         );
         return { url, label: result.data.name } as any;
       },
@@ -115,6 +132,12 @@ export const useBreadcrumbs = async () => {
         'document-family': 'Document Families',
         ...asyncResolvers,
       },
+      '/payer-family': {
+        'payer-family': 'Payer Families',
+        edit: 'Edit',
+        ...asyncResolvers,
+      },
+
       '/users': {
         users: 'Users',
         new: 'Create',
@@ -150,6 +173,10 @@ export const useBreadcrumbs = async () => {
           return Promise.resolve({ url, label } as any);
         },
         ...asyncResolvers,
+      },
+      '/stats': {
+        stats: 'Stats',
+        collection: 'Doc Collection Last 30 Days',
       },
     };
   }, [dispatch]);

@@ -1,4 +1,4 @@
-import { BaseDocument } from "../../common";
+import { BaseDocument } from '../../common';
 
 export interface WorkItemLock {
   work_queue_id: string;
@@ -40,13 +40,6 @@ export interface TakeNextWorkItemResponse {
 
 export interface SubmitWorkItemResponse {
   success: boolean;
-}
-
-export interface Comment {
-  time: string;
-  target_id: string;
-  user_id: string;
-  text: string
 }
 
 export interface SubmitWorkItemRequest {

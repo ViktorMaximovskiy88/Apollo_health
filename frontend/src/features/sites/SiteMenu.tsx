@@ -1,6 +1,5 @@
 import { Layout, Menu } from 'antd';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
-import { SelectOutlined } from '@ant-design/icons';
 
 export function SiteMenu() {
   const { siteId } = useParams();

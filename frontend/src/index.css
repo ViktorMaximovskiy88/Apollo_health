@@ -43,6 +43,10 @@ h1.ant-typography {
   overflow: auto;
 }
 
+.ant-tabs-h-full .ant-tabs-tabpane {
+  height: 100%;
+}
+
 .ant-tabs-scroll .ant-tabs-content-holder {
   overflow: auto;
 }

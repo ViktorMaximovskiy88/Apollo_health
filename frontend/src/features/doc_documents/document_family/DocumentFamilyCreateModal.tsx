@@ -2,88 +2,79 @@ import { Form, Input, Select } from 'antd';
 import {
   useLazyGetDocumentFamilyByNameQuery,
   useAddDocumentFamilyMutation,
+  useUpdateDocumentFamilyMutation,
 } from './documentFamilyApi';
-import { DocDocumentLocation } from '../locations/types';
 import { Modal } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
 import { useEffect } from 'react';
-import { fieldGroupsOptions } from './documentFamilyLevels';
+import { fieldGroupsOptions, legacyRelevanceOptions } from './documentFamilyLevels';
+import { DocumentFamily } from './types';
 
 interface DocumentFamilyCreateModalPropTypes {
   documentType?: string;
-  location?: DocDocumentLocation | undefined;
   open?: boolean;
   onClose: () => void;
   onSave: (documentFamilyId: string) => void;
+  documentFamilyData?: DocumentFamily;
 }
 
 export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTypes) => {
-  let legacyRelevanceOptions = [
-    { label: 'Editor Manual', value: 'EDITOR_MANUAL' },
-    { label: 'Editor Automated ', value: 'EDITOR_AUTOMATED' },
-    { label: 'PAR', value: 'PAR' },
-    { label: 'N/A', value: 'N/A' },
-  ];
-  const { documentType, location, open, onClose, onSave } = props;
+  const { documentType, open, documentFamilyData, onClose, onSave } = props;
   const [form] = useForm();
   const [getDocumentFamilyByName] = useLazyGetDocumentFamilyByNameQuery();
-  const [addDocumentFamily, { isLoading, data, isSuccess }] = useAddDocumentFamilyMutation();
+  const [addDocumentFamily, { isLoading, data, isSuccess, reset }] = useAddDocumentFamilyMutation();
+  const [update, { isLoading: isUpdateLoading, data: updateData, isSuccess: isUpdateSuccess }] =
+    useUpdateDocumentFamilyMutation();
   const nameValue: string[] = Form.useWatch('legacy_relevance', form);
   let filteredlegacyRelevanceOptions = legacyRelevanceOptions;
 
-  if (nameValue?.includes('N/A')) {
-    filteredlegacyRelevanceOptions = legacyRelevanceOptions.map((e) => {
-      if (e.value === 'N/A') return e;
-      return { ...e, disabled: true };
-    });
-  } else if (
-    nameValue?.includes('PAR') ||
-    nameValue?.includes('EDITOR_MANUAL') ||
-    nameValue?.includes('EDITOR_AUTOMATED')
-  ) {
-    filteredlegacyRelevanceOptions = legacyRelevanceOptions.map((e) => {
-      if (e.value === 'N/A') {
-        return { ...e, disabled: true };
-      } else if (
-        (nameValue?.includes('EDITOR_MANUAL') && e.value === 'EDITOR_AUTOMATED') ||
-        (nameValue?.includes('EDITOR_AUTOMATED') && e.value === 'EDITOR_MANUAL')
-      ) {
-        return { ...e, disabled: true };
-      }
-      return e;
-    });
-  }
+  filteredlegacyRelevanceOptions = filterLegacyRelevanceOptions(legacyRelevanceOptions, nameValue);
 
   useEffect(() => {
     if (isSuccess && data) {
       onSave(data._id);
       form.resetFields();
+      reset();
     }
   }, [isSuccess, data, onSave, form]);
 
+  useEffect(() => {
+    if (isUpdateSuccess && updateData) {
+      onSave(updateData._id);
+      form.resetFields();
+    }
+  }, [isUpdateSuccess, updateData]);
+
+  useEffect(() => {
+    form.setFieldsValue(documentFamilyData);
+  }, [documentFamilyData]);
   return (
     <Modal
       open={open}
-      title={<>Add Document Family</>}
+      title={documentFamilyData ? <>Edit Document Family</> : <>Add Document Family</>}
       width="50%"
       okText="Submit"
       onOk={form.submit}
       onCancel={onClose}
+      confirmLoading={isLoading || isUpdateLoading}
     >
       <Form
         form={form}
         layout="vertical"
-        disabled={isLoading}
         autoComplete="off"
         requiredMark={false}
         validateTrigger={['onBlur']}
         onFinish={(values: any) => {
-          addDocumentFamily({
-            ...values,
-            site_id: location?.site_id,
-            document_type: documentType,
-          });
+          if (documentFamilyData) {
+            update({ body: values, _id: documentFamilyData._id });
+            form.resetFields();
+          } else {
+            addDocumentFamily({
+              ...values,
+              document_type: documentType,
+            });
+          }
         }}
       >
         <div className="flex">
@@ -97,7 +88,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
           name="name"
           rules={[
             { required: true, message: 'Please input a document family name' },
-            mustBeUniqueToSite(getDocumentFamilyByName, location?.site_id),
+            mustBeUniqueName(getDocumentFamilyByName, documentFamilyData?.name),
           ]}
         >
           <Input />
@@ -122,16 +113,47 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
 };
 
 // asyncValidator because rtk query makes this tough without hooks/dispatch
-function mustBeUniqueToSite(asyncValidator: Function, siteId?: string) {
+export function mustBeUniqueName(asyncValidator: Function, name: string = '') {
   return {
     async validator(_rule: Rule, value: string) {
-      const { data: documentFamily } = await asyncValidator({ name: value, siteId });
+      if (value === name) {
+        return Promise.resolve();
+      }
+      const { data: documentFamily } = await asyncValidator({ name: value });
       if (documentFamily) {
-        return Promise.reject(
-          `Document family name "${documentFamily.name}" already exists on this site`
-        );
+        return Promise.reject(`Document family name "${documentFamily.name}" already exists`);
       }
       return Promise.resolve();
     },
   };
+}
+
+export function filterLegacyRelevanceOptions(
+  legacyRelevanceOptions: { label: string; value: string }[],
+  nameValue: string[]
+) {
+  let filtered = legacyRelevanceOptions;
+  if (nameValue?.includes('N/A')) {
+    filtered = legacyRelevanceOptions.map((e) => {
+      if (e.value === 'N/A') return e;
+      return { ...e, disabled: true };
+    });
+  } else if (
+    nameValue?.includes('PAR') ||
+    nameValue?.includes('EDITOR_MANUAL') ||
+    nameValue?.includes('EDITOR_AUTOMATED')
+  ) {
+    filtered = legacyRelevanceOptions.map((e) => {
+      if (e.value === 'N/A') {
+        return { ...e, disabled: true };
+      } else if (
+        (nameValue?.includes('EDITOR_MANUAL') && e.value == 'EDITOR_AUTOMATED') ||
+        (nameValue?.includes('EDITOR_AUTOMATED') && e.value == 'EDITOR_MANUAL')
+      ) {
+        return { ...e, disabled: true };
+      }
+      return e;
+    });
+  }
+  return filtered;
 }

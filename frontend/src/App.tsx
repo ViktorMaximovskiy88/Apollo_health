@@ -19,6 +19,7 @@ import { WorkQueuePage } from './features/work_queue/WorkQueuePage';
 import { SiteDocDocumentsPage } from './features/doc_documents/SiteDocDocumentPage';
 import { DocDocumentEditPage } from './features/doc_documents/DocDocumentEditPage';
 import { PayerFamilyHomePage } from './features/payer-family/PayerFamilyHomePage';
+import { PayerFamilyEditPage } from './features/payer-family/PayerFamilyEditPage';
 import { ProcessWorkItemPage, ReadonlyWorkItemPage } from './features/work_queue/WorkItemPage';
 import { AppLayout } from './app/AppLayout';
 import { SiteViewPage } from './features/sites/SiteViewPage';
@@ -29,7 +30,9 @@ import { PayerBackbomeHomePage } from './features/payer-backbone/PayerBackboneHo
 import { PayerBackboneNewPage } from './features/payer-backbone/PayerBackboneNewPage';
 import { PayerBackboneEditPage } from './features/payer-backbone/PayerBackboneEditPage';
 import { LineagePage } from './features/lineage/LineagePage';
+import { StatsRoutes } from './features/stats';
 import { DocumentFamilyHomePage } from './features/doc_documents/document_family/DocumentFamilyHomePage';
+import { DocumentFamilyEditPage } from './features/doc_documents/document_family/documentFamilyEditPage';
 
 function AppHomePage() {
   return <>{'Home'}</>;
@@ -55,6 +58,14 @@ function DocumentRoutes() {
     </Routes>
   );
 }
+function DocumentFamilyRoutes() {
+  return (
+    <Routes>
+      <Route index element={<DocumentFamilyHomePage />} />
+      <Route path=":documentFamilyId" element={<DocumentFamilyEditPage />} />
+    </Routes>
+  );
+}
 
 function TranslationRoutes() {
   return (
@@ -77,6 +88,15 @@ function PayerBackboneRoutes() {
   );
 }
 
+function PayerFamilyRoutes() {
+  return (
+    <Routes>
+      <Route index element={<PayerFamilyHomePage />} />
+      <Route path=":payerFamilyId" element={<PayerFamilyEditPage />} />
+    </Routes>
+  );
+}
+
 function App() {
   return (
     <Routes>
@@ -86,7 +106,7 @@ function App() {
           <Route index element={<WorkQueueHomePage />} />
           <Route path=":queueId">
             <Route index element={<WorkQueuePage />} />
-            <Route path=":itemId">
+            <Route path=":docDocumentId">
               <Route path="process" element={<ProcessWorkItemPage />} />
               <Route path="read-only" element={<ReadonlyWorkItemPage />} />
             </Route>
@@ -124,11 +144,13 @@ function App() {
           </Route>
         </Route>
         <Route path="/payer-family" element={<PayerFamilyHomePage />} />
-        <Route path="/document-family" element={<DocumentFamilyHomePage />} />
+        <Route path="/document-family/*" element={<DocumentFamilyRoutes />} />
+        <Route path="/payer-family/*" element={<PayerFamilyRoutes />} />
         <Route path="/users/*" element={<UserRoutes />} />
         <Route path="/documents/*" element={<DocumentRoutes />} />
         <Route path="/translations/*" element={<TranslationRoutes />} />
         <Route path="/payer-backbone/*" element={<PayerBackboneRoutes />} />
+        <Route path="/stats/*" element={<StatsRoutes />} />
         <Route path="/" element={<Navigate replace to="/sites" />} />
       </Route>
     </Routes>

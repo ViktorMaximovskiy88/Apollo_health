@@ -20,66 +20,73 @@ class LineageDoc(BaseModel):
 
 
 class DocumentAttrs(BaseModel):
-    state_name: str | None
-    state_abbr: str | None
-    year_part: int | None
-    month_part: int | None
-    month_name: str | None
-    month_abbr: str | None
-    lang_code: LangCode | None  # we dont want other or unknown except for doc case
+    state_name: str | None = None
+    state_abbr: str | None = None
+    year_part: int | None = None
+    month_part: int | None = None
+    month_name: str | None = None
+    month_abbr: str | None = None
+    lang_code: LangCode | None = None  # we dont want other or unknown except for doc case
 
 
 class DocumentAnalysis(BaseDocument):
     retrieved_document_id: PydanticObjectId
     site_id: PydanticObjectId
-    lineage_id: PydanticObjectId | None
+    lineage_id: PydanticObjectId | None = None
     is_current_version: bool = False
 
-    name: str | None
-    state_abbr: str | None
-    state_name: str | None
-    year_part: int | None
-    month_name: str | None
-    month_abbr: str | None
-    lang_code: LangCode | None  # we dont want other or unknown except for doc case
+    name: str | None = None
+    state_abbr: str | None = None
+    state_name: str | None = None
+    year_part: int | None = None
+    month_name: str | None = None
+    month_abbr: str | None = None
+    lang_code: LangCode | None = None  # we dont want other or unknown except for doc case = None
 
     # location info
-    element_text: str | None
-    parent_text: str | None
-    siblings_text: str | None
-    filename_text: str | None
-    pathname_text: str | None
+    element_text: str | None = None
+    parent_text: str | None = None
+    siblings_text: str | None = None
+    filename_text: str | None = None
+    pathname_text: str | None = None
 
     # doc info
-    document_type: str | None
-    final_effective_date: datetime | None
-    file_size: int | None
+    document_type: str | None = None
+    final_effective_date: datetime | None = None
+    file_size: int | None = None
 
     focus_therapy_tags: list[int] = []
     ref_therapy_tags: list[int] = []
     focus_indication_tags: list[int] = []
     ref_indication_tags: list[int] = []
 
+    url_focus_therapy_tags: list[int] = []
+    url_focus_indication_tags: list[int] = []
+
+    link_focus_therapy_tags: list[int] = []
+    link_focus_indication_tags: list[int] = []
+
     # tokens
     filename_tokens: list[str] = []
     pathname_tokens: list[str] = []
 
     # explicit matches per thing (repetition increase assuredness)
-    filename: DocumentAttrs | None
-    pathname: DocumentAttrs | None
-    element: DocumentAttrs | None
-    parent: DocumentAttrs | None
-    siblings: DocumentAttrs | None
+    filename: DocumentAttrs | None = None
+    pathname: DocumentAttrs | None = None
+    element: DocumentAttrs | None = None
+    parent: DocumentAttrs | None = None
+    siblings: DocumentAttrs | None = None
 
     doc_vectors: list[list[float]] = []
 
-    created_at: datetime | None
-    updated_at: datetime | None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     @before_event(Insert)
     def insert_dates(self):
-        self.created_at = datetime.now(tz=timezone.utc)
-        self.updated_at = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=timezone.utc)
+        self.created_at = now
+        self.updated_at = now
 
     @before_event(Replace)
     def replace_dates(self):

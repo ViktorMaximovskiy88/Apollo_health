@@ -12,6 +12,7 @@ from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import Site
 from backend.common.storage.client import DocumentStorageClient, TextStorageClient
 from backend.common.storage.hash import hash_full_text
+from backend.scrapeworker.common.utils import normalize_string
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.document_tagging.indication_tagging import IndicationTagger
 from backend.scrapeworker.document_tagging.therapy_tagging import TherapyTagger
@@ -23,7 +24,7 @@ class ReTagger:
         self.indication = IndicationTagger()
         self.therapy = TherapyTagger()
 
-    async def retag_docs_on_site(self, site: Site, total: int):
+    async def retag_docs_on_site(self, site: Site, total: int = 0):
         async for doc in DocDocument.find({"locations.site_id": site.id}):
             await self.retag_document(doc, site, total)
             total += 1
@@ -39,15 +40,19 @@ class ReTagger:
         focus_config = site.scrape_method_configuration.focus_section_configs
 
         document_type = rdoc.document_type or "N/A"
-        link_text = location.link_text
-        url = location.url
+        link_text = normalize_string(location.link_text, url=False)
+        url = normalize_string(location.url)
         doc_text = await self.get_text(doc, rdoc, url, link_text, focus_config)
         _doc_type, _confidence, doc_vectors = classify_doc_type(doc_text)
 
-        therapy_tags = await self.therapy.tag_document(
+        therapy_tags, url_therapy_tags, link_therapy_tags = await self.therapy.tag_document(
             doc_text, document_type, url, link_text, focus_config
         )
-        indication_tags = await self.indication.tag_document(
+        (
+            indication_tags,
+            url_indication_tags,
+            link_indication_tags,
+        ) = await self.indication.tag_document(
             doc_text, document_type, url, link_text, focus_config
         )
 
@@ -56,10 +61,18 @@ class ReTagger:
                 "therapy_tags": [t.dict() for t in therapy_tags],
                 "indication_tags": [i.dict() for i in indication_tags],
                 "doc_vectors": doc_vectors.tolist(),
+                "locations.$.url_therapy_tags": [t.dict() for t in url_therapy_tags],
+                "locations.$.link_therapy_tags": [t.dict() for t in link_therapy_tags],
+                "locations.$.url_indication_tags": [i.dict() for i in url_indication_tags],
+                "locations.$.link_indication_tags": [i.dict() for i in link_indication_tags],
             }
         }
-        up1 = RetrievedDocument.get_motor_collection().find_one_and_update({"_id": rdoc.id}, update)
-        up2 = DocDocument.get_motor_collection().find_one_and_update({"_id": doc.id}, update)
+        up1 = RetrievedDocument.get_motor_collection().find_one_and_update(
+            {"_id": rdoc.id, "locations.site_id": site.id}, update
+        )
+        up2 = DocDocument.get_motor_collection().find_one_and_update(
+            {"_id": doc.id, "locations.site_id": site.id}, update
+        )
         await asyncio.gather(up1, up2)
         typer.secho(f"{total} Retagged '{doc.name}'")
 

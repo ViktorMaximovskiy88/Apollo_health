@@ -1,36 +1,40 @@
+import os
 import tempfile
 
 import aiofiles
 import aiofiles.os
 import pytest
-import requests
 
 from backend.common.storage.hash import get_document_hash
 from backend.common.storage.text_extraction import TextExtractor
 
+current_path = os.path.dirname(os.path.realpath(__file__))
+fixture_path = os.path.join(current_path, "__fixtures__")
+
 
 @pytest.mark.asyncio
 async def test_html_hash():
-    URL = "https://parprdusemmitst01.blob.core.windows.net/autohunteddocs/1e7a028b-c1ef-4472-9b5a-01213ea47ebd/1e7a028b-c1ef-4472-9b5a-01213ea47ebd.htm"  # noqa
-    response = requests.get(URL)
-    extractor = TextExtractor(document_bytes=response.content)
+    file_path = os.path.join(fixture_path, "html_fixture.html")
+    async with aiofiles.open(file_path, "rb") as file:
+        doc = await file.read()
+    extractor = TextExtractor(document_bytes=doc)
     await extractor.extract()
     hash = get_document_hash(extractor)
-    assert hash == "94be9fbbe972308a65bed0efcdf1ba3d"
+    assert hash == "43764587756d5ffe002ec4080fea80fe"
 
 
 @pytest.mark.asyncio
 async def test_pdf_hash():
-    URL = "https://parprdusemmitst01.blob.core.windows.net/autohunteddocs/7c8418d4-054b-4fa4-9b97-d3f75c353dd1/7c8418d4-054b-4fa4-9b97-d3f75c353dd1.pdf"  # noqa
-    response = requests.get(URL)
+    file_path = os.path.join(fixture_path, "pdf_fixture.pdf")
     with tempfile.NamedTemporaryFile() as temp:
         async with aiofiles.open(temp.name, "wb") as fd:
-
-            await fd.write(response.content)
+            async with aiofiles.open(file_path, "rb") as file:
+                doc = await file.read()
+                await fd.write(doc)
             await aiofiles.os.stat(str(temp.name))
             extractor = TextExtractor(
-                document_bytes=response.content, mimetype="application/pdf", temp_path=temp.name
+                document_bytes=doc, mimetype="application/pdf", temp_path=temp.name
             )
             await extractor.extract()
             hash = get_document_hash(extractor)
-            assert hash == "f569ad67d959430a55870e04be4c7ed2"
+            assert hash == "e24d0bdc1e308abc1abb60889be537ad"

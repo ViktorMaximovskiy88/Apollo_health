@@ -1,11 +1,8 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { useCallback } from 'react';
-import { useSelector } from 'react-redux';
-import { GridPaginationToolbar } from '../../../components';
 import { useGetDocDocumentQuery, useLazyGetDocDocumentsQuery } from '../docDocumentApi';
 import { DocDocument } from '../types';
-import { useInterval } from '../../../common/hooks';
-import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
+import { useDataTablePagination } from '../../../common/hooks';
 import { useDataTableSort } from '../../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../../common/hooks/use-data-table-filter';
 import { useParams } from 'react-router-dom';
@@ -17,50 +14,6 @@ import {
   setLineageDocDocumentTableSort,
 } from './lineageDocDocumentsSlice';
 import { useLineageDocDocumentColumns } from './useLineageDocDocumentColumns';
-import { useAppDispatch } from '../../../app/store';
-
-const useControlledPagination = ({
-  isActive,
-  setActive,
-}: {
-  isActive: boolean;
-  setActive: (active: boolean) => void;
-}) => {
-  const tableState = useSelector(lineageDocDocumentTableState);
-  const dispatch = useAppDispatch();
-
-  const onLimitChange = useCallback(
-    (limit: number) => dispatch(setLineageDocDocumentTableLimit(limit)),
-    [dispatch]
-  );
-  const onSkipChange = useCallback(
-    (skip: number) => dispatch(setLineageDocDocumentTableSkip(skip)),
-    [dispatch]
-  );
-
-  const renderPaginationToolbar = useCallback(
-    (paginationProps: TypePaginationProps) => {
-      return (
-        <GridPaginationToolbar
-          paginationProps={{ ...paginationProps }}
-          autoRefreshValue={isActive}
-          autoRefreshClick={setActive}
-        />
-      );
-    },
-    [isActive, setActive]
-  );
-
-  const controlledPaginationProps = {
-    pagination: true,
-    limit: tableState.pagination.limit,
-    onLimitChange,
-    skip: tableState.pagination.skip,
-    onSkipChange,
-    renderPaginationToolbar,
-  };
-  return controlledPaginationProps;
-};
 
 const buildFilterValue = ({
   tableInfo,
@@ -88,8 +41,6 @@ const buildFilterValue = ({
 };
 
 export function LineageDocDocumentsTable() {
-  // Trigger update every 10 seconds by invalidating memoized callback
-  const { isActive, setActive, watermark } = useInterval(10000);
   const { docDocumentId: currentDocDocumentId } = useParams();
   const { data: currentDocDocument } = useGetDocDocumentQuery(currentDocDocumentId ?? '');
 
@@ -107,7 +58,7 @@ export function LineageDocDocumentsTable() {
       return { data: docDocuments, count };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentDocDocument, getDocDocumentsFn, watermark]
+    [currentDocDocument, getDocDocumentsFn]
   );
   const columns = useLineageDocDocumentColumns();
   const filterProps = useDataTableFilter(
@@ -115,7 +66,11 @@ export function LineageDocDocumentsTable() {
     setLineageDocDocumentTableFilter
   );
   const sortProps = useDataTableSort(lineageDocDocumentTableState, setLineageDocDocumentTableSort);
-  const controlledPagination = useControlledPagination({ isActive, setActive });
+  const controlledPagination = useDataTablePagination(
+    lineageDocDocumentTableState,
+    setLineageDocDocumentTableLimit,
+    setLineageDocDocumentTableSkip
+  );
 
   return (
     <ReactDataGrid

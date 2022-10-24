@@ -75,14 +75,23 @@ export function RetrievedDocumentViewer({
 
   if (showMetadata) {
     return (
-      <Tabs className="h-full">
-        <Tabs.TabPane tab="Document" key="document" className="h-full overflow-auto">
-          <FileTypeViewer doc={doc} onPageChange={onPageChange} docId={docId} />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="Metadata" key="properties">
-          <Table dataSource={dataSource} columns={columns} pagination={false} />
-        </Tabs.TabPane>
-      </Tabs>
+      <Tabs
+        className="h-full"
+        items={[
+          {
+            key: 'document',
+            label: 'Document',
+            className: 'h-full overflow-auto',
+            children: <FileTypeViewer doc={doc} onPageChange={onPageChange} docId={docId} />,
+          },
+          {
+            key: 'properties',
+            label: 'Metadata',
+            className: 'h-full overflow-auto',
+            children: <Table dataSource={dataSource} columns={columns} pagination={false} />,
+          },
+        ]}
+      />
     );
   } else {
     return <FileTypeViewer doc={doc} onPageChange={onPageChange} docId={docId} />;

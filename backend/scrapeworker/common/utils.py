@@ -2,15 +2,17 @@
 import os
 import pathlib
 import re
+import unicodedata
+from html import unescape
 from itertools import groupby
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 import magic
 
 
 def compile_date_rgx():
     date_formats = [
-        r"^[0-9]{8}$",  # mmddyyyy
+        r"[0-9]{6,8}",  # mmYYYY or YYYYmm or yyyyddMM or MMddyyyy w/o alpha-numeric bookends | # noqa
         r"(?<!\d|\/)[0-9]{4}[\/\-\.\|][0-9][0-9]?[\/\-\.\|][0-9][0-9]?(?!\d|\/)",  # yyyy-MM-dd with -, /, . or | # noqa
         r"(?<!\d|\/)[0-9][0-9]?[\/\-\.\|][0-9][0-9]?[\/\-\.\|](?:\d{4}|\d{2})(?!\d|\/)",  # dd-MM-yyyy, dd-mm-yy. With -, /, . or | # noqa
         r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).? [0-9][0-9]?(?:st|nd|rd|th)?,? [0-9][0-9][0-9][0-9]",  # M d, yyyy # noqa
@@ -22,7 +24,7 @@ def compile_date_rgx():
         r"(?<!\d |\w{2})(January|February|March|April|May|June|July|August|September|October|November|December),? [0-9][0-9][0-9][0-9]",  # M, yyyy # noqa
         r"(?<!\d |\w{2})(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).?,? [0-9]{4}",  # M, yyyy # noqa
         r"(?<!\d|\/|-|\||\.)[0-9][0-9]?[\/\-\.\|]\d{2}(?!\d|\/|-|\||\.)",  # MM/yy with /, -, | or . # noqa
-        r"(?<!\d|\/|-|\||\.)[0-9][0-9]?[\/\-\.\|]\d{4}(?!\d|\/|-|\||\.)",  # MM/yyyy with /, -, | or . # noqa
+        r"(?<!\d|\/|-|\||\.)[0-9][0-9]?\s?[\/\-\.\|]\d{4}(?!\d|\/|-|\||\.)",  # MM/yyyy with /, -, | or . # noqa
     ]
     return [re.compile(fmt, flags=re.IGNORECASE) for fmt in date_formats]
 
@@ -153,3 +155,45 @@ def jaccard(a: list, b: list):
     intersection = len(list(set(a).intersection(b)))
     union = (len(a) + len(b)) - intersection
     return intersection / union
+
+
+def deburr(input: str = "") -> str:
+    if input is None:
+        return ""
+    return unicodedata.normalize("NFKD", input).encode("ascii", "ignore").decode()
+
+
+def normalize_spaces(input: str = "") -> str:
+    if input is None:
+        return ""
+    return re.sub(r" +", " ", input).strip()
+
+
+# return meaningful chars
+def scrub_string(input: str = "") -> str:
+    if input is None:
+        return ""
+    return re.sub(r"[^A-Za-z0-9 ]+", " ", input).strip()
+
+
+# maybe too much but we can break it out without boolean gating too
+def normalize_string(input: str = "", html=False, url=True, lower=True, strip=True) -> str:
+    # so much for types...
+    if input is None:
+        return ""
+    # order matters, html can contain urls
+    if html:
+        input = unescape(input)
+    if url:
+        input = unquote(input)
+    # remove or replace non-ascii; ® gets removed while ö is the is replaced by o
+    input = deburr(input)
+    # replace non meaningful chars with space; the space keeps word boundaries
+    if strip:
+        input = scrub_string(input)
+        input = normalize_spaces(input)
+
+    if lower:
+        input = input.lower()
+    # always trim
+    return input.strip()

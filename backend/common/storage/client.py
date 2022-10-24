@@ -105,6 +105,14 @@ class BaseS3Client:
             ExpiresIn=expires_in_seconds,
         )
 
+    def get_signed_upload_url(self, relative_key, expires_in_seconds=60):
+        key = self.get_full_path(relative_key)
+        return self.s3.meta.client.generate_presigned_post(
+            settings.document_bucket,
+            key,
+            ExpiresIn=expires_in_seconds,
+        )
+
 
 class ModelStorageClient(BaseS3Client):
     root_path = settings.model_path

@@ -5,10 +5,10 @@ from typing import Any
 
 import aiofiles
 
-from backend.common.models.site import FocusSectionConfig
+from backend.common.models.site import FocusSectionConfig, ScrapeMethodConfiguration
 from backend.scrapeworker.common.date_parser import DateParser
 from backend.scrapeworker.common.detect_lang import detect_lang
-from backend.scrapeworker.common.utils import date_rgxs, label_rgxs
+from backend.scrapeworker.common.utils import date_rgxs, label_rgxs, normalize_string
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.document_tagging.indication_tagging import indication_tagger
 from backend.scrapeworker.document_tagging.taggers import Taggers
@@ -28,6 +28,7 @@ class FileParser(ABC):
         link_text: str | None = None,
         focus_config: list[FocusSectionConfig] | None = None,
         taggers: Taggers | None = Taggers(indication=indication_tagger, therapy=therapy_tagger),
+        scrape_method_config: ScrapeMethodConfiguration | None = None,
     ):
         self.file_path = file_path
         self.url = url
@@ -36,6 +37,7 @@ class FileParser(ABC):
         self.focus_config = focus_config if focus_config else []
         file_name = self.url.removesuffix("/")
         self.filename_no_ext = str(pathlib.Path(os.path.basename(file_name)).with_suffix(""))
+        self.scrape_method_config = scrape_method_config
 
     async def get_info(self) -> dict[str, str]:
         raise NotImplementedError("get_info is required")
@@ -63,16 +65,28 @@ class FileParser(ABC):
 
         date_parser = DateParser(date_rgxs, label_rgxs)
         date_parser.extract_dates(self.text)
+
         identified_dates = list(date_parser.unclassified_dates)
         identified_dates.sort()
 
         therapy_tags, indication_tags = [], []
+        scrubbed_link_text = normalize_string(self.link_text)
+        scrubbed_url = normalize_string(self.url)
+
         if self.taggers:
-            therapy_tags = await self.taggers.therapy.tag_document(
-                self.text, document_type, self.url, self.link_text, self.focus_config
+            (
+                therapy_tags,
+                url_therapy_tags,
+                link_therapy_tags,
+            ) = await self.taggers.therapy.tag_document(
+                self.text, document_type, scrubbed_url, scrubbed_link_text, self.focus_config
             )
-            indication_tags = await self.taggers.indication.tag_document(
-                self.text, document_type, self.url, self.link_text, self.focus_config
+            (
+                indication_tags,
+                url_indication_tags,
+                link_indication_tags,
+            ) = await self.taggers.indication.tag_document(
+                self.text, document_type, scrubbed_url, scrubbed_link_text, self.focus_config
             )
 
         self.result = {
@@ -93,6 +107,10 @@ class FileParser(ABC):
             "therapy_tags": therapy_tags,
             "indication_tags": indication_tags,
             "doc_vectors": doc_vectors.tolist(),
+            "url_therapy_tags": url_therapy_tags,
+            "url_indication_tags": url_indication_tags,
+            "link_therapy_tags": link_therapy_tags,
+            "link_indication_tags": link_indication_tags,
         }
 
         return self.result

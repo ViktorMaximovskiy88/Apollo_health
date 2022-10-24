@@ -32,7 +32,8 @@ export function SiteDocumentsTable() {
   const controlledPagination = useDataTablePagination(
     documentTableState,
     setDocumentTableLimit,
-    setDocumentTableSkip
+    setDocumentTableSkip,
+    undefined
   );
 
   return (

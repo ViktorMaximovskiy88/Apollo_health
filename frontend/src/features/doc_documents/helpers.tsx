@@ -1,6 +1,5 @@
 import { dateToMoment } from '../../common';
-import { compact, maxBy, minBy } from 'lodash';
-import { DocDocumentLocation } from './locations/types';
+import { compact, maxBy } from 'lodash';
 
 export const calculateFinalEffectiveFromValues = (values: any) => {
   const computeFromFields = compact([
