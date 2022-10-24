@@ -57,7 +57,6 @@ export interface Site extends BaseDocument {
   doc_type_threshold: number;
   lineage_threshold_override: boolean;
   lineage_threshold: number;
-  is_running_manual_collection: boolean;
 }
 
 export interface Proxy extends BaseDocument {

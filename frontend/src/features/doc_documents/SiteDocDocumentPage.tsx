@@ -5,7 +5,6 @@ import { useParams } from 'react-router-dom';
 import { MainLayout } from '../../components';
 import { SiteMenu } from '../sites/SiteMenu';
 import { ManualCollectionButton } from '../collections/CollectionsPage';
-import { SiteStatus } from '../sites/siteStatus';
 import { CollectionMethod } from '../sites/types';
 import { SiteDocDocumentsTable } from './SiteDocDocumentsTable';
 import { AddDocumentModal } from '../collections/AddDocumentModal';
@@ -20,6 +19,8 @@ import { initialState } from '../collections/collectionsSlice';
 
 export function SiteDocDocumentsPage() {
   const [newDocumentModalOpen, setNewDocumentModalOpen] = useState(false);
+  const [hasToggledShowManual, setHasToggledShowManual] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const [oldVersion, setOldVersion] = useState<any>();
   const { siteId } = useParams();
   const scrapeTaskId = useSiteScrapeTaskId();
@@ -45,24 +46,35 @@ export function SiteDocDocumentsPage() {
     sortInfo: initialState.table.sort,
     filterValue: initialState.table.filter,
   };
+
   const refreshDocs = async () => {
     if (!scrapeTaskId) return;
-    await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
+    setHasToggledShowManual(true);
+    const lastTask = await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
+    if (
+      lastTask.data &&
+      site.collection_method === CollectionMethod.Manual &&
+      ['IN_PROGRESS', 'QUEUED', 'PENDING'].includes(lastTask.data?.data[0].status)
+    ) {
+      setShowManual(true);
+    }
     await getDocDocumentsQuery({ siteId, scrapeTaskId });
   };
+
+  if (site.collection_method === CollectionMethod.Manual && !hasToggledShowManual) {
+    refreshDocs();
+  }
 
   return (
     <MainLayout
       sidebar={<SiteMenu />}
       sectionToolbar={
         <>
-          {site.collection_method === CollectionMethod.Manual &&
-          site.status !== SiteStatus.Inactive &&
-          site.is_running_manual_collection ? (
+          {showManual ? (
             <ManualCollectionButton site={site} refetch={refetch} runScrape={runScrape} />
           ) : null}
 
-          {site.collection_method === CollectionMethod.Manual ? (
+          {showManual ? (
             <Button onClick={() => setNewDocumentModalOpen(true)} className="ml-auto">
               Create Document
             </Button>

@@ -214,7 +214,6 @@ class CollectionService:
         if not created_task:
             response.add_error("Unable to create new scrape task.")
         else:
-            await self.site.update(Set({Site.is_running_manual_collection: True}))
             response.nav_id = created_task.id
         return response
 
@@ -242,7 +241,6 @@ class CollectionService:
         if not response.success:
             response.raise_error()
         await self.stop_queued_tasks()
-        await self.site.update(Set({Site.is_running_manual_collection: False}))
 
         return response
 

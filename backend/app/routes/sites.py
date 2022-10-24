@@ -253,19 +253,19 @@ async def get_site_doc_docs(
     site: Site | None = await Site.find_one({"_id": site_id})
     if not site:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve docs.")
-    if site.is_running_manual_collection:
+
+    current_task: SiteScrapeTask | None = await SiteScrapeTask.find_one(
+        {
+            "site_id": site_id,
+            "status": {"$in": CollectionService.queued_statuses},
+        },
+        sort=[("start_time", -1)],
+    )
+    if current_task and current_task.collection_method == CollectionMethod.Manual:
+        query["retrieved_document_id"] = {"$in": current_task.retrieved_document_ids}
         # Has at one point manually collected docs selected as not_found.
         if site.has_not_found_documents:
             query["not_found"] = {"$ne": True}
-        scrape_task = await SiteScrapeTask.find_one(
-            {
-                "site_id": site_id,
-                "status": {"$in": CollectionService.queued_statuses},
-            },
-            sort=[("start_time", -1)],
-        )
-        if scrape_task:
-            query["retrieved_document_id"] = {"$in": scrape_task.retrieved_document_ids}
     elif scrape_task_id:
         scrape_task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
         if scrape_task and scrape_task.status != TaskStatus.CANCELED:

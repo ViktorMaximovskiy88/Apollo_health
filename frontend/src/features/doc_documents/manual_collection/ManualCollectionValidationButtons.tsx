@@ -8,11 +8,14 @@ import {
 } from '@ant-design/icons';
 import { SiteDocDocument } from '../types';
 import { WorkItemOption } from '../../collections/types';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { ValidationButtonsContext, ValidationButtonsProvider } from './ManualCollectionContext';
-import { useUpdateSelected } from './useUpdateSelected';
+import { useSiteScrapeTaskId, useUpdateSelected } from './useUpdateSelected';
 import { useParams } from 'react-router-dom';
 import { useGetSiteQuery } from '../../sites/sitesApi';
+import { initialState } from '../../collections/collectionsSlice';
+import { useLazyGetScrapeTasksForSiteQuery } from '../../collections/siteScrapeTasksApi';
+import { CollectionMethod } from '../../sites/types';
 
 const Found = () => {
   const updateSelected = useUpdateSelected();
@@ -311,11 +314,44 @@ const Unhandled = () => {
 function ValidationButtons() {
   const { isLoading } = useContext(ValidationButtonsContext) ?? {};
   const params = useParams();
+  const [hasToggledShowManual, setHasToggledShowManual] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const siteId = params.siteId;
+  const scrapeTaskId = useSiteScrapeTaskId();
+  const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
   const { data: site, refetch } = useGetSiteQuery(siteId);
   if (!site) return null;
 
-  if (!site.is_running_manual_collection) {
+  const mostRecentTask = {
+    limit: 1,
+    skip: 0,
+    sortInfo: initialState.table.sort,
+    filterValue: initialState.table.filter,
+  };
+
+  const refreshShowManual = async () => {
+    if (!scrapeTaskId) return;
+    setHasToggledShowManual(true);
+    const lastTask = await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
+    if (
+      lastTask &&
+      lastTask.data &&
+      site.collection_method === CollectionMethod.Manual &&
+      ['IN_PROGRESS', 'QUEUED', 'PENDING'].includes(lastTask.data?.data[0].status)
+    ) {
+      setShowManual(true);
+    } else {
+      if (showManual === true) {
+        setShowManual(false);
+      }
+    }
+  };
+
+  setInterval(() => {
+    refreshShowManual();
+  }, 3000);
+
+  if (!showManual) {
     return null;
   } else {
     return (
