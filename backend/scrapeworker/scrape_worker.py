@@ -503,9 +503,10 @@ class ScrapeWorker:
 
         await self.wait_for_completion_or_cancel(tasks)
 
-        doc_ids = [doc.id for (doc, _) in self.new_document_pairs]
+        # doc_ids = [doc.id for (doc, _) in self.new_document_pairs]
         site_id = self.site.id
-        await self.lineage_service.process_lineage_for_doc_ids(site_id, doc_ids)  # type: ignore
+        # TEMPORARY: lets see how the scrapeworker fares at this (vs our webapp...)
+        await self.lineage_service.process_lineage_for_site(site_id)  # type: ignore
 
         doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
         change_info = ChangeInfo(translation_change=True, lineage_change=True)

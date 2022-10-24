@@ -84,6 +84,31 @@ class LineageService:
             DocumentAnalysis.get_motor_collection().delete_many({"site_id": site_id}),
         )
 
+    async def clear_all_lineage(self):
+        await asyncio.gather(
+            RetrievedDocument.get_motor_collection().update_many(
+                {},
+                {
+                    "$set": {
+                        "lineage_id": None,
+                        "is_current_version": False,
+                        "previous_doc_id": None,
+                    }
+                },
+            ),
+            DocDocument.get_motor_collection().update_many(
+                {},
+                {
+                    "$set": {
+                        "lineage_id": None,
+                        "is_current_version": False,
+                        "previous_doc_doc_id": None,
+                    }
+                },
+            ),
+            DocumentAnalysis.get_motor_collection().delete_many({}),
+        )
+
     async def update_site_docs(self, site_id):
         # Updates tags, doc vecs and whatever else we need for lineage
         # using retagger for now
