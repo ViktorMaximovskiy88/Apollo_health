@@ -13,7 +13,7 @@ from backend.app.routes.site_scrape_tasks import (
     run_bulk_by_type,
     start_scrape_task,
 )
-from backend.app.routes.table_query import TableFilterInfo, TableSortInfo
+from backend.app.routes.table_query import TableFilterInfo, TableQueryResponse, TableSortInfo
 from backend.common.core.enums import BulkScrapeActions, CollectionMethod, SiteStatus, TaskStatus
 from backend.common.db.init import init_db
 from backend.common.models.site import BaseUrl, HttpUrl, ScrapeMethodConfiguration, Site
@@ -106,15 +106,21 @@ class TestReadScrapeTasksForSite:
         sorts = [TableSortInfo(name="queued_time", dir=-1)]
         skip = 0
 
-        query = await SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id).to_list()
-        scrapeTasks = await read_scrape_tasks_for_site(query, limit, skip, sorts, filters)
+        scrapeTasks = await read_scrape_tasks_for_site(
+            site_id,
+            limit,
+            skip,
+            sorts,
+            filters,
+        )
         assert scrapeTasks.total == 1
         await simple_scrape(site_one).save()
         await simple_scrape(site_one).save()
         await simple_scrape(site_one).save()
         await simple_scrape(site_one).save()
-        query = await SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id).to_list()
-        scrapeTasks = await read_scrape_tasks_for_site(query, limit, skip, sorts, filters)
+        scrapeTasks: TableQueryResponse[SiteScrapeTask] = await read_scrape_tasks_for_site(
+            site_id, limit, skip, sorts, filters
+        )
         assert scrapeTasks.total == 5
 
     @pytest.mark.asyncio
@@ -126,14 +132,15 @@ class TestReadScrapeTasksForSite:
         filters = ""
         sorts = [TableSortInfo(name="queued_time", dir=1)]
         skip = 0
-
-        query = await SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_id).to_list()
-        scrapeTasks = await read_scrape_tasks_for_site(query, limit, skip, sorts, filters)
+        scrapeTasks: TableQueryResponse[SiteScrapeTask] = await read_scrape_tasks_for_site(
+            site_id, limit, skip, sorts, filters
+        )
         assert scrapeTasks.total == 1
 
     @pytest.mark.asyncio
     async def test_limit_read_scrape_task_not_found(self, user, logger):
         site_one = await simple_site().save()
+        site_id = site_one.id
         limit = 50
         filters = [
             TableFilterInfo(name="queued_time", operator="after", type="date", value="2022-09-05"),
@@ -146,8 +153,9 @@ class TestReadScrapeTasksForSite:
         assert isinstance(e.value, HTTPException)
         assert e.value.status_code == 404
         assert e.value.detail == "Site 62e823397ab9edcd2557612d Not Found"
-        query = await SiteScrapeTask.find_many(SiteScrapeTask.site_id == site_one.id).to_list()
-        scrapeTasks = await read_scrape_tasks_for_site(query, limit, skip, sorts, filters)
+        scrapeTasks: TableQueryResponse[SiteScrapeTask] = await read_scrape_tasks_for_site(
+            site_id, limit, skip, sorts, filters
+        )
         assert scrapeTasks.total == 0
 
 
@@ -157,11 +165,11 @@ class TestStartScrapeTask:
         site_one = await simple_site().save()
 
         res = await start_scrape_task(site_one.id, user, logger)
-        assert res.site_id == site_one.id
+        assert res.success is True
         scrapes = await SiteScrapeTask.find({}).to_list()
         assert len(scrapes) == 1
         update_site = await Site.find_one({})
-        assert update_site.last_run_status == res.status == TaskStatus.QUEUED
+        assert update_site.last_run_status == TaskStatus.QUEUED
 
     async def test_no_site_found(self, user, logger):
         with pytest.raises(HTTPException) as e:
@@ -182,16 +190,16 @@ class TestStartScrapeTask:
         with pytest.raises(HTTPException) as e:
             await start_scrape_task(site_one.id, user, logger)
         assert isinstance(e.value, HTTPException)
-        assert e.value.status_code == 406
-        assert e.value.detail == f"Scrapetask {scrape_one.id} is already queued or in progress."
+        assert e.value.status_code == 409
+        assert e.value.detail == f"Task[{scrape_one.id}] is already queued or in progress."
         scrapes = await SiteScrapeTask.find({}).to_list()
         assert len(scrapes) == 2
 
         with pytest.raises(HTTPException) as e:
             await start_scrape_task(site_two.id, user, logger)
         assert isinstance(e.value, HTTPException)
-        assert e.value.status_code == 406
-        assert e.value.detail == f"Scrapetask {scrape_two.id} is already queued or in progress."
+        assert e.value.status_code == 409
+        assert e.value.detail == f"Task[{scrape_two.id}] is already queued or in progress."
         scrapes = await SiteScrapeTask.find({}).to_list()
         assert len(scrapes) == 2
 

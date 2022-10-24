@@ -11,8 +11,8 @@ import {
   Tooltip,
   message,
   Checkbox,
+  notification,
 } from 'antd';
-
 import { useForm } from 'antd/lib/form/Form';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
@@ -33,28 +33,51 @@ interface AddDocumentModalPropTypes {
   oldVersion?: SiteDocDocument;
   setOpen: (open: boolean) => void;
   siteId: any;
+  refetch?: any;
 }
 
-export function AddDocumentModal({ oldVersion, setOpen, siteId }: AddDocumentModalPropTypes) {
+const buildInitialValues = (oldVersion?: SiteDocDocument) => {
+  if (!oldVersion) {
+    return {
+      lang_code: 'en',
+      internal_document: false,
+    };
+  }
+  return {
+    lang_code: oldVersion.lang_code,
+    name: oldVersion.name,
+    document_type: oldVersion.document_type,
+    internal_document: oldVersion.internal_document,
+    site_id: oldVersion.site_id,
+    link_text: oldVersion.link_text,
+    base_url: oldVersion.base_url,
+    url: oldVersion.url,
+  };
+};
+
+const displayDuplicateError = (error: any) => {
+  notification.error({
+    message: 'Document already exists',
+    description: `Upload a new document or enter a new location.`,
+  });
+};
+
+export function AddDocumentModal({
+  oldVersion,
+  setOpen,
+  siteId,
+  refetch,
+}: AddDocumentModalPropTypes) {
   const [form] = useForm();
   const [addDoc] = useAddDocumentMutation();
   const [fileData, setFileData] = useState<any>();
+  const [docTitle, setDocTitle] = useState('Add new document');
 
-  let initialValues: any = {
-    lang_code: 'en',
-    internal_document: false,
-  };
-
-  if (oldVersion) {
-    const { site_id, link_text, base_url, url } = oldVersion;
-    initialValues = {
-      lang_code: oldVersion.lang_code,
-      name: oldVersion.name,
-      document_type: oldVersion.document_type,
-      internal_document: oldVersion.internal_document,
-      locations: [{ site_id, link_text, base_url, url }],
-    };
+  const initialValues = buildInitialValues(oldVersion);
+  if (docTitle !== 'Add New Version' && oldVersion) {
+    setDocTitle('Add New Version');
   }
+
   /* eslint-disable no-template-curly-in-string */
   const validateMessages = {
     required: '${label} is required!',
@@ -67,24 +90,45 @@ export function AddDocumentModal({ oldVersion, setOpen, siteId }: AddDocumentMod
   async function saveDocument(newDocument: any) {
     try {
       newDocument.site_id = siteId;
-      //  we nuked this relationship
-      // if (scrapeTasks) {
-      //   newDocument.scrape_task_id = scrapeTasks[0]._id;
-      // }
-      // used to determine how we handle this request if new_version or new document
       if (oldVersion) {
-        newDocument._id = oldVersion._id;
-        newDocument.last_collected_date = oldVersion.last_collected_date;
-        newDocument.internal_document = oldVersion.internal_document;
+        newDocument.upload_new_version_for_id = oldVersion._id;
+        if (oldVersion.internal_document) {
+          newDocument.internal_document = oldVersion.internal_document;
+        } else {
+          newDocument.internal_document = false;
+        }
       }
+      newDocument.url = form.getFieldValue('url');
+      newDocument.base_url = form.getFieldValue('base_url') ?? newDocument.url;
+      newDocument.link_text = form.getFieldValue('link_text');
+
+      // For some reason, fileData never updates if browser auto fills.
+      fileData.url = form.getFieldValue('url');
+      fileData.base_url = form.getFieldValue('base_url') ?? newDocument.url;
+      fileData.link_text = form.getFieldValue('link_text');
       fileData.metadata.link_text = newDocument.link_text;
       delete newDocument.link_text;
       delete newDocument.document_file;
-      await addDoc({
-        ...newDocument,
-        ...fileData,
-      });
-      setOpen(false);
+
+      try {
+        const response = await addDoc({
+          ...newDocument,
+          ...fileData,
+        });
+        if (refetch) {
+          refetch();
+        }
+        if ('error' in response && response.error) {
+          displayDuplicateError(response);
+        } else {
+          setOpen(false);
+        }
+      } catch (error: any) {
+        notification.error({
+          message: error.data.detail,
+          description: `Upload a new document or enter a new location.`,
+        });
+      }
     } catch (error) {
       message.error('We could not save this document');
     }
@@ -92,8 +136,17 @@ export function AddDocumentModal({ oldVersion, setOpen, siteId }: AddDocumentMod
   function onCancel() {
     setOpen(false);
   }
+
+  function setLocationValuesFromResponse(responseData: any) {
+    form.setFieldsValue({
+      base_url: responseData.base_url,
+      url: responseData.url,
+      link_text: responseData.link_text,
+    });
+  }
+
   return (
-    <Modal open={true} title="Add new document" onCancel={onCancel} width={1000} footer={null}>
+    <Modal open={true} title={docTitle} onCancel={onCancel} width={1000} footer={null}>
       <Form
         layout="vertical"
         form={form}
@@ -103,7 +156,12 @@ export function AddDocumentModal({ oldVersion, setOpen, siteId }: AddDocumentMod
         onFinish={saveDocument}
       >
         <div className="flex grow space-x-3">
-          <UploadItem form={form} setFileData={setFileData} />
+          <UploadItem
+            form={form}
+            setFileData={setFileData}
+            siteId={siteId}
+            setLocationValuesFromResponse={setLocationValuesFromResponse}
+          />
           <InternalDocument oldVersion={oldVersion} />
         </div>
 
@@ -152,7 +210,7 @@ export function AddDocumentModal({ oldVersion, setOpen, siteId }: AddDocumentMod
 }
 
 function UploadItem(props: any) {
-  const { setFileData } = props;
+  const { setFileData, siteId, setLocationValuesFromResponse } = props;
   const [token, setToken] = useState('');
   const [fileName, setFileName] = useState('');
   const [uploadStatus, setUploadStatus] = useState('');
@@ -174,6 +232,7 @@ function UploadItem(props: any) {
         message.error(response.error);
       } else if (response.success) {
         setUploadStatus('done');
+        setLocationValuesFromResponse(response.data);
         setFileData(response.data);
       }
     }
@@ -189,7 +248,7 @@ function UploadItem(props: any) {
         <Upload
           name="file"
           accept=".pdf,.xlsx,.docx"
-          action={`${baseApiUrl}/documents/upload`}
+          action={`${baseApiUrl}/documents/upload/${siteId}`}
           headers={{
             Authorization: `Bearer ${token}`,
           }}
