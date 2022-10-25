@@ -1,0 +1,23 @@
+steps:
+  ## 
+  # Pull Latest SourceHub Base Image from ECR if it exists. This will help improve build times of the Base and App images
+  ##
+  - task: ECRPullImage@1
+    displayName: Pull SourceHub Base Image
+    inputs:
+      awsCredentials: "Apollo-AWS-Dev-Apollo"
+      regionName: 'us-east-1'
+      repository: 'sourcehub-base'
+      imageSource: 'imagetag'
+      imageTag: 'latest'
+    continueOnError: true
+
+  - task: Docker@2
+    displayName: Build Source Hub Base Image
+    inputs:
+      command: build
+      repository: sourcehub-base
+      Dockerfile: Docker/base.Dockerfile
+      arguments: '--cache-from 307744843177.dkr.ecr.us-east-1.amazonaws.com/sourcehub-base:latest --build-arg BUILDKIT_INLINE_CACHE=1'
+      tags: |
+        latest

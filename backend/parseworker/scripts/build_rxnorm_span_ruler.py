@@ -3,29 +3,30 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.joinpath("../../..").resolve()))
 import json
-import os
-import tempfile
+import pathlib
+import typer
 
 import spacy
 
-from backend.common.storage.client import ModelStorageClient
+def main(output_folder: pathlib.Path = typer.Argument(None)):
 
-nlp = spacy.blank("en")
-ruler = nlp.add_pipe("span_ruler", config={"spans_key": "sc", "phrase_matcher_attr": "LOWER"})
-version = "latest"
+    nlp = spacy.blank("en")
+    ruler = nlp.add_pipe("span_ruler", config={"spans_key": "sc", "phrase_matcher_attr": "LOWER"})
 
-client = ModelStorageClient()
-for line in client.read_lines(f"rxnorm/{version}/rxnorm.jsonl"):
-    obj = json.loads(line)
-    for pattern in obj["aliases"]:
-        ruler.add_patterns(  # type: ignore
-            [{"label": f"{obj['concept_id']}|{obj['canonical_name']}", "pattern": pattern}]
-        )
+    rxnorm_file_path = output_folder.joinpath("rxnorm", "rxnorm.jsonl")
 
-with tempfile.TemporaryDirectory() as tmpdir:
-    nlp.to_disk(tmpdir)
-    for root, dirs, files in os.walk(tmpdir):
-        for local_path in files:
-            folder = root.removeprefix(tmpdir).removeprefix("/")
-            remote_path = f"rxnorm-span/{version}/{folder}/{local_path}"
-            client.write_object(remote_path, f"{root}/{local_path}")
+    with open(rxnorm_file_path, 'r') as file: 
+        lines = file.readlines()
+        for line in lines:
+            obj = json.loads(line)
+            for pattern in obj["aliases"]:
+                ruler.add_patterns(  # type: ignore
+                    [{"label": f"{obj['concept_id']}|{obj['canonical_name']}", "pattern": pattern}]
+                )
+
+    rxnorm_span_base_path = output_folder.joinpath("rxnorm-span")
+    rxnorm_span_base_path.mkdir(exist_ok=True, parents=True)
+    nlp.to_disk(rxnorm_span_base_path)
+
+if __name__ == "__main__":
+    typer.run(main)
