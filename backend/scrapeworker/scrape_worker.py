@@ -41,7 +41,7 @@ from backend.scrapeworker.common.models import DownloadContext, Metadata, Reques
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.scrapeworker.common.update_documents import DocumentUpdater
 from backend.scrapeworker.common.utils import get_extension_from_path_like
-from backend.scrapeworker.file_parsers import parse_by_type
+from backend.scrapeworker.file_parsers import parse_by_type, pdf
 from backend.scrapeworker.playbook import ScrapePlaybook
 from backend.scrapeworker.scrapers import ScrapeHandler
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
@@ -153,6 +153,7 @@ class ScrapeWorker:
         link_retrieved_task: LinkRetrievedTask = link_retrieved_task_from_download(
             download, self.scrape_task
         )
+        scrape_method_config = self.site.scrape_method_configuration
         # prob our fail
         async for (temp_path, checksum) in self.downloader.try_download_to_tempfile(
             download, proxies
@@ -170,7 +171,7 @@ class ScrapeWorker:
             # TODO can we separate the concept of extensions to scrape on
             # and ext we expect to download? for now just html
             if download.file_extension == "html" and (
-                "html" not in self.site.scrape_method_configuration.document_extensions
+                "html" not in scrape_method_config.document_extensions
                 and self.site.scrape_method != "HtmlScrape"
             ):
                 self.log.error("Received an unexpected html response")
@@ -182,8 +183,8 @@ class ScrapeWorker:
             parsed_content = await parse_by_type(
                 temp_path,
                 download,
-                focus_config=self.site.scrape_method_configuration.focus_section_configs,
-                scrape_method_config=self.site.scrape_method_configuration,
+                focus_config=scrape_method_config.focus_section_configs,
+                scrape_method_config=scrape_method_config,
             )
 
             if parsed_content is None:
@@ -198,7 +199,7 @@ class ScrapeWorker:
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
 
             if download.file_extension == "html" and (
-                "html" in self.site.scrape_method_configuration.document_extensions
+                "html" in scrape_method_config.document_extensions
                 or self.site.scrape_method == "HtmlScrape"
             ):
                 target_url = url if not download.direct_scrape else f"file://{temp_path}"
@@ -210,6 +211,20 @@ class ScrapeWorker:
                     await page.goto(target_url, wait_until="domcontentloaded")
                     pdf_bytes = await page.pdf(display_header_footer=False, print_background=True)
                     self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
+
+                    with self.doc_client.read_object_to_tempfile(dest_path) as file_path:
+                        converted_pdf_parsed_content = await pdf.PdfParse(
+                            file_path,
+                            url,
+                            link_text=download.metadata.link_text,
+                            focus_config=scrape_method_config.focus_section_configs,
+                        ).parse()
+                        parsed_content["therapy_tags"] = converted_pdf_parsed_content[
+                            "therapy_tags"
+                        ]
+                        parsed_content["indication_tags"] = converted_pdf_parsed_content[
+                            "indication_tags"
+                        ]
 
             if download.file_extension == "html":
                 text_checksum = hash_full_text(parsed_content["text"])
