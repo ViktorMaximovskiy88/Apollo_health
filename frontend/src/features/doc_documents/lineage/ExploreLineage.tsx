@@ -47,30 +47,38 @@ const LineageModalFooter = (props: {
   setShowCurrentDocument: (showCurrentDocument: boolean) => void;
   closeModal: () => void;
   handleSubmit: () => void;
-}) => (
-  <div className="flex">
-    <div className="mr-auto">
-      <Checkbox
-        checked={props.showCurrentDocument}
-        onChange={(e) => props.setShowCurrentDocument(e.target.checked)}
-      >
-        Show Current Document
-      </Checkbox>
+}) => {
+  const previousDocDocumentId = useSelector(previousDocDocumentIdState);
+  return (
+    <div className="flex">
+      <div className="mr-auto">
+        <Checkbox
+          checked={props.showCurrentDocument}
+          onChange={(e) => props.setShowCurrentDocument(e.target.checked)}
+        >
+          Show Current Document
+        </Checkbox>
+      </div>
+      <div>
+        <Button key="cancel" onClick={props.closeModal}>
+          Cancel
+        </Button>
+        <Button
+          key="submit"
+          type="primary"
+          onClick={props.handleSubmit}
+          disabled={!previousDocDocumentId}
+        >
+          Submit
+        </Button>
+      </div>
     </div>
-    <div>
-      <Button key="cancel" onClick={props.closeModal}>
-        Cancel
-      </Button>
-      <Button key="submit" type="primary" onClick={props.handleSubmit}>
-        Submit
-      </Button>
-    </div>
-  </div>
-);
+  );
+};
 
 export function ExploreLineage(props: {
-  onChange?: (previousDocDocumentId: string) => void;
-  value?: string;
+  onChange: (previousDocDocumentId: string) => void;
+  value: string;
 }) {
   const dispatch = useAppDispatch();
   const previousDocDocumentId = useSelector(previousDocDocumentIdState);

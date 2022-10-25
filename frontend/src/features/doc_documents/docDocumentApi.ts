@@ -62,11 +62,24 @@ export const docDocumentsApi = createApi({
         method: 'POST',
       }),
     }),
+    updatePrevDocDoc: builder.mutation<
+      DocDocument,
+      { updatingDocDocId: string; prevDocDocId: string }
+    >({
+      query: (req) => ({
+        url: `/doc-documents/${req.updatingDocDocId}/update-previous?new_prev_doc_doc_id=${req.prevDocDocId}`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_r, _e, { updatingDocDocId, prevDocDocId }) => [
+        'DocDocument',
+        { type: 'ChangeLog', updatingDocDocId },
+        { type: 'ChangeLog', prevDocDocId },
+      ],
+    }),
     getChangeLog: builder.query<ChangeLog[], string>({
       query: (id) => `/change-log/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
     }),
-
     getWorkQueueItems: builder.query<
       { data: DocDocument[]; total: number },
       {
@@ -129,6 +142,7 @@ export const {
   useLazyGetDocDocumentsQuery,
   useUpdateDocDocumentMutation,
   useCreateDiffMutation,
+  useUpdatePrevDocDocMutation,
   useGetChangeLogQuery,
   useGetWorkQueueItemsQuery,
   useLazyGetWorkQueueItemsQuery,

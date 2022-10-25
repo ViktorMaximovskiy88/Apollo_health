@@ -165,7 +165,7 @@ async def update_doc_doc_and_new_prev_doc_doc(
     )
 
 
-@router.post("/{id}", response_model=DocDocument)
+@router.post("/{id}/update-previous", response_model=DocDocument)
 async def update_prev_doc_document(
     new_prev_doc_doc_id: PydanticObjectId,
     updating_doc_doc: DocDocument = Depends(get_target),
