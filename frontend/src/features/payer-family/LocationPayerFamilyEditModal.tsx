@@ -1,7 +1,12 @@
 import { Form, Input } from 'antd';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
-import { useUpdatePayerFamilyMutation, useLazyGetPayerFamilyQuery } from './payerFamilyApi';
+import {
+  useUpdatePayerFamilyMutation,
+  useLazyGetPayerFamilyQuery,
+  useLazyGetPayerFamilyByNameQuery,
+} from './payerFamilyApi';
 import { Modal } from 'antd';
+import { Rule } from 'antd/lib/form';
 import { useForm } from 'antd/lib/form/Form';
 import { useCallback, useEffect, useState } from 'react';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
@@ -19,6 +24,8 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
   const { location, onClose, onSave, open, payer_family_id } = props;
   const [form] = useForm();
   const [getPayerFamily] = useLazyGetPayerFamilyQuery();
+  const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
+
   const [updatePayerFamily, { isLoading }] = useUpdatePayerFamilyMutation();
   const [initialPayerOptions, setInitialPayerOptions] = useState<any>([]);
 
@@ -50,7 +57,6 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
         // @ts-ignore
         values.payer_ids = values.payer_ids?.map((val) => val.value);
       }
-      console.log(values.payer_ids);
       const payerFamily = await updatePayerFamily({ ...values, _id: payer_family_id }).unwrap();
       onSave(payerFamily._id);
       form.resetFields();
@@ -91,7 +97,10 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
         <Form.Item
           label="Name"
           name="name"
-          rules={[{ required: true, message: 'Please input a payer family name' }]}
+          rules={[
+            { required: true, message: 'Please input a payer family name' },
+            mustBeUnique(getPayerFamilyByName),
+          ]}
         >
           <Input />
         </Form.Item>
@@ -102,3 +111,16 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
     </Modal>
   );
 };
+
+// asyncValidator because rtk query makes this tough without hooks/dispatch
+function mustBeUnique(asyncValidator: Function) {
+  return {
+    async validator(_rule: Rule, value: string) {
+      const { data: payerFamily } = await asyncValidator({ name: value });
+      if (payerFamily) {
+        return Promise.reject(`Payer family name "${payerFamily.name}" already exists`);
+      }
+      return Promise.resolve();
+    },
+  };
+}
