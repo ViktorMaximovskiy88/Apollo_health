@@ -42,6 +42,32 @@ const LineageModalBody = ({ showCurrentDocument }: { showCurrentDocument: boolea
   );
 };
 
+const LineageModalFooter = (props: {
+  showCurrentDocument: boolean;
+  setShowCurrentDocument: (showCurrentDocument: boolean) => void;
+  closeModal: () => void;
+  handleSubmit: () => void;
+}) => (
+  <div className="flex">
+    <div className="mr-auto">
+      <Checkbox
+        checked={props.showCurrentDocument}
+        onChange={(e) => props.setShowCurrentDocument(e.target.checked)}
+      >
+        Show Current Document
+      </Checkbox>
+    </div>
+    <div>
+      <Button key="cancel" onClick={props.closeModal}>
+        Cancel
+      </Button>
+      <Button key="submit" type="primary" onClick={props.handleSubmit}>
+        Submit
+      </Button>
+    </div>
+  </div>
+);
+
 export function ExploreLineage(props: {
   onChange?: (previousDocDocumentId: string) => void;
   value?: string;
@@ -76,24 +102,12 @@ export function ExploreLineage(props: {
         open={open}
         onCancel={closeModal}
         footer={[
-          <div className="flex">
-            <div className="mr-auto">
-              <Checkbox
-                checked={showCurrentDocument}
-                onChange={(e) => setShowCurrentDocument(e.target.checked)}
-              >
-                Show Current Document
-              </Checkbox>
-            </div>
-            <div>
-              <Button key="cancel" onClick={closeModal}>
-                Cancel
-              </Button>
-              <Button key="submit" type="primary" onClick={handleSubmit}>
-                Submit
-              </Button>
-            </div>
-          </div>,
+          <LineageModalFooter
+            showCurrentDocument={showCurrentDocument}
+            setShowCurrentDocument={setShowCurrentDocument}
+            closeModal={closeModal}
+            handleSubmit={handleSubmit}
+          />,
         ]}
       >
         <LineageModalBody showCurrentDocument={showCurrentDocument} />
