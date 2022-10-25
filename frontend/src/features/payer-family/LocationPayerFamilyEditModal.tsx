@@ -10,6 +10,7 @@ import { useForm } from 'antd/lib/form/Form';
 import { useCallback, useEffect, useState } from 'react';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
 import { PayerFamily } from './types';
+import { Rule } from 'antd/lib/form';
 
 interface PayerFamilyCreateModalPropTypes {
   location: DocDocumentLocation | undefined;
