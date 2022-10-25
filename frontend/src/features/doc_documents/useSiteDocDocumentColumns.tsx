@@ -2,12 +2,12 @@ import { useMemo } from 'react';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import BoolFilter from '@inovua/reactdatagrid-community/BoolFilter';
-import { Button } from 'antd';
 import { LinkOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { prettyDateUTCFromISO } from '../../common';
 import { SiteDocDocument } from './types';
 import { Link } from 'react-router-dom';
 import { DocumentTypes } from '../retrieved_documents/types';
+import { ManualCollectionValidationButtons } from './manual_collection/ManualCollectionValidationButtons';
 
 interface CreateColumnsType {
   handleNewVersion?: (data: SiteDocDocument) => void;
@@ -123,17 +123,15 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
       },
     },
     {
-      header: 'Actions',
-      name: 'action',
-      minWidth: 200,
+      header: 'Validation',
+      name: 'validation',
+      minWidth: 230,
       render: ({ data: doc }: { data: SiteDocDocument }) => {
         return (
           <>
-            {handleNewVersion && (
-              <Button size="small" onClick={() => handleNewVersion(doc)}>
-                Upload new version
-              </Button>
-            )}
+            {handleNewVersion ? (
+              <ManualCollectionValidationButtons doc={doc} handleNewVersion={handleNewVersion} />
+            ) : null}
           </>
         );
       },

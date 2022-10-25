@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { withAuthenticationRequired, User } from '@auth0/auth0-react';
 
-import { DocDocumentsHomePage } from './features/doc_documents/DocDocumentsHomePage';
+import { DocDocumentsPage } from './features/doc_documents/DocDocumentsPage';
 import { DocumentEditPage } from './features/retrieved_documents/DocumentEditPage';
 import { CollectionsPage } from './features/collections/CollectionsPage';
 import { SiteCreatePage } from './features/sites/SiteCreatePage';
@@ -53,7 +53,7 @@ function UserRoutes() {
 function DocumentRoutes() {
   return (
     <Routes>
-      <Route index element={<DocDocumentsHomePage />} />
+      <Route index element={<DocDocumentsPage />} />
       <Route path=":docDocumentId" element={<DocDocumentEditPage />} />
     </Routes>
   );

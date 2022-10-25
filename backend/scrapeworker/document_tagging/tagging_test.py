@@ -87,7 +87,9 @@ class TestCheckFocus:
         span = MockSpan("ACITRETIN", 300, 400)
         focus_state = focus_checker.check_focus(span, 0)
         section = focus_areas[1].end, focus_areas[1].section_end
-        assert focus_state == FocusState(focus=True, key=False, section=section)
+        assert focus_state == FocusState(
+            focus=True, key=False, section=section, is_in_link_text=True
+        )
 
     def test_get_focus_by_url(self):
         url = "www.test.com/approval/acitretin-form-download"
@@ -99,7 +101,7 @@ class TestCheckFocus:
         span = MockSpan("ACITRETIN", 330, 340)
         focus_state = focus_checker.check_focus(span, 0)
         section = focus_areas[1].end, focus_areas[1].section_end
-        assert focus_state == FocusState(focus=True, key=False, section=section)
+        assert focus_state == FocusState(focus=True, key=False, section=section, is_in_url=True)
 
     def test_get_focus_by_all_focus(self):
         url = "www.test.com"
@@ -186,11 +188,15 @@ class TestCheckFocus:
 
         span = MockSpan("AUSTEDO", 1000, 2000)
         focus_state = focus_checker.check_focus(span, 0)
-        assert focus_state == FocusState(focus=True, key=False, section=None)
+        assert focus_state == FocusState(
+            focus=True, key=False, section=None, is_in_link_text=True, is_in_url=False
+        )
 
         non_focus_span = MockSpan("ACITRETIN", 30, 38)
         focus_state = focus_checker.check_focus(non_focus_span, 0)
-        assert focus_state == FocusState(focus=False, key=False, section=None)
+        assert focus_state == FocusState(
+            focus=False, key=False, section=None, is_in_link_text=False, is_in_url=False
+        )
 
     def test_offset(self):
         # Test offset param in check_focus

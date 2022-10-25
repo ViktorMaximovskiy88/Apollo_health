@@ -54,10 +54,7 @@ export const docDocumentsApi = createApi({
         method: 'POST',
         body,
       }),
-      invalidatesTags: (_r, _e, { _id: id }) => [
-        { type: 'DocDocument', id },
-        { type: 'ChangeLog', id },
-      ],
+      invalidatesTags: (_r, _e, { _id: id }) => ['DocDocument', { type: 'ChangeLog', id }],
     }),
     createDiff: builder.mutation<CompareResponse, CompareRequest>({
       query: (req) => ({

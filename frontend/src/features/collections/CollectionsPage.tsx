@@ -4,44 +4,119 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   useRunSiteScrapeTaskMutation,
   useCancelAllSiteScrapeTasksMutation,
+  useLazyGetScrapeTasksForSiteQuery,
 } from './siteScrapeTasksApi';
-import { useGetSiteQuery } from '../sites/sitesApi';
+import { useGetSiteQuery, useLazyGetSiteDocDocumentsQuery } from '../sites/sitesApi';
 import { CollectionsDataTable } from './CollectionsDataTable';
 import { CollectionMethod } from '../sites/types';
-import { AddDocumentModal } from './addDocumentModal';
+import { AddDocumentModal } from './AddDocumentModal';
 import { SiteStatus } from '../sites/siteStatus';
 import { SiteMenu } from '../sites/SiteMenu';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
 import { MainLayout } from '../../components';
 import { isErrorWithData } from '../../common/helpers';
+import { useSiteScrapeTaskId } from '../doc_documents/manual_collection/useUpdateSelected';
+import { initialState } from './collectionsSlice';
 
-function ManualCollectionButton(props: any) {
+export function ManualCollectionButton(props: any) {
   const { site, refetch, runScrape } = props;
   const navigate = useNavigate();
   const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
+  const [isLoading, setIsLoading] = useState(false);
+  const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
+  const scrapeTaskId = useSiteScrapeTaskId();
+  const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
+  const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
 
-  async function handleRunScrape() {
-    let response: any = await runScrape(site!._id);
-    if (response) {
-      refetch();
-      navigate(`../doc-documents?scrape_task_id=${response.data._id}`);
+  // Refresh site docs when starting / stopping collection.
+  const mostRecentTask = {
+    limit: 1,
+    skip: 0,
+    sortInfo: initialState.table.sort,
+    filterValue: initialState.table.filter,
+  };
+  const refreshDocs = async () => {
+    if (!scrapeTaskId) return;
+    if (!site) return;
+    const siteId = site._id;
+    refetch();
+    await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
+    await getDocDocumentsQuery({ siteId, scrapeTaskId });
+  };
+
+  async function handleRunManualScrape() {
+    try {
+      setIsLoading(true);
+      let response: any = await runScrape(site!._id);
+      if (response.data.success) {
+        refreshDocs();
+        navigate(`../doc-documents?scrape_task_id=${response.data.nav_id}`);
+      } else {
+        setIsLoading(false);
+        notification.error({
+          message: 'Error Running Manual Collection',
+          description: response.data.errors[0],
+        });
+      }
+    } catch (err) {
+      if (isErrorWithData(err)) {
+        setIsLoading(false);
+        notification.error({
+          message: 'Error Running Manual Collection',
+          description: `${err.data.detail}`,
+        });
+      } else {
+        setIsLoading(false);
+        notification.error({
+          message: 'Error Running Manual Collection',
+          description: JSON.stringify(err),
+        });
+      }
     }
   }
-  async function handleCancelScrape() {
-    await cancelAllScrapes(site!._id);
-    refetch();
-  }
-  const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
 
-  if (activeStatuses.includes(site.last_run_status)) {
+  async function handleCancelManualScrape() {
+    if (site?._id) {
+      try {
+        setIsLoading(true);
+        let response: any = await cancelAllScrapes(site!._id);
+        if (response.data?.success) {
+          refreshDocs();
+          setIsLoading(false);
+        } else {
+          setIsLoading(false);
+          notification.error({
+            message: 'Please review and update the following documents',
+            description: response.error.data.detail,
+          });
+        }
+      } catch (err) {
+        if (isErrorWithData(err)) {
+          setIsLoading(false);
+          notification.error({
+            message: 'Error Cancelling Collection',
+            description: `${err.data.detail}`,
+          });
+        } else {
+          setIsLoading(false);
+          notification.error({
+            message: 'Error Cancelling Collection',
+            description: 'Unknown error.',
+          });
+        }
+      }
+    }
+  }
+
+  if (site.collection_method == 'MANUAL' && activeStatuses.includes(site.last_run_status)) {
     return (
-      <Button className="ml-auto" onClick={handleCancelScrape}>
+      <Button className="ml-auto" disabled={isLoading} onClick={handleCancelManualScrape}>
         End Manual Collection
       </Button>
     );
   } else {
     return (
-      <Button className="ml-auto" onClick={handleRunScrape}>
+      <Button className="ml-auto" disabled={isLoading} onClick={handleRunManualScrape}>
         Start Manual Collection
       </Button>
     );
@@ -50,18 +125,24 @@ function ManualCollectionButton(props: any) {
 
 export function CollectionsPage() {
   const [newDocumentModalOpen, setNewDocumentModalOpen] = useState(false);
-
+  const [runScrape] = useRunSiteScrapeTaskMutation();
   const params = useParams();
   const siteId = params.siteId;
   const { data: site, refetch } = useGetSiteQuery(siteId);
-  const [runScrape] = useRunSiteScrapeTaskMutation();
-
-  if (!siteId || !site) return null;
+  if (!site) return null;
 
   async function handleRunScrape() {
     if (site?._id) {
       try {
-        await runScrape(site._id).unwrap();
+        let response: any = await runScrape(site._id).unwrap();
+        if (response.success) {
+          if (refetch) refetch();
+        } else {
+          notification.error({
+            message: 'Error Running Collection',
+            description: response.error.data.detail,
+          });
+        }
       } catch (err) {
         if (isErrorWithData(err)) {
           notification.error({
@@ -81,7 +162,7 @@ export function CollectionsPage() {
   return (
     <>
       {newDocumentModalOpen ? (
-        <AddDocumentModal setOpen={setNewDocumentModalOpen} siteId={siteId} />
+        <AddDocumentModal setOpen={setNewDocumentModalOpen} siteId={site._id} />
       ) : null}
       <MainLayout
         sidebar={<SiteMenu />}
@@ -100,7 +181,7 @@ export function CollectionsPage() {
         }
       >
         <CollectionsDataTable
-          siteId={siteId}
+          siteId={site._id}
           openNewDocumentModal={() => setNewDocumentModalOpen(true)}
         />
       </MainLayout>

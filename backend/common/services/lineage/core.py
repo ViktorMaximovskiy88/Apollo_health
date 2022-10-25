@@ -59,7 +59,7 @@ class LineageService:
         docs = await query.to_list()
         return docs
 
-    async def clear_lineage_for_site(self, site_id: PydanticObjectId | None):
+    async def clear_lineage_for_site(self, site_id: PydanticObjectId):
         await asyncio.gather(
             RetrievedDocument.get_motor_collection().update_many(
                 {"locations.site_id": site_id},
@@ -84,6 +84,31 @@ class LineageService:
             DocumentAnalysis.get_motor_collection().delete_many({"site_id": site_id}),
         )
 
+    async def clear_all_lineage(self):
+        await asyncio.gather(
+            RetrievedDocument.get_motor_collection().update_many(
+                {},
+                {
+                    "$set": {
+                        "lineage_id": None,
+                        "is_current_version": False,
+                        "previous_doc_id": None,
+                    }
+                },
+            ),
+            DocDocument.get_motor_collection().update_many(
+                {},
+                {
+                    "$set": {
+                        "lineage_id": None,
+                        "is_current_version": False,
+                        "previous_doc_doc_id": None,
+                    }
+                },
+            ),
+            DocumentAnalysis.get_motor_collection().delete_many({}),
+        )
+
     async def update_site_docs(self, site_id):
         # Updates tags, doc vecs and whatever else we need for lineage
         # using retagger for now
@@ -102,10 +127,26 @@ class LineageService:
         docs = await get_site_docs(site_id)
         await self.process_lineage_for_docs(site_id, docs)
 
+    async def get_shared_lineage_sites(self, site_id: PydanticObjectId):
+        docs = await RetrievedDocument.find_many({"locations.site_id": site_id}).to_list()
+        site_ids = set()
+        for doc in docs:
+            for location in doc.locations:
+                site_ids.add(location.site_id)
+        return list(site_ids)
+
     async def reprocess_lineage_for_site(self, site_id: PydanticObjectId):
-        await self.update_site_docs(site_id)
-        await self.clear_lineage_for_site(site_id)
-        await self.process_lineage_for_site(site_id)
+        # we also want to clear for shared lineage sites
+        site_ids = await self.get_shared_lineage_sites(site_id)
+
+        for site_id in site_ids:
+            self.logger.info(f"clear/update for site {site_id}")
+            await self.clear_lineage_for_site(site_id)
+            await self.update_site_docs(site_id)
+
+        for site_id in site_ids:
+            self.logger.info(f"reprocessing for site {site_id}")
+            await self.process_lineage_for_site(site_id)
 
     async def process_lineage_for_doc_ids(
         self, site_id: PydanticObjectId, doc_ids: list[PydanticObjectId]
@@ -279,7 +320,9 @@ def consensus_attr(model: DocumentAnalysis, attr: str):
 
 async def build_doc_analysis(doc: SiteRetrievedDocument) -> DocumentAnalysis:
 
-    doc_analysis = await DocumentAnalysis.find_one({"retrieved_document_id": doc.id})
+    doc_analysis = await DocumentAnalysis.find_one(
+        {"retrieved_document_id": doc.id, "site_id": doc.site_id}
+    )
 
     if doc_analysis is None:
         doc_analysis = DocumentAnalysis(
@@ -295,10 +338,15 @@ async def build_doc_analysis(doc: SiteRetrievedDocument) -> DocumentAnalysis:
     doc_analysis.doc_vectors = doc.doc_vectors
 
     doc_analysis.focus_therapy_tags = get_unique_focus_tags(doc.therapy_tags)
-    doc_analysis.ref_therapy_tags = get_unique_reference_tags(doc.therapy_tags)
-
     doc_analysis.focus_indication_tags = get_unique_focus_tags(doc.indication_tags)
+    doc_analysis.ref_therapy_tags = get_unique_reference_tags(doc.therapy_tags)
     doc_analysis.ref_indication_tags = get_unique_reference_tags(doc.indication_tags)
+
+    doc_analysis.url_focus_therapy_tags = get_unique_focus_tags(doc.url_therapy_tags)
+    doc_analysis.url_focus_indication_tags = get_unique_focus_tags(doc.url_indication_tags)
+
+    doc_analysis.link_focus_therapy_tags = get_unique_focus_tags(doc.link_therapy_tags)
+    doc_analysis.link_focus_indication_tags = get_unique_focus_tags(doc.link_indication_tags)
 
     [*path_parts, filename] = tokenize_url(doc.url)
     doc_analysis.filename_text = filename

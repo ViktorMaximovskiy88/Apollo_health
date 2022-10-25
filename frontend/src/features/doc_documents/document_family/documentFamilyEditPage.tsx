@@ -2,8 +2,7 @@ import { useForm } from 'antd/lib/form/Form';
 import { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MainLayout } from '../../../components';
-import { Rule } from 'antd/lib/form';
-import { Form, Input, Select } from 'antd';
+import { Form, Input, Select, Typography } from 'antd';
 import {
   useGetDocumentFamilyQuery,
   useLazyGetDocumentFamilyByNameQuery,
@@ -14,7 +13,7 @@ import { DocumentFamily } from './types';
 import { DocumentTypes } from '../../retrieved_documents/types';
 
 import { fieldGroupsOptions, legacyRelevanceOptions } from './documentFamilyLevels';
-import { mustBeUniqueName } from './DocumentFamilyCreateModal';
+import { filterLegacyRelevanceOptions, mustBeUniqueName } from './DocumentFamilyCreateModal';
 
 export function DocumentFamilyEditPage() {
   const [form] = useForm();
@@ -28,28 +27,7 @@ export function DocumentFamilyEditPage() {
   const nameValue: string[] = Form.useWatch('legacy_relevance', form);
   let filteredlegacyRelevanceOptions = legacyRelevanceOptions;
 
-  if (nameValue?.includes('N/A')) {
-    filteredlegacyRelevanceOptions = legacyRelevanceOptions.map((e) => {
-      if (e.value === 'N/A') return e;
-      return { ...e, disabled: true };
-    });
-  } else if (
-    nameValue?.includes('PAR') ||
-    nameValue?.includes('EDITOR_MANUAL') ||
-    nameValue?.includes('EDITOR_AUTOMATED')
-  ) {
-    filteredlegacyRelevanceOptions = legacyRelevanceOptions.map((e) => {
-      if (e.value === 'N/A') {
-        return { ...e, disabled: true };
-      } else if (
-        (nameValue?.includes('EDITOR_MANUAL') && e.value == 'EDITOR_AUTOMATED') ||
-        (nameValue?.includes('EDITOR_AUTOMATED') && e.value == 'EDITOR_MANUAL')
-      ) {
-        return { ...e, disabled: true };
-      }
-      return e;
-    });
-  }
+  filteredlegacyRelevanceOptions = filterLegacyRelevanceOptions(legacyRelevanceOptions, nameValue);
 
   const onFinish = useCallback(
     async (res: Partial<DocumentFamily>) => {
@@ -74,13 +52,12 @@ export function DocumentFamilyEditPage() {
           >
             <div className="flex">
               <div className="flex-1 mt-2 mb-4">
-                <h3>Edit Document Family</h3>
-                <div>{data.document_type}</div>
+                <Typography.Title level={3}>Document Family Information</Typography.Title>
               </div>
             </div>
             <Input.Group className="flex grow space-x-3">
               <Form.Item
-                label="Document Family Name"
+                label="Name"
                 name="name"
                 className="w-1/2"
                 rules={[

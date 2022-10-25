@@ -70,7 +70,7 @@ def calc_final_effective_date(doc) -> datetime | None:
     return as_naive_date(final_effective_date)
 
 
-def find_site_index(document, site_id: PydanticObjectId):
+def find_site_index(document, site_id: PydanticObjectId) -> int:
     return next((i for i, item in enumerate(document.locations) if item.site_id == site_id), -1)
 
 

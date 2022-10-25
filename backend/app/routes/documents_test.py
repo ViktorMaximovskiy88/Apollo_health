@@ -12,9 +12,9 @@ from backend.app.routes.documents import add_document, get_documents, upload_doc
 from backend.common.core.enums import CollectionMethod, LangCode, SiteStatus, TaskStatus
 from backend.common.db.init import init_db
 from backend.common.models.document import (
-    NewManualDocument,
     RetrievedDocument,
     RetrievedDocumentLimitTags,
+    UploadedDocument,
 )
 from backend.common.models.shared import RetrievedDocumentLocation
 from backend.common.models.site import BaseUrl, ScrapeMethodConfiguration, Site
@@ -109,7 +109,7 @@ def simple_manual_retrieved_document(
     identified_dates=[],
 ) -> RetrievedDocument:
     now = datetime.now(tz=timezone.utc)
-    return NewManualDocument(
+    return UploadedDocument(
         name="test",
         lang_code=LangCode.English,
         document_type="Authorization Policy",
@@ -265,9 +265,10 @@ class TestUploadFile:
     @pytest.mark.asyncio
     async def test_upload_file(self, user, logger, mock_s3_client):  # noqa
         file_path = os.path.join(fixture_path, "pdf_fixture.pdf")
+        site_one = await simple_site(collection_method=CollectionMethod.Manual).save()
         with open(file_path, "rb") as file:
             upload_file = UploadFile(filename="test.pdf", file=file, content_type="application/pdf")
-            uploaded_document = await upload_document(upload_file)
+            uploaded_document = await upload_document(upload_file, from_site_id=site_one.id)
 
             assert uploaded_document["success"] is True
             assert uploaded_document["data"]["checksum"] is not None  # type: ignore
@@ -279,11 +280,11 @@ class TestUploadFile:
     async def test_upload_create_document(self, user, logger, mock_s3_client):  # noqa
         file_path = os.path.join(fixture_path, "pdf_fixture.pdf")
         with open(file_path, "rb") as file:
-            upload_file = UploadFile(filename="test.pdf", file=file, content_type="application/pdf")
-            uploaded_document = await upload_document(upload_file)
-
-            assert uploaded_document["success"] is True
             site_one = await simple_site(collection_method=CollectionMethod.Manual).save()
+            upload_file = UploadFile(filename="test.pdf", file=file, content_type="application/pdf")
+            uploaded_document = await upload_document(upload_file, from_site_id=site_one.id)
+            assert uploaded_document["success"] is True
+
             doc = simple_manual_retrieved_document(
                 site_one,
                 checksum=uploaded_document["data"]["checksum"],  # type: ignore
@@ -296,11 +297,10 @@ class TestUploadFile:
                 indication_tags=uploaded_document["data"]["indication_tags"],  # type: ignore
                 identified_dates=uploaded_document["data"]["identified_dates"],  # type: ignore
             )
-
             result = await add_document(doc, user, logger)
             assert result.id is not None
-            uploaded_document_2 = await upload_document(upload_file)
 
+            uploaded_document_2 = await upload_document(upload_file, from_site_id=site_one.id)
             assert uploaded_document_2["error"] == "The document already exists!"
 
 
@@ -312,6 +312,3 @@ class TestCreateDocuments:
 
         result = await add_document(doc, user, logger)
         assert result.id is not None
-
-        first_ret_docs = await get_documents(scrape_task_id=result.id)
-        assert len(first_ret_docs) == 1
