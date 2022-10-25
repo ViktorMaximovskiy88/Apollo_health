@@ -35,6 +35,7 @@ class SiteScrapeTask(BaseDocument):
     start_time: Indexed(datetime) | None = None
     end_time: datetime | None = None
     last_active: datetime | None = None
+    last_doc_collected: datetime | None = None
     status: Indexed(str) = TaskStatus.QUEUED  # type: ignore
     documents_found: int = 0
     new_documents_found: int = 0

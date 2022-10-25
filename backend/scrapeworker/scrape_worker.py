@@ -1,5 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from random import shuffle
 from typing import AsyncGenerator, Coroutine
 from urllib.parse import urlparse
@@ -258,6 +259,7 @@ class ScrapeWorker:
             await asyncio.gather(
                 self.scrape_task.update(
                     {
+                        "$set": {"last_doc_collected": datetime.now(tz=timezone.utc)},
                         "$inc": {"documents_found": 1},
                         "$push": {"retrieved_document_ids": document.id},
                     }
