@@ -8,6 +8,7 @@ import { Rule } from 'antd/lib/form';
 import { useCallback, useState } from 'react';
 import { PayerFamily } from './types';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
+import { compact } from 'lodash';
 
 interface PayerFamilyCreateModalPropTypes {
   location: DocDocumentLocation | undefined;
@@ -24,8 +25,11 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
 
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
+      if (form.getFieldValue('custom_name')) {
+      }
       const payerFamily = await addPayerFamily(values).unwrap();
       onSave(payerFamily._id);
+
       form.resetFields();
     },
     [addPayerFamily, onSave, form]
@@ -33,6 +37,13 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
 
   if (!location) {
     return <></>;
+  }
+
+  async function onFieldsChange(changedFields: any, allFields: any) {
+    const { region, plan_type, benefit, channel, payer_ids } = allFields;
+    // lookup up payer names from payer_ids here
+
+    return compact([region, plan_type, benefit, channel, payer_ids]).join(' | ');
   }
 
   return (
@@ -47,6 +58,7 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
       <Form
         form={form}
         layout="vertical"
+        onFieldsChange={onFieldsChange}
         disabled={isLoading}
         autoComplete="off"
         requiredMark={false}
