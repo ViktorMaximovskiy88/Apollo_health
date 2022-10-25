@@ -120,6 +120,64 @@ async def create_diff(
     )
 
 
+async def update_old_prev_doc_doc(updating_doc_doc: DocDocument):
+    old_prev_doc_doc_id = updating_doc_doc.previous_doc_doc_id
+    old_prev_doc_doc = await get_target(old_prev_doc_doc_id)
+
+    if updating_doc_doc.is_current_version:
+        await DocDocument.get_motor_collection().find_one_and_update(
+            {"_id": old_prev_doc_doc_id}, {"$set": {"is_current_version": True}}
+        )
+        old_prev_doc_doc.is_current_version = True
+        return
+
+    await DocDocument.get_motor_collection().find_one_and_update(
+        {"previous_doc_doc_id": updating_doc_doc.id},
+        {"$set": {"previous_doc_doc_id": old_prev_doc_doc_id}},
+    )
+
+
+async def update_doc_doc_and_new_prev_doc_doc(
+    updating_doc_doc: DocDocument, new_prev_doc_doc_id: PydanticObjectId
+):
+    new_prev_doc_doc = await get_target(new_prev_doc_doc_id)
+    updating_doc_doc_mutation = {
+        "lineage_id": new_prev_doc_doc.lineage_id,
+        "previous_doc_doc_id": new_prev_doc_doc_id,
+    }
+
+    if new_prev_doc_doc.is_current_version:
+        await DocDocument.get_motor_collection().find_one_and_update(
+            {"_id": new_prev_doc_doc_id}, {"$set": {"is_current_version": False}}
+        )
+        updating_doc_doc_mutation.is_current_version: True
+        await DocDocument.get_motor_collection().find_one_and_update(
+            {"_id": updating_doc_doc.id}, {"$set": updating_doc_doc_mutation}
+        )
+        return
+
+    await DocDocument.get_motor_collection().find_one_and_update(
+        {"_id": updating_doc_doc.id}, {"$set": updating_doc_doc_mutation}
+    )
+    await DocDocument.get_motor_collection().find_one_and_update(
+        {"previous_doc_doc_id": new_prev_doc_doc_id},
+        {"$set": {"previous_dod_doc_id": updating_doc_doc.id}},
+    )
+
+
+@router.post("/{id}", response_model=DocDocument)
+async def update_prev_doc_document(
+    new_prev_doc_doc_id: PydanticObjectId,
+    updating_doc_doc: DocDocument = Depends(get_target),
+    current_user: User = Security(get_current_user),
+    logger: Logger = Depends(get_logger),
+):
+    await update_old_prev_doc_doc(updating_doc_doc)
+    await update_doc_doc_and_new_prev_doc_doc(
+        updating_doc_doc=updating_doc_doc, new_prev_doc_doc_id=new_prev_doc_doc_id
+    )
+
+
 @router.post("/{id}", response_model=DocDocument)
 async def update_doc_document(
     updates: UpdateDocDocument,
