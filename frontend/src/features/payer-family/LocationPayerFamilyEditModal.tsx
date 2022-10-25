@@ -57,7 +57,6 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
         // @ts-ignore
         values.payer_ids = values.payer_ids?.map((val) => val.value);
       }
-      console.log(values.payer_ids);
       const payerFamily = await updatePayerFamily({ ...values, _id: payer_family_id }).unwrap();
       onSave(payerFamily._id);
       form.resetFields();
