@@ -113,7 +113,6 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
 };
 
 // asyncValidator because rtk query makes this tough without hooks/dispatch
-// asyncValidator because rtk query makes this tough without hooks/dispatch
 function mustBeUnique(asyncValidator: Function) {
   return {
     async validator(_rule: Rule, value: string) {
