@@ -22,6 +22,9 @@ class DateMatch:
             self.start: int = None
             self.end: int = None
 
+    def __str__(self):
+        return str(self.date)
+
 
 class DateParser:
     def __init__(
@@ -41,6 +44,18 @@ class DateParser:
         self.next_update_date = DateMatch()
         self.published_date = DateMatch()
         self.unclassified_dates: set[datetime] = set()
+
+    def dump_dates(self):
+        return {
+            "effective_date": str(self.effective_date),
+            "end_date": str(self.end_date),
+            "last_updated_date": str(self.last_updated_date),
+            "last_reviewed_date": str(self.last_reviewed_date),
+            "next_review_date": str(self.next_review_date),
+            "next_update_date": str(self.next_update_date),
+            "published_date": str(self.published_date),
+            "unclassified_dates": [str(date) for date in self.unclassified_dates],
+        }
 
     def exclude_text(self, text: str) -> bool:
         exclusions = ["omb approval"]
