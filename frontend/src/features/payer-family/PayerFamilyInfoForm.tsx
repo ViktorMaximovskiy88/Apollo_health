@@ -5,7 +5,7 @@ import { useLazyGetPayerBackbonesQuery } from '../payer-backbone/payerBackboneAp
 import {
   benefitOptions,
   channelOptions,
-  payerTypeOptions,
+  backBoneLevelOptions,
   planTypeOptions,
   regionOptions,
 } from './payerLevels';
@@ -29,7 +29,7 @@ export const PayerFamilyInfoForm = (props: PayerFamilyInfoFormProps) => {
     form.setFieldsValue({ payer_ids: initialPayerOptions });
   }, [form, payerType, initialPayerOptions]);
 
-  const payerOptions = useCallback(
+  const backBoneValueOptions = useCallback(
     async (search: string) => {
       if (!payerType) return [];
       const { data } = await getPayers({
@@ -50,10 +50,18 @@ export const PayerFamilyInfoForm = (props: PayerFamilyInfoFormProps) => {
       <h2>Payer</h2>
       <Input.Group className="space-x-2 flex">
         <Form.Item label="Backbone Level" name={'payer_type'} className="w-48">
-          <Select options={payerTypeOptions} />
+          <Select options={backBoneLevelOptions} />
         </Form.Item>
         <Form.Item label="Backbone Values" name={'payer_ids'} className="w-80">
-          <RemoteSelect mode="multiple" className="w-full" fetchOptions={payerOptions} />
+          <RemoteSelect
+            mode="multiple"
+            disabled={
+              !form.getFieldValue('payer_type') ||
+              form.getFieldValue('payer_type') === 'Not Selected'
+            }
+            className="w-full"
+            fetchOptions={backBoneValueOptions}
+          />
         </Form.Item>
       </Input.Group>
       <Input.Group className="space-x-1 flex flex-wrap">
