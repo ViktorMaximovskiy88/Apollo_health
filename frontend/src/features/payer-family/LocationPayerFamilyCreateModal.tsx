@@ -1,4 +1,4 @@
-import { Form, Input, Switch } from 'antd';
+import { Checkbox, Form, Input, Switch } from 'antd';
 import { useLazyGetPayerFamilyByNameQuery } from './payerFamilyApi';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
 import { useAddPayerFamilyMutation } from './payerFamilyApi';
@@ -21,7 +21,6 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
   const [form] = useForm();
   const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
   const [addPayerFamily, { isLoading }] = useAddPayerFamilyMutation();
-  const [customNameChecked, setCustomNameChecked] = useState<boolean>(false);
 
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
@@ -60,25 +59,25 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
             <div>{location.site_name}</div>
           </div>
         </div>
-        <Form.Item
-          label="Name"
-          name="name"
-          rules={[
-            { required: true, message: 'Please input a payer family name' },
-            mustBeUnique(getPayerFamilyByName),
-          ]}
-        >
-          <Input />
-        </Form.Item>
         <Input.Group className="space-x-2 flex">
-          Custom Name
-          <br />
-          <Switch
-            checked={customNameChecked}
-            onChange={setCustomNameChecked}
-            checkedChildren="On"
-            unCheckedChildren="Off"
-          />
+          <Form.Item
+            label="Name"
+            name="name"
+            className="w-96 mr-5"
+            dependencies={['custom_name']}
+            rules={[
+              { required: false, message: 'Please input a payer family name' },
+              mustBeUnique(getPayerFamilyByName),
+            ]}
+            help={
+              form.getFieldValue('custom_name') ? 'Custom name will be generated on submission' : ''
+            }
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item valuePropName="checked" name="custom_name">
+            <Checkbox>Auto Generate</Checkbox>
+          </Form.Item>
         </Input.Group>
 
         <PayerFamilyInfoForm />
