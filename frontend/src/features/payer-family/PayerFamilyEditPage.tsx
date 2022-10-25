@@ -1,10 +1,15 @@
 import { Form, Input } from 'antd';
+import { Rule } from 'antd/lib/form';
 import { useForm } from 'antd/lib/form/Form';
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '../../components';
 import { PayerEditSubmitComponent } from './PayerEditSubmitComponent';
-import { useLazyGetPayerFamilyQuery, useUpdatePayerFamilyMutation } from './payerFamilyApi';
+import {
+  useLazyGetPayerFamilyByNameQuery,
+  useLazyGetPayerFamilyQuery,
+  useUpdatePayerFamilyMutation,
+} from './payerFamilyApi';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
 import { PayerFamily } from './types';
 
@@ -15,6 +20,8 @@ export const PayerFamilyEditPage = () => {
   const [form] = useForm();
   const navigate = useNavigate();
   const [getPayerFamily] = useLazyGetPayerFamilyQuery();
+  const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
+
   const [updatePayerFamily, { isLoading }] = useUpdatePayerFamilyMutation();
   const [initialPayerOptions, setInitialPayerOptions] = useState<any>([]);
 
@@ -72,7 +79,10 @@ export const PayerFamilyEditPage = () => {
             label="Name"
             name="name"
             className="w-96"
-            rules={[{ required: true, message: 'Please input a payer family name' }]}
+            rules={[
+              { required: true, message: 'Please input a payer family name' },
+              mustBeUnique(getPayerFamilyByName),
+            ]}
           >
             <Input />
           </Form.Item>
@@ -86,3 +96,16 @@ export const PayerFamilyEditPage = () => {
     </MainLayout>
   );
 };
+
+// asyncValidator because rtk query makes this tough without hooks/dispatch
+function mustBeUnique(asyncValidator: Function) {
+  return {
+    async validator(_rule: Rule, value: string) {
+      const { data: payerFamily } = await asyncValidator({ name: value });
+      if (payerFamily) {
+        return Promise.reject(`Payer family name "${payerFamily.name}" already exists`);
+      }
+      return Promise.resolve();
+    },
+  };
+}

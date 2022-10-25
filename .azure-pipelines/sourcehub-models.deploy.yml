@@ -1,0 +1,36 @@
+parameters:
+  - name: environment
+    displayName: Short Environment (dev, tst, or prd)
+    type: string
+    values:
+      - dev
+      - tst
+      - prd
+  - name: awsCredentials
+    displayName: AWS Service Connection Name
+steps:
+  - task: S3Upload@1
+    displayName: Deploy models to S3
+    inputs:
+      awsCredentials: ${{ parameters.awsCredentials }}
+      regionName: 'us-east-1'
+      bucketName: 'apollo-${{parameters.environment}}-docrepo-use1-mmit-s3-01'
+      sourceFolder: '$(Pipeline.Workspace)/models'
+      globExpressions: '**'
+      targetFolder: 'models/$(Build.BuildNumber)/'
+      keyManagement: 'awsManaged'
+      encryptionAlgorithm: 'AES256'
+
+  - task: S3Upload@1
+    displayName: Deploy models to S3 (latest)
+    condition: eq('${{parameters.environment}}', 'dev')
+    inputs:
+      awsCredentials: ${{ parameters.awsCredentials }}
+      regionName: 'us-east-1'
+      bucketName: 'apollo-${{parameters.environment}}-docrepo-use1-mmit-s3-01'
+      sourceFolder: '$(Pipeline.Workspace)/models'
+      globExpressions: '**'
+      targetFolder: 'models/latest/'
+      keyManagement: 'awsManaged'
+      encryptionAlgorithm: 'AES256'
+  

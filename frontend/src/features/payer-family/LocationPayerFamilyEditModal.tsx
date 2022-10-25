@@ -6,6 +6,7 @@ import {
   useLazyGetPayerFamilyByNameQuery,
 } from './payerFamilyApi';
 import { Modal } from 'antd';
+import { Rule } from 'antd/lib/form';
 import { useForm } from 'antd/lib/form/Form';
 import { useCallback, useEffect, useState } from 'react';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
@@ -57,7 +58,6 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
         // @ts-ignore
         values.payer_ids = values.payer_ids?.map((val) => val.value);
       }
-      console.log(values.payer_ids);
       const payerFamily = await updatePayerFamily({ ...values, _id: payer_family_id }).unwrap();
       onSave(payerFamily._id);
       form.resetFields();
@@ -113,6 +113,7 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
   );
 };
 
+// asyncValidator because rtk query makes this tough without hooks/dispatch
 function mustBeUnique(asyncValidator: Function) {
   return {
     async validator(_rule: Rule, value: string) {

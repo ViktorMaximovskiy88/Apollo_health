@@ -225,6 +225,21 @@ async def start_hung_task_checker():
         await asyncio.sleep(60)
 
 
+async def start_inactive_task_checker():
+    """
+    Cancel tasks where last document was scraped more than 1 hour ago
+    """
+    now = datetime.now(tz=timezone.utc)
+    SiteScrapeTask.get_motor_collection().update_many(
+        {
+            "status": {"$in": [TaskStatus.IN_PROGRESS]},
+            "last_doc_collected": {"$lt": now - timedelta(hours=1)},
+        },
+        {"$set": {"status": TaskStatus.CANCELED, "error_message": "Cancelled due to inactivity"}},
+    )
+    await asyncio.sleep(60)
+
+
 background_tasks: list[asyncio.Task] = []
 
 
@@ -233,6 +248,7 @@ async def start_scheduler_and_scaler():
     background_tasks.append(asyncio.create_task(start_scaler()))
     background_tasks.append(asyncio.create_task(start_scheduler()))
     background_tasks.append(asyncio.create_task(start_hung_task_checker()))
+    background_tasks.append(asyncio.create_task(start_inactive_task_checker()))
     await asyncio.gather(*background_tasks)
 
 

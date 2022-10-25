@@ -1,0 +1,127 @@
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - backend/parseworker/scripts/build_rxnorm_linker.py
+      - backend/parseworker/scripts/build_rxnorm_span_ruler.py
+    
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  DOCKER_BUILDKIT: 1
+  aws.rolecredential.maxduration: 1800 # 30 minutes
+
+stages:
+  ##############################################################################################
+  # Build Stage
+  # - Build Models
+  # - Upload Models to Pipeline Artifacts
+  ###############################################################################################
+  - stage: build 
+    displayName: Build Stage
+    jobs:
+      - job: buildAndPackageModels
+        displayName: Build and Package SourceHub Models
+        condition: succeeded()
+        steps:
+          - template: .azure-pipelines/sourcehub-base.build.yml
+
+          - template: .azure-pipelines/sourcehub-app.build.yml
+          
+          - template: .azure-pipelines/sourcehub-models.build.yml
+
+  ##############################################################################################
+  # Stage: Deploy to the Development Environment
+  #
+  # - It is assumed that the models have been published as Pipeline Artifacts in the build stage
+  # - This stage will use a template for the deployment job
+  # - This stage can be executed using either the main branch or a feature/* branch. Executing
+  #   from a feature/ branch requires a manual trigger.
+  ##############################################################################################
+  - stage: development
+    displayName: Development Stage
+    dependsOn: build
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature/')))
+    jobs:
+      - deployment: dev_deployment
+        displayName: Deploy to SourceHub Dev
+        environment: SourceHub-Dev
+        strategy:
+            runOnce:
+              deploy:
+                steps:
+
+                  ##
+                  # Deploy SourceHub to Dev environment
+                  ##
+                  - template: .azure-pipelines/sourcehub-models.deploy.yml
+                    parameters:
+                      environment: dev
+                      awsCredentials: "Apollo-AWS-Dev-Apollo"
+
+
+  ##############################################################################################
+  # Stage: Deploy to the Test Environment
+  #
+  # - It is assumed that the container images have been pushed to Dev ECR in the Build Stage
+  # - This stage will pull the container images from Dev ECR and then push to Test ECR
+  # - This stage will use a template for the deployment job
+  # - This stage can only be executed from the main branch
+  # - This stage will reference the SourceHub-Test environment which may require approvals and
+  #   other policies configured outside of this Pipeline.
+  ##############################################################################################
+  - stage: test
+    displayName: Test Stage
+    dependsOn: development
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: tst_deployment
+        displayName: Deploy to SourceHub Test
+        environment: SourceHub-Test
+        strategy:
+            runOnce:
+              deploy:
+                steps:
+                  ##
+                  # Deploy SourceHub to Test environment
+                  ##
+                  - template: .azure-pipelines/sourcehub-models.deploy.yml
+                    parameters:
+                      environment: tst
+                      awsCredentials: "Apollo-AWS-Test-Apollo"
+
+
+  ##############################################################################################
+  # Stage: Deploy to the Prod Environment
+  #
+  # - It is assumed that the container images have been pushed to Dev ECR in the Build Stage
+  # - This stage will pull the container images from Dev ECR and then push to Prod ECR
+  # - This stage will use a template for the deployment job
+  # - This stage can only be executed from a tag matching pattern 'v*'
+  # - This stage will reference the SourceHub-Prod environment which may require approvals and
+  #   other policies configured outside of this Pipeline.
+  ##############################################################################################
+  - stage: production
+    displayName: Production Stage
+    dependsOn: test
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: prd_deployment
+        displayName: Deploy to SourceHub Prod
+        environment: SourceHub-Prod
+        strategy:
+            runOnce:
+              deploy:
+                steps:
+                  ##
+                  # Deploy SourceHub to Prod environment
+                  ##
+                  - template: .azure-pipelines/sourcehub-models.deploy.yml
+                    parameters:
+                      environment: prd
+                      awsCredentials: "Apollo-AWS-Prod-Apollo"
