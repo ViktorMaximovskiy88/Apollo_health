@@ -49,10 +49,10 @@ export const PayerFamilyInfoForm = (props: PayerFamilyInfoFormProps) => {
     <div className="mt-4">
       <h2>Payer</h2>
       <Input.Group className="space-x-2 flex">
-        <Form.Item label="Payer Type" name={'payer_type'} className="w-48">
+        <Form.Item label="Backbone Level" name={'payer_type'} className="w-48">
           <Select options={payerTypeOptions} />
         </Form.Item>
-        <Form.Item label="Payers" name={'payer_ids'} className="w-80">
+        <Form.Item label="Backbone Values" name={'payer_ids'} className="w-80">
           <RemoteSelect mode="multiple" className="w-full" fetchOptions={payerOptions} />
         </Form.Item>
       </Input.Group>
