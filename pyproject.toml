@@ -55,6 +55,8 @@ python-magic = "^0.4.27"
 scispacy = {git = "https://github.com/mbrown-bhe/scispacy.git", rev = "main"}
 newrelic = "^8.1.0"
 diff-match-patch = "^20200713"
+PyMuPDF = "^1.20.2"
+swig = "^4.0.2"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
