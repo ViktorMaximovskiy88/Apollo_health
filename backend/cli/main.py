@@ -12,6 +12,7 @@ sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 from backend.scrapeworker.common.date_parser import DateParser
 from backend.scrapeworker.common.utils import date_rgxs, label_rgxs
 from backend.scrapeworker.file_parsers.mupdf import MuPdfParse
+from backend.scrapeworker.file_parsers.mupdf_smart import MuPdfSmartParse
 
 app = typer.Typer()
 log = logging.getLogger(__name__)
@@ -51,9 +52,11 @@ async def _parse_dates(file: str):
 
 async def _parse_text(file: str):
 
-    parser = MuPdfParse(file_path=file, url=f"file://{file}")
-    text = await parser.get_text()
-    print(text)
+    parser = MuPdfSmartParse(file_path=file, url=f"file://{file}")
+    parts = parser.map_document_parts()
+    print(parts)
+    # json = parser.get_structure_json()
+    # print(json)
 
 
 @app.command()
