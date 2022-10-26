@@ -37,6 +37,7 @@ export const PayerFamilyEditPage = () => {
           benefits: data.benefits,
           plan_types: data.plan_types,
           regions: data.regions,
+          custom_name: true,
         });
         setInitialPayerOptions(data.payer_ids);
       }
@@ -108,9 +109,13 @@ function mustBeUnique(asyncValidator: Function, currentPayerFamilyId: string) {
   return {
     async validator(_rule: Rule, value: string) {
       const { data: payerFamily } = await asyncValidator({ name: value });
-      if (payerFamily && currentPayerFamilyId === payerFamily._id) {
+      if (
+        currentPayerFamilyId === payerFamily._id &&
+        value !== payerFamily.name.toLowerCase() &&
+        value !== payerFamily.name.toUpperCase()
+      ) {
         return Promise.resolve();
-      } else if (payerFamily.name) {
+      } else {
         return Promise.reject(`Payer family name "${payerFamily.name}" already exists`);
       }
     },
