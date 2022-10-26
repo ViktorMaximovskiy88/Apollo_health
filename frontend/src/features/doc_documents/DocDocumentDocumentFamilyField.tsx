@@ -24,8 +24,9 @@ export const DocDocumentDocumentFamilyField = ({
   const [isNewVisible, setIsNewVisible] = useState<boolean>(false);
   const [isEditVisible, setIsEditVisible] = useState<boolean>(false);
   const [skip, setSkip] = useState<boolean>(true);
+  const document_type_selected = Form.useWatch('document_type');
   const { data } = useGetDocumentFamiliesQuery({
-    documentType: doc?.document_type,
+    documentType: document_type_selected ? document_type_selected : doc?.document_type,
   });
   const options = data?.data.map((item: DocumentFamily) => ({ value: item._id, label: item.name }));
   options?.sort((a: { label: string }, b: { label: string }) => a.label.localeCompare(b.label));
@@ -71,7 +72,7 @@ export const DocDocumentDocumentFamilyField = ({
         )}
         <DocumentFamilyCreateModal
           documentFamilyData={docFamilyData}
-          documentType={doc?.document_type}
+          documentType={docFamilyData?.document_type}
           open={isEditVisible}
           onSave={(documentFamilyId: string) => {
             onFieldChange();
@@ -92,7 +93,7 @@ export const DocDocumentDocumentFamilyField = ({
           New
         </Button>
         <DocumentFamilyCreateModal
-          documentType={doc?.document_type}
+          documentType={document_type_selected ? document_type_selected : doc?.document_type}
           open={isNewVisible}
           onSave={(documentFamilyId: string) => {
             form.setFieldsValue({ document_family_id: documentFamilyId });
