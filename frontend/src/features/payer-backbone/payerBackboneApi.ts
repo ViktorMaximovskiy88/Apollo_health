@@ -78,6 +78,8 @@ export const {
   useUpdatePayerBackboneMutation,
   useGetPayerBackbonesQuery,
   useGetPayerBackboneQuery,
+  useLazyGetPayerBackboneQuery,
   useGetPayerBackboneByLIdQuery,
+  useLazyGetPayerBackboneByLIdQuery,
   useGetChangeLogQuery,
 } = payerBackboneApi;
