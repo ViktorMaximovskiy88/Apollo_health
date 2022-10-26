@@ -40,7 +40,7 @@ from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocs
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.scrapeworker.common.update_documents import DocumentUpdater
-from backend.scrapeworker.common.utils import get_extension_from_path_like
+from backend.scrapeworker.common.utils import get_extension_from_path_like, supported_mimetypes
 from backend.scrapeworker.file_parsers import parse_by_type, pdf
 from backend.scrapeworker.playbook import ScrapePlaybook
 from backend.scrapeworker.scrapers import ScrapeHandler
@@ -165,6 +165,11 @@ class ScrapeWorker:
 
             # log response error
             if not (temp_path and checksum):
+                await link_retrieved_task.save()
+                break
+
+            if download.mimetype not in supported_mimetypes:
+                self.log.error(f"Mimetype not supported {download.mimetype}")
                 await link_retrieved_task.save()
                 break
 
