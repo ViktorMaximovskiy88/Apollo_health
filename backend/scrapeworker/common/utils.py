@@ -73,7 +73,6 @@ mimetype_to_extension_map = {
     "text/csv": "csv",
     "text/plain": "txt",
     "application/octet-stream": "bin",
-    "image/png": "png",
 }
 extension_to_mimetype_map = {v: k for k, v in mimetype_to_extension_map.items()}
 

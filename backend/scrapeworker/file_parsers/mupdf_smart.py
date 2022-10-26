@@ -1,19 +1,24 @@
 import fitz
 
-from backend.scrapeworker.common.utils import deburr
+from backend.scrapeworker.common.utils import deburr, group_by_key
 from backend.scrapeworker.file_parsers.base import FileParser
 
 
 class MuPdfSmartParse(FileParser):
     def __init__(self, *args, **kwargs):
         super(MuPdfSmartParse, self).__init__(*args, **kwargs)
+        self.row_number = 0
         self.doc = fitz.Document(self.file_path)
         self.pages = self.get_structure()
         self.parts = self.map_document_parts()
+        grouped = group_by_key(self.parts, "page_index")
+        self.parts_by_page = {}
+        for page_index, pages in grouped:
+            self.parts_by_page[page_index] = list(pages)
+        print(self.parts_by_page)
+        # self.process_lines()
 
-        self.line_number = 0
-
-        # table handle
+        # table handle, later
         self.is_open_table = False
         self.table_index = 0
         self.table_col = 0
@@ -45,41 +50,6 @@ class MuPdfSmartParse(FileParser):
         title = metadata.get("title") or metadata.get("subject") or str(self.filename_no_ext)
         return title
 
-    def detect_doc_elements(self):
-        pass
-
-    def detect_page_elements(self):
-        pass
-
-    def detect_page_header(self):
-        # by position
-        # by repetition
-        # by font
-        # by siblings
-        # by exact edges
-        # by fuzzy edges
-        pass
-
-    def same_font(self, span_a: dict, span_b: dict) -> bool:
-        return span_a["font"] == span_b["font"]
-
-    def same_size(self, span_a: dict, span_b: dict) -> bool:
-        return span_a["size"] == span_b["size"]
-
-    def same_color(self, span_a: dict, span_b: dict) -> bool:
-        return span_a["color"] == span_b["color"]
-
-    def same_flags(self, span_a: dict, span_b: dict) -> bool:
-        return span_a["flags"] == span_b["flags"]
-
-    def same_style(self, span_a: dict, span_b: dict) -> bool:
-        return (
-            self.same_color(span_a, span_b)
-            and self.same_size(span_a, span_b)
-            and self.same_font(span_a, span_b)
-            and self.same_flags(span_a, span_b)
-        )
-
     def map_span(self, span: dict):
         span["origin_x"] = span["origin"][0]
         span["origin_y"] = span["origin"][1]
@@ -87,7 +57,6 @@ class MuPdfSmartParse(FileParser):
         span["bbox_y0"] = span["bbox"][1]
         span["bbox_x1"] = span["bbox"][2]
         span["bbox_y1"] = span["bbox"][3]
-        span["scrubbed"] = deburr(span["text"])
         span["line_height"] = abs(span["ascender"]) + abs(span["descender"])
         return span
 
@@ -136,7 +105,7 @@ class MuPdfSmartParse(FileParser):
     def map_document_parts(self):
         parts = []
         index = 0
-        for page_index, page in enumerate(self.pages):
+        for page_index, page in enumerate([self.pages[28]]):
             text_blocks = [block for block in page["blocks"] if block["type"] == 0]
             for block_index, block in enumerate(text_blocks):
                 for line_index, line in enumerate(block["lines"]):
@@ -152,63 +121,103 @@ class MuPdfSmartParse(FileParser):
                         span["block_index"] = block_index
                         span["line_index"] = line_index
                         span["span_index"] = span_index
+                        span[
+                            "style"
+                        ] = f"{span['size']}|{span['flags']}|{span['font']}|{span['color']}"
                         span.pop("bbox")
                         span.pop("origin")
                         parts.append(span)
                         index += 1
 
-        sorted_parts = sorted(parts, key=lambda x: (x["page_index"], x["origin_y"], x["origin_x"]))
+        sorted_parts = sorted(
+            parts, key=lambda x: (x["page_index"], x["block_index"], x["origin_y"], x["origin_x"])
+        )
         return sorted_parts
 
-    def set_line_number(self, part, prev, next):
+    def set_cell_location(self, parts):
+        coords = {}
+        x_aligned = group_by_key(parts, "origin_x")
+        for x_coord, x_parts in x_aligned:
+            coords[x_coord] = {}
+            y_aligned = group_by_key(list(x_parts), "origin_y")
+            for y_coord, y_parts in y_aligned:
+                coords[x_coord][y_coord] = list(y_parts)
+        print(coords)
+
+    def set_row_number(self, part, prev, next):
         # first page
         if not prev:
-            self.line_number = 0
-            return self.line_number
+            self.row_number = 0
+            return self.row_number
 
         # new page, so new line
         if prev["page_index"] != part["page_index"]:
-            self.line_number += 1
-            return self.line_number
+            self.row_number += 1
+            return self.row_number
 
         # last page and part
+        tolerance = 1.5
         if (
             not next
-            and prev["origin_y"] == part["origin_y"]
+            and (abs(prev["origin_y"] - part["origin_y"]) <= tolerance)
             and prev["page_index"] == part["page_index"]
         ):
-            return self.line_number
-        elif not next and prev["origin_y"] != part["origin_y"]:
-            self.line_number += 1
-            return self.line_number
+            return self.row_number
+        elif not next and (abs(prev["origin_y"] - part["origin_y"]) > tolerance):
+            self.row_number += 1
+            return self.row_number
 
         # we have both prev and next
         #  same line, would be set by prev, skip
-        if prev["origin_y"] == part["origin_y"] and part["page_index"] == prev["page_index"]:
-            return self.line_number
-        elif prev["origin_y"] != part["origin_y"] and part["page_index"] == prev["page_index"]:
-            self.line_number += 1
-            return self.line_number
+        if (
+            abs(prev["origin_y"] - part["origin_y"]) <= tolerance
+            and part["page_index"] == prev["page_index"]
+        ):
+            return self.row_number
+        elif (
+            abs(prev["origin_y"] - part["origin_y"]) > tolerance
+            and part["page_index"] == prev["page_index"]
+        ):
+            self.row_number += 1
+            return self.row_number
 
-    def detect_table(self):
-        parts = self.parts
-        for index, part in enumerate(parts):
-            prev = None if index == 0 else parts[index - 1]
-            next = None if index == len(parts) - 1 else parts[index + 1]
+    def process_lines(self):
+        # TODO think on spces in scripts, and/or scrubbing
+        # parts = [
+        #     part for part in self.parts if not (part["is_superscript"] or part["is_subscript"])
+        # ]
+        # parts = self.parts
+        # for index, part in enumerate(parts):
+        #     prev = None if index == 0 else parts[index - 1]
+        #     next = None if index == len(parts) - 1 else parts[index + 1]
+        #     part["row_number"] = self.set_row_number(part, prev, next)
 
-            part["line_number"] = self.set_line_number(part, prev, next)
+        self.set_cell_location(self.parts)
 
-        return parts
+        # self.parts = parts
+        # return parts
 
-    def print_text(self, spans):
+    def detect_header_footer(self):
+        # group by page
+        # find min y and max y
+        # header = for all pages find duplicated or very similar text very near min y
+        # footer = for all pages find duplicated or very similar text very near max y
+        pass
+
+    def get_text(self):
         text = ""
-        for span in enumerate(spans):
-            # print(page_index, block_index, line_index, span)
-            print(span)
-            if span["is_superscript"] or span["is_subscript"]:
-                continue
+        prev_row_number = 0
+        is_new_line = False
+        for index, part in enumerate(self.parts):
+            prev = None if index == 0 else self.parts[index - 1]
+            next = None if index == len(self.parts) - 1 else self.parts[index + 1]
 
-            # options: remove unicode, subscript, superscript
-            text += deburr(span["text"])
+            is_new_line = prev_row_number != part["row_number"]
+
+            if is_new_line:
+                text += "\n"
+
+            text += part["text"]
+            prev_row_number = part["row_number"]
 
         print(text.strip())
