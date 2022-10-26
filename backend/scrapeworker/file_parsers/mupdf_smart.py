@@ -1,6 +1,6 @@
 import fitz
 
-from backend.scrapeworker.common.utils import deburr, group_by_key, normalize_spaces
+from backend.scrapeworker.common.utils import deburr
 from backend.scrapeworker.file_parsers.base import FileParser
 
 
@@ -9,8 +9,15 @@ class MuPdfSmartParse(FileParser):
         super(MuPdfSmartParse, self).__init__(*args, **kwargs)
         self.doc = fitz.Document(self.file_path)
         self.pages = self.get_structure()
-        self.parts = []
+        self.parts = self.map_document_parts()
+
+        self.line_number = 0
+
+        # table handle
+        self.is_open_table = False
         self.table_index = 0
+        self.table_col = 0
+        self.table_row = 0
 
     async def get_info(self) -> dict[str, str]:
         return self.doc.metadata
@@ -18,7 +25,7 @@ class MuPdfSmartParse(FileParser):
     def get_structure(self, format="dict"):
         pages = []
         for page in self.doc:
-            pages.append(page.get_text(format))
+            pages.append(page.get_text(format, sort=True))
         return pages
 
     def get_structure_json(self):
@@ -72,11 +79,6 @@ class MuPdfSmartParse(FileParser):
             and self.same_font(span_a, span_b)
             and self.same_flags(span_a, span_b)
         )
-
-    def same_line(self, span_a: dict, span_b: dict):
-        (xa, ya) = span_a["origin"]
-        (xb, yb) = span_b["origin"]
-        return ya == yb
 
     def map_span(self, span: dict):
         span["origin_x"] = span["origin"][0]
@@ -133,15 +135,17 @@ class MuPdfSmartParse(FileParser):
 
     def map_document_parts(self):
         parts = []
+        index = 0
         for page_index, page in enumerate(self.pages):
             text_blocks = [block for block in page["blocks"] if block["type"] == 0]
-            for block_index, block in text_blocks):
+            for block_index, block in enumerate(text_blocks):
                 for line_index, line in enumerate(block["lines"]):
                     # map with lookbehind and lookahead
                     spans = [self.map_span(span) for span in line["spans"]]
                     for span_index, span in enumerate(spans):
-                        prev_span = None if span_index == 0 else spans[span_index - 1]                        next_span = None if span_index == len(spans) - 1 else spans[span_index + 1]
-
+                        prev_span = None if span_index == 0 else spans[span_index - 1]
+                        next_span = None if span_index == len(spans) - 1 else spans[span_index + 1]
+                        span["index"] = index
                         span["is_subscript"] = self.is_subscript(span, prev_span, next_span)
                         span["is_superscript"] = self.is_superscript(span, prev_span, next_span)
                         span["page_index"] = page_index
@@ -151,28 +155,50 @@ class MuPdfSmartParse(FileParser):
                         span.pop("bbox")
                         span.pop("origin")
                         parts.append(span)
+                        index += 1
 
-        return parts
+        sorted_parts = sorted(parts, key=lambda x: (x["page_index"], x["origin_y"], x["origin_x"]))
+        return sorted_parts
 
+    def set_line_number(self, part, prev, next):
+        # first page
+        if not prev:
+            self.line_number = 0
+            return self.line_number
 
-    def is_table_row(self, part, prev, next):
-        # i mean this is a bit open but cant compare... maybe styles analysis too
-        if not (prev and next):
-            return False
+        # new page, so new line
+        if prev["page_index"] != part["page_index"]:
+            self.line_number += 1
+            return self.line_number
 
-        return prev["origin_y"] == part["origin_y"] and next["origin_y"] == part["origin_y"] and part["page_index"] == prev["page_index"] and part["page_index"] == next["page_index"]
+        # last page and part
+        if (
+            not next
+            and prev["origin_y"] == part["origin_y"]
+            and prev["page_index"] == part["page_index"]
+        ):
+            return self.line_number
+        elif not next and prev["origin_y"] != part["origin_y"]:
+            self.line_number += 1
+            return self.line_number
 
+        # we have both prev and next
+        #  same line, would be set by prev, skip
+        if prev["origin_y"] == part["origin_y"] and part["page_index"] == prev["page_index"]:
+            return self.line_number
+        elif prev["origin_y"] != part["origin_y"] and part["page_index"] == prev["page_index"]:
+            self.line_number += 1
+            return self.line_number
 
     def detect_table(self):
-        table_row = None
         parts = self.parts
-        for index, span in enumerate(parts):
+        for index, part in enumerate(parts):
             prev = None if index == 0 else parts[index - 1]
             next = None if index == len(parts) - 1 else parts[index + 1]
 
-        return []
+            part["line_number"] = self.set_line_number(part, prev, next)
 
-
+        return parts
 
     def print_text(self, spans):
         text = ""
