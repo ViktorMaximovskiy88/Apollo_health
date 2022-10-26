@@ -110,7 +110,7 @@ function mustBeUnique(asyncValidator: Function, currentPayerFamilyId: string) {
       const { data: payerFamily } = await asyncValidator({ name: value });
       if (payerFamily && currentPayerFamilyId === payerFamily._id) {
         return Promise.resolve();
-      } else if (payerFamily) {
+      } else if (payerFamily.name) {
         return Promise.reject(`Payer family name "${payerFamily.name}" already exists`);
       }
     },
