@@ -1,4 +1,4 @@
-import { Form, Input } from 'antd';
+import { Checkbox, Form, Input } from 'antd';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
 import {
   useUpdatePayerFamilyMutation,
@@ -11,7 +11,6 @@ import { useForm } from 'antd/lib/form/Form';
 import { useCallback, useEffect, useState } from 'react';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
 import { PayerFamily } from './types';
-import { Rule } from 'antd/lib/form';
 
 interface PayerFamilyCreateModalPropTypes {
   location: DocDocumentLocation | undefined;
@@ -43,6 +42,7 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
           benefits: data.benefits,
           plan_types: data.plan_types,
           regions: data.regions,
+          custom_name: true,
         });
         setInitialPayerOptions(data.payer_ids);
       }
@@ -98,14 +98,21 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
         <Form.Item
           label="Name"
           name="name"
+          className="w-96 mr-5"
+          dependencies={['custom_name']}
           rules={[
             { required: true, message: 'Please input a payer family name' },
-            mustBeUnique(getPayerFamilyByName),
+            mustBeUnique(getPayerFamilyByName, payer_family_id),
           ]}
         >
           <Input />
         </Form.Item>
-        <Input.Group className="space-x-2 flex"></Input.Group>
+        {form.getFieldValue('custom_name') ? 'Custom name will be generated on submission' : ''}
+        <Input.Group className="space-x-2 flex">
+          <Form.Item valuePropName="checked" name="custom_name">
+            <Checkbox>Auto Generate</Checkbox>
+          </Form.Item>
+        </Input.Group>
 
         <PayerFamilyInfoForm initialPayerOptions={initialPayerOptions} />
       </Form>
@@ -114,14 +121,15 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
 };
 
 // asyncValidator because rtk query makes this tough without hooks/dispatch
-function mustBeUnique(asyncValidator: Function) {
+function mustBeUnique(asyncValidator: Function, currentPayerFamilyId: string) {
   return {
     async validator(_rule: Rule, value: string) {
       const { data: payerFamily } = await asyncValidator({ name: value });
-      if (payerFamily) {
+      if (payerFamily && currentPayerFamilyId === payerFamily._id) {
+        return Promise.resolve();
+      } else if (payerFamily) {
         return Promise.reject(`Payer family name "${payerFamily.name}" already exists`);
       }
-      return Promise.resolve();
     },
   };
 }
