@@ -1,10 +1,10 @@
-from beanie import PydanticObjectId
+from beanie import Indexed, PydanticObjectId
 
 from backend.common.models.base_document import BaseDocument, BaseModel
 
 
 class PayerFamily(BaseDocument):
-    name: str
+    name: Indexed(str, unique=True)
     site_id: PydanticObjectId | None = None
     payer_type: str = "plan"
     payer_ids: list[str] = []
@@ -16,7 +16,7 @@ class PayerFamily(BaseDocument):
 
 
 class PayerFamilyEditView(BaseModel):
-    name: str
+    name: Indexed(str, unique=True)
     site_id: PydanticObjectId | None = None
     payer_type: str = "plan"
     payer_ids: list[dict] | list[str]
@@ -39,7 +39,7 @@ class NewPayerFamily(BaseModel):
 
 
 class UpdatePayerFamily(BaseModel):
-    name: str | None = None
+    name: Indexed(str, unique=True)
     site_id: PydanticObjectId | None = None
     payer_type: str | None = None
     payer_ids: list[str] | None = None

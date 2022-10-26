@@ -55,7 +55,7 @@ async def read_payer_families(
 async def read_payer_family_by_name(
     name: str,
 ):
-    payer_family = await PayerFamily.find_one({"name": name})
+    payer_family = await PayerFamily.find_one({"name": {"$regex": name, "$options": "i"}})
     return payer_family
 
 
