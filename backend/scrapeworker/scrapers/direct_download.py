@@ -51,9 +51,15 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
         resource_attr: str = "href",
     ) -> None:
         link_handle: ElementHandle
+
+        base_tag = await self.page.query_selector("head base")
+        base_tag_href = None
+        if base_tag:
+            base_tag_href = await base_tag.get_attribute("href")
+
         for link_handle in link_handles:
             metadata: Metadata = await self.extract_metadata(link_handle, resource_attr)
-            url = normalize_url(metadata.resource_value, metadata.anchor_target, base_url)
+            url = normalize_url(base_url, metadata.resource_value, base_tag_href)
             downloads.append(DownloadContext(metadata=metadata, request=Request(url=url)))
 
     async def scrape_and_queue(self, downloads: list[DownloadContext], page: Page) -> None:

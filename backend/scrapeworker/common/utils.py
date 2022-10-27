@@ -199,15 +199,8 @@ def normalize_string(input: str = "", html=False, url=True, lower=True, strip=Tr
     return input.strip()
 
 
-# iterate on this logic
 # cases '../abc' '/abc' 'abc' 'https://a.com/abc' 'http://a.com/abc' '//a.com/abc'
 # anchor targets can change behavior
-def normalize_url(url: str, anchor: str | None, base_url: str) -> str:
-    if (
-        anchor and anchor == "_blank" and not (url.startswith("http") or url.startswith("/"))
-    ) and not url.startswith("../"):
-        normalized_url = f"/{url}"
-    else:
-        normalized_url = url
-    normalized_url = urljoin(base_url, normalized_url)
-    return normalized_url
+def normalize_url(base_url: str, target_url: str, base_tag_href: str = None) -> str:
+    target_url = urljoin(base_tag_href, target_url)
+    return urljoin(base_url, target_url)
