@@ -1,7 +1,9 @@
 import fitz
-
+import statistics
 from backend.scrapeworker.common.utils import deburr, group_by_key
 from backend.scrapeworker.file_parsers.base import FileParser
+from heapq import nsmallest, nlargest
+from collections import Counter
 
 
 class MuPdfSmartParse(FileParser):
@@ -11,18 +13,89 @@ class MuPdfSmartParse(FileParser):
         self.doc = fitz.Document(self.file_path)
         self.pages = self.get_structure()
         self.parts = self.map_document_parts()
-        grouped = group_by_key(self.parts, "page_index")
-        self.parts_by_page = {}
-        for page_index, pages in grouped:
-            self.parts_by_page[page_index] = list(pages)
-        print(self.parts_by_page)
-        # self.process_lines()
+        self.process_lines()
 
         # table handle, later
         self.is_open_table = False
         self.table_index = 0
         self.table_col = 0
         self.table_row = 0
+
+        x_coords = [part["origin_x"] for part in self.parts]
+        y_coords = [part["origin_y"] for part in self.parts]
+
+        grouped = group_by_key(self.parts, "page_index")
+        doc_stat_number = 10
+        min_x = nsmallest(doc_stat_number, x_coords)
+        max_x = nlargest(doc_stat_number, x_coords)
+
+        min_y = nsmallest(doc_stat_number, y_coords)
+        max_y = nlargest(doc_stat_number, y_coords)
+
+        self.document_analysis = {
+            "frequency_x": Counter(x_coords).most_common(doc_stat_number),
+            "count_x": len(x_coords),
+            "min_x": min_x,
+            "max_x": max_x,
+            "mean_x": statistics.mean(x_coords),
+            "median_x": statistics.median(x_coords),
+            "mode_x": statistics.multimode(x_coords),
+            "frequency_y": Counter(y_coords).most_common(doc_stat_number),
+            "count_y": len(y_coords),
+            "min_y": min_y,
+            "max_y": max_y,
+            "mean_y": statistics.mean(y_coords),
+            "median_y": statistics.median(y_coords),
+            "mode_y": statistics.multimode(y_coords),
+            "pages": [],
+        }
+
+        page_stat_count = 5
+        for page_index, parts in grouped:
+            parts_list = list(parts)
+            x_coords = [part["origin_x"] for part in parts_list]
+            y_coords = [part["origin_y"] for part in parts_list]
+
+            min_x = nsmallest(page_stat_count, x_coords)
+            max_x = nlargest(page_stat_count, x_coords)
+
+            min_y = nsmallest(page_stat_count, y_coords)
+            max_y = nlargest(page_stat_count, y_coords)
+
+            self.document_analysis["pages"].append(
+                {
+                    "page_index": page_index,
+                    "parts": list(parts_list),
+                    "frequency_x": Counter(x_coords).most_common(page_stat_count),
+                    "count_x": len(x_coords),
+                    "min_x": min_x,
+                    "max_x": max_x,
+                    "mean_x": statistics.mean(x_coords),
+                    "median_x": statistics.median(x_coords),
+                    "mode_x": statistics.multimode(x_coords),
+                    "frequency_y": Counter(y_coords).most_common(page_stat_count),
+                    "count_y": len(y_coords),
+                    "min_y": min_y,
+                    "max_y": max_y,
+                    "mean_y": statistics.mean(y_coords),
+                    "median_y": statistics.median(y_coords),
+                    "mode_y": statistics.multimode(y_coords),
+                }
+            )
+
+        # self.document_analysis
+
+        # header detection
+        # canidates = []
+        # for mode_y in self.document_analysis["mode_y"]:
+        #     for page in self.document_analysis["pages"]:
+        #         text = "".join(
+        #             [part["text"] for part in page["parts"] if part["origin_y"] == mode_y]
+        #         )
+        #         print(text)
+
+        # heading detection
+        # h1 kinda thing (heading to not confuse header)
 
     async def get_info(self) -> dict[str, str]:
         return self.doc.metadata
@@ -105,7 +178,7 @@ class MuPdfSmartParse(FileParser):
     def map_document_parts(self):
         parts = []
         index = 0
-        for page_index, page in enumerate([self.pages[28]]):
+        for page_index, page in enumerate(self.pages):
             text_blocks = [block for block in page["blocks"] if block["type"] == 0]
             for block_index, block in enumerate(text_blocks):
                 for line_index, line in enumerate(block["lines"]):
@@ -130,7 +203,13 @@ class MuPdfSmartParse(FileParser):
                         index += 1
 
         sorted_parts = sorted(
-            parts, key=lambda x: (x["page_index"], x["block_index"], x["origin_y"], x["origin_x"])
+            parts,
+            key=lambda x: (
+                x["page_index"],
+                x["origin_y"],
+                x["origin_x"],
+                x["block_index"],
+            ),
         )
         return sorted_parts
 
@@ -183,19 +262,19 @@ class MuPdfSmartParse(FileParser):
 
     def process_lines(self):
         # TODO think on spces in scripts, and/or scrubbing
-        # parts = [
-        #     part for part in self.parts if not (part["is_superscript"] or part["is_subscript"])
-        # ]
-        # parts = self.parts
-        # for index, part in enumerate(parts):
-        #     prev = None if index == 0 else parts[index - 1]
-        #     next = None if index == len(parts) - 1 else parts[index + 1]
-        #     part["row_number"] = self.set_row_number(part, prev, next)
+        parts = [
+            part for part in self.parts if not (part["is_superscript"] or part["is_subscript"])
+        ]
 
-        self.set_cell_location(self.parts)
+        for index, part in enumerate(parts):
+            prev = None if index == 0 else parts[index - 1]
+            next = None if index == len(parts) - 1 else parts[index + 1]
+            part["row_number"] = self.set_row_number(part, prev, next)
 
-        # self.parts = parts
-        # return parts
+        # self.set_cell_location(self.parts)
+
+        self.parts = parts
+        return parts
 
     def detect_header_footer(self):
         # group by page

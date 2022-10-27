@@ -50,17 +50,22 @@ async def _parse_dates(file: str):
     pprint(result)
 
 
-async def _parse_text(file: str):
-    # parser = MuPdfSmartParse(file_path=file, url=f"file://{file}")
-    # text = parser.get_text()
-    # print(text)
+async def _parse_text(file: str, parser_type: str = "smart"):
+    if parser_type == "smart":
+        parser = MuPdfSmartParse(file_path=file, url=f"file://{file}")
+        text = parser.get_text()
+        print(text)
+    else:
+        parser = PdfParse(file_path=file, url=f"file://{file}")
+        text = await parser.get_text()
+        print(text)
 
+
+async def _dump_schema(file: str):
     parser = MuPdfSmartParse(file_path=file, url=f"file://{file}")
-    parts = parser.process_lines()
+    import json
 
-    # parser = PdfParse(file_path=file, url=f"file://{file}")
-    # text = await parser.get_text()
-    # print(text)
+    print(json.dumps(parser.document_analysis))
 
 
 @app.command()
@@ -81,13 +86,27 @@ def lineage_clear():
 
 
 @app.command()
+def dump_schema(
+    file: str = typer.Option(
+        ...,
+        help="Path of the text file to detect schema",
+    ),
+):
+    asyncio.run(_dump_schema(file))
+
+
+@app.command()
 def parse_text(
     file: str = typer.Option(
         ...,
         help="Path of the text file to parse for dates",
     ),
+    parser_type: str = typer.Option(
+        ...,
+        help="What parser to use",
+    ),
 ):
-    asyncio.run(_parse_text(file))
+    asyncio.run(_parse_text(file, parser_type))
 
 
 @app.command()
