@@ -31,7 +31,7 @@ export function FileTypeViewer({ docId, doc, onPageChange = () => {} }: PropType
   const token = useAccessToken();
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
 
-  if (!(token && doc)) return null;
+  if (!(token && doc && docId)) return null;
 
   return ['pdf', 'html'].includes(doc.file_extension) ? (
     <Viewer

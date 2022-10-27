@@ -12,7 +12,7 @@ export const initialState = {
     ],
     pagination: { limit: 50, skip: 0 },
   },
-  previousDocDocumentId: '',
+  previousDocDocumentId: null,
 };
 
 export const lineageDocDocuments = createSlice({
@@ -44,7 +44,7 @@ export const lineageDocDocumentTableState = createSelector(
 
 export const previousDocDocumentIdState = createSelector(
   (state: RootState) => state.lineageDocDocuments.previousDocDocumentId,
-  (previousDocDocumentId): string => previousDocDocumentId
+  (previousDocDocumentId): string | null => previousDocDocumentId
 );
 
 export const {

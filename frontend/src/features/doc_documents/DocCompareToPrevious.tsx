@@ -63,7 +63,9 @@ function CompareModal(props: {
 export function DocCompareToPrevious() {
   const form = Form.useFormInstance();
   const currentDocDocId: string = form.getFieldValue('docId');
-  const { data: currentDocument } = useGetDocDocumentQuery(currentDocDocId);
+  const { data: currentDocument } = useGetDocDocumentQuery(currentDocDocId, {
+    skip: !currentDocDocId,
+  });
   const [modalOpen, setModalOpen] = useState(false);
   const [createDiff, { data: diffData, isLoading, isSuccess }] = useCreateDiffMutation();
 

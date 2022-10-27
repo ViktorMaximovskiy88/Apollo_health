@@ -1,13 +1,14 @@
-import { Form, Select, DatePicker, Switch, Input } from 'antd';
+import { Form, Select, DatePicker, Switch } from 'antd';
 import { languageCodes } from '../retrieved_documents/types';
 import { prettyDate } from '../../common';
 import { DocumentTypes } from '../retrieved_documents/types';
-import { ExploreLineage } from './lineage/ExploreLineage';
 import { DocCompareToPrevious } from './DocCompareToPrevious';
-import { useGetDocDocumentQuery, useUpdatePrevDocDocMutation } from './docDocumentApi';
-import { useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useGetDocDocumentQuery } from './docDocumentApi';
+import { useEffect } from 'react';
+import { ExploreLineage } from './lineage/ExploreLineage';
+import { Link, useParams } from 'react-router-dom';
+import { setPreviousDocDocumentId } from './lineage/lineageDocDocumentsSlice';
+import { useAppDispatch } from '../../app/store';
 
 const DocumentType = () => (
   <Form.Item className="flex-1" name="document_type" label="Document Type" required={true}>
@@ -27,32 +28,26 @@ const FinalEffectiveDate = () => (
 );
 
 const Lineage = () => {
-  const [updatePreviousDocDocument] = useUpdatePrevDocDocMutation();
+  const { docDocumentId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docDocumentId, { skip: !docDocumentId });
+  const dispatch = useAppDispatch();
 
-  const { docId } = useParams();
-  const { data: doc } = useGetDocDocumentQuery(docId, { skip: !docId });
-
-  const [previousDocDocId, setPreviousDocDocumentId] = useState(doc?.previous_doc_doc_id ?? '');
   useEffect(() => {
-    setPreviousDocDocumentId(doc?.previous_doc_doc_id ?? '');
-  }, [doc]);
+    // on mount, set initial previousDocDocumentId
+    dispatch(setPreviousDocDocumentId(doc?.previous_doc_doc_id));
+  }, [dispatch, doc]);
 
-  const { data: prevDoc } = useGetDocDocumentQuery(previousDocDocId, { skip: !previousDocDocId });
-
-  const onUpdatePreviousDocDocument = async (newPrevDocDocId: string) => {
-    if (!docId) return;
-    setPreviousDocDocumentId(newPrevDocDocId);
-    await updatePreviousDocDocument({ updatingDocDocId: docId, prevDocDocId: previousDocDocId });
-  };
+  const { data: prevDoc } = useGetDocDocumentQuery(doc?.previous_doc_doc_id ?? '', {
+    skip: !doc?.previous_doc_doc_id,
+  });
 
   return (
     <>
       <Form.Item label="Lineage" className="flex-1">
         <Link to={`../${prevDoc?._id}`}>{prevDoc?.name}</Link>
       </Form.Item>
-      <Form.Item name="previous_doc_doc_id" noStyle>
-        <Input hidden value={previousDocDocId} />
-        <ExploreLineage onChange={onUpdatePreviousDocDocument} value={previousDocDocId} />
+      <Form.Item noStyle>
+        <ExploreLineage />
       </Form.Item>
     </>
   );

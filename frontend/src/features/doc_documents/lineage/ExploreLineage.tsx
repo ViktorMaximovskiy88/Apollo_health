@@ -2,7 +2,7 @@ import { Button, Checkbox } from 'antd';
 import { useParams } from 'react-router-dom';
 import { FileTypeViewer } from '../../retrieved_documents/RetrievedDocumentViewer';
 import { useCallback, useState } from 'react';
-import { useGetDocDocumentQuery } from '../docDocumentApi';
+import { useGetDocDocumentQuery, useUpdatePrevDocDocMutation } from '../docDocumentApi';
 import { LineageDocDocumentsTable } from './LineageDocDocumentsTable';
 import { useSelector } from 'react-redux';
 import { previousDocDocumentIdState, setPreviousDocDocumentId } from './lineageDocDocumentsSlice';
@@ -26,7 +26,7 @@ const LineageModalBody = ({ showCurrentDocument }: { showCurrentDocument: boolea
   const { data: currentDocDocument } = useGetDocDocumentQuery(docDocumentId);
 
   const previousDocDocumentId = useSelector(previousDocDocumentIdState);
-  const { data: docDocument } = useGetDocDocumentQuery(previousDocDocumentId);
+  const { data: previousDocDocument } = useGetDocDocumentQuery(previousDocDocumentId ?? '');
 
   return (
     <div className="flex flex-row h-full">
@@ -34,7 +34,7 @@ const LineageModalBody = ({ showCurrentDocument }: { showCurrentDocument: boolea
         <h3>Documents</h3>
         <LineageDocDocumentsTable />
       </div>
-      <LineageDocViewer label="Previous Document" doc={docDocument} />
+      <LineageDocViewer label="Previous Document" doc={previousDocDocument} />
       {showCurrentDocument ? (
         <LineageDocViewer label="Current Document" doc={currentDocDocument} />
       ) : null}
@@ -46,7 +46,7 @@ const LineageModalFooter = (props: {
   showCurrentDocument: boolean;
   setShowCurrentDocument: (showCurrentDocument: boolean) => void;
   closeModal: () => void;
-  handleSubmit: () => void;
+  handleSubmit: () => Promise<void>;
 }) => {
   const previousDocDocumentId = useSelector(previousDocDocumentIdState);
   return (
@@ -76,28 +76,34 @@ const LineageModalFooter = (props: {
   );
 };
 
-export function ExploreLineage(props: {
-  onChange: (previousDocDocumentId: string) => void;
-  value: string;
-}) {
+export function ExploreLineage() {
+  const [updatePreviousDocDocument] = useUpdatePrevDocDocMutation();
+
+  const { docDocumentId: updatingDocDocId } = useParams();
+  const { data: updatingDocDoc } = useGetDocDocumentQuery(updatingDocDocId, {
+    skip: !updatingDocDocId,
+  });
+
   const dispatch = useAppDispatch();
-  const previousDocDocumentId = useSelector(previousDocDocumentIdState);
+  const prevDocDocId = useSelector(previousDocDocumentIdState);
   const [open, setOpen] = useState(false);
   const [showCurrentDocument, setShowCurrentDocument] = useState(true);
 
   const closeModal = useCallback(() => setOpen(false), [setOpen]);
 
   const handleModalOpen = useCallback(() => {
-    if (props.value) {
-      dispatch(setPreviousDocDocumentId(props.value));
+    if (updatingDocDoc?.previous_doc_doc_id) {
+      dispatch(setPreviousDocDocumentId(updatingDocDoc.previous_doc_doc_id));
     }
     setOpen(true);
-  }, [dispatch, setOpen, props]);
+  }, [dispatch, updatingDocDoc?.previous_doc_doc_id]);
 
-  const handleSubmit = useCallback(() => {
-    props.onChange?.(previousDocDocumentId);
+  const handleSubmit = useCallback(async () => {
+    if (!updatingDocDocId || !prevDocDocId)
+      throw new Error('updatingDocDocId or prevDocDocId not found');
+    await updatePreviousDocDocument({ updatingDocDocId, prevDocDocId });
     closeModal();
-  }, [props, previousDocDocumentId, closeModal]);
+  }, [updatingDocDocId, prevDocDocId, updatePreviousDocDocument, closeModal]);
 
   return (
     <div className="flex space-x-8 items-center">

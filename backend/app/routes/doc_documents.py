@@ -122,6 +122,8 @@ async def create_diff(
 
 async def update_old_prev_doc_doc(updating_doc_doc: DocDocument):
     old_prev_doc_doc_id = updating_doc_doc.previous_doc_doc_id
+    if not old_prev_doc_doc_id:
+        return
     old_prev_doc_doc = await get_target(old_prev_doc_doc_id)
 
     if updating_doc_doc.is_current_version:
