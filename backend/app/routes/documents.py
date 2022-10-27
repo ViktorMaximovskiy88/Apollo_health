@@ -271,10 +271,14 @@ async def add_document(
     link_text = uploaded_doc.metadata.get("link_text", None)
 
     if uploaded_doc.old_location_doc_id:
-        created_retr_doc: RetrievedDocument | None = await RetrievedDocument.find_one(
-            {id: uploaded_doc.old_location_doc_id}
+        created_retr_doc = await RetrievedDocument.find_one(
+            {"_id": f"{uploaded_doc.old_location_doc_id}"}
         )
         if not created_retr_doc:
+            typer.secho(
+                f"NOT ABLE TO FIND RETR DOC {uploaded_doc.old_location_doc_id}",
+                fg=typer.colors.BRIGHT_RED,
+            )
             raise HTTPException(
                 status.HTTP_409_CONFLICT,
                 "Not able to upload document to site. Duplicate location error.",
@@ -372,7 +376,7 @@ async def add_document(
 
     if not new_retr_document.lineage_id:
         new_retr_document.lineage_id = PydanticObjectId()
-    if uploaded_doc.old_location_doc_id:
+    if not uploaded_doc.old_location_doc_id:
         created_retr_doc: RetrievedDocument = await create_and_log(
             logger, current_user, new_retr_document
         )
