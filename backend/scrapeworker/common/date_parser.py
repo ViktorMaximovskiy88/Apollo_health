@@ -93,7 +93,7 @@ class DateParser:
         lookahead_year = datetime.now(tz=timezone.utc).year + 5
         return (
             (month >= 1 and month <= 12)
-            and (year > 1980 and year < lookahead_year)
+            and (year > 1980 and year <= lookahead_year)
             and (not day or (day >= 1 and day <= 31))
         )
 
