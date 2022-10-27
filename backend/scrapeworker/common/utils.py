@@ -5,7 +5,7 @@ import re
 import unicodedata
 from html import unescape
 from itertools import groupby
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote, urljoin, urlparse
 
 import magic
 
@@ -197,3 +197,17 @@ def normalize_string(input: str = "", html=False, url=True, lower=True, strip=Tr
         input = input.lower()
     # always trim
     return input.strip()
+
+
+# iterate on this logic
+# cases '../abc' '/abc' 'abc' 'https://a.com/abc' 'http://a.com/abc' '//a.com/abc'
+# anchor targets can change behavior
+def normalize_url(url: str, anchor: str | None, base_url: str) -> str:
+    if (
+        anchor and anchor == "_blank" and not (url.startswith("http") or url.startswith("/"))
+    ) and not url.startswith("../"):
+        normalized_url = f"/{url}"
+    else:
+        normalized_url = url
+    normalized_url = urljoin(base_url, normalized_url)
+    return normalized_url
