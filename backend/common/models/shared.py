@@ -27,7 +27,7 @@ class FileMetadata(BaseModel):
     checksum: str
     file_size: int
     mimetype: str
-    file_extension: str | None
+    file_extension: str
 
 
 class IndicationTag(BaseModel):

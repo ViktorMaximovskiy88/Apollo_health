@@ -80,7 +80,7 @@ def test_get_extension_from_file_mimetype_non_match():
     assert result is None
 
 
-def test_normalize_url_noForwardSlash():
+def test_normalize_url_no_forward_slash():
     base = "https://a.com"
     url1 = "Docs/test.xlsx"
     anchor1 = "_blank"
@@ -102,7 +102,7 @@ def test_normalize_url_from_parent():
     assert result2 == "https://a.com/test.xlsx"
 
 
-def test_normalize_url_with_forwardSlash():
+def test_normalize_url_with_forward_slash():
     base = "https://a.com"
     url = "/Docs/test.xlsx"
     anchor = "_blank"
@@ -110,7 +110,7 @@ def test_normalize_url_with_forwardSlash():
     assert result == "https://a.com/Docs/test.xlsx"
 
 
-def test_normalize_url_with_oldUrlStyle():
+def test_normalize_url_with_old_url_style():
     base = "https://a.com"
     url = "//a.com/Docs/test.xlsx"
     anchor = "_blank"
@@ -121,7 +121,7 @@ def test_normalize_url_with_oldUrlStyle():
     assert result1 == "https://a.com/Docs/test.xlsx"
 
 
-def test_normalize_url_with_unsecureUrl():
+def test_normalize_url_with_unsecured_url():
     base = "http://a.com"
     url = "http://a.com/Docs/test.xlsx"
     anchor = "_blank"
@@ -132,7 +132,7 @@ def test_normalize_url_with_unsecureUrl():
     assert result1 == "http://a.com/Docs/test.xlsx"
 
 
-def test_normalize_url_with_securedUrl():
+def test_normalize_url_with_secured_url():
     base = "https://a.com"
     url = "https://a.com/Docs/test.xlsx"
     anchor = "_blank"

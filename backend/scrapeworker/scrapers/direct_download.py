@@ -54,7 +54,7 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
         for link_handle in link_handles:
             metadata: Metadata = await self.extract_metadata(link_handle, resource_attr)
             url = normalize_url(metadata.resource_value, metadata.anchor_target, base_url)
-            downloads.append(DownloadContext(metadata=metadata, request=Request(url)))
+            downloads.append(DownloadContext(metadata=metadata, request=Request(url=url)))
 
     async def scrape_and_queue(self, downloads: list[DownloadContext], page: Page) -> None:
         link_handles = await page.query_selector_all(self.css_selector)
