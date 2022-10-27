@@ -1,9 +1,11 @@
-import fitz
 import statistics
+from collections import Counter
+from heapq import nlargest, nsmallest
+
+import fitz
+
 from backend.scrapeworker.common.utils import deburr, group_by_key
 from backend.scrapeworker.file_parsers.base import FileParser
-from heapq import nsmallest, nlargest
-from collections import Counter
 
 
 class MuPdfSmartParse(FileParser):
@@ -23,6 +25,7 @@ class MuPdfSmartParse(FileParser):
 
         x_coords = [part["origin_x"] for part in self.parts]
         y_coords = [part["origin_y"] for part in self.parts]
+        styles = [part["style"] for part in self.parts]
 
         grouped = group_by_key(self.parts, "page_index")
         doc_stat_number = 10
@@ -33,6 +36,7 @@ class MuPdfSmartParse(FileParser):
         max_y = nlargest(doc_stat_number, y_coords)
 
         self.document_analysis = {
+            "frequency_style": Counter(styles).most_common(doc_stat_number),
             "frequency_x": Counter(x_coords).most_common(doc_stat_number),
             "count_x": len(x_coords),
             "min_x": min_x,
@@ -55,6 +59,7 @@ class MuPdfSmartParse(FileParser):
             parts_list = list(parts)
             x_coords = [part["origin_x"] for part in parts_list]
             y_coords = [part["origin_y"] for part in parts_list]
+            styles = [part["style"] for part in self.parts]
 
             min_x = nsmallest(page_stat_count, x_coords)
             max_x = nlargest(page_stat_count, x_coords)
@@ -65,7 +70,7 @@ class MuPdfSmartParse(FileParser):
             self.document_analysis["pages"].append(
                 {
                     "page_index": page_index,
-                    "parts": list(parts_list),
+                    "frequency_style": Counter(styles).most_common(doc_stat_number),
                     "frequency_x": Counter(x_coords).most_common(page_stat_count),
                     "count_x": len(x_coords),
                     "min_x": min_x,
@@ -80,6 +85,7 @@ class MuPdfSmartParse(FileParser):
                     "mean_y": statistics.mean(y_coords),
                     "median_y": statistics.median(y_coords),
                     "mode_y": statistics.multimode(y_coords),
+                    "parts": list(parts_list),
                 }
             )
 
