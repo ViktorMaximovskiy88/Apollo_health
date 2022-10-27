@@ -80,64 +80,69 @@ def test_get_extension_from_file_mimetype_non_match():
     assert result is None
 
 
-def test_normalize_url_no_forward_slash():
+def test_normalize_url_none_base_tag():
     base = "https://a.com"
-    url1 = "Docs/test.xlsx"
-    anchor1 = "_blank"
-    anchor2 = None
-    result = normalize_url(url1, anchor1, base)
-    result1 = normalize_url(url1, anchor2, base)
+    url = "Docs/test.xlsx"
+    base_tag_href = None
+    result = normalize_url(base, url, base_tag_href)
     assert result == "https://a.com/Docs/test.xlsx"
-    assert result1 == "https://a.com/Docs/test.xlsx"
 
 
-def test_normalize_url_from_parent():
-    base1 = "https://a.com/parent1"
-    base2 = "https://a.com"
-    url = "../test.xlsx"
-    anchor = "_blank"
-    result = normalize_url(url, anchor, base1)
-    result2 = normalize_url(url, anchor, base2)
-    assert result == "https://a.com/test.xlsx"
-    assert result2 == "https://a.com/test.xlsx"
-
-
-def test_normalize_url_with_forward_slash():
+def test_normalize_url_empty_base_tag():
     base = "https://a.com"
+    url = "Docs/test.xlsx"
+    base_tag_href = ""
+    result = normalize_url(base, url, base_tag_href)
+    assert result == "https://a.com/Docs/test.xlsx"
+
+
+def test_normalize_url_root_base_tag():
+    base = "https://a.com"
+    url = "Docs/test.xlsx"
+    base_tag_href = "/"
+    result = normalize_url(base, url, base_tag_href)
+    assert result == "https://a.com/Docs/test.xlsx"
+
+
+def test_normalize_url_from_path_base_tag_from_root():
+    base = "https://a.com/noroot"
+    url = "Docs/test.xlsx"
+    base_tag_href = "/"
+    result = normalize_url(base, url, base_tag_href)
+    assert result == "https://a.com/Docs/test.xlsx"
+
+
+def test_normalize_url_from_path_relative_url_base_tag_root():
+    base = "https://a.com/noroot"
+    url = "../Docs/test.xlsx"
+    base_tag_href = "/"
+    result = normalize_url(base, url, base_tag_href)
+    assert result == "https://a.com/Docs/test.xlsx"
+
+
+def test_normalize_url_from_path_relative_url_base_tag_none():
+    base = "https://a.com/noroot"
+    url = "../Docs/test.xlsx"
+    result = normalize_url(base, url)
+    assert result == "https://a.com/Docs/test.xlsx"
+
+
+def test_normalize_url_from_nested_path_relative_url_base_tag_none():
+    base = "https://a.com/noroot/anotherone"
+    url = "Docs/test.xlsx"
+    result = normalize_url(base, url)
+    assert result == "https://a.com/noroot/Docs/test.xlsx"
+
+
+def test_normalize_url_from_nested_path_absolute_url_base_tag_none():
+    base = "https://a.com/noroot/anotherone"
     url = "/Docs/test.xlsx"
-    anchor = "_blank"
-    result = normalize_url(url, anchor, base)
+    result = normalize_url(base, url)
     assert result == "https://a.com/Docs/test.xlsx"
 
 
-def test_normalize_url_with_old_url_style():
-    base = "https://a.com"
-    url = "//a.com/Docs/test.xlsx"
-    anchor = "_blank"
-    anchor1 = None
-    result = normalize_url(url, anchor, base)
-    result1 = normalize_url(url, anchor1, base)
-    assert result == "https://a.com/Docs/test.xlsx"
-    assert result1 == "https://a.com/Docs/test.xlsx"
-
-
-def test_normalize_url_with_unsecured_url():
-    base = "http://a.com"
-    url = "http://a.com/Docs/test.xlsx"
-    anchor = "_blank"
-    anchor1 = None
-    result = normalize_url(url, anchor, base)
-    result1 = normalize_url(url, anchor1, base)
-    assert result == "http://a.com/Docs/test.xlsx"
-    assert result1 == "http://a.com/Docs/test.xlsx"
-
-
-def test_normalize_url_with_secured_url():
-    base = "https://a.com"
-    url = "https://a.com/Docs/test.xlsx"
-    anchor = "_blank"
-    anchor1 = None
-    result = normalize_url(url, anchor, base)
-    result1 = normalize_url(url, anchor1, base)
-    assert result == "https://a.com/Docs/test.xlsx"
-    assert result1 == "https://a.com/Docs/test.xlsx"
+def test_normalize_url_with_different_domains():
+    base = "https://a.com/noroot/anotherone"
+    url = "https://b.com/groot/page.html"
+    result = normalize_url(base, url)
+    assert result == "https://b.com/groot/page.html"
