@@ -279,30 +279,16 @@ async def add_document(
     link_text = uploaded_doc.metadata.get("link_text", None)
 
     if uploaded_doc.old_location_doc_id:
-        # TODO: Fix (invalid location added?)
-        # pydantic.error_wrappers.ValidationError: 1 validation error for RetrievedDocument
-        # locations -> 1
         new_retr_document = await RetrievedDocument.find_one(
             RetrievedDocument.id == PydanticObjectId(uploaded_doc.old_location_doc_id)
         )
         if not new_retr_document:
-            typer.secho(
-                f"NOT ABLE TO FIND RETR DOC {uploaded_doc.old_location_doc_id}",
-                fg=typer.colors.BRIGHT_RED,
-            )
             raise HTTPException(
                 status.HTTP_409_CONFLICT,
                 "Not able to upload document to site. Duplicate location error.",
             )
         retr_doc_loc: RetrievedDocumentLocation = new_retr_document.get_site_location(
             PydanticObjectId(uploaded_doc.old_location_site_id)
-        )
-        # TODO: Double check that ALL fields are copied.
-        # 1) Handle old location same as params.
-        # 2) Handle old location different than params.
-        typer.secho(
-            f"creating doc location for site_id {uploaded_doc.site_id}",
-            fg=typer.colors.BRIGHT_RED,
         )
         new_doc_loc: RetrievedDocumentLocation = RetrievedDocumentLocation(
             url=retr_doc_loc.url,
@@ -411,6 +397,8 @@ async def add_document(
         created_doc_doc = new_doc_doc
     if uploaded_doc.upload_new_version_for_id and original_doc_doc.document_family_id:
         created_doc_doc.document_family_id = original_doc_doc.document_family_id
+    if uploaded_doc.upload_new_version_for_id and original_doc_doc.translation_id:
+        created_doc_doc.translation_id = original_doc_doc.translation_id
     # Need to update previous_doc_doc_id since new_retr_doc is retr_doc which does not have
     # a previous_doc_doc_id. New retr_document.previous_doc_id is set before create.
     if uploaded_doc.upload_new_version_for_id:
