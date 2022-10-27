@@ -180,10 +180,6 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
         # Doc with checksum and location exists on OTHER site.
         checksum_location: RetrievedDocumentLocation = doc.locations[-1]
         if checksum_location:
-            typer.secho(
-                f"has checksum_location {doc.id}",
-                fg=typer.colors.BRIGHT_GREEN,
-            )
             response["data"] = copy_location_to(checksum_location, response["data"])
             response["data"]["old_location_doc_id"] = doc.id
             break
@@ -212,10 +208,6 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
             # Doc with checksum and location exists on OTHER site.
             text_checksum_location: RetrievedDocumentLocation = doc.locations[-1]
             if text_checksum_location:
-                typer.secho(
-                    f"has TEXT_checksum_location {doc.id}",
-                    fg=typer.colors.BRIGHT_GREEN,
-                )
                 response["data"] = copy_location_to(text_checksum_location, response["data"])
                 response["data"]["old_location_doc_id"] = doc.id
                 break
@@ -287,12 +279,9 @@ async def add_document(
                 status.HTTP_409_CONFLICT,
                 "Not able to upload document to site. Duplicate location error.",
             )
-        retr_doc_loc: RetrievedDocumentLocation = new_retr_document.get_site_location(
-            PydanticObjectId(uploaded_doc.old_location_site_id)
-        )
         new_doc_loc: RetrievedDocumentLocation = RetrievedDocumentLocation(
-            url=retr_doc_loc.url,
-            base_url=retr_doc_loc.base_url,
+            url=uploaded_doc.url,
+            base_url=uploaded_doc.base_url,
             first_collected_date=now,
             last_collected_date=now,
             site_id=uploaded_doc.site_id,
@@ -304,14 +293,19 @@ async def add_document(
             DocDocument.retrieved_document_id == new_retr_document.id
         )
         new_doc_doc_loc: DocDocumentLocation = DocDocumentLocation(
-            url=retr_doc_loc.url,
-            base_url=retr_doc_loc.base_url,
+            url=uploaded_doc.url,
+            base_url=uploaded_doc.base_url,
             first_collected_date=now,
             last_collected_date=now,
             site_id=uploaded_doc.site_id,
             link_text=link_text,
             context_metadata=uploaded_doc.metadata,
         )
+        prev_loc: DocDocumentLocation = next(
+            loc for loc in new_doc_doc.locations if uploaded_doc.old_location_doc_id == loc.site_id
+        )
+        if prev_loc.payer_family_id:
+            new_doc_doc_loc.payer_family_id = prev_loc.payer_family_id
         new_doc_doc.locations.append(new_doc_doc_loc)
         await new_retr_document.save()
         await new_doc_doc.save()
@@ -403,6 +397,15 @@ async def add_document(
         # Need to update previous_doc_doc_id since new_retr_doc is retr_doc which does not have
         # a previous_doc_doc_id. New retr_document.previous_doc_id is set before create.
         created_doc_doc.previous_doc_doc_id = original_doc_doc.id
+        # Update location with prev_loc payer_family_id.
+        loc: DocDocumentLocation = next(
+            loc for loc in created_doc_doc.locations if site.id == loc.site_id
+        )
+        prev_loc: DocDocumentLocation = next(
+            loc for loc in original_doc_doc.locations if site.id == loc.site_id
+        )
+        if prev_loc.payer_family_id:
+            loc.payer_family_id = prev_loc.payer_family_id
         await created_doc_doc.save()
 
     # Automatic: Add document to new task.
