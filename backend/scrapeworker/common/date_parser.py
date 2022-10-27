@@ -199,7 +199,7 @@ class DateParser:
         Set label to new date if current match is closer to today's date.
         """
 
-        future_dates = ["end_date", "next_review_date", "next_update_date"]
+        future_dates = ["end_date", "next_review_date", "next_update_date", "effective_date"]
         now = datetime.now(tz=timezone.utc)
         existing_label: DateMatch = getattr(self, label)
         if label in future_dates:
