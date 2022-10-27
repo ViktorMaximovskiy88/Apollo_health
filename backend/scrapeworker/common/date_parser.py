@@ -163,7 +163,8 @@ class DateParser:
                             continue
                     datetext = datetext.replace("|", "-")
                     date = parser.parse(datetext, ignoretz=True)
-                    yield DateMatch(date, m, last_index)
+                    if self.valid_range(month=date.month, year=date.year, day=date.day):
+                        yield DateMatch(date, m, last_index)
                     last_index = m.end()
                 except Exception as ex:
                     logging.debug(ex)
@@ -222,7 +223,6 @@ class DateParser:
         prev_line_index = 0
         prev_label = ""
         ends_with_comma = False
-
         for line in text.split("\n"):
             if re.fullmatch("references?", line.strip(), re.IGNORECASE):
                 break
