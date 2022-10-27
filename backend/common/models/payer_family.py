@@ -6,7 +6,7 @@ from backend.common.models.base_document import BaseDocument, BaseModel
 class PayerFamily(BaseDocument):
     name: Indexed(str, unique=True)
     site_id: PydanticObjectId | None = None
-    payer_type: str = "plan"
+    payer_type: str | None = None
     payer_ids: list[str] = []
     channels: list[str] = []
     benefits: list[str] = []
@@ -18,7 +18,7 @@ class PayerFamily(BaseDocument):
 class PayerFamilyEditView(BaseModel):
     name: Indexed(str, unique=True)
     site_id: PydanticObjectId | None = None
-    payer_type: str = "plan"
+    payer_type: str | None = None
     payer_ids: list[dict] | list[str]
     channels: list[str] = []
     benefits: list[str] = []
@@ -30,7 +30,7 @@ class PayerFamilyEditView(BaseModel):
 class NewPayerFamily(BaseModel):
     name: str
     site_id: PydanticObjectId | None = None
-    payer_type: str = "plan"
+    payer_type: str | None = None
     payer_ids: list[str] = []
     channels: list[str] = []
     benefits: list[str] = []
