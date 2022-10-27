@@ -132,9 +132,10 @@ async def update_prev_doc_document(
     logger: Logger = Depends(get_logger),
 ):
     await update_old_prev_doc_doc(updating_doc_doc)
-    await update_doc_doc_and_new_prev_doc_doc(
+    updated_doc_doc = await update_doc_doc_and_new_prev_doc_doc(
         updating_doc_doc=updating_doc_doc, new_prev_doc_doc_id=new_prev_doc_doc_id
     )
+    return updated_doc_doc
 
 
 @router.post("/{id}", response_model=DocDocument)
