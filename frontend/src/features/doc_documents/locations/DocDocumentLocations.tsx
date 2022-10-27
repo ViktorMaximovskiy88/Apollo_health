@@ -44,6 +44,7 @@ export const DocDocumentLocations = ({ docDocument, locations }: DocDocumentLoca
           onSave={(payerFamilyId: string) => {
             form.setFieldValue(['locations', selectedIndex, 'payer_family_id'], payerFamilyId);
             setCreateModalOpen(false);
+            setEditPayerFamilyId(payerFamilyId);
             setSelectedLocationIndex(-1);
           }}
           onClose={() => {
