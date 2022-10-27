@@ -28,6 +28,10 @@ from backend.common.models.shared import DocDocumentLocationView
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook, get_doc_change_info
+from backend.common.services.lineage.update_prev_document import (
+    update_doc_doc_and_new_prev_doc_doc,
+    update_old_prev_doc_doc,
+)
 from backend.common.storage.text_handler import TextHandler
 
 router: APIRouter = APIRouter(
@@ -117,62 +121,6 @@ async def create_diff(
     _, diff = await text_handler.create_diff(previous_doc.text_checksum, current_doc.text_checksum)
     return CompareResponse(
         diff=diff.decode("utf-8"), previous_doc=previous_doc, current_doc=current_doc
-    )
-
-
-async def update_old_prev_doc_doc(updating_doc_doc: DocDocument):
-    old_prev_doc_doc_id = updating_doc_doc.previous_doc_doc_id
-    if not old_prev_doc_doc_id:
-        return
-    old_prev_doc_doc = await get_target(old_prev_doc_doc_id)
-
-    if updating_doc_doc.is_current_version:
-        await DocDocument.get_motor_collection().find_one_and_update(
-            {"_id": old_prev_doc_doc_id}, {"$set": {"is_current_version": True}}
-        )
-        old_prev_doc_doc.is_current_version = True
-        return
-
-    await DocDocument.get_motor_collection().find_one_and_update(
-        {"previous_doc_doc_id": updating_doc_doc.id},
-        {"$set": {"previous_doc_doc_id": old_prev_doc_doc_id}},
-    )
-
-
-async def update_doc_doc_and_new_prev_doc_doc(
-    updating_doc_doc: DocDocument, new_prev_doc_doc_id: PydanticObjectId
-):
-    new_prev_doc_doc = await get_target(new_prev_doc_doc_id)
-
-    if new_prev_doc_doc.is_current_version:
-        await DocDocument.get_motor_collection().find_one_and_update(
-            {"_id": new_prev_doc_doc_id}, {"$set": {"is_current_version": False}}
-        )
-        await DocDocument.get_motor_collection().find_one_and_update(
-            {"_id": updating_doc_doc.id},
-            {
-                "$set": {
-                    "lineage_id": new_prev_doc_doc.lineage_id,
-                    "previous_doc_doc_id": new_prev_doc_doc_id,
-                    "is_current_version": True,
-                }
-            },
-        )
-        return
-
-    await DocDocument.get_motor_collection().find_one_and_update(
-        {"previous_doc_doc_id": new_prev_doc_doc_id},
-        {"$set": {"previous_dod_doc_id": updating_doc_doc.id}},
-    )
-
-    await DocDocument.get_motor_collection().find_one_and_update(
-        {"_id": updating_doc_doc.id},
-        {
-            "$set": {
-                "lineage_id": new_prev_doc_doc.lineage_id,
-                "previous_doc_doc_id": new_prev_doc_doc_id,
-            }
-        },
     )
 
 
