@@ -72,6 +72,8 @@ export function AddDocumentModal({
   const [addDoc] = useAddDocumentMutation();
   const [fileData, setFileData] = useState<any>();
   const [docTitle, setDocTitle] = useState('Add new document');
+  const [oldLocationSiteId, setOldLocationSiteId] = useState('');
+  const [oldLocationDocId, setOldLocationDocId] = useState('');
 
   const initialValues = buildInitialValues(oldVersion);
   if (docTitle !== 'Add New Version' && oldVersion) {
@@ -101,6 +103,11 @@ export function AddDocumentModal({
       newDocument.url = form.getFieldValue('url');
       newDocument.base_url = form.getFieldValue('base_url') ?? newDocument.url;
       newDocument.link_text = form.getFieldValue('link_text');
+
+      if (oldLocationSiteId) {
+        newDocument.old_location_site_id = oldLocationSiteId;
+        newDocument.old_location_doc_id = oldLocationDocId;
+      }
 
       // For some reason, fileData never updates if browser auto fills.
       fileData.url = form.getFieldValue('url');
@@ -143,6 +150,8 @@ export function AddDocumentModal({
       url: responseData.url,
       link_text: responseData.link_text,
     });
+    setOldLocationSiteId(responseData.old_location_site_id);
+    setOldLocationDocId(responseData.old_location_doc_id);
   }
 
   return (
