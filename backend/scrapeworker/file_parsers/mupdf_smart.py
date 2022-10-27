@@ -4,7 +4,7 @@ from heapq import nlargest, nsmallest
 
 import fitz
 
-from backend.scrapeworker.common.utils import deburr, group_by_key
+from backend.scrapeworker.common.utils import group_by_key
 from backend.scrapeworker.file_parsers.base import FileParser
 
 
@@ -23,6 +23,7 @@ class MuPdfSmartParse(FileParser):
         self.table_col = 0
         self.table_row = 0
 
+    def make_stats(self):
         x_coords = [part["origin_x"] for part in self.parts]
         y_coords = [part["origin_y"] for part in self.parts]
         styles = [part["style"] for part in self.parts]
@@ -118,13 +119,6 @@ class MuPdfSmartParse(FileParser):
         pages = self.get_structure("json")
         return f"[{','.join(pages)}]"
 
-    async def get_text(self):
-        pdftext_out = ""
-        for page in self.doc:
-            text = page.get_text()
-            pdftext_out += deburr(text.strip())
-        return pdftext_out.strip()
-
     def get_title(self, metadata):
         title = metadata.get("title") or metadata.get("subject") or str(self.filename_no_ext)
         return title
@@ -214,20 +208,10 @@ class MuPdfSmartParse(FileParser):
                 x["page_index"],
                 x["origin_y"],
                 x["origin_x"],
-                x["block_index"],
             ),
         )
-        return sorted_parts
 
-    def set_cell_location(self, parts):
-        coords = {}
-        x_aligned = group_by_key(parts, "origin_x")
-        for x_coord, x_parts in x_aligned:
-            coords[x_coord] = {}
-            y_aligned = group_by_key(list(x_parts), "origin_y")
-            for y_coord, y_parts in y_aligned:
-                coords[x_coord][y_coord] = list(y_parts)
-        print(coords)
+        return sorted_parts
 
     def set_row_number(self, part, prev, next):
         # first page
@@ -272,15 +256,28 @@ class MuPdfSmartParse(FileParser):
             part for part in self.parts if not (part["is_superscript"] or part["is_subscript"])
         ]
 
+        # visual ordering
         for index, part in enumerate(parts):
             prev = None if index == 0 else parts[index - 1]
             next = None if index == len(parts) - 1 else parts[index + 1]
             part["row_number"] = self.set_row_number(part, prev, next)
 
-        # self.set_cell_location(self.parts)
+        # recombine by layout if we can
+        for index, part in enumerate(parts):
+            prev = None if index == 0 else parts[index - 1]
+            next = None if index == len(parts) - 1 else parts[index + 1]
+            part["row_number"] = self.set_row_number(part, prev, next)
 
-        self.parts = parts
-        return parts
+        self.parts = sorted(
+            parts,
+            key=lambda x: (
+                x["page_index"],
+                x["row_number"],
+                x["origin_x"],
+            ),
+        )
+
+        return self.parts
 
     def detect_header_footer(self):
         # group by page
@@ -291,18 +288,23 @@ class MuPdfSmartParse(FileParser):
 
     def get_text(self):
         text = ""
-        prev_row_number = 0
-        is_new_line = False
         for index, part in enumerate(self.parts):
-            prev = None if index == 0 else self.parts[index - 1]
-            next = None if index == len(self.parts) - 1 else self.parts[index + 1]
 
-            is_new_line = prev_row_number != part["row_number"]
+            prev = None if index == 0 else self.parts[index - 1]
+            # next = None if index == len(self.parts) - 1 else self.parts[index + 1]
+
+            is_new_line = prev and prev["row_number"] != part["row_number"]
+
+            if (
+                prev
+                and prev["row_number"] == part["row_number"]
+                and prev["block_index"] != part["block_index"]
+            ):
+                text += "\t\t\t"
 
             if is_new_line:
                 text += "\n"
 
             text += part["text"]
-            prev_row_number = part["row_number"]
 
         print(text.strip())

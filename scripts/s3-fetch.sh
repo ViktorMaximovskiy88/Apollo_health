@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
 # Examples
-# ./scripts/s3-fetch.sh apollo-dev-docrepo-use1-mmit-s3-01 documents/7aa05cebcd9059bea666e5ffa4407000.pdf
-# ./scripts/s3-fetch.sh apollo-dev-docrepo-use1-mmit-s3-01 text/2c2b78f0d2b684acca7f4a3626fffc4f.txt
-
+# ./scripts/s3-fetch.sh apollo-dev-docrepo-use1-mmit-s3-01 documents/63e01ca7c256e0e398d4f72309eb33ab.pdf
+# ./scripts/s3-fetch.sh apollo-dev-docrepo-use1-mmit-s3-01 text/2c672985e12a5e3ceeb69703ea8a1593.txt
 
 S3_BUCKET=${1:?specifybucket}
 S3_KEY=${2:?specifykey}

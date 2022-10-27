@@ -189,33 +189,6 @@ class DateParser:
                     return closest_match
         return None
 
-    def check_effective_date(self):
-        def valid_eff(date: datetime) -> bool:
-            return date != self.next_review_date.date
-
-        max_labeled_date: DateMatch | None = None
-        if self.published_date.date and valid_eff(self.published_date.date):
-            max_labeled_date = self.published_date
-        if self.last_updated_date.date and valid_eff(self.last_updated_date.date):
-            if not max_labeled_date or self.last_updated_date.date > max_labeled_date.date:
-                max_labeled_date = self.last_updated_date
-
-        if self.effective_date.date:
-            if max_labeled_date and self.effective_date.date < max_labeled_date.date:
-                self.effective_date = max_labeled_date
-        else:
-            if max_labeled_date:
-                self.effective_date = max_labeled_date
-            else:
-                now = datetime.now(tz=timezone.utc)
-                dates_in_the_past = list(
-                    filter(lambda d: now.timestamp() > d.timestamp(), self.unclassified_dates)
-                )
-                if dates_in_the_past:
-                    latest_date = max(dates_in_the_past)
-                    if valid_eff(latest_date):
-                        self.effective_date = DateMatch(latest_date)
-
     def update_label(
         self,
         match: DateMatch,
@@ -249,6 +222,7 @@ class DateParser:
         prev_line_index = 0
         prev_label = ""
         ends_with_comma = False
+
         for line in text.split("\n"):
             if re.fullmatch("references?", line.strip(), re.IGNORECASE):
                 break
@@ -286,5 +260,3 @@ class DateParser:
                 ends_with_comma = True if line[-1] == "," else False
                 prev_line = line
                 prev_line_index = latest_match
-
-        self.check_effective_date()

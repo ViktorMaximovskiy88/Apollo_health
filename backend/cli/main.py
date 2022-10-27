@@ -65,7 +65,7 @@ async def _dump_schema(file: str):
     parser = MuPdfSmartParse(file_path=file, url=f"file://{file}")
     import json
 
-    print(json.dumps(parser.document_analysis))
+    print(json.dumps(parser.parts))
 
 
 @app.command()
