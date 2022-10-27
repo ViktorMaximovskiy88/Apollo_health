@@ -10,7 +10,6 @@ def test_get_date_and_label():
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 1
     assert parser.last_updated_date.date == datetime(2022, 2, 9)
-    assert parser.effective_date.date == datetime(2022, 2, 9)
 
     text = """
         Multiple Formats, left and right, 05/30 expire, Published 02/21,
@@ -110,13 +109,11 @@ def test_get_date_and_label_multiple_lines():
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert parser.published_date.date == datetime(2022, 1, 2)
-    assert parser.effective_date.date == datetime(2022, 1, 2)
 
     text = "This date is the published date: 1/2/22 \n different date: 12/11/1989"
     new_parser = DateParser(date_rgxs, label_rgxs)
     new_parser.extract_dates(text)
     assert new_parser.published_date.date == datetime(2022, 1, 2)
-    assert new_parser.effective_date.date == datetime(2022, 1, 2)
 
     text = """
         This text has many lines with dates: 12/15/2024 \n
@@ -141,13 +138,12 @@ def test_get_label_to_the_right():
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
     assert parser.published_date.date == datetime(2022, 2, 15)
-    assert parser.effective_date.date == datetime(2022, 2, 15)
+
     text = "2/15/22: this label is too far published"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 1
     assert parser.published_date.date is None
-    assert parser.effective_date.date == datetime(2022, 2, 15)
 
 
 def test_get_no_dates():
@@ -190,28 +186,24 @@ def test_extract_date_span():
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
-    assert parser.effective_date.date == datetime(2020, 12, 1)
     assert parser.end_date.date == datetime(2030, 10, 15)
 
     text = "This will also get a date May 2021     -      July 2030 with text around"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
-    assert parser.effective_date.date == datetime(2021, 5, 1)
     assert parser.end_date.date == datetime(2030, 7, 1)
 
     text = "This will not grab a date span 10-10-2021 because - July 2030 of the text left of dash"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
-    assert parser.effective_date.date == datetime(2021, 10, 10)
     assert parser.end_date.date is None
 
     text = "This will not grab a date span 12-10-2021 - because July 2030 of the text right of dash"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
-    assert parser.effective_date.date == datetime(2021, 12, 10)
     assert parser.end_date.date is None
 
     text = """
@@ -238,7 +230,6 @@ def test_exclusions():
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 1
-    assert parser.effective_date.date == datetime(2021, 11, 20)
 
 
 def test_default_effective_date():
@@ -246,14 +237,13 @@ def test_default_effective_date():
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
-    assert parser.effective_date.date == datetime(2022, 2, 9)
 
     text = "Contains two dates with updated date override, updated 2/9/2022, effective May 5 2020"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
     assert parser.last_updated_date.date == datetime(2022, 2, 9)
-    assert parser.effective_date.date == datetime(2022, 2, 9)
+    assert parser.effective_date.date == datetime(2020, 5, 5)
 
     text = (
         "Contains two dates with published date override, published 3/9/2022, effective May 5 2020"
@@ -262,4 +252,4 @@ def test_default_effective_date():
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
     assert parser.published_date.date == datetime(2022, 3, 9)
-    assert parser.effective_date.date == datetime(2022, 3, 9)
+    assert parser.effective_date.date == datetime(2020, 5, 5)

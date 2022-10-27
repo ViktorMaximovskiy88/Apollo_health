@@ -8,13 +8,13 @@ import xgboost as xgb
 
 logging.basicConfig(format="%(asctime)s : %(levelname)s : %(message)s", level=logging.INFO)
 
-# vector_size = 50
-# local_dir = Path(__file__).parent
-# vector_model = gensim.models.doc2vec.Doc2Vec.load(
-#     str(local_dir.joinpath("./doc_type_model/doc2vec_model.pkl").resolve())
-# )
-# xgb_model = xgb.XGBClassifier()
-# xgb_model.load_model(str(local_dir.joinpath("./doc_type_model/xgbmodel.json").resolve()))
+vector_size = 50
+local_dir = Path(__file__).parent
+vector_model = gensim.models.doc2vec.Doc2Vec.load(
+    str(local_dir.joinpath("./doc_type_model/doc2vec_model.pkl").resolve())
+)
+xgb_model = xgb.XGBClassifier()
+xgb_model.load_model(str(local_dir.joinpath("./doc_type_model/xgbmodel.json").resolve()))
 
 doc_types = [
     "Authorization Policy",
