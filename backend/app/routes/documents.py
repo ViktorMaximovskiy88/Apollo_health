@@ -180,6 +180,10 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
         # Doc with checksum and location exists on OTHER site.
         checksum_location: RetrievedDocumentLocation = doc.locations[-1]
         if checksum_location:
+            typer.secho(
+                f"has checksum_location {doc.id}",
+                fg=typer.colors.BRIGHT_GREEN,
+            )
             response["data"] = copy_location_to(checksum_location, response["data"])
             response["data"]["old_location_doc_id"] = doc.id
             break
@@ -196,7 +200,7 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
 
         text_checksum: str = await text_handler.save_text(parsed_content["text"])
         text_checksum_documents: List[RetrievedDocument] = await RetrievedDocument.find(
-            RetrievedDocument.text_checksum == checksum,
+            RetrievedDocument.text_checksum == text_checksum,
         ).to_list()
         for doc in text_checksum_documents:
             if not doc.locations:
@@ -208,6 +212,10 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
             # Doc with checksum and location exists on OTHER site.
             text_checksum_location: RetrievedDocumentLocation = doc.locations[-1]
             if text_checksum_location:
+                typer.secho(
+                    f"has TEXT_checksum_location {doc.id}",
+                    fg=typer.colors.BRIGHT_GREEN,
+                )
                 response["data"] = copy_location_to(text_checksum_location, response["data"])
                 response["data"]["old_location_doc_id"] = doc.id
                 break
@@ -271,10 +279,13 @@ async def add_document(
     link_text = uploaded_doc.metadata.get("link_text", None)
 
     if uploaded_doc.old_location_doc_id:
-        created_retr_doc = await RetrievedDocument.find_one(
-            {"_id": f"{uploaded_doc.old_location_doc_id}"}
+        # TODO: Fix (invalid location added?)
+        # pydantic.error_wrappers.ValidationError: 1 validation error for RetrievedDocument
+        # locations -> 1
+        new_retr_document = await RetrievedDocument.find_one(
+            RetrievedDocument.id == PydanticObjectId(uploaded_doc.old_location_doc_id)
         )
-        if not created_retr_doc:
+        if not new_retr_document:
             typer.secho(
                 f"NOT ABLE TO FIND RETR DOC {uploaded_doc.old_location_doc_id}",
                 fg=typer.colors.BRIGHT_RED,
@@ -283,29 +294,30 @@ async def add_document(
                 status.HTTP_409_CONFLICT,
                 "Not able to upload document to site. Duplicate location error.",
             )
-        retr_doc_loc: RetrievedDocumentLocation = created_retr_doc.get_site_location(
-            uploaded_doc.old_location_site_id
+        retr_doc_loc: RetrievedDocumentLocation = new_retr_document.get_site_location(
+            PydanticObjectId(uploaded_doc.old_location_site_id)
         )
         # TODO: Double check that ALL fields are copied.
         # 1) Handle old location same as params.
         # 2) Handle old location different than params.
-        new_doc_loc: RetrievedDocumentLocation = RetrievedDocumentLocation(
-            url=retr_doc_loc.url,
-            base_url=retr_doc_loc.base_url,
-            first_collected_date=now,
-            last_collected_date=now,
-            site_id=uploaded_doc.site_id,
-            link_text=link_text,
-            context_metadata=uploaded_doc.metadata,
+        loc_values = {
+            "url": retr_doc_loc.url,
+            "base_url": retr_doc_loc.base_url,
+            "first_collected_date": now,
+            "last_collected_date": now,
+            "site_id": uploaded_doc.site_id,
+            "link_text": link_text,
+            "context_metadata": uploaded_doc.metadata,
+        }
+        new_doc_loc: RetrievedDocumentLocation = RetrievedDocumentLocation(**loc_values)
+        new_retr_document.locations.append(f"{new_doc_loc}")
+        new_doc_doc: DocDocument | None = await DocDocument.find_one(
+            DocDocument.retrieved_document_id == new_retr_document.id
         )
-        created_retr_doc.locations.append(f"{new_doc_loc}")
-        created_doc_doc: DocDocument | None = await DocDocument.find_one(
-            DocDocument.retrieved_document_id == created_retr_doc.id
-        )
-        new_doc_doc_loc: DocDocumentLocation = DocDocumentLocation(**new_doc_loc)
-        created_doc_doc.locations.append(f"{new_doc_doc_loc}")
-        await created_retr_doc.save()
-        await created_doc_doc.save()
+        new_doc_doc_loc: DocDocumentLocation = DocDocumentLocation(**loc_values)
+        new_doc_doc.locations.append(f"{new_doc_doc_loc}")
+        await new_retr_document.save()
+        await new_doc_doc.save()
     else:
         # Create retr_doc and doc_doc from uploaded_doc.
         new_retr_document: RetrievedDocument = RetrievedDocument(
@@ -383,6 +395,9 @@ async def add_document(
         created_doc_doc: DocDocument = await create_doc_document_service(
             new_retr_document, current_user
         )
+    else:
+        created_retr_doc = new_retr_document
+        created_doc_doc = new_doc_doc
     if uploaded_doc.upload_new_version_for_id and original_doc_doc.document_family_id:
         created_doc_doc.document_family_id = original_doc_doc.document_family_id
     # Need to update previous_doc_doc_id since new_retr_doc is retr_doc which does not have
