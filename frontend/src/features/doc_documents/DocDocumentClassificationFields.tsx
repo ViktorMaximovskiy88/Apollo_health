@@ -29,17 +29,15 @@ const FinalEffectiveDate = () => (
 
 const Lineage = () => {
   const { docDocumentId } = useParams();
-  const { data: doc } = useGetDocDocumentQuery(docDocumentId, { skip: !docDocumentId });
+  const { data: docDocument } = useGetDocDocumentQuery(docDocumentId, { skip: !docDocumentId });
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     // on mount, set initial previousDocDocumentId
-    dispatch(setPreviousDocDocumentId(doc?.previous_doc_doc_id));
-  }, [dispatch, doc]);
+    dispatch(setPreviousDocDocumentId(docDocument?.previous_doc_doc_id || null));
+  }, [dispatch, docDocument?.previous_doc_doc_id]);
 
-  const { data: prevDoc } = useGetDocDocumentQuery(doc?.previous_doc_doc_id ?? '', {
-    skip: !doc?.previous_doc_doc_id,
-  });
+  const { data: prevDoc } = useGetDocDocumentQuery(docDocument?.previous_doc_doc_id ?? '');
 
   return (
     <>
