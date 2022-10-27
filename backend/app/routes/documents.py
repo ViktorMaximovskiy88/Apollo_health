@@ -300,22 +300,33 @@ async def add_document(
         # TODO: Double check that ALL fields are copied.
         # 1) Handle old location same as params.
         # 2) Handle old location different than params.
-        loc_values = {
-            "url": retr_doc_loc.url,
-            "base_url": retr_doc_loc.base_url,
-            "first_collected_date": now,
-            "last_collected_date": now,
-            "site_id": uploaded_doc.site_id,
-            "link_text": link_text,
-            "context_metadata": uploaded_doc.metadata,
-        }
-        new_doc_loc: RetrievedDocumentLocation = RetrievedDocumentLocation(**loc_values)
-        new_retr_document.locations.append(f"{new_doc_loc}")
+        typer.secho(
+            f"creating doc location for site_id {uploaded_doc.site_id}",
+            fg=typer.colors.BRIGHT_RED,
+        )
+        new_doc_loc: RetrievedDocumentLocation = RetrievedDocumentLocation(
+            url=retr_doc_loc.url,
+            base_url=retr_doc_loc.base_url,
+            first_collected_date=now,
+            last_collected_date=now,
+            site_id=uploaded_doc.site_id,
+            link_text=link_text,
+            context_metadata=uploaded_doc.metadata,
+        )
+        new_retr_document.locations.append(new_doc_loc)
         new_doc_doc: DocDocument | None = await DocDocument.find_one(
             DocDocument.retrieved_document_id == new_retr_document.id
         )
-        new_doc_doc_loc: DocDocumentLocation = DocDocumentLocation(**loc_values)
-        new_doc_doc.locations.append(f"{new_doc_doc_loc}")
+        new_doc_doc_loc: DocDocumentLocation = DocDocumentLocation(
+            url=retr_doc_loc.url,
+            base_url=retr_doc_loc.base_url,
+            first_collected_date=now,
+            last_collected_date=now,
+            site_id=uploaded_doc.site_id,
+            link_text=link_text,
+            context_metadata=uploaded_doc.metadata,
+        )
+        new_doc_doc.locations.append(new_doc_doc_loc)
         await new_retr_document.save()
         await new_doc_doc.save()
     else:
