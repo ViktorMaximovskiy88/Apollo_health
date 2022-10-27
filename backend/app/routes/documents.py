@@ -395,13 +395,13 @@ async def add_document(
     else:
         created_retr_doc = new_retr_document
         created_doc_doc = new_doc_doc
-    if uploaded_doc.upload_new_version_for_id and original_doc_doc.document_family_id:
-        created_doc_doc.document_family_id = original_doc_doc.document_family_id
-    if uploaded_doc.upload_new_version_for_id and original_doc_doc.translation_id:
-        created_doc_doc.translation_id = original_doc_doc.translation_id
-    # Need to update previous_doc_doc_id since new_retr_doc is retr_doc which does not have
-    # a previous_doc_doc_id. New retr_document.previous_doc_id is set before create.
     if uploaded_doc.upload_new_version_for_id:
+        if original_doc_doc.document_family_id:
+            created_doc_doc.document_family_id = original_doc_doc.document_family_id
+        if original_doc_doc.translation_id:
+            created_doc_doc.translation_id = original_doc_doc.translation_id
+        # Need to update previous_doc_doc_id since new_retr_doc is retr_doc which does not have
+        # a previous_doc_doc_id. New retr_document.previous_doc_id is set before create.
         created_doc_doc.previous_doc_doc_id = original_doc_doc.id
         await created_doc_doc.save()
 
