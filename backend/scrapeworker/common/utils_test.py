@@ -98,44 +98,51 @@ def test_normalize_url_empty_base_tag():
 
 def test_normalize_url_root_base_tag():
     base = "https://a.com"
-    url1 = "Docs/test.xlsx"
+    url = "Docs/test.xlsx"
     base_tag_href = "/"
-    result = normalize_url(base, url1, base_tag_href)
+    result = normalize_url(base, url, base_tag_href)
     assert result == "https://a.com/Docs/test.xlsx"
 
 
 def test_normalize_url_from_path_base_tag_from_root():
     base = "https://a.com/noroot"
-    url1 = "Docs/test.xlsx"
+    url = "Docs/test.xlsx"
     base_tag_href = "/"
-    result = normalize_url(base, url1, base_tag_href)
+    result = normalize_url(base, url, base_tag_href)
     assert result == "https://a.com/Docs/test.xlsx"
 
 
 def test_normalize_url_from_path_relative_url_base_tag_root():
     base = "https://a.com/noroot"
-    url1 = "../Docs/test.xlsx"
+    url = "../Docs/test.xlsx"
     base_tag_href = "/"
-    result = normalize_url(base, url1, base_tag_href)
+    result = normalize_url(base, url, base_tag_href)
     assert result == "https://a.com/Docs/test.xlsx"
 
 
 def test_normalize_url_from_path_relative_url_base_tag_none():
     base = "https://a.com/noroot"
-    url1 = "../Docs/test.xlsx"
-    result = normalize_url(base, url1)
+    url = "../Docs/test.xlsx"
+    result = normalize_url(base, url)
     assert result == "https://a.com/Docs/test.xlsx"
 
 
 def test_normalize_url_from_nested_path_relative_url_base_tag_none():
     base = "https://a.com/noroot/anotherone"
-    url1 = "Docs/test.xlsx"
-    result = normalize_url(base, url1)
+    url = "Docs/test.xlsx"
+    result = normalize_url(base, url)
     assert result == "https://a.com/noroot/Docs/test.xlsx"
 
 
 def test_normalize_url_from_nested_path_absolute_url_base_tag_none():
     base = "https://a.com/noroot/anotherone"
-    url1 = "/Docs/test.xlsx"
-    result = normalize_url(base, url1)
+    url = "/Docs/test.xlsx"
+    result = normalize_url(base, url)
     assert result == "https://a.com/Docs/test.xlsx"
+
+
+def test_normalize_url_with_different_domains():
+    base = "https://a.com/noroot/anotherone"
+    url = "https://b.com/groot/page.html"
+    result = normalize_url(base, url)
+    assert result == "https://b.com/groot/page.html"
