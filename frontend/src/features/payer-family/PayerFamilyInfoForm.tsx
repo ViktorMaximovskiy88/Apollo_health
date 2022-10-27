@@ -71,7 +71,7 @@ export const PayerFamilyInfoForm = (props: PayerFamilyInfoFormProps) => {
         <Form.Item label="Benefit" name={'benefits'} className="w-64">
           <Select mode="multiple" options={benefitOptions} />
         </Form.Item>
-        <Form.Item label="Plan Types" name={'plan_types'} className="w-30">
+        <Form.Item label="Plan Types" name={'plan_types'} className="w-40">
           <Select mode="multiple" options={planTypeOptions} />
         </Form.Item>
         <Form.Item label="Region" name={'regions'} className="w-40">
