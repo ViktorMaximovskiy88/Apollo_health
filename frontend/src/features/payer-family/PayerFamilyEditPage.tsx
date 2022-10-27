@@ -109,6 +109,10 @@ function mustBeUnique(asyncValidator: Function, currentPayerFamilyId: string) {
   return {
     async validator(_rule: Rule, value: string) {
       const { data: payerFamily } = await asyncValidator({ name: value });
+
+      if (!payerFamily) {
+        return Promise.resolve();
+      }
       if (
         currentPayerFamilyId === payerFamily._id &&
         value !== payerFamily.name.toLowerCase() &&
