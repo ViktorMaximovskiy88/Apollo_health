@@ -73,7 +73,6 @@ mimetype_to_extension_map = {
     "text/csv": "csv",
     "text/plain": "txt",
     "application/octet-stream": "bin",
-    "image/png": "png",
 }
 extension_to_mimetype_map = {v: k for k, v in mimetype_to_extension_map.items()}
 
@@ -126,10 +125,20 @@ def sort_by_attr(items: list[any], attr: str):
     return sorted(items, key=lambda x: getattr(x, attr))
 
 
+def sort_by_key(items: list[any], key: str):
+    return sorted(items, key=lambda x: x[key])
+
+
 # so you have to sort first for groupby to work...
 def group_by_attr(items: list[any], attr: str):
     sorted_items = sort_by_attr(items, attr)
     return groupby(sorted_items, lambda x: getattr(x, attr))
+
+
+# so you have to sort first for groupby to work...
+def group_by_key(items: list[any], key: str):
+    sorted_items = sort_by_key(items, key)
+    return groupby(sorted_items, lambda x: x[key])
 
 
 def compact(input: list[str]) -> list[str]:
@@ -166,7 +175,7 @@ def deburr(input: str = "") -> str:
 def normalize_spaces(input: str = "") -> str:
     if input is None:
         return ""
-    return re.sub(r" +", " ", input).strip()
+    return re.sub(r" +", " ", input)
 
 
 # return meaningful chars

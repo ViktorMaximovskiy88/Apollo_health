@@ -22,6 +22,9 @@ class DateMatch:
             self.start: int = None
             self.end: int = None
 
+    def __str__(self):
+        return str(self.date)
+
 
 class DateParser:
     def __init__(
@@ -41,6 +44,18 @@ class DateParser:
         self.next_update_date = DateMatch()
         self.published_date = DateMatch()
         self.unclassified_dates: set[datetime] = set()
+
+    def dump_dates(self):
+        return {
+            "effective_date": str(self.effective_date),
+            "end_date": str(self.end_date),
+            "last_updated_date": str(self.last_updated_date),
+            "last_reviewed_date": str(self.last_reviewed_date),
+            "next_review_date": str(self.next_review_date),
+            "next_update_date": str(self.next_update_date),
+            "published_date": str(self.published_date),
+            "unclassified_dates": [str(date) for date in self.unclassified_dates],
+        }
 
     def exclude_text(self, text: str) -> bool:
         exclusions = ["omb approval"]
@@ -78,7 +93,7 @@ class DateParser:
         lookahead_year = datetime.now(tz=timezone.utc).year + 5
         return (
             (month >= 1 and month <= 12)
-            and (year > 1980 and year < lookahead_year)
+            and (year > 1980 and year <= lookahead_year)
             and (not day or (day >= 1 and day <= 31))
         )
 
@@ -148,7 +163,8 @@ class DateParser:
                             continue
                     datetext = datetext.replace("|", "-")
                     date = parser.parse(datetext, ignoretz=True)
-                    yield DateMatch(date, m, last_index)
+                    if self.valid_range(month=date.month, year=date.year, day=date.day):
+                        yield DateMatch(date, m, last_index)
                     last_index = m.end()
                 except Exception as ex:
                     logging.debug(ex)
@@ -174,33 +190,6 @@ class DateParser:
                     return closest_match
         return None
 
-    def check_effective_date(self):
-        def valid_eff(date: datetime) -> bool:
-            return date != self.next_review_date.date
-
-        max_labeled_date: DateMatch | None = None
-        if self.published_date.date and valid_eff(self.published_date.date):
-            max_labeled_date = self.published_date
-        if self.last_updated_date.date and valid_eff(self.last_updated_date.date):
-            if not max_labeled_date or self.last_updated_date.date > max_labeled_date.date:
-                max_labeled_date = self.last_updated_date
-
-        if self.effective_date.date:
-            if max_labeled_date and self.effective_date.date < max_labeled_date.date:
-                self.effective_date = max_labeled_date
-        else:
-            if max_labeled_date:
-                self.effective_date = max_labeled_date
-            else:
-                now = datetime.now(tz=timezone.utc)
-                dates_in_the_past = list(
-                    filter(lambda d: now.timestamp() > d.timestamp(), self.unclassified_dates)
-                )
-                if dates_in_the_past:
-                    latest_date = max(dates_in_the_past)
-                    if valid_eff(latest_date):
-                        self.effective_date = DateMatch(latest_date)
-
     def update_label(
         self,
         match: DateMatch,
@@ -208,21 +197,27 @@ class DateParser:
     ) -> None:
         """
         Check existing date label for previous best match.
-        Set label to new date if current match is closer to today's date.
         """
 
         future_dates = ["end_date", "next_review_date", "next_update_date"]
         now = datetime.now(tz=timezone.utc)
         existing_label: DateMatch = getattr(self, label)
-        if label in future_dates:
-            if not existing_label.date or existing_label.date > match.date:
-                setattr(self, label, match)
-        else:
-            if now.timestamp() < match.date.timestamp():
-                return
-            elif not existing_label.date or existing_label.date < match.date:
-                setattr(self, label, match)
-        return
+
+        # not set, set it
+        if not existing_label.date:
+            setattr(self, label, match)
+
+        # future date take closest to today
+        elif label in future_dates and match.date < existing_label.date:
+            setattr(self, label, match)
+
+        # future date take furtherest from today
+        elif label == "effective_date" and match.date > existing_label.date:
+            setattr(self, label, match)
+
+        # past date take closest to today
+        elif match.date > existing_label.date and match.date.timestamp() < now.timestamp():
+            setattr(self, label, match)
 
     def extract_dates(self, text: str) -> None:
         """
@@ -247,7 +242,6 @@ class DateParser:
             for m in self.get_dates(line):
                 end_date = self.extract_date_span(line, m.end)
                 if end_date:
-                    self.update_label(m, "effective_date")
                     self.update_label(end_date, "end_date")
                 else:
                     label = self.get_date_label(line, m.last_date_index, m.start)
@@ -271,5 +265,3 @@ class DateParser:
                 ends_with_comma = True if line[-1] == "," else False
                 prev_line = line
                 prev_line_index = latest_match
-
-        self.check_effective_date()
