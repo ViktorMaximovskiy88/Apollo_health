@@ -5,7 +5,6 @@ import { DateFields } from './DocDocumentDateFields';
 import { DocumentClassification } from './DocDocumentClassificationFields';
 import { Translation } from './TranslationSelector';
 import { DocDocumentDocumentFamilyField } from './DocDocumentDocumentFamilyField';
-import { DocDocument } from './types';
 
 interface DocDocumentInfoTypes {
   onFieldChange: () => void;
@@ -24,6 +23,19 @@ export function DocDocumentInfoForm({ onFieldChange }: DocDocumentInfoTypes) {
       <Hr />
       <DocDocumentDocumentFamilyField onFieldChange={onFieldChange} />
       <Translation />
+      <Hr />
+      <Form.Item
+        name="previous_par_id"
+        label="Previous PAR ID"
+        rules={[
+          {
+            message: 'PAR ID must be a valid GUID (e.g. 412d2222-faed-4ff5-ac07-000000000000)',
+            pattern: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+          },
+        ]}
+      >
+        <Input />
+      </Form.Item>
     </div>
   );
 }
