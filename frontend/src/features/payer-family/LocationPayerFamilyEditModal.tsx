@@ -50,6 +50,7 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
     fetchCurrentPayerFamilyVals();
   }, [form, getPayerFamily, payer_family_id, open]);
 
+  console.log(payer_family_id);
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
       let elem = values.payer_ids?.slice(0, 1);
