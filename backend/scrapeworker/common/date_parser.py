@@ -197,21 +197,26 @@ class DateParser:
     ) -> None:
         """
         Check existing date label for previous best match.
-        Set label to new date if current match is closer to today's date.
         """
 
-        future_dates = ["end_date", "next_review_date", "next_update_date", "effective_date"]
+        future_dates = ["end_date", "next_review_date", "next_update_date"]
         now = datetime.now(tz=timezone.utc)
         existing_label: DateMatch = getattr(self, label)
-        if label in future_dates:
-            if not existing_label.date or existing_label.date > match.date:
-                setattr(self, label, match)
-        else:
-            if now.timestamp() < match.date.timestamp():
-                return
-            elif not existing_label.date or existing_label.date < match.date:
-                setattr(self, label, match)
-        return
+        # not set, set it
+        if not existing_label.date:
+            setattr(self, label, match)
+
+        # future date take closest to today
+        elif label in future_dates and existing_label.date > match.date:
+            setattr(self, label, match)
+
+        # future date take closest further from today
+        elif label == "effective_date" and existing_label.date < match.date:
+            setattr(self, label, match)
+
+        # past date take closest to today
+        elif existing_label.date < match.date < now.timestamp():
+            setattr(self, label, match)
 
     def extract_dates(self, text: str) -> None:
         """
