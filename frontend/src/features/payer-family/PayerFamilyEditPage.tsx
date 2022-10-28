@@ -24,6 +24,7 @@ export const PayerFamilyEditPage = () => {
 
   const [updatePayerFamily, { isLoading }] = useUpdatePayerFamilyMutation();
   const [initialPayerOptions, setInitialPayerOptions] = useState<any>([]);
+  const [checked, setChecked] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchCurrentPayerFamilyVals = async () => {
@@ -37,7 +38,7 @@ export const PayerFamilyEditPage = () => {
           benefits: data.benefits,
           plan_types: data.plan_types,
           regions: data.regions,
-          custom_name: true,
+          auto_generated: data.auto_generated,
         });
         setInitialPayerOptions(data.payer_ids);
       }
@@ -80,19 +81,18 @@ export const PayerFamilyEditPage = () => {
             label="Name"
             name="name"
             className="w-96"
-            dependencies={['custom_name']}
             rules={[
               { required: true, message: 'Please input a payer family name' },
               mustBeUnique(getPayerFamilyByName, payerFamilyId),
             ]}
           >
-            <Input />
+            <Input disabled={checked === false ? false : true} />
           </Form.Item>
           <Input.Group className="space-x-2 flex"></Input.Group>
           {form.getFieldValue('custom_name') ? 'Custom name will be generated on submission' : ''}
           <Input.Group className="space-x-2 flex">
             <Form.Item valuePropName="checked" name="custom_name">
-              <Checkbox>Auto Generate</Checkbox>
+              <Checkbox onChange={() => setChecked(!checked)}>Auto Generate</Checkbox>
             </Form.Item>
           </Input.Group>
           <PayerFamilyInfoForm initialPayerOptions={initialPayerOptions} />
@@ -120,6 +120,7 @@ function mustBeUnique(asyncValidator: Function, currentPayerFamilyId: string) {
       ) {
         return Promise.resolve();
       } else {
+        console.log();
         return Promise.reject(`Payer family name "${payerFamily.name}" already exists`);
       }
     },
