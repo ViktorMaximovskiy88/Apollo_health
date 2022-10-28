@@ -120,7 +120,6 @@ function mustBeUnique(asyncValidator: Function, currentPayerFamilyId: string) {
       ) {
         return Promise.resolve();
       } else {
-        console.log();
         return Promise.reject(`Payer family name "${payerFamily.name}" already exists`);
       }
     },
