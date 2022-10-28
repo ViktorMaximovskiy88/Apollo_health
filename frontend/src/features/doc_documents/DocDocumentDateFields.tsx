@@ -1,6 +1,8 @@
-import { Form } from 'antd';
+import { Collapse, Form } from 'antd';
 import { ListDatePicker } from '../../components';
 import { useGetDocDocumentQuery } from './docDocumentApi';
+
+const { Panel } = Collapse;
 
 const EffectiveDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
   const form = Form.useFormInstance();
@@ -161,23 +163,27 @@ const LastCollectedDate = ({ onFieldChange }: { onFieldChange: () => void }) => 
 export function DateFields(props: { onFieldChange: () => void }) {
   return (
     <>
-      <div className="flex flex-1 space-x-8">
-        <EffectiveDate {...props} />
-        <EndDate {...props} />
-        <LastUpdatedDate {...props} />
-      </div>
+      <Collapse className="bg-white">
+        <Panel header="Dates" key="1">
+          <div className="flex flex-1 space-x-8">
+            <EffectiveDate {...props} />
+            <EndDate {...props} />
+            <LastUpdatedDate {...props} />
+          </div>
 
-      <div className="flex flex-1 space-x-8">
-        <LastReviewedDate {...props} />
-        <NextReviewedDate {...props} />
-        <NextUpdateDate {...props} />
-      </div>
+          <div className="flex flex-1 space-x-8">
+            <LastReviewedDate {...props} />
+            <NextReviewedDate {...props} />
+            <NextUpdateDate {...props} />
+          </div>
 
-      <div className="flex flex-1 space-x-8">
-        <PublishedDate {...props} />
-        <FirstCollectedDate {...props} />
-        <LastCollectedDate {...props} />
-      </div>
+          <div className="flex flex-1 space-x-8">
+            <PublishedDate {...props} />
+            <FirstCollectedDate {...props} />
+            <LastCollectedDate {...props} />
+          </div>
+        </Panel>
+      </Collapse>
     </>
   );
 }
