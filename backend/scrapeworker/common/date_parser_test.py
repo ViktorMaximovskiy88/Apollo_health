@@ -12,24 +12,25 @@ def test_get_date_and_label():
     assert parser.last_updated_date.date == datetime(2022, 2, 9)
 
     text = """
-        Multiple Formats, left and right, 05/30 expire, Published 02/21,
-        updated 10/9/11, next review March 8, 2036, next update 10 January 2038 \n
+        Multiple Formats, left and right, 05/23 expire, Published 02/21,
+        updated 10/9/11, next review March 8, 2023, next update 10 January 2023 \n
         Last Review 6.30.22.
     """
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
+
     assert len(parser.unclassified_dates) == 6
-    assert parser.end_date.date == datetime(2030, 5, 1)
+    assert parser.end_date.date == datetime(2023, 5, 1)
     assert parser.published_date.date == datetime(2021, 2, 1)
     assert parser.last_updated_date.date == datetime(2011, 10, 9)
+    assert parser.next_review_date.date == datetime(2023, 3, 8)
+    assert parser.next_update_date.date == datetime(2023, 1, 10)
     assert parser.last_reviewed_date.date == datetime(2022, 6, 30)
-    assert parser.next_review_date.date == datetime(2036, 3, 8)
-    assert parser.next_update_date.date == datetime(2038, 1, 10)
 
     text = """
         Different formats, rev. 1/10/20 and v. 12/12 4/20\n
         with no label match here harv.2/27/2021 \n
-        and more labels - reviewed as of 03/2020 through Dec 2030
+        and more labels - reviewed as of 03/2020 through Dec 2023
     """
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
@@ -37,7 +38,7 @@ def test_get_date_and_label():
     assert parser.published_date.date == datetime(2012, 12, 1)
     assert parser.last_updated_date.date == datetime(2020, 1, 10)
     assert parser.last_reviewed_date.date == datetime(2020, 3, 1)
-    assert parser.end_date.date == datetime(2030, 12, 1)
+    assert parser.end_date.date == datetime(2023, 12, 1)
 
 
 def test_all_date_formats():
@@ -118,18 +119,18 @@ def test_get_date_and_label_multiple_lines():
     text = """
         This text has many lines with dates: 12/15/2024 \n
         There are also some blank lines. The below date is the end date.\n\n
-        end Date: 12/11/2032\n
+        end Date: 12/11/2023\n
         The publish date: 02/21 \n
-        10|20|2020 recent review, annual review 11|2033
+        10|20|2020 recent review, annual review 11|2023
     """
 
     many_line_parser = DateParser(date_rgxs, label_rgxs)
     many_line_parser.extract_dates(text)
     assert len(many_line_parser.unclassified_dates) == 5
-    assert many_line_parser.end_date.date == datetime(2032, 12, 11)
+    assert many_line_parser.end_date.date == datetime(2023, 12, 11)
     assert many_line_parser.published_date.date == datetime(2021, 2, 1)
     assert many_line_parser.last_reviewed_date.date == datetime(2020, 10, 20)
-    assert many_line_parser.next_review_date.date == datetime(2033, 11, 1)
+    assert many_line_parser.next_review_date.date == datetime(2023, 11, 1)
 
 
 def test_get_label_to_the_right():
@@ -170,58 +171,56 @@ def test_select_best_match():
     assert len(parser.unclassified_dates) == 2
 
     text = """
-        This line has multiple dates including end date 4/30/2031,
-        eff. date 2021/10/31, and a better expire date 4-30-2030
+        This line has multiple dates including end date 4/30/2023,
+        eff. date 2021/10/31, and a better expire date 4-30-2024
     """
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
 
     assert len(parser.unclassified_dates) == 3
-    assert parser.end_date.date == datetime(2030, 4, 30)
+    assert parser.end_date.date == datetime(2023, 4, 30)
     assert parser.effective_date.date == datetime(2021, 10, 31)
 
 
 def test_extract_date_span():
-    text = "12/1/2020 - 10/15/30"
+    text = "12/1/2020 - 10/15/23"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
-    assert parser.end_date.date == datetime(2030, 10, 15)
+    assert parser.end_date.date == datetime(2023, 10, 15)
 
-    text = "This will also get a date May 2021     -      July 2030 with text around"
+    text = "This will also get a date May 2021     -      July 2023 with text around"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
-    assert parser.end_date.date == datetime(2030, 7, 1)
+    assert parser.end_date.date == datetime(2023, 7, 1)
 
-    text = "This will not grab a date span 10-10-2021 because - July 2030 of the text left of dash"
+    text = "This will not grab a date span 10-10-2021 because - July 2023 of the text left of dash"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
     assert parser.end_date.date is None
 
-    text = "This will not grab a date span 12-10-2021 - because July 2030 of the text right of dash"
+    text = "This will not grab a date span 12-10-2021 - because July 2023 of the text right of dash"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
     assert parser.end_date.date is None
 
     text = """
-        date span 12/10/2021-1/5/2031 and
-        other dates published 2010-10-31
+        date span 12/10/2021-1/5/2023 and
+        other dates published 2010-10-23
     """
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 3
-    assert parser.effective_date.date == datetime(2021, 12, 10)
-    assert parser.end_date.date == datetime(2031, 1, 5)
-    assert parser.published_date.date == datetime(2010, 10, 31)
+    assert parser.end_date.date == datetime(2023, 1, 5)
+    assert parser.published_date.date == datetime(2010, 10, 23)
 
     text = "date span with only 1 year and unicode separator January 1 – December 31, 2022"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
-    assert parser.effective_date.date == datetime(2022, 1, 1)
     assert parser.end_date.date == datetime(2022, 12, 31)
 
 

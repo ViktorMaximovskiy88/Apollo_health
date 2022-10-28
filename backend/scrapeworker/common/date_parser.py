@@ -202,20 +202,21 @@ class DateParser:
         future_dates = ["end_date", "next_review_date", "next_update_date"]
         now = datetime.now(tz=timezone.utc)
         existing_label: DateMatch = getattr(self, label)
+
         # not set, set it
         if not existing_label.date:
             setattr(self, label, match)
 
         # future date take closest to today
-        elif label in future_dates and existing_label.date > match.date:
+        elif label in future_dates and match.date < existing_label.date:
             setattr(self, label, match)
 
-        # future date take closest further from today
-        elif label == "effective_date" and existing_label.date < match.date:
+        # future date take furtherest from today
+        elif label == "effective_date" and match.date > existing_label.date:
             setattr(self, label, match)
 
         # past date take closest to today
-        elif existing_label.date < match.date < now.timestamp():
+        elif match.date > existing_label.date and match.date.timestamp() < now.timestamp():
             setattr(self, label, match)
 
     def extract_dates(self, text: str) -> None:
@@ -241,7 +242,6 @@ class DateParser:
             for m in self.get_dates(line):
                 end_date = self.extract_date_span(line, m.end)
                 if end_date:
-                    self.update_label(m, "effective_date")
                     self.update_label(end_date, "end_date")
                 else:
                     label = self.get_date_label(line, m.last_date_index, m.start)
