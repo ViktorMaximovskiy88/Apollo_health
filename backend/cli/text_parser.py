@@ -19,6 +19,7 @@ log = logging.getLogger(__name__)
 @click.option("--file", help="File to parse", required=True, type=str)
 @click.option("--type", help="Parser to use", default="default", type=str)
 async def text_parser(ctx, file: str, type: str):
+    print(file, type)
     if type == "mu-smart":
         ctx.obj = {"parser": MuPdfSmartParse(file_path=file, url=f"file://{file}")}
     elif type == "mu":
@@ -32,12 +33,14 @@ async def text_parser(ctx, file: str, type: str):
 @click.pass_context
 async def parse(ctx, stdout: bool):
     parser = ctx.obj["parser"]
+    type = ctx.parent.params["type"]
+    file = ctx.parent.params["file"]
+
     text = await parser.get_text()
     if stdout:
         print(text)
     else:
-        parsed_path = Path(ctx.parent.params["file"])
-        type = ctx.parent.params["type"]
+        parsed_path = Path(file)
         output_file = parsed_path.parent / f"{parsed_path.stem}-{type}.txt"
         async with aiofiles.open(output_file, mode="w") as f:
             await f.writelines(text)

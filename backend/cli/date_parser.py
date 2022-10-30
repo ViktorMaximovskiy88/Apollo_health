@@ -17,7 +17,6 @@ log = logging.getLogger(__name__)
 @click.pass_context
 @click.option("--type", help="Parser to use", default="default", type=str)
 async def date_parser(ctx, type: str):
-    pprint(ctx)
     if type == "default":
         ctx.obj = {"parser": DateParser(date_rgxs, label_rgxs)}
     else:
