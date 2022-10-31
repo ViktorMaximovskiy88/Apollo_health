@@ -56,10 +56,9 @@ const buildInitialValues = (oldVersion?: SiteDocDocument) => {
   };
 };
 
-const displayDuplicateError = (error: any) => {
+const displayDuplicateError = (err_msg: string) => {
   notification.error({
-    message: 'Document already exists',
-    description: `Upload a new document or enter a new location.`,
+    message: err_msg,
   });
 };
 
@@ -130,14 +129,14 @@ export function AddDocumentModal({
           refetch();
         }
         if ('error' in response && response.error) {
-          displayDuplicateError(response);
+          displayDuplicateError('Document exists on this site');
         } else {
           setOpen(false);
         }
       } catch (error: any) {
         notification.error({
           message: error.data.detail,
-          description: `Upload a new document or enter a new location.`,
+          description: 'Upload a new document or enter a new location.',
         });
       }
     } catch (error) {
@@ -162,6 +161,7 @@ export function AddDocumentModal({
       published_date: convertDate(responseData.published_date),
     });
     if (responseData.prev_location_doc_id) {
+      displayDuplicateError('Document exists on other site');
       setOldLocationSiteId(responseData.prev_location_site_id);
       setOldLocationDocId(responseData.prev_location_doc_id);
       setIsEditingDocFromOtherSite(true);
