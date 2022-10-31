@@ -5,7 +5,6 @@ import { DateFields } from './DocDocumentDateFields';
 import { DocumentClassification } from './DocDocumentClassificationFields';
 import { Translation } from './TranslationSelector';
 import { DocDocumentDocumentFamilyField } from './DocDocumentDocumentFamilyField';
-import { DocDocument } from './types';
 
 interface DocDocumentInfoTypes {
   onFieldChange: () => void;
