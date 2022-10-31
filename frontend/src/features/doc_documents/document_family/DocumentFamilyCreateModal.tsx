@@ -58,7 +58,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
       closable={false}
       mask={false}
       extra={
-        <Button type="text" onClick={onClose} className="border-none">
+        <Button type="text" onClick={onClose}>
           <CloseOutlined />
         </Button>
       }
