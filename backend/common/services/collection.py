@@ -372,7 +372,6 @@ class CollectionService:
 
         match work_item.selected:
             case WorkItemOption.FOUND:
-                await self.set_first_collected(retr_doc)
                 await self.set_last_collected(retr_doc)
                 self.found_docs_total += 1
             case WorkItemOption.NEW_DOCUMENT:
