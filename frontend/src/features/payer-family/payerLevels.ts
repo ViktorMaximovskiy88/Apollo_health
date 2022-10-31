@@ -90,7 +90,8 @@ export const planTypeOptions = [
   { label: 'State Medicaid', value: 'STATE_MEDICAID' },
 ];
 
-export const payerTypeOptions = [
+export const backBoneLevelOptions = [
+  { label: 'Not Selected', value: 'Not Selected' },
   { label: 'Plan', value: 'plan' },
   { label: 'Formulary', value: 'formulary' },
   { label: 'UMP', value: 'ump' },

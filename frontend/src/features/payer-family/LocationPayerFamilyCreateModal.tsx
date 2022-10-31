@@ -2,12 +2,14 @@ import { Form, Input } from 'antd';
 import { useLazyGetPayerFamilyByNameQuery } from './payerFamilyApi';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
 import { useAddPayerFamilyMutation } from './payerFamilyApi';
+import { useLazyGetPayerBackboneByLIdQuery } from '../payer-backbone/payerBackboneApi';
 import { Modal } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
 import { useCallback } from 'react';
 import { PayerFamily } from './types';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
+import { compact } from 'lodash';
 
 interface PayerFamilyCreateModalPropTypes {
   location: DocDocumentLocation | undefined;
@@ -20,6 +22,8 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
   const { location, onClose, onSave, open } = props;
   const [form] = useForm();
   const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
+  const [getPayerName] = useLazyGetPayerBackboneByLIdQuery();
+
   const [addPayerFamily, { isLoading }] = useAddPayerFamilyMutation();
 
   const onFinish = useCallback(
@@ -31,6 +35,29 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
     [addPayerFamily, onSave, form]
   );
 
+  const onOk = useCallback(async () => {
+    let { payer_type, payer_ids, channels, benefits, plan_types, regions } =
+      form.getFieldsValue(true);
+    let getPayerNameVals = async () => {
+      const payers: any = [];
+      for (let i = 0; i < payer_ids.length; i++) {
+        const { data } = await getPayerName({ payerType: payer_type, id: payer_ids[i] });
+        payers.push(data?.name);
+      }
+      return payers;
+    };
+    let payerNames;
+    if (payer_ids && payer_ids[0] !== '') {
+      payerNames = await getPayerNameVals();
+    }
+    const newName = [regions, plan_types, benefits, channels, payerNames]
+      .filter((vals: any) => (!vals || vals.length === 0 ? false : true))
+      .join(' | ');
+    console.log(newName);
+    form.setFieldsValue({ name: newName });
+    form.submit();
+  }, [form, getPayerName]);
+
   if (!location) {
     return <></>;
   }
@@ -41,7 +68,7 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
       title={<>Add Payer Family for {location.site_name}</>}
       width="50%"
       okText="Submit"
-      onOk={form.submit}
+      onOk={onOk}
       onCancel={onClose}
     >
       <Form
@@ -59,17 +86,19 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
             <div>{location.site_name}</div>
           </div>
         </div>
-        <Form.Item
-          label="Name"
-          name="name"
-          rules={[
-            { required: true, message: 'Please input a payer family name' },
-            mustBeUnique(getPayerFamilyByName),
-          ]}
-        >
-          <Input />
-        </Form.Item>
-        <Input.Group className="space-x-2 flex"></Input.Group>
+        <Input.Group className="space-x-2 flex">
+          <Form.Item
+            label="Name"
+            name="name"
+            className="w-96 mr-5"
+            rules={[
+              { required: false, message: 'Please input a payer family name' },
+              mustBeUnique(getPayerFamilyByName),
+            ]}
+          >
+            <Input disabled={true} placeholder={'Custom Name will be generated'} />
+          </Form.Item>
+        </Input.Group>
 
         <PayerFamilyInfoForm />
       </Form>
@@ -82,6 +111,7 @@ function mustBeUnique(asyncValidator: Function) {
   return {
     async validator(_rule: Rule, value: string) {
       const { data: payerFamily } = await asyncValidator({ name: value });
+
       if (payerFamily) {
         return Promise.reject(`Payer family name "${payerFamily.name}" already exists`);
       }
