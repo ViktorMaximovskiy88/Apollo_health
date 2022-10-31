@@ -74,6 +74,7 @@ export function AddDocumentModal({
   const [docTitle, setDocTitle] = useState('Add new document');
   const [oldLocationSiteId, setOldLocationSiteId] = useState('');
   const [oldLocationDocId, setOldLocationDocId] = useState('');
+  const [isEditingDocFromOtherSite, setIsEditingDocFromOtherSite] = useState(false);
 
   const initialValues = buildInitialValues(oldVersion);
   if (docTitle !== 'Add New Version' && oldVersion) {
@@ -105,7 +106,7 @@ export function AddDocumentModal({
       newDocument.link_text = form.getFieldValue('link_text');
 
       if (oldLocationSiteId) {
-        newDocument.old_location_site_id = oldLocationSiteId;
+        newDocument.prev_location_site_id = oldLocationSiteId;
         newDocument.old_location_doc_id = oldLocationDocId;
       }
 
@@ -150,8 +151,13 @@ export function AddDocumentModal({
       url: responseData.url,
       link_text: responseData.link_text,
     });
-    setOldLocationSiteId(responseData.old_location_site_id);
-    setOldLocationDocId(responseData.old_location_doc_id);
+    if (responseData.old_location_doc_id) {
+      setOldLocationSiteId(responseData.prev_location_site_id);
+      setOldLocationDocId(responseData.old_location_doc_id);
+      setIsEditingDocFromOtherSite(true);
+    } else {
+      setIsEditingDocFromOtherSite(false);
+    }
   }
 
   return (
@@ -171,7 +177,10 @@ export function AddDocumentModal({
             siteId={siteId}
             setLocationValuesFromResponse={setLocationValuesFromResponse}
           />
-          <InternalDocument oldVersion={oldVersion} />
+          <InternalDocument
+            oldVersion={oldVersion}
+            isEditingDocFromOtherSite={isEditingDocFromOtherSite}
+          />
         </div>
 
         <div className="flex grow space-x-3">
@@ -181,10 +190,10 @@ export function AddDocumentModal({
             label="Document Name"
             rules={[{ required: true }]}
           >
-            <Input />
+            <Input disabled={isEditingDocFromOtherSite ? true : false} />
           </Form.Item>
-          <DocumentTypeItem />
-          <LanguageItem />
+          <DocumentTypeItem isEditingDocFromOtherSite={isEditingDocFromOtherSite} />
+          <LanguageItem isEditingDocFromOtherSite={isEditingDocFromOtherSite} />
         </div>
         <div className="flex grow space-x-3">
           <Form.Item className="grow" name="base_url" label="Base Url" rules={[{ type: 'url' }]}>
@@ -202,7 +211,7 @@ export function AddDocumentModal({
             <Input type="url" />
           </Form.Item>
         </div>
-        <DateItems />
+        <DateItems isEditingDocFromOtherSite={isEditingDocFromOtherSite} />
         <Form.Item>
           <Space>
             <Button type="primary" htmlType="submit">
@@ -287,19 +296,21 @@ function UploadItem(props: any) {
 }
 
 function InternalDocument(props: any) {
-  const { oldVersion } = props;
+  const { oldVersion, isEditingDocFromOtherSite } = props;
 
   return (
     <>
       <div className="mt-1">Internal Document&nbsp;</div>
       <Form.Item valuePropName="checked" className="grow" name="internal_document">
-        <Checkbox disabled={oldVersion ? true : false} />
+        <Checkbox disabled={isEditingDocFromOtherSite || oldVersion ? true : false} />
       </Form.Item>
     </>
   );
 }
 
-function DocumentTypeItem() {
+function DocumentTypeItem(props: any) {
+  const { isEditingDocFromOtherSite } = props;
+
   return (
     <Form.Item
       className="grow"
@@ -307,20 +318,24 @@ function DocumentTypeItem() {
       label="Document Type"
       rules={[{ required: true }]}
     >
-      <Select options={DocumentTypes} />
+      <Select options={DocumentTypes} disabled={isEditingDocFromOtherSite ? true : false} />
     </Form.Item>
   );
 }
 
-function LanguageItem() {
+function LanguageItem(props: any) {
+  const { isEditingDocFromOtherSite } = props;
+
   return (
     <Form.Item className="grow" name="lang_code" label="Language" rules={[{ required: true }]}>
-      <Select options={languageCodes} />
+      <Select options={languageCodes} disabled={isEditingDocFromOtherSite ? true : false} />
     </Form.Item>
   );
 }
 
 function DateItems(props: any) {
+  const { isEditingDocFromOtherSite } = props;
+
   let fields = [
     [
       {
@@ -370,6 +385,7 @@ function DateItems(props: any) {
                     showTime={false}
                     style={{ width: '100%' }}
                     format={(value) => prettyDate(value.toDate())}
+                    disabled={isEditingDocFromOtherSite ? true : false}
                   />
                 </Form.Item>
               );
