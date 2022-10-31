@@ -28,6 +28,7 @@ import { useAddDocumentMutation } from '../retrieved_documents/documentsApi';
 import { baseApiUrl, client } from '../../app/base-api';
 import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
 import { SiteDocDocument } from '../doc_documents/types';
+import moment from 'moment';
 
 interface AddDocumentModalPropTypes {
   oldVersion?: SiteDocDocument;
@@ -123,6 +124,8 @@ export function AddDocumentModal({
           ...newDocument,
           ...fileData,
         });
+        // TODO: On success but has duplicate file from OTHER site,
+        // display notice.
         if (refetch) {
           refetch();
         }
@@ -149,16 +152,14 @@ export function AddDocumentModal({
     form.setFieldsValue({
       name: responseData.doc_name,
       base_url: responseData.base_url,
-      url: responseData.url,
-      link_text: responseData.link_text,
       document_type: responseData.document_type,
       lang_code: responseData.lang_code,
-      effective_date: responseData.effective_date,
-      last_reviewed_date: responseData.last_reviewed_date,
-      last_updated_date: responseData.last_updated_date,
-      next_review_date: responseData.next_review_date,
-      next_update_date: responseData.next_update_date,
-      published_date: responseData.published_date,
+      effective_date: convertDate(responseData.effective_date),
+      last_reviewed_date: convertDate(responseData.last_reviewed_date),
+      last_updated_date: convertDate(responseData.last_updated_date),
+      next_review_date: convertDate(responseData.next_review_date),
+      next_update_date: convertDate(responseData.next_update_date),
+      published_date: convertDate(responseData.published_date),
     });
     if (responseData.prev_location_doc_id) {
       setOldLocationSiteId(responseData.prev_location_site_id);
@@ -342,6 +343,11 @@ function LanguageItem(props: any) {
   );
 }
 
+function convertDate(date?: string) {
+  if (date) return moment(date);
+  return undefined;
+}
+
 function DateItems(props: any) {
   const { isEditingDocFromOtherSite } = props;
 
@@ -381,6 +387,7 @@ function DateItems(props: any) {
       },
     ],
   ];
+
   return (
     <>
       {fields.map((section, i) => {

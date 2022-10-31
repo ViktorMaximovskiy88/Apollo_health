@@ -38,8 +38,10 @@ from backend.scrapeworker.common.models import DownloadContext, Request
 from backend.scrapeworker.file_parsers import parse_by_type
 
 
-def copy_location_to(location: RetrievedDocumentLocation, data: dict) -> dict:
-    data["base_url"] = location.base_url
+def copy_location_to(site: Site, location: RetrievedDocumentLocation, data: dict) -> dict:
+    # TODO: Implement select with site.base_urls options.
+    if site.base_urls:
+        data["base_url"] = site.base_urls[-1].url
     data["url"] = location.url
     data["link_text"] = location.link_text
     data["closest_heading"] = location.closest_heading
@@ -48,9 +50,30 @@ def copy_location_to(location: RetrievedDocumentLocation, data: dict) -> dict:
     data["url_indication_tags"] = location.url_indication_tags
     data["link_therapy_tags"] = location.link_therapy_tags
     data["link_indication_tags"] = location.link_indication_tags
-    data["old_location_site_id"] = location.site_id
-    data["first_collected_date"] = location.first_collected_date
-    data["last_collected_date"] = location.last_collected_date
+    data["prev_location_site_id"] = location.site_id
+    return data
+
+
+async def copy_doc_field_values(doc: RetrievedDocument, data: dict) -> dict:
+    # Add existing_doc metadata. Displayed, but not editable.
+    data["doc_name"] = doc.name
+    data["document_type"] = doc.document_type
+    data["lang_code"] = doc.lang_code
+    data["effective_date"] = doc.effective_date
+    data["last_reviewed_date"] = doc.last_reviewed_date
+    data["last_updated_date"] = doc.last_updated_date
+    data["next_review_date"] = doc.next_review_date
+    data["next_update_date"] = doc.next_update_date
+    data["published_date"] = doc.published_date
+    # Populate document form fields that are doc_doc only.
+    doc_doc: DocDocument | None = await DocDocument.find_one(
+        DocDocument.retrieved_document_id == doc.id
+    )
+    if doc_doc:
+        if doc_doc.internal_document:
+            data["internal_document"] = doc_doc.internal_document
+        if doc_doc.first_created_date:
+            data["first_created_date"] = doc_doc.first_created_date
     return data
 
 
@@ -155,6 +178,9 @@ async def read_document(
 # instead of creating new docs in scenario when doc exists in different location
 @router.post("/upload/{from_site_id}", dependencies=[Security(get_current_user)])
 async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> dict[str, Any]:
+    site: Site | None = await Site.find_one({"_id": from_site_id})
+    if not site:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Not able to upload document to site.")
     text_handler: TextHandler = TextHandler()
     content: bytes | str = await file.read()
     if isinstance(content, str):
@@ -179,8 +205,9 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
         # Doc with checksum and location exists on OTHER site.
         checksum_location: RetrievedDocumentLocation = doc.locations[-1]
         if checksum_location:
-            response["data"] = copy_location_to(checksum_location, response["data"])
-            response["data"]["old_location_doc_id"] = doc.id
+            response["data"] = copy_location_to(site, checksum_location, response["data"])
+            response["data"]["prev_location_doc_id"] = doc.id
+            response["data"] = await copy_doc_field_values(doc, response["data"])
             break
 
     with tempfile.NamedTemporaryFile(delete=True, suffix="." + file_extension) as tmp:
@@ -207,8 +234,9 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
             # Doc with checksum and location exists on OTHER site.
             text_checksum_location: RetrievedDocumentLocation = doc.locations[-1]
             if text_checksum_location:
-                response["data"] = copy_location_to(text_checksum_location, response["data"])
-                response["data"]["old_location_doc_id"] = doc.id
+                response["data"] = copy_location_to(site, text_checksum_location, response["data"])
+                response["data"]["prev_location_doc_id"] = doc.id
+                response["data"] = await copy_doc_field_values(doc, response["data"])
                 break
 
         response["data"] = {
@@ -269,9 +297,9 @@ async def add_document(
     now: datetime = datetime.now(tz=timezone.utc)
     link_text = uploaded_doc.metadata.get("link_text", None)
 
-    if uploaded_doc.old_location_doc_id:
+    if uploaded_doc.prev_location_doc_id:
         new_retr_document = await RetrievedDocument.find_one(
-            RetrievedDocument.id == PydanticObjectId(uploaded_doc.old_location_doc_id)
+            RetrievedDocument.id == PydanticObjectId(uploaded_doc.prev_location_doc_id)
         )
         if not new_retr_document:
             raise HTTPException(
@@ -303,7 +331,7 @@ async def add_document(
         prev_loc: DocDocumentLocation = next(
             loc
             for loc in new_doc_doc.locations
-            if uploaded_doc.old_location_site_id == f"{loc.site_id}"
+            if uploaded_doc.prev_location_site_id == f"{loc.site_id}"
         )
         if prev_loc.payer_family_id:
             new_doc_doc_loc.payer_family_id = prev_loc.payer_family_id
@@ -381,7 +409,7 @@ async def add_document(
 
     if not new_retr_document.lineage_id:
         new_retr_document.lineage_id = PydanticObjectId()
-    if not uploaded_doc.old_location_doc_id:
+    if not uploaded_doc.prev_location_doc_id:
         created_retr_doc: RetrievedDocument = await create_and_log(
             logger, current_user, new_retr_document
         )
