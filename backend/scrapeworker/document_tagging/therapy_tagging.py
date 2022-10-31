@@ -9,18 +9,19 @@ from backend.common.models.doc_document import TherapyTag
 from backend.common.models.site import FocusSectionConfig
 from backend.common.storage.client import ModelStorageClient
 from backend.scrapeworker.document_tagging.tag_focusing import FocusChecker
+from backend.common.core.config import config
 
 TRADEMARK_SYMBOLS = ["\u00AE", "\u2122", "\24C7"]
 
 
 class TherapyTagger:
-    def __init__(self) -> None:
+    def __init__(self, version="latest") -> None:
         self.nlp = None
         try:
             self.client = ModelStorageClient()
             self.tempdir = tempfile.TemporaryDirectory()
             dirname = self.tempdir.name
-            self.client.download_directory("rxnorm-span/latest", dirname)
+            self.client.download_directory(f"{version}/rxnorm-span", dirname)
             self.nlp = spacy.load(dirname)
             # This limit assumes the default large NER model is being used
             # We are not using this model so safe to bump limit
@@ -109,4 +110,4 @@ class TherapyTagger:
         return list(tags), list(url_tags), list(link_tags)
 
 
-therapy_tagger = TherapyTagger()
+therapy_tagger = TherapyTagger(version=config["MODEL_VERSION"])

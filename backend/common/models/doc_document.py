@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 import pymongo
 from beanie import Indexed, PydanticObjectId
@@ -46,6 +47,7 @@ class BaseDocDocument(BaseModel):
     internal_document: bool | None = None
 
     document_family_id: PydanticObjectId | None = None
+    previous_par_id: UUID | None = None
 
     # Extracted Dates
     effective_date: datetime | None = None
@@ -116,6 +118,7 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     document_type: str | None = None
     lang_code: LangCode | None = None
     document_family_id: PydanticObjectId | None = None
+    previous_par_id: UUID | None = None
 
     classification_status: ApprovalStatus | None = None
     classification_lock: TaskLock | None = None

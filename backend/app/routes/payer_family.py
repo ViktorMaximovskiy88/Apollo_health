@@ -1,3 +1,4 @@
+import re
 from typing import Type
 
 from beanie import PydanticObjectId
@@ -55,7 +56,13 @@ async def read_payer_families(
 async def read_payer_family_by_name(
     name: str,
 ):
-    payer_family = await PayerFamily.find_one({"name": name})
+    new_name = re.escape(name)
+    print("new_name", new_name)
+    payer_family = await PayerFamily.find(
+        {"name": {"$regex": f"^{new_name}$", "$options": "i"}}
+    ).first_or_none()
+
+    print("payer_family", payer_family)
     return payer_family
 
 

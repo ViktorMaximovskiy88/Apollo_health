@@ -1,7 +1,12 @@
-import { Form, Input } from 'antd';
+import { Checkbox, Form, Input } from 'antd';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
-import { useUpdatePayerFamilyMutation, useLazyGetPayerFamilyQuery } from './payerFamilyApi';
+import {
+  useUpdatePayerFamilyMutation,
+  useLazyGetPayerFamilyQuery,
+  useLazyGetPayerFamilyByNameQuery,
+} from './payerFamilyApi';
 import { Modal } from 'antd';
+import { Rule } from 'antd/lib/form';
 import { useForm } from 'antd/lib/form/Form';
 import { useCallback, useEffect, useState } from 'react';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
@@ -19,6 +24,8 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
   const { location, onClose, onSave, open, payer_family_id } = props;
   const [form] = useForm();
   const [getPayerFamily] = useLazyGetPayerFamilyQuery();
+  const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
+
   const [updatePayerFamily, { isLoading }] = useUpdatePayerFamilyMutation();
   const [initialPayerOptions, setInitialPayerOptions] = useState<any>([]);
 
@@ -35,6 +42,7 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
           benefits: data.benefits,
           plan_types: data.plan_types,
           regions: data.regions,
+          custom_name: true,
         });
         setInitialPayerOptions(data.payer_ids);
       }
@@ -42,6 +50,7 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
     fetchCurrentPayerFamilyVals();
   }, [form, getPayerFamily, payer_family_id, open]);
 
+  console.log(payer_family_id);
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
       let elem = values.payer_ids?.slice(0, 1);
@@ -50,7 +59,6 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
         // @ts-ignore
         values.payer_ids = values.payer_ids?.map((val) => val.value);
       }
-      console.log(values.payer_ids);
       const payerFamily = await updatePayerFamily({ ...values, _id: payer_family_id }).unwrap();
       onSave(payerFamily._id);
       form.resetFields();
@@ -91,14 +99,46 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
         <Form.Item
           label="Name"
           name="name"
-          rules={[{ required: true, message: 'Please input a payer family name' }]}
+          className="w-96 mr-5"
+          dependencies={['custom_name']}
+          rules={[
+            { required: true, message: 'Please input a payer family name' },
+            mustBeUnique(getPayerFamilyByName, payer_family_id),
+          ]}
         >
           <Input />
         </Form.Item>
-        <Input.Group className="space-x-2 flex"></Input.Group>
+        {form.getFieldValue('custom_name') ? 'Custom name will be generated on submission' : ''}
+        <Input.Group className="space-x-2 flex">
+          <Form.Item valuePropName="checked" name="custom_name">
+            <Checkbox>Auto Generate</Checkbox>
+          </Form.Item>
+        </Input.Group>
 
         <PayerFamilyInfoForm initialPayerOptions={initialPayerOptions} />
       </Form>
     </Modal>
   );
 };
+
+// asyncValidator because rtk query makes this tough without hooks/dispatch
+function mustBeUnique(asyncValidator: Function, currentPayerFamilyId: string) {
+  return {
+    async validator(_rule: Rule, value: string) {
+      const { data: payerFamily } = await asyncValidator({ name: value });
+
+      if (!payerFamily) {
+        return Promise.resolve();
+      }
+      if (
+        currentPayerFamilyId === payerFamily._id &&
+        value !== payerFamily.name.toLowerCase() &&
+        value !== payerFamily.name.toUpperCase()
+      ) {
+        return Promise.resolve();
+      } else {
+        return Promise.reject(`Payer family name "${payerFamily.name}" already exists`);
+      }
+    },
+  };
+}

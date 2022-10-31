@@ -12,7 +12,7 @@ from scispacy.linking_utils import KnowledgeBase
 
 from backend.common.models.translation_config import TranslationRule
 from backend.common.storage.client import ModelStorageClient
-
+from backend.common.core.config import config
 
 class RxNormEntityLinkerModel:
     def __init__(self, version="latest"):
@@ -21,7 +21,7 @@ class RxNormEntityLinkerModel:
             self.client = ModelStorageClient()
             self.tempdir = tempfile.TemporaryDirectory()
             dirname = self.tempdir.name
-            self.client.download_directory(f"rxnorm/{version}", dirname)
+            self.client.download_directory(f"{version}/rxnorm", dirname)
             DEFAULT_PATHS[f"RxNorm_{version}"] = LinkerPaths(
                 ann_index=f"{dirname}/nmslib_index.bin",
                 tfidf_vectorizer=f"{dirname}/tfidf_vectorizer.joblib",
@@ -263,4 +263,4 @@ class RxNormEntityLinkerModel:
         return best_candidates
 
 
-rxnorm_linker = RxNormEntityLinkerModel()
+rxnorm_linker = RxNormEntityLinkerModel(version=config["MODEL_VERSION"])

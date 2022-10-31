@@ -6,7 +6,7 @@ import { PayerFamily } from '../payer-family/types';
 import { useGetPayerFamiliesQuery } from '../payer-family/payerFamilyApi';
 import { TextEllipsis } from '../../components';
 import { LinkIcon } from '../../components/LinkIcon';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 interface DocDocumentLocationFormTypes {
   documentType: string;
@@ -47,8 +47,9 @@ export const DocDocumentLocationForm = ({
   const baseUrl = Form.useWatch(['locations', index, 'base_url']);
   const url = Form.useWatch(['locations', index, 'url']);
 
-  setEditPayerFamilyId(form.getFieldValue(['locations', 0, 'payer_family_id']));
-
+  useEffect(() => {
+    setEditPayerFamilyId(form.getFieldValue(['locations', 0, 'payer_family_id']));
+  }, [setEditPayerFamilyId, form]);
   return (
     <div className="property-grid bg-white p-2 mb-4">
       {/* Our header is separate due to styles */}

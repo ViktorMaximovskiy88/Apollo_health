@@ -1,9 +1,12 @@
 import asyncio
+import tempfile
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from random import shuffle
 from typing import AsyncGenerator, Coroutine
 from urllib.parse import urlparse
 
+import fitz
 from async_lru import alru_cache
 from beanie.odm.operators.update.general import Inc
 from playwright.async_api import Browser, BrowserContext, Cookie, Dialog, Page, ProxySettings
@@ -39,8 +42,8 @@ from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocs
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.scrapeworker.common.update_documents import DocumentUpdater
-from backend.scrapeworker.common.utils import get_extension_from_path_like
-from backend.scrapeworker.file_parsers import parse_by_type
+from backend.scrapeworker.common.utils import get_extension_from_path_like, supported_mimetypes
+from backend.scrapeworker.file_parsers import parse_by_type, pdf
 from backend.scrapeworker.playbook import ScrapePlaybook
 from backend.scrapeworker.scrapers import ScrapeHandler
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
@@ -110,6 +113,27 @@ class ScrapeWorker:
         self.seen_hashes.add(hash)
         return True
 
+    async def html_to_pdf(self, url: str, download: DownloadContext, checksum: str, temp_path: str):
+        dest_path = f"{checksum}.{download.file_extension}.pdf"
+        if download.direct_scrape:
+            html_doc = fitz.Document(temp_path)
+            pdf_bytes: bytes = html_doc.convert_to_pdf()
+            with tempfile.NamedTemporaryFile() as pdf_temp:
+                pdf_temp.write(pdf_bytes)
+                yield pdf_temp.name
+            self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
+        else:
+            async with self.playwright_context(url, download.request.cookies) as (
+                page,
+                _context,
+            ):
+                await page.goto(url, wait_until="domcontentloaded")
+                pdf_bytes = await page.pdf(display_header_footer=False, print_background=True)
+                with tempfile.NamedTemporaryFile() as pdf_temp:
+                    pdf_temp.write(pdf_bytes)
+                    yield pdf_temp.name
+                self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
+
     def get_updated_tags(
         self,
         existing_doc: RetrievedDocument,
@@ -147,11 +171,14 @@ class ScrapeWorker:
         return new_therapy_tags, new_indicate_tags
 
     async def attempt_download(self, download: DownloadContext):
+        # TODO: This function keeps getting added to.
+        # Maybe turn this into a class after our deadlines...
         url = download.request.url
         proxies = await self.get_proxy_settings()
         link_retrieved_task: LinkRetrievedTask = link_retrieved_task_from_download(
             download, self.scrape_task
         )
+        scrape_method_config = self.site.scrape_method_configuration
         # prob our fail
         async for (temp_path, checksum) in self.downloader.try_download_to_tempfile(
             download, proxies
@@ -166,10 +193,15 @@ class ScrapeWorker:
                 await link_retrieved_task.save()
                 break
 
+            if download.mimetype not in supported_mimetypes:
+                self.log.error(f"Mimetype not supported {download.mimetype}")
+                await link_retrieved_task.save()
+                break
+
             # TODO can we separate the concept of extensions to scrape on
             # and ext we expect to download? for now just html
             if download.file_extension == "html" and (
-                "html" not in self.site.scrape_method_configuration.document_extensions
+                "html" not in scrape_method_config.document_extensions
                 and self.site.scrape_method != "HtmlScrape"
             ):
                 self.log.error("Received an unexpected html response")
@@ -181,8 +213,8 @@ class ScrapeWorker:
             parsed_content = await parse_by_type(
                 temp_path,
                 download,
-                focus_config=self.site.scrape_method_configuration.focus_section_configs,
-                scrape_method_config=self.site.scrape_method_configuration,
+                focus_config=scrape_method_config.focus_section_configs,
+                scrape_method_config=scrape_method_config,
             )
 
             if parsed_content is None:
@@ -197,18 +229,20 @@ class ScrapeWorker:
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
 
             if download.file_extension == "html" and (
-                "html" in self.site.scrape_method_configuration.document_extensions
+                "html" in scrape_method_config.document_extensions
                 or self.site.scrape_method == "HtmlScrape"
             ):
-                target_url = url if not download.direct_scrape else f"file://{temp_path}"
-                async with self.playwright_context(target_url, download.request.cookies) as (
-                    page,
-                    _context,
-                ):
-                    dest_path = f"{checksum}.{download.file_extension}.pdf"
-                    await page.goto(target_url, wait_until="domcontentloaded")
-                    pdf_bytes = await page.pdf(display_header_footer=False, print_background=True)
-                    self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
+                async for pdf_path in self.html_to_pdf(url, download, checksum, temp_path):
+                    converted_pdf_parsed_content = await pdf.PdfParse(
+                        pdf_path,
+                        url,
+                        link_text=download.metadata.link_text,
+                        focus_config=scrape_method_config.focus_section_configs,
+                    ).parse()
+                    parsed_content["therapy_tags"] = converted_pdf_parsed_content["therapy_tags"]
+                    parsed_content["indication_tags"] = converted_pdf_parsed_content[
+                        "indication_tags"
+                    ]
 
             if download.file_extension == "html":
                 text_checksum = hash_full_text(parsed_content["text"])
@@ -258,6 +292,7 @@ class ScrapeWorker:
             await asyncio.gather(
                 self.scrape_task.update(
                     {
+                        "$set": {"last_doc_collected": datetime.now(tz=timezone.utc)},
                         "$inc": {"documents_found": 1},
                         "$push": {"retrieved_document_ids": document.id},
                     }

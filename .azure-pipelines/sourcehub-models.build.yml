@@ -1,0 +1,23 @@
+steps:
+
+  - task: AWSShellScript@1
+    displayName: Build Models
+    inputs:
+      awsCredentials: 'Apollo-AWS-Dev-Apollo'
+      regionName: 'us-east-1'
+      scriptType: 'inline'
+      inlineScript: |
+        set -e
+        HOST_MODEL_BUILD=$BUILD_ARTIFACTSTAGINGDIRECTORY/modelbuild
+        CONTAINER_MODEL_BUILD=/home/user/modelbuild/
+        BUILD_VERSION="$(Build.BuildNumber)"
+        echo $HOST_MODEL_BUILD
+        echo $CONTAINER_MODEL_BUILD
+        docker run -id --name modelbuild --env ENV_TYPE=dev --env S3_ENDPOINT_URL=s3.us-east-1.amazonaws.com --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY --env AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN --env S3_DOCUMENT_BUCKET=apollo-dev-docrepo-use1-mmit-s3-01 sourcehub-app:latest
+        docker exec modelbuild bash -lc ". ./venv/bin/activate && python parseworker/scripts/build_rxnorm_linker.py $CONTAINER_MODEL_BUILD && python parseworker/scripts/build_rxnorm_span_ruler.py $CONTAINER_MODEL_BUILD"
+        docker cp modelbuild:$CONTAINER_MODEL_BUILD $HOST_MODEL_BUILD
+        docker stop modelbuild
+  
+  - publish: $(Build.ArtifactStagingDirectory)/modelbuild
+    artifact: models
+    displayName: Publish Artifact (Models)

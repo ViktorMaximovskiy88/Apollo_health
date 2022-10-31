@@ -8,6 +8,7 @@ from playwright.async_api import BrowserContext, Page
 from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.playbook import PlaybookContext
+from backend.scrapeworker.scrapers.apps_humana_com import AppsHumanaComScraper
 from backend.scrapeworker.scrapers.aspnet_webform import AspNetWebFormScraper
 from backend.scrapeworker.scrapers.direct_download import (
     DirectDownloadScraper,
@@ -21,6 +22,7 @@ scrapers: list[Type[PlaywrightBaseScraper]] = [
     DirectDownloadScraper,
     JavascriptClick,
     TargetedHtmlScraper,
+    AppsHumanaComScraper,
 ]
 
 

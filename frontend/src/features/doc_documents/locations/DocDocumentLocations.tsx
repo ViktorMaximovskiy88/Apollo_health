@@ -37,35 +37,39 @@ export const DocDocumentLocations = ({ docDocument, locations }: DocDocumentLoca
           }}
         />
       ))}
+      {createModalOpen ? (
+        <PayerFamilyCreateModal
+          location={locations[selectedIndex]}
+          open={createModalOpen}
+          onSave={(payerFamilyId: string) => {
+            form.setFieldValue(['locations', selectedIndex, 'payer_family_id'], payerFamilyId);
+            setCreateModalOpen(false);
+            setEditPayerFamilyId(payerFamilyId);
+            setSelectedLocationIndex(-1);
+          }}
+          onClose={() => {
+            setCreateModalOpen(false);
+            setSelectedLocationIndex(-1);
+          }}
+        />
+      ) : null}
 
-      <PayerFamilyCreateModal
-        location={locations[selectedIndex]}
-        open={createModalOpen}
-        onSave={(payerFamilyId: string) => {
-          form.setFieldValue(['locations', selectedIndex, 'payer_family_id'], payerFamilyId);
-          setCreateModalOpen(false);
-          setSelectedLocationIndex(-1);
-        }}
-        onClose={() => {
-          setCreateModalOpen(false);
-          setSelectedLocationIndex(-1);
-        }}
-      />
-
-      <PayerFamilyEditModal
-        location={locations[selectedIndex]}
-        payer_family_id={editPayerFamilyId}
-        open={editModalOpen}
-        onSave={(payerFamilyId: string) => {
-          form.setFieldValue(['locations', selectedIndex, 'payer_family_id'], payerFamilyId);
-          setEditModalOpen(false);
-          setSelectedLocationIndex(-1);
-        }}
-        onClose={() => {
-          setEditModalOpen(false);
-          setSelectedLocationIndex(-1);
-        }}
-      />
+      {editModalOpen ? (
+        <PayerFamilyEditModal
+          location={locations[selectedIndex]}
+          payer_family_id={editPayerFamilyId}
+          open={editModalOpen}
+          onSave={(payerFamilyId: string) => {
+            form.setFieldValue(['locations', selectedIndex, 'payer_family_id'], payerFamilyId);
+            setEditModalOpen(false);
+            setSelectedLocationIndex(-1);
+          }}
+          onClose={() => {
+            setEditModalOpen(false);
+            setSelectedLocationIndex(-1);
+          }}
+        />
+      ) : null}
     </div>
   );
 };

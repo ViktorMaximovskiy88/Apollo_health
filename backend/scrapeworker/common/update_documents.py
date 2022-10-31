@@ -161,7 +161,7 @@ class DocumentUpdater:
             # Can be removed after text added to older docs
             doc_document.text_checksum = retrieved_document.text_checksum
             doc_document.last_collected_date = retrieved_document.last_collected_date
-
+            doc_document.set_final_effective_date()
             await doc_document.save()
         else:
             await self.create_doc_document(retrieved_document)

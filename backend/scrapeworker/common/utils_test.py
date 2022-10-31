@@ -5,6 +5,7 @@ from backend.scrapeworker.common.utils import (
     get_extension_from_content_type,
     get_extension_from_file_mimetype,
     get_extension_from_path_like,
+    normalize_url,
 )
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -77,3 +78,71 @@ def test_get_extension_from_file_mimetype_non_match():
     file_path = os.path.join(fixture_path, "music.mp3")
     result = get_extension_from_file_mimetype(file_path)
     assert result is None
+
+
+def test_normalize_url_none_base_tag():
+    base = "https://a.com"
+    url = "Docs/test.xlsx"
+    base_tag_href = None
+    result = normalize_url(base, url, base_tag_href)
+    assert result == "https://a.com/Docs/test.xlsx"
+
+
+def test_normalize_url_empty_base_tag():
+    base = "https://a.com"
+    url = "Docs/test.xlsx"
+    base_tag_href = ""
+    result = normalize_url(base, url, base_tag_href)
+    assert result == "https://a.com/Docs/test.xlsx"
+
+
+def test_normalize_url_root_base_tag():
+    base = "https://a.com"
+    url = "Docs/test.xlsx"
+    base_tag_href = "/"
+    result = normalize_url(base, url, base_tag_href)
+    assert result == "https://a.com/Docs/test.xlsx"
+
+
+def test_normalize_url_from_path_base_tag_from_root():
+    base = "https://a.com/noroot"
+    url = "Docs/test.xlsx"
+    base_tag_href = "/"
+    result = normalize_url(base, url, base_tag_href)
+    assert result == "https://a.com/Docs/test.xlsx"
+
+
+def test_normalize_url_from_path_relative_url_base_tag_root():
+    base = "https://a.com/noroot"
+    url = "../Docs/test.xlsx"
+    base_tag_href = "/"
+    result = normalize_url(base, url, base_tag_href)
+    assert result == "https://a.com/Docs/test.xlsx"
+
+
+def test_normalize_url_from_path_relative_url_base_tag_none():
+    base = "https://a.com/noroot"
+    url = "../Docs/test.xlsx"
+    result = normalize_url(base, url)
+    assert result == "https://a.com/Docs/test.xlsx"
+
+
+def test_normalize_url_from_nested_path_relative_url_base_tag_none():
+    base = "https://a.com/noroot/anotherone"
+    url = "Docs/test.xlsx"
+    result = normalize_url(base, url)
+    assert result == "https://a.com/noroot/Docs/test.xlsx"
+
+
+def test_normalize_url_from_nested_path_absolute_url_base_tag_none():
+    base = "https://a.com/noroot/anotherone"
+    url = "/Docs/test.xlsx"
+    result = normalize_url(base, url)
+    assert result == "https://a.com/Docs/test.xlsx"
+
+
+def test_normalize_url_with_different_domains():
+    base = "https://a.com/noroot/anotherone"
+    url = "https://b.com/groot/page.html"
+    result = normalize_url(base, url)
+    assert result == "https://b.com/groot/page.html"

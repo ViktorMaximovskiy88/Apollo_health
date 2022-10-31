@@ -1,10 +1,10 @@
 from functools import cached_property
-from urllib.parse import urljoin
 
 from playwright.async_api import ElementHandle, Page
 
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.selectors import filter_by_hidden_value, filter_by_href, to_xpath
+from backend.scrapeworker.common.utils import normalize_url
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 
 
@@ -51,34 +51,16 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
         resource_attr: str = "href",
     ) -> None:
         link_handle: ElementHandle
+
+        base_tag = await self.page.query_selector("head base")
+        base_tag_href = None
+        if base_tag:
+            base_tag_href = await base_tag.get_attribute("href")
+
         for link_handle in link_handles:
             metadata: Metadata = await self.extract_metadata(link_handle, resource_attr)
-
-            # TODO iterate on this logic
-            # cases '../abc' '/abc' 'abc' 'https://a.com/abc' 'http://a.com/abc' '//a.com/abc'
-            # anchor targets can change behavior
-            url = (
-                f"/{metadata.resource_value}"
-                if metadata.anchor_target
-                and metadata.anchor_target == "_blank"
-                and not (
-                    metadata.resource_value.startswith("http")
-                    or metadata.resource_value.startswith("/")
-                )
-                else metadata.resource_value
-            )
-
-            downloads.append(
-                DownloadContext(
-                    metadata=metadata,
-                    request=Request(
-                        url=urljoin(
-                            base_url,
-                            url,
-                        ),
-                    ),
-                )
-            )
+            url = normalize_url(base_url, metadata.resource_value, base_tag_href)
+            downloads.append(DownloadContext(metadata=metadata, request=Request(url=url)))
 
     async def scrape_and_queue(self, downloads: list[DownloadContext], page: Page) -> None:
         link_handles = await page.query_selector_all(self.css_selector)

@@ -279,7 +279,7 @@ async def version_doc_doc(
         raise Exception(f"DocDocument {doc_analysis.retrieved_document_id} does not exists")
 
     # Don't modify DocDocument Lineage if Lineage is Already Approved
-    if doc.classification_status == ApprovalStatus.APPROVED:
+    if doc.classification_status == ApprovalStatus.APPROVED and doc.lineage_id:
         return doc
 
     doc.lineage_id = doc_analysis.lineage_id
