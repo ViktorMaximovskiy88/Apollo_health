@@ -301,7 +301,9 @@ async def add_document(
             context_metadata=uploaded_doc.metadata,
         )
         prev_loc: DocDocumentLocation = next(
-            loc for loc in new_doc_doc.locations if uploaded_doc.old_location_site_id == loc.site_id
+            loc
+            for loc in new_doc_doc.locations
+            if uploaded_doc.old_location_site_id == f"{loc.site_id}"
         )
         if prev_loc.payer_family_id:
             new_doc_doc_loc.payer_family_id = prev_loc.payer_family_id
