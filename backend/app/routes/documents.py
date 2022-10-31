@@ -38,11 +38,21 @@ from backend.scrapeworker.common.models import DownloadContext, Request
 from backend.scrapeworker.file_parsers import parse_by_type
 
 
-def copy_location_to(location: RetrievedDocumentLocation, data: dict) -> dict:
-    # TODO: Copy doc info like effective date
-    data["base_url"] = location.base_url
-    data["url"] = location.url
-    data["link_text"] = location.link_text
+def copy_location_to(
+    uploaded_doc: UploadFile, location: RetrievedDocumentLocation, data: dict
+) -> dict:
+    if uploaded_doc.base_url:
+        data["base_url"] = uploaded_doc.base_url
+    else:
+        data["base_url"] = location.base_url
+    if uploaded_doc.url:
+        data["url"] = uploaded_doc.url
+    else:
+        data["url"] = location.url
+    if uploaded_doc.link_text:
+        data["link_text"] = uploaded_doc.link_text
+    else:
+        data["link_text"] = location.link_text
     data["closest_heading"] = location.closest_heading
     data["siblings_text"] = location.siblings_text
     data["url_therapy_tags"] = location.url_therapy_tags
@@ -180,7 +190,7 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
         # Doc with checksum and location exists on OTHER site.
         checksum_location: RetrievedDocumentLocation = doc.locations[-1]
         if checksum_location:
-            response["data"] = copy_location_to(checksum_location, response["data"])
+            response["data"] = copy_location_to(file, checksum_location, response["data"])
             response["data"]["old_location_doc_id"] = doc.id
             break
 
@@ -208,7 +218,7 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
             # Doc with checksum and location exists on OTHER site.
             text_checksum_location: RetrievedDocumentLocation = doc.locations[-1]
             if text_checksum_location:
-                response["data"] = copy_location_to(text_checksum_location, response["data"])
+                response["data"] = copy_location_to(file, text_checksum_location, response["data"])
                 response["data"]["old_location_doc_id"] = doc.id
                 break
 
@@ -314,6 +324,7 @@ async def add_document(
         new_retr_document: RetrievedDocument = RetrievedDocument(
             checksum=uploaded_doc.checksum,
             content_type=uploaded_doc.content_type,
+            internal_document=uploaded_doc.internal_document,
             doc_type_confidence=uploaded_doc.doc_type_confidence,
             document_type=uploaded_doc.document_type,
             effective_date=uploaded_doc.effective_date,
@@ -389,6 +400,13 @@ async def add_document(
     else:
         created_retr_doc = new_retr_document
         created_doc_doc = new_doc_doc
+    # TODO:
+    # For “add new version” scenario we need to calculate delta between
+    # Indication/Therapy Tags of the previous document version and new document version.
+    # The function that calculates this delta is
+    # backend/common/services/tag_compare.py TagCompare
+    # tag_compare = TagCompare()
+    # tag_compare.execute(doc=newer_doc, prev_doc=older_doc)
     if uploaded_doc.upload_new_version_for_id:
         if original_doc_doc.document_family_id:
             created_doc_doc.document_family_id = original_doc_doc.document_family_id
