@@ -107,7 +107,7 @@ export function AddDocumentModal({
 
       if (oldLocationSiteId) {
         newDocument.prev_location_site_id = oldLocationSiteId;
-        newDocument.old_location_doc_id = oldLocationDocId;
+        newDocument.prev_location_doc_id = oldLocationDocId;
       }
 
       // For some reason, fileData never updates if browser auto fills.
@@ -147,13 +147,22 @@ export function AddDocumentModal({
 
   function setLocationValuesFromResponse(responseData: any) {
     form.setFieldsValue({
+      name: responseData.doc_name,
       base_url: responseData.base_url,
       url: responseData.url,
       link_text: responseData.link_text,
+      document_type: responseData.document_type,
+      lang_code: responseData.lang_code,
+      effective_date: responseData.effective_date,
+      last_reviewed_date: responseData.last_reviewed_date,
+      last_updated_date: responseData.last_updated_date,
+      next_review_date: responseData.next_review_date,
+      next_update_date: responseData.next_update_date,
+      published_date: responseData.published_date,
     });
-    if (responseData.old_location_doc_id) {
+    if (responseData.prev_location_doc_id) {
       setOldLocationSiteId(responseData.prev_location_site_id);
-      setOldLocationDocId(responseData.old_location_doc_id);
+      setOldLocationDocId(responseData.prev_location_doc_id);
       setIsEditingDocFromOtherSite(true);
     } else {
       setIsEditingDocFromOtherSite(false);
