@@ -38,21 +38,10 @@ from backend.scrapeworker.common.models import DownloadContext, Request
 from backend.scrapeworker.file_parsers import parse_by_type
 
 
-def copy_location_to(
-    uploaded_doc: UploadFile, location: RetrievedDocumentLocation, data: dict
-) -> dict:
-    if uploaded_doc.base_url:
-        data["base_url"] = uploaded_doc.base_url
-    else:
-        data["base_url"] = location.base_url
-    if uploaded_doc.url:
-        data["url"] = uploaded_doc.url
-    else:
-        data["url"] = location.url
-    if uploaded_doc.link_text:
-        data["link_text"] = uploaded_doc.link_text
-    else:
-        data["link_text"] = location.link_text
+def copy_location_to(location: RetrievedDocumentLocation, data: dict) -> dict:
+    data["base_url"] = location.base_url
+    data["url"] = location.url
+    data["link_text"] = location.link_text
     data["closest_heading"] = location.closest_heading
     data["siblings_text"] = location.siblings_text
     data["url_therapy_tags"] = location.url_therapy_tags
@@ -190,7 +179,7 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
         # Doc with checksum and location exists on OTHER site.
         checksum_location: RetrievedDocumentLocation = doc.locations[-1]
         if checksum_location:
-            response["data"] = copy_location_to(file, checksum_location, response["data"])
+            response["data"] = copy_location_to(checksum_location, response["data"])
             response["data"]["old_location_doc_id"] = doc.id
             break
 
@@ -218,7 +207,7 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
             # Doc with checksum and location exists on OTHER site.
             text_checksum_location: RetrievedDocumentLocation = doc.locations[-1]
             if text_checksum_location:
-                response["data"] = copy_location_to(file, text_checksum_location, response["data"])
+                response["data"] = copy_location_to(text_checksum_location, response["data"])
                 response["data"]["old_location_doc_id"] = doc.id
                 break
 
@@ -312,7 +301,7 @@ async def add_document(
             context_metadata=uploaded_doc.metadata,
         )
         prev_loc: DocDocumentLocation = next(
-            loc for loc in new_doc_doc.locations if uploaded_doc.old_location_doc_id == loc.site_id
+            loc for loc in new_doc_doc.locations if uploaded_doc.old_location_site_id == loc.site_id
         )
         if prev_loc.payer_family_id:
             new_doc_doc_loc.payer_family_id = prev_loc.payer_family_id
