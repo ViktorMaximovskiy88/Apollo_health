@@ -74,7 +74,7 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
     <Drawer
       open={open}
       title={<>Edit Payer Family for {location.site_name}</>}
-      width="20%"
+      width="30%"
       placement="left"
       closable={false}
       mask={false}
