@@ -2,10 +2,10 @@ import { Button } from 'antd';
 import { useGetDocDocumentQuery, useUpdateDocDocumentMutation } from './docDocumentApi';
 import { DocDocumentEditForm } from './DocDocumentEditForm';
 import { RetrievedDocumentViewer } from '../retrieved_documents/RetrievedDocumentViewer';
-import { MainLayout } from '../../components';
+import { MainLayout, Notification } from '../../components';
 import { useForm } from 'antd/lib/form/Form';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { WarningFilled } from '@ant-design/icons';
 import { DocDocument } from './types';
 
@@ -18,11 +18,27 @@ export function DocDocumentEditPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [pageNumber, setPageNumber] = useState(0);
-  const [updateDocDocumentMutation] = useUpdateDocDocumentMutation();
+  const [updateDocDocumentMutation, { status, isSuccess, isError }] =
+    useUpdateDocDocumentMutation();
   const updateDocDocument = async (doc: Partial<DocDocument>): Promise<void> => {
     await updateDocDocumentMutation(doc);
     navigate(-1);
   };
+
+  useEffect(() => {
+    if (isSuccess && status === 'fulfilled') {
+      Notification('success', 'Success', 'Document updated successfully');
+    }
+  }, [isSuccess, status]);
+  useEffect(() => {
+    if (isError && status === 'rejected') {
+      Notification(
+        'error',
+        'Something went wrong!',
+        'An error occured while updating the document!'
+      );
+    }
+  }, [isError, status]);
 
   if (!doc || !docId) return null;
 
