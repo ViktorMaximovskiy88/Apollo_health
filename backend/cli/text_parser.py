@@ -19,7 +19,6 @@ log = logging.getLogger(__name__)
 @click.option("--file", help="File to parse", required=True, type=str)
 @click.option("--type", help="Parser to use", default="default", type=str)
 async def text_parser(ctx, file: str, type: str):
-    print(file, type)
     if type == "mu-smart":
         ctx.obj = {"parser": MuPdfSmartParse(file_path=file, url=f"file://{file}")}
     elif type == "mu":
