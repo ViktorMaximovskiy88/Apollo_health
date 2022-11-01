@@ -12,5 +12,5 @@ export const calculateFinalEffectiveFromValues = (values: any) => {
     computeFromFields.length > 0
       ? maxBy(computeFromFields, (date) => date.unix())
       : values.first_collected_date;
-  return finalEffectiveDate.startOf('day');
+  return finalEffectiveDate?.startOf('day');
 };
