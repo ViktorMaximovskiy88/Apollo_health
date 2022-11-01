@@ -235,7 +235,7 @@ class DateParser:
         prev_label = ""
         ends_with_comma = False
         for line in text.split("\n"):
-            if re.fullmatch(r"([^A-z]+)*references?", line.strip(), re.IGNORECASE):
+            if re.fullmatch(r"references?", line.strip(), re.IGNORECASE):
                 break
             latest_match = 0  # Latest date match on current line
             if self.exclude_text(line):
