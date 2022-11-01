@@ -1,5 +1,5 @@
 import { DeleteFilled, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Checkbox, Collapse, Form, Input, Select } from 'antd';
+import { Button, Checkbox, Collapse, Form, Input, Select, Tabs } from 'antd';
 import { FormInstance } from 'antd/lib/form/Form';
 import { Tab } from 'rc-tabs/lib/interface';
 import { ReactNode, useCallback, useState } from 'react';
@@ -11,7 +11,6 @@ import { useGetSiteQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
 import { RemoteSelect } from '../../components/RemoteSelect';
 import { TranslationConfig } from './types';
 import { CommentWall } from '../comments/CommentWall';
-import { HashRoutedTabs } from '../../components/HashRoutedTabs';
 
 function TranslationFormContainer(props: { children: ReactNode }) {
   return <div className="max-w-xl">{props.children}</div>;
@@ -603,7 +602,7 @@ export function TranslationForm(props: {
       onFinish={props.onFinish}
       initialValues={props.initialValues}
     >
-      <HashRoutedTabs className="h-full ant-tabs-scroll" items={tabs} />
+      <Tabs className="h-full ant-tabs-scroll" items={tabs} />
     </Form>
   );
 }

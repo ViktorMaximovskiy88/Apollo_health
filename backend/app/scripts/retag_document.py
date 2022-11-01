@@ -60,7 +60,7 @@ class ReTagger:
             "$set": {
                 "therapy_tags": [t.dict() for t in therapy_tags],
                 "indication_tags": [i.dict() for i in indication_tags],
-                "doc_vectors": doc_vectors.tolist(),
+                "doc_vectors": doc_vectors,
                 "locations.$.url_therapy_tags": [t.dict() for t in url_therapy_tags],
                 "locations.$.link_therapy_tags": [t.dict() for t in link_therapy_tags],
                 "locations.$.url_indication_tags": [i.dict() for i in url_indication_tags],

@@ -46,7 +46,7 @@ const columns = [
     defaultFlex: 1,
     minWidth: 200,
     render: ({ data: task }: { data: ExtractionTask }) =>
-      prettyDateDistance(task.queued_time, task.end_time),
+      prettyDateDistance(task.start_time || task.queued_time, task.end_time),
   },
   {
     header: 'Status',

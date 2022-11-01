@@ -86,20 +86,24 @@ class LineageMatcher:
             self.cosine_similarity = 0
             self.euclidean_distance = 100
         else:
-            self.cosine_similarity = 1 - spatial.distance.cosine(
-                self.doc_a.doc_vectors[0],
-                self.doc_b.doc_vectors[0],
-            )
-            self.logger.debug(
-                f"'{self.doc_a.name}' '{self.doc_b.name}' self.cosine_similarity={self.cosine_similarity}"
-            )
-            self.euclidean_distance = spatial.distance.euclidean(
-                self.doc_a.doc_vectors[0],
-                self.doc_b.doc_vectors[0],
-            )
-            self.logger.debug(
-                f"'{self.doc_a.name}' '{self.doc_b.name}' self.euclidean_distance={self.euclidean_distance}"
-            )
+            try:
+                self.cosine_similarity = 1 - spatial.distance.cosine(
+                    self.doc_a.doc_vectors[0],
+                    self.doc_b.doc_vectors[0],
+                )
+                self.logger.debug(
+                    f"'{self.doc_a.name}' '{self.doc_b.name}' self.cosine_similarity={self.cosine_similarity}"
+                )
+                self.euclidean_distance = spatial.distance.euclidean(
+                    self.doc_a.doc_vectors[0],
+                    self.doc_b.doc_vectors[0],
+                )
+                self.logger.debug(
+                    f"'{self.doc_a.name}' '{self.doc_b.name}' self.euclidean_distance={self.euclidean_distance}"
+                )
+            except ValueError:
+                self.cosine_similarity = 0
+                self.euclidean_distance = 100
 
     def exec(self) -> bool:
         if self.doc_a.id == self.doc_b.id:

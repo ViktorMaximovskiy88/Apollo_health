@@ -19,7 +19,7 @@ const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
     const values = form.getFieldsValue(true);
     const finalEffectiveDate = calculateFinalEffectiveFromValues(values);
     form.setFieldsValue({
-      final_effective_date: finalEffectiveDate.startOf('day'),
+      final_effective_date: finalEffectiveDate?.startOf('day'),
     });
   }, [form]);
 
