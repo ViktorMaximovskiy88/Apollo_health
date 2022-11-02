@@ -194,6 +194,9 @@ class DocLifecycleService:
         fully_approved, edit = await self.assess_intermediate_statuses(doc)
         if fully_approved:
             doc.status = ApprovalStatus.APPROVED
+            document_json = await EventConvert().convert(doc)
+            send_event_client = SendEventClient()
+            send_event_client.send_event("document-details", document_json)
         else:
             doc.status = ApprovalStatus.PENDING
 
@@ -214,10 +217,6 @@ class DocLifecycleService:
                     }
                 },
             )
-            if fully_approved:
-                document_json = await EventConvert().convert(doc)
-                send_event_client = SendEventClient()
-                send_event_client.send_event("document-details", document_json)
 
         return doc
 
