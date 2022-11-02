@@ -53,7 +53,7 @@ class Response(BaseModel):
         matched = None
         self.content_disposition = headers.get("content-disposition")
         if self.content_disposition:
-            matched = re.search('filename="(.*)";', self.content_disposition)
+            matched = re.search('filename="(.*)";?', self.content_disposition)
 
         if matched:
             return matched.group(1)
