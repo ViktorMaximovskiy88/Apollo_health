@@ -19,6 +19,7 @@ from backend.common.models.user import User
 from backend.common.services.document import create_doc_document_service
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.models import DownloadContext
+from backend.scrapeworker.common.utils import tokenize_string
 
 
 class DocumentUpdater:
@@ -61,6 +62,7 @@ class DocumentUpdater:
         location: RetrievedDocumentLocation = document.get_site_location(self.site.id)
         context_metadata = download.metadata.dict()
         text_checksum = await self.text_handler.save_text(parsed_content["text"])
+        token_count = tokenize_string(parsed_content["text"])
 
         if location:
             location.link_text = download.metadata.link_text
@@ -110,6 +112,7 @@ class DocumentUpdater:
             last_collected_date=now,
             doc_vectors=parsed_content["doc_vectors"],
             file_size=download.file_size,
+            token_count=token_count,
         )
 
         await document.update(Set(updated_doc.dict(exclude_unset=True)))
@@ -172,6 +175,7 @@ class DocumentUpdater:
         self.log.debug("creating doc")
         now: datetime = datetime.now(tz=timezone.utc)
         name = self.set_doc_name(parsed_content, download)
+        token_count = tokenize_string(parsed_content["text"])
         text_checksum: str = await self.text_handler.save_text(parsed_content["text"])
         context_metadata = download.metadata.dict()
 
@@ -199,6 +203,7 @@ class DocumentUpdater:
             indication_tags=parsed_content["indication_tags"],
             first_collected_date=now,
             last_collected_date=now,
+            token_count=token_count,
             locations=[
                 RetrievedDocumentLocation(
                     base_url=download.metadata.base_url,

@@ -12,7 +12,7 @@ from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import Site
 from backend.common.storage.client import DocumentStorageClient, TextStorageClient
 from backend.common.storage.hash import hash_full_text
-from backend.scrapeworker.common.utils import normalize_string
+from backend.scrapeworker.common.utils import normalize_string, tokenize_string
 from backend.scrapeworker.doc_type_classifier import classify_doc_type
 from backend.scrapeworker.document_tagging.indication_tagging import IndicationTagger
 from backend.scrapeworker.document_tagging.therapy_tagging import TherapyTagger
@@ -106,7 +106,8 @@ class ReTagger:
             doc_text = await ParserClass(file_path, url, link_text, focus_config).get_text()
 
             text_hash = hash_full_text(doc_text)
-            update = {"$set": {"text_checksum": text_hash}}
+            token_count = tokenize_string(doc_text)
+            update = {"$set": {"text_checksum": text_hash, "token_count": token_count}}
             up1 = RetrievedDocument.get_motor_collection().find_one_and_update(
                 {"_id": rdoc.id}, update
             )
