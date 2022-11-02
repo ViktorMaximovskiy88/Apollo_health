@@ -7,6 +7,7 @@ export const initialState = {
     filter: [
       { name: 'name', operator: 'contains', type: 'string', value: '' },
       { name: 'locations.site_id', operator: 'eq', type: 'select', value: '' },
+      { name: 'final_effective_date', operator: 'before', type: 'date', value: '' },
       { name: 'first_collected_date', operator: 'before', type: 'date', value: '' },
       { name: 'last_collected_date', operator: 'before', type: 'date', value: '' },
       { name: 'classification_status', operator: 'eq', type: 'select', value: null },

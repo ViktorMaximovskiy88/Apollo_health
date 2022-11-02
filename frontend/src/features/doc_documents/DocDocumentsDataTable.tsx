@@ -98,6 +98,23 @@ const useColumns = (siteNamesById: { [key: string]: string }) => {
       },
     },
     {
+      header: 'Final Effective Date',
+      name: 'final_effective_date',
+      minWidth: 200,
+      filterEditor: DateFilter,
+      filterEditorProps: () => {
+        return {
+          dateFormat: 'YYYY-MM-DD',
+          highlightWeekends: false,
+          placeholder: 'Select Date',
+        };
+      },
+      render: ({ data: doc }: { data: DocDocument }) => {
+        if (!doc.final_effective_date) return null;
+        return prettyDateTimeFromISO(doc.final_effective_date);
+      },
+    },
+    {
       header: 'First Collected Date',
       name: 'first_collected_date',
       minWidth: 200,
