@@ -258,7 +258,7 @@ def test_does_not_exclude_references():
     """
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
-    assert len(parser.unclassified_dates) == 2
+    assert len(parser.unclassified_dates) == 1
 
 
 def test_default_effective_date():
