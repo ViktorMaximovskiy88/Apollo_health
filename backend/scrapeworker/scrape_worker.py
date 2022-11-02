@@ -233,7 +233,11 @@ class ScrapeWorker:
 
             dest_path = f"{checksum}.{download.file_extension}"
 
-            if not parsed_content["text"] or len(parsed_content["text"]) == 0:
+            if (
+                not parsed_content["text"]
+                or len(parsed_content["text"]) == 0
+                and download.file_extension != "pdf"
+            ):
                 message = f"No text detected in file. path={dest_path}"
                 self.log.error(message)
                 link_retrieved_task.error_message = message
@@ -249,16 +253,14 @@ class ScrapeWorker:
                 or self.site.scrape_method == "HtmlScrape"
             ):
                 async for pdf_path in self.html_to_pdf(url, download, checksum, temp_path):
-                    converted_pdf_parsed_content = await pdf.PdfParse(
+                    parsed_pdf = await pdf.PdfParse(
                         pdf_path,
                         url,
                         link_text=download.metadata.link_text,
                         focus_config=scrape_method_config.focus_section_configs,
                     ).parse()
-                    parsed_content["therapy_tags"] = converted_pdf_parsed_content["therapy_tags"]
-                    parsed_content["indication_tags"] = converted_pdf_parsed_content[
-                        "indication_tags"
-                    ]
+                    parsed_content["therapy_tags"] = parsed_pdf["therapy_tags"]
+                    parsed_content["indication_tags"] = parsed_pdf["indication_tags"]
 
             if download.file_extension == "html":
                 text_checksum = hash_full_text(parsed_content["text"])
@@ -270,9 +272,16 @@ class ScrapeWorker:
 
             if document:
                 self.log.info("updating doc")
-                if document.text_checksum is None:  # Can be removed after text added to older docs
+
+                # Can be removed after text added to older docs
+                if document.text_checksum is None and len(parsed_content["text"]) > 0:
                     text_checksum = await self.text_handler.save_text(parsed_content["text"])
                     document.text_checksum = text_checksum
+
+                # in the case where the pdf has no text (aka is an image),
+                # set the text checksum to the checksum
+                if len(parsed_content["text"]) == 0 and download.file_extension == "pdf":
+                    document.text_checksum = checksum
 
                 new_therapy_tags, new_indicate_tags = self.get_updated_tags(
                     document,
