@@ -78,6 +78,7 @@ class DocumentAnalysis(BaseDocument):
     siblings: DocumentAttrs | None = None
 
     doc_vectors: list[list[float]] = []
+    token_count: int = 0
 
     created_at: datetime | None = None
     updated_at: datetime | None = None
