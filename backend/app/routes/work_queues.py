@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Any, Type
 
@@ -266,14 +265,10 @@ async def take_next_work_item(
     unclaimed_query = {
         "locks": {"$not": {"$elemMatch": {"work_queue_id": work_queue.id, "expires": {"$gt": now}}}}
     }
-    for _ in range(5):
-        query = combine_queue_query_with_user_query(work_queue, sort, filter)
-        query = query.find(unclaimed_query)
-        item = await query.project(IdOnlyDocument).first_or_none()
-        if not item or not item.id:
-            await asyncio.sleep(0.1)
-            continue
-
+    query = combine_queue_query_with_user_query(work_queue, sort, filter)
+    query = query.find(unclaimed_query)
+    item = await query.project(IdOnlyDocument).first_or_none()
+    if item and item.id:
         lock = await attempt_lock_acquire(work_queue, item.id, current_user)
         if lock.acquired_lock:
             return TakeNextWorkQueueResponse(acquired_lock=True, item_id=item.id)

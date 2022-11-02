@@ -162,8 +162,30 @@ const useColumns = (siteNamesById: { [key: string]: string }) => {
     },
     {
       header: 'Link Text',
-      name: 'link_text',
-      render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
+      name: 'locations.link_text',
+      render: ({ data: docDocument }: { data: DocDocument }) => {
+        const linkTexts = docDocument.locations.map((location) => location.link_text);
+        return <>{linkTexts.join(', ')}</>;
+      },
+    },
+    {
+      header: 'Current Version',
+      name: 'is_current_version',
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        placeholder: true,
+        dataSource: [
+          {
+            id: true,
+            label: 'True',
+          },
+          {
+            id: false,
+            label: 'False',
+          },
+        ],
+      },
+      render: ({ value: is_current_version }: { value: boolean }) => <>{is_current_version}</>,
     },
     {
       header: 'Tags',

@@ -336,6 +336,7 @@ async def build_doc_analysis(doc: SiteRetrievedDocument) -> DocumentAnalysis:
     doc_analysis.element_text = doc.link_text
     doc_analysis.file_size = doc.file_size
     doc_analysis.doc_vectors = doc.doc_vectors
+    doc_analysis.token_count = doc.token_count
 
     doc_analysis.focus_therapy_tags = get_unique_focus_tags(doc.therapy_tags)
     doc_analysis.focus_indication_tags = get_unique_focus_tags(doc.indication_tags)

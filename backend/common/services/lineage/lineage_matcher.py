@@ -80,26 +80,44 @@ class LineageMatcher:
             doc_a.link_focus_indication_tags, doc_b.link_focus_indication_tags
         )
 
+        max_file_size = max(doc_a.file_size, doc_b.file_size)
+        if max_file_size > 0:
+            self.file_size_similarity = 1 - (abs(doc_a.file_size - doc_b.file_size) / max_file_size)
+        else:
+            self.token_count_similarity = 0
+
+        max_token_count = max(doc_a.token_count, doc_b.token_count)
+        if max_token_count > 0:
+            self.token_count_similarity = 1 - (
+                abs(doc_a.token_count - doc_b.token_count) / max_token_count
+            )
+        else:
+            self.token_count_similarity = 0
+
         if len(self.doc_a.doc_vectors) == 0 or len(self.doc_b.doc_vectors) == 0:
             self.logger.debug(f"'{self.doc_a.name}' len(doc_vectors)={len(self.doc_a.doc_vectors)}")
             self.logger.debug(f"'{self.doc_b.name}' len(doc_vectors)={len(self.doc_b.doc_vectors)}")
             self.cosine_similarity = 0
             self.euclidean_distance = 100
         else:
-            self.cosine_similarity = 1 - spatial.distance.cosine(
-                self.doc_a.doc_vectors[0],
-                self.doc_b.doc_vectors[0],
-            )
-            self.logger.debug(
-                f"'{self.doc_a.name}' '{self.doc_b.name}' self.cosine_similarity={self.cosine_similarity}"
-            )
-            self.euclidean_distance = spatial.distance.euclidean(
-                self.doc_a.doc_vectors[0],
-                self.doc_b.doc_vectors[0],
-            )
-            self.logger.debug(
-                f"'{self.doc_a.name}' '{self.doc_b.name}' self.euclidean_distance={self.euclidean_distance}"
-            )
+            try:
+                self.cosine_similarity = 1 - spatial.distance.cosine(
+                    self.doc_a.doc_vectors[0],
+                    self.doc_b.doc_vectors[0],
+                )
+                self.logger.debug(
+                    f"'{self.doc_a.name}' '{self.doc_b.name}' self.cosine_similarity={self.cosine_similarity}"
+                )
+                self.euclidean_distance = spatial.distance.euclidean(
+                    self.doc_a.doc_vectors[0],
+                    self.doc_b.doc_vectors[0],
+                )
+                self.logger.debug(
+                    f"'{self.doc_a.name}' '{self.doc_b.name}' self.euclidean_distance={self.euclidean_distance}"
+                )
+            except ValueError:
+                self.cosine_similarity = 0
+                self.euclidean_distance = 100
 
     def exec(self) -> bool:
         if self.doc_a.id == self.doc_b.id:
@@ -109,8 +127,8 @@ class LineageMatcher:
             "revised_document",
             "updated_document_b",
             "updated_document_a",
-            "updated_document_c",
-            "similar_rule",
+            # "updated_document_c",
+            # "similar_rule",
         ]
         match = False
 
@@ -238,3 +256,9 @@ class LineageMatcher:
 
     def score_cosine_similarity(self):
         return self.cosine_similarity > 0.9
+
+    def score_file_size_similarity(self, similarity):
+        return self.file_size_similarity >= similarity
+
+    def score_token_count_similarity(self, similarity):
+        return self.token_count_similarity >= similarity

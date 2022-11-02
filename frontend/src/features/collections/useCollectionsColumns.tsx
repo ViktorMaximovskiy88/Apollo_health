@@ -49,7 +49,7 @@ export const createColumns = ({
       minWidth: 300,
       defaultFlex: 1,
       render: ({ data: task }: { data: SiteScrapeTask }) => {
-        return prettyDateDistance(task.queued_time, task.end_time);
+        return prettyDateDistance(task.start_time || task.queued_time, task.end_time);
       },
     },
     {
