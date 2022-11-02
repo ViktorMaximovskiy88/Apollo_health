@@ -110,7 +110,7 @@ const useColumns = (siteNamesById: { [key: string]: string }) => {
         };
       },
       render: ({ data: doc }: { data: DocDocument }) => {
-        if (!doc.first_collected_date) return null;
+        if (!doc.final_effective_date) return null;
         return prettyDateTimeFromISO(doc.final_effective_date);
       },
     },
