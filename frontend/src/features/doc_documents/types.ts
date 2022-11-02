@@ -9,7 +9,7 @@ export enum TagUpdateStatus {
 }
 export interface BaseDocTag {
   id: string;
-  _type: 'indication' | 'therapy' | 'therapy-group';
+  _type: 'indication' | 'therapy';
   _normalized: string;
 }
 
