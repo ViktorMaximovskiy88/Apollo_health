@@ -28,6 +28,7 @@ import { useAddDocumentMutation } from '../retrieved_documents/documentsApi';
 import { baseApiUrl, client } from '../../app/base-api';
 import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
 import { SiteDocDocument } from '../doc_documents/types';
+import moment from 'moment';
 
 interface AddDocumentModalPropTypes {
   oldVersion?: SiteDocDocument;
@@ -55,10 +56,9 @@ const buildInitialValues = (oldVersion?: SiteDocDocument) => {
   };
 };
 
-const displayDuplicateError = (error: any) => {
+const displayDuplicateError = (err_msg: string) => {
   notification.error({
-    message: 'Document already exists',
-    description: `Upload a new document or enter a new location.`,
+    message: err_msg,
   });
 };
 
@@ -72,6 +72,9 @@ export function AddDocumentModal({
   const [addDoc] = useAddDocumentMutation();
   const [fileData, setFileData] = useState<any>();
   const [docTitle, setDocTitle] = useState('Add new document');
+  const [oldLocationSiteId, setOldLocationSiteId] = useState('');
+  const [oldLocationDocId, setOldLocationDocId] = useState('');
+  const [isEditingDocFromOtherSite, setIsEditingDocFromOtherSite] = useState(false);
 
   const initialValues = buildInitialValues(oldVersion);
   if (docTitle !== 'Add New Version' && oldVersion) {
@@ -102,6 +105,11 @@ export function AddDocumentModal({
       newDocument.base_url = form.getFieldValue('base_url') ?? newDocument.url;
       newDocument.link_text = form.getFieldValue('link_text');
 
+      if (oldLocationSiteId) {
+        newDocument.prev_location_site_id = oldLocationSiteId;
+        newDocument.prev_location_doc_id = oldLocationDocId;
+      }
+
       // For some reason, fileData never updates if browser auto fills.
       fileData.url = form.getFieldValue('url');
       fileData.base_url = form.getFieldValue('base_url') ?? newDocument.url;
@@ -115,18 +123,20 @@ export function AddDocumentModal({
           ...newDocument,
           ...fileData,
         });
+        // TODO: On success but has duplicate file from OTHER site,
+        // display notice.
         if (refetch) {
           refetch();
         }
         if ('error' in response && response.error) {
-          displayDuplicateError(response);
+          displayDuplicateError('Document exists on this site');
         } else {
           setOpen(false);
         }
       } catch (error: any) {
         notification.error({
           message: error.data.detail,
-          description: `Upload a new document or enter a new location.`,
+          description: 'Upload a new document or enter a new location.',
         });
       }
     } catch (error) {
@@ -139,10 +149,25 @@ export function AddDocumentModal({
 
   function setLocationValuesFromResponse(responseData: any) {
     form.setFieldsValue({
+      name: responseData.doc_name,
       base_url: responseData.base_url,
-      url: responseData.url,
-      link_text: responseData.link_text,
+      document_type: responseData.document_type,
+      lang_code: responseData.lang_code,
+      effective_date: convertDate(responseData.effective_date),
+      last_reviewed_date: convertDate(responseData.last_reviewed_date),
+      last_updated_date: convertDate(responseData.last_updated_date),
+      next_review_date: convertDate(responseData.next_review_date),
+      next_update_date: convertDate(responseData.next_update_date),
+      published_date: convertDate(responseData.published_date),
     });
+    if (responseData.prev_location_doc_id) {
+      displayDuplicateError('Document exists on other site');
+      setOldLocationSiteId(responseData.prev_location_site_id);
+      setOldLocationDocId(responseData.prev_location_doc_id);
+      setIsEditingDocFromOtherSite(true);
+    } else {
+      setIsEditingDocFromOtherSite(false);
+    }
   }
 
   return (
@@ -162,7 +187,10 @@ export function AddDocumentModal({
             siteId={siteId}
             setLocationValuesFromResponse={setLocationValuesFromResponse}
           />
-          <InternalDocument oldVersion={oldVersion} />
+          <InternalDocument
+            oldVersion={oldVersion}
+            isEditingDocFromOtherSite={isEditingDocFromOtherSite}
+          />
         </div>
 
         <div className="flex grow space-x-3">
@@ -172,10 +200,10 @@ export function AddDocumentModal({
             label="Document Name"
             rules={[{ required: true }]}
           >
-            <Input />
+            <Input disabled={isEditingDocFromOtherSite ? true : false} />
           </Form.Item>
-          <DocumentTypeItem />
-          <LanguageItem />
+          <DocumentTypeItem isEditingDocFromOtherSite={isEditingDocFromOtherSite} />
+          <LanguageItem isEditingDocFromOtherSite={isEditingDocFromOtherSite} />
         </div>
         <div className="flex grow space-x-3">
           <Form.Item className="grow" name="base_url" label="Base Url" rules={[{ type: 'url' }]}>
@@ -193,7 +221,7 @@ export function AddDocumentModal({
             <Input type="url" />
           </Form.Item>
         </div>
-        <DateItems />
+        <DateItems isEditingDocFromOtherSite={isEditingDocFromOtherSite} />
         <Form.Item>
           <Space>
             <Button type="primary" htmlType="submit">
@@ -278,19 +306,21 @@ function UploadItem(props: any) {
 }
 
 function InternalDocument(props: any) {
-  const { oldVersion } = props;
+  const { oldVersion, isEditingDocFromOtherSite } = props;
 
   return (
     <>
       <div className="mt-1">Internal Document&nbsp;</div>
       <Form.Item valuePropName="checked" className="grow" name="internal_document">
-        <Checkbox disabled={oldVersion ? true : false} />
+        <Checkbox disabled={isEditingDocFromOtherSite || oldVersion ? true : false} />
       </Form.Item>
     </>
   );
 }
 
-function DocumentTypeItem() {
+function DocumentTypeItem(props: any) {
+  const { isEditingDocFromOtherSite } = props;
+
   return (
     <Form.Item
       className="grow"
@@ -298,20 +328,29 @@ function DocumentTypeItem() {
       label="Document Type"
       rules={[{ required: true }]}
     >
-      <Select options={DocumentTypes} />
+      <Select options={DocumentTypes} disabled={isEditingDocFromOtherSite ? true : false} />
     </Form.Item>
   );
 }
 
-function LanguageItem() {
+function LanguageItem(props: any) {
+  const { isEditingDocFromOtherSite } = props;
+
   return (
     <Form.Item className="grow" name="lang_code" label="Language" rules={[{ required: true }]}>
-      <Select options={languageCodes} />
+      <Select options={languageCodes} disabled={isEditingDocFromOtherSite ? true : false} />
     </Form.Item>
   );
+}
+
+function convertDate(date?: string) {
+  if (date) return moment(date);
+  return undefined;
 }
 
 function DateItems(props: any) {
+  const { isEditingDocFromOtherSite } = props;
+
   let fields = [
     [
       {
@@ -348,6 +387,7 @@ function DateItems(props: any) {
       },
     ],
   ];
+
   return (
     <>
       {fields.map((section, i) => {
@@ -361,6 +401,7 @@ function DateItems(props: any) {
                     showTime={false}
                     style={{ width: '100%' }}
                     format={(value) => prettyDate(value.toDate())}
+                    disabled={isEditingDocFromOtherSite ? true : false}
                   />
                 </Form.Item>
               );
