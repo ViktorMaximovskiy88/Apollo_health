@@ -190,11 +190,16 @@ class ScrapeWorker:
 
             # log response error
             if not (temp_path and checksum):
+                message = f"Missing required value: temp_path={temp_path} checksum={checksum}"
+                self.log.error(message)
+                link_retrieved_task.error_message = message
                 await link_retrieved_task.save()
                 break
 
             if download.mimetype not in supported_mimetypes:
-                self.log.error(f"Mimetype not supported {download.mimetype}")
+                message = f"Mimetype not supported. mimetype={download.mimetype}"
+                self.log.error(message)
+                link_retrieved_task.error_message = message
                 await link_retrieved_task.save()
                 break
 
@@ -204,7 +209,9 @@ class ScrapeWorker:
                 "html" not in scrape_method_config.document_extensions
                 and self.site.scrape_method != "HtmlScrape"
             ):
-                self.log.error("Received an unexpected html response")
+                message = f"Received an unexpected html response. mimetype={download.mimetype}"
+                self.log.error(message)
+                link_retrieved_task.error_message = message
                 await link_retrieved_task.save()
                 break
 
@@ -218,13 +225,22 @@ class ScrapeWorker:
             )
 
             if parsed_content is None:
+                message = f"Cannot parse file. mimetype={download.mimetype} file_extension={download.file_extension}"  # noqa
+                self.log.error(message)
+                link_retrieved_task.error_message = message
                 await link_retrieved_task.save()
-                self.log.error(f"{download.request.url} {download.file_extension} cannot be parsed")
+                break
+
+            dest_path = f"{checksum}.{download.file_extension}"
+
+            if not parsed_content["text"] or len(parsed_content["text"]) == 0:
+                message = f"No text detected in file. path={dest_path}"
+                self.log.error(message)
+                link_retrieved_task.error_message = message
+                await link_retrieved_task.save()
                 break
 
             document = None
-            dest_path = f"{checksum}.{download.file_extension}"
-
             if not self.doc_client.object_exists(dest_path):
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
 
