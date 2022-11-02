@@ -40,8 +40,9 @@ from backend.scrapeworker.file_parsers import parse_by_type
 
 def copy_location_to(site: Site, location: RetrievedDocumentLocation, data: dict) -> dict:
     # TODO: Implement select with site.base_urls options.
-    if site.base_urls:
-        data["base_url"] = site.base_urls[-1].url
+    # If more than one, send all base_urls as select options similiar to translate widget.
+    if site.base_urls and len(site.base_urls) == 1:
+        data["base_url"] = site.base_urls[0].url
     # URL and link_text are just displayed and can be editable.
     # Lets the create doc process know to create a new location
     # rather than creating a new doc.
