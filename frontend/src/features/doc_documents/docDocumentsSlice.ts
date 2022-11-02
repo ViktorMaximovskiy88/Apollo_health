@@ -12,6 +12,7 @@ export const initialState = {
       { name: 'classification_status', operator: 'eq', type: 'select', value: null },
       { name: 'document_type', operator: 'eq', type: 'select', value: null },
       { name: 'link_text', operator: 'contains', type: 'string', value: '' },
+      { name: 'is_current_version', operator: 'eq', type: 'boolean', value: null },
     ],
     pagination: { limit: 50, skip: 0 },
   },
