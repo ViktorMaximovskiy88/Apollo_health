@@ -80,15 +80,19 @@ class LineageMatcher:
             doc_a.link_focus_indication_tags, doc_b.link_focus_indication_tags
         )
 
-        self.filesize_diff = 1 - (
-            abs(doc_a.file_size - doc_b.file_size) / max(doc_a.file_size, doc_b.file_size)
-        )
-        print(f"self.filesize_diff={self.filesize_diff}")
+        max_file_size = max(doc_a.file_size, doc_b.file_size)
+        if max_file_size > 0:
+            self.file_size_similarity = 1 - (abs(doc_a.file_size - doc_b.file_size) / max_file_size)
+        else:
+            self.token_count_similarity = 0
 
-        self.token_count_diff = 1 - (
-            abs(doc_a.token_count - doc_b.token_count) / max(doc_a.token_count, doc_b.token_count)
-        )
-        print(f"self.token_count_diff={self.token_count_diff}")
+        max_token_count = max(doc_a.token_count, doc_b.token_count)
+        if max_token_count > 0:
+            self.token_count_similarity = 1 - (
+                abs(doc_a.token_count - doc_b.token_count) / max_token_count
+            )
+        else:
+            self.token_count_similarity = 0
 
         if len(self.doc_a.doc_vectors) == 0 or len(self.doc_b.doc_vectors) == 0:
             self.logger.debug(f"'{self.doc_a.name}' len(doc_vectors)={len(self.doc_a.doc_vectors)}")
@@ -123,8 +127,8 @@ class LineageMatcher:
             "revised_document",
             "updated_document_b",
             "updated_document_a",
-            "updated_document_c",
-            "similar_rule",
+            # "updated_document_c",
+            # "similar_rule",
         ]
         match = False
 
@@ -252,3 +256,9 @@ class LineageMatcher:
 
     def score_cosine_similarity(self):
         return self.cosine_similarity > 0.9
+
+    def score_file_size_similarity(self, similarity):
+        return self.file_size_similarity >= similarity
+
+    def score_token_count_similarity(self, similarity):
+        return self.token_count_similarity >= similarity

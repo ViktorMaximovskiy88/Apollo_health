@@ -44,6 +44,7 @@ class ReTagger:
         url = normalize_string(location.url)
         doc_text = await self.get_text(doc, rdoc, url, link_text, focus_config)
         _doc_type, _confidence, doc_vectors = classify_doc_type(doc_text)
+        tokens = tokenize_string(doc_text)
 
         therapy_tags, url_therapy_tags, link_therapy_tags = await self.therapy.tag_document(
             doc_text, document_type, url, link_text, focus_config
@@ -65,8 +66,10 @@ class ReTagger:
                 "locations.$.link_therapy_tags": [t.dict() for t in link_therapy_tags],
                 "locations.$.url_indication_tags": [i.dict() for i in url_indication_tags],
                 "locations.$.link_indication_tags": [i.dict() for i in link_indication_tags],
+                "token_count": len(tokens),
             }
         }
+
         up1 = RetrievedDocument.get_motor_collection().find_one_and_update(
             {"_id": rdoc.id, "locations.site_id": site.id}, update
         )
@@ -106,8 +109,8 @@ class ReTagger:
             doc_text = await ParserClass(file_path, url, link_text, focus_config).get_text()
 
             text_hash = hash_full_text(doc_text)
-            token_count = tokenize_string(doc_text)
-            update = {"$set": {"text_checksum": text_hash, "token_count": token_count}}
+
+            update = {"$set": {"text_checksum": text_hash}}
             up1 = RetrievedDocument.get_motor_collection().find_one_and_update(
                 {"_id": rdoc.id}, update
             )
