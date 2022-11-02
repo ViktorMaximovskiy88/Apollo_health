@@ -162,8 +162,11 @@ const useColumns = (siteNamesById: { [key: string]: string }) => {
     },
     {
       header: 'Link Text',
-      name: 'link_text',
-      render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
+      name: 'locations.link_text',
+      render: ({ data: docDocument }: { data: DocDocument }) => {
+        const linkTexts = docDocument.locations.map((location) => location.link_text);
+        return <>{linkTexts.join(', ')}</>;
+      },
     },
     {
       header: 'Current Version',
