@@ -43,8 +43,6 @@ def copy_location_to(site: Site, location: RetrievedDocumentLocation, data: dict
     if site.base_urls:
         data["base_url"] = site.base_urls[-1].url
     # URL and link_text are just displayed and can be editable.
-    data["url"] = location.url
-    data["link_text"] = location.link_text
     # Lets the create doc process know to create a new location
     # rather than creating a new doc.
     data["prev_location_site_id"] = location.site_id
