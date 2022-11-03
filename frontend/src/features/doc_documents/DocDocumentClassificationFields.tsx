@@ -2,9 +2,9 @@ import { Form, Select, DatePicker, Switch } from 'antd';
 import { languageCodes } from '../retrieved_documents/types';
 import { prettyDate } from '../../common';
 import { DocumentTypes } from '../retrieved_documents/types';
+import { DocCompareToPrevious } from './lineage/DocCompareToPrevious';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 import { ExploreLineage } from './lineage/ExploreLineage';
-import { DocCompareToPrevious } from './DocCompareToPrevious';
 
 const DocumentType = () => (
   <Form.Item className="flex-1" name="document_type" label="Document Type" required={true}>

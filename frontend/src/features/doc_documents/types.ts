@@ -50,9 +50,11 @@ export interface CompareRequest {
 }
 
 export interface CompareResponse extends BaseDocument {
-  diff: string;
-  previous_doc: DocDocument;
-  current_doc: DocDocument;
+  exists: boolean;
+  processing: boolean;
+  queued: boolean;
+  new_key: string | null;
+  prev_key: string | null;
 }
 
 export interface DocDocument extends BaseDocument {
