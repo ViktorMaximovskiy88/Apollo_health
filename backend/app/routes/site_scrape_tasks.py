@@ -94,7 +94,6 @@ async def start_scrape_task(
     site_id: PydanticObjectId,
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
-    response_model=CollectionResponse,
 ) -> CollectionResponse:
     response: CollectionResponse = CollectionResponse()
     site: Site | None = await Site.get(site_id)
@@ -125,7 +124,6 @@ async def cancel_all_site_scrape_task(
     site_id: PydanticObjectId,
     current_user: User = Depends(get_current_user),
     logger: Logger = Depends(get_logger),
-    response_model=CollectionResponse,
 ) -> CollectionResponse:
     site: Site | None = await Site.get(site_id)
     if not site:

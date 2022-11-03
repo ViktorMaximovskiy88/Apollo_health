@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Any, Type
 
 from beanie.odm.queries.find import FindMany
@@ -18,7 +19,13 @@ from backend.common.models.payer_backbone import (
 class PayerBackboneQuerier:
     def __init__(self, payer_info: PayerInfo, effective_date: str | None = None) -> None:
         self.payer_info = payer_info
-        self.effective_date = effective_date
+        if effective_date:
+            year, month, day = effective_date.split("-")
+            self.effective_date = datetime(int(year), int(month), int(day))
+        else:
+            self.effective_date = datetime.now(tz=timezone.utc).replace(
+                minute=0, second=0, microsecond=0
+            )
 
     async def relevant_payer_ids_of_type(self, PayerClass: Type[PayerBackbone]) -> list[int]:
         plans = await self.construct_plan_query()
@@ -49,7 +56,14 @@ class PayerBackboneQuerier:
         benefits = self.payer_info.benefits
         benefits.sort()
         ump_ids: set[int | None] = set()
-        async for formulary in Formulary.find({"l_id": {"$in": result_ids}}):
+        formulary_query = Formulary.find(
+            {
+                "start_date": {"$lt": self.effective_date},
+                "end_date": {"$gt": self.effective_date},
+                "l_id": {"$in": result_ids},
+            }
+        )
+        async for formulary in formulary_query:
             if not benefits or Benefit.Medical in benefits:
                 ump_ids.add(formulary.l_medical_ump_id)
             if not benefits or Benefit.Pharmacy in benefits:
@@ -58,7 +72,9 @@ class PayerBackboneQuerier:
         return ump_ids
 
     async def construct_plan_query(self) -> FindMany[Plan]:
-        query = Plan.find({})
+        query = Plan.find(
+            {"start_date": {"$lt": self.effective_date}, "end_date": {"$gt": self.effective_date}}
+        )
         query = self.channel_criteria(query)
         query = self.plan_type_criteria(query)
         query = self.benefit_criteria(query)
@@ -126,7 +142,12 @@ class PayerBackboneQuerier:
             if payer_type == "bm":
                 query = query.find({"l_bm_id": {"$in": payer_ids}})
             if payer_type == "ump":
-                formulary_query = Formulary.find({})
+                formulary_query = Formulary.find(
+                    {
+                        "start_date": {"$lt": self.effective_date},
+                        "end_date": {"$gt": self.effective_date},
+                    }
+                )
                 formulary_query = self.modify_query_by_benefit(
                     formulary_query, {"l_benefit_ump_id": {"$in": payer_ids}}
                 )

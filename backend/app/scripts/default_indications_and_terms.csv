@@ -107,7 +107,6 @@ IndicationId,Name,Term
 312,Diabetes Type 2: Test Strips,Type 2
 313,Diabetes Type 1: Insulin Pumps,Insulin Pumps
 314,Ophthalmic: Allergic Conjunctivitis,Allergic Conjunctivitis
-315,Ophthalmic: Anti-Inflammatory,Opthalmic Anti-Inflammatory
 315,Ophthalmic: Anti-Inflammatory,Opthalmic AntiInflammatory
 316,Pancreatic Insufficiency: Pancreatic Enzymes,Pancreatic Enzymes
 317,Oncology: Carcinoid Syndrome,Carcinoid Syndrome
@@ -122,12 +121,6 @@ IndicationId,Name,Term
 324,Multiple Sclerosis Exacerbation,Multiple Sclerosis Exacerbation
 326,Adjunctive Rheumatoid Arthritis,Adjunctive Rheumatoid Arthritis
 329,Nephrotic Syndrome,Nephrotic Syndrome
-330,Breast Cancer: Hormone Refractory (HER2+),HER2+
-330,Breast Cancer: Hormone Refractory (HER2+),Breast Cancer
-330,Breast Cancer: Hormone Refractory (HER2+),HER
-331,Breast Cancer: Hormone Refractory (HER2-),HER2-
-331,Breast Cancer: Hormone Refractory (HER2-),Breast Cancer
-331,Breast Cancer: Hormone Refractory (HER2-),HER2
 332,Kidney Cancer,Kidney Cancer
 332,Kidney Cancer,Renal Cell Carcinoma
 336,Diabetes Type 2: DPP4 + Combo,Diabetes Type 2
@@ -138,7 +131,6 @@ IndicationId,Name,Term
 338,Diabetes Type 2: SGLT2 + Combo,Diabetes Type 2
 338,Diabetes Type 2: SGLT2 + Combo,Type 2
 338,Diabetes Type 2: SGLT2 + Combo,Sodium-glucose transport protein 2 inhibitors
-339,Prostate Cancer,Prostate Cancer
 340,Growth Hormone Deficiency,Growth Hormone Deficiency
 340,Growth Hormone Deficiency,Growth failure
 341,Primary Axillary Hyperhidrosis,Primary Axillary Hyperhidrosis
@@ -167,7 +159,8 @@ IndicationId,Name,Term
 358,Ovarian Cancer,Ovarian Cancer
 359,Neurogenic Orthostatic Hypotension,Neurogenic Orthostatic Hypotension
 361,Hepatocellular Carcinoma,Hepatocellular Carcinoma
-362,Anemia due to Chronic Kidney Disease,Anemia due to Chronic Kidney Disease
+362,Anemia,Anemia due to Chronic Kidney Disease
+362,Anemia,Iron Deficiency Anemia
 363,Anemia due to Chemotherapy,Anemia
 364,Asthma (oral),Asthma
 365,Infantile Spasm,Infantile Spasm
@@ -187,9 +180,8 @@ IndicationId,Name,Term
 377,ABSSSI,ABSSSI
 378,Uveitis,Uveitis
 379,Macular Edema,Macular Edema
-379,Macular Edema,DME
 379,Macular Edema,Diabetic Macular Edema
-380,Familial Amyloid Polyneuropathy (FAP),Familial Amyloid Polyneuropathy 
+380,Familial Amyloid Polyneuropathy (FAP),Familial Amyloid Polyneuropathy
 380,Familial Amyloid Polyneuropathy (FAP),FAP
 381,Acute Lymphoblastic Leukemia,Acute Lymphoblastic Leukemia
 381,Acute Lymphoblastic Leukemia,Acute Lymphocytic Leukemia
@@ -228,7 +220,7 @@ IndicationId,Name,Term
 408,Assisted Reproductive Technology (ART),Assisted Reproductive Technology
 408,Assisted Reproductive Technology (ART),Pregnyl
 409,Non-Metastatic Prostate Cancer,Prostate Cancer
-409,Non-Metastatic Prostate Cancer,Non-Metastatic Prostate Cancer 
+409,Non-Metastatic Prostate Cancer,Non-Metastatic Prostate Cancer
 410,Duchenne Muscular Dystrophy (DMD),Duchenne Muscular Dystrophy
 410,Duchenne Muscular Dystrophy (DMD),DMD
 411,Phenylketonuria (PKU),PKU
@@ -347,7 +339,7 @@ IndicationId,Name,Term
 490,Postpartum Depression (PPD),PPD
 490,Postpartum Depression (PPD),Postpartum Depression
 491,Pseudo-Bulbar Affect,PseudoBulbar Affect
-492,Recurrent Pericarditis ,Recurrent Pericarditis 
+492,Recurrent Pericarditis ,Recurrent Pericarditis
 494,Respiratory Syncytial Virus (RSV),Respiratory Syncytial Virus
 494,Respiratory Syncytial Virus (RSV),RSV
 494,Respiratory Syncytial Virus (RSV),Respiratory Syncytial Virus (RSV)
@@ -415,8 +407,8 @@ IndicationId,Name,Term
 551,HIV Wasting,HIV associated cachexia
 551,HIV Wasting,HIV cachexia
 551,HIV Wasting,HIV associated wasting
-552,RET-Mutant MTC,RET-mutant Medullary Thyroid Cancer 
-552,RET-Mutant MTC,RET mutant Medullary Thyroid Cancer 
+552,RET-Mutant MTC,RET-mutant Medullary Thyroid Cancer
+552,RET-Mutant MTC,RET mutant Medullary Thyroid Cancer
 552,RET-Mutant MTC,RET Mutant MTC
 552,RET-Mutant MTC,RET-Mutant MTC
 554,Blepharospasm,Blepharospasm
@@ -427,8 +419,8 @@ IndicationId,Name,Term
 558,Actinic Keratosis,Actinic Keratosis
 559,Behcet’s Disease,Behcet
 559,Behcet’s Disease,Behcet’s Disease
-560,Major Depressive Disorder with Suicidal Ideation ,MDD with Suicidal Ideation 
-560,Major Depressive Disorder with Suicidal Ideation ,Major Depressive Disorder with Suicidal Ideation 
+560,Major Depressive Disorder with Suicidal Ideation ,MDD with Suicidal Ideation
+560,Major Depressive Disorder with Suicidal Ideation ,Major Depressive Disorder with Suicidal Ideation
 561,Cholestatic Liver Disease,Pediatric Cholestatic liver disease
 562,Neuroblastoma,Neuroblastoma
 563,Short Bowel Syndrome,Short Bowel Syndrome
@@ -447,6 +439,8 @@ IndicationId,Name,Term
 567,Niemann Pick Disease,Neuronal lipidosis
 567,Niemann Pick Disease,Sphingomyelinase deficiency
 567,Niemann Pick Disease,Sphingomyelin lipidosis
+567,Niemann Pick Disease,acid sphingomyelinase deficiency
+567,Niemann Pick Disease,ASMD
 568,Malignant Pleural Mesothelioma,Mesothelioma
 568,Malignant Pleural Mesothelioma,Malignant Plural Mesothelioma
 569,Eosinophilic Esophagitis (EoE),Eosinophilic Esophagitis (EoE)
@@ -464,7 +458,7 @@ IndicationId,Name,Term
 575,Aggressive Systemic Mastocytosis (ASM),Aggressive Systemic Mastocytosis
 576,Gouty Arthritis,Gouty Arthritis
 578,Cholangiocarcinoma,Cholangiocarcinoma
-579,Autoinflammatory Syndromes,Autoinflammatory Syndromes
+579,Cryopyrin-Associated Periodic Syndromes (CAPS),Autoinflammatory Syndromes
 581,Anxiety,Anxiety
 581,Anxiety,GAD
 581,Anxiety,Generalized Anxiety Disorder
@@ -474,7 +468,7 @@ IndicationId,Name,Term
 584,Adult Onset Stills Disease (AOSD),AOSD
 584,Adult Onset Stills Disease (AOSD),Adult Onset Stills Disease
 584,Adult Onset Stills Disease (AOSD),Adult Onset Stills Disease (AOSD)
-585,Fever Syndromes,Fever Syndromes
+585,Periodic Fever Syndromes,Fever Syndromes
 587,Long-chain fatty acid oxidation disorders (LC-FAOD),LC-FAOD
 587,Long-chain fatty acid oxidation disorders (LC-FAOD),Long-chain fatty acid oxidation disorders
 588,X-linked hypophosphatemia (XLH),X-Linked Hypophosphatemia (XLH)
@@ -488,3 +482,49 @@ IndicationId,Name,Term
 597,Molybdenum cofactor deficiency (MoCD),MoCD
 597,Molybdenum cofactor deficiency (MoCD),Molybdenum cofactor deficiency
 599,Myasthenia Gravis,Myasthenia Gravis
+601,CDKL5 Deficiency Disorder,STK9
+601,CDKL5 Deficiency Disorder,CDD
+601,CDKL5 Deficiency Disorder,Early infantile epileptic encephalopathy 2
+601,CDKL5 Deficiency Disorder,CDKL5-related epileptic encephalopathy
+601,CDKL5 Deficiency Disorder,CDKL5-related epilepsy
+601,CDKL5 Deficiency Disorder,CDKL5 encephalopathy
+601,CDKL5 Deficiency Disorder,CDKL5 disorder
+601,CDKL5 Deficiency Disorder,CDKL5 deficiency
+601,CDKL5 Deficiency Disorder,CDKL5 Deficiency Disorder
+602,Complicated Urinary Tract Infections (cUTI),Complicated UTI
+602,Complicated Urinary Tract Infections (cUTI),UTI
+602,Complicated Urinary Tract Infections (cUTI),Urinary Tract Infections
+602,Complicated Urinary Tract Infections (cUTI),Complicated Urinary Tract Infections
+603,Tumors Induced by VHL,Tumors Induced by VHL
+603,Tumors Induced by VHL,VHL
+603,Tumors Induced by VHL,von Hippel-Lindau
+604,IgA Nephropathy (IgAN),Berger's disease
+604,IgA Nephropathy (IgAN),IgAN
+604,IgA Nephropathy (IgAN),IgA Nephropathy
+604,IgA Nephropathy (IgAN),immunoglobulin A nephropathy
+605,Vasomotor Symptoms Associated with Menopause (VMS),menopause vasomotor symptoms
+605,Vasomotor Symptoms Associated with Menopause (VMS),vasomotor menopause symptoms
+605,Vasomotor Symptoms Associated with Menopause (VMS),Vasomotor Symptoms Associated with Menopause
+606,Hypoparathyroidism,Hypoparathyroidism
+607,PIK3CA-Related Overgrowth Spectrum (PROS),Proteus Syndrome
+608,Hypothyroidism,Hypothyroidism
+609,COVID-19 Treatment,Covid-19 Treatment
+610,Alopecia Areata,Alopecia
+610,Alopecia Areata,Alopecia Areata
+611,Supportive Therapy - Ototoxicity,Ototoxicity
+612,Cutaneous T-Cell Lymphomas,Cutaneous T-Cell Lymphomas
+613,Chronic Kidney Disease,CKD
+613,Chronic Kidney Disease,Chronic Kidney Disease
+614,Paroxysmal Nocturnal Hemoglobinuria,PNH
+614,Paroxysmal Nocturnal Hemoglobinuria,Paroxysmal Nocturnal Hemoglobinuria
+617,Prurigo Nodularis,Prurigo nodularis
+617,Prurigo Nodularis,nodular prurigo
+618,Tumor Mutational Burden-High (TMB-H) Cancer,Tumor Mutational Burden-High
+618,Tumor Mutational Burden-High (TMB-H) Cancer,TMB-H
+619,Melasma,Melasma
+619,Melasma,chloasma faciei
+619,Melasma,chloasma
+619,Melasma,mask of pregnancy
+620,COVID-19 Vaccines,COVID-19 Immunization
+620,COVID-19 Vaccines,COVID-19 Vaccines
+621,Dermal Ulcers,Dermal Ulcers

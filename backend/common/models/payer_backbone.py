@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from typing import ClassVar, Type, Union
 
@@ -61,8 +62,11 @@ class BenefitManagerControl(str, Enum):
 
 class Plan(BaseDocument):
     payer_key: ClassVar[str] = "plan"
+    start_date: datetime = datetime(1970, 1, 1)
+    end_date: datetime = datetime(2038, 1, 1)
     name: str
     l_id: int
+
     l_formulary_id: int | None = None
     l_mco_id: int | None = None
     l_parent_id: int | None = None
@@ -83,6 +87,8 @@ class Formulary(BaseDocument):
     payer_key: ClassVar[str] = "formulary"
     name: str
     l_id: int
+    start_date: datetime = datetime(1970, 1, 1)
+    end_date: datetime = datetime(2038, 1, 1)
     l_medical_ump_id: int | None = None
     l_pharmacy_ump_id: int | None = None
 
@@ -94,6 +100,8 @@ class MCO(BaseDocument):
     payer_key: ClassVar[str] = "mco"
     name: str
     l_id: int
+    start_date: datetime = datetime(1970, 1, 1)
+    end_date: datetime = datetime(2038, 1, 1)
 
     class Settings:
         union_doc = PayerBackboneUnionDoc
@@ -104,6 +112,8 @@ class UMP(BaseDocument):
     benefit: Benefit
     name: str
     l_id: int
+    start_date: datetime = datetime(1970, 1, 1)
+    end_date: datetime = datetime(2038, 1, 1)
 
     class Settings:
         union_doc = PayerBackboneUnionDoc
@@ -113,6 +123,8 @@ class PayerParent(BaseDocument):
     payer_key: ClassVar[str] = "parent"
     name: str
     l_id: int
+    start_date: datetime = datetime(1970, 1, 1)
+    end_date: datetime = datetime(2038, 1, 1)
 
     class Settings:
         union_doc = PayerBackboneUnionDoc
@@ -124,6 +136,8 @@ class BenefitManager(BaseDocument):
     type: BenefitManagerType | None = None
     control: BenefitManagerControl | None = None
     l_id: int
+    start_date: datetime = datetime(1970, 1, 1)
+    end_date: datetime = datetime(2038, 1, 1)
 
     class Settings:
         union_doc = PayerBackboneUnionDoc
