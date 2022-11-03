@@ -31,6 +31,7 @@ from backend.common.models.proxy import Proxy
 from backend.common.models.search_codes import SearchCodeSet
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.models.task_log import LineageTask, PDFDiffTask, TaskLog
 from backend.common.models.translation_config import TranslationConfig
 from backend.common.models.user import User
 from backend.common.models.work_queue import WorkQueue
@@ -89,5 +90,8 @@ async def init_db(mock=False, database_name=None):
             MCO,
             Formulary,
             SearchCodeSet,
+            TaskLog,
+            LineageTask,
+            PDFDiffTask,
         ],  # type: ignore
     )
