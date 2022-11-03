@@ -277,7 +277,7 @@ async def process_backbone(filepath: str, previous_delivery: Delivery | None):
 
     for pfield in dataclasses.fields(Delivery):
         payers: dict[str, PayerBackbone | None] = getattr(delivery, pfield.name)
-        prev_payers: dict[str, PayerBackbone | None] = getattr(previous_delivery, field.name)
+        prev_payers: dict[str, PayerBackbone | None] = getattr(previous_delivery, pfield.name)
         prev_payers_ids = set(prev_payers.keys())
         for id, payer in payers.items():
             prev_payer = prev_payers.get(id, None)
