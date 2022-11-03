@@ -286,7 +286,7 @@ class MuPdfSmartParse(FileParser):
         # footer = for all pages find duplicated or very similar text very near max y
         pass
 
-    def get_text(self):
+    async def get_text(self):
         text = ""
         for index, part in enumerate(self.parts):
 
@@ -306,5 +306,4 @@ class MuPdfSmartParse(FileParser):
                 text += "\n"
 
             text += part["text"]
-
-        print(text.strip())
+        return text

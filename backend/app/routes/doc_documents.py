@@ -14,8 +14,6 @@ from backend.app.routes.table_query import (
 )
 from backend.app.utils.logger import Logger, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
-from backend.common.events.event_convert import EventConvert
-from backend.common.events.send_event_client import SendEventClient
 from backend.common.models.base_document import BaseModel
 from backend.common.models.doc_document import (
     DocDocument,
@@ -132,9 +130,4 @@ async def update_doc_document(
     change_info = get_doc_change_info(updates, doc)
     updated = await update_and_log_diff(logger, current_user, doc, updates)
     await doc_document_save_hook(doc, change_info)
-
-    # Sending Event Bridge Event.  Need to add condition when to send.
-    document_json = await EventConvert(document=updated).convert(doc)
-    send_event_client = SendEventClient()
-    send_event_client.send_event("document-details", document_json)  # noqa: F841
     return updated
