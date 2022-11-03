@@ -58,7 +58,7 @@ export const docDocumentsApi = createApi({
     }),
     createDiff: builder.mutation<CompareResponse, CompareRequest>({
       query: (req) => ({
-        url: `/doc-documents/${req.currentDocDocId}/diff?previous_doc_doc_id=${req.previousDocDocId}`,
+        url: `/doc-documents/diff/${req.currentDocDocId}?previous_doc_doc_id=${req.previousDocDocId}`,
         method: 'POST',
       }),
     }),

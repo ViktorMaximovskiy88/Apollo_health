@@ -30,7 +30,6 @@ interface PropTypes {
 export function FileTypeViewer({ docId, doc, onPageChange = () => {} }: PropTypes) {
   const token = useAccessToken();
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
-
   if (!(token && doc)) return null;
 
   return ['pdf', 'html'].includes(doc.file_extension) ? (
