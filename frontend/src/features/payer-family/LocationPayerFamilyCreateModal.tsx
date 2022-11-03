@@ -1,14 +1,15 @@
-import { Button, Drawer, Form, Input } from 'antd';
+import { Form, Input } from 'antd';
 import { useLazyGetPayerFamilyByNameQuery } from './payerFamilyApi';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
 import { useAddPayerFamilyMutation } from './payerFamilyApi';
 import { useLazyGetPayerBackboneByLIdQuery } from '../payer-backbone/payerBackboneApi';
+import { Modal } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
 import { useCallback } from 'react';
 import { PayerFamily } from './types';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
-import { CloseOutlined } from '@ant-design/icons';
+import { compact } from 'lodash';
 
 interface PayerFamilyCreateModalPropTypes {
   location: DocDocumentLocation | undefined;
@@ -34,7 +35,7 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
     [addPayerFamily, onSave, form]
   );
 
-  const onSubmit = useCallback(async () => {
+  const onOk = useCallback(async () => {
     let { payer_type, payer_ids, channels, benefits, plan_types, regions } =
       form.getFieldsValue(true);
     let getPayerNameVals = async () => {
@@ -62,18 +63,13 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
   }
 
   return (
-    <Drawer
+    <Modal
       open={open}
       title={<>Add Payer Family for {location.site_name}</>}
-      width="30%"
-      placement="left"
-      closable={false}
-      mask={false}
-      extra={
-        <Button type="text" onClick={onClose}>
-          <CloseOutlined />
-        </Button>
-      }
+      width="50%"
+      okText="Submit"
+      onOk={onOk}
+      onCancel={onClose}
     >
       <Form
         form={form}
@@ -105,15 +101,8 @@ export const PayerFamilyCreateModal = (props: PayerFamilyCreateModalPropTypes) =
         </Input.Group>
 
         <PayerFamilyInfoForm />
-
-        <div className="space-x-2 flex justify-end">
-          <Button onClick={onClose}>Cancel</Button>
-          <Button type="primary" onClick={onSubmit} loading={isLoading}>
-            Submit
-          </Button>
-        </div>
       </Form>
-    </Drawer>
+    </Modal>
   );
 };
 

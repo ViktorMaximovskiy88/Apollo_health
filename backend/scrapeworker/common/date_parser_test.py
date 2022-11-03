@@ -231,26 +231,6 @@ def test_exclusions():
     assert len(parser.unclassified_dates) == 1
 
 
-def test_exclude_references():
-    text = """
-        4. References \n
-        date span 12/10/2021-1/5/2031
-    """
-    parser = DateParser(date_rgxs, label_rgxs)
-    parser.extract_dates(text)
-    assert len(parser.unclassified_dates) == 0
-
-
-def test_does_not_exclude_references():
-    text = """
-        4. Not a references header \n
-        date span 12/10/2021-1/5/2031
-    """
-    parser = DateParser(date_rgxs, label_rgxs)
-    parser.extract_dates(text)
-    assert len(parser.unclassified_dates) == 1
-
-
 def test_default_effective_date():
     text = "Contains two dates with no labels, 2/9/2022, May 5 2020"
     parser = DateParser(date_rgxs, label_rgxs)

@@ -34,7 +34,6 @@ export interface RetrievedDocument extends BaseDocument {
   base_url: string;
   lang_code: string;
   file_extension: string;
-  is_current_version: boolean;
 }
 
 // id is added so that it can be used for both table filters and dropdown selections

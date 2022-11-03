@@ -219,11 +219,6 @@ class DateParser:
         elif match.date > existing_label.date and match.date.timestamp() < now.timestamp():
             setattr(self, label, match)
 
-    def is_references_header(self, line: str) -> bool:
-        search = "references"
-        if search in line and not any(c.isalpha() for c in line.replace(search, "")):
-            return True
-
     def extract_dates(self, text: str) -> None:
         """
         Extract dates and labels from provided text.
@@ -235,7 +230,7 @@ class DateParser:
         prev_label = ""
         ends_with_comma = False
         for line in text.split("\n"):
-            if self.is_references_header(line.lower()):
+            if re.fullmatch("references?", line.strip(), re.IGNORECASE):
                 break
             latest_match = 0  # Latest date match on current line
             if self.exclude_text(line):

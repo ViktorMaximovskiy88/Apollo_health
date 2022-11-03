@@ -50,8 +50,6 @@ def transform_value(filter_value: str, filter_type: str):
         value = float(filter_value)
     elif filter_type == "date":
         value = parser.parse(filter_value)
-    elif filter_type == "boolean":
-        value = filter_value.lower() in ("true")
     else:
         value = filter_value
 
