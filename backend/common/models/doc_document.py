@@ -35,7 +35,7 @@ class BaseDocDocument(BaseModel):
 
     classification_lock: TaskLock | None = None
 
-    name: str
+    name: Indexed(str)  # type: ignore
     checksum: str
     file_extension: str | None = None
     text_checksum: str | None = None
@@ -93,6 +93,7 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
     class Settings:
         indexes = [
             [("locations.site_id", pymongo.ASCENDING)],
+            [("locations.link_text", pymongo.ASCENDING)],
             [("locks.user_id", pymongo.ASCENDING)],
         ]
 

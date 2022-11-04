@@ -22,6 +22,7 @@ from backend.common.models.payer_backbone import (
     Channel,
     Formulary,
     PayerBackbone,
+    PayerBackboneUnionDoc,
     PayerParent,
     Plan,
     PlanType,
@@ -307,6 +308,9 @@ async def process_backbone(filepath: str, previous_delivery: Delivery | None):
 
 
 async def load_payer_backbone():
+    if await PayerBackboneUnionDoc.count():
+        return
+
     previous_delivery = None
     for file in os.listdir(this_folder):
         if not file.endswith("xlsx"):

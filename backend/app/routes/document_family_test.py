@@ -2,12 +2,13 @@ from random import random
 
 import pytest
 import pytest_asyncio
+from beanie import PydanticObjectId
 
 from backend.app.routes.document_family import read_document_families
 from backend.app.routes.table_query import TableFilterInfo, TableSortInfo
 from backend.common.core.enums import CollectionMethod, DocumentType, SiteStatus
 from backend.common.db.init import init_db
-from backend.common.models.document_family import DocumentFamily, PayerInfo
+from backend.common.models.document_family import DocumentFamily
 from backend.common.models.site import BaseUrl, HttpUrl, ScrapeMethodConfiguration, Site
 from backend.common.models.user import User
 
@@ -22,7 +23,7 @@ async def before_each_test():
 @pytest.mark.asyncio()
 async def user():
     user = User(
-        id="62e7c6647e2a94f469d57f34",
+        id=PydanticObjectId(),
         email="example@me.com",
         full_name="John Doe",
         hashed_password="example",
@@ -80,7 +81,6 @@ def create_document_family(
     document_type=DocumentType.AuthorizationPolicy,
     description="Example description",
     relevance=[],
-    payer_info=PayerInfo(),
     field_groups=[],
     legacy_relevance=[],
     disabled=False,
@@ -91,7 +91,6 @@ def create_document_family(
         description=description,
         site_id=site.id,
         relevance=relevance,
-        payer_info=payer_info,
         field_groups=field_groups,
         legacy_relevance=legacy_relevance,
         disabled=disabled,

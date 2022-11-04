@@ -5,7 +5,6 @@ import pytest_asyncio
 
 from backend.app.services.payer_backbone.payer_backbone_querier import PayerBackboneQuerier
 from backend.common.db.init import init_db
-from backend.common.models.document_family import PayerInfo
 from backend.common.models.payer_backbone import (
     MCO,
     UMP,
@@ -17,6 +16,7 @@ from backend.common.models.payer_backbone import (
     Plan,
     PlanType,
 )
+from backend.common.models.payer_family import PayerFamily
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -104,7 +104,7 @@ async def before_each_test():
 
 @pytest.mark.asyncio
 async def test_querier_1():
-    pi = PayerInfo(channels=[Channel.Commercial], benefits=[Benefit.Pharmacy])
+    pi = PayerFamily(name="", channels=[Channel.Commercial], benefits=[Benefit.Pharmacy])
     pbbq = PayerBackboneQuerier(pi)
     plans = await pbbq.construct_plan_query()
     plan_ids = [p.l_id async for p in plans]
@@ -120,7 +120,7 @@ async def test_querier_1():
 
 @pytest.mark.asyncio
 async def test_querier_2():
-    pi = PayerInfo(regions=["PA"])
+    pi = PayerFamily(name="", regions=["PA"])
     pbbq = PayerBackboneQuerier(pi)
     plan_ids = await pbbq.relevant_payer_ids_of_type(Plan)
     assert plan_ids == [3, 4]
@@ -131,7 +131,7 @@ async def test_querier_2():
 
 @pytest.mark.asyncio
 async def test_querier_3():
-    pi = PayerInfo(payer_type="formulary", payer_ids=["3"], benefits=[Benefit.Medical])
+    pi = PayerFamily(name="", payer_type="formulary", payer_ids=["3"], benefits=[Benefit.Medical])
     pbbq = PayerBackboneQuerier(pi)
     ump_ids = await pbbq.relevant_payer_ids_of_type(UMP)
     assert ump_ids == [4]

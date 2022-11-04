@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal, Type
 
 from beanie import PydanticObjectId
@@ -57,6 +58,13 @@ async def read_payer_backbones(
 ):
     (class_filter,) = PayerClass._add_class_id_filter(())
     query = PayerBackboneUnionDoc.find(class_filter)
+    effective_date = datetime.now()
+    query = PayerBackboneUnionDoc.find(
+        {
+            "start_date": {"$lte": effective_date},
+            "end_date": {"$gt": effective_date},
+        }
+    )
     return await query_table(query, limit, skip, sorts, filters)
 
 

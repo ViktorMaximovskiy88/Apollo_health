@@ -3,7 +3,6 @@ from typing import Any, Type
 
 from beanie.odm.queries.find import FindMany
 
-from backend.common.models.document_family import PayerInfo
 from backend.common.models.payer_backbone import (
     MCO,
     UMP,
@@ -14,10 +13,11 @@ from backend.common.models.payer_backbone import (
     PayerParent,
     Plan,
 )
+from backend.common.models.payer_family import PayerFamily
 
 
 class PayerBackboneQuerier:
-    def __init__(self, payer_info: PayerInfo, effective_date: str | None = None) -> None:
+    def __init__(self, payer_info: PayerFamily, effective_date: str | None = None) -> None:
         self.payer_info = payer_info
         if effective_date:
             year, month, day = effective_date.split("-")
@@ -58,7 +58,7 @@ class PayerBackboneQuerier:
         ump_ids: set[int | None] = set()
         formulary_query = Formulary.find(
             {
-                "start_date": {"$lt": self.effective_date},
+                "start_date": {"$lte": self.effective_date},
                 "end_date": {"$gt": self.effective_date},
                 "l_id": {"$in": result_ids},
             }
@@ -73,7 +73,7 @@ class PayerBackboneQuerier:
 
     async def construct_plan_query(self) -> FindMany[Plan]:
         query = Plan.find(
-            {"start_date": {"$lt": self.effective_date}, "end_date": {"$gt": self.effective_date}}
+            {"start_date": {"$lte": self.effective_date}, "end_date": {"$gt": self.effective_date}}
         )
         query = self.channel_criteria(query)
         query = self.plan_type_criteria(query)
@@ -144,7 +144,7 @@ class PayerBackboneQuerier:
             if payer_type == "ump":
                 formulary_query = Formulary.find(
                     {
-                        "start_date": {"$lt": self.effective_date},
+                        "start_date": {"$lte": self.effective_date},
                         "end_date": {"$gt": self.effective_date},
                     }
                 )
