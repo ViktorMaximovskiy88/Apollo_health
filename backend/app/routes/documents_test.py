@@ -301,7 +301,7 @@ class TestUploadFile:
             assert result.id is not None
 
             uploaded_document_2 = await upload_document(upload_file, from_site_id=site_one.id)
-            assert uploaded_document_2["error"] == "The document already exists!"
+            assert uploaded_document_2["error"] == "The document already exists for this site!"
 
 
 class TestCreateDocuments:

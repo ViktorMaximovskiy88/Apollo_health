@@ -185,6 +185,7 @@ class CollectionService:
             initiator_id=self.current_user.id,
             start_time=datetime.now(tz=timezone.utc),
             queued_time=datetime.now(tz=timezone.utc),
+            last_active=datetime.now(tz=timezone.utc),
             status=TaskStatus.IN_PROGRESS,
             collection_method=CollectionMethod.Manual,
         )
@@ -193,8 +194,6 @@ class CollectionService:
         # docs without work_items were generated outside manual process.
         previous_task: SiteScrapeTask = await self.fetch_previous_task()
         if previous_task:
-            typer.secho("last_queued", fg=typer.colors.BRIGHT_GREEN)
-            print(previous_task.retrieved_document_ids)
             doc_docs: List[DocDocument] = await DocDocument.find(
                 {"retrieved_document_id": {"$in": previous_task.retrieved_document_ids}}
             ).to_list()
@@ -326,6 +325,16 @@ class CollectionService:
         await doc_doc.save()
         return response
 
+    async def set_task_complete(self, task) -> CollectionResponse:
+        """
+        Set sitescrapetask completed dates and statuses.
+        """
+        response: CollectionResponse = CollectionResponse()
+        task.end_time = datetime.now(tz=timezone.utc)
+        task.last_doc_collected = datetime.now(tz=timezone.utc)
+        await task.save()
+        return response
+
     async def process_work_lists(self) -> CollectionResponse:
         """
         Go through every queued task's work_list and process each action.
@@ -364,15 +373,14 @@ class CollectionService:
         )
         if env_type == "local" and work_item.selected != WorkItemOption.UNHANDLED:
             work_item_msg: str = (
-                f"work_item selected: [{work_item.selected}] in task: [{target_task.id}] "
-                f"doc_id: [{work_item.document_id}] "
-                f"retrieved_document_id: [{work_item.retrieved_document_id}]"
+                f"work_item selected[{work_item.selected}] in task[{target_task.id}] "
+                f"doc_id[{work_item.document_id}] "
+                f"retrieved_document_id[{work_item.retrieved_document_id}]"
             )
             typer.secho(work_item_msg, fg=typer.colors.BRIGHT_GREEN)
 
         match work_item.selected:
             case WorkItemOption.FOUND:
-                await self.set_first_collected(retr_doc)
                 await self.set_last_collected(retr_doc)
                 self.found_docs_total += 1
             case WorkItemOption.NEW_DOCUMENT:
@@ -392,7 +400,7 @@ class CollectionService:
             case WorkItemOption.UNHANDLED:
                 result.add_error(f"{retr_doc.name}")
                 return result
-        await target_task.save()
+        await self.set_task_complete(target_task)
 
         return result
 
@@ -406,7 +414,7 @@ def find_work_item_index(doc, task, raise_exception=False, err_msg="") -> int:
             (i for i, item in enumerate(task.work_list) if f"{item.document_id}" == f"{doc.id}"),
             -1,
         )
-    # Is retr_doc
+    # Is retr_doc.
     else:
         work_item_index: int = next(
             (

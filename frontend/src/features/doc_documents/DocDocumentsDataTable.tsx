@@ -98,6 +98,23 @@ const useColumns = (siteNamesById: { [key: string]: string }) => {
       },
     },
     {
+      header: 'Final Effective Date',
+      name: 'final_effective_date',
+      minWidth: 200,
+      filterEditor: DateFilter,
+      filterEditorProps: () => {
+        return {
+          dateFormat: 'YYYY-MM-DD',
+          highlightWeekends: false,
+          placeholder: 'Select Date',
+        };
+      },
+      render: ({ data: doc }: { data: DocDocument }) => {
+        if (!doc.final_effective_date) return null;
+        return prettyDateTimeFromISO(doc.final_effective_date);
+      },
+    },
+    {
       header: 'First Collected Date',
       name: 'first_collected_date',
       minWidth: 200,
@@ -162,8 +179,30 @@ const useColumns = (siteNamesById: { [key: string]: string }) => {
     },
     {
       header: 'Link Text',
-      name: 'link_text',
-      render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
+      name: 'locations.link_text',
+      render: ({ data: docDocument }: { data: DocDocument }) => {
+        const linkTexts = docDocument.locations.map((location) => location.link_text);
+        return <>{linkTexts.join(', ')}</>;
+      },
+    },
+    {
+      header: 'Current Version',
+      name: 'is_current_version',
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        placeholder: true,
+        dataSource: [
+          {
+            id: true,
+            label: 'True',
+          },
+          {
+            id: false,
+            label: 'False',
+          },
+        ],
+      },
+      render: ({ value: is_current_version }: { value: boolean }) => <>{is_current_version}</>,
     },
     {
       header: 'Tags',

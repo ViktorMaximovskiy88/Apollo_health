@@ -1,15 +1,15 @@
-import { Form, Input, Select } from 'antd';
+import { Button, Drawer, Form, Input, Select } from 'antd';
 import {
   useLazyGetDocumentFamilyByNameQuery,
   useAddDocumentFamilyMutation,
   useUpdateDocumentFamilyMutation,
 } from './documentFamilyApi';
-import { Modal } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
 import { useEffect } from 'react';
 import { fieldGroupsOptions, legacyRelevanceOptions } from './documentFamilyLevels';
 import { DocumentFamily } from './types';
+import { CloseOutlined } from '@ant-design/icons';
 
 interface DocumentFamilyCreateModalPropTypes {
   documentType?: string;
@@ -50,14 +50,18 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
     form.setFieldsValue(documentFamilyData);
   }, [documentFamilyData]);
   return (
-    <Modal
+    <Drawer
       open={open}
       title={documentFamilyData ? <>Edit Document Family</> : <>Add Document Family</>}
-      width="50%"
-      okText="Submit"
-      onOk={form.submit}
-      onCancel={onClose}
-      confirmLoading={isLoading || isUpdateLoading}
+      width="20%"
+      placement="left"
+      closable={false}
+      mask={false}
+      extra={
+        <Button type="text" onClick={onClose}>
+          <CloseOutlined />
+        </Button>
+      }
     >
       <Form
         form={form}
@@ -107,8 +111,14 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
             <Select mode="multiple" options={fieldGroupsOptions} />
           </Form.Item>
         </Input.Group>
+        <div className="space-x-2 flex justify-end">
+          <Button onClick={onClose}>Cancel</Button>
+          <Button type="primary" onClick={form.submit} loading={isLoading || isUpdateLoading}>
+            Submit
+          </Button>
+        </div>
       </Form>
-    </Modal>
+    </Drawer>
   );
 };
 
@@ -147,8 +157,8 @@ export function filterLegacyRelevanceOptions(
       if (e.value === 'N/A') {
         return { ...e, disabled: true };
       } else if (
-        (nameValue?.includes('EDITOR_MANUAL') && e.value == 'EDITOR_AUTOMATED') ||
-        (nameValue?.includes('EDITOR_AUTOMATED') && e.value == 'EDITOR_MANUAL')
+        (nameValue?.includes('EDITOR_MANUAL') && e.value === 'EDITOR_AUTOMATED') ||
+        (nameValue?.includes('EDITOR_AUTOMATED') && e.value === 'EDITOR_MANUAL')
       ) {
         return { ...e, disabled: true };
       }

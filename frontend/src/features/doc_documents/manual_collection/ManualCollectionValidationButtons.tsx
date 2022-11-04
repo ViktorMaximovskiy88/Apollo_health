@@ -1,4 +1,4 @@
-import { Button, Spin } from 'antd';
+import { Button, Spin, Tooltip } from 'antd';
 import {
   FileAddOutlined,
   FileDoneOutlined,
@@ -8,15 +8,11 @@ import {
 } from '@ant-design/icons';
 import { SiteDocDocument } from '../types';
 import { WorkItemOption } from '../../collections/types';
-import { useContext, useState } from 'react';
+import { useContext } from 'react';
 import { ValidationButtonsContext, ValidationButtonsProvider } from './ManualCollectionContext';
-import { useSiteScrapeTaskId, useUpdateSelected } from './useUpdateSelected';
+import { useUpdateSelected } from './useUpdateSelected';
 import { useParams } from 'react-router-dom';
 import { useGetSiteQuery } from '../../sites/sitesApi';
-import { initialState } from '../../collections/collectionsSlice';
-import { useLazyGetScrapeTasksForSiteQuery } from '../../collections/siteScrapeTasksApi';
-import { CollectionMethod } from '../../sites/types';
-import useInterval from '../../../common/hooks/use-interval';
 import { TaskStatus } from '../../../common/scrapeTaskStatus';
 
 const Found = () => {
@@ -29,53 +25,69 @@ const Found = () => {
       if (workItem.is_new || workItem.new_doc) {
         return (
           <Button type="primary" onClick={() => updateSelected(WorkItemOption.Found)}>
-            <FileDoneOutlined className="text-white" />
+            <Tooltip placement="top" title="Found">
+              <FileDoneOutlined className="text-white" />
+            </Tooltip>
           </Button>
         );
       } else {
         return (
           <Button type="primary">
-            <FileDoneOutlined className="text-white" />
+            <Tooltip placement="top" title="Found">
+              <FileDoneOutlined className="text-white" />
+            </Tooltip>
           </Button>
         );
       }
     case WorkItemOption.NewDocument:
       return (
         <Button disabled>
-          <FileDoneOutlined />
+          <Tooltip placement="top" title="Found">
+            <FileDoneOutlined />
+          </Tooltip>
         </Button>
       );
     case WorkItemOption.NotFound:
       if (workItem.is_new || workItem.new_doc) {
         return (
           <Button onClick={() => updateSelected(WorkItemOption.Found)}>
-            <FileDoneOutlined />
+            <Tooltip placement="top" title="Found">
+              <FileDoneOutlined />
+            </Tooltip>
           </Button>
         );
       } else {
         return (
           <Button>
-            <FileDoneOutlined />
+            <Tooltip placement="top" title="Found">
+              <FileDoneOutlined />
+            </Tooltip>
           </Button>
         );
       }
     case WorkItemOption.NewVersion:
       return (
         <Button disabled>
-          <FileDoneOutlined />
+          <Tooltip placement="top" title="Found">
+            <FileDoneOutlined />
+          </Tooltip>
         </Button>
       );
     default:
       if (workItem.is_new) {
         return (
           <Button onClick={() => updateSelected(WorkItemOption.Found)}>
-            <FileDoneOutlined />
+            <Tooltip placement="top" title="Found">
+              <FileDoneOutlined />
+            </Tooltip>
           </Button>
         );
       } else {
         return (
           <Button>
-            <FileDoneOutlined />
+            <Tooltip placement="top" title="Found">
+              <FileDoneOutlined />
+            </Tooltip>
           </Button>
         );
       }
@@ -90,31 +102,41 @@ const NewDocument = () => {
     case WorkItemOption.Found:
       return (
         <Button disabled>
-          <FileAddOutlined />
+          <Tooltip placement="top" title="New Document">
+            <FileAddOutlined />
+          </Tooltip>
         </Button>
       );
     case WorkItemOption.NewDocument:
       return (
         <Button type="primary">
-          <FileAddOutlined className="text-white" />
+          <Tooltip placement="top" title="New Document">
+            <FileAddOutlined className="text-white" />
+          </Tooltip>
         </Button>
       );
     case WorkItemOption.NotFound:
       return (
         <Button disabled>
-          <FileAddOutlined />
+          <Tooltip placement="top" title="New Document">
+            <FileAddOutlined />
+          </Tooltip>
         </Button>
       );
     case WorkItemOption.NewVersion:
       return (
         <Button disabled>
-          <FileAddOutlined />
+          <Tooltip placement="top" title="New Document">
+            <FileAddOutlined />
+          </Tooltip>
         </Button>
       );
     default:
       return (
         <Button disabled>
-          <FileAddOutlined />
+          <Tooltip placement="top" title="New Document">
+            <FileAddOutlined />
+          </Tooltip>
         </Button>
       );
   }
@@ -130,53 +152,69 @@ const NotFound = () => {
       if (workItem.is_new || workItem.new_doc) {
         return (
           <Button onClick={() => updateSelected(WorkItemOption.NotFound)}>
-            <FileExcelOutlined />
+            <Tooltip placement="top" title="Not Found">
+              <FileExcelOutlined />
+            </Tooltip>
           </Button>
         );
       } else {
         return (
           <Button>
-            <FileExcelOutlined />
+            <Tooltip placement="top" title="Not Found">
+              <FileExcelOutlined />
+            </Tooltip>
           </Button>
         );
       }
     case WorkItemOption.NewDocument:
       return (
         <Button disabled>
-          <FileExcelOutlined />
+          <Tooltip placement="top" title="Not Found">
+            <FileExcelOutlined />
+          </Tooltip>
         </Button>
       );
     case WorkItemOption.NotFound:
       if (workItem.is_new || workItem.new_doc) {
         return (
           <Button type="primary" onClick={() => updateSelected(WorkItemOption.NotFound)}>
-            <FileExcelOutlined className="text-white" />
+            <Tooltip placement="top" title="Not Found">
+              <FileExcelOutlined className="text-white" />
+            </Tooltip>
           </Button>
         );
       } else {
         return (
           <Button type="primary">
-            <FileExcelOutlined className="text-white" />
+            <Tooltip placement="top" title="Not Found">
+              <FileExcelOutlined className="text-white" />
+            </Tooltip>
           </Button>
         );
       }
     case WorkItemOption.NewVersion:
       return (
         <Button disabled>
-          <FileExcelOutlined />
+          <Tooltip placement="top" title="Not Found">
+            <FileExcelOutlined />
+          </Tooltip>
         </Button>
       );
     default:
       if (workItem.is_new) {
         return (
           <Button onClick={() => updateSelected(WorkItemOption.NotFound)}>
-            <FileExcelOutlined />
+            <Tooltip placement="top" title="Not Found">
+              <FileExcelOutlined />
+            </Tooltip>
           </Button>
         );
       } else {
         return (
           <Button>
-            <FileExcelOutlined />
+            <Tooltip placement="top" title="Not Found">
+              <FileExcelOutlined />
+            </Tooltip>
           </Button>
         );
       }
@@ -198,20 +236,26 @@ const NewVersion = () => {
               updateSelected(WorkItemOption.NewVersion);
             }}
           >
-            <FileExclamationOutlined />
+            <Tooltip placement="top" title="New Version">
+              <FileExclamationOutlined />
+            </Tooltip>
           </Button>
         );
       } else {
         return (
           <Button disabled>
-            <FileExclamationOutlined />
+            <Tooltip placement="top" title="New Version">
+              <FileExclamationOutlined />
+            </Tooltip>
           </Button>
         );
       }
     case WorkItemOption.NewDocument:
       return (
         <Button disabled>
-          <FileExclamationOutlined />
+          <Tooltip placement="top" title="New Version">
+            <FileExclamationOutlined />
+          </Tooltip>
         </Button>
       );
     case WorkItemOption.NotFound:
@@ -223,13 +267,17 @@ const NewVersion = () => {
               updateSelected(WorkItemOption.NewVersion);
             }}
           >
-            <FileExclamationOutlined />
+            <Tooltip placement="top" title="New Version">
+              <FileExclamationOutlined />
+            </Tooltip>
           </Button>
         );
       } else {
         return (
           <Button disabled>
-            <FileExclamationOutlined />
+            <Tooltip placement="top" title="New Version">
+              <FileExclamationOutlined />
+            </Tooltip>
           </Button>
         );
       }
@@ -243,13 +291,17 @@ const NewVersion = () => {
               updateSelected(WorkItemOption.NewVersion);
             }}
           >
-            <FileExclamationOutlined className="text-white" />
+            <Tooltip placement="top" title="New Version">
+              <FileExclamationOutlined className="text-white" />
+            </Tooltip>
           </Button>
         );
       } else {
         return (
           <Button type="primary">
-            <FileExclamationOutlined className="text-white" />
+            <Tooltip placement="top" title="New Version">
+              <FileExclamationOutlined className="text-white" />
+            </Tooltip>
           </Button>
         );
       }
@@ -262,13 +314,17 @@ const NewVersion = () => {
               updateSelected(WorkItemOption.NewVersion);
             }}
           >
-            <FileExclamationOutlined />
+            <Tooltip placement="top" title="New Version">
+              <FileExclamationOutlined />
+            </Tooltip>
           </Button>
         );
       } else {
         return (
           <Button>
-            <FileExclamationOutlined />
+            <Tooltip placement="top" title="New Version">
+              <FileExclamationOutlined />
+            </Tooltip>
           </Button>
         );
       }
@@ -283,31 +339,41 @@ const Unhandled = () => {
     case WorkItemOption.Found:
       return (
         <Button disabled>
-          <FileUnknownOutlined />
+          <Tooltip placement="top" title="Unhandled">
+            <FileUnknownOutlined />
+          </Tooltip>
         </Button>
       );
     case WorkItemOption.NewDocument:
       return (
         <Button disabled>
-          <FileUnknownOutlined />
+          <Tooltip placement="top" title="Unhandled">
+            <FileUnknownOutlined />
+          </Tooltip>
         </Button>
       );
     case WorkItemOption.NotFound:
       return (
         <Button disabled>
-          <FileUnknownOutlined />
+          <Tooltip placement="top" title="Unhandled">
+            <FileUnknownOutlined />
+          </Tooltip>
         </Button>
       );
     case WorkItemOption.NewVersion:
       return (
         <Button disabled>
-          <FileUnknownOutlined />
+          <Tooltip placement="top" title="Unhandled">
+            <FileUnknownOutlined />
+          </Tooltip>
         </Button>
       );
     default:
       return (
         <Button type="primary">
-          <FileUnknownOutlined />
+          <Tooltip placement="top" title="Unhandled">
+            <FileUnknownOutlined />
+          </Tooltip>
         </Button>
       );
   }

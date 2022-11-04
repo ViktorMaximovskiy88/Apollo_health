@@ -35,7 +35,7 @@ class DateParser:
         self.date_rgxs = date_rgxs
         self.label_rgxs = label_rgxs
         self.whitespace_rgx = re.compile(r"\S")
-        self.hyphen_rgx = re.compile(r"[\u2010-\u2015]|-")  # unicode hyphens
+        self.hyphen_rgx = re.compile(r"[\u2010-\u2015]|\u00AD|-")  # unicode hyphens
         self.effective_date = DateMatch()
         self.end_date = DateMatch()
         self.last_updated_date = DateMatch()
@@ -219,6 +219,11 @@ class DateParser:
         elif match.date > existing_label.date and match.date.timestamp() < now.timestamp():
             setattr(self, label, match)
 
+    def is_references_header(self, line: str) -> bool:
+        search = "references"
+        if search in line and not any(c.isalpha() for c in line.replace(search, "")):
+            return True
+
     def extract_dates(self, text: str) -> None:
         """
         Extract dates and labels from provided text.
@@ -230,7 +235,7 @@ class DateParser:
         prev_label = ""
         ends_with_comma = False
         for line in text.split("\n"):
-            if re.fullmatch("references?", line.strip(), re.IGNORECASE):
+            if self.is_references_header(line.lower()):
                 break
             latest_match = 0  # Latest date match on current line
             if self.exclude_text(line):
