@@ -4,11 +4,8 @@ import { prettyDate } from '../../common';
 import { DocumentTypes } from '../retrieved_documents/types';
 import { DocCompareToPrevious } from './DocCompareToPrevious';
 import { useGetDocDocumentQuery } from './docDocumentApi';
-import { useEffect } from 'react';
 import { ExploreLineage } from './lineage/ExploreLineage';
 import { Link, useParams } from 'react-router-dom';
-import { setPreviousDocDocumentId } from './lineage/lineageDocDocumentsSlice';
-import { useAppDispatch } from '../../app/store';
 
 const DocumentType = () => (
   <Form.Item className="flex-1" name="document_type" label="Document Type" required={true}>
@@ -30,12 +27,6 @@ const FinalEffectiveDate = () => (
 const Lineage = () => {
   const { docDocumentId } = useParams();
   const { data: docDocument } = useGetDocDocumentQuery(docDocumentId, { skip: !docDocumentId });
-  const dispatch = useAppDispatch();
-
-  useEffect(() => {
-    // on mount, set initial previousDocDocumentId
-    dispatch(setPreviousDocDocumentId(docDocument?.previous_doc_doc_id || null));
-  }, [dispatch, docDocument?.previous_doc_doc_id]);
 
   const { data: prevDoc } = useGetDocDocumentQuery(docDocument?.previous_doc_doc_id ?? '');
 
