@@ -9,7 +9,7 @@ export enum TagUpdateStatus {
 }
 export interface BaseDocTag {
   id: string;
-  _type: 'indication' | 'therapy' | 'therapy-group';
+  _type: 'indication' | 'therapy';
   _normalized: string;
 }
 
@@ -50,9 +50,11 @@ export interface CompareRequest {
 }
 
 export interface CompareResponse extends BaseDocument {
-  diff: string;
-  previous_doc: DocDocument;
-  current_doc: DocDocument;
+  exists: boolean;
+  processing: boolean;
+  queued: boolean;
+  new_key: string | null;
+  prev_key: string | null;
 }
 
 export interface DocDocument extends BaseDocument {

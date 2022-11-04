@@ -1,8 +1,10 @@
+from datetime import datetime, timedelta, timezone
 from typing import List
 
 from beanie import PydanticObjectId
 from beanie.odm.queries.find import FindMany
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
+from fastapi.responses import StreamingResponse
 
 from backend.app.routes.sites import Site
 from backend.app.routes.table_query import (
@@ -14,8 +16,6 @@ from backend.app.routes.table_query import (
 )
 from backend.app.utils.logger import Logger, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
-from backend.common.events.event_convert import EventConvert
-from backend.common.events.send_event_client import SendEventClient
 from backend.common.models.base_document import BaseModel
 from backend.common.models.doc_document import (
     DocDocument,
@@ -32,7 +32,8 @@ from backend.common.services.lineage.update_prev_document import (
     update_doc_doc_and_new_prev_doc_doc,
     update_old_prev_doc_doc,
 )
-from backend.common.storage.text_handler import TextHandler
+from backend.common.services.text_compare.doc_text_compare import DocTextCompare
+from backend.common.storage.client import DocumentStorageClient
 
 router: APIRouter = APIRouter(
     prefix="/doc-documents",
@@ -74,6 +75,13 @@ async def read_doc_documents(
     return await query_table(document_query, limit, skip, sorts, filters)
 
 
+@router.get("/diff/{key}.pdf", dependencies=[Security(get_current_user)])
+async def download_diff_document(key: str):
+    client = DocumentStorageClient()
+    stream = client.read_object_stream(f"{key}.pdf")
+    return StreamingResponse(stream, media_type="application/pdf")
+
+
 @router.get(
     "/{id}",
     response_model=DocDocumentView,
@@ -98,30 +106,42 @@ async def read_extraction_task(
 
 
 class CompareResponse(BaseModel):
-    diff: str
-    previous_doc: DocDocument
-    current_doc: DocDocument
+    exists: bool
+    processing: bool
+    queued: bool = False
+    new_key: str | None = None
+    prev_key: str | None = None
 
 
 @router.post(
-    "/{id}/diff",
+    "/diff/{id}",
     response_model=CompareResponse,
     dependencies=[Security(get_current_user)],
 )
 async def create_diff(
-    previous_doc_doc_id: PydanticObjectId, current_doc: DocDocument = Depends(get_target)
+    previous_doc_doc_id: PydanticObjectId,
+    background_tasks: BackgroundTasks,
+    current_doc: DocDocument = Depends(get_target),
 ):
-    text_handler: TextHandler = TextHandler()
-    previous_doc: DocDocument = await get_target(previous_doc_doc_id)
-    if current_doc.text_checksum is None or previous_doc.text_checksum is None:
-        raise HTTPException(
-            detail="Current or previous DocDocument does not have an associated text file.",
-            status_code=status.HTTP_406_NOT_ACCEPTABLE,
-        )
-    _, diff = await text_handler.create_diff(previous_doc.text_checksum, current_doc.text_checksum)
-    return CompareResponse(
-        diff=diff.decode("utf-8"), previous_doc=previous_doc, current_doc=current_doc
-    )
+    five_mins_ago = datetime.now(tz=timezone.utc) - timedelta(minutes=5)
+    if (
+        current_doc.compare_create_time
+        and current_doc.compare_create_time.replace(tzinfo=timezone.utc) > five_mins_ago
+    ):
+        # Do not requeue if creation queued in past five mins
+        return CompareResponse(exists=False, processing=True)
+    prev_doc: DocDocument = await get_target(previous_doc_doc_id)
+    doc_client = DocumentStorageClient()
+    new_key = f"{current_doc.checksum}-{prev_doc.checksum}-new.pdf"
+    prev_key = f"{current_doc.checksum}-{prev_doc.checksum}-prev.pdf"
+    if doc_client.object_exists(new_key) and doc_client.object_exists(prev_key):
+        return CompareResponse(exists=True, processing=False, new_key=new_key, prev_key=prev_key)
+    else:
+        dtc = DocTextCompare(doc_client)
+        background_tasks.add_task(dtc.compare, doc=current_doc, prev_doc=prev_doc)
+        current_doc.compare_create_time = datetime.now(tz=timezone.utc)
+        await current_doc.save()
+        return CompareResponse(exists=False, processing=True, queued=True)
 
 
 @router.post("/{id}/update-previous", response_model=DocDocument)
@@ -150,9 +170,4 @@ async def update_doc_document(
     change_info = get_doc_change_info(updates, doc)
     updated = await update_and_log_diff(logger, current_user, doc, updates)
     await doc_document_save_hook(doc, change_info)
-
-    # Sending Event Bridge Event.  Need to add condition when to send.
-    document_json = await EventConvert(document=updated).convert(doc)
-    send_event_client = SendEventClient()
-    send_event_client.send_event("document-details", document_json)  # noqa: F841
     return updated

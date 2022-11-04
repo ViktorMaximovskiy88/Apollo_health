@@ -35,7 +35,7 @@ class BaseDocDocument(BaseModel):
 
     classification_lock: TaskLock | None = None
 
-    name: str
+    name: Indexed(str)  # type: ignore
     checksum: str
     file_extension: str | None = None
     text_checksum: str | None = None
@@ -77,6 +77,8 @@ class BaseDocDocument(BaseModel):
     translation_id: PydanticObjectId | None = None
     content_extraction_task_id: PydanticObjectId | None = None
 
+    compare_create_time: datetime | None = None
+
     tags: list[str] = []
 
 
@@ -93,6 +95,7 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
     class Settings:
         indexes = [
             [("locations.site_id", pymongo.ASCENDING)],
+            [("locations.link_text", pymongo.ASCENDING)],
             [("locks.user_id", pymongo.ASCENDING)],
         ]
 

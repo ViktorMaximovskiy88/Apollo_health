@@ -35,7 +35,7 @@ class DateParser:
         self.date_rgxs = date_rgxs
         self.label_rgxs = label_rgxs
         self.whitespace_rgx = re.compile(r"\S")
-        self.hyphen_rgx = re.compile(r"[\u2010-\u2015]|-")  # unicode hyphens
+        self.hyphen_rgx = re.compile(r"[\u2010-\u2015]|\u00AD|-")  # unicode hyphens
         self.effective_date = DateMatch()
         self.end_date = DateMatch()
         self.last_updated_date = DateMatch()

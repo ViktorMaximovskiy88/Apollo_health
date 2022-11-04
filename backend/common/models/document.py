@@ -38,6 +38,7 @@ class BaseRetrievedDocument(BaseModel):
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
     doc_vectors: list[list[float]] = []
+    token_count: int = 0
 
     # lineage
     lineage_id: PydanticObjectId | None = None
@@ -67,6 +68,8 @@ class UploadedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
     internal_document: bool
     add_new_document: bool | None = None  # If adding new doc clicked from work item.
     upload_new_version_for_id: str | None = None  # If adding new version, this is original doc id.
+    prev_location_site_id: str | None = None  # If same location but from different site, site_id.
+    prev_location_doc_id: str | None = None  # If same location but from different site, doc_id.
 
 
 class UpdateRetrievedDocument(BaseModel, DocumentMixins):

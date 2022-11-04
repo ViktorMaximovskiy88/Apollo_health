@@ -6,6 +6,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '../../components';
 import { PayerEditSubmitComponent } from './PayerEditSubmitComponent';
 import {
+  useGetPayerFamilyQuery,
   useLazyGetPayerFamilyByNameQuery,
   useLazyGetPayerFamilyQuery,
   useUpdatePayerFamilyMutation,
@@ -19,41 +20,14 @@ export const PayerFamilyEditPage = () => {
 
   const [form] = useForm();
   const navigate = useNavigate();
-  const [getPayerFamily] = useLazyGetPayerFamilyQuery();
+  const { data: payerFamily } = useGetPayerFamilyQuery(payerFamilyId);
   const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
 
   const [updatePayerFamily, { isLoading }] = useUpdatePayerFamilyMutation();
-  const [initialPayerOptions, setInitialPayerOptions] = useState<any>([]);
   const [checked, setChecked] = useState<boolean>(false);
-
-  useEffect(() => {
-    const fetchCurrentPayerFamilyVals = async () => {
-      const { data } = await getPayerFamily(payerFamilyId);
-      if (data) {
-        //conditional used to address: Warning: Instance created by `useForm` is not connected to any Form element. Forget to pass `form` prop?
-        form.setFieldsValue({
-          name: data?.name,
-          payer_type: data.payer_type,
-          channels: data.channels,
-          benefits: data.benefits,
-          plan_types: data.plan_types,
-          regions: data.regions,
-          auto_generated: data.auto_generated,
-        });
-        setInitialPayerOptions(data.payer_ids);
-      }
-    };
-    fetchCurrentPayerFamilyVals();
-  }, [form, getPayerFamily, payerFamilyId]);
 
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
-      let elem = values.payer_ids?.slice(0, 1);
-      // @ts-ignore
-      if (elem[0]?.label) {
-        // @ts-ignore
-        values.payer_ids = values.payer_ids?.map((val) => val.value);
-      }
       await updatePayerFamily({ ...values, _id: payerFamilyId }).unwrap();
       form.resetFields();
       navigate('/payer-family');
@@ -61,7 +35,7 @@ export const PayerFamilyEditPage = () => {
     [updatePayerFamily, form, payerFamilyId, navigate]
   );
 
-  if (!payerFamilyId) {
+  if (!payerFamilyId || !payerFamily) {
     return <></>;
   }
 
@@ -76,6 +50,7 @@ export const PayerFamilyEditPage = () => {
           requiredMark={false}
           validateTrigger={['onBlur']}
           onFinish={onFinish}
+          initialValues={payerFamily}
         >
           <Form.Item
             label="Name"
@@ -95,7 +70,7 @@ export const PayerFamilyEditPage = () => {
               <Checkbox onChange={() => setChecked(!checked)}>Auto Generate</Checkbox>
             </Form.Item>
           </Input.Group>
-          <PayerFamilyInfoForm initialPayerOptions={initialPayerOptions} />
+          <PayerFamilyInfoForm />
         </Form>
         <div className="w-1/2 h-full overflow-auto"></div>
         <div className="w-1/2 h-full overflow-auto ant-tabs-h-full"></div>

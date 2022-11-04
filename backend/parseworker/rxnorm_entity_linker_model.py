@@ -10,9 +10,10 @@ from scispacy.candidate_generation import (
 )
 from scispacy.linking_utils import KnowledgeBase
 
+from backend.common.core.config import config
 from backend.common.models.translation_config import TranslationRule
 from backend.common.storage.client import ModelStorageClient
-from backend.common.core.config import config
+
 
 class RxNormEntityLinkerModel:
     def __init__(self, version="latest"):
@@ -242,8 +243,6 @@ class RxNormEntityLinkerModel:
             best_candidate: MentionCandidate | None = None
             for candidate in candidates:
                 for score, description in zip(candidate.similarities, candidate.aliases):
-                    if "colchicine" in span:
-                        print(score, description)
                     if score < 0.5:
                         continue
                     if "bulk" in description.lower() and not has_bulk:

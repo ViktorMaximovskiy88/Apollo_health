@@ -5,6 +5,8 @@ from logging import Logger
 from beanie import PydanticObjectId
 
 from backend.common.core.enums import ApprovalStatus, TaskStatus
+from backend.common.events.event_convert import EventConvert
+from backend.common.events.send_event_client import SendEventClient
 from backend.common.models.content_extraction_task import ContentExtractionTask
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document_family import DocumentFamily
@@ -192,6 +194,9 @@ class DocLifecycleService:
         fully_approved, edit = await self.assess_intermediate_statuses(doc)
         if fully_approved:
             doc.status = ApprovalStatus.APPROVED
+            document_json = await EventConvert().convert(doc)
+            send_event_client = SendEventClient()
+            send_event_client.send_event("document-details", document_json)
         else:
             doc.status = ApprovalStatus.PENDING
 
@@ -212,9 +217,6 @@ class DocLifecycleService:
                     }
                 },
             )
-            if fully_approved:
-                pass
-                # TODO: Send Event
 
         return doc
 
