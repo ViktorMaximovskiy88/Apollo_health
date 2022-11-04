@@ -11,7 +11,7 @@ import {
   setDocDocumentTableLimit,
   setDocDocumentTableSkip,
 } from './docDocumentsSlice';
-import { prettyDateTimeFromISO } from '../../common';
+import { prettyDateTimeFromISO, prettyFromISO } from '../../common';
 import { ButtonLink, GridPaginationToolbar } from '../../components';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { Site } from '../sites/types';
@@ -29,6 +29,7 @@ import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
 import { useGetSiteQuery, useGetSitesQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
+import { DateTime } from 'luxon';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
@@ -111,7 +112,7 @@ const useColumns = (siteNamesById: { [key: string]: string }) => {
       },
       render: ({ data: doc }: { data: DocDocument }) => {
         if (!doc.final_effective_date) return null;
-        return prettyDateTimeFromISO(doc.final_effective_date);
+        return prettyFromISO(doc.final_effective_date, DateTime.DATE_MED, false);
       },
     },
     {
