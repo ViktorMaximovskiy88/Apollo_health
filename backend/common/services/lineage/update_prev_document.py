@@ -4,8 +4,7 @@ from pymongo import ReturnDocument
 from backend.common.models.doc_document import DocDocument
 
 
-async def update_old_prev_doc_doc(updating_doc_doc: DocDocument):
-    old_prev_doc_doc_id = updating_doc_doc.previous_doc_doc_id
+async def update_old_prev_doc_doc(old_prev_doc_doc_id: PydanticObjectId):
     if not old_prev_doc_doc_id:
         return
     await DocDocument.get_motor_collection().find_one_and_update(
@@ -105,3 +104,17 @@ async def update_doc_doc_and_new_prev_doc_doc(
         {"$set": {"previous_doc_doc_id": updated_earliest_ancestor.id}},
     )
     return await DocDocument.get(updating_doc_doc.id)
+
+
+async def update_lineage(
+    updating_doc_doc: DocDocument,
+    old_prev_doc_doc_id: PydanticObjectId,
+    new_prev_doc_doc_id: PydanticObjectId,
+):
+    if not new_prev_doc_doc_id or old_prev_doc_doc_id == new_prev_doc_doc_id:
+        return updating_doc_doc
+    await update_old_prev_doc_doc(old_prev_doc_doc_id)
+    updated_doc_doc = await update_doc_doc_and_new_prev_doc_doc(
+        updating_doc_doc=updating_doc_doc, new_prev_doc_doc_id=new_prev_doc_doc_id
+    )
+    return updated_doc_doc

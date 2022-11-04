@@ -28,10 +28,7 @@ from backend.common.models.shared import DocDocumentLocationView
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook, get_doc_change_info
-from backend.common.services.lineage.update_prev_document import (
-    update_doc_doc_and_new_prev_doc_doc,
-    update_old_prev_doc_doc,
-)
+from backend.common.services.lineage.update_prev_document import update_lineage
 from backend.common.services.text_compare.doc_text_compare import DocTextCompare
 from backend.common.storage.client import DocumentStorageClient
 
@@ -144,20 +141,6 @@ async def create_diff(
         return CompareResponse(exists=False, processing=True, queued=True)
 
 
-@router.post("/{id}/update-previous", response_model=DocDocument)
-async def update_prev_doc_document(
-    new_prev_doc_doc_id: PydanticObjectId,
-    updating_doc_doc: DocDocument = Depends(get_target),
-    current_user: User = Security(get_current_user),
-    logger: Logger = Depends(get_logger),
-):
-    await update_old_prev_doc_doc(updating_doc_doc)
-    updated_doc_doc = await update_doc_doc_and_new_prev_doc_doc(
-        updating_doc_doc=updating_doc_doc, new_prev_doc_doc_id=new_prev_doc_doc_id
-    )
-    return updated_doc_doc
-
-
 @router.post("/{id}", response_model=DocDocument)
 async def update_doc_document(
     updates: UpdateDocDocument,
@@ -168,6 +151,12 @@ async def update_doc_document(
 ):
     updates.final_effective_date = calc_final_effective_date(updates)
     change_info = get_doc_change_info(updates, doc)
+    old_previous_doc_doc_id = doc.previous_doc_doc_id
     updated = await update_and_log_diff(logger, current_user, doc, updates)
+    await update_lineage(
+        updating_doc_doc=doc,
+        old_prev_doc_doc_id=old_previous_doc_doc_id,
+        new_prev_doc_doc_id=updates.previous_doc_doc_id,
+    )
     await doc_document_save_hook(doc, change_info)
     return updated

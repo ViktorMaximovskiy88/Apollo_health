@@ -1,8 +1,8 @@
-import { Button, Checkbox } from 'antd';
+import { Button, Checkbox, Form } from 'antd';
 import { useParams } from 'react-router-dom';
 import { FileTypeViewer } from '../../retrieved_documents/RetrievedDocumentViewer';
 import { useCallback, useState } from 'react';
-import { useGetDocDocumentQuery, useUpdatePrevDocDocMutation } from '../docDocumentApi';
+import { useGetDocDocumentQuery } from '../docDocumentApi';
 import { LineageDocDocumentsTable } from './LineageDocDocumentsTable';
 import { useSelector } from 'react-redux';
 import { previousDocDocumentIdState, setPreviousDocDocumentId } from './lineageDocDocumentsSlice';
@@ -45,7 +45,7 @@ const LineageModalBody = ({ showCurrentDocument }: { showCurrentDocument: boolea
 const LineageModalFooter = (props: {
   showCurrentDocument: boolean;
   setShowCurrentDocument: (showCurrentDocument: boolean) => void;
-  closeModal: () => void;
+  handleCancel: () => void;
   handleSubmit: () => Promise<void>;
 }) => {
   const previousDocDocumentId = useSelector(previousDocDocumentIdState);
@@ -60,7 +60,7 @@ const LineageModalFooter = (props: {
         </Checkbox>
       </div>
       <div>
-        <Button key="cancel" onClick={props.closeModal}>
+        <Button key="cancel" onClick={props.handleCancel}>
           Cancel
         </Button>
         <Button
@@ -77,7 +77,7 @@ const LineageModalFooter = (props: {
 };
 
 export function ExploreLineage() {
-  const [updatePreviousDocDocument] = useUpdatePrevDocDocMutation();
+  const form = Form.useFormInstance();
 
   const { docDocumentId: updatingDocDocId } = useParams();
   const { data: updatingDocDoc } = useGetDocDocumentQuery(updatingDocDocId, {
@@ -89,21 +89,30 @@ export function ExploreLineage() {
   const [open, setOpen] = useState(false);
   const [showCurrentDocument, setShowCurrentDocument] = useState(true);
 
-  const closeModal = useCallback(() => setOpen(false), [setOpen]);
+  const closeModal = useCallback(() => {
+    setOpen(false);
+  }, []);
+
+  const handleCancel = useCallback(() => {
+    dispatch(setPreviousDocDocumentId(null));
+    closeModal();
+  }, [closeModal, dispatch]);
 
   const handleModalOpen = useCallback(() => {
-    if (updatingDocDoc?.previous_doc_doc_id) {
+    if (!prevDocDocId && updatingDocDoc?.previous_doc_doc_id) {
       dispatch(setPreviousDocDocumentId(updatingDocDoc.previous_doc_doc_id));
     }
     setOpen(true);
-  }, [dispatch, updatingDocDoc?.previous_doc_doc_id]);
+    return () => {
+      dispatch(setPreviousDocDocumentId(null));
+    };
+  }, [dispatch, prevDocDocId, updatingDocDoc?.previous_doc_doc_id]);
 
   const handleSubmit = useCallback(async () => {
-    if (!updatingDocDocId || !prevDocDocId)
-      throw new Error('updatingDocDocId or prevDocDocId not found');
-    await updatePreviousDocDocument({ updatingDocDocId, prevDocDocId });
+    if (!prevDocDocId) throw new Error('prevDocDocId not found');
+    form.setFieldValue('previous_doc_doc_id', prevDocDocId);
     closeModal();
-  }, [updatingDocDocId, prevDocDocId, updatePreviousDocDocument, closeModal]);
+  }, [prevDocDocId, form, closeModal]);
 
   return (
     <div className="flex space-x-8 items-center">
@@ -114,12 +123,12 @@ export function ExploreLineage() {
       <FullScreenModal
         title="Explore Lineage"
         open={open}
-        onCancel={closeModal}
+        onCancel={handleCancel}
         footer={[
           <LineageModalFooter
             showCurrentDocument={showCurrentDocument}
             setShowCurrentDocument={setShowCurrentDocument}
-            closeModal={closeModal}
+            handleCancel={handleCancel}
             handleSubmit={handleSubmit}
           />,
         ]}

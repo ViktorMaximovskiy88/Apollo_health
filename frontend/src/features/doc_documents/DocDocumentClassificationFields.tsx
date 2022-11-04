@@ -1,4 +1,4 @@
-import { Form, Select, DatePicker, Switch } from 'antd';
+import { Form, Select, DatePicker, Switch, Input } from 'antd';
 import { languageCodes } from '../retrieved_documents/types';
 import { prettyDate } from '../../common';
 import { DocumentTypes } from '../retrieved_documents/types';
@@ -6,6 +6,7 @@ import { DocCompareToPrevious } from './DocCompareToPrevious';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 import { ExploreLineage } from './lineage/ExploreLineage';
 import { Link, useParams } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const DocumentType = () => (
   <Form.Item className="flex-1" name="document_type" label="Document Type" required={true}>
@@ -25,15 +26,24 @@ const FinalEffectiveDate = () => (
 );
 
 const Lineage = () => {
+  const form = Form.useFormInstance();
+
   const { docDocumentId } = useParams();
   const { data: docDocument } = useGetDocDocumentQuery(docDocumentId, { skip: !docDocumentId });
+  const previousDocDocId: string | undefined = Form.useWatch('previous_doc_doc_id');
+  const { data: prevDoc } = useGetDocDocumentQuery(previousDocDocId, { skip: !docDocumentId });
 
-  const { data: prevDoc } = useGetDocDocumentQuery(docDocument?.previous_doc_doc_id ?? '');
+  useEffect(() => {
+    form.setFieldValue('previous_doc_doc_id', docDocument?.previous_doc_doc_id);
+  }, [docDocument?.previous_doc_doc_id, form]);
 
   return (
     <>
       <Form.Item label="Lineage" className="flex-1">
-        <Link to={`../${prevDoc?._id}`}>{prevDoc?.name}</Link>
+        {previousDocDocId ? <Link to={`../${prevDoc?._id}`}>{prevDoc?.name}</Link> : null}
+      </Form.Item>
+      <Form.Item hidden name="previous_doc_doc_id">
+        <Input />
       </Form.Item>
       <Form.Item noStyle>
         <ExploreLineage />
