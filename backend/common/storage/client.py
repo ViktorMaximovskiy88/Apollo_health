@@ -42,8 +42,8 @@ class BaseS3Client:
 
     def write_object(
         self,
-        relative_key: str,
-        temp_object_path: str,
+        relative_key,
+        temp_object_path,
         content_type: str | None = "application/pdf",  # TODO rxnormlinker
     ):
         self.bucket.upload_file(

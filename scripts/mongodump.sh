@@ -15,17 +15,16 @@ ARCHIVE_PATH="${HOME}/archives"
 mkdir -p "${ARCHIVE_PATH}"
 ARCHIVE_NAME="${ARCHIVE_PATH}/${OUTPUT_NAME}.tgz"
 
-mongodump --uri="mongodb://localhost:27017/${DB_NAME}" \
-    -u "admin" \
-    -p "admin" \
-    --authenticationDatabase="admin" \
-    -o "${BACKUP_NAME}"
+# mongodump --uri="mongodb://localhost:27017/${DB_NAME}" \
+#     -u "admin" \
+#     -p "admin" \
+#     --authenticationDatabase="admin" \
+#     -o "${BACKUP_NAME}"
 
 # careful this is for test or dev.
-AWS_ACCESS_KEY_ID=""
-AWS_SECRET_ACCESS_KEY=""
-AWS_SESSION_TOKEN=""
-
+# AWS_ACCESS_KEY_ID=""
+# AWS_SECRET_ACCESS_KEY=""
+# AWS_SESSION_TOKEN=""
 # mongodump --uri="mongodb+srv://apollo-${DB_ENV}-use1-mmit-01.3qm7h.mongodb.net/${DB_NAME}?&authSource=%24external" \
 #     --authenticationMechanism="MONGODB-AWS" \
 #     --awsSessionToken="${AWS_SESSION_TOKEN}" \

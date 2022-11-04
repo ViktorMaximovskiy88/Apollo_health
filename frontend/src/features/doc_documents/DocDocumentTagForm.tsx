@@ -29,11 +29,9 @@ export function DocDocumentTagForm(props: {
   const { tags, onEditTag, onDeleteTag, currentPage } = props;
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredList, setFilteredList] = useState(tags);
-  const [tagTypeFilter, setTagTypeFilter] = useState<('focus' | 'indication' | 'therapy')[]>([
-    'focus',
-    'indication',
-    'therapy',
-  ]);
+  const [tagTypeFilter, setTagTypeFilter] = useState<
+    ('indication' | 'therapy' | 'therapy-group')[]
+  >(['indication', 'therapy', 'therapy-group']);
   const [editTags, setEditTags] = useState<{ [index: string]: DocumentTag }>({});
   const [pageFilter, setPageFilter] = useState('page');
 
@@ -41,9 +39,6 @@ export function DocDocumentTagForm(props: {
     (tag: DocumentTag) => {
       const validPage = pageFilter === 'doc' ? true : currentPage === tag.page;
       console.debug(currentPage === tag.page, 'currentPage', currentPage, 'tag.page', tag.page);
-      if (tagTypeFilter.includes('focus')) {
-        return tag.focus && tagTypeFilter.includes(tag._type) && validPage;
-      }
       return tagTypeFilter.includes(tag._type) && validPage;
     },
     [pageFilter, currentPage, tagTypeFilter]
@@ -136,9 +131,9 @@ export function DocDocumentTagForm(props: {
           />
           <Checkbox.Group
             options={[
-              { label: 'Focus', value: 'focus' },
               { label: 'Indication', value: 'indication' },
               { label: 'Therapy', value: 'therapy' },
+              { label: 'Therapy Group', value: 'therapy-group' },
             ]}
             value={tagTypeFilter}
             onChange={(values: any) => {

@@ -19,7 +19,6 @@ from backend.common.models.document import (
     UpdateRetrievedDocument,
     UploadedDocument,
 )
-from backend.common.models.shared import DocDocumentLocation
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import (
     ManualWorkItem,
@@ -36,42 +35,6 @@ from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.models import DownloadContext, Request
 from backend.scrapeworker.file_parsers import parse_by_type
-
-
-def copy_location_to(site: Site, location: RetrievedDocumentLocation, data: dict) -> dict:
-    # TODO: Implement select with site.base_urls options.
-    # If more than one, send all base_urls as select options similiar to translate widget.
-    if site.base_urls and len(site.base_urls) == 1:
-        data["base_url"] = site.base_urls[0].url
-    # URL and link_text are just displayed and can be editable.
-    # Lets the create doc process know to create a new location
-    # rather than creating a new doc.
-    data["prev_location_site_id"] = location.site_id
-    return data
-
-
-async def copy_doc_field_values(doc: RetrievedDocument, data: dict) -> dict:
-    # Add existing_doc metadata. Displayed, but not editable.
-    data["doc_name"] = doc.name
-    data["document_type"] = doc.document_type
-    data["lang_code"] = doc.lang_code
-    data["effective_date"] = doc.effective_date
-    data["last_reviewed_date"] = doc.last_reviewed_date
-    data["last_updated_date"] = doc.last_updated_date
-    data["next_review_date"] = doc.next_review_date
-    data["next_update_date"] = doc.next_update_date
-    data["published_date"] = doc.published_date
-    # Populate document form fields that are doc_doc only.
-    doc_doc: DocDocument | None = await DocDocument.find_one(
-        DocDocument.retrieved_document_id == doc.id
-    )
-    if doc_doc:
-        if doc_doc.internal_document:
-            data["internal_document"] = doc_doc.internal_document
-        if doc_doc.first_created_date:
-            data["first_created_date"] = doc_doc.first_created_date
-    return data
-
 
 router: APIRouter = APIRouter(
     prefix="/documents",
@@ -165,18 +128,8 @@ async def read_document(
     return target
 
 
-# User can upload the same document based on checksum from 2 different Sites in
-# both ‘Create Document’ and ‘Add new version’ scenarious.  All validation logic
-# should take place on upload.  If system finds that this doc already exists
-# but on different site, some fields like Effective Dates have to be defaulted
-# from already existing doc.  ‘save’ logic has to be adjusted to create
-# new location element in both Retrieved Doc and Doc Doc ‘location’ array
-# instead of creating new docs in scenario when doc exists in different location
 @router.post("/upload/{from_site_id}", dependencies=[Security(get_current_user)])
 async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> dict[str, Any]:
-    site: Site | None = await Site.find_one({"_id": from_site_id})
-    if not site:
-        raise HTTPException(status.HTTP_409_CONFLICT, "Not able to upload document to site.")
     text_handler: TextHandler = TextHandler()
     content: bytes | str = await file.read()
     if isinstance(content, str):
@@ -188,24 +141,9 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
     dest_path: str = f"{checksum}.{file_extension}"
     response = {"success": True, "data": {}}
 
-    checksum_documents: List[RetrievedDocument] = await RetrievedDocument.find(
+    checksum_document: RetrievedDocument | None = await RetrievedDocument.find_one(
         RetrievedDocument.checksum == checksum,
-    ).to_list()
-    for doc in checksum_documents:
-        if not doc.locations:
-            continue
-        # Doc with checksum and location exists on THIS site.
-        checksum_same_site: RetrievedDocumentLocation = doc.get_site_location(from_site_id)
-        if checksum_same_site:
-            return {"error": "The document already exists for this site!"}
-        # Doc with checksum and location exists on OTHER site.
-        checksum_location: RetrievedDocumentLocation = doc.locations[-1]
-        if checksum_location:
-            response["data"] = copy_location_to(site, checksum_location, response["data"])
-            response["data"]["prev_location_doc_id"] = doc.id
-            response["data"] = await copy_doc_field_values(doc, response["data"])
-            break
-
+    )
     with tempfile.NamedTemporaryFile(delete=True, suffix="." + file_extension) as tmp:
         tmp.write(content)
         temp_path = tmp.name
@@ -217,24 +155,12 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
             raise Exception("Count not extract file contents")
 
         text_checksum: str = await text_handler.save_text(parsed_content["text"])
-        text_checksum_documents: List[RetrievedDocument] = await RetrievedDocument.find(
-            RetrievedDocument.text_checksum == text_checksum,
-        ).to_list()
-        for doc in text_checksum_documents:
-            if not doc.locations:
-                continue
-            # Doc with text_checksum and location exists on THIS site.
-            text_checksum_same_site: RetrievedDocumentLocation = doc.get_site_location(from_site_id)
-            if text_checksum_same_site:
-                return {"error": "The document already exists for this site!"}
-            # Doc with checksum and location exists on OTHER site.
-            text_checksum_location: RetrievedDocumentLocation = doc.locations[-1]
-            if text_checksum_location:
-                response["data"] = copy_location_to(site, text_checksum_location, response["data"])
-                response["data"]["prev_location_doc_id"] = doc.id
-                response["data"] = await copy_doc_field_values(doc, response["data"])
-                break
-
+        text_checksum_document: RetrievedDocument | None = await RetrievedDocument.find_one(
+            RetrievedDocument.text_checksum == text_checksum
+        )
+        # use first hash to see if their is a retrieved document
+        if checksum_document or text_checksum_document:
+            return {"error": "The document already exists!"}
         response["data"] = {
             "checksum": checksum,
             "text_checksum": text_checksum,
@@ -245,9 +171,29 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
             "therapy_tags": parsed_content["therapy_tags"],
             "indication_tags": parsed_content["indication_tags"],
             "identified_dates": parsed_content["identified_dates"],
-        } | response["data"]
+            "base_url": "",
+            "url": "",
+            "link_text": "",
+        }
 
-        if not checksum_documents and not text_checksum_documents:
+        # If uploaded doc exists in site, store existing location in response.
+        if checksum_document:
+            checksum_location: RetrievedDocumentLocation = checksum_document.get_site_location(
+                from_site_id
+            )
+            if checksum_location:
+                response["data"]["base_url"] = checksum_location.base_url
+                response["data"]["url"] = checksum_location.url
+                response["data"]["link_text"] = checksum_location.link_text
+        elif text_checksum_document:
+            text_checksum_location: RetrievedDocumentLocation = (
+                text_checksum_document.get_site_location(from_site_id)
+            )
+            if text_checksum_location:
+                response["data"]["base_url"] = text_checksum_location.base_url
+                response["data"]["url"] = text_checksum_location.url
+                response["data"]["link_text"] = text_checksum_location.link_text
+        else:
             doc_client: DocumentStorageClient = DocumentStorageClient()
             if not doc_client.object_exists(dest_path):
                 logging.info("Uploading file...")
@@ -287,91 +233,50 @@ async def add_document(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ) -> RetrievedDocument | CollectionResponse:
+    # if await location_exists(uploaded_doc, uploaded_doc.site_id):
+    #     raise HTTPException(status.HTTP_409_CONFLICT, "Doc already exists for that location")
     site: Site | None = await Site.find_one({"_id": uploaded_doc.site_id})
     if not site:
         raise HTTPException(status.HTTP_409_CONFLICT, "Not able to upload document to site.")
     now: datetime = datetime.now(tz=timezone.utc)
     link_text = uploaded_doc.metadata.get("link_text", None)
 
-    if uploaded_doc.prev_location_doc_id:
-        new_retr_document = await RetrievedDocument.find_one(
-            RetrievedDocument.id == PydanticObjectId(uploaded_doc.prev_location_doc_id)
-        )
-        if not new_retr_document:
-            raise HTTPException(
-                status.HTTP_409_CONFLICT,
-                "Not able to upload document to site. Duplicate location error.",
+    # Create retr_doc and doc_doc from uploaded_doc.
+    new_retr_document: RetrievedDocument = RetrievedDocument(
+        checksum=uploaded_doc.checksum,
+        content_type=uploaded_doc.content_type,
+        doc_type_confidence=uploaded_doc.doc_type_confidence,
+        document_type=uploaded_doc.document_type,
+        effective_date=uploaded_doc.effective_date,
+        end_date=uploaded_doc.end_date,
+        file_extension=uploaded_doc.file_extension,
+        identified_dates=uploaded_doc.identified_dates,
+        indication_tags=uploaded_doc.indication_tags,
+        lang_code=uploaded_doc.lang_code,
+        last_reviewed_date=uploaded_doc.last_reviewed_date,
+        last_updated_date=uploaded_doc.last_updated_date,
+        metadata=uploaded_doc.metadata,
+        name=uploaded_doc.name,
+        next_review_date=uploaded_doc.next_review_date,
+        next_update_date=uploaded_doc.next_update_date,
+        published_date=uploaded_doc.published_date,
+        text_checksum=uploaded_doc.text_checksum,
+        therapy_tags=uploaded_doc.therapy_tags,
+        uploader_id=current_user.id,
+        first_collected_date=now,
+        last_collected_date=now,
+        locations=[
+            RetrievedDocumentLocation(
+                url=uploaded_doc.url,
+                base_url=uploaded_doc.base_url,
+                first_collected_date=now,
+                last_collected_date=now,
+                site_id=uploaded_doc.site_id,
+                link_text=link_text,
+                context_metadata=uploaded_doc.metadata,
             )
-        new_doc_loc: RetrievedDocumentLocation = RetrievedDocumentLocation(
-            url=uploaded_doc.url,
-            base_url=uploaded_doc.base_url,
-            first_collected_date=now,
-            last_collected_date=now,
-            site_id=uploaded_doc.site_id,
-            link_text=link_text,
-            context_metadata=uploaded_doc.metadata,
-        )
-        new_retr_document.locations.append(new_doc_loc)
-        new_doc_doc: DocDocument | None = await DocDocument.find_one(
-            DocDocument.retrieved_document_id == new_retr_document.id
-        )
-        new_doc_doc_loc: DocDocumentLocation = DocDocumentLocation(
-            url=uploaded_doc.url,
-            base_url=uploaded_doc.base_url,
-            first_collected_date=now,
-            last_collected_date=now,
-            site_id=uploaded_doc.site_id,
-            link_text=link_text,
-            context_metadata=uploaded_doc.metadata,
-        )
-        prev_loc: DocDocumentLocation = next(
-            loc
-            for loc in new_doc_doc.locations
-            if uploaded_doc.prev_location_site_id == f"{loc.site_id}"
-        )
-        if prev_loc.payer_family_id:
-            new_doc_doc_loc.payer_family_id = prev_loc.payer_family_id
-        new_doc_doc.locations.append(new_doc_doc_loc)
-        await new_retr_document.save()
-        await new_doc_doc.save()
-    else:
-        # Create retr_doc and doc_doc from uploaded_doc.
-        new_retr_document: RetrievedDocument = RetrievedDocument(
-            checksum=uploaded_doc.checksum,
-            content_type=uploaded_doc.content_type,
-            internal_document=uploaded_doc.internal_document,
-            doc_type_confidence=uploaded_doc.doc_type_confidence,
-            document_type=uploaded_doc.document_type,
-            effective_date=uploaded_doc.effective_date,
-            end_date=uploaded_doc.end_date,
-            file_extension=uploaded_doc.file_extension,
-            identified_dates=uploaded_doc.identified_dates,
-            indication_tags=uploaded_doc.indication_tags,
-            lang_code=uploaded_doc.lang_code,
-            last_reviewed_date=uploaded_doc.last_reviewed_date,
-            last_updated_date=uploaded_doc.last_updated_date,
-            metadata=uploaded_doc.metadata,
-            name=uploaded_doc.name,
-            next_review_date=uploaded_doc.next_review_date,
-            next_update_date=uploaded_doc.next_update_date,
-            published_date=uploaded_doc.published_date,
-            text_checksum=uploaded_doc.text_checksum,
-            therapy_tags=uploaded_doc.therapy_tags,
-            uploader_id=current_user.id,
-            first_collected_date=now,
-            last_collected_date=now,
-            locations=[
-                RetrievedDocumentLocation(
-                    url=uploaded_doc.url,
-                    base_url=uploaded_doc.base_url,
-                    first_collected_date=now,
-                    last_collected_date=now,
-                    site_id=uploaded_doc.site_id,
-                    link_text=link_text,
-                    context_metadata=uploaded_doc.metadata,
-                )
-            ],
-        )
+        ],
+    )
 
     # Set new_document current_version and lineage.
     # previous_doc_doc_id (a field on DocDocument) is a DocDocument id,
@@ -405,40 +310,18 @@ async def add_document(
 
     if not new_retr_document.lineage_id:
         new_retr_document.lineage_id = PydanticObjectId()
-    if not uploaded_doc.prev_location_doc_id:
-        created_retr_doc: RetrievedDocument = await create_and_log(
-            logger, current_user, new_retr_document
-        )
-        created_doc_doc: DocDocument = await create_doc_document_service(
-            new_retr_document, current_user
-        )
-    else:
-        created_retr_doc = new_retr_document
-        created_doc_doc = new_doc_doc
-    # TODO:
-    # For “add new version” scenario we need to calculate delta between
-    # Indication/Therapy Tags of the previous document version and new document version.
-    # The function that calculates this delta is
-    # backend/common/services/tag_compare.py TagCompare
-    # tag_compare = TagCompare()
-    # tag_compare.execute(doc=newer_doc, prev_doc=older_doc)
+    created_retr_doc: RetrievedDocument = await create_and_log(
+        logger, current_user, new_retr_document
+    )
+    created_doc_doc: DocDocument = await create_doc_document_service(
+        new_retr_document, current_user
+    )
+    if uploaded_doc.upload_new_version_for_id and original_doc_doc.document_family_id:
+        created_doc_doc.document_family_id = original_doc_doc.document_family_id
+    # Need to update previous_doc_doc_id since new_retr_doc is retr_doc which does not have
+    # a previous_doc_doc_id. New retr_document.previous_doc_id is set before create.
     if uploaded_doc.upload_new_version_for_id:
-        if original_doc_doc.document_family_id:
-            created_doc_doc.document_family_id = original_doc_doc.document_family_id
-        if original_doc_doc.translation_id:
-            created_doc_doc.translation_id = original_doc_doc.translation_id
-        # Need to update previous_doc_doc_id since new_retr_doc is retr_doc which does not have
-        # a previous_doc_doc_id. New retr_document.previous_doc_id is set before create.
         created_doc_doc.previous_doc_doc_id = original_doc_doc.id
-        # Update location with prev_loc payer_family_id.
-        loc: DocDocumentLocation = next(
-            loc for loc in created_doc_doc.locations if site.id == loc.site_id
-        )
-        prev_loc: DocDocumentLocation = next(
-            loc for loc in original_doc_doc.locations if site.id == loc.site_id
-        )
-        if prev_loc.payer_family_id:
-            loc.payer_family_id = prev_loc.payer_family_id
         await created_doc_doc.save()
 
     # Automatic: Add document to new task.

@@ -179,11 +179,6 @@ export function DocDocumentEditForm({
       ),
     },
     {
-      label: 'Sites',
-      key: 'sites',
-      children: <DocDocumentLocations locations={doc.locations} docDocument={doc} />,
-    },
-    {
       label: 'Tags',
       key: 'tags',
       children: (
@@ -197,6 +192,11 @@ export function DocDocumentEditForm({
           currentPage={pageNumber}
         />
       ),
+    },
+    {
+      label: 'Sites',
+      key: 'sites',
+      children: <DocDocumentLocations locations={doc.locations} docDocument={doc} />,
     },
   ];
 

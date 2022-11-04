@@ -58,7 +58,6 @@ class LinkRetrievedTask(LinkTask):
     invalid_responses: list[InvalidResponse] = []
     valid_response: ValidResponse | None = None
     retrieved_document_id: PydanticObjectId | None = None
-    error_message: str = ""
 
     class Settings:
         union_doc = LinkTaskLog

@@ -190,16 +190,11 @@ class ScrapeWorker:
 
             # log response error
             if not (temp_path and checksum):
-                message = f"Missing required value: temp_path={temp_path} checksum={checksum}"
-                self.log.error(message)
-                link_retrieved_task.error_message = message
                 await link_retrieved_task.save()
                 break
 
             if download.mimetype not in supported_mimetypes:
-                message = f"Mimetype not supported. mimetype={download.mimetype}"
-                self.log.error(message)
-                link_retrieved_task.error_message = message
+                self.log.error(f"Mimetype not supported {download.mimetype}")
                 await link_retrieved_task.save()
                 break
 
@@ -209,9 +204,7 @@ class ScrapeWorker:
                 "html" not in scrape_method_config.document_extensions
                 and self.site.scrape_method != "HtmlScrape"
             ):
-                message = f"Received an unexpected html response. mimetype={download.mimetype}"
-                self.log.error(message)
-                link_retrieved_task.error_message = message
+                self.log.error("Received an unexpected html response")
                 await link_retrieved_task.save()
                 break
 
@@ -225,26 +218,13 @@ class ScrapeWorker:
             )
 
             if parsed_content is None:
-                message = f"Cannot parse file. mimetype={download.mimetype} file_extension={download.file_extension}"  # noqa
-                self.log.error(message)
-                link_retrieved_task.error_message = message
                 await link_retrieved_task.save()
-                break
-
-            dest_path = f"{checksum}.{download.file_extension}"
-
-            if (
-                not parsed_content["text"]
-                or len(parsed_content["text"]) == 0
-                and download.file_extension != "pdf"
-            ):
-                message = f"No text detected in file. path={dest_path}"
-                self.log.error(message)
-                link_retrieved_task.error_message = message
-                await link_retrieved_task.save()
+                self.log.error(f"{download.request.url} {download.file_extension} cannot be parsed")
                 break
 
             document = None
+            dest_path = f"{checksum}.{download.file_extension}"
+
             if not self.doc_client.object_exists(dest_path):
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
 
@@ -253,14 +233,16 @@ class ScrapeWorker:
                 or self.site.scrape_method == "HtmlScrape"
             ):
                 async for pdf_path in self.html_to_pdf(url, download, checksum, temp_path):
-                    parsed_pdf = await pdf.PdfParse(
+                    converted_pdf_parsed_content = await pdf.PdfParse(
                         pdf_path,
                         url,
                         link_text=download.metadata.link_text,
                         focus_config=scrape_method_config.focus_section_configs,
                     ).parse()
-                    parsed_content["therapy_tags"] = parsed_pdf["therapy_tags"]
-                    parsed_content["indication_tags"] = parsed_pdf["indication_tags"]
+                    parsed_content["therapy_tags"] = converted_pdf_parsed_content["therapy_tags"]
+                    parsed_content["indication_tags"] = converted_pdf_parsed_content[
+                        "indication_tags"
+                    ]
 
             if download.file_extension == "html":
                 text_checksum = hash_full_text(parsed_content["text"])
@@ -272,16 +254,9 @@ class ScrapeWorker:
 
             if document:
                 self.log.info("updating doc")
-
-                # Can be removed after text added to older docs
-                if document.text_checksum is None and len(parsed_content["text"]) > 0:
+                if document.text_checksum is None:  # Can be removed after text added to older docs
                     text_checksum = await self.text_handler.save_text(parsed_content["text"])
                     document.text_checksum = text_checksum
-
-                # in the case where the pdf has no text (aka is an image),
-                # set the text checksum to the checksum
-                if len(parsed_content["text"]) == 0 and download.file_extension == "pdf":
-                    document.text_checksum = checksum
 
                 new_therapy_tags, new_indicate_tags = self.get_updated_tags(
                     document,

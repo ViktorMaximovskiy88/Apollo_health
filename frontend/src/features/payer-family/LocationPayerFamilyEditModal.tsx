@@ -1,16 +1,16 @@
-import { Button, Checkbox, Drawer, Form, Input } from 'antd';
+import { Checkbox, Form, Input } from 'antd';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
 import {
   useUpdatePayerFamilyMutation,
   useLazyGetPayerFamilyByNameQuery,
   useGetPayerFamilyQuery,
 } from './payerFamilyApi';
+import { Modal } from 'antd';
 import { Rule } from 'antd/lib/form';
 import { useForm } from 'antd/lib/form/Form';
 import { useCallback } from 'react';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
 import { PayerFamily } from './types';
-import { CloseOutlined } from '@ant-design/icons';
 
 interface PayerFamilyCreateModalPropTypes {
   location: DocDocumentLocation | undefined;
@@ -42,18 +42,15 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
   }
 
   return (
-    <Drawer
+    <Modal
       open={open}
       title={<>Edit Payer Family for {location.site_name}</>}
-      width="30%"
-      placement="left"
-      closable={false}
-      mask={false}
-      extra={
-        <Button type="text" onClick={onClose}>
-          <CloseOutlined />
-        </Button>
-      }
+      width="50%"
+      okText="Submit"
+      onOk={form.submit}
+      onCancel={onClose}
+      forceRender
+      destroyOnClose={true}
     >
       <Form
         form={form}
@@ -91,14 +88,8 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
         </Input.Group>
 
         <PayerFamilyInfoForm />
-        <div className="space-x-2 flex justify-end">
-          <Button onClick={onClose}>Cancel</Button>
-          <Button type="primary" onClick={form.submit} loading={isLoading}>
-            Submit
-          </Button>
-        </div>
       </Form>
-    </Drawer>
+    </Modal>
   );
 };
 

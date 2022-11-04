@@ -34,7 +34,7 @@ function CollectionMethodRadio() {
 function ScrapeMethodSelect() {
   const scrapes = [
     { value: ScrapeMethod.Simple, label: 'Simple Document Scrape' },
-    { value: ScrapeMethod.Html, label: 'Direct HTML Scrape' },
+    { value: ScrapeMethod.Html, label: 'HTML Scrape' },
   ];
 
   return (

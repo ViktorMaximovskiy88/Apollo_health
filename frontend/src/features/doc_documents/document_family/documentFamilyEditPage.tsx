@@ -8,7 +8,7 @@ import {
   useLazyGetDocumentFamilyByNameQuery,
   useUpdateDocumentFamilyMutation,
 } from './documentFamilyApi';
-import { SubmitDocumentFamily } from './SubmitDocumentFamily';
+import { SumbitDocumentFamily } from './SumbitDocumentFamily';
 import { DocumentFamily } from './types';
 import { DocumentTypes } from '../../retrieved_documents/types';
 
@@ -38,7 +38,7 @@ export function DocumentFamilyEditPage() {
   );
 
   return (
-    <MainLayout sectionToolbar={<SubmitDocumentFamily form={form} />}>
+    <MainLayout sectionToolbar={<SumbitDocumentFamily form={form} />}>
       <div>
         {data && (
           <Form

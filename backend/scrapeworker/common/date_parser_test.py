@@ -223,35 +223,9 @@ def test_extract_date_span():
     assert len(parser.unclassified_dates) == 2
     assert parser.end_date.date == datetime(2022, 12, 31)
 
-    text = "different unicode separator January 1 ­ December 31, 2023"
-    parser = DateParser(date_rgxs, label_rgxs)
-    parser.extract_dates(text)
-    assert len(parser.unclassified_dates) == 2
-    assert parser.end_date.date == datetime(2023, 12, 31)
-
 
 def test_exclusions():
     text = "this line is exluded OMB Approval 3/15/22 \n this one isn't 11|20|21"
-    parser = DateParser(date_rgxs, label_rgxs)
-    parser.extract_dates(text)
-    assert len(parser.unclassified_dates) == 1
-
-
-def test_exclude_references():
-    text = """
-        4. References \n
-        date span 12/10/2021-1/5/2031
-    """
-    parser = DateParser(date_rgxs, label_rgxs)
-    parser.extract_dates(text)
-    assert len(parser.unclassified_dates) == 0
-
-
-def test_does_not_exclude_references():
-    text = """
-        4. Not a references header \n
-        date span 12/10/2021-1/5/2031
-    """
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 1

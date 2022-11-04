@@ -77,8 +77,6 @@ class BaseDocDocument(BaseModel):
     translation_id: PydanticObjectId | None = None
     content_extraction_task_id: PydanticObjectId | None = None
 
-    compare_create_time: datetime | None = None
-
     tags: list[str] = []
 
 
