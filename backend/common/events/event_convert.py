@@ -5,8 +5,7 @@ from backend.common.models.document_family import DocumentFamily
 
 
 class EventConvert:
-    def __init__(self, document, event_type="new"):
-        self.document = document
+    def __init__(self, event_type="new"):
         self.event_type = event_type
 
     async def convert(self, target: DocDocument):

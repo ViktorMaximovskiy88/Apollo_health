@@ -1,14 +1,11 @@
-import re
 from dataclasses import dataclass
 
 from backend.common.core.enums import TagUpdateStatus
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.shared import IndicationTag, TherapyTag
-from backend.common.services.diff_utilities import Dmp
+from backend.common.services.text_compare.diff_utilities import Dmp
 from backend.common.storage.client import TextStorageClient
-from backend.scrapeworker.common.date_parser import DateParser
-from backend.scrapeworker.common.utils import date_rgxs, digit_rgx, label_rgxs
 
 TagList = list[TherapyTag] | list[IndicationTag]
 
@@ -41,12 +38,12 @@ class SectionLineage:
         self.b_section = b_section
         self.diffs: list[tuple[int, str]] = []
         self.has_change: bool = False
+        self.dmp = Dmp()
 
     def _create_diff(self, a: str, b: str) -> list[tuple[int, str]]:
-        dmp = Dmp()
-        words = dmp.diff_wordsToChars(a, b)
-        diffs = dmp.diff_main(words[0], words[1], False)
-        dmp.diff_charsToLines(diffs, words[2])
+        words = self.dmp.diff_wordsToChars(a, b)
+        diffs = self.dmp.diff_main(words[0], words[1], False)
+        self.dmp.diff_charsToLines(diffs, words[2])
         return diffs
 
     def _group_by_code(self, tags: TagList):
@@ -117,6 +114,7 @@ class SectionLineage:
 class TagCompare:
     def __init__(self) -> None:
         self.text_client = TextStorageClient()
+        self.dmp = Dmp(exclude_digits=True)
 
     def _partition_tags_by_type(self, tags: TagList):
         key_tags: TagList = []
@@ -196,94 +194,6 @@ class TagCompare:
             if section_lineage.has_change:
                 section_lineage.a_section.set_section_status(TagUpdateStatus.CHANGED)
 
-    def _has_remove_text(self, text: str) -> bool:
-        strp_text = text.strip()
-        date_parser = DateParser(date_rgxs, label_rgxs)
-        dates = date_parser.get_dates(strp_text)
-        match = next(dates, None)
-        if not match:
-            match = re.match(digit_rgx, strp_text)
-        if not match:
-            for rgx in label_rgxs[0]:
-                match = re.match(rgx, strp_text)
-                if match:
-                    break
-        return bool(match)
-
-    def _clean_line(self, line: str):
-        cleaned_line = []
-        words = re.split(r"\s", line)
-        for word in words:
-            cleaned_word = word
-            if self._has_remove_text(word):
-                cleaned_word = "".join([" " for _ in word])
-            cleaned_line.append(cleaned_word)
-        return " ".join(cleaned_line)
-
-    def _remove_exclude_text(self, a_text: str, b_text: str):
-        cleaned_a = map(self._clean_line, a_text.split("\n"))
-        cleaned_b = map(self._clean_line, b_text.split("\n"))
-
-        return "\n".join(cleaned_a), "\n".join(cleaned_b)
-
-    def _remove_footers(self, text: str) -> str:
-        repeat_lines: dict[str, list[int]] = {}
-        exclude_lines: dict[str, bool] = {}
-
-        pages = text.split("\f")
-        page_count = len(pages)
-        if page_count < 2:
-            return text
-        lines_by_page = list(map(lambda page: page.split("\n"), pages))
-
-        def parse_page(lines: list[str], is_first: bool = False):
-            current_page_lines: dict[str, bool] = {}
-            for line_num, line in enumerate(lines):
-                if line in current_page_lines:
-                    exclude_lines[line] = True
-                    continue
-                else:
-                    current_page_lines[line] = True
-
-                if line in repeat_lines:
-                    repeat_lines[line].append(line_num)
-                elif is_first:
-                    repeat_lines[line] = [line_num]
-
-        def remove_lines():
-            for line in repeat_lines:
-                line_nums = repeat_lines[line]
-                if line in exclude_lines or len(line_nums) < page_count:
-                    continue
-                for page_num, line_num in enumerate(line_nums):
-                    old_line = lines_by_page[page_num][line_num]
-                    lines_by_page[page_num][line_num] = "".join([" " for _ in old_line])
-
-        for i, lines in enumerate(lines_by_page):
-            if i == 0:
-                parse_page(lines, is_first=True)
-            else:
-                parse_page(lines)
-
-        remove_lines()
-
-        final_pages = map(lambda page: "\n".join(page), lines_by_page)
-        return "\f".join(final_pages)
-
-    def _remove_repeat_lines(self, a_text: str, b_text: str) -> tuple[str, str]:
-        dmp = Dmp()
-        lines = dmp.diff_linesToChars(a_text, b_text)
-        diffs = dmp.diff_main(lines[0], lines[1], False)
-        dmp.diff_charsToLines(diffs, lines[2])
-        deletes, inserts = dmp.find_repeat_lines(diffs)
-        return dmp.remove_diffs(deletes, inserts, a_text, b_text)
-
-    def _preprocess_diff(self, a_text: str, b_text: str) -> tuple[str, str]:
-        cleaned_a, cleaned_b = self._remove_footers(a_text), self._remove_footers(b_text)
-        cleaned_a, cleaned_b = self._remove_repeat_lines(cleaned_a, cleaned_b)
-        cleaned_a, cleaned_b = self._remove_exclude_text(cleaned_a, cleaned_b)
-        return cleaned_a, cleaned_b
-
     def compare_sections(
         self,
         doc_text: str,
@@ -337,7 +247,7 @@ class TagCompare:
     ):
         doc_text = self._get_doc_text(doc)
         prev_doc_text = self._get_doc_text(prev_doc)
-        clean_doc_text, clean_prev_text = self._preprocess_diff(doc_text, prev_doc_text)
+        clean_doc_text, clean_prev_text = self.dmp.preprocess_text(doc_text, prev_doc_text)
 
         final_therapy_tags: set[TherapyTag] = self.compare_tags(
             doc.therapy_tags, prev_doc.therapy_tags, clean_doc_text, clean_prev_text
