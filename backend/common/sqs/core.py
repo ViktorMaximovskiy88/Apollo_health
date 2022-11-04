@@ -36,7 +36,10 @@ class SQSListener(SQSBase):
             for message in messages:
                 try:
                     parsed_body = json.loads(message.body)
-                    await self.process_message(parsed_body, message=message)
+                    await self.process_message(
+                        message,
+                        parsed_body,
+                    )
                 except Exception as e:
                     await self.handle_exception(e, message, parsed_body)
                     continue
@@ -51,13 +54,13 @@ class SQSListener(SQSBase):
 
 class SQSClient(SQSBase):
     # JSON encode message and send it
-    def send(self, message: dict[str, any], dedupe_id: str):
+    def send(self, message: dict[str, any], dedupe_key: str):
         # JSON encode message and send it
         body = json.dumps(message, default=str)
         response = self.queue.send_message(
             MessageBody=body,
-            MessageDeduplicationId=dedupe_id,
-            MessageGroupId=dedupe_id,
+            MessageDeduplicationId=dedupe_key,
+            MessageGroupId=dedupe_key,
         )
         return response
 

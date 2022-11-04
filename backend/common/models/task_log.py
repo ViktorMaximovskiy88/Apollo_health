@@ -22,6 +22,8 @@ class BaseTask(BaseDocument):
     status_at: datetime | None = None
 
     error: str | None = None
+    is_complete: bool = False
+    dedupe_key: str
 
     @before_event(Insert)
     def insert_dates(self):
@@ -36,7 +38,8 @@ class BaseTask(BaseDocument):
 
 
 class PDFDiffTask(BaseTask):
-    key: str
+    current_checksum: str | None
+    previous_checksum: str | None
 
     class Settings:
         union_doc = TaskLog

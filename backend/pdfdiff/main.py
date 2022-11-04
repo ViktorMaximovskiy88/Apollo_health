@@ -18,7 +18,7 @@ logger = logging.getLogger("pdfdiff")
 
 async def main():
     await init_db()
-    logger.info("Starting the pdf queue worker")
+    logger.info("Starting the pdfdiff queue worker")
 
     queue = PDFDiffTaskQueue(
         queue_name="pdf-diff-queue.fifo",
