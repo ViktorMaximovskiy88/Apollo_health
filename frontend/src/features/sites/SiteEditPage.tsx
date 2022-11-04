@@ -4,7 +4,7 @@ import { Site, CollectionMethod } from './types';
 import { SiteForm } from './form/SiteForm';
 import { useGetSiteQuery, useUpdateSiteMutation } from './sitesApi';
 import { useCancelAllSiteScrapeTasksMutation } from '../collections/siteScrapeTasksApi';
-import { MainLayout, Notification } from '../../components';
+import { MainLayout } from '../../components';
 import { useCurrentUser } from '../../common/hooks/use-current-user';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { useEffect } from 'react';
@@ -12,6 +12,7 @@ import { SiteMenu } from '../sites/SiteMenu';
 import { useForm } from 'antd/lib/form/Form';
 import { SiteSubmitButton } from './form/SiteSubmitButton';
 import { Link } from 'react-router-dom';
+import { useNotifyMutation } from '../../common/hooks/use-notify-mutation';
 
 const { confirm } = Modal;
 
@@ -57,25 +58,22 @@ const useAlreadyAssignedModal = () => {
 export function SiteEditPage() {
   const [form] = useForm();
   const params = useParams();
-  const [updateSite, { status, isSuccess, isError }] = useUpdateSiteMutation();
+  const [updateSite, result] = useUpdateSiteMutation();
   const { data: site } = useGetSiteQuery(params.siteId);
   const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
   const navigate = useNavigate();
   const currentUser = useCurrentUser();
   useAlreadyAssignedModal();
 
+  useNotifyMutation(
+    result,
+    { description: 'Site Updated Successfully.' },
+    { description: 'An error occurred while updating the Site.' }
+  );
+
   useEffect(() => {
-    if (isSuccess && status === 'fulfilled') {
-      Notification('success', 'Success', 'Site updated successfully');
-      navigate('../scrapes');
-    }
-  }, [isSuccess, status]);
-  useEffect(() => {
-    if (isError && status === 'rejected') {
-      Notification('error', 'Something went wrong!', 'An error occured while updating the site!');
-      navigate('../scrapes');
-    }
-  }, [isError, status]);
+    if (result.isSuccess || result.isError) navigate('../scrapes');
+  }, [result.isSuccess, result.isError]);
 
   if (!site || !currentUser) return <Spin size="large" />;
 

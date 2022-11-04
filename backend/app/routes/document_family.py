@@ -61,7 +61,6 @@ async def read_document_family_by_name(
     name: str,
     site_id: PydanticObjectId | None = None,
 ):
-    document_family: DocumentFamily
     if site_id:
         document_family = await DocumentFamily.find_one({"name": name, "site_id": site_id})
     document_family = await DocumentFamily.find_one({"name": name})
