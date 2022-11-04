@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Literal, Type
 
 from beanie import PydanticObjectId
@@ -57,14 +57,13 @@ async def read_payer_backbones(
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
     (class_filter,) = PayerClass._add_class_id_filter(())
-    query = PayerBackboneUnionDoc.find(class_filter)
-    effective_date = datetime.now()
-    query = PayerBackboneUnionDoc.find(
-        {
-            "start_date": {"$lte": effective_date},
-            "end_date": {"$gt": effective_date},
-        }
+    effective_date = datetime.now(tz=timezone.utc).replace(
+        hour=0, minute=0, second=0, microsecond=0
     )
+    date_str = effective_date.strftime("%Y-%m-%d")
+    query = PayerBackboneUnionDoc.find(class_filter)
+    filters.append(TableFilterInfo(name="start_date", operator="lte", type="date", value=date_str))
+    filters.append(TableFilterInfo(name="end_date", operator="gt", type="date", value=date_str))
     return await query_table(query, limit, skip, sorts, filters)
 
 
