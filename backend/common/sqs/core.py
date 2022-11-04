@@ -45,7 +45,7 @@ class SQSListener(SQSBase):
                     continue
                 message.delete()
 
-    async def process_message(self, body: dict, message: dict):
+    async def process_message(self, message: dict, body: dict):
         pass
 
     async def handle_exception(self, ex: Exception, message: dict, body: dict):
