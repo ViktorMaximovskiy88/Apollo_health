@@ -24,7 +24,7 @@ resource "aws_ecs_task_definition" "pdfdiff" {
       command = [
         "/bin/bash",
         "-lc",
-        ". ./venv/bin/activate && exec python pdf_diff_task/main.py"
+        ". ./venv/bin/activate && exec python pdf_diff/main.py"
       ]
       environment = [
         {
