@@ -87,6 +87,7 @@ const useColumns = (siteNamesById: { [key: string]: string }) => {
     {
       header: 'Sites',
       name: 'locations.site_id',
+      minWidth: 200,
       filterEditor: RemoteColumnFilter,
       filterEditorProps: {
         fetchOptions: siteOptions,
