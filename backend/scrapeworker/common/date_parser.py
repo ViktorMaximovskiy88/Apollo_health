@@ -97,6 +97,16 @@ class DateParser:
             and (not day or (day >= 1 and day <= 31))
         )
 
+    def is_best_effective(self, test_date: datetime, existing_date: datetime) -> bool:
+        if test_date == self.end_date.date:
+            return False
+        today = datetime.now()
+        existing_delta = abs(today - existing_date)
+        new_delta = abs(today - test_date)
+        if new_delta < existing_delta:
+            return True
+        return False
+
     def pick_valid_parts(self, datetext: str):
         if len(datetext) == 6:
             # assuming we have no `day part` and mmYYYY
@@ -211,8 +221,8 @@ class DateParser:
         elif label in future_dates and match.date < existing_label.date:
             setattr(self, label, match)
 
-        # future date take furtherest from today
-        elif label == "effective_date" and match.date > existing_label.date:
+        # effective date get closest to present
+        elif label == "effective_date" and self.is_best_effective(match.date, existing_label.date):
             setattr(self, label, match)
 
         # past date take closest to today
@@ -248,6 +258,7 @@ class DateParser:
                 end_date = self.extract_date_span(line, m.end)
                 if end_date:
                     self.update_label(end_date, "end_date")
+                    self.update_label(m, "effective_date")
                 else:
                     label = self.get_date_label(line, m.last_date_index, m.start)
                     if not label:  # If no match, check right of date

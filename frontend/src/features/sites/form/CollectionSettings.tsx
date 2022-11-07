@@ -59,7 +59,18 @@ function Schedule() {
 }
 
 const Playbook = () => (
-  <Form.Item name="playbook" label="Playbook">
+  <Form.Item
+    name="playbook"
+    label="Playbook"
+    rules={[
+      {
+        validator: async (_, value) =>
+          !value || value.includes('playwright')
+            ? Promise.resolve()
+            : Promise.reject('Playbook must be a playwright script'),
+      },
+    ]}
+  >
     <Input.TextArea />
   </Form.Item>
 );

@@ -4,6 +4,7 @@ from beanie import PydanticObjectId
 
 from backend.common.core.enums import TagUpdateStatus
 from backend.common.models.base_document import BaseModel
+from backend.common.models.payer_family import PayerFamily
 from backend.scrapeworker.common.utils import unique_by_attr
 
 
@@ -101,6 +102,7 @@ class DocDocumentLocation(SiteLocation):
 
 class DocDocumentLocationView(DocDocumentLocation):
     site_name: str | None = None
+    payer_family: PayerFamily | None = None
 
 
 def get_reference_tags(tags: list[TherapyTag] | list[IndicationTag]):

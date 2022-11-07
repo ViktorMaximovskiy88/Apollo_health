@@ -12,4 +12,3 @@ export * from './TextFileViewer';
 export * from './RemoteSelect';
 export * from './TextEllipsis';
 export * from './LinkIcon';
-export * from './Notification';

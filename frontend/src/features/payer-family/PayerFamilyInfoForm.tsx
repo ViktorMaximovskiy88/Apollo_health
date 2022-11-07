@@ -1,5 +1,4 @@
 import { Form, Input, Select } from 'antd';
-import { FormInstance, Rule } from 'antd/lib/form';
 import { useCallback } from 'react';
 import { RemoteSelect } from '../../components';
 import {
@@ -32,6 +31,7 @@ function PayerIdsSelector() {
     },
     [getPayers, payerType]
   );
+
   const initialPayerIds = Form.useWatch('payer_ids');
   const { data: payers } = useGetPayerBackbonesQuery(
     {
@@ -56,8 +56,6 @@ function PayerIdsSelector() {
 }
 
 export const PayerFamilyInfoForm = () => {
-  const form = Form.useFormInstance();
-
   return (
     <div className="mt-4">
       <h2>Payer</h2>
@@ -68,58 +66,19 @@ export const PayerFamilyInfoForm = () => {
         <PayerIdsSelector />
       </Input.Group>
       <Input.Group className="space-x-1 flex flex-wrap">
-        <Form.Item
-          rules={[{ required: false }, mustHaveOnePayerValue(form)]}
-          label="Channel"
-          name="channels"
-          className="w-80"
-        >
+        <Form.Item label="Channel" name={'channels'} className="w-80">
           <Select mode="multiple" options={channelOptions} />
         </Form.Item>
-        <Form.Item
-          rules={[{ required: false }, mustHaveOnePayerValue(form)]}
-          label="Benefit"
-          name="benefits"
-          className="w-64"
-        >
+        <Form.Item label="Benefit" name="benefits" className="w-64">
           <Select mode="multiple" options={benefitOptions} />
         </Form.Item>
-        <Form.Item
-          rules={[{ required: false }, mustHaveOnePayerValue(form)]}
-          label="Plan Types"
-          name="plan_types"
-          className="w-40"
-        >
+        <Form.Item label="Plan Types" name="plan_types" className="w-40">
           <Select mode="multiple" options={planTypeOptions} />
         </Form.Item>
-        <Form.Item
-          rules={[{ required: false }, mustHaveOnePayerValue(form)]}
-          label="Region"
-          name="regions"
-          className="w-40"
-        >
+        <Form.Item label="Region" name={'regions'} className="w-40">
           <Select mode="multiple" options={regionOptions} />
         </Form.Item>
       </Input.Group>
     </div>
   );
 };
-
-function mustHaveOnePayerValue(form: FormInstance) {
-  const { payer_ids, channels, regions, plan_types, benefits } = form.getFieldsValue(true);
-  return {
-    async validator(_rule: Rule) {
-      if (
-        payer_ids?.length ||
-        channels?.length ||
-        regions?.length ||
-        plan_types?.length ||
-        benefits?.length
-      ) {
-        return await Promise.resolve();
-      } else {
-        return await Promise.reject('One Payer Value required');
-      }
-    },
-  };
-}

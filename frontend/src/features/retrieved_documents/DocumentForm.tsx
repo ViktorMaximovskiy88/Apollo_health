@@ -4,6 +4,7 @@ import moment from 'moment';
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { prettyDate } from '../../common';
+import { useNotifyMutation } from '../../common/hooks';
 import { useUpdateDocumentMutation } from './documentsApi';
 import { RetrievedDocument, DocumentTypes, languageCodes } from './types';
 const { TextArea } = Input;
@@ -11,9 +12,15 @@ const { TextArea } = Input;
 export function DocumentForm(props: { doc: RetrievedDocument }) {
   const navigate = useNavigate();
   const params = useParams();
-  const [updateDoc] = useUpdateDocumentMutation();
+  const [updateDoc, result] = useUpdateDocumentMutation();
   const [form] = useForm();
   const doc = props.doc;
+
+  useNotifyMutation(
+    result,
+    { description: 'Retrieved Document Updated Successfully.' },
+    { description: 'An error occurred while updating the Retrieved document.' }
+  );
 
   const [docTypeConfidence, setDocTypeConfidence] = useState(doc.doc_type_confidence);
 

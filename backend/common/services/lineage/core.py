@@ -203,7 +203,7 @@ class LineageService:
     async def compare_tags(
         self, doc: RetrievedDocument, doc_doc: DocDocument, prev_doc: RetrievedDocument
     ) -> tuple[RetrievedDocument, DocDocument]:
-        ther_tags, indi_tags = self.tag_compare.execute(doc, prev_doc)
+        ther_tags, indi_tags = await self.tag_compare.execute(doc, prev_doc)
         doc.therapy_tags = ther_tags
         doc.indication_tags = indi_tags
         doc_doc.therapy_tags = ther_tags

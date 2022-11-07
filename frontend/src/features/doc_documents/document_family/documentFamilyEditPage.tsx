@@ -1,5 +1,5 @@
 import { useForm } from 'antd/lib/form/Form';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MainLayout } from '../../../components';
 import { Form, Input, Select, Typography } from 'antd';
@@ -11,9 +11,10 @@ import {
 import { SubmitDocumentFamily } from './SubmitDocumentFamily';
 import { DocumentFamily } from './types';
 import { DocumentTypes } from '../../retrieved_documents/types';
+import { useNotifyMutation } from '../../../common/hooks';
 
 import { fieldGroupsOptions, legacyRelevanceOptions } from './documentFamilyLevels';
-import { filterLegacyRelevanceOptions, mustBeUniqueName } from './DocumentFamilyCreateModal';
+import { filterLegacyRelevanceOptions, mustBeUniqueName } from './DocumentFamilyCreateDrawer';
 
 export function DocumentFamilyEditPage() {
   const [form] = useForm();
@@ -23,16 +24,25 @@ export function DocumentFamilyEditPage() {
   const [getDocumentFamilyByName] = useLazyGetDocumentFamilyByNameQuery();
   const { data } = useGetDocumentFamilyQuery(documentFamilyId);
   const original = data?.name;
-  const [update] = useUpdateDocumentFamilyMutation();
+  const [update, result] = useUpdateDocumentFamilyMutation();
   const nameValue: string[] = Form.useWatch('legacy_relevance', form);
   let filteredlegacyRelevanceOptions = legacyRelevanceOptions;
 
   filteredlegacyRelevanceOptions = filterLegacyRelevanceOptions(legacyRelevanceOptions, nameValue);
 
+  useNotifyMutation(
+    result,
+    { description: 'Document Family Updated Successfully.' },
+    { description: 'An error occurred while updating the Document Family.' }
+  );
+
+  useEffect(() => {
+    if (result.isSuccess || result.isError) navigate('..');
+  }, [result.isSuccess, result.isError]);
+
   const onFinish = useCallback(
     async (res: Partial<DocumentFamily>) => {
       await update({ body: res, _id: documentFamilyId });
-      navigate('..');
     },
     [navigate, update, documentFamilyId]
   );

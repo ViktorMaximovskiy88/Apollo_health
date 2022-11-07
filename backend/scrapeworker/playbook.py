@@ -39,8 +39,11 @@ class ScrapePlaybook:
             return steps
 
         ignore_keywords = [
+            "pupeteer.launch",
+            "require('puppeteer')",
             "chromium.launch",
             "browser.close",
+            "browser.newPage",
             "page.goto",
             "page.setViewport",
         ]

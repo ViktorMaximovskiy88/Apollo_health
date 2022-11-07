@@ -54,8 +54,8 @@ export function SearchTokens() {
             tooltip={'Button to trigger search'}
           >
             <Input.Group className="grid grid-cols-10 space-x-1">
-              <ElementInput displayLabel name={submitName} />
-              <NameInput displayLabel name={submitName} />
+              <ElementInput displayLabel name={submitName} rules={undefined} />
+              <NameInput displayLabel name={submitName} rules={undefined} />
               <ValueInput displayLabel name={submitName} />
               <ContainsTextInput displayLabel name={submitName} />
             </Input.Group>

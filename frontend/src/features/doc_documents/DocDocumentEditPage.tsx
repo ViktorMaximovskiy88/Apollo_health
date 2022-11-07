@@ -2,12 +2,13 @@ import { Button } from 'antd';
 import { useGetDocDocumentQuery, useUpdateDocDocumentMutation } from './docDocumentApi';
 import { DocDocumentEditForm } from './DocDocumentEditForm';
 import { RetrievedDocumentViewer } from '../retrieved_documents/RetrievedDocumentViewer';
-import { MainLayout, Notification } from '../../components';
+import { MainLayout } from '../../components';
 import { useForm } from 'antd/lib/form/Form';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { WarningFilled } from '@ant-design/icons';
 import { DocDocument } from './types';
+import { useNotifyMutation } from '../../common/hooks';
 
 export function DocDocumentEditPage() {
   const navigate = useNavigate();
@@ -18,27 +19,17 @@ export function DocDocumentEditPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [pageNumber, setPageNumber] = useState(0);
-  const [updateDocDocumentMutation, { status, isSuccess, isError }] =
-    useUpdateDocDocumentMutation();
-  const updateDocDocument = async (doc: Partial<DocDocument>): Promise<void> => {
-    await updateDocDocumentMutation(doc);
+  const [updateDocDocument, result] = useUpdateDocDocumentMutation();
+  const updateDocDoc = async (doc: Partial<DocDocument>): Promise<void> => {
+    await updateDocDocument(doc);
     navigate(-1);
   };
 
-  useEffect(() => {
-    if (isSuccess && status === 'fulfilled') {
-      Notification('success', 'Success', 'Document updated successfully');
-    }
-  }, [isSuccess, status]);
-  useEffect(() => {
-    if (isError && status === 'rejected') {
-      Notification(
-        'error',
-        'Something went wrong!',
-        'An error occured while updating the document!'
-      );
-    }
-  }, [isError, status]);
+  useNotifyMutation(
+    result,
+    { description: 'Document Updated Successfully.' },
+    { description: 'An error occurred while updating the document.' }
+  );
 
   if (!doc || !docId) return null;
 
@@ -80,7 +71,7 @@ export function DocDocumentEditPage() {
           setHasChanges={setHasChanges}
           form={form}
           pageNumber={pageNumber}
-          onSubmit={updateDocDocument}
+          onSubmit={updateDocDoc}
           docId={docId}
         />
         <div className="flex-1 h-full overflow-hidden ant-tabs-h-full">
