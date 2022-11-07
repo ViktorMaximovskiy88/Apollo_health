@@ -5,8 +5,8 @@ class DocTypeMatcher:
 
     def _contains(self, terms: list[str]) -> bool:
         for term in terms:
-            text = term.lower() if self.lower else term
-            if text.find(term):
+            term = term.lower() if self.lower else term
+            if self.text.find(term):
                 return True
         return False
 
@@ -23,10 +23,10 @@ class DocTypeMatcher:
             return "Formulary"
 
     def medical_coverage_list(self) -> str | None:
-        if self._contains(["Medical", "Medical Coverage", "Jcode"]) and not self._contains(
+        if self._contains(["Medical Coverage", "Jcode"]) and not self._contains(
             ["policy", "policies"]
         ):
-            return "Medical Coverage List"
+            return "JAL"
 
     def restriction_list(self) -> str | None:
         if (
