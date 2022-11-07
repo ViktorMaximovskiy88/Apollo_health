@@ -14,7 +14,7 @@ from backend.common.models.site import Site
 from backend.common.storage.client import DocumentStorageClient, TextStorageClient
 from backend.common.storage.hash import hash_full_text
 from backend.scrapeworker.common.utils import normalize_string, tokenize_string
-from backend.scrapeworker.doc_type_classifier import classify_doc_type
+from backend.scrapeworker.doc_type_classifier import guess_doc_type
 from backend.scrapeworker.document_tagging.indication_tagging import IndicationTagger
 from backend.scrapeworker.document_tagging.therapy_tagging import TherapyTagger
 from backend.scrapeworker.file_parsers import docx, html, pdf, text, xlsx
@@ -44,7 +44,7 @@ class ReTagger:
         link_text = normalize_string(location.link_text, url=False)
         url = normalize_string(location.url)
         doc_text = await self.get_text(doc, rdoc, url, link_text, focus_config)
-        _doc_type, _confidence, doc_vectors = classify_doc_type(doc_text)
+        _doc_type, _confidence, doc_vectors = guess_doc_type(doc_text)
         tokens = tokenize_string(doc_text)
 
         (therapy_tags, url_therapy_tags, link_therapy_tags) = await self.therapy.tag_document(
