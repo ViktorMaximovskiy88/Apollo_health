@@ -1,10 +1,12 @@
 import { Collapse, Form } from 'antd';
+import { Rule } from 'antd/lib/form';
 import { ListDatePicker } from '../../components';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 
 const EffectiveDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
   const form = Form.useFormInstance();
   const docId = form.getFieldValue('docId');
+  const endDate = Form.useWatch('end_date');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
   return (
@@ -16,12 +18,22 @@ const EffectiveDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
       label={'Effective Date'}
       dateList={doc.identified_dates}
       onChange={onFieldChange}
+      rules={[
+        {
+          validator: (_rule: Rule, effectiveDate: moment.Moment): Promise<void> => {
+            if (!effectiveDate || !endDate) return Promise.resolve();
+            if (effectiveDate < endDate) return Promise.resolve();
+            return Promise.reject('Effective Date must come before End Date.');
+          },
+        },
+      ]}
     />
   );
 };
 const EndDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
   const form = Form.useFormInstance();
   const docId = form.getFieldValue('docId');
+  const effectiveDate = Form.useWatch('effective_date');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
   return (
@@ -33,12 +45,22 @@ const EndDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
       label={'End Date'}
       dateList={doc.identified_dates}
       onChange={onFieldChange}
+      rules={[
+        {
+          validator: (_rule: Rule, endDate: moment.Moment): Promise<void> => {
+            if (!effectiveDate || !endDate) return Promise.resolve();
+            if (effectiveDate < endDate) return Promise.resolve();
+            return Promise.reject('Effective Date must come before End Date.');
+          },
+        },
+      ]}
     />
   );
 };
 const LastUpdatedDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
   const form = Form.useFormInstance();
   const docId = form.getFieldValue('docId');
+  const nextUpdateDate = Form.useWatch('next_update_date');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
   return (
@@ -50,12 +72,22 @@ const LastUpdatedDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
       label={'Last Updated Date'}
       dateList={doc.identified_dates}
       onChange={onFieldChange}
+      rules={[
+        {
+          validator: (_rule: Rule, lastUpdatedDate: moment.Moment): Promise<void> => {
+            if (!lastUpdatedDate || !nextUpdateDate) return Promise.resolve();
+            if (lastUpdatedDate < nextUpdateDate) return Promise.resolve();
+            return Promise.reject('Last Updated Date must come before Next Update Date.');
+          },
+        },
+      ]}
     />
   );
 };
 const LastReviewedDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
   const form = Form.useFormInstance();
   const docId = form.getFieldValue('docId');
+  const nextReviewDate = Form.useWatch('next_review_date');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
   return (
@@ -67,12 +99,22 @@ const LastReviewedDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
       label={'Last Reviewed Date'}
       dateList={doc.identified_dates}
       onChange={onFieldChange}
+      rules={[
+        {
+          validator: (_rule: Rule, lastReviewedDate: moment.Moment): Promise<void> => {
+            if (!lastReviewedDate || !nextReviewDate) return Promise.resolve();
+            if (lastReviewedDate < nextReviewDate) return Promise.resolve();
+            return Promise.reject('Last Review Date must come before Next Review Date.');
+          },
+        },
+      ]}
     />
   );
 };
-const NextReviewedDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
+const NextReviewDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
   const form = Form.useFormInstance();
   const docId = form.getFieldValue('docId');
+  const lastReviewedDate = Form.useWatch('last_reviewed_date');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
   return (
@@ -84,12 +126,22 @@ const NextReviewedDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
       label={'Next Review Date'}
       dateList={doc.identified_dates}
       onChange={onFieldChange}
+      rules={[
+        {
+          validator: (_rule: Rule, nextReviewDate: moment.Moment): Promise<void> => {
+            if (!lastReviewedDate || !nextReviewDate) return Promise.resolve();
+            if (lastReviewedDate < nextReviewDate) return Promise.resolve();
+            return Promise.reject('Last Review Date must come before Next Review Date.');
+          },
+        },
+      ]}
     />
   );
 };
 const NextUpdateDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
   const form = Form.useFormInstance();
   const docId = form.getFieldValue('docId');
+  const lastUpdatedDate = Form.useWatch('last_updated_date');
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
   return (
@@ -101,6 +153,15 @@ const NextUpdateDate = ({ onFieldChange }: { onFieldChange: () => void }) => {
       label={'Next Update Date'}
       dateList={doc.identified_dates}
       onChange={onFieldChange}
+      rules={[
+        {
+          validator: (_rule: Rule, nextUpdateDate: moment.Moment): Promise<void> => {
+            if (!lastUpdatedDate || !nextUpdateDate) return Promise.resolve();
+            if (lastUpdatedDate < nextUpdateDate) return Promise.resolve();
+            return Promise.reject('Last Updated Date must come before Next Update Date.');
+          },
+        },
+      ]}
     />
   );
 };
@@ -170,7 +231,7 @@ export function DateFields(props: { onFieldChange: () => void }) {
 
         <div className="flex flex-1 space-x-8">
           <LastReviewedDate {...props} />
-          <NextReviewedDate {...props} />
+          <NextReviewDate {...props} />
           <NextUpdateDate {...props} />
         </div>
 
