@@ -2,7 +2,6 @@ class DocTypeMatcher:
     def __init__(self, text: str, take_count: int = 500, lower=True):
         self.text = text[:take_count]
         self.lower = lower
-        return self.exec()
 
     def _contains(self, terms: list[str]) -> bool:
         for term in terms:

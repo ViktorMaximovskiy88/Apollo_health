@@ -1,4 +1,5 @@
 import logging
+from functools import cache
 from pathlib import Path
 from typing import Any, Tuple
 
@@ -11,14 +12,9 @@ logging.basicConfig(format="%(asctime)s : %(levelname)s : %(message)s", level=lo
 local_dir = Path(__file__).parent
 
 
-def get_model(dir: str):
-    global _model
-    if _model:
-        return _model
-    _model = fasttext.load_model(
-        str(Path.joinpath("./doc_type_model/fasttext_model.bin").resolve())
-    )
-    return _model
+@cache
+def get_model(dir: Path):
+    return fasttext.load_model(str(dir.joinpath("./doc_type_model/fasttext_model.bin").resolve()))
 
 
 def classify_doc_type(text: str) -> Tuple[str, float, Any]:
@@ -36,11 +32,11 @@ def classify_doc_type(text: str) -> Tuple[str, float, Any]:
 
 def guess_doc_type(text: str) -> Tuple[str, float, Any]:
     clean_text = " ".join(gensim.utils.simple_preprocess(text))
-    doc_type = DocTypeMatcher(clean_text)
+    doc_type = DocTypeMatcher(clean_text).exec()
     confidence = 100
 
     # always classify for vectors
-    _doc_type, _confidence, doc_vectors = classify_doc_type(text)
+    _doc_type, _confidence, doc_vectors = classify_doc_type(clean_text)
 
     # reassign to model result if we dont have a guess
     if not doc_type:
