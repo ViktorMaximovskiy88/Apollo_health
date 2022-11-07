@@ -150,7 +150,7 @@ async def create_families():
 
         doc = await DocDocument.get(doc_id)
         if not doc:
-            raise Exception(f"{doc_id} DocDocument not found!")
+            return
         for loc in doc.locations:
             if loc.site_id == site_id:
                 pass
@@ -211,7 +211,7 @@ async def create_families():
 
         doc = await DocDocument.get(doc_id)
         if not doc:
-            raise Exception(f"DocDocument {doc_id} not found!")
+            return
         doc.document_family_id = df_id
         await doc.save()
 
