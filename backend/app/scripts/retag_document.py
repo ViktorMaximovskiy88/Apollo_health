@@ -6,6 +6,7 @@ import typer
 from beanie import PydanticObjectId
 
 sys.path.append(str(Path(__file__).parent.joinpath("../../..").resolve()))
+from backend.common.core.config import config
 from backend.common.db.init import init_db
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
@@ -22,7 +23,7 @@ from backend.scrapeworker.file_parsers import docx, html, pdf, text, xlsx
 class ReTagger:
     def __init__(self):
         self.indication = IndicationTagger()
-        self.therapy = TherapyTagger()
+        self.therapy = TherapyTagger(version=config["MODEL_VERSION"])
 
     async def retag_docs_on_site(self, site: Site, total: int = 0):
         async for doc in DocDocument.find({"locations.site_id": site.id}):
