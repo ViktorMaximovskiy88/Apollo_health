@@ -37,7 +37,7 @@ class BaseDocDocument(BaseModel):
     classification_lock: TaskLock | None = None
 
     name: Indexed(str)  # type: ignore
-    checksum: str
+    checksum: Indexed(str)
     file_extension: str | None = None
     text_checksum: str | None = None
     lang_code: LangCode | None = None

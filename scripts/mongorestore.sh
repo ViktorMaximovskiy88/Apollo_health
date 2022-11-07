@@ -6,7 +6,7 @@ RESTORE_DIR=${1:?please indicate the restore directory}
 DB_ENV="dev"
 DB_NAME="source-hub"
 
-# mongorestore --uri="mongodb://localhost:27017/source-hub" -u admin -p admin --authenticationDatabase=admin --drop "${RESTORE_DIR}"
+mongorestore --uri="mongodb://localhost:27017/source-hub" -u admin -p admin --authenticationDatabase=admin --drop "${RESTORE_DIR}"
 
 # careful this is for test or dev.
 AWS_ACCESS_KEY_ID=""
