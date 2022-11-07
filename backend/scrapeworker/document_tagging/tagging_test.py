@@ -52,10 +52,44 @@ class TestFocusAreas:
         config.section_type.append(SectionType.KEY)
         focus_checker = FocusChecker(test_text, [config], url, link_text)
         assert focus_checker.key_areas == [
-            FocusArea(start=24, end=70, section_end=204),
-            FocusArea(start=204, end=260, section_end=342),
+            FocusArea(
+                start=24,
+                end=70,
+                section_end=204,
+                key_text=" Group ACITRETIN\n    Drug Names ACITRETIN\n    ",
+            ),
+            FocusArea(
+                start=204,
+                end=260,
+                section_end=342,
+                key_text=" Group ADAPALENE\n    Drug Names ADAPALENE, DIFFERIN\n    ",
+            ),
         ]
         assert focus_checker.focus_areas == []
+
+    def test_get_key_areas(self):
+        url = "www.test.com"
+        link_text = "test"
+        config = simple_focus_config()
+        focus_checker = FocusChecker(test_text, [config], url, link_text)
+        assert focus_checker.key_areas == []
+
+        config.section_type.append(SectionType.KEY)
+        focus_checker = FocusChecker(test_text, [config], url, link_text)
+        assert focus_checker.key_areas == [
+            FocusArea(
+                key_text=" Group ACITRETIN\n    Drug Names ACITRETIN\n    ",
+                start=24,
+                end=70,
+                section_end=204,
+            ),
+            FocusArea(
+                key_text=" Group ADAPALENE\n    Drug Names ADAPALENE, DIFFERIN\n    ",
+                start=204,
+                end=260,
+                section_end=342,
+            ),
+        ]
 
 
 class TestCheckFocus:

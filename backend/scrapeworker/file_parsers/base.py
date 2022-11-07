@@ -69,7 +69,8 @@ class FileParser(ABC):
         identified_dates = list(date_parser.unclassified_dates)
         identified_dates.sort()
 
-        therapy_tags, indication_tags = [], []
+        therapy_tags, url_therapy_tags, link_therapy_tags = [], [], []
+        indication_tags, url_indication_tags, link_indication_tags = [], [], []
         scrubbed_link_text = normalize_string(self.link_text)
         scrubbed_url = normalize_string(self.url)
 

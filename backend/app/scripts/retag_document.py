@@ -47,7 +47,7 @@ class ReTagger:
         _doc_type, _confidence, doc_vectors = classify_doc_type(doc_text)
         tokens = tokenize_string(doc_text)
 
-        therapy_tags, url_therapy_tags, link_therapy_tags = await self.therapy.tag_document(
+        (therapy_tags, url_therapy_tags, link_therapy_tags) = await self.therapy.tag_document(
             doc_text, document_type, url, link_text, focus_config
         )
         (
