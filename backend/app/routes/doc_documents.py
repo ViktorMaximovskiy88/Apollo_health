@@ -23,7 +23,9 @@ from backend.common.models.doc_document import (
     DocDocumentView,
     UpdateDocDocument,
 )
+from backend.common.models.document_family import DocumentFamily
 from backend.common.models.document_mixins import calc_final_effective_date
+from backend.common.models.payer_family import PayerFamily
 from backend.common.models.shared import DocDocumentLocationView
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
@@ -97,6 +99,12 @@ async def read_extraction_task(
         location: DocDocumentLocationView | None = doc.get_site_location(site.id)
         if location:
             location.site_name = site.name
+        if location.payer_family_id:
+            location.payer_family = await PayerFamily.get(location.payer_family_id)
+
+    # TODO would love the ref/link here
+    if doc.document_family_id:
+        doc.document_family = await DocumentFamily.get(doc.document_family_id)
 
     return doc
 

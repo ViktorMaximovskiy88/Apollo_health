@@ -181,7 +181,7 @@ export function DocDocumentEditForm({
     {
       label: 'Sites',
       key: 'sites',
-      children: <DocDocumentLocations locations={doc.locations} docDocument={doc} />,
+      children: <DocDocumentLocations locations={doc.locations} />,
     },
     {
       label: 'Tags',

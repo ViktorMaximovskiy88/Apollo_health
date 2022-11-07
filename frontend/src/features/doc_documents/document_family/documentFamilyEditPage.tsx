@@ -14,7 +14,7 @@ import { DocumentTypes } from '../../retrieved_documents/types';
 import { useNotifyMutation } from '../../../common/hooks';
 
 import { fieldGroupsOptions, legacyRelevanceOptions } from './documentFamilyLevels';
-import { filterLegacyRelevanceOptions, mustBeUniqueName } from './DocumentFamilyCreateModal';
+import { filterLegacyRelevanceOptions, mustBeUniqueName } from './DocumentFamilyCreateDrawer';
 
 export function DocumentFamilyEditPage() {
   const [form] = useForm();

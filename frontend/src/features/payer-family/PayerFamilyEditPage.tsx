@@ -1,14 +1,13 @@
 import { Checkbox, Form, Input } from 'antd';
 import { Rule } from 'antd/lib/form';
 import { useForm } from 'antd/lib/form/Form';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '../../components';
 import { PayerEditSubmitComponent } from './PayerEditSubmitComponent';
 import {
   useGetPayerFamilyQuery,
   useLazyGetPayerFamilyByNameQuery,
-  useLazyGetPayerFamilyQuery,
   useUpdatePayerFamilyMutation,
 } from './payerFamilyApi';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';

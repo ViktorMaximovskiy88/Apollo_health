@@ -7,6 +7,7 @@ from pydantic import Field
 
 from backend.common.core.enums import ApprovalStatus, LangCode
 from backend.common.models.base_document import BaseDocument, BaseModel
+from backend.common.models.document_family import DocumentFamily
 from backend.common.models.document_mixins import DocumentMixins
 from backend.common.models.shared import (
     DocDocumentLocation,
@@ -102,6 +103,7 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
 
 class DocDocumentView(DocDocument):
     locations: list[DocDocumentLocationView] = []
+    document_family: DocumentFamily | None = None
 
 
 class SiteDocDocument(BaseDocDocument, DocDocumentLocation):

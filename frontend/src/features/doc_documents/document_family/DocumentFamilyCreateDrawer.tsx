@@ -11,15 +11,15 @@ import { fieldGroupsOptions, legacyRelevanceOptions } from './documentFamilyLeve
 import { DocumentFamily } from './types';
 import { CloseOutlined } from '@ant-design/icons';
 
-interface DocumentFamilyCreateModalPropTypes {
+interface DocumentFamilyCreateDrawerPropTypes {
   documentType?: string;
   open?: boolean;
   onClose: () => void;
-  onSave: (documentFamilyId: string) => void;
   documentFamilyData?: DocumentFamily;
+  onSave: (documentFamily: DocumentFamily) => void;
 }
 
-export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTypes) => {
+export const DocumentFamilyCreateDrawer = (props: DocumentFamilyCreateDrawerPropTypes) => {
   const { documentType, open, documentFamilyData, onClose, onSave } = props;
   const [form] = useForm();
   const [getDocumentFamilyByName] = useLazyGetDocumentFamilyByNameQuery();
@@ -33,7 +33,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
 
   useEffect(() => {
     if (isSuccess && data) {
-      onSave(data._id);
+      onSave(data);
       form.resetFields();
       reset();
     }
@@ -41,7 +41,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
 
   useEffect(() => {
     if (isUpdateSuccess && updateData) {
-      onSave(updateData._id);
+      onSave(updateData);
       form.resetFields();
     }
   }, [isUpdateSuccess, updateData]);

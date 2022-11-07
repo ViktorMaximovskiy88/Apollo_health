@@ -1,3 +1,5 @@
+import { PayerFamily } from '../../payer-family/types';
+
 export interface DocDocumentLocation {
   base_url: string;
   url: string;
@@ -9,4 +11,5 @@ export interface DocDocumentLocation {
   last_collected_date: string;
   previous_doc_doc_id: string;
   payer_family_id: string;
+  payer_family: PayerFamily;
 }

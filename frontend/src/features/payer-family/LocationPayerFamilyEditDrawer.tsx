@@ -12,15 +12,15 @@ import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
 import { PayerFamily } from './types';
 import { CloseOutlined } from '@ant-design/icons';
 
-interface PayerFamilyCreateModalPropTypes {
+interface PayerFamilyCreateDrawerPropTypes {
   location: DocDocumentLocation | undefined;
   payer_family_id: string;
   open?: boolean;
   onClose: () => void;
-  onSave: (payer_family_id: string) => void;
+  onSave: (updatedPayerFamily: PayerFamily) => void;
 }
 
-export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => {
+export const PayerFamilyEditDrawer = (props: PayerFamilyCreateDrawerPropTypes) => {
   const { location, onClose, onSave, open, payer_family_id } = props;
   const [form] = useForm();
   const { data: payerFamily } = useGetPayerFamilyQuery(payer_family_id, { skip: !payer_family_id });
@@ -31,7 +31,7 @@ export const PayerFamilyEditModal = (props: PayerFamilyCreateModalPropTypes) => 
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
       const payerFamily = await updatePayerFamily({ ...values, _id: payer_family_id }).unwrap();
-      onSave(payerFamily._id);
+      onSave(payerFamily);
       form.resetFields();
     },
     [updatePayerFamily, onSave, form, payer_family_id]
