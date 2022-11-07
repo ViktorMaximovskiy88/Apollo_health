@@ -26,7 +26,7 @@ class DocTypeMatcher:
         if self._contains(["Medical Coverage", "Jcode"]) and not self._contains(
             ["policy", "policies"]
         ):
-            return "JAL"
+            return "Medical Coverage List"
 
     def restriction_list(self) -> str | None:
         if (
