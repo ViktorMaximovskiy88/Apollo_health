@@ -4,8 +4,6 @@ import { useGetScrapeTasksForSiteQuery } from '../../collections/siteScrapeTasks
 import { SiteScrapeTask, WorkItem } from '../../collections/types';
 import { SiteDocDocument } from '../types';
 import { initialState } from '../../collections/collectionsSlice';
-import { Site } from '../../sites/types';
-import { useGetSiteQuery } from '../../sites/sitesApi';
 
 const mostRecentTask = {
   limit: 1,
@@ -61,6 +59,7 @@ export const ValidationButtonsProvider = ({
   children: ReactNode;
 }) => {
   const docId = doc._id;
+
   const [isLoading, setIsLoading] = useState(false);
   const { workList } = useWorkList();
   const workItem = useWorkItem(docId);

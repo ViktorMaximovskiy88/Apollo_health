@@ -480,8 +480,12 @@ async def add_document(
         original_item = current_task.work_list[original_item_index]
         original_item.is_current_version = False
         original_item.is_new = False
-        original_item.selected = WorkItemOption.NOT_FOUND
         original_item.new_doc = created_retr_doc.id
+        # Set previous to not_found. This was set on the frontend,
+        # but a user could open a new_version modal and close it without uploading
+        # which would cause the work_item to be stuck.
+        # All other work_item's selected are set when first clicked.
+        original_item.selected = WorkItemOption.NOT_FOUND
         current_task.work_list[original_item_index] = original_item
         # Update new version's prev_doc to old version and set as current.
         created_item_index: int = find_work_item_index(
