@@ -6,7 +6,7 @@ class DocTypeMatcher:
     def _contains(self, terms: list[str]) -> bool:
         for term in terms:
             term = term.lower() if self.lower else term
-            if self.text.find(term):
+            if self.text.find(f" {term} "):
                 return True
         return False
 
