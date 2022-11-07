@@ -203,7 +203,9 @@ const useColumns = (siteNamesById: { [key: string]: string }) => {
           },
         ],
       },
-      render: ({ value: is_current_version }: { value: boolean }) => <>{is_current_version}</>,
+      render: ({ value: is_current_version }: { value: boolean }) => {
+        return <>{is_current_version ? 'True' : 'False'}</>;
+      },
     },
     {
       header: 'Tags',
