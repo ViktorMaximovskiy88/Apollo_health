@@ -50,50 +50,51 @@ const PayerFamily = ({
   const fetchPayerFamilyOptions = useFetchPayerFamilyOptions();
 
   return (
-    <Form.Item label="Payer Family" name={['locations', index, 'payer_family_id']}>
-      <RemoteSelect
-        allowClear
-        style={{
-          width: updatedLocation?.payer_family_id ? 'calc(100% - 192px)' : 'calc(100% - 96px)',
-          marginRight: '8px',
-        }}
-        initialOptions={currentOption ? [currentOption] : []}
-        fetchOptions={fetchPayerFamilyOptions}
-        value={currentOption}
-        onClear={() => {
-          const locations = form.getFieldValue('locations');
-          locations[index].payer_family_id = undefined;
-          setCurrentOption(undefined);
-          form.setFieldsValue({ locations });
-        }}
-        onSelect={(payerFamilyId: any, option: any) => {
-          const locations = form.getFieldValue('locations');
-          locations[index].payer_family_id = payerFamilyId;
-          setCurrentOption(option);
-          form.setFieldsValue({ locations });
-        }}
-      />
-      {updatedLocation?.payer_family_id ? (
-        <Button
-          className="mr-3"
-          onClick={() => {
-            onShowPayerFamilyEdit(updatedLocation);
-          }}
-          type="dashed"
-        >
-          <EditOutlined />
-          Edit
-        </Button>
-      ) : null}
-      <Button
-        onClick={() => {
-          onShowPayerFamilyCreate(location);
-        }}
-        type="dashed"
-      >
-        <PlusOutlined />
-        New
-      </Button>
+    <Form.Item label="Payer Family">
+      <div className="flex space-x-2 pt-1">
+        <Form.Item noStyle name={['locations', index, 'payer_family_id']}>
+          <RemoteSelect
+            className="flex-grow"
+            allowClear
+            initialOptions={currentOption ? [currentOption] : []}
+            fetchOptions={fetchPayerFamilyOptions}
+            value={currentOption}
+            onClear={() => {
+              const locations = form.getFieldValue('locations');
+              locations[index].payer_family_id = undefined;
+              setCurrentOption(undefined);
+              form.setFieldsValue({ locations });
+            }}
+            onSelect={(payerFamilyId: any, option: any) => {
+              const locations = form.getFieldValue('locations');
+              locations[index].payer_family_id = payerFamilyId;
+              setCurrentOption(option);
+              form.setFieldsValue({ locations });
+            }}
+          />
+          {updatedLocation?.payer_family_id ? (
+            <Button
+              className="mr-3"
+              onClick={() => {
+                onShowPayerFamilyEdit(updatedLocation);
+              }}
+              type="dashed"
+            >
+              <EditOutlined />
+              Edit
+            </Button>
+          ) : null}
+          <Button
+            onClick={() => {
+              onShowPayerFamilyCreate(location);
+            }}
+            type="dashed"
+          >
+            <PlusOutlined />
+            New
+          </Button>
+        </Form.Item>
+      </div>
     </Form.Item>
   );
 };

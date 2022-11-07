@@ -5,10 +5,10 @@ import { useAddPayerFamilyMutation } from './payerFamilyApi';
 import { useLazyGetPayerBackboneByLIdQuery } from '../payer-backbone/payerBackboneApi';
 import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { PayerFamily } from './types';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
-import { CloseOutlined } from '@ant-design/icons';
+import { CloseOutlined, WarningFilled } from '@ant-design/icons';
 
 interface PayerFamilyCreateDrawerPropTypes {
   location: DocDocumentLocation | undefined;
@@ -24,6 +24,7 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
   const [getPayerName] = useLazyGetPayerBackboneByLIdQuery();
 
   const [addPayerFamily, { isLoading }] = useAddPayerFamilyMutation();
+  const [payerInfoError, setPayerInfoError] = useState<boolean>(false);
 
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
@@ -37,6 +38,16 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
   const onSubmit = useCallback(async () => {
     let { payer_type, payer_ids, channels, benefits, plan_types, regions } =
       form.getFieldsValue(true);
+    if (
+      !payer_ids.length &&
+      !channels.length &&
+      !benefits.length &&
+      !plan_types.length &&
+      !regions.length
+    ) {
+      setPayerInfoError(true);
+      return;
+    }
     let getPayerNameVals = async () => {
       const payers: any = [];
       for (let i = 0; i < payer_ids.length; i++) {
@@ -52,7 +63,6 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
     const newName = [regions, plan_types, benefits, channels, payerNames]
       .filter((vals: any) => (!vals || vals.length === 0 ? false : true))
       .join(' | ');
-    console.log(newName);
     form.setFieldsValue({ name: newName });
     form.submit();
   }, [form, getPayerName]);
@@ -83,6 +93,13 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
         requiredMark={false}
         validateTrigger={['onBlur']}
         onFinish={onFinish}
+        initialValues={{
+          payer_ids: [],
+          channels: [],
+          benefits: [],
+          plan_types: [],
+          regions: [],
+        }}
       >
         <div className="flex">
           <div className="flex-1 mt-2 mb-4">
@@ -107,6 +124,13 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
         <PayerFamilyInfoForm />
 
         <div className="space-x-2 flex justify-end">
+          {payerInfoError ? (
+            <>
+              <WarningFilled className="text-red-600" />
+              <span className="text-red-600">'At least one payer value is required'</span>
+            </>
+          ) : null}
+
           <Button onClick={onClose}>Cancel</Button>
           <Button type="primary" onClick={onSubmit} loading={isLoading}>
             Submit

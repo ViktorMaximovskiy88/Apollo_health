@@ -53,7 +53,7 @@ export const DocumentFamilyCreateDrawer = (props: DocumentFamilyCreateDrawerProp
     <Drawer
       open={open}
       title={documentFamilyData ? <>Edit Document Family</> : <>Add Document Family</>}
-      width="20%"
+      width="30%"
       placement="left"
       closable={false}
       mask={false}
