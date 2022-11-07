@@ -1,6 +1,7 @@
 import { AutoComplete, Button, Checkbox, Form, Input, Popover, Tooltip, Typography } from 'antd';
-import { MinusCircleOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { Rule } from 'antd/lib/form';
 import { FormListFieldData } from 'antd/lib/form/FormList';
+import { MinusCircleOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { ReactNode, useState } from 'react';
 
 import { Hr } from '../../../components';
@@ -9,6 +10,7 @@ interface InputPropTypes {
   displayLabel?: boolean;
   name: (string | number)[];
   field?: { fieldKey?: number };
+  rules?: Rule[];
 }
 
 interface HeaderPropTypes {
@@ -119,7 +121,7 @@ function Header({ title }: { title: ReactNode }) {
   );
 }
 
-export function ElementInput({ displayLabel, name, field }: InputPropTypes) {
+export function ElementInput({ displayLabel, name, field, ...props }: InputPropTypes) {
   const defaultOptions = [
     { label: 'a', value: 'a' },
     { label: 'p', value: 'p' },
@@ -153,13 +155,14 @@ export function ElementInput({ displayLabel, name, field }: InputPropTypes) {
       label={label}
       rules={[{ required: true, message: 'Required' }]}
       tooltip={tooltip}
+      {...props}
     >
       <AutoComplete defaultActiveFirstOption={false} onSearch={onSearch} options={options} />
     </Form.Item>
   );
 }
 
-export function NameInput({ displayLabel, name, field }: InputPropTypes) {
+export function NameInput({ displayLabel, name, field, ...props }: InputPropTypes) {
   const defaultOptions = [
     { label: 'aria-label', value: 'aria-label' },
     { label: 'class', value: 'class' },
@@ -191,6 +194,7 @@ export function NameInput({ displayLabel, name, field }: InputPropTypes) {
       rules={[{ required: true, message: 'Required' }]}
       tooltip={tooltip}
       className="mb-0 shrink-0 col-span-2"
+      {...props}
     >
       <AutoComplete defaultActiveFirstOption={false} onSearch={onSearch} options={options} />
     </Form.Item>
