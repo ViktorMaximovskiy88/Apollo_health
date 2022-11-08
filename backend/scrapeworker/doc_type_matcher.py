@@ -1,5 +1,6 @@
 from gensim.utils import simple_preprocess
 
+from backend.common.core.enums import DocumentType
 from backend.scrapeworker.common.utils import tokenize_filename, tokenize_url
 
 
@@ -60,19 +61,19 @@ class DocTypeMatcher:
         if self._contains(text, ["PDL", "formulary", "drug list"]) and self._contains(
             text, ["update", "change"]
         ):
-            return "Formulary Update"
+            return DocumentType.FormularyUpdate
 
     def formulary(self, text: str) -> str | None:
         if self._contains(text, ["PDL", "formulary", "drug list"]) and not self._contains(
             text, ["update", "change", "Preventive", "Specialty", "Exclusion", "Medical"]
         ):
-            return "Formulary"
+            return DocumentType.Formulary
 
     def medical_coverage_list(self, text: str) -> str | None:
         if self._contains(text, ["Medical Coverage", "Jcode"]) and not self._contains(
             text, ["policy", "policies"]
         ):
-            return "Medical Coverage List"
+            return DocumentType.MedicalCoverageList
 
     def restriction_list(self, text: str) -> str | None:
         if (
@@ -80,19 +81,19 @@ class DocTypeMatcher:
             or self._contains(text, ["ST", "Step Therapy", "Step-Therapy", "Step"])
             or self._contains(text, ["QL", "Quantity Limit", "Quantity"]),
         ) and self._contains(text, ["list"]):
-            return "Restriction List"
+            return DocumentType.RestrictionList
 
     def specialty_list(self, text: str) -> str | None:
         if (self._contains(text, ["SP", "Specialty", "Specialty Pharmacy"])) and self._contains(
             text, ["list"]
         ):
-            return "Specialty List"
+            return DocumentType.SpecialtyList
 
     def exclusion_list(self, text: str) -> str | None:
         if (self._contains(text, ["Exclusion", "non-formulary"])) and self._contains(
             text, ["list"]
         ):
-            return "Exclusion List"
+            return DocumentType.ExclusionList
 
     def preventive_drug_list(self, text: str) -> str | None:
         if (
@@ -110,22 +111,22 @@ class DocTypeMatcher:
                 ],
             )
         ) and self._contains(text, ["list"]):
-            return "Preventive Drug List"
+            return DocumentType.PreventiveDrugList
 
     def fee_schedule(self, text: str) -> str | None:
         if self._contains(text, ["Fee Schedule"]):
-            return "Fee Schedule"
+            return DocumentType.FeeSchedule
 
     def authorization_policy_a(self, text: str) -> str | None:
         if self._contains(
             text,
             ["PA", "Authorization", "Auth", "Step", "ST", "Prior Authorization", "Step Therapy"],
         ) and not self._contains(text, ["list", "new to market", "unlisted", "non-formulary"]):
-            return "Authorization Policy"
+            return DocumentType.AuthorizationPolicy
 
     def site_of_care_policy(self, text: str) -> str | None:
         if self._contains(text, ["SOC", "site of care", "site-of-care"]):
-            return "Site of Care Policy"
+            return DocumentType.SiteOfCarePolicy
 
     def authorization_policy_b(self, text: str) -> str | None:
         if self._contains(text, ["policy", "coverage determination"]) and not self._contains(
@@ -141,19 +142,19 @@ class DocTypeMatcher:
                 "non-formulary",
             ],
         ):
-            return "Authorization Policy"
+            return DocumentType.AuthorizationPolicy
 
     def authorization_policy_c(self, text: str) -> str | None:
         if self._contains(text, ["criteria"]) and not self._contains(
             text, ["new to market", "unlisted", "non-formulary"]
         ):
-            return "Authorization Policy"
+            return DocumentType.AuthorizationPolicy
 
     def new_to_market_policy(self, text: str) -> str | None:
         if self._contains(text, ["NTM", "new to market", "new-to-market"]) and not self._contains(
             text, ["policy", "guideline"]
         ):
-            return "New-to-Market Policy"
+            return DocumentType.NewToMarketPolicy
 
     def non_formulary_policy(self, text: str) -> str | None:
         if (
@@ -161,57 +162,57 @@ class DocTypeMatcher:
             and self._contains(text, ["policy", "guideline"])
             and not self._contains(text, ["NTM", "new to market", "new-to-market"])
         ):
-            return "Non-formulary Policy"
+            return DocumentType.NonFormularyPolicy
 
     def treatment_request_form(self, text: str) -> str | None:
         if self._contains(text, ["form", "request", "submission"]):
             return "Treatment Request Form"
 
     def provider_guide(self, text: str) -> str | None:
-        if self._contains(text, ["Provider Policy"]) or self._contains_all(
-            text, ["Provider", "Guide"]
-        ):
-            return "Provider Guide"
+        if self._contains(
+            text, ["Provider Policy", "Provider Manual", "Resource Manual", "Resource Guide"]
+        ) or self._contains_all(text, ["Provider", "Guide"]):
+            return DocumentType.ProviderGuide
 
     def evidence_of_coverage(self, text: str) -> str | None:
         if self._contains(text, ["EOC", "Evidence of Coverage"]):
-            return "Evidence of Coverage"
+            return DocumentType.EvidenceOfCoverage
 
     def summary_of_benefits(self, text: str) -> str | None:
         if self._contains(text, ["SOB", "Summary", "Benefits Summary", "Summary of Benefits"]):
-            return "Summary of Benefits"
+            return DocumentType.SummaryOfBenefits
 
     def nccn_guidlines(self, text: str) -> str | None:
-        if self._contains(text, ["NCCN", "NCCN Guidelines", "Guidelines"]):
-            return "NCCN Guidelines"
+        if self._contains(text, ["NCCN", "NCCN Guideline", "Guideline"]):
+            return DocumentType.NCCNGuideline
 
     def ncd(self, text: str) -> str | None:
         if self._contains(text, ["NCD", "national coverage determination"]):
-            return "NCD"
+            return DocumentType.NCD
 
     def lcd(self, text: str) -> str | None:
         if self._contains(text, ["LCD", "local coverage determination"]):
-            return "LCD"
+            return DocumentType.LCD
 
     def review_committee_meetings(self, text: str) -> str | None:
         if self._contains(
             text, ["Meeting", "Committee", "Agenda", "P&T", "Pharmacy & Therapeutics"]
         ) and not self._contains(text, ["schedule"]):
-            return "Review Committee Meetings"
+            return DocumentType.ReviewCommitteeMeetings
 
     def newsletter(self, text: str) -> str | None:
         if self._contains(text, ["Newsletter", "News"]):
-            return "Newsletter"
+            return DocumentType.Newsletter
 
     def review_committee_schedule(self, text: str) -> str | None:
         if self._contains(
             text, ["Meeting", "Committee", "Agenda", "P&T", "Pharmacy & Therapeutics"]
         ) and self._contains(text, ["schedule"]):
-            return "Review Committee Schedule"
+            return DocumentType.ReviewCommitteeSchedule
 
     def regulation(self, text: str) -> str | None:
         if self._contains(text, ["regulation", "law", "carve out", "carve-out"]):
-            return "Regulation"
+            return DocumentType.RegulatoryDocument
 
     def exec(self) -> str | None:
 
