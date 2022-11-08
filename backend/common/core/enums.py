@@ -61,9 +61,10 @@ class DocumentType(str, Enum):
     MedicalCoverageList = "Medical Coverage List"
     NCCNGuideline = "NCCN Guideline"
     NCD = "NCD"
-    NewToMarketPolicy = "New-to-Market Policy"
     Newsletter = "Newsletter"
-    NonFormularyPolicy = "Non-Formulary Policy"
+    NewToMarketPolicy = "New-to-Market Policy"
+    NotApplicable = "Not Applicable"
+    PayerUnlistedPolicy = "Payer Unlisted Policy"
     PreventiveDrugList = "Preventive Drug List"
     ProviderGuide = "Provider Guide"
     RegulatoryDocument = "Regulatory Document"
@@ -73,8 +74,6 @@ class DocumentType(str, Enum):
     SiteOfCarePolicy = "Site of Care Policy"
     SpecialtyList = "Specialty List"
     SummaryOfBenefits = "Summary of Benefits"
-    NotApplicable = "Not Applicable"
-    PayerUnlistedPolicy = "Payer Unlisted Policy"
     TreatmentRequestForm = "Treatment Request Form"
 
 

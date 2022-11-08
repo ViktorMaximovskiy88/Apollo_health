@@ -52,7 +52,6 @@ export const DocumentTypes = [
   { id: 'NCD', label: 'NCD', value: 'NCD' },
   { id: 'New-to-Market Policy', label: 'New-to-Market Policy', value: 'New-to-Market Policy' },
   { id: 'Newsletter', label: 'Newsletter', value: 'Newsletter' },
-  { id: 'Non-Formulary Policy', label: 'Non-Formulary Policy', value: 'Non-Formulary Policy' },
   { id: 'Preventive Drug List', label: 'Preventive Drug List', value: 'Preventive Drug List' },
   { id: 'Provider Guide', label: 'Provider Guide', value: 'Provider Guide' },
   { id: 'Regulatory Document', label: 'Regulatory Document', value: 'Regulatory Document' },

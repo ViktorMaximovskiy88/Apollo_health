@@ -1,3 +1,5 @@
+import logging
+
 from gensim.utils import simple_preprocess
 
 from backend.common.core.enums import DocumentType
@@ -39,7 +41,7 @@ class DocTypeMatcher:
         else:
             self.name_text = ""
 
-        print(
+        logging.info(
             f"link_text='{self.link_text}' name_text='{self.name_text}' filename_text='{self.filename_text}' doc_text='{self.doc_text}'"  # noqa
         )
 
@@ -217,23 +219,22 @@ class DocTypeMatcher:
     def exec(self) -> str | None:
 
         if match := self.run_rules(self.link_text):
-            print("link_text matched")
+            logging.info("link_text matched")
             return match
         elif match := self.run_rules(self.name_text):
-            print("name_text matched")
+            logging.info("name_text matched")
             return match
         elif match := self.run_rules(self.filename_text):
-            print("filename_text matched")
+            logging.info("filename_text matched")
             return match
         elif match := self.run_rules(self.doc_text):
-            print("doc_text matched")
+            logging.info("doc_text matched")
             return match
         else:
-            print("No match fallthrough to classifier")
+            logging.info("No match fallthrough to classifier")
             return None
 
     def run_rules(self, text: str) -> str | None:
-        # take first 500 chars...
         # brute force, no lie... get fancy later
         rule_sets = [
             "formulary_update",
@@ -269,7 +270,7 @@ class DocTypeMatcher:
             rule = getattr(self, rule_set)
             match = rule(text)
             if match:
-                print(f"matched {rule_set}")
+                logging.info(f"matched {rule_set}")
                 break
 
         return match

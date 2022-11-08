@@ -6,6 +6,7 @@ from typing import Any, Tuple
 import fasttext
 import gensim
 
+from backend.common.core.enums import DocumentType
 from backend.scrapeworker.doc_type_matcher import DocTypeMatcher
 
 logging.basicConfig(format="%(asctime)s : %(levelname)s : %(message)s", level=logging.INFO)
@@ -23,6 +24,13 @@ def classify_doc_type(raw_text: str) -> Tuple[str, float, Any]:
     vector = fasttext_model.get_sentence_vector(clean_text).tolist()
     prediction, confidence = fasttext_model.predict(clean_text)
     clean_pred = prediction[0].removeprefix("__label__").replace("-", " ")
+
+    # doc type was renamed; lets do a mapping for this one; can be dropped with new model
+    # trained on new Doc Type list
+    # "Covered Treatment List" -> "Medical Coverage List"
+    clean_pred = (
+        DocumentType.MedicalCoverageList if clean_pred == "Covered Treatment List" else clean_pred
+    )
     conf = confidence[0]
     return (clean_pred, conf, [vector])
 
