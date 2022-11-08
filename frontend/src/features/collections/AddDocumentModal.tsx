@@ -123,8 +123,6 @@ export function AddDocumentModal({
           ...newDocument,
           ...fileData,
         });
-        // TODO: On success but has duplicate file from OTHER site,
-        // display notice.
         if (refetch) {
           refetch();
         }
@@ -270,37 +268,44 @@ function UploadItem(props: any) {
     <div className="flex grow space-x-4">
       <Form.Item
         name="document_file"
-        label="Document File"
         rules={[{ required: uploadStatus === 'done' ? false : true }]}
+        style={{ width: '100px' }}
+        label="Document File"
       >
-        <Upload
-          name="file"
-          accept=".pdf,.xlsx,.docx"
-          action={`${baseApiUrl}/documents/upload/${siteId}`}
-          headers={{
-            Authorization: `Bearer ${token}`,
-          }}
-          showUploadList={false}
-          onChange={onChange}
-        >
-          {uploadStatus === 'uploading' ? (
-            <Button style={{ marginRight: '10px' }} icon={<LoadingOutlined />}>
-              Uploading {fileName}...
-            </Button>
-          ) : uploadStatus === 'done' ? (
-            <Button style={{ marginRight: '10px' }} icon={<CheckCircleOutlined />}>
-              {fileName} uploaded!
-            </Button>
-          ) : (
-            <Button style={{ marginRight: '10px' }} icon={<UploadOutlined />}>
-              Click to Upload
-            </Button>
-          )}
-        </Upload>
-        <Tooltip placement="right" title="Only upload .pdf, .xlsx and .docx">
-          <QuestionCircleOutlined />
-        </Tooltip>
+        <div className="flex grow space-x-4" style={{ width: '50px' }}>
+          <Upload
+            style={{ width: '50px !important' }}
+            name="file"
+            accept=".pdf,.xlsx,.docx"
+            action={`${baseApiUrl}/documents/upload/${siteId}`}
+            headers={{
+              Authorization: `Bearer ${token}`,
+            }}
+            showUploadList={false}
+            onChange={onChange}
+          >
+            {uploadStatus === 'uploading' ? (
+              <Button style={{ marginRight: '10px' }} icon={<LoadingOutlined />}>
+                Uploading {fileName}...
+              </Button>
+            ) : uploadStatus === 'done' ? (
+              <Button
+                style={{ marginRight: '10px', inlineSize: '70%', overflow: 'hidden' }}
+                icon={<CheckCircleOutlined />}
+              >
+                {fileName} uploaded!
+              </Button>
+            ) : (
+              <Button style={{ marginRight: '10px' }} icon={<UploadOutlined />}>
+                Click to Upload
+              </Button>
+            )}
+          </Upload>
+        </div>
       </Form.Item>
+      <Tooltip placement="rightBottom" title="Only upload .pdf, .xlsx and .docx">
+        <QuestionCircleOutlined style={{ marginTop: '3px' }} />
+      </Tooltip>
     </div>
   );
 }
