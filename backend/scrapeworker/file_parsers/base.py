@@ -9,7 +9,7 @@ from backend.common.models.site import FocusSectionConfig, ScrapeMethodConfigura
 from backend.scrapeworker.common.date_parser import DateParser
 from backend.scrapeworker.common.detect_lang import detect_lang
 from backend.scrapeworker.common.utils import date_rgxs, label_rgxs, normalize_string
-from backend.scrapeworker.doc_type_classifier import classify_doc_type
+from backend.scrapeworker.doc_type_classifier import guess_doc_type
 from backend.scrapeworker.document_tagging.indication_tagging import indication_tagger
 from backend.scrapeworker.document_tagging.taggers import Taggers
 from backend.scrapeworker.document_tagging.therapy_tagging import therapy_tagger
@@ -60,7 +60,9 @@ class FileParser(ABC):
         self.metadata = await self.get_info()
         self.text = await self.get_text()
         title = self.get_title(self.metadata)
-        document_type, confidence, doc_vectors = classify_doc_type(self.text)
+        document_type, confidence, doc_vectors = guess_doc_type(
+            self.text, self.link_text, self.url, title
+        )
         lang_code = detect_lang(self.text)
 
         date_parser = DateParser(date_rgxs, label_rgxs)
