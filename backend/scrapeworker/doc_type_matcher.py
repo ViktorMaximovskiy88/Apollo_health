@@ -41,6 +41,14 @@ class DocTypeMatcher:
         else:
             self.name_text = ""
 
+        self.texts = [self.filename_text, self.doc_text, self.link_text, self.name_text]
+
+        self.is_pennsylvania = False
+        for text in self.texts:
+            if "Pennsylvania" in text:
+                self.is_pennsylvania = True
+                break
+
         logging.info(
             f"link_text='{self.link_text}' name_text='{self.name_text}' filename_text='{self.filename_text}' doc_text='{self.doc_text}'"  # noqa
         )
@@ -79,9 +87,10 @@ class DocTypeMatcher:
 
     def restriction_list(self, text: str) -> str | None:
         if (
-            self._contains(text, ["PA", "Prior Authorization", "Authorization", "Auth"])
+            (self._contains(text, ["PA"]) and not self.is_pennsylvania)
+            or self._contains(text, ["PA", "Prior Authorization", "Authorization", "Auth"])
             or self._contains(text, ["ST", "Step Therapy", "Step-Therapy", "Step"])
-            or self._contains(text, ["QL", "Quantity Limit", "Quantity"]),
+            or self._contains(text, ["QL", "Quantity Limit", "Quantity"])
         ) and self._contains(text, ["list"]):
             return DocumentType.RestrictionList
 
@@ -120,10 +129,22 @@ class DocTypeMatcher:
             return DocumentType.FeeSchedule
 
     def authorization_policy_a(self, text: str) -> str | None:
-        if self._contains(
-            text,
-            ["PA", "Authorization", "Auth", "Step", "ST", "Prior Authorization", "Step Therapy"],
-        ) and not self._contains(text, ["list", "new to market", "unlisted", "non-formulary"]):
+        if (
+            self._contains(
+                text,
+                [
+                    "PA",
+                    "Authorization",
+                    "Auth",
+                    "Step",
+                    "ST",
+                    "Prior Authorization",
+                    "Step Therapy",
+                ],
+            )
+            and not self._contains(text, ["list", "new to market", "unlisted", "non-formulary"])
+            and not self.is_pennsylvania
+        ):
             return DocumentType.AuthorizationPolicy
 
     def site_of_care_policy(self, text: str) -> str | None:
