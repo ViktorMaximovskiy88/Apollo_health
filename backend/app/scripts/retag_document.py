@@ -44,7 +44,9 @@ class ReTagger:
         link_text = normalize_string(location.link_text, url=False)
         url = normalize_string(location.url)
         doc_text = await self.get_text(doc, rdoc, url, link_text, focus_config)
-        _doc_type, _confidence, doc_vectors = guess_doc_type(doc_text)
+        _doc_type, _confidence, doc_vectors = guess_doc_type(
+            doc_text, location.link_text, location.url
+        )
         tokens = tokenize_string(doc_text)
 
         (therapy_tags, url_therapy_tags, link_therapy_tags) = await self.therapy.tag_document(

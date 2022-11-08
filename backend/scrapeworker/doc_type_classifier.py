@@ -17,26 +17,23 @@ def get_model(dir: Path):
     return fasttext.load_model(str(dir.joinpath("./doc_type_model/fasttext_model.bin").resolve()))
 
 
-def classify_doc_type(text: str) -> Tuple[str, float, Any]:
+def classify_doc_type(raw_text: str) -> Tuple[str, float, Any]:
+    clean_text = " ".join(gensim.utils.simple_preprocess(raw_text))
     fasttext_model = get_model(local_dir)
-    vector = fasttext_model.get_sentence_vector(text).tolist()
-    prediction, confidence = fasttext_model.predict(text)
+    vector = fasttext_model.get_sentence_vector(clean_text).tolist()
+    prediction, confidence = fasttext_model.predict(clean_text)
     clean_pred = prediction[0].removeprefix("__label__").replace("-", " ")
     conf = confidence[0]
-    return (
-        clean_pred,
-        conf,
-        [vector],
-    )
+    return (clean_pred, conf, [vector])
 
 
-def guess_doc_type(text: str) -> Tuple[str, float, Any]:
-    clean_text = " ".join(gensim.utils.simple_preprocess(text))
-    doc_type = DocTypeMatcher(clean_text).exec()
+def guess_doc_type(raw_text: str, raw_link_text: str, raw_url: str) -> Tuple[str, float, Any]:
+
+    doc_type = DocTypeMatcher(raw_text, raw_link_text, raw_url).exec()
     confidence = 100
 
     # always classify for vectors
-    _doc_type, _confidence, doc_vectors = classify_doc_type(clean_text)
+    _doc_type, _confidence, doc_vectors = classify_doc_type(raw_text)
 
     # reassign to model result if we dont have a guess
     if not doc_type:
