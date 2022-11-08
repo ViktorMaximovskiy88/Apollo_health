@@ -88,7 +88,7 @@ class DocTypeMatcher:
     def restriction_list(self, text: str) -> str | None:
         if (
             (self._contains(text, ["PA"]) and not self.is_pennsylvania)
-            or self._contains(text, ["PA", "Prior Authorization", "Authorization", "Auth"])
+            or self._contains(text, ["Prior Authorization", "Authorization", "Auth"])
             or self._contains(text, ["ST", "Step Therapy", "Step-Therapy", "Step"])
             or self._contains(text, ["QL", "Quantity Limit", "Quantity"])
         ) and self._contains(text, ["list"]):
