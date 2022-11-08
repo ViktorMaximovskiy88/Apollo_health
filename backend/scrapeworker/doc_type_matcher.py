@@ -130,20 +130,21 @@ class DocTypeMatcher:
 
     def authorization_policy_a(self, text: str) -> str | None:
         if (
-            self._contains(
-                text,
-                [
-                    "PA",
-                    "Authorization",
-                    "Auth",
-                    "Step",
-                    "ST",
-                    "Prior Authorization",
-                    "Step Therapy",
-                ],
+            (self._contains(text, ["PA"]) and not self.is_pennsylvania)
+            or (
+                self._contains(
+                    text,
+                    [
+                        "Authorization",
+                        "Auth",
+                        "Step",
+                        "ST",
+                        "Prior Authorization",
+                        "Step Therapy",
+                    ],
+                )
             )
             and not self._contains(text, ["list", "new to market", "unlisted", "non-formulary"])
-            and not self.is_pennsylvania
         ):
             return DocumentType.AuthorizationPolicy
 
