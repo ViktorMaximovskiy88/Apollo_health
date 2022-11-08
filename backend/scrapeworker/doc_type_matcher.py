@@ -158,13 +158,13 @@ class DocTypeMatcher:
         ):
             return DocumentType.NewToMarketPolicy
 
-    def non_formulary_policy(self, text: str) -> str | None:
+    def payer_unlisted_policy(self, text: str) -> str | None:
         if (
             self._contains(text, ["NF", "non-formulary", "unlisted"])
             and self._contains(text, ["policy", "guideline"])
             and not self._contains(text, ["NTM", "new to market", "new-to-market"])
         ):
-            return DocumentType.NonFormularyPolicy
+            return DocumentType.PayerUnlistedPolicy
 
     def treatment_request_form(self, text: str) -> str | None:
         if self._contains(text, ["form", "request", "submission"]):
@@ -212,7 +212,7 @@ class DocTypeMatcher:
         ) and self._contains(text, ["schedule"]):
             return DocumentType.ReviewCommitteeSchedule
 
-    def regulation(self, text: str) -> str | None:
+    def regulatory_document(self, text: str) -> str | None:
         if self._contains(text, ["regulation", "law", "carve out", "carve-out"]):
             return DocumentType.RegulatoryDocument
 
@@ -236,6 +236,7 @@ class DocTypeMatcher:
 
     def run_rules(self, text: str) -> str | None:
         # brute force, no lie... get fancy later
+        # order matters
         rule_sets = [
             "formulary_update",
             "formulary",
@@ -250,7 +251,7 @@ class DocTypeMatcher:
             "authorization_policy_b",
             "authorization_policy_c",
             "new_to_market_policy",
-            "non_formulary_policy",
+            "payer_unlisted_policy",
             "treatment_request_form",
             "provider_guide",
             "evidence_of_coverage",
@@ -262,7 +263,7 @@ class DocTypeMatcher:
             "review_committee_meetings",
             "newsletter",
             "review_committee_schedule",
-            "regulation",
+            "regulatory_document",
         ]
         match = None
 
