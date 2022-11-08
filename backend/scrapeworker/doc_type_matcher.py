@@ -12,28 +12,49 @@ class DocTypeMatcher:
         raw_name: str,
         take_count: int = 100,
     ):
-        [*path_parts, filename] = tokenize_url(raw_url)
-        self.filename_tokens = tokenize_filename(filename)
-        self.filename_text = " ".join(self.filename_tokens)
-        self.lower = True
+        if raw_url:
+            [*path_parts, filename] = tokenize_url(raw_url)
+            self.filename_tokens = tokenize_filename(filename)
+            self.filename_text = " ".join(self.filename_tokens).lower()
+        else:
+            self.filename_text = ""
 
-        self.doc_tokens = simple_preprocess(raw_text)
-        self.doc_tokens = self.doc_tokens[:take_count]
-        self.doc_text = " ".join(self.doc_tokens)
+        if raw_text:
+            self.doc_tokens = simple_preprocess(raw_text)
+            self.doc_tokens = self.doc_tokens[:take_count]
+            self.doc_text = " ".join(self.doc_tokens).lower()
+        else:
+            self.doc_text = ""
 
-        self.link_tokens = simple_preprocess(raw_link_text)
-        self.link_text = " ".join(self.link_tokens)
+        if raw_link_text:
+            self.link_tokens = simple_preprocess(raw_link_text)
+            self.link_text = " ".join(self.link_tokens).lower()
+        else:
+            self.link_text = ""
 
-        self.name_tokens = simple_preprocess(raw_name)
-        self.name_text = " ".join(self.name_tokens)
+        if raw_name:
+            self.name_tokens = simple_preprocess(raw_name)
+            self.name_text = " ".join(self.name_tokens).lower()
+        else:
+            self.name_text = ""
+
+        print(
+            f"link_text='{self.link_text}' name_text='{self.name_text}' filename_text='{self.filename_text}' doc_text='{self.doc_text}'"  # noqa
+        )
 
     def _contains(self, text: str, terms: list[str]) -> bool:
         for term in terms:
             term = term.lower()
-            if text.find(f" {term} ") > -1:
-                print(text, f"found '{term}'")
+            if f" {text} ".find(f" {term} ") > -1:
                 return True
         return False
+
+    def _contains_all(self, text: str, terms: list[str]) -> bool:
+        for term in terms:
+            term = term.lower()
+            if f" {text} ".find(f" {term} ") == -1:
+                return False
+        return True
 
     def formulary_update(self, text: str) -> str | None:
         if self._contains(text, ["PDL", "formulary", "drug list"]) and self._contains(
@@ -147,7 +168,9 @@ class DocTypeMatcher:
             return "Treatment Request Form"
 
     def provider_guide(self, text: str) -> str | None:
-        if self._contains(text, ["Provider Guide", "Provider Policy"]):
+        if self._contains(text, ["Provider Policy"]) or self._contains_all(
+            text, ["Provider", "Guide"]
+        ):
             return "Provider Guide"
 
     def evidence_of_coverage(self, text: str) -> str | None:
@@ -193,14 +216,19 @@ class DocTypeMatcher:
     def exec(self) -> str | None:
 
         if match := self.run_rules(self.link_text):
+            print("link_text matched")
             return match
         elif match := self.run_rules(self.name_text):
+            print("name_text matched")
             return match
         elif match := self.run_rules(self.filename_text):
+            print("filename_text matched")
             return match
         elif match := self.run_rules(self.doc_text):
+            print("doc_text matched")
             return match
         else:
+            print("No match fallthrough to classifier")
             return None
 
     def run_rules(self, text: str) -> str | None:
