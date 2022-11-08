@@ -108,10 +108,12 @@ async def update_doc_doc_and_new_prev_doc_doc(
 
 async def update_lineage(
     updating_doc_doc: DocDocument,
-    old_prev_doc_doc_id: PydanticObjectId,
-    new_prev_doc_doc_id: PydanticObjectId,
+    old_prev_doc_doc_id: PydanticObjectId | None,
+    new_prev_doc_doc_id: PydanticObjectId | None,
 ):
-    if not new_prev_doc_doc_id or old_prev_doc_doc_id == new_prev_doc_doc_id:
+    if not old_prev_doc_doc_id or not new_prev_doc_doc_id:
+        return updating_doc_doc
+    if old_prev_doc_doc_id == new_prev_doc_doc_id:
         return updating_doc_doc
     await update_old_prev_doc_doc(old_prev_doc_doc_id)
     updated_doc_doc = await update_doc_doc_and_new_prev_doc_doc(
