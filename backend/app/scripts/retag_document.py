@@ -45,7 +45,7 @@ class ReTagger:
         url = normalize_string(location.url)
         doc_text = await self.get_text(doc, rdoc, url, link_text, focus_config)
         _doc_type, _confidence, doc_vectors = guess_doc_type(
-            doc_text, location.link_text, location.url
+            doc_text, location.link_text, location.url, doc.name
         )
         tokens = tokenize_string(doc_text)
 

@@ -27,9 +27,11 @@ def classify_doc_type(raw_text: str) -> Tuple[str, float, Any]:
     return (clean_pred, conf, [vector])
 
 
-def guess_doc_type(raw_text: str, raw_link_text: str, raw_url: str) -> Tuple[str, float, Any]:
+def guess_doc_type(
+    raw_text: str, raw_link_text: str, raw_url: str, raw_name: str
+) -> Tuple[str, float, Any]:
 
-    doc_type = DocTypeMatcher(raw_text, raw_link_text, raw_url).exec()
+    doc_type = DocTypeMatcher(raw_text, raw_link_text, raw_url, raw_name).exec()
     confidence = 100
 
     # always classify for vectors

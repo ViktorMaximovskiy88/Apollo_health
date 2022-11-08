@@ -1,28 +1,35 @@
-from gensim.utils import tokenize
+from gensim.utils import simple_preprocess
 
 from backend.scrapeworker.common.utils import tokenize_filename, tokenize_url
 
 
 class DocTypeMatcher:
-    def __init__(self, raw_text: str, raw_link_text, raw_url: str, take_count: int = 100):
-
+    def __init__(
+        self,
+        raw_text: str,
+        raw_link_text,
+        raw_url: str,
+        raw_name: str,
+        take_count: int = 100,
+    ):
         [*path_parts, filename] = tokenize_url(raw_url)
         self.filename_tokens = tokenize_filename(filename)
         self.filename_text = " ".join(self.filename_tokens)
+        self.lower = True
 
-        self.doc_tokens = [
-            token for token in tokenize(raw_text, lower=False, deacc=True, errors="ignore")
-        ]
+        self.doc_tokens = simple_preprocess(raw_text)
         self.doc_tokens = self.doc_tokens[:take_count]
         self.doc_text = " ".join(self.doc_tokens)
 
-        self.link_tokens = [
-            token for token in tokenize(raw_link_text, lower=False, deacc=True, errors="ignore")
-        ]
+        self.link_tokens = simple_preprocess(raw_link_text)
         self.link_text = " ".join(self.link_tokens)
+
+        self.name_tokens = simple_preprocess(raw_name)
+        self.name_text = " ".join(self.name_tokens)
 
     def _contains(self, text: str, terms: list[str]) -> bool:
         for term in terms:
+            term = term.lower()
             if text.find(f" {term} ") > -1:
                 print(text, f"found '{term}'")
                 return True
@@ -187,6 +194,8 @@ class DocTypeMatcher:
 
         if match := self.run_rules(self.link_text):
             return match
+        elif match := self.run_rules(self.name_text):
+            return match
         elif match := self.run_rules(self.filename_text):
             return match
         elif match := self.run_rules(self.doc_text):
@@ -231,7 +240,7 @@ class DocTypeMatcher:
             rule = getattr(self, rule_set)
             match = rule(text)
             if match:
-                print(f"matched {rule_set} {text}")
+                print(f"matched {rule_set}")
                 break
 
         return match

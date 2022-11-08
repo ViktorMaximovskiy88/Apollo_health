@@ -60,7 +60,9 @@ class FileParser(ABC):
         self.metadata = await self.get_info()
         self.text = await self.get_text()
         title = self.get_title(self.metadata)
-        document_type, confidence, doc_vectors = guess_doc_type(self.text, self.link_text, self.url)
+        document_type, confidence, doc_vectors = guess_doc_type(
+            self.text, self.link_text, self.url, title
+        )
         lang_code = detect_lang(self.text)
 
         date_parser = DateParser(date_rgxs, label_rgxs)
