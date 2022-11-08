@@ -328,7 +328,11 @@ function DocumentTypeItem(props: any) {
       label="Document Type"
       rules={[{ required: true }]}
     >
-      <Select options={DocumentTypes} disabled={isEditingDocFromOtherSite ? true : false} />
+      <Select
+        showSearch
+        options={DocumentTypes}
+        disabled={isEditingDocFromOtherSite ? true : false}
+      />
     </Form.Item>
   );
 }
@@ -338,7 +342,11 @@ function LanguageItem(props: any) {
 
   return (
     <Form.Item className="grow" name="lang_code" label="Language" rules={[{ required: true }]}>
-      <Select options={languageCodes} disabled={isEditingDocFromOtherSite ? true : false} />
+      <Select
+        showSearch
+        options={languageCodes}
+        disabled={isEditingDocFromOtherSite ? true : false}
+      />
     </Form.Item>
   );
 }

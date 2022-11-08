@@ -4,6 +4,7 @@ from logging import Logger
 
 from beanie import PydanticObjectId
 
+from backend.app.core.settings import settings
 from backend.common.core.enums import ApprovalStatus, TaskStatus
 from backend.common.events.event_convert import EventConvert
 from backend.common.events.send_event_client import SendEventClient
@@ -74,8 +75,11 @@ class DocLifecycleService:
         return False
 
     def extraction_delta_needs_review(self, task: ContentExtractionTask | None) -> bool:
-        if not task or not task.delta.total:
+        if not task:
             return True
+        # Zero Total Delta means no Previous Version, no review needed
+        if not task.delta.total:
+            return False
 
         added_pct = task.delta.added / task.delta.total
         removed_pct = task.delta.removed / task.delta.total
@@ -194,9 +198,10 @@ class DocLifecycleService:
         fully_approved, edit = await self.assess_intermediate_statuses(doc)
         if fully_approved:
             doc.status = ApprovalStatus.APPROVED
-            document_json = await EventConvert().convert(doc)
-            send_event_client = SendEventClient()
-            send_event_client.send_event("document-details", document_json)
+            if not settings.is_local:
+                document_json = await EventConvert().convert(doc)
+                send_event_client = SendEventClient()
+                send_event_client.send_event("document-details", document_json)
         else:
             doc.status = ApprovalStatus.PENDING
 
