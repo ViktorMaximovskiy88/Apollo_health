@@ -86,6 +86,18 @@ async def check_url(
         return ActiveUrlResponse(in_use=False)
 
 
+@router.get(
+    "/search",
+    dependencies=[Security(get_current_user)],
+    response_model=Site,
+)
+async def read_site_by_name(
+    name: str,
+):
+    site = await Site.find_one({"name": name})
+    return site
+
+
 @router.get("/{id}", response_model=Site, dependencies=[Security(get_current_user)])
 async def read_site(
     target: Site = Depends(get_target),
