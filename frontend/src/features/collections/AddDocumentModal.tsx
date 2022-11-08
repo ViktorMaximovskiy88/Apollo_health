@@ -272,7 +272,7 @@ function UploadItem(props: any) {
         style={{ width: '100px' }}
         label="Document File"
       >
-        <div className="flex grow space-x-4" style={{ width: '50px' }}>
+        <div className="flex grow space-x-4">
           <Upload
             style={{ width: '50px !important' }}
             name="file"
@@ -285,12 +285,15 @@ function UploadItem(props: any) {
             onChange={onChange}
           >
             {uploadStatus === 'uploading' ? (
-              <Button style={{ marginRight: '10px' }} icon={<LoadingOutlined />}>
+              <Button
+                style={{ marginRight: '10px', inlineSize: '65%', overflow: 'hidden' }}
+                icon={<LoadingOutlined />}
+              >
                 Uploading {fileName}...
               </Button>
             ) : uploadStatus === 'done' ? (
               <Button
-                style={{ marginRight: '10px', inlineSize: '70%', overflow: 'hidden' }}
+                style={{ marginRight: '10px', inlineSize: '65%', overflow: 'hidden' }}
                 icon={<CheckCircleOutlined />}
               >
                 {fileName} uploaded!
