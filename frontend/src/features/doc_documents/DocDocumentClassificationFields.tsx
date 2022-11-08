@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 
 const DocumentType = () => (
   <Form.Item className="flex-1" name="document_type" label="Document Type" required={true}>
-    <Select options={DocumentTypes} />
+    <Select showSearch options={DocumentTypes} />
   </Form.Item>
 );
 

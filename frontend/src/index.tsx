@@ -10,6 +10,7 @@ import { HistoryRouter as Router } from 'redux-first-history/rr6';
 import { Auth0Provider } from '@auth0/auth0-react';
 import settings from './settings';
 import moment from 'moment';
+import { notification } from 'antd';
 
 window.moment = moment;
 
@@ -33,3 +34,5 @@ const app = (
 const container = document.getElementById('root');
 const root = createRoot(container as Element);
 root.render(app);
+
+notification.config({ duration: 2 });

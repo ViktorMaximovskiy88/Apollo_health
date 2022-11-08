@@ -52,6 +52,14 @@ resource "aws_ecs_task_definition" "parseworker" {
           value = data.aws_ssm_parameter.docrepo-bucket-name.value
         },
         {
+          name  = "EVENT_BUS_ARN"
+          value = data.aws_cloudwatch_event_bus.sourcehub.arn
+        },
+        {
+          name  = "EVENT_SOURCE"
+          value = local.event_source
+        },
+        {
           name = "NEW_RELIC_APP_NAME"
           value = "${local.new_relic_app_name}-ParseWorker"
         }
