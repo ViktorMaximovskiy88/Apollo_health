@@ -265,9 +265,9 @@ def inherit_prev_doc_fields(
         doc.document_family_id = prev_doc.document_family_id
 
     loc = next(loc for loc in doc.locations if site_id == loc.site_id)
-    prev_loc = next(loc for loc in prev_doc.locations if site_id == loc.site_id)
+    prev_loc = next((loc for loc in prev_doc.locations if site_id == loc.site_id), None)
 
-    if prev_loc.payer_family_id:
+    if prev_loc and prev_loc.payer_family_id:
         loc.payer_family_id = prev_loc.payer_family_id
 
 
