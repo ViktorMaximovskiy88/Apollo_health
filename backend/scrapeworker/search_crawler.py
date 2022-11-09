@@ -51,8 +51,8 @@ class SearchableCrawler:
 
     async def __type(self, page: Page, code: str):
         assert self.input_selector is not None
-        await page.fill(self.input_selector, "")
-        await page.fill(self.input_selector, code)
+        await page.fill(self.input_selector, "", force=True)
+        await page.fill(self.input_selector, code, force=True)
 
     async def __select(self, page: Page, code: str):
         """
@@ -73,11 +73,15 @@ class SearchableCrawler:
     async def run_searchable(self, page: Page, playbook_context: PlaybookContext):
         base_url = page.url
         codes = await self.__codes()
-
         for code in codes:
             nav_state = NavState()
             try:
+                page.on
                 page.on("load", nav_state.handle_nav)
+                # pre-type check, use actionability check from playright
+                await page.locator(".form-item > .ant-text-input").click(force=True)
+                await page.locator("#codeDescription").click(force=True)
+
                 await self.__type(page, code)
                 await self.__select(page, code)
                 await self.__search(page)
