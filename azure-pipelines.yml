@@ -18,6 +18,7 @@ stages:
   # - Build and Test SourceHub Back End
   # - Validate Dev Deploy
   # - Validate Test Deploy
+  # - Validate Prod Deploy
   # - Package SourceHub
   #
   # NOTES:
@@ -114,13 +115,11 @@ stages:
   #
   # - It is assumed that the container images have been pushed to Dev ECR in the Build Stage
   # - This stage will use a template for the deployment job
-  # - This stage can be executed using either the main branch or a feature/* branch. Executing
-  #   from a feature/ branch requires a manual trigger.
   ##############################################################################################
   - stage: development
     displayName: Development Stage
     dependsOn: build
-    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature/')))
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
       - deployment: dev_deployment
         displayName: Deploy to SourceHub Dev
@@ -143,14 +142,13 @@ stages:
   # - It is assumed that the container images have been pushed to Dev ECR in the Build Stage
   # - This stage will pull the container images from Dev ECR and then push to Test ECR
   # - This stage will use a template for the deployment job
-  # - This stage can only be executed from the main branch
   # - This stage will reference the SourceHub-Test environment which may require approvals and
   #   other policies configured outside of this Pipeline.
   ##############################################################################################
   - stage: test
     displayName: Test Stage
-    dependsOn: development
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    dependsOn: build
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/release'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/*')))
     jobs:
       - deployment: tst_deployment
         displayName: Deploy to SourceHub Test
@@ -199,14 +197,13 @@ stages:
   # - It is assumed that the container images have been pushed to Dev ECR in the Build Stage
   # - This stage will pull the container images from Dev ECR and then push to Prod ECR
   # - This stage will use a template for the deployment job
-  # - This stage can only be executed from a tag matching pattern 'v*'
   # - This stage will reference the SourceHub-Prod environment which may require approvals and
   #   other policies configured outside of this Pipeline.
   ##############################################################################################
   - stage: production
     displayName: Production Stage
     dependsOn: test
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/release'))
     jobs:
       - deployment: prd_deployment
         displayName: Deploy to SourceHub Prod
