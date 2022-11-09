@@ -13,7 +13,7 @@ class DocTypeMatcher:
         raw_link_text,
         raw_url: str,
         raw_name: str,
-        take_count: int = 100,
+        take_count: int = 50,
     ):
         if raw_url:
             [*path_parts, filename] = tokenize_url(raw_url)
@@ -142,7 +142,9 @@ class DocTypeMatcher:
                     "Step Therapy",
                 ],
             )
-        ) and not self._contains(text, ["list", "new to market", "unlisted", "non-formulary"]):
+        ) and not self._contains(
+            text, ["list", "new to market", "unlisted", "non-formulary", "form"]
+        ):
             return DocumentType.AuthorizationPolicy
 
     def site_of_care_policy(self, text: str) -> str | None:
