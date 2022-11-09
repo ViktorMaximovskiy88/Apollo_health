@@ -51,8 +51,8 @@ class SearchableCrawler:
 
     async def __type(self, page: Page, code: str):
         assert self.input_selector is not None
-        await page.fill(self.input_selector, "", force=True)
-        await page.fill(self.input_selector, code, force=True)
+        await page.fill(self.input_selector, "")
+        await page.fill(self.input_selector, code)
 
     async def __select(self, page: Page, code: str):
         """
