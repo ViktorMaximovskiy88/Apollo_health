@@ -70,6 +70,13 @@ class SearchableCrawler:
         else:
             await page.keyboard.press("Enter")
 
+    async def __find_input_dropdown(self, page: Page):
+        try:
+            await page.locator(".form-item > .ant-text-input").click(force=True, timeout=500)
+            await page.locator("#codeDescription").click(force=True, timeout=500)
+        except Exception:
+            return
+
     async def run_searchable(self, page: Page, playbook_context: PlaybookContext):
         base_url = page.url
         codes = await self.__codes()
@@ -79,9 +86,7 @@ class SearchableCrawler:
                 page.on
                 page.on("load", nav_state.handle_nav)
                 # pre-type check, use actionability check from playright
-                await page.locator(".form-item > .ant-text-input").click(force=True)
-                await page.locator("#codeDescription").click(force=True)
-
+                await self.__find_input_dropdown(page)
                 await self.__type(page, code)
                 await self.__select(page, code)
                 await self.__search(page)
