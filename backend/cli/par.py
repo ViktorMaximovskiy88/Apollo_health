@@ -25,12 +25,17 @@ async def par(ctx, file: str, type: str):
 async def prev_par_ids(ctx):
     file = ctx.parent.params["file"]
     df = pd.read_csv(file)
+    print(
+        f"ParDocumentId, ParChecksum, ParEffectiveDate, ParPolicyId, Version?, SHDocDocId, SHchecksum, SHFinalEffectiveDate, SHLineageId"  # noqa
+    )
     for _index, row in df.iterrows():
         doc = await DocDocument.find_one({"locations.url": row["DocumentUrl"]})
         if doc:
-            version = "Last" if doc.checksum != row["Checksum"] else "Same"
+            version = "Last" if doc.checksum.lower() != row["Checksum"].lower() else "Same"
             print(
                 f"{row['ParDocumentId']}, {row['Checksum']}, {row['EffectiveDate']}, {row['PolicyId']}, {version}, {doc.id}, {doc.checksum}, {doc.final_effective_date}, {doc.lineage_id}"  # noqa
             )
-
-    print("/n")
+        else:
+            print(
+                f"{row['ParDocumentId']}, {row['Checksum']}, {row['EffectiveDate']}, {row['PolicyId']}, , , , , "  # noqa
+            )

@@ -41,11 +41,13 @@ async def clear(ctx, site_id: PydanticObjectId):
 
 @lineage.command()
 @click.pass_context
-@click.option("--current-doc", help="Current doc to compare", required=True, type=PydanticObjectId)
-@click.option("--prev-doc", help="Prev doc to compare", required=True, type=PydanticObjectId)
-async def compare_tags(ctx, current_id: PydanticObjectId, prev_id: PydanticObjectId):
-    current_doc = await DocDocument.get(current_id)
-    prev_doc = await DocDocument.get(prev_id)
+@click.option(
+    "--current-doc-id", help="Current doc to compare", required=True, type=PydanticObjectId
+)
+@click.option("--previous-doc-id", help="Prev doc to compare", required=True, type=PydanticObjectId)
+async def compare_tags(ctx, current_doc_id: PydanticObjectId, previous_doc_id: PydanticObjectId):
+    current_doc = await DocDocument.get(current_doc_id)
+    prev_doc = await DocDocument.get(previous_doc_id)
 
     if not current_doc or not prev_doc:
         raise Exception("Document(s) not found")
