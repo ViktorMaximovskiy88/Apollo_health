@@ -1,6 +1,7 @@
 import logging
 import sys
 from pathlib import Path
+from pprint import pprint
 
 import asyncclick as click
 
@@ -26,7 +27,11 @@ async def match(ctx, doc_doc_id: PydanticObjectId):
 
     doc_storage = TextStorageClient()
     doc_doc = await DocDocument.get(doc_doc_id)
+    if not doc_doc:
+        log.error(f"DocDocument not found: id={doc_doc_id}")
+        return
+
     location = doc_doc.locations[0]
     raw_text = doc_storage.read_utf8_object(f"{doc_doc.text_checksum}.txt")
     doc_type = DocTypeMatcher(raw_text, location.link_text, location.url, doc_doc.name).exec()
-    print(str(doc_type.value))
+    pprint(doc_type)

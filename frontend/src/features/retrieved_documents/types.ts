@@ -39,6 +39,11 @@ export interface RetrievedDocument extends BaseDocument {
 
 // id is added so that it can be used for both table filters and dropdown selections
 export const DocumentTypes = [
+  {
+    id: 'Annual Notice of Changes',
+    label: 'Annual Notice of Changes',
+    value: 'Annual Notice of Changes',
+  },
   { id: 'Authorization Policy', label: 'Authorization Policy', value: 'Authorization Policy' },
   { id: 'Evidence of Coverage', label: 'Evidence of Coverage', value: 'Evidence of Coverage' },
   { id: 'Exclusion List', label: 'Exclusion List', value: 'Exclusion List' },
@@ -51,7 +56,11 @@ export const DocumentTypes = [
   { id: 'NCCN Guideline', label: 'NCCN Guideline', value: 'NCCN Guideline' },
   { id: 'NCD', label: 'NCD', value: 'NCD' },
   { id: 'New-to-Market Policy', label: 'New-to-Market Policy', value: 'New-to-Market Policy' },
-  { id: 'Newsletter', label: 'Newsletter', value: 'Newsletter' },
+  {
+    id: 'Newsletter / Announcement',
+    label: 'Newsletter / Announcement',
+    value: 'Newsletter / Announcement',
+  },
   { id: 'Not Applicable', label: 'Not Applicable', value: 'Not Applicable' },
   { id: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy', value: 'Payer Unlisted Policy' },
   { id: 'Preventive Drug List', label: 'Preventive Drug List', value: 'Preventive Drug List' },
