@@ -49,7 +49,6 @@ class Forward:
     )
     async def rename_doc_types(self, session):
         await update_doc_type("Covered Treatment List", "Medical Coverage List")
-        await update_doc_type("Newsletter", "Newsletter / Announcement")
 
 
 class Backward:
