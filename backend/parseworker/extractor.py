@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import re
 from contextlib import contextmanager
+from functools import cached_property
 from typing import Generator
 
 import pdfplumber
@@ -26,7 +27,10 @@ class TableContentExtractor:
     def __init__(self, doc: DocDocument, config: TranslationConfig) -> None:
         self.config = config
         self.doc = doc
-        self.client = DocumentStorageClient()
+
+    @cached_property
+    def client(self):
+        return DocumentStorageClient()
 
     def create_doc_sample(self):
         sample_creator = DocumentSampleCreator(self.config.detection)
@@ -349,27 +353,26 @@ class TableContentExtractor:
                         yield page
 
     async def calculate_delta(self, extraction_task: ContentExtractionTask):
-        if not self.doc.previous_doc_doc_id:
-            return
-        prev_doc = await DocDocument.get(self.doc.previous_doc_doc_id)
-        if not prev_doc:
-            return
-        if not prev_doc.content_extraction_task_id:
-            return
-        prev_task = await ContentExtractionTask.get(prev_doc.content_extraction_task_id)
-        if not prev_task or prev_task.status != TaskStatus.FINISHED:
-            return
-        await DeltaCreator().compute_delta(extraction_task, prev_task)
+        await DeltaCreator().clear_delta(extraction_task.id)
 
-        next_doc = await DocDocument.find_one(DocDocument.previous_doc_doc_id == self.doc.id)
-        if not next_doc:
-            return
-        if not next_doc.content_extraction_task_id:
-            return
-        next_task = await ContentExtractionTask.get(next_doc.content_extraction_task_id)
-        if not next_task or next_task.status != TaskStatus.FINISHED:
-            return
-        await DeltaCreator().compute_delta(next_task, extraction_task)
+        modified = []
+        # Previous Doc with Extraction Exists
+        prev_doc = await DocDocument.find_one({"_id": self.doc.previous_doc_doc_id})
+        if prev_doc and prev_doc.content_extraction_task_id:
+            prev_task = await ContentExtractionTask.get(prev_doc.content_extraction_task_id)
+            if prev_task and prev_task.status == TaskStatus.FINISHED:
+                await DeltaCreator().compute_delta(extraction_task, prev_task)
+                modified.append(extraction_task.id)
+
+        # Next Doc with Extraction Exists
+        next_doc = await DocDocument.find_one({"previous_doc_doc_id": self.doc.id})
+        if next_doc and next_doc.content_extraction_task_id:
+            next_task = await ContentExtractionTask.get(next_doc.content_extraction_task_id)
+            if next_task and next_task.status == TaskStatus.FINISHED:
+                await DeltaCreator().compute_delta(next_task, extraction_task)
+                modified.append(next_task.id)
+
+        return modified
 
     async def run_extraction(self, extraction_task: ContentExtractionTask):
         filename = f"{self.doc.checksum}.pdf"
