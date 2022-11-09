@@ -2,7 +2,6 @@ import logging
 import sys
 from pathlib import Path
 
-import aiofiles
 import asyncclick as click
 import pandas as pd
 
@@ -17,17 +16,21 @@ log = logging.getLogger(__name__)
 @click.pass_context
 @click.option("--file", help="File to parse", required=True, type=str)
 @click.option("--type", help="Parser to use", default="default", type=str)
-async def data(ctx, file: str, type: str):
+async def par(ctx, file: str, type: str):
     await init_db()
 
 
-@data.command()
+@par.command()
 @click.pass_context
-async def match_docs(ctx):
+async def prev_par_ids(ctx):
     file = ctx.parent.params["file"]
     df = pd.read_csv(file)
     for _index, row in df.iterrows():
-        doc = await DocDocument.find_one({"locations.url": row["url"]})
-        if doc and doc.checksum != row["checksum"]:
-            print(f"{row['policy_id']}, {row['checksum']}, {row['par_id']}, {doc.id}")
+        doc = await DocDocument.find_one({"locations.url": row["DocumentUrl"]})
+        if doc:
+            version = "Last" if doc.checksum != row["Checksum"] else "Same"
+            print(
+                f"{row['ParDocumentId']}, {row['Checksum']}, {row['EffectiveDate']}, {row['PolicyId']}, {version}, {doc.id}, {doc.checksum}, {doc.final_effective_date}, {doc.lineage_id}"  # noqa
+            )
+
     print("/n")
