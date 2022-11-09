@@ -274,7 +274,6 @@ function UploadItem(props: any) {
       >
         <div className="flex grow space-x-4">
           <Upload
-            style={{ width: '50px !important' }}
             name="file"
             accept=".pdf,.xlsx,.docx"
             action={`${baseApiUrl}/documents/upload/${siteId}`}
@@ -285,15 +284,15 @@ function UploadItem(props: any) {
             onChange={onChange}
           >
             {uploadStatus === 'uploading' ? (
-              <Button
-                style={{ marginRight: '10px', inlineSize: '65%', overflow: 'hidden' }}
+              <Button // 435 is most of the width of small screen modal
+                style={{ marginRight: '10px', inlineSize: '435px', overflow: 'hidden' }}
                 icon={<LoadingOutlined />}
               >
                 Uploading {fileName}...
               </Button>
             ) : uploadStatus === 'done' ? (
               <Button
-                style={{ marginRight: '10px', inlineSize: '65%', overflow: 'hidden' }}
+                style={{ marginRight: '10px', inlineSize: '435px', overflow: 'hidden' }}
                 icon={<CheckCircleOutlined />}
               >
                 {fileName} uploaded!
