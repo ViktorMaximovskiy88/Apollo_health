@@ -10,24 +10,28 @@ import { CommentWall } from '../../comments/CommentWall';
 import { useParams } from 'react-router-dom';
 import { useGetSiteQuery, useLazyGetSiteByNameQuery } from '../sitesApi';
 import { Rule } from 'antd/lib/form';
+import { useCallback } from 'react';
 
 const useMustBeUniqueNameRule = () => {
   const { siteId } = useParams();
   const { data: currentSite } = useGetSiteQuery(siteId);
   const [getSiteByName] = useLazyGetSiteByNameQuery();
 
-  const mustBeUniqueName = () => ({
-    async validator(_rule: Rule, newName: string) {
-      if (currentSite && newName === currentSite.name) {
+  const mustBeUniqueName = useCallback(
+    () => ({
+      async validator(_rule: Rule, newName: string) {
+        if (currentSite && newName === currentSite.name) {
+          return Promise.resolve();
+        }
+        const { data: site } = await getSiteByName(newName);
+        if (site) {
+          return Promise.reject(`Site name "${site.name}" already exists`);
+        }
         return Promise.resolve();
-      }
-      const { data: site } = await getSiteByName(newName);
-      if (site) {
-        return Promise.reject(`Site name "${site.name}" already exists`);
-      }
-      return Promise.resolve();
-    },
-  });
+      },
+    }),
+    [currentSite, getSiteByName]
+  );
   return mustBeUniqueName;
 };
 
