@@ -228,7 +228,6 @@ export function DocDocumentEditForm({
         requiredMark={false}
         initialValues={initialValues}
         onFinish={onFinish}
-        validateTrigger={['onBlur']}
       >
         <HashRoutedTabs
           tabBarExtraContent={<DocStatusModal doc={doc} />}
