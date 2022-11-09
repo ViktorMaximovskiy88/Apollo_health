@@ -1,9 +1,25 @@
 import logging
+from enum import Enum
 
 from gensim.utils import simple_preprocess
+from pydantic import BaseModel
 
 from backend.common.core.enums import DocumentType
 from backend.scrapeworker.common.utils import tokenize_filename, tokenize_url
+
+
+class MatchSource(str, Enum):
+    DocText = "DocText"
+    LinkText = "LinkText"
+    Filename = "Filename"
+    Name = "Name"
+
+
+class DocTypeMatch(BaseModel):
+    document_type: DocumentType
+    match_source: MatchSource
+    confidence: float
+    rule_name: str
 
 
 class DocTypeMatcher:
@@ -15,6 +31,7 @@ class DocTypeMatcher:
         raw_name: str,
         take_count: int = 50,
     ):
+        self.matched_rule = None
         if raw_url:
             [*path_parts, filename] = tokenize_url(raw_url)
             self.filename_tokens = tokenize_filename(filename)
@@ -69,13 +86,25 @@ class DocTypeMatcher:
 
     def formulary_update(self, text: str) -> str | None:
         if self._contains(text, ["PDL", "formulary", "drug list"]) and self._contains(
-            text, ["update", "change"]
+            text, ["update", "change", "changes"]
         ):
             return DocumentType.FormularyUpdate
 
     def formulary(self, text: str) -> str | None:
         if self._contains(text, ["PDL", "formulary", "drug list"]) and not self._contains(
-            text, ["update", "change", "Preventive", "Specialty", "Exclusion", "Medical"]
+            text,
+            [
+                "update",
+                "change",
+                "changes",
+                "Preventive",
+                "Specialty",
+                "Exclusion",
+                "Medical",
+                "Prior Authorization",
+                "Policy",
+                "Procedure",
+            ],
         ):
             return DocumentType.Formulary
 
@@ -127,6 +156,10 @@ class DocTypeMatcher:
     def fee_schedule(self, text: str) -> str | None:
         if self._contains(text, ["Fee Schedule"]):
             return DocumentType.FeeSchedule
+
+    def annual_notice_of_changes(self, text: str) -> str | None:
+        if self._contains(text, ["ANOC", "Annual Notice of change", "Annual Notice of changes"]):
+            return DocumentType.AnnualNoticeOfChanges
 
     def authorization_policy_a(self, text: str) -> str | None:
         if (
@@ -223,9 +256,9 @@ class DocTypeMatcher:
         ) and not self._contains(text, ["schedule"]):
             return DocumentType.ReviewCommitteeMeetings
 
-    def newsletter(self, text: str) -> str | None:
-        if self._contains(text, ["Newsletter", "News"]):
-            return DocumentType.Newsletter
+    def newsletter_announcement(self, text: str) -> str | None:
+        if self._contains(text, ["Newsletter", "News", "Announcement", "Announcements"]):
+            return DocumentType.NewsletterAnnouncement
 
     def review_committee_schedule(self, text: str) -> str | None:
         if self._contains(
@@ -237,25 +270,45 @@ class DocTypeMatcher:
         if self._contains(text, ["regulation", "law", "carve out", "carve-out"]):
             return DocumentType.RegulatoryDocument
 
-    def exec(self) -> str | None:
+    def exec(self) -> DocTypeMatch | None:
 
         if match := self.run_rules(self.link_text):
             logging.info("link_text matched")
-            return match
+            return DocTypeMatch(
+                match_source=MatchSource.LinkText,
+                confidence=80,
+                rule_name=self.matched_rule,
+                document_type=match,
+            )
         elif match := self.run_rules(self.name_text):
             logging.info("name_text matched")
-            return match
+            return DocTypeMatch(
+                match_source=MatchSource.Name,
+                confidence=80,
+                rule_name=self.matched_rule,
+                document_type=match,
+            )
         elif match := self.run_rules(self.filename_text):
             logging.info("filename_text matched")
-            return match
+            return DocTypeMatch(
+                match_source=MatchSource.Filename,
+                confidence=80,
+                rule_name=self.matched_rule,
+                document_type=match,
+            )
         elif match := self.run_rules(self.doc_text):
             logging.info("doc_text matched")
-            return match
+            return DocTypeMatch(
+                match_source=MatchSource.DocText,
+                confidence=70,
+                rule_name=self.matched_rule,
+                document_type=match,
+            )
         else:
             logging.info("No match fallthrough to classifier")
             return None
 
-    def run_rules(self, text: str) -> str | None:
+    def run_rules(self, text: str) -> DocumentType | None:
         # brute force, no lie... get fancy later
         # order matters
         rule_sets = [
@@ -267,6 +320,7 @@ class DocTypeMatcher:
             "exclusion_list",
             "preventive_drug_list",
             "fee_schedule",
+            "annual_notice_of_changes",
             "authorization_policy_a",
             "site_of_care_policy",
             "authorization_policy_b",
@@ -282,7 +336,7 @@ class DocTypeMatcher:
             "lcd",
             "lcd",
             "review_committee_meetings",
-            "newsletter",
+            "newsletter_announcement",
             "review_committee_schedule",
             "regulatory_document",
         ]
@@ -292,7 +346,7 @@ class DocTypeMatcher:
             rule = getattr(self, rule_set)
             match = rule(text)
             if match:
-                logging.info(f"matched {rule_set}")
+                self.matched_rule = rule_set
                 break
 
         return match

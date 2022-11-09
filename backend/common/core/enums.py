@@ -50,6 +50,7 @@ class SearchableType(str, Enum):
 
 
 class DocumentType(str, Enum):
+    AnnualNoticeOfChanges = "Annual Notice of Changes"
     AuthorizationPolicy = "Authorization Policy"
     EvidenceOfCoverage = "Evidence of Coverage"
     ExclusionList = "Exclusion List"
@@ -61,7 +62,7 @@ class DocumentType(str, Enum):
     MedicalCoverageList = "Medical Coverage List"
     NCCNGuideline = "NCCN Guideline"
     NCD = "NCD"
-    Newsletter = "Newsletter"
+    NewsletterAnnouncement = "Newsletter / Announcement"
     NewToMarketPolicy = "New-to-Market Policy"
     NotApplicable = "Not Applicable"
     PayerUnlistedPolicy = "Payer Unlisted Policy"
