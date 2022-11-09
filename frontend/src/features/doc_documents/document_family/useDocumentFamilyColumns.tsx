@@ -2,13 +2,22 @@ import { useMemo } from 'react';
 import { DocumentFamily } from './types';
 
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
-import { DocumentTypes } from '../../retrieved_documents/types';
+import {
+  DocumentTypes,
+  FieldGroupsOptions,
+  LegacyRelevanceOptions,
+} from '../../retrieved_documents/types';
+import { RemoteColumnFilter } from '../../../components/RemoteColumnFilter';
 import { ChangeLogModal } from '../../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './documentFamilyApi';
 import { TypeColumn } from '@inovua/reactdatagrid-community/types';
 import { Link } from 'react-router-dom';
+import { useSiteSelectOptions } from '../DocDocumentsDataTable';
 
-export const createColumns = () => {
+export const createColumns = (
+  siteOptions: (search: string) => Promise<{ label: string; value: string }[]>,
+  sitesNamesById: { [key: string]: string }
+) => {
   return [
     {
       header: 'Family Name',
@@ -17,6 +26,60 @@ export const createColumns = () => {
       minWidth: 200,
       render: ({ data: docFam }: { data: DocumentFamily }) => {
         return <Link to={`/document-family/${docFam._id}`}>{docFam.name}</Link>;
+      },
+    },
+    {
+      header: 'Sites',
+      name: 'site_id',
+      filterEditor: RemoteColumnFilter,
+      filterEditorProps: {
+        fetchOptions: siteOptions,
+      },
+      render: ({ data: docFam }: { data: DocumentFamily }) => {
+        return sitesNamesById[docFam.site_id];
+      },
+    },
+    {
+      header: 'Legacy Relevance',
+      name: 'legacy_relevance',
+      filterEditor: SelectFilter,
+      minWidth: 300,
+      filterEditorProps: {
+        placeholder: 'All',
+        dataSource: LegacyRelevanceOptions,
+      },
+      render: ({ data: docFam }: { data: DocumentFamily }) => {
+        return docFam.legacy_relevance
+          .map((val) => {
+            val = val
+              .toLocaleLowerCase()
+              .split('_')
+              .map((e) => e[0].toUpperCase() + e.slice(1))
+              .join(' ');
+            return val;
+          })
+          .join(', ');
+      },
+    },
+    {
+      header: 'Field Group',
+      name: 'field_groups',
+      filterEditor: SelectFilter,
+      minWidth: 300,
+      filterEditorProps: {
+        multiple: true,
+        dataSource: FieldGroupsOptions,
+      },
+      render: ({ data: docFam }: { data: DocumentFamily }) => {
+        return docFam.field_groups
+          .map((val) => {
+            return val
+              .toLocaleLowerCase()
+              .split('_')
+              .map((e) => e[0].toUpperCase() + e.slice(1))
+              .join(' ');
+          })
+          .join(', ');
       },
     },
     {
@@ -41,4 +104,11 @@ export const createColumns = () => {
   ];
 };
 
-export const useDocumentFamilyColumns = (): TypeColumn[] => useMemo(() => createColumns(), []);
+export const useDocumentFamilyColumns = (siteNamesById: {
+  [key: string]: string;
+}): TypeColumn[] => {
+  const { siteOptions } = useSiteSelectOptions();
+  return useMemo(() => {
+    return createColumns(siteOptions, siteNamesById);
+  }, [siteNamesById]);
+};

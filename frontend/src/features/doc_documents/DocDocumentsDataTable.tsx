@@ -32,7 +32,7 @@ import { useGetSiteQuery, useGetSitesQuery, useLazyGetSitesQuery } from '../site
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
-function useSiteSelectOptions() {
+export function useSiteSelectOptions() {
   const [getSites] = useLazyGetSitesQuery();
   const siteOptions = useCallback(
     async (search: string) => {
@@ -50,7 +50,7 @@ function useSiteSelectOptions() {
   return { siteOptions };
 }
 
-function useGetSiteNamesById() {
+export function useGetSiteNamesById() {
   const [siteIds, setSiteIds] = useState<string[]>([]);
   const { data: sites } = useGetSitesQuery(
     {

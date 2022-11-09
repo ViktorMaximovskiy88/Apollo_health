@@ -6,4 +6,7 @@ export interface DocumentFamily extends BaseDocument {
   description: string;
   site_id: string;
   relevance: string[];
+  disabled: boolean;
+  legacy_relevance: string[];
+  field_groups: string[];
 }
