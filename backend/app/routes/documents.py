@@ -23,6 +23,7 @@ from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import ManualWorkItem, SiteScrapeTask, WorkItemOption
 from backend.common.models.user import User
 from backend.common.services.collection import CollectionResponse, find_work_item_index
+from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook
 from backend.common.services.document import create_doc_document_service
 from backend.common.services.site import site_last_started_task
 from backend.common.services.tag_compare import TagCompare
@@ -398,6 +399,7 @@ async def add_document(
         await original_retr_doc.save()
         await original_doc_doc.save()
 
+    # Create doc pairs or update existing.
     if not new_retr_document.lineage_id:
         new_retr_document.lineage_id = PydanticObjectId()
     if not uploaded_doc.prev_location_doc_id:
@@ -440,7 +442,7 @@ async def add_document(
         created_doc_doc.indication_tags = tag_compare_response[1]
         await created_doc_doc.save()
 
-    # Manual: Process and update work items.
+    # Process and update work items.
     current_task: SiteScrapeTask = await site_last_started_task(site.id)
     if not current_task:
         return created_retr_doc
@@ -482,5 +484,7 @@ async def add_document(
     # Save updated work_list and add to task.retr_doc_ids for querying.
     current_task.retrieved_document_ids.append(f"{created_retr_doc.id}")
     await current_task.save()
+    # Set workflows.
+    await doc_document_save_hook(created_doc_doc)
 
     return created_retr_doc
