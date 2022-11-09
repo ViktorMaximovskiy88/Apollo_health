@@ -104,6 +104,8 @@ class DocTypeMatcher:
                 "Prior Authorization",
                 "Policy",
                 "Procedure",
+                "Step Therapy",
+                "Quantity Limit",
             ],
         ):
             return DocumentType.Formulary
