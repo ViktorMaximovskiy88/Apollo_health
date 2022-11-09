@@ -239,7 +239,7 @@ class DocTypeMatcher:
             return DocumentType.SummaryOfBenefits
 
     def nccn_guidlines(self, text: str) -> str | None:
-        if self._contains(text, ["NCCN", "NCCN Guideline", "Guideline"]):
+        if self._contains(text, ["NCCN", "NCCN Guideline"]):
             return DocumentType.NCCNGuideline
 
     def ncd(self, text: str) -> str | None:
