@@ -7,7 +7,7 @@ import {
 } from './payerFamilyApi';
 import { Rule } from 'antd/lib/form';
 import { useForm } from 'antd/lib/form/Form';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
 import { PayerFamily } from './types';
 import { CloseOutlined, WarningFilled } from '@ant-design/icons';

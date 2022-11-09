@@ -1,11 +1,16 @@
 from dataclasses import dataclass
+from datetime import datetime
 
-from backend.common.core.enums import TagUpdateStatus
+from beanie import PydanticObjectId
+
+from backend.common.core.enums import SectionType, TagUpdateStatus
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.shared import IndicationTag, TherapyTag
+from backend.common.models.site import Site
 from backend.common.services.text_compare.diff_utilities import Dmp
 from backend.common.storage.client import TextStorageClient
+from backend.scrapeworker.document_tagging.tag_focusing import FocusArea, FocusChecker
 
 TagList = list[TherapyTag] | list[IndicationTag]
 
@@ -15,6 +20,7 @@ class DocumentSection:
     text_area: tuple[int, int]
     id_tags: TagList
     ref_tags: TagList
+    key_text: str | None = None
 
     def set_section_status(self, status: TagUpdateStatus):
         for tag in self.id_tags:
@@ -46,6 +52,11 @@ class SectionLineage:
         self.dmp.diff_charsToLines(diffs, words[2])
         return diffs
 
+    def _concat_removed_tags(self, a_tag_list: TagList, b_tag_list: TagList):
+        """Add removed tags to current document tag list"""
+        removed_tags = [tag for tag in b_tag_list if tag.update_status == TagUpdateStatus.REMOVED]
+        a_tag_list += removed_tags
+
     def _group_by_code(self, tags: TagList):
         codes: dict[int | str, TagList] = {}
         for tag in tags:
@@ -55,36 +66,44 @@ class SectionLineage:
                 codes[tag.code] = [tag]
         return codes
 
-    def _match_and_update_tags(
-        self, code: int | str, a_refs: dict[int | str, TagList], b_refs: dict[int | str, TagList]
-    ):
-        a_tags = a_refs[code]
-        if code in b_refs:
-            b_tags = b_refs[code]
-            a_tags_len = len(a_tags)
-            b_tags_len = len(b_tags)
-            if a_tags_len == b_tags_len:
-                return
-            elif a_tags_len > b_tags_len:
-                for i in range(b_tags_len - 1, a_tags_len - 1):
-                    a_tags[i].update_status = TagUpdateStatus.ADDED
-            else:
-                for i in range(a_tags_len - 1, b_tags_len - 1):
-                    b_tags[i].update_status = TagUpdateStatus.REMOVED
-            del b_refs[code]
-        else:
+    def _match_and_update_tags(self, a_tags: TagList, b_tags: TagList | None):
+        if b_tags is None:
             for tag in a_tags:
                 tag.update_status = TagUpdateStatus.ADDED
+            return
 
-    def compare_ref_tags(self):
-        a_ref_by_code = self._group_by_code(self.a_section.ref_tags)
-        b_ref_by_code = self._group_by_code(self.b_section.ref_tags)
-        for code in a_ref_by_code:
-            self._match_and_update_tags(code, a_ref_by_code, b_ref_by_code)
-        for code in b_ref_by_code:
-            b_tags = b_ref_by_code[code]
+        a_tags_len = len(a_tags)
+        b_tags_len = len(b_tags)
+        if a_tags_len == b_tags_len:
+            return
+        elif a_tags_len > b_tags_len:
+            for i in range(b_tags_len - 1, a_tags_len - 1):
+                a_tags[i].update_status = TagUpdateStatus.ADDED
+        else:
+            for i in range(a_tags_len - 1, b_tags_len - 1):
+                b_tags[i].update_status = TagUpdateStatus.REMOVED
+
+    def _compare_tags(self, a_tag_list: TagList, b_tag_list: TagList):
+        a_tags_by_code = self._group_by_code(a_tag_list)
+        b_tags_by_code = self._group_by_code(b_tag_list)
+        for code in a_tags_by_code:
+            a_tags = a_tags_by_code[code]
+            b_tags = b_tags_by_code.pop(code, None)
+            self._match_and_update_tags(a_tags, b_tags)
+
+        for code in b_tags_by_code:
+            b_tags = b_tags_by_code[code]
             for tag in b_tags:
                 tag.update_status = TagUpdateStatus.REMOVED
+        self._concat_removed_tags(a_tag_list, b_tag_list)
+
+    def compare_ref_tags(self):
+        self._compare_tags(self.a_section.ref_tags, self.b_section.ref_tags)
+
+    def compare_id_tags(self):
+        if not self.a_section.key_text or not self.b_section.key_text:
+            return
+        self._compare_tags(self.a_section.id_tags, self.b_section.id_tags)
 
     def compare_text(self, a_text: str, b_text: str):
         a_text_area: str | None = None
@@ -112,34 +131,32 @@ class SectionLineage:
 
 
 class TagCompare:
+    THERAPY = "THERAPY"
+    INDICATION = "INDICATION"
+
     def __init__(self) -> None:
         self.text_client = TextStorageClient()
         self.dmp = Dmp(exclude_digits=True)
 
     def _partition_tags_by_type(self, tags: TagList):
-        key_tags: TagList = []
         focus_tags: TagList = []
         ref_tags: TagList = []
         for tag in tags:
-            if tag.key:
-                key_tags.append(tag)
-            elif tag.focus:
+            if tag.focus:
                 focus_tags.append(tag)
             else:
                 ref_tags.append(tag)
 
-        if key_tags:
-            ref_tags += focus_tags
-            return key_tags, ref_tags
-
         return focus_tags, ref_tags
 
     def _group_by_area(
-        self,
-        id_tags: TagList,
-        ref_tags: TagList,
+        self, id_tags: TagList, ref_tags: TagList, focus_areas: list[FocusArea]
     ) -> tuple[dict[tuple[int, int], DocumentSection], TagList]:
         text_areas: dict[tuple[int, int], DocumentSection] = {}
+        for area in focus_areas:
+            text_areas[area.get_text_area()] = DocumentSection(
+                area.get_text_area(), id_tags=[], ref_tags=[], key_text=area.key_text
+            )
         unmatched_ref: TagList = []
         for tag in id_tags:
             if not tag.text_area:
@@ -147,7 +164,7 @@ class TagCompare:
 
             if tag.text_area in text_areas:
                 text_areas[tag.text_area].id_tags.append(tag)
-            else:
+            elif not focus_areas:
                 lineage_section = DocumentSection(tag.text_area, id_tags=[tag], ref_tags=[])
                 text_areas[tag.text_area] = lineage_section
 
@@ -158,18 +175,18 @@ class TagCompare:
                 unmatched_ref.append(tag)
         return text_areas, unmatched_ref
 
-    def _group_by_section(
-        self,
-        id_tags: TagList,
-        ref_tags: TagList,
-    ):
-        text_areas, unmatched_ref = self._group_by_area(id_tags, ref_tags)
-        # if we need multiple sections with identical id tags, make this a list of sections
+    def _group_by_section(self, id_tags: TagList, ref_tags: TagList, focus_areas: list[FocusArea]):
+        text_areas, unmatched_ref = self._group_by_area(id_tags, ref_tags, focus_areas)
+        # if document has key FocusAreas, use those to group. else use tag_codes
         sections: dict[frozenset[int | str], DocumentSection] = {}
         for key in text_areas:
-            id_codes = [tag.code for tag in text_areas[key].id_tags]
-            id_set = frozenset(id_codes)
-            sections[id_set] = text_areas[key]
+            doc_section = text_areas[key]
+            if doc_section.key_text:
+                section_id = frozenset(doc_section.key_text)
+            else:
+                id_codes = [tag.code for tag in doc_section.id_tags]
+                section_id = frozenset(id_codes)
+            sections[section_id] = doc_section
 
         return sections, unmatched_ref
 
@@ -201,6 +218,7 @@ class TagCompare:
         section_lineage: list[SectionLineage],
     ):
         for lineage in section_lineage:
+            lineage.compare_id_tags()
             lineage.compare_ref_tags()
             lineage.compare_text(doc_text, prev_doc_text)
             lineage.check_change()
@@ -209,12 +227,15 @@ class TagCompare:
         self,
         doc_tags: TagList,
         prev_tags: TagList,
+        doc_focus_areas: list[FocusArea],
+        prev_focus_areas: list[FocusArea],
     ):
-
         doc_id_tags, doc_ref_tags = self._partition_tags_by_type(doc_tags)
         prev_id_tags, prev_ref_tags = self._partition_tags_by_type(prev_tags)
-        doc_sections, unmatched_ref = self._group_by_section(doc_id_tags, doc_ref_tags)
-        prev_sections, _ = self._group_by_section(prev_id_tags, prev_ref_tags)
+        doc_sections, unmatched_ref = self._group_by_section(
+            doc_id_tags, doc_ref_tags, doc_focus_areas
+        )
+        prev_sections, _ = self._group_by_section(prev_id_tags, prev_ref_tags, prev_focus_areas)
 
         paired_sections: list[SectionLineage] = []
         unpaired_sections: list[DocumentSection] = []
@@ -232,28 +253,76 @@ class TagCompare:
             unpaired_sections.append(prev_section)
         return paired_sections, unpaired_sections, unmatched_ref
 
-    def compare_tags(
-        self, doc_tags: TagList, prev_tags: TagList, doc_text: str, prev_text: str
+    async def _get_focus_configs(self, doc: RetrievedDocument | DocDocument, tag_type: SectionType):
+        latest_collection: datetime | None = None
+        site_id: PydanticObjectId | None = None
+        for location in doc.locations:
+            if latest_collection is None or (
+                location.last_collected_date and latest_collection < location.last_collected_date
+            ):
+                site_id = location.site_id
+                latest_collection = location.last_collected_date
+        if not site_id:
+            return None
+
+        site = await Site.get(site_id)
+        if site:
+            return [
+                config
+                for config in site.scrape_method_configuration.focus_section_configs
+                if config.doc_type == doc.document_type and (tag_type in config.section_type)
+            ]
+        return None
+
+    async def _get_focus_areas(
+        self, doc: RetrievedDocument | DocDocument, doc_text: str, tag_type: SectionType
+    ) -> list[FocusArea]:
+        doc_focus_configs = await self._get_focus_configs(doc, tag_type)
+        key_areas: list[FocusArea] = []
+        if doc_focus_configs is not None:
+            doc_focus_checker = FocusChecker(
+                full_text=doc_text, focus_configs=doc_focus_configs, url="", link_text=None
+            )
+            key_areas = doc_focus_checker.key_areas
+
+        return key_areas
+
+    async def compare_tags(
+        self,
+        doc: RetrievedDocument | DocDocument,
+        prev_doc: RetrievedDocument | DocDocument,
+        doc_text: str,
+        prev_text: str,
+        tag_type: SectionType,
     ) -> set[IndicationTag | TherapyTag]:
-        paired, unpaired, unmatched_ref = self.match_tags(doc_tags, prev_tags)
+        doc_tags = doc.therapy_tags if tag_type == self.THERAPY else doc.indication_tags
+        prev_tags = prev_doc.therapy_tags if tag_type == self.THERAPY else prev_doc.indication_tags
+        doc_focus_areas = await self._get_focus_areas(doc, doc_text, tag_type)
+        prev_focus_areas = await self._get_focus_areas(prev_doc, prev_text, tag_type)
+        paired, unpaired, unmatched_ref = self.match_tags(
+            doc_tags,
+            prev_tags,
+            doc_focus_areas=doc_focus_areas,
+            prev_focus_areas=prev_focus_areas,
+        )
         self.compare_sections(doc_text, prev_text, paired)
         self._mark_changed(paired)
         final_tags = self._collect_final_tags(paired, unpaired)
         final_tags.update(unmatched_ref)
         return final_tags
 
-    def execute(
+    async def execute(
         self, doc: RetrievedDocument | DocDocument, prev_doc: RetrievedDocument | DocDocument
     ):
         doc_text = self._get_doc_text(doc)
         prev_doc_text = self._get_doc_text(prev_doc)
         clean_doc_text, clean_prev_text = self.dmp.preprocess_text(doc_text, prev_doc_text)
 
-        final_therapy_tags: set[TherapyTag] = self.compare_tags(
-            doc.therapy_tags, prev_doc.therapy_tags, clean_doc_text, clean_prev_text
+        final_therapy_tags: set[TherapyTag] = await self.compare_tags(
+            doc, prev_doc, clean_doc_text, clean_prev_text, tag_type=self.THERAPY
         )
-        final_indication_tags: set[IndicationTag] = self.compare_tags(
-            doc.indication_tags, prev_doc.indication_tags, clean_doc_text, clean_prev_text
+        final_indication_tags: set[IndicationTag] = await self.compare_tags(
+            doc, prev_doc, clean_doc_text, clean_prev_text, tag_type=self.INDICATION
         )
 
         return list(final_therapy_tags), list(final_indication_tags)

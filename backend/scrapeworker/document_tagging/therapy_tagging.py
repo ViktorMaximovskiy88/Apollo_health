@@ -4,12 +4,12 @@ import tempfile
 import spacy
 from spacy.tokens.span import Span
 
+from backend.common.core.config import config
 from backend.common.core.enums import SectionType
 from backend.common.models.doc_document import TherapyTag
 from backend.common.models.site import FocusSectionConfig
 from backend.common.storage.client import ModelStorageClient
 from backend.scrapeworker.document_tagging.tag_focusing import FocusChecker
-from backend.common.core.config import config
 
 TRADEMARK_SYMBOLS = ["\u00AE", "\u2122", "\24C7"]
 

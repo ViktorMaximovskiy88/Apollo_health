@@ -2,7 +2,7 @@ import asyncio
 import pprint
 from logging import Logger
 
-from beanie import PydanticObjectId
+from beanie import BulkWriter, PydanticObjectId
 
 from backend.app.scripts.retag_document import ReTagger
 from backend.common.core.enums import ApprovalStatus
@@ -54,7 +54,7 @@ class LineageService:
         )
 
         if site_id:
-            DocumentAnalysis.find({"site_id": site_id})
+            query = query.find({"site_id": site_id})
 
         docs = await query.to_list()
         return docs
@@ -154,13 +154,33 @@ class LineageService:
         docs = await get_site_docs_for_ids(site_id, doc_ids)
         await self.process_lineage_for_docs(site_id, docs)
 
+    async def refresh_doc_analyses(
+        self, site_id: PydanticObjectId, docs: list[SiteRetrievedDocument]
+    ):
+        existing_analyses_query = DocumentAnalysis.find(
+            {"retrieved_document_id": {"$in": [doc.id for doc in docs]}, "site_id": site_id}
+        )
+        doc_analyses: dict[PydanticObjectId, DocumentAnalysis] = {}
+        async for analysis in existing_analyses_query:
+            doc_analyses[analysis.retrieved_document_id] = analysis
+
+        async with BulkWriter() as bulk_writer:
+            for doc in docs:
+                existing_analysis = doc_analyses.get(doc.id)
+                doc_analysis = build_doc_analysis(doc, existing_analysis)
+                if existing_analysis:
+                    await DocumentAnalysis.replace(doc_analysis, bulk_writer=bulk_writer)
+                else:
+                    await DocumentAnalysis.insert_one(doc_analysis, bulk_writer=bulk_writer)
+
     async def process_lineage_for_docs(
         self, site_id: PydanticObjectId, docs: list[SiteRetrievedDocument]
     ):
         # build the model and save it
         self.logger.info(f"before doc analysis save len(docs)={len(docs)}")
-        for doc in docs:
-            await build_doc_analysis(doc)
+
+        await self.refresh_doc_analyses(site_id, docs)
+
         self.logger.info(f"after doc analysis save len(docs)={len(docs)}")
 
         # pick all from DB that are most recent OR no lineage...
@@ -203,7 +223,7 @@ class LineageService:
     async def compare_tags(
         self, doc: RetrievedDocument, doc_doc: DocDocument, prev_doc: RetrievedDocument
     ) -> tuple[RetrievedDocument, DocDocument]:
-        ther_tags, indi_tags = self.tag_compare.execute(doc, prev_doc)
+        ther_tags, indi_tags = await self.tag_compare.execute(doc, prev_doc)
         doc.therapy_tags = ther_tags
         doc.indication_tags = indi_tags
         doc_doc.therapy_tags = ther_tags
@@ -265,9 +285,9 @@ def inherit_prev_doc_fields(
         doc.document_family_id = prev_doc.document_family_id
 
     loc = next(loc for loc in doc.locations if site_id == loc.site_id)
-    prev_loc = next(loc for loc in prev_doc.locations if site_id == loc.site_id)
+    prev_loc = next((loc for loc in prev_doc.locations if site_id == loc.site_id), None)
 
-    if prev_loc.payer_family_id:
+    if prev_loc and prev_loc.payer_family_id:
         loc.payer_family_id = prev_loc.payer_family_id
 
 
@@ -318,12 +338,9 @@ def consensus_attr(model: DocumentAnalysis, attr: str):
     return consensus[0] if len(consensus) == 1 else None
 
 
-async def build_doc_analysis(doc: SiteRetrievedDocument) -> DocumentAnalysis:
-
-    doc_analysis = await DocumentAnalysis.find_one(
-        {"retrieved_document_id": doc.id, "site_id": doc.site_id}
-    )
-
+def build_doc_analysis(
+    doc: SiteRetrievedDocument, doc_analysis: DocumentAnalysis | None
+) -> DocumentAnalysis:
     if doc_analysis is None:
         doc_analysis = DocumentAnalysis(
             retrieved_document_id=doc.id,
@@ -368,7 +385,5 @@ async def build_doc_analysis(doc: SiteRetrievedDocument) -> DocumentAnalysis:
     doc_analysis.year_part = (
         int(year_part) if (year_part := consensus_attr(doc_analysis, "year_part")) else 0
     )
-
-    doc_analysis = await doc_analysis.save()
 
     return doc_analysis

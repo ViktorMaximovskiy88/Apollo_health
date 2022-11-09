@@ -212,9 +212,21 @@ async def delete_site(
 )
 async def get_site_docs(
     site_id: PydanticObjectId,
+    scrape_task_id: PydanticObjectId | None = None,
 ):
+    query = {"locations.site_id": site_id}
+    if scrape_task_id:
+        scrape_task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
+        if not scrape_task:
+            raise HTTPException(
+                status.HTTP_406_NOT_ACCEPTABLE,
+                f"Scrape Task {scrape_task_id} does not exist",
+            )
+        query["_id"] = {"$in": scrape_task.retrieved_document_ids}
+
     docs = (
-        await RetrievedDocument.find({"locations.site_id": site_id})
+        await RetrievedDocument.find(query)
+        .sort("-first_collected_date")
         .project(RetrievedDocumentLimitTags)
         .to_list()
     )

@@ -65,7 +65,7 @@ const Playbook = () => (
     rules={[
       {
         validator: async (_, value) =>
-          value && value.includes('playwright')
+          !value || value.includes('playwright')
             ? Promise.resolve()
             : Promise.reject('Playbook must be a playwright script'),
       },

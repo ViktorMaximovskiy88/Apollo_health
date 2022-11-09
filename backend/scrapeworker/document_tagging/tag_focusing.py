@@ -12,6 +12,10 @@ class FocusArea:
     start: int
     end: int
     section_end: int
+    key_text: str | None = None
+
+    def get_text_area(self):
+        return (self.end, self.section_end)
 
 
 @dataclass
@@ -84,6 +88,7 @@ class FocusChecker:
                         section_end=doc_end,
                     )
                     if is_key_area:
+                        focus_area.key_text = self.full_text[start:end]
                         key_areas.append(focus_area)
                     else:
                         focus_areas.append(focus_area)
@@ -121,9 +126,9 @@ class FocusChecker:
 
         if self.key_areas:
             if key_area:
-                section = key_area.end, key_area.section_end
+                section = key_area.get_text_area()
         elif focus_area:
-            section = focus_area.end, focus_area.section_end
+            section = focus_area.get_text_area()
 
         return key_area, focus_area, section
 
