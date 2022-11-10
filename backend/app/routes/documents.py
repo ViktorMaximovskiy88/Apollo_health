@@ -485,10 +485,8 @@ async def add_document(
     current_task.retrieved_document_ids.append(f"{created_retr_doc.id}")
     await current_task.save()
 
-    # Set workflows for non-duplicate added doc or new version.
-    # Copy all original therapy and indication tags to.
-    # If new version, copy all original therapy and indication tags and
-    # set delta tags of differences between old and new_version.
+    # Start doc cycle workflow for add_doc and new_version.
+    # If the doc exists on another site, doc cycle has already started.
     if not uploaded_doc.prev_location_doc_id:
         await doc_document_save_hook(created_doc_doc)
 
