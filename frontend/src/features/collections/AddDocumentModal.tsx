@@ -185,10 +185,6 @@ export function AddDocumentModal({
             siteId={siteId}
             setLocationValuesFromResponse={setLocationValuesFromResponse}
           />
-          <InternalDocument
-            oldVersion={oldVersion}
-            isEditingDocFromOtherSite={isEditingDocFromOtherSite}
-          />
         </div>
 
         <div className="flex grow space-x-3">
@@ -219,7 +215,7 @@ export function AddDocumentModal({
             <Input type="url" />
           </Form.Item>
         </div>
-        <DateItems isEditingDocFromOtherSite={isEditingDocFromOtherSite} />
+        <DateItems oldVersion={oldVersion} isEditingDocFromOtherSite={isEditingDocFromOtherSite} />
         <Form.Item>
           <Space>
             <Button type="primary" htmlType="submit">
@@ -317,9 +313,15 @@ function InternalDocument(props: any) {
 
   return (
     <>
-      <div className="mt-1">Internal Document&nbsp;</div>
-      <Form.Item valuePropName="checked" className="grow" name="internal_document">
-        <Checkbox disabled={isEditingDocFromOtherSite || oldVersion ? true : false} />
+      <Form.Item
+        style={{ width: '50%', marginTop: '25px' }}
+        valuePropName="checked"
+        className="grow"
+        name="internal_document"
+      >
+        <Checkbox disabled={isEditingDocFromOtherSite || oldVersion ? true : false}>
+          Internal Document
+        </Checkbox>
       </Form.Item>
     </>
   );
@@ -364,13 +366,17 @@ function convertDate(date?: string) {
 }
 
 function DateItems(props: any) {
-  const { isEditingDocFromOtherSite } = props;
+  const { oldVersion, isEditingDocFromOtherSite } = props;
 
   let fields = [
     [
       {
         name: 'effective_date',
         title: 'Effective Date',
+      },
+      {
+        name: 'internal_document',
+        title: 'Internal Document',
       },
     ],
     [
@@ -409,17 +415,30 @@ function DateItems(props: any) {
         return (
           <div key={i} className="flex grow space-x-3">
             {section.map((field) => {
-              return (
-                <Form.Item key={field.name} name={field.name} className="grow" label={field.title}>
-                  <DatePicker
-                    mode="date"
-                    showTime={false}
-                    style={{ width: '100%' }}
-                    format={(value) => prettyDate(value.toDate())}
-                    disabled={isEditingDocFromOtherSite ? true : false}
+              if (field.name === 'internal_document') {
+                return (
+                  <InternalDocument
+                    oldVersion={oldVersion}
+                    isEditingDocFromOtherSite={isEditingDocFromOtherSite}
                   />
-                </Form.Item>
-              );
+                );
+              } else {
+                return (
+                  <Form.Item
+                    key={field.name}
+                    name={field.name}
+                    className="grow"
+                    label={field.title}
+                  >
+                    <DatePicker
+                      mode="date"
+                      showTime={false}
+                      format={(value) => prettyDate(value.toDate())}
+                      disabled={isEditingDocFromOtherSite ? true : false}
+                    />
+                  </Form.Item>
+                );
+              }
             })}
           </div>
         );
