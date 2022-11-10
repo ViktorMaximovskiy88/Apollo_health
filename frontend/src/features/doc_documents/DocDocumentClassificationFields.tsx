@@ -2,7 +2,7 @@ import { Form, Select, DatePicker, Switch, Input } from 'antd';
 import { languageCodes } from '../retrieved_documents/types';
 import { prettyDate } from '../../common';
 import { DocumentTypes } from '../retrieved_documents/types';
-import { DocCompareToPrevious } from './DocCompareToPrevious';
+import { DocCompareToPrevious } from './lineage/DocCompareToPrevious';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 import { ExploreLineage } from './lineage/ExploreLineage';
 import { Link, useParams } from 'react-router-dom';
