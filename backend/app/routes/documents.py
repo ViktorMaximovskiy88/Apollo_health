@@ -335,7 +335,6 @@ async def add_document(
         new_retr_document: RetrievedDocument = RetrievedDocument(
             checksum=uploaded_doc.checksum,
             content_type=uploaded_doc.content_type,
-            internal_document=uploaded_doc.internal_document,
             doc_type_confidence=uploaded_doc.doc_type_confidence,
             document_type=uploaded_doc.document_type,
             effective_date=uploaded_doc.effective_date,
@@ -407,13 +406,13 @@ async def add_document(
             logger, current_user, new_retr_document
         )
         created_doc_doc: DocDocument = await create_doc_document_service(
-            new_retr_document, current_user
+            new_retr_document, current_user, {"internal_document": uploaded_doc.internal_document}
         )
     else:
         created_retr_doc = new_retr_document
         created_doc_doc = new_doc_doc
 
-    # Handle setting doc_doc specfic fields for new version.
+    # Generate new_version tags, location payer_family.
     if uploaded_doc.upload_new_version_for_id:
         # We set document_family_id and translation_id here
         # because they are only set on doc_doc.

@@ -178,17 +178,19 @@ export function AddDocumentModal({
         validateMessages={validateMessages}
         onFinish={saveDocument}
       >
-        <UploadItem
-          form={form}
-          setFileData={setFileData}
-          siteId={siteId}
-          setLocationValuesFromResponse={setLocationValuesFromResponse}
-        />
+        <div className="flex space-x-3">
+          <UploadItem
+            form={form}
+            setFileData={setFileData}
+            siteId={siteId}
+            setLocationValuesFromResponse={setLocationValuesFromResponse}
+          />
+        </div>
 
         <div className="flex grow space-x-3">
           <Form.Item
             className="grow"
-            style={{ width: '40%' }}
+            style={{ width: '43%' }}
             name="name"
             label="Document Name"
             rules={[{ required: true }]}
@@ -278,6 +280,11 @@ function UploadItem(props: any) {
         label="Document File"
         style={{ width: '100%' }}
       >
+        <Tooltip placement="top" title="Only upload .pdf, .xlsx and .docx">
+          <QuestionCircleOutlined
+            style={{ marginTop: '-26px', marginLeft: '105px', float: 'left' }}
+          />
+        </Tooltip>
         <Upload
           name="file"
           accept=".pdf,.xlsx,.docx"
@@ -300,10 +307,6 @@ function UploadItem(props: any) {
             </Button>
           )}
         </Upload>
-
-        <Tooltip placement="top" title="Only upload .pdf, .xlsx and .docx">
-          <QuestionCircleOutlined style={{ marginLeft: '10px', marginTop: '5px' }} />
-        </Tooltip>
       </Form.Item>
     </div>
   );
