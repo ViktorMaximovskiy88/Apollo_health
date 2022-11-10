@@ -484,7 +484,9 @@ async def add_document(
     # Save updated work_list and add to task.retr_doc_ids for querying.
     current_task.retrieved_document_ids.append(f"{created_retr_doc.id}")
     await current_task.save()
-    # Set workflows.
-    await doc_document_save_hook(created_doc_doc)
+
+    # Set workflows for non-duplicate added doc or new version.
+    if not uploaded_doc.prev_location_doc_id:
+        await doc_document_save_hook(created_doc_doc)
 
     return created_retr_doc
