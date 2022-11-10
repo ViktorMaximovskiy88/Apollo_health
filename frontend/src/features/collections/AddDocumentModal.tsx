@@ -314,9 +314,8 @@ function InternalDocument(props: any) {
   return (
     <>
       <Form.Item
-        style={{ width: '50%', marginTop: '25px' }}
+        style={{ marginTop: '25px', paddingLeft: '8%', width: '40%' }}
         valuePropName="checked"
-        className="grow"
         name="internal_document"
       >
         <Checkbox disabled={isEditingDocFromOtherSite || oldVersion ? true : false}>
@@ -431,6 +430,7 @@ function DateItems(props: any) {
                     label={field.title}
                   >
                     <DatePicker
+                      style={{ width: '100%' }}
                       mode="date"
                       showTime={false}
                       format={(value) => prettyDate(value.toDate())}
