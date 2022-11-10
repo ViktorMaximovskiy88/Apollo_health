@@ -301,7 +301,7 @@ function UploadItem(props: any) {
           </Upload>
         </div>
       </Form.Item>
-      <Tooltip placement="rightBottom" title="Only upload .pdf, .xlsx and .docx">
+      <Tooltip placement="topRight" title="Only upload .pdf, .xlsx and .docx">
         <QuestionCircleOutlined style={{ marginTop: '3px' }} />
       </Tooltip>
     </div>
@@ -314,7 +314,7 @@ function InternalDocument(props: any) {
   return (
     <>
       <Form.Item
-        style={{ marginTop: '25px', paddingLeft: '8%', width: '40%' }}
+        style={{ marginTop: '25px', paddingLeft: '25px', width: '35%' }}
         valuePropName="checked"
         name="internal_document"
       >
