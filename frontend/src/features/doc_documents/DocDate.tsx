@@ -30,6 +30,7 @@ export function DocDate(props: {
   beforeDateName?: DateName;
   beforeDateLabel?: DateLabel;
   onFieldChange: () => void;
+  disabled?: boolean;
 }) {
   const form = Form.useFormInstance();
   const docId = form.getFieldValue('docId');
@@ -42,6 +43,7 @@ export function DocDate(props: {
       name={props.name}
       defaultValue={doc[props.name]}
       label={props.label}
+      disabled={props.disabled}
       dateList={doc.identified_dates}
       onChange={props.onFieldChange}
       rules={[

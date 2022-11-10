@@ -37,8 +37,8 @@ export function DateFields(props: { onFieldChange: () => void }) {
 
         <div className="flex flex-1 space-x-8">
           <DocDate name="published_date" label="Published Date" {...props} />
-          <DocDate name="first_collected_date" label="First Collected Date" {...props} />
-          <DocDate name="last_collected_date" label="Last Collected Date" {...props} />
+          <DocDate name="first_collected_date" label="First Collected Date" disabled {...props} />
+          <DocDate name="last_collected_date" label="Last Collected Date" disabled {...props} />
         </div>
       </Collapse.Panel>
     </Collapse>
