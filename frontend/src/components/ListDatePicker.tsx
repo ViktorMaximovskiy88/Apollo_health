@@ -6,6 +6,7 @@ import { prettyDate, prettyFromISO, dateToMoment } from '../common';
 import { FormInstance } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import classNames from 'classnames';
+import { Rule } from 'antd/lib/form';
 
 export function ListDatePicker(props: {
   className?: string;
@@ -14,6 +15,7 @@ export function ListDatePicker(props: {
   defaultValue?: string;
   label: string;
   name: string;
+  rules?: { validator(_rule: Rule, value: moment.Moment): Promise<void> }[];
   disabled?: boolean;
   style?: object;
   onChange?: Function;
@@ -29,6 +31,7 @@ export function ListDatePicker(props: {
     label,
     name,
     style,
+    rules,
     disabled = false,
     onChange = () => {},
   } = props;
@@ -57,7 +60,13 @@ export function ListDatePicker(props: {
   );
 
   return (
-    <Form.Item name={name} className={classNames(className)} label={label} style={style}>
+    <Form.Item
+      name={name}
+      className={classNames(className)}
+      label={label}
+      style={style}
+      rules={rules}
+    >
       <DatePicker
         disabled={disabled}
         style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
