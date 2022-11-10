@@ -259,51 +259,37 @@ function UploadItem(props: any) {
   };
 
   return (
-    <div className="flex grow space-x-3">
+    <div className="flex grow space-x-1">
       <Form.Item
-        className="grow"
         name="document_file"
         rules={[{ required: uploadStatus === 'done' ? false : true }]}
         label="Document File"
       >
-        <div className="flex grow space-x-2">
-          <Upload
-            name="file"
-            accept=".pdf,.xlsx,.docx"
-            action={`${baseApiUrl}/documents/upload/${siteId}`}
-            headers={{
-              Authorization: `Bearer ${token}`,
-            }}
-            showUploadList={false}
-            onChange={onChange}
-            style={{ width: '100%' }}
-          >
-            {uploadStatus === 'uploading' ? (
-              <Button // 435 is most of the width of small screen modal
-                className="grow"
-                // style={{ marginRight: '10px', inlineSize: '90%', overflow: 'hidden' }}
-                icon={<LoadingOutlined />}
-              >
-                Uploading {fileName}...
-              </Button>
-            ) : uploadStatus === 'done' ? (
-              <Button
-                className="grow"
-                style={{ inlineSize: '430px', overflow: 'hidden' }}
-                icon={<CheckCircleOutlined />}
-              >
-                {fileName} uploaded!
-              </Button>
-            ) : (
-              <Button style={{ marginRight: '10px' }} icon={<UploadOutlined />}>
-                Click to Upload
-              </Button>
-            )}
-          </Upload>
-          <Tooltip placement="topRight" title="Only upload .pdf, .xlsx and .docx">
-            <QuestionCircleOutlined style={{ marginTop: '8px' }} />
-          </Tooltip>
-        </div>
+        <Upload
+          name="file"
+          accept=".pdf,.xlsx,.docx"
+          action={`${baseApiUrl}/documents/upload/${siteId}`}
+          headers={{
+            Authorization: `Bearer ${token}`,
+          }}
+          showUploadList={false}
+          onChange={onChange}
+        >
+          {uploadStatus === 'uploading' ? (
+            <Button icon={<LoadingOutlined />}>Uploading {fileName}...</Button>
+          ) : uploadStatus === 'done' ? (
+            <Button style={{ whiteSpace: 'normal' }} icon={<CheckCircleOutlined />}>
+              {fileName} uploaded!
+            </Button>
+          ) : (
+            <Button style={{ whiteSpace: 'normal' }} icon={<UploadOutlined />}>
+              Click to Upload
+            </Button>
+          )}
+        </Upload>
+        <Tooltip placement="top" title="Only upload .pdf, .xlsx and .docx">
+          <QuestionCircleOutlined style={{ marginLeft: '10px', marginTop: '5px' }} />
+        </Tooltip>
       </Form.Item>
     </div>
   );
@@ -315,7 +301,7 @@ function InternalDocument(props: any) {
   return (
     <>
       <Form.Item
-        style={{ marginTop: '25px', paddingLeft: '25px', width: '35%' }}
+        style={{ marginTop: '30px', paddingLeft: '10px', width: '33%' }}
         valuePropName="checked"
         name="internal_document"
       >
@@ -432,6 +418,7 @@ function DateItems(props: any) {
                   >
                     <DatePicker
                       style={{ width: '100%' }}
+                      className="grow"
                       mode="date"
                       showTime={false}
                       format={(value) => prettyDate(value.toDate())}
