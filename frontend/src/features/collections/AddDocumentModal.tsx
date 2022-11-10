@@ -12,6 +12,7 @@ import {
   message,
   Checkbox,
   notification,
+  Switch,
 } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { UploadChangeParam } from 'antd/lib/upload';
@@ -303,13 +304,12 @@ function InternalDocument(props: any) {
   return (
     <>
       <Form.Item
-        style={{ marginTop: '30px', paddingLeft: '5px', width: '33%' }}
+        style={{ paddingLeft: '5px', width: '33%' }}
         valuePropName="checked"
+        label="Internal"
         name="internal_document"
       >
-        <Checkbox disabled={isEditingDocFromOtherSite || oldVersion ? true : false}>
-          Internal Document
-        </Checkbox>
+        <Switch disabled={isEditingDocFromOtherSite || oldVersion ? true : false} />
       </Form.Item>
     </>
   );

@@ -33,6 +33,7 @@ export function ManualCollectionButton(props: any) {
     sortInfo: initialState.table.sort,
     filterValue: initialState.table.filter,
   };
+
   const refreshDocs = async () => {
     if (!site) return;
     const siteId = site._id;
