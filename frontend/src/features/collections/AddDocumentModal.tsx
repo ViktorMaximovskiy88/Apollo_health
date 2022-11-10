@@ -178,14 +178,12 @@ export function AddDocumentModal({
         validateMessages={validateMessages}
         onFinish={saveDocument}
       >
-        <div className="flex grow space-x-3">
-          <UploadItem
-            form={form}
-            setFileData={setFileData}
-            siteId={siteId}
-            setLocationValuesFromResponse={setLocationValuesFromResponse}
-          />
-        </div>
+        <UploadItem
+          form={form}
+          setFileData={setFileData}
+          siteId={siteId}
+          setLocationValuesFromResponse={setLocationValuesFromResponse}
+        />
 
         <div className="flex grow space-x-3">
           <Form.Item
@@ -261,14 +259,14 @@ function UploadItem(props: any) {
   };
 
   return (
-    <div className="flex grow space-x-4">
+    <div className="flex grow space-x-3">
       <Form.Item
+        className="grow"
         name="document_file"
         rules={[{ required: uploadStatus === 'done' ? false : true }]}
-        style={{ width: '100px' }}
         label="Document File"
       >
-        <div className="flex grow space-x-4">
+        <div className="flex grow space-x-2">
           <Upload
             name="file"
             accept=".pdf,.xlsx,.docx"
@@ -278,17 +276,20 @@ function UploadItem(props: any) {
             }}
             showUploadList={false}
             onChange={onChange}
+            style={{ width: '100%' }}
           >
             {uploadStatus === 'uploading' ? (
               <Button // 435 is most of the width of small screen modal
-                style={{ marginRight: '10px', inlineSize: '435px', overflow: 'hidden' }}
+                className="grow"
+                // style={{ marginRight: '10px', inlineSize: '90%', overflow: 'hidden' }}
                 icon={<LoadingOutlined />}
               >
                 Uploading {fileName}...
               </Button>
             ) : uploadStatus === 'done' ? (
               <Button
-                style={{ marginRight: '10px', inlineSize: '435px', overflow: 'hidden' }}
+                className="grow"
+                style={{ inlineSize: '430px', overflow: 'hidden' }}
                 icon={<CheckCircleOutlined />}
               >
                 {fileName} uploaded!
@@ -299,11 +300,11 @@ function UploadItem(props: any) {
               </Button>
             )}
           </Upload>
+          <Tooltip placement="topRight" title="Only upload .pdf, .xlsx and .docx">
+            <QuestionCircleOutlined style={{ marginTop: '8px' }} />
+          </Tooltip>
         </div>
       </Form.Item>
-      <Tooltip placement="topRight" title="Only upload .pdf, .xlsx and .docx">
-        <QuestionCircleOutlined style={{ marginTop: '3px' }} />
-      </Tooltip>
     </div>
   );
 }
