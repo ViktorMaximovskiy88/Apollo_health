@@ -147,6 +147,7 @@ export function CollectionsDataTable({ siteId, openNewDocumentModal }: DataTable
         columns={columns}
         renderLoadMask={disableLoadingMask}
         rowHeight={50}
+        columnUserSelect
       />
     </>
   );

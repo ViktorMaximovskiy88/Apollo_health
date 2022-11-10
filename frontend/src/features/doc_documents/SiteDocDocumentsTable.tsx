@@ -42,6 +42,7 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
       {...controlledPagination}
       rowHeight={50}
       columns={columns}
+      columnUserSelect
     />
   );
 }

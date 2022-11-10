@@ -324,6 +324,7 @@ export function DocDocumentsDataTable() {
       rowHeight={50}
       renderLoadMask={() => <></>}
       activateRowOnFocus={false}
+      columnUserSelect
     />
   );
 }

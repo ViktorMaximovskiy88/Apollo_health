@@ -159,6 +159,7 @@ export function SiteDataTable({ setLoading, selected, setSelected }: SiteDataTab
       rowHeight={50}
       renderLoadMask={disableLoadingMask}
       activateRowOnFocus={false}
+      columnUserSelect
     />
   );
 }

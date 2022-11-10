@@ -62,6 +62,7 @@ export function PayerBackboneDataTable() {
       rowHeight={50}
       activateRowOnFocus={false}
       renderLoadMask={() => <></>}
+      columnUserSelect
     />
   );
 }
