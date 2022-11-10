@@ -18,7 +18,7 @@ export function DateFields(props: { onFieldChange: () => void }) {
         </div>
 
         <div className="flex flex-1 space-x-8">
-          <DocDate name="last_reviewed_date" label="Last Reviewed Date" {...props} />{' '}
+          <DocDate name="last_reviewed_date" label="Last Reviewed Date" {...props} />
           <DocDate
             name="next_review_date"
             label="Next Review Date"
