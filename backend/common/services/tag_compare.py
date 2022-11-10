@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-import pytz
 from beanie import PydanticObjectId
 
 from backend.common.core.enums import SectionType, TagUpdateStatus
@@ -258,15 +257,11 @@ class TagCompare:
         latest_collection: datetime | None = None
         site_id: PydanticObjectId | None = None
         for location in doc.locations:
-            # Must use asttimezone or sometimes you'll get a
-            # TypeError: can't compare offset-naive and offset-aware datetimes
-            # Beanie or pydantic issue with datetime tz offset comparison?
             if latest_collection is None or (
-                location.last_collected_date
-                and latest_collection < location.last_collected_date.astimezone(pytz.utc)
+                location.last_collected_date and latest_collection < location.last_collected_date
             ):
                 site_id = location.site_id
-                latest_collection = location.last_collected_date.astimezone(pytz.utc)
+                latest_collection = location.last_collected_date
         if not site_id:
             return None
 

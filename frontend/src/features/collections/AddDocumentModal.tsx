@@ -10,7 +10,6 @@ import {
   Select,
   Tooltip,
   message,
-  Checkbox,
   notification,
   Switch,
 } from 'antd';
