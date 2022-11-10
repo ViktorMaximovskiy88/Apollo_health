@@ -188,6 +188,7 @@ export function AddDocumentModal({
         <div className="flex grow space-x-3">
           <Form.Item
             className="grow"
+            style={{ width: '50%' }}
             name="name"
             label="Document Name"
             rules={[{ required: true }]}
@@ -264,6 +265,7 @@ function UploadItem(props: any) {
         name="document_file"
         rules={[{ required: uploadStatus === 'done' ? false : true }]}
         label="Document File"
+        style={{ width: '100%' }}
       >
         <Upload
           name="file"
@@ -301,7 +303,7 @@ function InternalDocument(props: any) {
   return (
     <>
       <Form.Item
-        style={{ marginTop: '30px', paddingLeft: '10px', width: '33%' }}
+        style={{ marginTop: '30px', paddingLeft: '5px', width: '33%' }}
         valuePropName="checked"
         name="internal_document"
       >
