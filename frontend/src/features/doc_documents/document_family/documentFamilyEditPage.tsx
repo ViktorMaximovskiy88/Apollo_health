@@ -38,13 +38,13 @@ export function DocumentFamilyEditPage() {
 
   useEffect(() => {
     if (result.isSuccess || result.isError) navigate('..');
-  }, [result.isSuccess, result.isError]);
+  }, [result.isSuccess, result.isError, navigate]);
 
   const onFinish = useCallback(
     async (res: Partial<DocumentFamily>) => {
       await update({ body: res, _id: documentFamilyId });
     },
-    [navigate, update, documentFamilyId]
+    [update, documentFamilyId]
   );
 
   return (
@@ -83,7 +83,7 @@ export function DocumentFamilyEditPage() {
                 className="w-1/2"
                 rules={[{ required: true, message: 'Please input a Document Type' }]}
               >
-                <Select options={DocumentTypes} />
+                <Select showSearch options={DocumentTypes} />
               </Form.Item>
             </Input.Group>
 

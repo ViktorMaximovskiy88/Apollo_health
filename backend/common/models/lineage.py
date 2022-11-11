@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from beanie import Insert, PydanticObjectId, Replace, before_event
+from beanie import Indexed, Insert, PydanticObjectId, Replace, before_event
 from pydantic import Field
 
 from backend.common.core.enums import LangCode
@@ -30,8 +30,8 @@ class DocumentAttrs(BaseModel):
 
 
 class DocumentAnalysis(BaseDocument):
-    retrieved_document_id: PydanticObjectId
-    site_id: PydanticObjectId
+    retrieved_document_id: Indexed(PydanticObjectId)  # type: ignore
+    site_id: Indexed(PydanticObjectId)  # type: ignore
     lineage_id: PydanticObjectId | None = None
     is_current_version: bool = False
 

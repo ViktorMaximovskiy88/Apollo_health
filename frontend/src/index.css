@@ -152,3 +152,10 @@ a {
 .property-grid .ant-form-item {
   margin-bottom: 12px;
 }
+
+.ant-select-expandable .ant-select-selection-item {
+  white-space: normal;
+}
+.ant-select-expandable .ant-select-selector {
+  height: unset !important;
+}

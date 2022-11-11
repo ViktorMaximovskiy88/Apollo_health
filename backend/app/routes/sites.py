@@ -86,6 +86,18 @@ async def check_url(
         return ActiveUrlResponse(in_use=False)
 
 
+@router.get(
+    "/search",
+    dependencies=[Security(get_current_user)],
+    response_model=Site,
+)
+async def read_site_by_name(
+    name: str,
+):
+    site = await Site.find_one({"name": name})
+    return site
+
+
 @router.get("/{id}", response_model=Site, dependencies=[Security(get_current_user)])
 async def read_site(
     target: Site = Depends(get_target),
@@ -212,9 +224,21 @@ async def delete_site(
 )
 async def get_site_docs(
     site_id: PydanticObjectId,
+    scrape_task_id: PydanticObjectId | None = None,
 ):
+    query = {"locations.site_id": site_id}
+    if scrape_task_id:
+        scrape_task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
+        if not scrape_task:
+            raise HTTPException(
+                status.HTTP_406_NOT_ACCEPTABLE,
+                f"Scrape Task {scrape_task_id} does not exist",
+            )
+        query["_id"] = {"$in": scrape_task.retrieved_document_ids}
+
     docs = (
-        await RetrievedDocument.find({"locations.site_id": site_id})
+        await RetrievedDocument.find(query)
+        .sort("-first_collected_date")
         .project(RetrievedDocumentLimitTags)
         .to_list()
     )

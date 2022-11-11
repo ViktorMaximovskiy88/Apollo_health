@@ -123,7 +123,7 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
 
       <div className="flex space-x-2">
         <Form.Item className="grow" name="document_type" label="Document Type">
-          <Select options={DocumentTypes} />
+          <Select showSearch options={DocumentTypes} />
         </Form.Item>
         <Form.Item label="Confidence">
           <div className="flex justify-center">{confidencePercent}</div>

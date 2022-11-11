@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from spacy.tokens.span import Span
 
-from backend.common.core.enums import SectionType
+from backend.common.core.enums import DocumentType, SectionType
 from backend.common.models.site import FocusSectionConfig
 
 
@@ -12,6 +12,10 @@ class FocusArea:
     start: int
     end: int
     section_end: int
+    key_text: str | None = None
+
+    def get_text_area(self):
+        return (self.end, self.section_end)
 
 
 @dataclass
@@ -30,17 +34,32 @@ class FocusChecker:
         focus_configs: list[FocusSectionConfig],
         url: str,
         link_text: str | None,
+        doc_type: str | None = None,
     ) -> None:
         self.full_text = full_text
         self.focus_configs = focus_configs
         self.url = url
         self.link_text = link_text
-        self.all_focus = self._check_all_focus()
+        self.all_focus = self._check_all_focus(doc_type)
         self.focus_areas: list[FocusArea] = []
         self.key_areas: list[FocusArea] = []
         self.set_section_areas()
 
-    def _check_all_focus(self):
+    def _check_all_focus(self, doc_type: str | None):
+        all_focus_doc_types = [
+            DocumentType.Formulary,
+            DocumentType.FormularyUpdate,
+            DocumentType.MedicalCoverageList,
+            DocumentType.RestrictionList,
+            DocumentType.SpecialtyList,
+            DocumentType.ExclusionList,
+            DocumentType.PreventiveDrugList,
+            DocumentType.FeeSchedule,
+            DocumentType.PayerUnlistedPolicy,
+        ]
+        if doc_type in all_focus_doc_types:
+            return True
+
         for config in self.focus_configs:
             if config.all_focus is True:
                 return True
@@ -84,6 +103,7 @@ class FocusChecker:
                         section_end=doc_end,
                     )
                     if is_key_area:
+                        focus_area.key_text = self.full_text[start:end]
                         key_areas.append(focus_area)
                     else:
                         focus_areas.append(focus_area)
@@ -121,9 +141,9 @@ class FocusChecker:
 
         if self.key_areas:
             if key_area:
-                section = key_area.end, key_area.section_end
+                section = key_area.get_text_area()
         elif focus_area:
-            section = focus_area.end, focus_area.section_end
+            section = focus_area.get_text_area()
 
         return key_area, focus_area, section
 

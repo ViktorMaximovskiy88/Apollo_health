@@ -286,3 +286,10 @@ def test_default_effective_date():
     assert len(parser.unclassified_dates) == 2
     assert parser.published_date.date == datetime(2022, 3, 9)
     assert parser.effective_date.date == datetime(2020, 5, 5)
+
+
+def test_pick_valid_date_range():
+    text = "Contains invalid date 01-1678"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 0

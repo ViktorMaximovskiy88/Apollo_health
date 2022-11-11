@@ -89,7 +89,7 @@ class DateParser:
 
         return matched_label
 
-    def valid_range(self, year: int, month: int, day: int | None) -> bool:
+    def valid_range(self, year: int, month: int, day: int | None = None) -> bool:
         lookahead_year = datetime.now(tz=timezone.utc).year + 5
         return (
             (month >= 1 and month <= 12)
@@ -111,12 +111,12 @@ class DateParser:
         if len(datetext) == 6:
             # assuming we have no `day part` and mmYYYY
             maybe_month = int(datetext[:2])
-            maybe_year = int(datetext[4:])
+            maybe_year = int(datetext[2:])
             if self.valid_range(month=maybe_month, year=maybe_year):
                 return f"{maybe_year}-{maybe_month}-01"
 
             # assuming we have no `day part` and YYYYmm
-            maybe_month = int(datetext[2:])
+            maybe_month = int(datetext[4:])
             maybe_year = int(datetext[:4])
             if self.valid_range(month=maybe_month, year=maybe_year):
                 return f"{maybe_year}-{maybe_month}-01"

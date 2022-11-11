@@ -22,7 +22,7 @@ class ChangeInfo(BaseModel):
 
 
 async def recompare_tags(doc: DocDocument, prev_doc: DocDocument):
-    ther_tags, indi_tags = TagCompare().execute(doc, prev_doc)
+    ther_tags, indi_tags = await TagCompare().execute(doc, prev_doc)
     doc.therapy_tags = ther_tags
     doc.indication_tags = indi_tags
     await DocDocument.get_motor_collection().update_one(

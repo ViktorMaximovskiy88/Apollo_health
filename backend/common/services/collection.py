@@ -353,6 +353,7 @@ class CollectionService:
                 if work_item_response.errors:
                     work_list_response.add_error(work_item_response.errors[0])
             queued_site_task.documents_found = self.found_docs_total
+            await self.set_task_complete(queued_site_task)
             await queued_site_task.save()
 
         return work_list_response
@@ -400,7 +401,6 @@ class CollectionService:
             case WorkItemOption.UNHANDLED:
                 result.add_error(f"{retr_doc.name}")
                 return result
-        await self.set_task_complete(target_task)
 
         return result
 

@@ -39,33 +39,55 @@ export interface RetrievedDocument extends BaseDocument {
 
 // id is added so that it can be used for both table filters and dropdown selections
 export const DocumentTypes = [
-  { id: 'Authorization Policy', value: 'Authorization Policy', label: 'Authorization Policy' },
-  { id: 'Provider Guide', value: 'Provider Guide', label: 'Provider Guide' },
   {
-    id: 'Treatment Request Form',
-    value: 'Treatment Request Form',
-    label: 'Treatment Request Form',
+    id: 'Annual Notice of Changes',
+    label: 'Annual Notice of Changes',
+    value: 'Annual Notice of Changes',
   },
-  { id: 'Payer Unlisted Policy', value: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy' },
+  { id: 'Authorization Policy', label: 'Authorization Policy', value: 'Authorization Policy' },
+  { id: 'Evidence of Coverage', label: 'Evidence of Coverage', value: 'Evidence of Coverage' },
+  { id: 'Exclusion List', label: 'Exclusion List', value: 'Exclusion List' },
+  { id: 'Fee Schedule', label: 'Fee Schedule', value: 'Fee Schedule' },
+  { id: 'Formulary Update', label: 'Formulary Update', value: 'Formulary Update' },
+  { id: 'Formulary', label: 'Formulary', value: 'Formulary' },
+  { id: 'Internal Resource', label: 'Internal Resource', value: 'Internal Resource' },
+  { id: 'LCD', label: 'LCD', value: 'LCD' },
+  { id: 'Medical Coverage List', label: 'Medical Coverage List', value: 'Medical Coverage List' },
+  { id: 'NCCN Guideline', label: 'NCCN Guideline', value: 'NCCN Guideline' },
+  { id: 'NCD', label: 'NCD', value: 'NCD' },
+  { id: 'New-to-Market Policy', label: 'New-to-Market Policy', value: 'New-to-Market Policy' },
   {
-    id: 'Covered Treatment List',
-    value: 'Covered Treatment List',
-    label: 'Covered Treatment List',
+    id: 'Newsletter / Announcement',
+    label: 'Newsletter / Announcement',
+    value: 'Newsletter / Announcement',
   },
-  { id: 'Regulatory Document', value: 'Regulatory Document', label: 'Regulatory Document' },
-  { id: 'Formulary', value: 'Formulary', label: 'Formulary' },
-  { id: 'Internal Reference', value: 'Internal Reference', label: 'Internal Reference' },
-  { id: 'Formulary Update', value: 'Formulary Update', label: 'Formulary Update' },
-  { id: 'NCCN Guideline', value: 'NCCN Guideline', label: 'NCCN Guideline' },
-  { id: 'Restriction List', value: 'Restriction List', label: 'Restriction List' },
+  { id: 'Not Applicable', label: 'Not Applicable', value: 'Not Applicable' },
+  { id: 'Payer Unlisted Policy', label: 'Payer Unlisted Policy', value: 'Payer Unlisted Policy' },
+  { id: 'Preventive Drug List', label: 'Preventive Drug List', value: 'Preventive Drug List' },
+  { id: 'Provider Guide', label: 'Provider Guide', value: 'Provider Guide' },
+  { id: 'Regulatory Document', label: 'Regulatory Document', value: 'Regulatory Document' },
+  { id: 'Restriction List', label: 'Restriction List', value: 'Restriction List' },
+  { id: 'Site of Care Policy', label: 'Site of Care Policy', value: 'Site of Care Policy' },
+  { id: 'Specialty List', label: 'Specialty List', value: 'Specialty List' },
+  { id: 'Summary of Benefits', label: 'Summary of Benefits', value: 'Summary of Benefits' },
   {
     id: 'Review Committee Meetings',
-    value: 'Review Committee Meetings',
     label: 'Review Committee Meetings',
+    value: 'Review Committee Meetings',
   },
-
-  { id: 'Not Applicable', value: 'Not Applicable', label: 'Not Applicable' },
+  {
+    id: 'Review Committee Schedule',
+    label: 'Review Committee Schedule',
+    value: 'Review Committee Schedule',
+  },
+  {
+    id: 'Treatment Request Form',
+    label: 'Treatment Request Form',
+    value: 'Treatment Request Form',
+  },
 ];
+
+export const documentTypes = DocumentTypes;
 
 export const languageCodes = [
   { value: 'en', label: 'English' },
