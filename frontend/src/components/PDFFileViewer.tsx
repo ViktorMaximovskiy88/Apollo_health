@@ -4,7 +4,7 @@ import { useGetDocumentViewerUrlQuery } from '../features/retrieved_documents/do
 
 export function PDFFileLoader({ docId, onPageChange }: { docId?: string; onPageChange: Function }) {
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
-  const { data } = useGetDocumentViewerUrlQuery(docId);
+  const { data } = useGetDocumentViewerUrlQuery(docId, { refetchOnMountOrArgChange: true });
   if (!data) return null;
 
   return (
