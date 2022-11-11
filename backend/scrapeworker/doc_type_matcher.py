@@ -306,7 +306,7 @@ class DocTypeMatcher:
             logging.info("link_text matched")
             return DocTypeMatch(
                 match_source=MatchSource.LinkText,
-                confidence=80,
+                confidence=0.8,
                 rule_name=self.matched_rule,
                 document_type=match,
             )
@@ -314,7 +314,7 @@ class DocTypeMatcher:
             logging.info("name_text matched")
             return DocTypeMatch(
                 match_source=MatchSource.Name,
-                confidence=80,
+                confidence=0.8,
                 rule_name=self.matched_rule,
                 document_type=match,
             )
@@ -322,7 +322,7 @@ class DocTypeMatcher:
             logging.info("filename_text matched")
             return DocTypeMatch(
                 match_source=MatchSource.Filename,
-                confidence=80,
+                confidence=0.8,
                 rule_name=self.matched_rule,
                 document_type=match,
             )
@@ -333,7 +333,7 @@ class DocTypeMatcher:
             logging.info("doc_text matched")
             return DocTypeMatch(
                 match_source=MatchSource.DocText,
-                confidence=70,
+                confidence=0.7,
                 rule_name=self.matched_rule,
                 document_type=match,
             )
