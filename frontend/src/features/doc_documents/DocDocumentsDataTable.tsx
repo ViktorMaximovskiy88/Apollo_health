@@ -95,7 +95,10 @@ const useColumns = (siteNamesById: { [key: string]: string }) => {
       },
       defaultFlex: 1,
       render: ({ data }: { data: { locations: { site_id: string }[] } }) => {
-        return data.locations.map((s) => siteNamesById[s.site_id]).join(', ');
+        return data.locations
+          .filter((s) => siteNamesById[s.site_id])
+          .map((s) => siteNamesById[s.site_id])
+          .join(', ');
       },
     },
     {
@@ -324,6 +327,7 @@ export function DocDocumentsDataTable() {
       rowHeight={50}
       renderLoadMask={() => <></>}
       activateRowOnFocus={false}
+      columnUserSelect
     />
   );
 }

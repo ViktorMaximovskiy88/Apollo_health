@@ -137,6 +137,7 @@ export const DocDocumentDocumentFamilyField = ({
           onClose={() => {
             setIsEditVisible(false);
           }}
+          mask={false}
         />
 
         <Button
@@ -160,6 +161,7 @@ export const DocDocumentDocumentFamilyField = ({
           onClose={() => {
             setIsNewVisible(false);
           }}
+          mask={false}
         />
       </div>
     </Form.Item>

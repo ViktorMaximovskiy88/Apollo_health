@@ -23,7 +23,7 @@ import {
   CheckCircleOutlined,
 } from '@ant-design/icons';
 
-import { prettyDate } from '../../common';
+import { prettyDateFromISO } from '../../common';
 import { useAddDocumentMutation } from '../retrieved_documents/documentsApi';
 import { baseApiUrl, client } from '../../app/base-api';
 import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
@@ -322,8 +322,8 @@ function InternalDocument(props: any) {
   return (
     <>
       <Form.Item
-        style={{ width: '100%' }}
         className="grow"
+        style={{ width: '100%' }}
         valuePropName="checked"
         label="Internal"
         name="internal_document"
@@ -369,7 +369,7 @@ function EffectiveDateItem(props: any) {
         style={{ width: '100%' }}
         mode="date"
         showTime={false}
-        format={(value) => prettyDate(value.toDate())}
+        format={(value) => prettyDateFromISO(value.toISOString())}
         disabled={isEditingDocFromOtherSite ? true : false}
       />
     </Form.Item>
@@ -438,11 +438,11 @@ function DateItems(props: any) {
               return (
                 <Form.Item key={field.name} name={field.name} className="grow" label={field.title}>
                   <DatePicker
-                    style={{ width: '100%' }}
                     className="grow"
+                    style={{ width: '100%' }}
                     mode="date"
                     showTime={false}
-                    format={(value) => prettyDate(value.toDate())}
+                    format={(value) => prettyDateFromISO(value.toISOString())}
                     disabled={isEditingDocFromOtherSite ? true : false}
                   />
                 </Form.Item>

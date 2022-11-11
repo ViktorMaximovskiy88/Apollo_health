@@ -5,6 +5,7 @@ from functools import cached_property
 
 from playwright.async_api import Download, ElementHandle
 from playwright.async_api import Response as PageResponse
+from playwright.async_api import TimeoutError as PlaywrightTimeout
 
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request, Response
 from backend.scrapeworker.common.selectors import to_xpath
@@ -83,11 +84,24 @@ class JavascriptClick(PlaywrightBaseScraper):
             ]
             try:
                 await response.finished()
+                content_type: str | None = None
+                if "content-type" in response.headers:
+                    content_type = response.headers["content-type"]
                 download = await self.handle_json(response)
                 if (
                     isinstance(download, DownloadContext)
                     and download.content_type in accepted_types
                 ):
+                    download.metadata = await self.extract_metadata(link_handle)
+                    downloads.append(download)
+                elif content_type in accepted_types:
+                    logging.info(f"Direct Download result: {content_type} - {response.url}")
+                    download = DownloadContext(
+                        response=Response(content_type=content_type, status=response.status),
+                        request=Request(
+                            url=response.url,
+                        ),
+                    )
                     download.metadata = await self.extract_metadata(link_handle)
                     downloads.append(download)
                 else:
@@ -107,14 +121,14 @@ class JavascriptClick(PlaywrightBaseScraper):
                     self.log.debug(
                         f"javascript click -> direct download: {filename}.{file_extension}"
                     )
-                    download = DownloadContext(
+                    download_context = DownloadContext(
                         response=Response(content_type=None),
                         request=Request(
                             url=download.url,
                         ),
                     )
-                    download.metadata = await self.extract_metadata(link_handle)
-                    downloads.append(download)
+                    download_context.metadata = await self.extract_metadata(link_handle)
+                    downloads.append(download_context)
                 else:
                     self.log.debug(f"unknown download extension: {file_extension}")
                     return None
@@ -122,7 +136,7 @@ class JavascriptClick(PlaywrightBaseScraper):
                 logging.error("exception", exc_info=True)
 
         # Handle onclick json response where the json has link to pdf.
-        self.page.on("response", postprocess_response)
+        self.context.on("response", postprocess_response)
         # Handle onclick download directly to pdf rather than response.
         self.page.on("download", postprocess_download)
 
@@ -131,10 +145,13 @@ class JavascriptClick(PlaywrightBaseScraper):
         for index in range(0, xpath_locator_count):
             try:
                 link_handle = await xpath_locator.nth(index).element_handle(timeout=1000)
-                await link_handle.click()
+                await link_handle.click(timeout=10000)
                 await asyncio.sleep(0.25)
+            except PlaywrightTimeout as ex:
+                # If Playwright Timeout, we likely haven't nav'd away
+                self.log.error(ex, exc_info=True)
             except Exception as ex:
                 self.log.error(ex, exc_info=True, stack_info=True)
-                await self.page.goto(self.url)
+                await self.nav_to_base()
 
         return downloads

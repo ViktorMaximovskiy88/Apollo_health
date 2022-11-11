@@ -66,7 +66,6 @@ export const docDocumentsApi = createApi({
       query: (id) => `/change-log/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
     }),
-
     getWorkQueueItems: builder.query<
       { data: DocDocument[]; total: number },
       {

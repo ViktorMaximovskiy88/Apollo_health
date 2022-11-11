@@ -282,7 +282,11 @@ class TagCompare:
         key_areas: list[FocusArea] = []
         if doc_focus_configs is not None:
             doc_focus_checker = FocusChecker(
-                full_text=doc_text, focus_configs=doc_focus_configs, url="", link_text=None
+                full_text=doc_text,
+                focus_configs=doc_focus_configs,
+                url="",
+                link_text=None,
+                doc_type=doc.document_type,
             )
             key_areas = doc_focus_checker.key_areas
 
