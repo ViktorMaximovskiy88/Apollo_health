@@ -1,4 +1,4 @@
-import { Form, Input, Select } from 'antd';
+import { Form, FormInstance, Input, Select } from 'antd';
 import { useCallback } from 'react';
 import { RemoteSelect } from '../../components';
 import {
@@ -55,13 +55,24 @@ function PayerIdsSelector() {
   );
 }
 
+// add props and pass handleChange prop
+
 export const PayerFamilyInfoForm = () => {
+  const form = Form.useFormInstance();
+  const handlePlanChange = useCallback(() => {
+    form.setFieldsValue({ payer_ids: [] });
+  }, [form]);
   return (
     <div className="mt-4">
       <h2>Payer</h2>
       <Input.Group className="space-x-2 flex">
         <Form.Item label="Backbone Level" name="payer_type" className="w-48">
-          <Select defaultActiveFirstOption={true} options={backBoneLevelOptions} />
+          <Select
+            defaultActiveFirstOption={true}
+            defaultValue={'Not Selected'}
+            onChange={handlePlanChange}
+            options={backBoneLevelOptions}
+          />
         </Form.Item>
         <PayerIdsSelector />
       </Input.Group>

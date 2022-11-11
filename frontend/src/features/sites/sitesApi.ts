@@ -33,6 +33,10 @@ export const sitesApi = createApi({
       query: (id) => `/sites/${id}`,
       providesTags: (_r, _e, id) => (id ? [{ type: 'Site' as const, id }] : []),
     }),
+    getSiteByName: builder.query<Site, string>({
+      query: (name) => `/sites/search?name=${name}`,
+      providesTags: (_r, _e, name) => [{ type: 'Site' as const, name }],
+    }),
     getSiteRetrievedDocuments: builder.query<
       RetrievedDocument[],
       {
@@ -112,6 +116,7 @@ export const sitesApi = createApi({
 export const {
   useGetSiteQuery,
   useLazyGetSiteQuery,
+  useLazyGetSiteByNameQuery,
   useGetSitesQuery,
   useLazyGetSitesQuery,
   useAddSiteMutation,

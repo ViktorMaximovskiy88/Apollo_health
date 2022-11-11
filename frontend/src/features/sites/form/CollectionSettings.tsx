@@ -46,9 +46,9 @@ function ScrapeMethodSelect() {
 
 function Schedule() {
   const schedules = [
-    { value: '0 16 * * *', label: 'Daily' },
-    { value: '0 16 * * 0', label: 'Weekly' },
-    { value: '0 16 1 * *', label: 'Monthly' },
+    { value: '0 12 * * *', label: 'Daily' },
+    { value: '0 12 * * 0', label: 'Weekly' },
+    { value: '0 12 1 * *', label: 'Monthly' },
   ];
 
   return (

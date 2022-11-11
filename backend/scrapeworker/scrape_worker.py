@@ -459,11 +459,15 @@ class ScrapeWorker:
     def active_base_urls(self):
         return [url for url in self.site.base_urls if url.status == "ACTIVE"]
 
-    async def queue_downloads(self, url: str, base_url: str, cookies: list[Cookie] = []):
+    async def queue_downloads(
+        self, url: str, base_url: str, cookies: list[Cookie] = [], skip_playbook: bool = False
+    ):
         all_downloads: list[DownloadContext] = []
 
         async with self.playwright_context(url, cookies) as (base_page, context):
-            async for (page, playbook_context) in self.playbook.run_playbook(base_page):
+            async for (page, playbook_context) in self.playbook.run_playbook(
+                base_page, skip_playbook=skip_playbook
+            ):
 
                 scrape_handler = ScrapeHandler(
                     context=context,
@@ -483,23 +487,24 @@ class ScrapeWorker:
 
         return all_downloads
 
-    async def follow_links(self, url) -> tuple[list[str], list[Cookie]]:
-        urls: list[str] = []
+    async def follow_links(self, url) -> tuple[set[str], list[Cookie]]:
+        urls: set[str] = set()
         page: Page
         context: BrowserContext
         cookies: list[Cookie] = []
-        async with self.playwright_context(url) as (page, context):
-            crawler = FollowLinkScraper(
-                page=page,
-                context=context,
-                config=self.site.scrape_method_configuration,
-                url=url,
-            )
+        async with self.playwright_context(url) as (base_page, context):
+            async for page, _ in self.playbook.run_playbook(base_page):
+                crawler = FollowLinkScraper(
+                    page=page,
+                    context=context,
+                    config=self.site.scrape_method_configuration,
+                    url=url,
+                )
 
-            cookies = await context.cookies()
-            if await crawler.is_applicable():
-                for dl in await crawler.execute():
-                    urls.append(dl.request.url)
+                cookies = await context.cookies()
+                if await crawler.is_applicable():
+                    async for dl in crawler.execute():
+                        urls.add(dl.request.url)
 
         return urls, cookies
 
@@ -550,7 +555,7 @@ class ScrapeWorker:
                 for nested_url in links_found:
                     await self.scrape_task.update(Inc({SiteScrapeTask.follow_links_found: 1}))
                     all_downloads += await self.queue_downloads(
-                        nested_url, base_url=url, cookies=cookies
+                        nested_url, base_url=url, cookies=cookies, skip_playbook=True
                     )
 
         tasks = []

@@ -1,5 +1,3 @@
-import { Viewer, PageChangeEvent } from '@react-pdf-viewer/core';
-import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 import {
   OfficeFileLoader,
   TextFileLoader,
@@ -12,8 +10,7 @@ import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 
 import { Table, Tabs } from 'antd';
-import { useAccessToken } from '../../common/hooks';
-import { baseApiUrl } from '../../app/base-api';
+import { PDFFileLoader } from '../../components/PDFFileViewer';
 
 const columns = [
   { title: 'Key', dataIndex: 'key', key: 'key' },
@@ -28,26 +25,10 @@ interface PropTypes {
 }
 
 export function FileTypeViewer({ docId, doc, onPageChange = () => {} }: PropTypes) {
-  const token = useAccessToken();
-  const defaultLayoutPluginInstance = defaultLayoutPlugin();
-
-  if (!(token && doc && docId)) return null;
+  if (!doc) return null;
 
   return ['pdf', 'html'].includes(doc.file_extension) ? (
-    <Viewer
-      withCredentials={true}
-      fileUrl={`${baseApiUrl}/documents/${docId}.pdf`}
-      plugins={[defaultLayoutPluginInstance]}
-      onPageChange={(e: PageChangeEvent) => {
-        // BUG: we dont get a page 0 event from the viewer ???
-        // JumpToDestination maybe invert this...
-        console.log('currentPage', e.currentPage);
-        onPageChange(e.currentPage);
-      }}
-      httpHeaders={{
-        Authorization: `Bearer ${token}`,
-      }}
-    />
+    <PDFFileLoader docId={docId} onPageChange={onPageChange} />
   ) : doc.file_extension === 'xlsx' ? (
     <OfficeFileLoader docId={docId} />
   ) : doc.file_extension === 'docx' ? (

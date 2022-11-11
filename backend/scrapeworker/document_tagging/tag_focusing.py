@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from spacy.tokens.span import Span
 
-from backend.common.core.enums import SectionType
+from backend.common.core.enums import DocumentType, SectionType
 from backend.common.models.site import FocusSectionConfig
 
 
@@ -34,17 +34,32 @@ class FocusChecker:
         focus_configs: list[FocusSectionConfig],
         url: str,
         link_text: str | None,
+        doc_type: str | None = None,
     ) -> None:
         self.full_text = full_text
         self.focus_configs = focus_configs
         self.url = url
         self.link_text = link_text
-        self.all_focus = self._check_all_focus()
+        self.all_focus = self._check_all_focus(doc_type)
         self.focus_areas: list[FocusArea] = []
         self.key_areas: list[FocusArea] = []
         self.set_section_areas()
 
-    def _check_all_focus(self):
+    def _check_all_focus(self, doc_type: str | None):
+        all_focus_doc_types = [
+            DocumentType.Formulary,
+            DocumentType.FormularyUpdate,
+            DocumentType.MedicalCoverageList,
+            DocumentType.RestrictionList,
+            DocumentType.SpecialtyList,
+            DocumentType.ExclusionList,
+            DocumentType.PreventiveDrugList,
+            DocumentType.FeeSchedule,
+            DocumentType.PayerUnlistedPolicy,
+        ]
+        if doc_type in all_focus_doc_types:
+            return True
+
         for config in self.focus_configs:
             if config.all_focus is True:
                 return True

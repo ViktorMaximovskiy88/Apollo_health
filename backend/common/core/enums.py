@@ -50,18 +50,32 @@ class SearchableType(str, Enum):
 
 
 class DocumentType(str, Enum):
+    AnnualNoticeOfChanges = "Annual Notice of Changes"
     AuthorizationPolicy = "Authorization Policy"
-    TreatmentRequestForm = "Treatment Request Form"
-    PayerUnlistedPolicy = "Payer Unlisted Policy"
-    CoveredTreatmentList = "Covered Treatment List"
-    RegulatoryDocument = "Regulatory Document"
+    EvidenceOfCoverage = "Evidence of Coverage"
+    ExclusionList = "Exclusion List"
+    FeeSchedule = "Fee Schedule"
     Formulary = "Formulary"
-    InternalResource = "Internal Resource"
     FormularyUpdate = "Formulary Update"
+    InternalResource = "Internal Resource"
+    LCD = "LCD"
+    MedicalCoverageList = "Medical Coverage List"
     NCCNGuideline = "NCCN Guideline"
+    NCD = "NCD"
+    NewsletterAnnouncement = "Newsletter / Announcement"
+    NewToMarketPolicy = "New-to-Market Policy"
+    NotApplicable = "Not Applicable"
+    PayerUnlistedPolicy = "Payer Unlisted Policy"
+    PreventiveDrugList = "Preventive Drug List"
+    ProviderGuide = "Provider Guide"
+    RegulatoryDocument = "Regulatory Document"
     RestrictionList = "Restriction List"
     ReviewCommitteeMeetings = "Review Committee Meetings"
-    NotApplicable = "Not Applicable"
+    ReviewCommitteeSchedule = "Review Committee Schedule"
+    SiteOfCarePolicy = "Site of Care Policy"
+    SpecialtyList = "Specialty List"
+    SummaryOfBenefits = "Summary of Benefits"
+    TreatmentRequestForm = "Treatment Request Form"
 
 
 class SectionType(str, Enum):
