@@ -3,7 +3,7 @@ from backend.scrapeworker.doc_type_matcher import DocTypeMatcher
 
 def test_contains():
     matcher = DocTypeMatcher(raw_text="", raw_link_text="", raw_url="", raw_name="")
-    result = matcher._contains("dog", ["dog"])
+    result = matcher._contains("alphabet soup dog animal", ["dog", "cat", "turtle"])
     assert result is True
 
 
