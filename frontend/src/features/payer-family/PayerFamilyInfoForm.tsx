@@ -67,7 +67,12 @@ export const PayerFamilyInfoForm = () => {
       <h2>Payer</h2>
       <Input.Group className="space-x-2 flex">
         <Form.Item label="Backbone Level" name="payer_type" className="w-48">
-          <Select onChange={handlePlanChange} options={backBoneLevelOptions} />
+          <Select
+            defaultActiveFirstOption={true}
+            defaultValue={'Not Selected'}
+            onChange={handlePlanChange}
+            options={backBoneLevelOptions}
+          />
         </Form.Item>
         <PayerIdsSelector />
       </Input.Group>
