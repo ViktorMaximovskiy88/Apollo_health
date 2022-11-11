@@ -56,11 +56,12 @@ function PayerIdsSelector() {
 }
 
 // add props and pass handleChange prop
-interface PayerFamilyInfoFormProps {
-  handlePlanChange?: () => void;
-}
 
-export const PayerFamilyInfoForm = ({ handlePlanChange }: PayerFamilyInfoFormProps) => {
+export const PayerFamilyInfoForm = () => {
+  const form = Form.useFormInstance();
+  const handlePlanChange = useCallback(() => {
+    form.setFieldsValue({ payer_ids: [] });
+  }, [form]);
   return (
     <div className="mt-4">
       <h2>Payer</h2>

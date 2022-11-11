@@ -73,7 +73,7 @@ export const PayerFamilyEditPage = () => {
               <Checkbox>Auto Generate</Checkbox>
             </Form.Item>
           </Input.Group>
-          <PayerFamilyInfoForm handlePlanChange={handlePlanChange} />
+          <PayerFamilyInfoForm />
         </Form>
       </div>
     </MainLayout>
