@@ -59,7 +59,6 @@ class SearchableCrawler:
         Best attempt to check for and click the appropriate option.
         """
         try:
-            await page.wait_for_timeout(5000)
             select_locator = page.locator(":not(input)", has_text=code).last
             await select_locator.click()
         except Exception:
