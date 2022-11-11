@@ -45,6 +45,7 @@ export const DocumentTypes = [
     value: 'Annual Notice of Changes',
   },
   { id: 'Authorization Policy', label: 'Authorization Policy', value: 'Authorization Policy' },
+  { id: 'Directory', label: 'Directory', value: 'Directory' },
   { id: 'Evidence of Coverage', label: 'Evidence of Coverage', value: 'Evidence of Coverage' },
   { id: 'Exclusion List', label: 'Exclusion List', value: 'Exclusion List' },
   { id: 'Fee Schedule', label: 'Fee Schedule', value: 'Fee Schedule' },

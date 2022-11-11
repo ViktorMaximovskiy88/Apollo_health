@@ -52,6 +52,7 @@ class SearchableType(str, Enum):
 class DocumentType(str, Enum):
     AnnualNoticeOfChanges = "Annual Notice of Changes"
     AuthorizationPolicy = "Authorization Policy"
+    Directory = "Directory"
     EvidenceOfCoverage = "Evidence of Coverage"
     ExclusionList = "Exclusion List"
     FeeSchedule = "Fee Schedule"

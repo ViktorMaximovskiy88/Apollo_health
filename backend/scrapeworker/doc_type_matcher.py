@@ -58,7 +58,7 @@ class DocTypeMatcher:
         else:
             self.name_text = ""
 
-        self.texts = [self.filename_text, self.doc_text, self.link_text, self.name_text]
+        self.texts = [self.filename_text, self.link_text, self.name_text]
 
         self.is_pennsylvania = False
         for text in self.texts:
@@ -66,16 +66,19 @@ class DocTypeMatcher:
                 self.is_pennsylvania = True
                 break
 
-        logging.info(
-            f"link_text='{self.link_text}' name_text='{self.name_text}' filename_text='{self.filename_text}' doc_text='{self.doc_text}'"  # noqa
-        )
-
     def _contains(self, text: str, terms: list[str]) -> bool:
         for term in terms:
             term = term.lower()
             if f" {text} ".find(f" {term} ") > -1:
                 return True
         return False
+
+    def _not_contains(self, text: str, terms: list[str]) -> bool:
+        for term in terms:
+            term = term.lower()
+            if f" {text} ".find(f" {term} ") > -1:
+                return False
+        return True
 
     def _contains_all(self, text: str, terms: list[str]) -> bool:
         for term in terms:
@@ -91,7 +94,7 @@ class DocTypeMatcher:
             return DocumentType.FormularyUpdate
 
     def formulary(self, text: str) -> str | None:
-        if self._contains(text, ["PDL", "formulary", "drug list"]) and not self._contains(
+        if self._contains(text, ["PDL", "formulary", "drug list"]) and self._not_contains(
             text,
             [
                 "update",
@@ -106,12 +109,14 @@ class DocTypeMatcher:
                 "Procedure",
                 "Step Therapy",
                 "Quantity Limit",
+                "Precertification",
+                "Pre-certification",
             ],
         ):
             return DocumentType.Formulary
 
     def medical_coverage_list(self, text: str) -> str | None:
-        if self._contains(text, ["Medical Coverage", "Jcode"]) and not self._contains(
+        if self._contains(text, ["Medical Coverage", "Jcode"]) and self._not_contains(
             text, ["policy", "policies"]
         ):
             return DocumentType.MedicalCoverageList
@@ -119,7 +124,16 @@ class DocTypeMatcher:
     def restriction_list(self, text: str) -> str | None:
         if (
             (self._contains(text, ["PA"]) and not self.is_pennsylvania)
-            or self._contains(text, ["Prior Authorization", "Authorization", "Auth"])
+            or self._contains(
+                text,
+                [
+                    "Prior Authorization",
+                    "Authorization",
+                    "Auth",
+                    "Precertification",
+                    "Pre-certification",
+                ],
+            )
             or self._contains(text, ["ST", "Step Therapy", "Step-Therapy", "Step"])
             or self._contains(text, ["QL", "Quantity Limit", "Quantity"])
         ) and self._contains(text, ["list"]):
@@ -175,9 +189,11 @@ class DocTypeMatcher:
                     "ST",
                     "Prior Authorization",
                     "Step Therapy",
+                    "Precertification",
+                    "Pre-certification",
                 ],
             )
-        ) and not self._contains(
+        ) and self._not_contains(
             text, ["list", "new to market", "unlisted", "non-formulary", "form"]
         ):
             return DocumentType.AuthorizationPolicy
@@ -187,7 +203,7 @@ class DocTypeMatcher:
             return DocumentType.SiteOfCarePolicy
 
     def authorization_policy_b(self, text: str) -> str | None:
-        if self._contains(text, ["policy", "coverage determination"]) and not self._contains(
+        if self._contains(text, ["policy", "coverage determination"]) and self._not_contains(
             text,
             [
                 "update",
@@ -203,13 +219,13 @@ class DocTypeMatcher:
             return DocumentType.AuthorizationPolicy
 
     def authorization_policy_c(self, text: str) -> str | None:
-        if self._contains(text, ["criteria"]) and not self._contains(
+        if self._contains(text, ["criteria"]) and self._not_contains(
             text, ["new to market", "unlisted", "non-formulary"]
         ):
             return DocumentType.AuthorizationPolicy
 
     def new_to_market_policy(self, text: str) -> str | None:
-        if self._contains(text, ["NTM", "new to market", "new-to-market"]) and not self._contains(
+        if self._contains(text, ["NTM", "new to market", "new-to-market"]) and self._not_contains(
             text, ["policy", "guideline"]
         ):
             return DocumentType.NewToMarketPolicy
@@ -218,7 +234,7 @@ class DocTypeMatcher:
         if (
             self._contains(text, ["NF", "non-formulary", "unlisted"])
             and self._contains(text, ["policy", "guideline"])
-            and not self._contains(text, ["NTM", "new to market", "new-to-market"])
+            and self._not_contains(text, ["NTM", "new to market", "new-to-market"])
         ):
             return DocumentType.PayerUnlistedPolicy
 
@@ -255,11 +271,23 @@ class DocTypeMatcher:
     def review_committee_meetings(self, text: str) -> str | None:
         if self._contains(
             text, ["Meeting", "Committee", "Agenda", "P&T", "Pharmacy & Therapeutics"]
-        ) and not self._contains(text, ["schedule"]):
+        ) and self._not_contains(text, ["schedule"]):
             return DocumentType.ReviewCommitteeMeetings
 
     def newsletter_announcement(self, text: str) -> str | None:
-        if self._contains(text, ["Newsletter", "News", "Announcement", "Announcements"]):
+        if self._contains(
+            text,
+            [
+                "Newsletter",
+                "News",
+                "Announcement",
+                "Announcements",
+                "Bulletin",
+                "Bulletins",
+                "Letter",
+                "Letters",
+            ],
+        ):
             return DocumentType.NewsletterAnnouncement
 
     def review_committee_schedule(self, text: str) -> str | None:
@@ -270,6 +298,10 @@ class DocTypeMatcher:
 
     def regulatory_document(self, text: str) -> str | None:
         if self._contains(text, ["regulation", "law", "carve out", "carve-out"]):
+            return DocumentType.RegulatoryDocument
+
+    def directory(self, text: str) -> str | None:
+        if self._contains(text, ["directory"]):
             return DocumentType.RegulatoryDocument
 
     def exec(self) -> DocTypeMatch | None:
@@ -299,6 +331,9 @@ class DocTypeMatcher:
                 document_type=match,
             )
         elif match := self.run_rules(self.doc_text):
+            # disable doc text for now...
+            logging.info("doc_text skipped")
+            return None
             logging.info("doc_text matched")
             return DocTypeMatch(
                 match_source=MatchSource.DocText,
@@ -341,6 +376,7 @@ class DocTypeMatcher:
             "newsletter_announcement",
             "review_committee_schedule",
             "regulatory_document",
+            "directory",
         ]
         match = None
 
