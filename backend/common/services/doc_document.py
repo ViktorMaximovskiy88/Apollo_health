@@ -32,7 +32,7 @@ async def get_site_doc_doc_table(
     for filter in filters:
         pipeline.append({"$match": filter})
 
-    pipeline.append({"$unset": ["locations"]})
+    pipeline.append({"$unset": ["locations", "therapy_tags", "indication_tags"]})
 
     count_pipeline = pipeline[:]
     count_pipeline.append({"$count": "checksum"})
