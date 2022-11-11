@@ -1,6 +1,7 @@
+import { useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import ReactDataGrid from '@inovua/reactdatagrid-community';
-import { useGetSiteDocDocumentsQuery } from '../sites/sitesApi';
+import { useLazyGetSiteDocDocumentsQuery, TableQueryInfo } from '../sites/sitesApi';
 import {
   siteDocDocumentTableState,
   setSiteDocDocumentTableFilter,
@@ -21,9 +22,17 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
   const [searchParams] = useSearchParams();
   const scrapeTaskId = searchParams.get('scrape_task_id');
 
-  const { data } = useGetSiteDocDocumentsQuery({ siteId, scrapeTaskId }, { pollingInterval: 5000 });
+  const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
 
-  const documents = data ?? [];
+  const loadData = useCallback(
+    async (tableParams: TableQueryInfo) => {
+      const { data } = await getDocDocumentsQuery({ siteId, scrapeTaskId, ...tableParams });
+      const sites = data?.data ?? [];
+      const count = data?.total ?? 0;
+      return { data: sites, count };
+    },
+    [getDocDocumentsQuery]
+  );
 
   const columns = useSiteDocDocumentColumns({ handleNewVersion });
   const filterProps = useDataTableFilter(siteDocDocumentTableState, setSiteDocDocumentTableFilter);
@@ -36,7 +45,7 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
 
   return (
     <ReactDataGrid
-      dataSource={documents}
+      dataSource={loadData}
       {...filterProps}
       {...sortProps}
       {...controlledPagination}

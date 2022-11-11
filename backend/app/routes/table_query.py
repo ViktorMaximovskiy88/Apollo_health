@@ -63,11 +63,11 @@ def transform_value(filter_value: str, filter_type: str):
     return value
 
 
-def construct_table_query(
-    query: FindMany[T],  # type: ignore
+def _prepare_table_query(
     sorts: list[TableSortInfo] = [],
     filters: list[TableFilterInfo] = [],
-) -> FindMany[T]:  # type: ignore
+) -> tuple[list[dict], list[tuple[str, int]]]:  # type: ignore
+    match = []
     for filter in filters:
         if not filter.value and filter.operator not in ["empty", "notEmpty"]:
             continue
@@ -81,45 +81,56 @@ def construct_table_query(
             value = transform_value(filter.value, filter.type)
 
         if filter.operator == "contains":
-            query = query.find({filter.name: {"$regex": value, "$options": "i"}})
+            match.append({filter.name: {"$regex": value, "$options": "i"}})
         if filter.operator == "notContains":
-            query = query.find({filter.name: {"$not": {"$regex": value, "$options": "i"}}})
+            match.append({filter.name: {"$not": {"$regex": value, "$options": "i"}}})
         if filter.operator == "startsWith":
-            query = query.find({filter.name: {"$regex": f"^{value}", "$options": "i"}})
+            match.append({filter.name: {"$regex": f"^{value}", "$options": "i"}})
         if filter.operator == "endsWith":
-            query = query.find({filter.name: {"$regex": f"{value}$", "$options": "i"}})
+            match.append({filter.name: {"$regex": f"{value}$", "$options": "i"}})
         if filter.operator == "eq":
             if isinstance(value, list):
-                query = query.find({filter.name: {"$in": value}})
+                match.append({filter.name: {"$in": value}})
             else:
-                query = query.find({filter.name: value})
+                match.append({filter.name: value})
         if filter.operator == "neq":
             if isinstance(value, list):
-                query = query.find({filter.name: {"$nin": value}})
+                match.append({filter.name: {"$nin": value}})
             else:
-                query = query.find({filter.name: {"$ne": value}})
+                match.append({filter.name: {"$ne": value}})
         if filter.operator == "empty":
-            query = query.find({filter.name: {"$in": [None, ""]}})
+            match.append({filter.name: {"$in": [None, ""]}})
         if filter.operator == "notEmpty":
-            query = query.find({filter.name: {"$exists": True, "$nin": [None, ""]}})
+            match.append({filter.name: {"$exists": True, "$nin": [None, ""]}})
         if filter.operator in ["gt", "gte", "lt", "lte"]:
-            query = query.find({filter.name: {f"${filter.operator}": value}})
+            match.append({filter.name: {f"${filter.operator}": value}})
         if filter.operator == "after":
-            query = query.find({filter.name: {"$gt": value}})
+            match.append({filter.name: {"$gt": value}})
         if filter.operator == "afterOrOn":
-            query = query.find({filter.name: {"$gte": value}})
+            match.append({filter.name: {"$gte": value}})
         if filter.operator == "before":
-            query = query.find({filter.name: {"$lt": value}})
+            match.append({filter.name: {"$lt": value}})
         if filter.operator == "beforeOrOn":
-            query = query.find({filter.name: {"$lte": value}})
+            match.append({filter.name: {"$lte": value}})
 
+    sort_by = []
     for sort in sorts:
-        if sort.dir == -1:
-            query = query.sort(f"-{sort.name}")
-        elif sort.dir == 1:
-            query = query.sort(sort.name)
-        # dir could be 0, in which case do not add sort
+        if sort != 0:
+            sort_by.append((sort.name, sort.dir))
 
+    return (match, sort_by)
+
+
+def construct_table_query(
+    query: FindMany[T],  # type: ignore
+    sorts: list[TableSortInfo] = [],
+    filters: list[TableFilterInfo] = [],
+) -> FindMany[T]:  # type: ignore
+    (match_filter, sort_by) = _prepare_table_query(sorts, filters)
+    for filter in match_filter:
+        query = query.find(filter)
+    for sort in sort_by:
+        query = query.sort(sort)
     return query
 
 
