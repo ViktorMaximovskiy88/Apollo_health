@@ -94,6 +94,9 @@ h1.ant-typography {
 .ant-btn-link {
   background-color: transparent;
   color: var(--blue-primary);
+  user-select: inherit;
+  -webkit-user-select: inherit; /* Safari */
+  -ms-user-select: inherit; /* IE 10+ */
 }
 
 .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {

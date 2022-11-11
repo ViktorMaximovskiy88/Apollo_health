@@ -83,6 +83,7 @@ export function WorkQueueHomePage() {
         defaultFilterValue={filters}
         columns={columns}
         rowHeight={50}
+        columnUserSelect
       />
     </MainLayout>
   );

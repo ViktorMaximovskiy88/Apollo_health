@@ -120,6 +120,7 @@ export function ExtractedDocumentsTable() {
       {...controlledPagination}
       rowHeight={50}
       columns={columns}
+      columnUserSelect
     />
   );
 }
