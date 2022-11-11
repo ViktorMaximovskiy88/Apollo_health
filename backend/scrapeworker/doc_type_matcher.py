@@ -74,11 +74,7 @@ class DocTypeMatcher:
         return False
 
     def _not_contains(self, text: str, terms: list[str]) -> bool:
-        for term in terms:
-            term = term.lower()
-            if f" {text} ".find(f" {term} ") > -1:
-                return False
-        return True
+        return not self._contains(text, terms)
 
     def _contains_all(self, text: str, terms: list[str]) -> bool:
         for term in terms:
