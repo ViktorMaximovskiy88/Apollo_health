@@ -17,7 +17,6 @@ async def get_site_doc_doc_table(
     skip: int = 0,
 ) -> list[SiteDocDocument]:
     pipeline = []
-    print(filters, " * * * * * * ** * ** * ** ")
 
     if len(retrieved_document_ids) > 0:
         pipeline.append({"$match": {"retrieved_document_id": {"$in": retrieved_document_ids}}})
