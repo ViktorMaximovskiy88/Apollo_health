@@ -29,6 +29,7 @@ import { baseApiUrl, client } from '../../app/base-api';
 import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
 import { SiteDocDocument } from '../doc_documents/types';
 import moment from 'moment';
+import { useGetSiteQuery } from '../sites/sitesApi';
 
 interface AddDocumentModalPropTypes {
   oldVersion?: SiteDocDocument;
@@ -37,22 +38,21 @@ interface AddDocumentModalPropTypes {
   refetch?: any;
 }
 
-const buildInitialValues = (oldVersion?: SiteDocDocument) => {
+const buildInitialValues = (initialBaseUrl: String, oldVersion?: SiteDocDocument) => {
   if (!oldVersion) {
     return {
+      base_url: initialBaseUrl,
       lang_code: 'en',
       internal_document: false,
     };
   }
   return {
+    base_url: initialBaseUrl,
     lang_code: oldVersion.lang_code,
     name: oldVersion.name,
     document_type: oldVersion.document_type,
     internal_document: oldVersion.internal_document,
     site_id: oldVersion.site_id,
-    link_text: oldVersion.link_text,
-    base_url: oldVersion.base_url,
-    url: oldVersion.url,
   };
 };
 
@@ -75,8 +75,14 @@ export function AddDocumentModal({
   const [oldLocationSiteId, setOldLocationSiteId] = useState('');
   const [oldLocationDocId, setOldLocationDocId] = useState('');
   const [isEditingDocFromOtherSite, setIsEditingDocFromOtherSite] = useState(false);
+  const [intitialBaseUrl, setIntitialBaseUrl] = useState('');
 
-  const initialValues = buildInitialValues(oldVersion);
+  // Set initial values.
+  const { data: site } = useGetSiteQuery(siteId);
+  if (site && site.base_urls.length === 1 && !intitialBaseUrl) {
+    setIntitialBaseUrl(site.base_urls[0].url);
+  }
+  const initialValues = buildInitialValues(intitialBaseUrl, oldVersion);
   if (docTitle !== 'Add New Version' && oldVersion) {
     setDocTitle('Add New Version');
   }
@@ -115,7 +121,6 @@ export function AddDocumentModal({
       fileData.base_url = form.getFieldValue('base_url') ?? newDocument.url;
       fileData.link_text = form.getFieldValue('link_text');
       fileData.metadata.link_text = newDocument.link_text;
-      delete newDocument.link_text;
       delete newDocument.document_file;
 
       try {
@@ -148,7 +153,6 @@ export function AddDocumentModal({
   function setLocationValuesFromResponse(responseData: any) {
     form.setFieldsValue({
       name: responseData.doc_name,
-      base_url: responseData.base_url,
       document_type: responseData.document_type,
       lang_code: responseData.lang_code,
       effective_date: convertDate(responseData.effective_date),

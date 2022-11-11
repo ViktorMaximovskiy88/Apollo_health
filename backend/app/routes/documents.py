@@ -238,9 +238,9 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
             "file_extension": file_extension,
             "metadata": parsed_content["metadata"],
             "doc_type_confidence": str(parsed_content["confidence"]),
+            "identified_dates": parsed_content["identified_dates"],
             "therapy_tags": parsed_content["therapy_tags"],
             "indication_tags": parsed_content["indication_tags"],
-            "identified_dates": parsed_content["identified_dates"],
         } | response["data"]
 
         if not checksum_documents and not text_checksum_documents:
@@ -288,38 +288,37 @@ async def add_document(
         raise HTTPException(status.HTTP_409_CONFLICT, "Not able to upload document to site.")
     now: datetime = datetime.now(tz=timezone.utc)
     link_text = uploaded_doc.metadata.get("link_text", None)
+    doc_doc_fields = {"internal_document": uploaded_doc.internal_document}
+    new_loc_fields = {
+        "url": uploaded_doc.url,
+        "base_url": uploaded_doc.base_url,
+        "first_collected_date": now,
+        "last_collected_date": now,
+        "site_id": uploaded_doc.site_id,
+        "link_tex": link_text,
+        "context_metadata": uploaded_doc.metadata,
+    }
 
+    # Doc exists on other site so instead of creating doc,
+    # add location to existing doc.
     if uploaded_doc.prev_location_doc_id:
+        err_msg = (
+            f"Not able to upload document to site. Duplicate location detected, "
+            f"but cannot find duplicate document {uploaded_doc.prev_location_doc_id}",
+        )
         new_retr_document = await RetrievedDocument.find_one(
             RetrievedDocument.id == PydanticObjectId(uploaded_doc.prev_location_doc_id)
         )
         if not new_retr_document:
-            raise HTTPException(
-                status.HTTP_409_CONFLICT,
-                "Not able to upload document to site. Duplicate location error.",
-            )
-        new_doc_loc: RetrievedDocumentLocation = RetrievedDocumentLocation(
-            url=uploaded_doc.url,
-            base_url=uploaded_doc.base_url,
-            first_collected_date=now,
-            last_collected_date=now,
-            site_id=uploaded_doc.site_id,
-            link_text=link_text,
-            context_metadata=uploaded_doc.metadata,
-        )
+            raise HTTPException(status.HTTP_409_CONFLICT, err_msg)
+        new_doc_loc: RetrievedDocumentLocation = RetrievedDocumentLocation(**new_loc_fields)
         new_retr_document.locations.append(new_doc_loc)
         new_doc_doc: DocDocument | None = await DocDocument.find_one(
             DocDocument.retrieved_document_id == new_retr_document.id
         )
-        new_doc_doc_loc: DocDocumentLocation = DocDocumentLocation(
-            url=uploaded_doc.url,
-            base_url=uploaded_doc.base_url,
-            first_collected_date=now,
-            last_collected_date=now,
-            site_id=uploaded_doc.site_id,
-            link_text=link_text,
-            context_metadata=uploaded_doc.metadata,
-        )
+        if not new_doc_doc:
+            raise HTTPException(status.HTTP_409_CONFLICT, err_msg)
+        new_doc_doc_loc: DocDocumentLocation = DocDocumentLocation(**new_loc_fields)
         prev_loc: DocDocumentLocation = next(
             loc
             for loc in new_doc_doc.locations
@@ -330,18 +329,19 @@ async def add_document(
         new_doc_doc.locations.append(new_doc_doc_loc)
         await new_retr_document.save()
         await new_doc_doc.save()
+    # Create new doc from uploaded doc.
     else:
-        # Create retr_doc and doc_doc from uploaded_doc.
         new_retr_document: RetrievedDocument = RetrievedDocument(
             checksum=uploaded_doc.checksum,
             content_type=uploaded_doc.content_type,
-            doc_type_confidence=uploaded_doc.doc_type_confidence,
+            doc_type_confidence=1,  # new_doc / new_version uploads are always 1
             document_type=uploaded_doc.document_type,
             effective_date=uploaded_doc.effective_date,
             end_date=uploaded_doc.end_date,
             file_extension=uploaded_doc.file_extension,
             identified_dates=uploaded_doc.identified_dates,
             indication_tags=uploaded_doc.indication_tags,
+            therapy_tags=uploaded_doc.therapy_tags,
             lang_code=uploaded_doc.lang_code,
             last_reviewed_date=uploaded_doc.last_reviewed_date,
             last_updated_date=uploaded_doc.last_updated_date,
@@ -351,21 +351,10 @@ async def add_document(
             next_update_date=uploaded_doc.next_update_date,
             published_date=uploaded_doc.published_date,
             text_checksum=uploaded_doc.text_checksum,
-            therapy_tags=uploaded_doc.therapy_tags,
             uploader_id=current_user.id,
             first_collected_date=now,
             last_collected_date=now,
-            locations=[
-                RetrievedDocumentLocation(
-                    url=uploaded_doc.url,
-                    base_url=uploaded_doc.base_url,
-                    first_collected_date=now,
-                    last_collected_date=now,
-                    site_id=uploaded_doc.site_id,
-                    link_text=link_text,
-                    context_metadata=uploaded_doc.metadata,
-                )
-            ],
+            locations=[RetrievedDocumentLocation(**new_loc_fields)],
         )
 
     # Set new_document current_version and lineage.
@@ -406,7 +395,7 @@ async def add_document(
             logger, current_user, new_retr_document
         )
         created_doc_doc: DocDocument = await create_doc_document_service(
-            new_retr_document, current_user, {"internal_document": uploaded_doc.internal_document}
+            new_retr_document, current_user, doc_doc_fields=doc_doc_fields
         )
     else:
         created_retr_doc = new_retr_document
