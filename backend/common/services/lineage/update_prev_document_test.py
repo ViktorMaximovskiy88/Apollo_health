@@ -1,15 +1,3 @@
-#   C -> Previous Version E
-#   C -> Not Current Version
-#   C -> Lineage becomes L2
-#   B -> Current Version
-#   F -> Previous Version C
-# B move to F
-#   B -> Previous Version F
-#   B -> Lineage L2
-#   F -> Not Current Version
-#   A -> Current Version
-# B move to E
-
 from random import random
 
 import pytest

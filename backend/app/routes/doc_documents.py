@@ -30,7 +30,6 @@ from backend.common.models.shared import DocDocumentLocationView
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook, get_doc_change_info
-from backend.common.services.lineage.update_prev_document import update_lineage
 from backend.common.services.text_compare.doc_text_compare import DocTextCompare
 from backend.common.storage.client import DocumentStorageClient
 
@@ -159,12 +158,6 @@ async def update_doc_document(
 ):
     updates.final_effective_date = calc_final_effective_date(updates)
     change_info = get_doc_change_info(updates, doc)
-    old_previous_doc_doc_id = doc.previous_doc_doc_id
     updated = await update_and_log_diff(logger, current_user, doc, updates)
-    await update_lineage(
-        updating_doc_doc=doc,
-        old_prev_doc_doc_id=old_previous_doc_doc_id,
-        new_prev_doc_doc_id=updates.previous_doc_doc_id,
-    )
     await doc_document_save_hook(doc, change_info)
     return updated
