@@ -113,10 +113,7 @@ def _prepare_table_query(
         if filter.operator == "beforeOrOn":
             match.append({filter.name: {"$lte": value}})
 
-    sort_by = []
-    for sort in sorts:
-        if sort != 0:
-            sort_by.append((sort.name, sort.dir))
+    sort_by = [(s.name, s.dir) for s in sorts if s.dir]
 
     return (match, sort_by)
 
