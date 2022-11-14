@@ -62,6 +62,20 @@ resource "aws_iam_role" "sourcehub" {
           Resource = [
             "arn:aws:ecs:${var.region}:${data.aws_caller_identity.current.account_id}:service/${data.aws_ecs_cluster.ecs-cluster.cluster_name}/${local.service_name}-scrapeworker"
           ]
+        },
+        {
+          Effect = "Allow"
+          Action = [
+            "sqs:SendMessage",
+            "sqs:ReceiveMessage",
+            "sqs:GetQueueUrl",
+            "sqs:GetQueueAttributes",
+            "sqs:DeleteMessage",
+            "sqs:ChangeMessageVisibility"
+          ]
+          Resource = [
+            aws_sqs_queue.lineageworker.arn
+          ]
         }
       ]
     })
