@@ -50,6 +50,7 @@ async def doc_type_validation(ctx):
 
     df = pd.read_csv(file)
     df["DocDocId"] = df["Url"].str.extract(r"([a-fA-F\d]{24})", expand=False).str.strip()
+
     for index, row in df.iterrows():
         doc = await DocDocument.get(PydanticObjectId(row["DocDocId"]))
         if doc:
@@ -60,12 +61,18 @@ async def doc_type_validation(ctx):
                 raw_url=location.url,
                 raw_name=doc.name,
             ).exec()
+            df.loc[index, "CurrentDocType"] = doc.document_type
             if matched:
                 df.loc[index, "ProposedDocType"] = matched.document_type
             df.loc[index, "LocationCount"] = len(doc.locations)
             df.loc[index, "Name"] = doc.name
             df.loc[index, "LinkText"] = location.link_text
             df.loc[index, "ExternalUrl"] = location.url
-            df.loc[index, "CurrentDocType"] = doc.document_type
+
+    df.insert(0, "CurrentDocType", df.pop("CurrentDocType"))
+    df.insert(1, "ExpectedDocType", df.pop("ExpectedDocType"))
+    df.insert(2, "ProposedDocType", df.pop("ProposedDocType"))
+    df.insert(3, "Name", df.pop("Name"))
+    df.insert(4, "LinkText", df.pop("LinkText"))
 
     df.to_csv(output_file)

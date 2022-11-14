@@ -83,6 +83,9 @@ class DocTypeMatcher:
                 return False
         return True
 
+    ###
+    # RULES
+    ###
     def formulary_update(self, text: str) -> str | None:
         if self._contains(text, ["PDL", "formulary", "drug list"]) and self._contains(
             text, ["update", "change", "changes"]
@@ -298,7 +301,7 @@ class DocTypeMatcher:
 
     def directory(self, text: str) -> str | None:
         if self._contains(text, ["directory"]):
-            return DocumentType.RegulatoryDocument
+            return DocumentType.Directory
 
     def exec(self) -> DocTypeMatch | None:
 
