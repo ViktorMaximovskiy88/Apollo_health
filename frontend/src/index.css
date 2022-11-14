@@ -94,6 +94,9 @@ h1.ant-typography {
 .ant-btn-link {
   background-color: transparent;
   color: var(--blue-primary);
+  user-select: inherit;
+  -webkit-user-select: inherit; /* Safari */
+  -ms-user-select: inherit; /* IE 10+ */
 }
 
 .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
@@ -151,4 +154,11 @@ a {
 }
 .property-grid .ant-form-item {
   margin-bottom: 12px;
+}
+
+.ant-select-expandable .ant-select-selection-item {
+  white-space: normal;
+}
+.ant-select-expandable .ant-select-selector {
+  height: unset !important;
 }

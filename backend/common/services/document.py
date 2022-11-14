@@ -109,10 +109,11 @@ async def create_doc_document_service(
         identified_dates=retrieved_document.identified_dates,
         last_collected_date=retrieved_document.last_collected_date,
         first_collected_date=retrieved_document.first_collected_date,
+        lineage_id=retrieved_document.lineage_id,
         locations=[DocDocumentLocation(**rt_doc_location.dict())],
     )
-
     doc_document.set_final_effective_date()
+
     logger: Logger = Logger()
     await create_and_log(logger, user, doc_document)
 

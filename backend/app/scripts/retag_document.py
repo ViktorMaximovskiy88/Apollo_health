@@ -6,6 +6,7 @@ import typer
 from beanie import PydanticObjectId
 
 sys.path.append(str(Path(__file__).parent.joinpath("../../..").resolve()))
+from backend.common.core.config import config
 from backend.common.db.init import init_db
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
@@ -13,7 +14,7 @@ from backend.common.models.site import Site
 from backend.common.storage.client import DocumentStorageClient, TextStorageClient
 from backend.common.storage.hash import hash_full_text
 from backend.scrapeworker.common.utils import normalize_string, tokenize_string
-from backend.scrapeworker.doc_type_classifier import classify_doc_type
+from backend.scrapeworker.doc_type_classifier import guess_doc_type
 from backend.scrapeworker.document_tagging.indication_tagging import IndicationTagger
 from backend.scrapeworker.document_tagging.therapy_tagging import TherapyTagger
 from backend.scrapeworker.file_parsers import docx, html, pdf, text, xlsx
@@ -22,7 +23,7 @@ from backend.scrapeworker.file_parsers import docx, html, pdf, text, xlsx
 class ReTagger:
     def __init__(self):
         self.indication = IndicationTagger()
-        self.therapy = TherapyTagger()
+        self.therapy = TherapyTagger(version=config["MODEL_VERSION"])
 
     async def retag_docs_on_site(self, site: Site, total: int = 0):
         async for doc in DocDocument.find({"locations.site_id": site.id}):
@@ -43,10 +44,12 @@ class ReTagger:
         link_text = normalize_string(location.link_text, url=False)
         url = normalize_string(location.url)
         doc_text = await self.get_text(doc, rdoc, url, link_text, focus_config)
-        _doc_type, _confidence, doc_vectors = classify_doc_type(doc_text)
+        _doc_type, _confidence, doc_vectors = guess_doc_type(
+            doc_text, location.link_text, location.url, doc.name
+        )
         tokens = tokenize_string(doc_text)
 
-        therapy_tags, url_therapy_tags, link_therapy_tags = await self.therapy.tag_document(
+        (therapy_tags, url_therapy_tags, link_therapy_tags) = await self.therapy.tag_document(
             doc_text, document_type, url, link_text, focus_config
         )
         (

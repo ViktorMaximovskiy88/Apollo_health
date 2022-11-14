@@ -1,22 +1,39 @@
 import { useState } from 'react';
 import { Form } from 'antd';
-import { DocDocument } from '../types';
 import { DocDocumentLocation } from './types';
 import { DocDocumentLocationForm } from '../../payer-family/DocDocumentLocationForm';
-import { PayerFamilyCreateModal } from '../../payer-family/LocationPayerFamilyCreateModal';
-import { PayerFamilyEditModal } from '../../payer-family/LocationPayerFamilyEditModal';
+import { PayerFamilyCreateDrawer } from '../../payer-family/LocationPayerFamilyCreateDrawer';
+import { PayerFamilyEditDrawer } from '../../payer-family/LocationPayerFamilyEditDrawer';
+import { PayerFamily } from '../../payer-family/types';
+import { useGetDocDocumentQuery } from '../docDocumentApi';
+import { useParams } from 'react-router-dom';
 
 interface DocDocumentLocationsPropTypes {
-  docDocument: DocDocument;
   locations: DocDocumentLocation[];
 }
 
-export const DocDocumentLocations = ({ docDocument, locations }: DocDocumentLocationsPropTypes) => {
+export const DocDocumentLocations = ({ locations }: DocDocumentLocationsPropTypes) => {
+  const { docDocumentId: docId } = useParams();
+  const { data: doc } = useGetDocDocumentQuery(docId);
   const form = Form.useFormInstance();
-  const [editModalOpen, setEditModalOpen] = useState<boolean>(false);
-  const [createModalOpen, setCreateModalOpen] = useState<boolean>(false);
-  const [editPayerFamilyId, setEditPayerFamilyId] = useState<string>('');
+  const [editDrawerOpen, setEditDrawerOpen] = useState<boolean>(false);
+  const [createDrawerOpen, setCreateDrawerOpen] = useState<boolean>(false);
   const [selectedIndex, setSelectedLocationIndex] = useState<number>(-1);
+
+  const [currentOptions, setCurrentOptions] = useState<
+    ({ value: string; label: string } | undefined)[]
+  >(
+    doc?.locations.map((location) =>
+      location.payer_family
+        ? {
+            value: location.payer_family._id,
+            label: location.payer_family.name,
+          }
+        : undefined
+    ) ?? []
+  );
+
+  const updatedLocations = Form.useWatch('locations');
 
   return (
     <div>
@@ -24,48 +41,63 @@ export const DocDocumentLocations = ({ docDocument, locations }: DocDocumentLoca
         <DocDocumentLocationForm
           key={location.site_id}
           index={index}
-          documentType={docDocument.document_type}
           location={location}
-          setEditPayerFamilyId={setEditPayerFamilyId}
           onShowPayerFamilyCreate={() => {
             setSelectedLocationIndex(index);
-            setCreateModalOpen(true);
+            setCreateDrawerOpen(true);
           }}
           onShowPayerFamilyEdit={() => {
             setSelectedLocationIndex(index);
-            setEditModalOpen(true);
+            setEditDrawerOpen(true);
+          }}
+          currentOption={currentOptions[index]}
+          setCurrentOption={(newCurrentOption?: { value: string; label: string }) => {
+            const newCurrentOptions = currentOptions.map((currentOption, i) =>
+              index === i ? newCurrentOption : currentOption
+            );
+            setCurrentOptions(newCurrentOptions);
           }}
         />
       ))}
-      {createModalOpen ? (
-        <PayerFamilyCreateModal
+      {createDrawerOpen ? (
+        <PayerFamilyCreateDrawer
           location={locations[selectedIndex]}
-          open={createModalOpen}
-          onSave={(payerFamilyId: string) => {
-            form.setFieldValue(['locations', selectedIndex, 'payer_family_id'], payerFamilyId);
-            setCreateModalOpen(false);
-            setEditPayerFamilyId(payerFamilyId);
+          open={createDrawerOpen}
+          onSave={(newPayerFamily: PayerFamily) => {
+            const newCurrentOptions = currentOptions.map((option, index) =>
+              index === selectedIndex
+                ? { label: newPayerFamily.name, value: newPayerFamily._id } // update label
+                : option
+            );
+            setCurrentOptions(newCurrentOptions);
+            form.setFieldValue(['locations', selectedIndex, 'payer_family_id'], newPayerFamily._id);
+            setCreateDrawerOpen(false);
             setSelectedLocationIndex(-1);
           }}
           onClose={() => {
-            setCreateModalOpen(false);
+            setCreateDrawerOpen(false);
             setSelectedLocationIndex(-1);
           }}
         />
       ) : null}
 
-      {editModalOpen ? (
-        <PayerFamilyEditModal
+      {editDrawerOpen ? (
+        <PayerFamilyEditDrawer
           location={locations[selectedIndex]}
-          payer_family_id={editPayerFamilyId}
-          open={editModalOpen}
-          onSave={(payerFamilyId: string) => {
-            form.setFieldValue(['locations', selectedIndex, 'payer_family_id'], payerFamilyId);
-            setEditModalOpen(false);
+          payer_family_id={updatedLocations[selectedIndex].payer_family_id}
+          open={editDrawerOpen}
+          onSave={(updatedPayerFamily: PayerFamily) => {
+            const newCurrentOptions = currentOptions.map((option, index) =>
+              index === selectedIndex
+                ? { label: updatedPayerFamily.name, value: updatedPayerFamily._id } // update label
+                : option
+            );
+            setCurrentOptions(newCurrentOptions);
+            setEditDrawerOpen(false);
             setSelectedLocationIndex(-1);
           }}
           onClose={() => {
-            setEditModalOpen(false);
+            setEditDrawerOpen(false);
             setSelectedLocationIndex(-1);
           }}
         />

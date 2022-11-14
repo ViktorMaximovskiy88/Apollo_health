@@ -136,6 +136,7 @@ export function ExtractionTasksTable() {
       {...controlledPagination}
       rowHeight={50}
       columns={columns}
+      columnUserSelect
     />
   );
 }

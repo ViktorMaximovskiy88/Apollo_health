@@ -14,7 +14,7 @@ fixture_path = os.path.join(current_path, "__fixtures__")
 
 def test_date_regexes_count():
     regexes = compile_date_rgx()
-    assert len(regexes) == 13
+    assert len(regexes) == 14
 
 
 def test_get_extension_from_path_like_none():

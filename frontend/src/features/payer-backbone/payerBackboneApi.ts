@@ -22,21 +22,28 @@ export const payerBackboneApi = createApi({
       { data: PayerBackbone[]; total: number },
       {
         type: string;
-        limit: number;
-        skip: number;
-        sortInfo: TypeSortInfo;
-        filterValue: TypeFilterValue;
+        limit?: number;
+        skip?: number;
+        sortInfo?: TypeSortInfo;
+        filterValue?: TypeFilterValue;
       }
     >({
       query: ({ type, limit, skip, sortInfo, filterValue }) => {
         const sorts = sortInfo ? [sortInfo] : [];
-        const args = [
-          `limit=${encodeURIComponent(limit)}`,
-          `skip=${encodeURIComponent(skip)}`,
-          `sorts=${encodeURIComponent(JSON.stringify(sorts))}`,
-          `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
-        ].join('&');
-        return `/payer-backbone/${type}?${args}`;
+        const args = [];
+        if (limit) {
+          args.push(`limit=${encodeURIComponent(limit)}`);
+        }
+        if (skip) {
+          args.push(`skip=${encodeURIComponent(skip)}`);
+        }
+        if (sorts) {
+          args.push(`sorts=${encodeURIComponent(JSON.stringify(sorts))}`);
+        }
+        if (filterValue) {
+          args.push(`filters=${encodeURIComponent(JSON.stringify(filterValue))}`);
+        }
+        return `/payer-backbone/${type}?${args.join('&')}`;
       },
     }),
     addPayerBackbone: builder.mutation<

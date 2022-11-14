@@ -82,9 +82,9 @@ function RemoveButton({ fields, remove, name }: RemoveButtonPropTypes) {
 
 interface UrlFormFieldPropTypes {
   initialValues?: Site;
-  form: FormInstance;
 }
-export function UrlFormFields({ initialValues, form }: UrlFormFieldPropTypes) {
+export function UrlFormFields({ initialValues }: UrlFormFieldPropTypes) {
+  const form = Form.useFormInstance();
   return (
     <Form.List name="base_urls">
       {(fields, { add, remove }, { errors }) => (

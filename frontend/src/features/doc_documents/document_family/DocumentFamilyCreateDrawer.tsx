@@ -10,17 +10,36 @@ import { useEffect } from 'react';
 import { fieldGroupsOptions, legacyRelevanceOptions } from './documentFamilyLevels';
 import { DocumentFamily } from './types';
 import { CloseOutlined } from '@ant-design/icons';
+import { DocumentTypes } from '../../retrieved_documents/types';
 
-interface DocumentFamilyCreateModalPropTypes {
+const DocumentType = (props: { documentType?: string }) => (
+  <>
+    {props.documentType ? (
+      <div className="flex">
+        <div className="flex-1 mt-2 mb-4">
+          <h3>Document Type</h3>
+          <div>{props.documentType}</div>
+        </div>
+      </div>
+    ) : (
+      <Form.Item label="Document Type" name="document_type">
+        <Select showSearch options={DocumentTypes} />
+      </Form.Item>
+    )}
+  </>
+);
+
+interface DocumentFamilyCreateDrawerPropTypes {
   documentType?: string;
   open?: boolean;
   onClose: () => void;
-  onSave: (documentFamilyId: string) => void;
   documentFamilyData?: DocumentFamily;
+  onSave: (documentFamily: DocumentFamily) => void;
+  mask?: boolean;
 }
 
-export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTypes) => {
-  const { documentType, open, documentFamilyData, onClose, onSave } = props;
+export const DocumentFamilyCreateDrawer = (props: DocumentFamilyCreateDrawerPropTypes) => {
+  const { open, documentFamilyData, onClose, onSave, mask = true } = props;
   const [form] = useForm();
   const [getDocumentFamilyByName] = useLazyGetDocumentFamilyByNameQuery();
   const [addDocumentFamily, { isLoading, data, isSuccess, reset }] = useAddDocumentFamilyMutation();
@@ -33,7 +52,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
 
   useEffect(() => {
     if (isSuccess && data) {
-      onSave(data._id);
+      onSave(data);
       form.resetFields();
       reset();
     }
@@ -41,7 +60,7 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
 
   useEffect(() => {
     if (isUpdateSuccess && updateData) {
-      onSave(updateData._id);
+      onSave(updateData);
       form.resetFields();
     }
   }, [isUpdateSuccess, updateData]);
@@ -53,15 +72,16 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
     <Drawer
       open={open}
       title={documentFamilyData ? <>Edit Document Family</> : <>Add Document Family</>}
-      width="20%"
+      width="30%"
       placement="left"
       closable={false}
-      mask={false}
+      mask={mask}
       extra={
         <Button type="text" onClick={onClose}>
           <CloseOutlined />
         </Button>
       }
+      onClose={onClose}
     >
       <Form
         form={form}
@@ -73,20 +93,17 @@ export const DocumentFamilyCreateModal = (props: DocumentFamilyCreateModalPropTy
           if (documentFamilyData) {
             update({ body: values, _id: documentFamilyData._id });
             form.resetFields();
-          } else {
+          } else if (props.documentType) {
             addDocumentFamily({
               ...values,
-              document_type: documentType,
+              document_type: props.documentType,
             });
+          } else {
+            addDocumentFamily({ ...values });
           }
         }}
       >
-        <div className="flex">
-          <div className="flex-1 mt-2 mb-4">
-            <h3>Document Type</h3>
-            <div>{documentType}</div>
-          </div>
-        </div>
+        <DocumentType documentType={props.documentType} />
         <Form.Item
           label="Name"
           name="name"

@@ -235,7 +235,13 @@ async def start_inactive_task_checker():
             "status": {"$in": [TaskStatus.IN_PROGRESS]},
             "last_doc_collected": {"$lt": now - timedelta(hours=1)},
         },
-        {"$set": {"status": TaskStatus.CANCELED, "error_message": "Cancelled due to inactivity"}},
+        {
+            "$set": {
+                "status": TaskStatus.CANCELED,
+                "error_message": "Canceled due to inactivity",
+                "end_time": now,
+            }
+        },
     )
     await asyncio.sleep(60)
 

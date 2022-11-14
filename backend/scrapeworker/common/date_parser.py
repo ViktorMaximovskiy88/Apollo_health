@@ -65,6 +65,13 @@ class DateParser:
                 return True
         return False
 
+    def check_effective_date(self):
+        if len(self.unclassified_dates) == 1 and self.effective_date.date is None:
+            eff_date = list(self.unclassified_dates)[0]
+            if self.end_date.date == eff_date:
+                return
+            self.effective_date = DateMatch(date=eff_date)
+
     def get_date_label(self, line: str, start: int, end: int, target="END") -> str | None:
         """
         Find date label between start and end indexes of given string.
@@ -89,7 +96,7 @@ class DateParser:
 
         return matched_label
 
-    def valid_range(self, year: int, month: int, day: int | None) -> bool:
+    def valid_range(self, year: int, month: int, day: int | None = None) -> bool:
         lookahead_year = datetime.now(tz=timezone.utc).year + 5
         return (
             (month >= 1 and month <= 12)
@@ -97,16 +104,26 @@ class DateParser:
             and (not day or (day >= 1 and day <= 31))
         )
 
+    def is_best_effective(self, test_date: datetime, existing_date: datetime) -> bool:
+        if test_date == self.end_date.date:
+            return False
+        today = datetime.now()
+        existing_delta = abs(today - existing_date)
+        new_delta = abs(today - test_date)
+        if new_delta < existing_delta:
+            return True
+        return False
+
     def pick_valid_parts(self, datetext: str):
         if len(datetext) == 6:
             # assuming we have no `day part` and mmYYYY
             maybe_month = int(datetext[:2])
-            maybe_year = int(datetext[4:])
+            maybe_year = int(datetext[2:])
             if self.valid_range(month=maybe_month, year=maybe_year):
                 return f"{maybe_year}-{maybe_month}-01"
 
             # assuming we have no `day part` and YYYYmm
-            maybe_month = int(datetext[2:])
+            maybe_month = int(datetext[4:])
             maybe_year = int(datetext[:4])
             if self.valid_range(month=maybe_month, year=maybe_year):
                 return f"{maybe_year}-{maybe_month}-01"
@@ -136,6 +153,14 @@ class DateParser:
         # if all else fails not a date and we skip
         raise Exception("Invalid date range")
 
+    def check_trailing_chars(self, match: re.Match, text: str) -> bool:
+        # check text for $, %, oz, ml, mg after match
+        trailing_text = text[match.end() :]  # noqa: E203
+        char_match = re.match(r"\s*([\$\%]|mg|ml|oz)", trailing_text)
+        if char_match:
+            return True
+        return False
+
     def get_dates(self, text: str) -> Generator[DateMatch, None, None]:
         for i, rgx in enumerate(self.date_rgxs):
             match = rgx.finditer(text)
@@ -144,11 +169,16 @@ class DateParser:
                 try:
                     datetext = m.group()
                     if i == 0:
+                        year, month = datetext[:4], datetext[4:7]
+                        datetext = f"{year}-{month}-01"
+                    if i == 1:
                         datetext = self.pick_valid_parts(datetext)
                     if i + 1 == len(self.date_rgxs):
                         month, year = re.split(r"[/\-|\.]", datetext)
                         datetext = f"{year}-{month}-01"
                     if i + 2 == len(self.date_rgxs):
+                        if self.check_trailing_chars(m, text):
+                            continue
                         month, year = re.split(r"[/\-|\.]", datetext)
                         datetext = f"20{year}-{month}-01"
                     if i + 3 == len(self.date_rgxs) or i + 4 == len(self.date_rgxs):
@@ -211,8 +241,8 @@ class DateParser:
         elif label in future_dates and match.date < existing_label.date:
             setattr(self, label, match)
 
-        # future date take furtherest from today
-        elif label == "effective_date" and match.date > existing_label.date:
+        # effective date get closest to present
+        elif label == "effective_date" and self.is_best_effective(match.date, existing_label.date):
             setattr(self, label, match)
 
         # past date take closest to today
@@ -244,10 +274,12 @@ class DateParser:
                 continue
             if ends_with_comma:  # append previous line to current line to restore context
                 line = f"{prev_line} {line}"
+            label = ""
             for m in self.get_dates(line):
                 end_date = self.extract_date_span(line, m.end)
                 if end_date:
                     self.update_label(end_date, "end_date")
+                    self.update_label(m, "effective_date")
                 else:
                     label = self.get_date_label(line, m.last_date_index, m.start)
                     if not label:  # If no match, check right of date
@@ -266,7 +298,11 @@ class DateParser:
                         self.update_label(m, label)
                 self.unclassified_dates.add(m.date)
                 latest_match = m.end if m.end > latest_match else latest_match
+            if not label and prev_label:
+                prev_label = None
             if line != "":
                 ends_with_comma = True if line[-1] == "," else False
                 prev_line = line
                 prev_line_index = latest_match
+
+        self.check_effective_date()

@@ -22,6 +22,7 @@ from backend.common.models.payer_backbone import (
     Channel,
     Formulary,
     PayerBackbone,
+    PayerBackboneUnionDoc,
     PayerParent,
     Plan,
     PlanType,
@@ -160,7 +161,7 @@ def process_line(h, line, start_date, delivery: Delivery):
     except ValueError:
         mco_id = None
     try:
-        medical_par_group_id = int(medical_par_group_id)
+        medical_par_group_id = int(medical_par_group_id) * 10000
     except ValueError:
         medical_par_group_id = None
     try:
@@ -252,7 +253,7 @@ async def insert_delivery(delivery: Delivery | None):
 
 def convert_filepath_to_start_date(filepath: str):
     if "4Q22" in filepath:
-        return datetime(2022, 9, 1)
+        return datetime(2022, 10, 1)
     if "3Q22" in filepath:
         return datetime(2000, 1, 1)
     raise Exception(f"Unknown start date time file {filepath}")
@@ -307,6 +308,9 @@ async def process_backbone(filepath: str, previous_delivery: Delivery | None):
 
 
 async def load_payer_backbone():
+    if await PayerBackboneUnionDoc.count():
+        return
+
     previous_delivery = None
     for file in os.listdir(this_folder):
         if not file.endswith("xlsx"):

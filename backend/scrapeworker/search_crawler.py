@@ -24,7 +24,9 @@ class SearchableCrawler:
             to_xpath(config.searchable_input) if config.searchable_input else None
         )
         self.submit_selector: str | None = (
-            to_xpath(config.searchable_submit) if config.searchable_submit else None
+            to_xpath(config.searchable_submit)
+            if config.searchable_submit and config.searchable_submit.attr_element
+            else None
         )
         self.log = log
 

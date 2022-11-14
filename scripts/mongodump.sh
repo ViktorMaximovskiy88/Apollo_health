@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-DB_ENV="tst"
+DB_ENV="dev"
 DB_NAME="source-hub"
 TIMESTAMP=$(date +'%Y%m%d_%H%M%S_%Z')
 OUTPUT_NAME="${DB_NAME}-${DB_ENV}-${TIMESTAMP}"
@@ -22,10 +22,6 @@ mongodump --uri="mongodb://localhost:27017/${DB_NAME}" \
     -o "${BACKUP_NAME}"
 
 # careful this is for test or dev.
-AWS_ACCESS_KEY_ID=""
-AWS_SECRET_ACCESS_KEY=""
-AWS_SESSION_TOKEN=""
-
 # mongodump --uri="mongodb+srv://apollo-${DB_ENV}-use1-mmit-01.3qm7h.mongodb.net/${DB_NAME}?&authSource=%24external" \
 #     --authenticationMechanism="MONGODB-AWS" \
 #     --awsSessionToken="${AWS_SESSION_TOKEN}" \

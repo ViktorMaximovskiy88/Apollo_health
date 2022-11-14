@@ -44,6 +44,7 @@ export function SiteDocumentsTable() {
       {...controlledPagination}
       rowHeight={50}
       columns={columns}
+      columnUserSelect
     />
   );
 }

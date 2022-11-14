@@ -162,6 +162,7 @@ export function UsersHomePage() {
         dataSource={formattedUsers}
         columns={newColumns}
         rowHeight={50}
+        columnUserSelect
       />
     </MainLayout>
   );

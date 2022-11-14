@@ -39,8 +39,11 @@ class ScrapePlaybook:
             return steps
 
         ignore_keywords = [
+            "pupeteer.launch",
+            "require('puppeteer')",
             "chromium.launch",
             "browser.close",
+            "browser.newPage",
             "page.goto",
             "page.setViewport",
         ]
@@ -197,8 +200,8 @@ class ScrapePlaybook:
         async for next_page, context in next_steps:
             yield next_page, context
 
-    async def run_playbook(self, page: Page):
-        if not self.playbook:
+    async def run_playbook(self, page: Page, skip_playbook: bool = False):
+        if not self.playbook or skip_playbook:
             yield page, []
             return
 

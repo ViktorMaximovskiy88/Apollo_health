@@ -1,55 +1,115 @@
-import { Form, Select, Button, Input, Row, Col } from 'antd';
+import { Form, Button, Input, Row, Col } from 'antd';
 import { Link } from 'react-router-dom';
 import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
-import { PayerFamily } from '../payer-family/types';
-import { useGetPayerFamiliesQuery } from '../payer-family/payerFamilyApi';
-import { TextEllipsis } from '../../components';
+import { PayerFamily as PayerFamilyType } from '../payer-family/types';
+import { useLazyGetPayerFamiliesQuery } from '../payer-family/payerFamilyApi';
+import { RemoteSelect, TextEllipsis } from '../../components';
 import { LinkIcon } from '../../components/LinkIcon';
-import { useEffect, useMemo } from 'react';
+import { useCallback } from 'react';
+
+const useFetchPayerFamilyOptions = () => {
+  const [getPayerFamilies] = useLazyGetPayerFamiliesQuery();
+  const fetchPayerFamilyOptions = useCallback(
+    async (search: string) => {
+      const { data } = await getPayerFamilies({
+        limit: 50,
+        skip: 0,
+        sortInfo: { name: 'name', dir: 1 },
+        filterValue: [{ name: 'name', operator: 'contains', type: 'string', value: search }],
+      });
+      if (!data) return [];
+      return data.data.map((item: PayerFamilyType) => ({ value: item._id, label: item.name }));
+    },
+    [getPayerFamilies]
+  );
+  return fetchPayerFamilyOptions;
+};
 
 interface DocDocumentLocationFormTypes {
-  documentType: string;
   location: DocDocumentLocation;
   index: number;
   onShowPayerFamilyCreate: (location: DocDocumentLocation) => void;
   onShowPayerFamilyEdit: (location: DocDocumentLocation) => void;
-  setEditPayerFamilyId: (payerFamilyId: string) => void;
+  currentOption?: { value: string; label: string };
+  setCurrentOption: (newCurrentOption: { value: string; label: string } | undefined) => void;
 }
-const useGetPayerFamilies = () => {
-  const args = useMemo(() => {
-    return {
-      limit: 1000,
-      skip: 0,
-      sortInfo: { name: 'name', dir: 1 as 1 | -1 | 0 },
-      filterValue: [
-        { name: 'name', operator: 'eq', type: 'string', value: '' },
-        { name: 'document_type', operator: 'eq', type: 'string', value: '' },
-      ],
-    };
-  }, []);
-  return useGetPayerFamiliesQuery(args);
-};
-export const DocDocumentLocationForm = ({
+
+const PayerFamily = ({
   location,
   index,
-  setEditPayerFamilyId,
   onShowPayerFamilyCreate,
   onShowPayerFamilyEdit,
+  currentOption,
+  setCurrentOption,
 }: DocDocumentLocationFormTypes) => {
   const form = Form.useFormInstance();
 
-  const { data } = useGetPayerFamilies();
-  const options = data?.data
-    .map((item: PayerFamily) => ({ value: item._id, label: item.name }))
-    .sort();
   const updatedLocation = Form.useWatch(['locations', index]);
+
+  const fetchPayerFamilyOptions = useFetchPayerFamilyOptions();
+
+  return (
+    <Form.Item label="Payer Family">
+      <div className="flex space-x-2 pt-1">
+        <Form.Item noStyle name={['locations', index, 'payer_family_id']}>
+          <RemoteSelect
+            className="flex-grow"
+            allowClear
+            initialOptions={currentOption ? [currentOption] : []}
+            fetchOptions={fetchPayerFamilyOptions}
+            value={currentOption}
+            onClear={() => {
+              const locations = form.getFieldValue('locations');
+              locations[index].payer_family_id = undefined;
+              setCurrentOption(undefined);
+              form.setFieldsValue({ locations });
+            }}
+            onSelect={(payerFamilyId: any, option: any) => {
+              const locations = form.getFieldValue('locations');
+              locations[index].payer_family_id = payerFamilyId;
+              setCurrentOption(option);
+              form.setFieldsValue({ locations });
+            }}
+          />
+          {updatedLocation?.payer_family_id ? (
+            <Button
+              className="mr-3"
+              onClick={() => {
+                onShowPayerFamilyEdit(updatedLocation);
+              }}
+              type="dashed"
+            >
+              <EditOutlined />
+              Edit
+            </Button>
+          ) : null}
+          <Button
+            onClick={() => {
+              onShowPayerFamilyCreate(location);
+            }}
+            type="dashed"
+          >
+            <PlusOutlined />
+            New
+          </Button>
+        </Form.Item>
+      </div>
+    </Form.Item>
+  );
+};
+
+export function DocDocumentLocationForm({
+  location,
+  index,
+  onShowPayerFamilyCreate,
+  onShowPayerFamilyEdit,
+  currentOption,
+  setCurrentOption,
+}: DocDocumentLocationFormTypes) {
   const baseUrl = Form.useWatch(['locations', index, 'base_url']);
   const url = Form.useWatch(['locations', index, 'url']);
 
-  useEffect(() => {
-    setEditPayerFamilyId(form.getFieldValue(['locations', 0, 'payer_family_id']));
-  }, [setEditPayerFamilyId, form]);
   return (
     <div className="property-grid bg-white p-2 mb-4">
       {/* Our header is separate due to styles */}
@@ -110,41 +170,16 @@ export const DocDocumentLocationForm = ({
           <Input readOnly={true} />
         </Form.Item>
 
-        <Form.Item label="Payer Family" name={['locations', index, 'payer_family_id']}>
-          <Select
-            value={updatedLocation?.payer_family_id}
-            onSelect={(payerFamilyId: string) => {
-              const locations = form.getFieldValue('locations');
-              locations[index].payer_family_id = payerFamilyId;
-              setEditPayerFamilyId(payerFamilyId);
-              form.setFieldsValue({ locations });
-            }}
-            options={options}
-            style={{ width: 'calc(100% - 296px', marginRight: '8px' }}
-          />
-          {form.getFieldValue('locations')[index].payer_family_id ? (
-            <Button
-              className="mr-3"
-              onClick={() => {
-                onShowPayerFamilyEdit(updatedLocation);
-              }}
-              type="dashed"
-            >
-              <EditOutlined />
-              Edit
-            </Button>
-          ) : null}
-          <Button
-            onClick={() => {
-              onShowPayerFamilyCreate(location);
-            }}
-            type="dashed"
-          >
-            <PlusOutlined />
-            New
-          </Button>
-        </Form.Item>
+        <PayerFamily
+          key={location.site_id}
+          index={index}
+          location={location}
+          onShowPayerFamilyCreate={onShowPayerFamilyCreate}
+          onShowPayerFamilyEdit={onShowPayerFamilyEdit}
+          currentOption={currentOption}
+          setCurrentOption={setCurrentOption}
+        />
       </div>
     </div>
   );
-};
+}

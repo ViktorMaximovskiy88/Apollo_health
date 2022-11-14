@@ -92,15 +92,15 @@ def test_all_date_formats():
     text = """
         2023|01|01 02|01|2023
         03|23 04|2023 05.23
-        06.2023
+        06.2023 2023Jul
     """
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     dates = []
-    for m in range(1, 7):
+    for m in range(1, 8):
         dates.append(datetime(2023, m, 1))
 
-    assert len(parser.unclassified_dates) == 6
+    assert len(parser.unclassified_dates) == 7
     for date in dates:
         assert date in parser.unclassified_dates
 
@@ -187,46 +187,54 @@ def test_extract_date_span():
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
+    assert parser.effective_date.date == datetime(2020, 12, 1)
     assert parser.end_date.date == datetime(2023, 10, 15)
 
     text = "This will also get a date May 2021     -      July 2023 with text around"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
+    assert parser.effective_date.date == datetime(2021, 5, 1)
     assert parser.end_date.date == datetime(2023, 7, 1)
 
     text = "This will not grab a date span 10-10-2021 because - July 2023 of the text left of dash"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
+    assert parser.effective_date.date is None
     assert parser.end_date.date is None
 
     text = "This will not grab a date span 12-10-2021 - because July 2023 of the text right of dash"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
+    assert parser.effective_date.date is None
     assert parser.end_date.date is None
 
     text = """
-        date span 12/10/2021-1/5/2023 and
-        other dates published 2010-10-23
+        date span 12/10/2026-1/5/2027 and
+        other dates published 2010-10-23 effective
+        between 12/10/2026 and 1/6/2027
     """
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
-    assert len(parser.unclassified_dates) == 3
-    assert parser.end_date.date == datetime(2023, 1, 5)
+    assert len(parser.unclassified_dates) == 4
+    assert parser.effective_date.date == datetime(2026, 12, 10)
+    assert parser.end_date.date == datetime(2027, 1, 5)
     assert parser.published_date.date == datetime(2010, 10, 23)
 
-    text = "date span with only 1 year and unicode separator January 1 – December 31, 2022"
+    text = "date span with only 1 year and unicode separator January 1 – December 31, 2023"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
-    assert parser.end_date.date == datetime(2022, 12, 31)
+    assert parser.effective_date.date == datetime(2023, 1, 1)
+    assert parser.end_date.date == datetime(2023, 12, 31)
 
     text = "different unicode separator January 1 ­ December 31, 2023"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
+    assert parser.effective_date.date == datetime(2023, 1, 1)
     assert parser.end_date.date == datetime(2023, 12, 31)
 
 
@@ -278,3 +286,23 @@ def test_default_effective_date():
     assert len(parser.unclassified_dates) == 2
     assert parser.published_date.date == datetime(2022, 3, 9)
     assert parser.effective_date.date == datetime(2020, 5, 5)
+
+    text = "Contains only one date 1/30/2020"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 1
+    assert parser.effective_date.date == datetime(2020, 1, 30)
+
+
+def test_pick_valid_date_range():
+    text = "Contains invalid date 01-1678"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 0
+
+
+def test_ignore_trailing_chars():
+    text = "Not a date 01-22 ml 01-23 mg 01-24 %"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 0

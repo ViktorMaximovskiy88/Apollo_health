@@ -7,6 +7,7 @@ from pydantic import Field
 
 from backend.common.core.enums import ApprovalStatus, LangCode
 from backend.common.models.base_document import BaseDocument, BaseModel
+from backend.common.models.document_family import DocumentFamily
 from backend.common.models.document_mixins import DocumentMixins
 from backend.common.models.shared import (
     DocDocumentLocation,
@@ -35,8 +36,8 @@ class BaseDocDocument(BaseModel):
 
     classification_lock: TaskLock | None = None
 
-    name: str
-    checksum: str
+    name: Indexed(str)  # type: ignore
+    checksum: Indexed(str)
     file_extension: str | None = None
     text_checksum: str | None = None
     lang_code: LangCode | None = None
@@ -95,12 +96,14 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
     class Settings:
         indexes = [
             [("locations.site_id", pymongo.ASCENDING)],
+            [("locations.link_text", pymongo.ASCENDING)],
             [("locks.user_id", pymongo.ASCENDING)],
         ]
 
 
 class DocDocumentView(DocDocument):
     locations: list[DocDocumentLocationView] = []
+    document_family: DocumentFamily | None = None
 
 
 class SiteDocDocument(BaseDocDocument, DocDocumentLocation):

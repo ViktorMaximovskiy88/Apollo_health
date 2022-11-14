@@ -92,7 +92,16 @@ function useWorkQueueColumns(
       defaultFlex: 1,
       minWidth: 300,
       render: ({ data: item }: { data: { _id: string; name: string } }) => {
-        return <ButtonLink to={`${item._id}/read-only`}>{item.name}</ButtonLink>;
+        return <ButtonLink to={`${item._id}/process`}>{item.name}</ButtonLink>;
+      },
+    },
+    {
+      name: 'locations.link_text',
+      header: 'Link Text',
+      defaultFlex: 1,
+      minWidth: 300,
+      render: ({ data }: { data: { locations: { link_text: string }[] } }) => {
+        return data.locations.map((s) => s.link_text).join(', ');
       },
     },
     {
@@ -226,6 +235,7 @@ export function WorkQueuePage() {
         {...filterProps}
         {...sortProps}
         {...paginationProps}
+        columnUserSelect
       />
     </MainLayout>
   );

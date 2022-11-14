@@ -223,7 +223,6 @@ const NotFound = () => {
 
 const NewVersion = () => {
   const { doc, handleNewVersion, workItem } = useContext(ValidationButtonsContext) ?? {};
-  const updateSelected = useUpdateSelected();
   if (!workItem || !doc || !handleNewVersion) return null;
 
   switch (workItem.selected) {
@@ -233,7 +232,6 @@ const NewVersion = () => {
           <Button
             onClick={() => {
               handleNewVersion(doc);
-              updateSelected(WorkItemOption.NewVersion);
             }}
           >
             <Tooltip placement="top" title="New Version">
@@ -264,7 +262,6 @@ const NewVersion = () => {
           <Button
             onClick={() => {
               handleNewVersion(doc);
-              updateSelected(WorkItemOption.NewVersion);
             }}
           >
             <Tooltip placement="top" title="New Version">
@@ -288,7 +285,6 @@ const NewVersion = () => {
             type="primary"
             onClick={() => {
               handleNewVersion(doc);
-              updateSelected(WorkItemOption.NewVersion);
             }}
           >
             <Tooltip placement="top" title="New Version">
@@ -311,7 +307,6 @@ const NewVersion = () => {
           <Button
             onClick={() => {
               handleNewVersion(doc);
-              updateSelected(WorkItemOption.NewVersion);
             }}
           >
             <Tooltip placement="top" title="New Version">

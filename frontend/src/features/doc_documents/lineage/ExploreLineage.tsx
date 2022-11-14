@@ -1,4 +1,4 @@
-import { Button, Checkbox } from 'antd';
+import { Button, Checkbox, Form } from 'antd';
 import { useParams } from 'react-router-dom';
 import { FileTypeViewer } from '../../retrieved_documents/RetrievedDocumentViewer';
 import { useCallback, useState } from 'react';
@@ -26,7 +26,7 @@ const LineageModalBody = ({ showCurrentDocument }: { showCurrentDocument: boolea
   const { data: currentDocDocument } = useGetDocDocumentQuery(docDocumentId);
 
   const previousDocDocumentId = useSelector(previousDocDocumentIdState);
-  const { data: docDocument } = useGetDocDocumentQuery(previousDocDocumentId);
+  const { data: previousDocDocument } = useGetDocDocumentQuery(previousDocDocumentId ?? '');
 
   return (
     <div className="flex flex-row h-full">
@@ -34,7 +34,7 @@ const LineageModalBody = ({ showCurrentDocument }: { showCurrentDocument: boolea
         <h3>Documents</h3>
         <LineageDocDocumentsTable />
       </div>
-      <LineageDocViewer label="Previous Document" doc={docDocument} />
+      <LineageDocViewer label="Previous Document" doc={previousDocDocument} />
       {showCurrentDocument ? (
         <LineageDocViewer label="Current Document" doc={currentDocDocument} />
       ) : null}
@@ -42,28 +42,77 @@ const LineageModalBody = ({ showCurrentDocument }: { showCurrentDocument: boolea
   );
 };
 
-export function ExploreLineage(props: {
-  onChange?: (previousDocDocumentId: string) => void;
-  value?: string;
-}) {
-  const dispatch = useAppDispatch();
+const LineageModalFooter = (props: {
+  showCurrentDocument: boolean;
+  setShowCurrentDocument: (showCurrentDocument: boolean) => void;
+  handleCancel: () => void;
+  handleSubmit: () => Promise<void>;
+}) => {
   const previousDocDocumentId = useSelector(previousDocDocumentIdState);
+  return (
+    <div className="flex">
+      <div className="mr-auto">
+        <Checkbox
+          checked={props.showCurrentDocument}
+          onChange={(e) => props.setShowCurrentDocument(e.target.checked)}
+        >
+          Show Current Document
+        </Checkbox>
+      </div>
+      <div>
+        <Button key="cancel" onClick={props.handleCancel}>
+          Cancel
+        </Button>
+        <Button
+          key="submit"
+          type="primary"
+          onClick={props.handleSubmit}
+          disabled={!previousDocDocumentId}
+        >
+          Submit
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export function ExploreLineage() {
+  const form = Form.useFormInstance();
+
+  const { docDocumentId: updatingDocDocId } = useParams();
+  const { data: updatingDocDoc } = useGetDocDocumentQuery(updatingDocDocId, {
+    skip: !updatingDocDocId,
+  });
+
+  const dispatch = useAppDispatch();
+  const prevDocDocId = useSelector(previousDocDocumentIdState);
   const [open, setOpen] = useState(false);
   const [showCurrentDocument, setShowCurrentDocument] = useState(true);
 
-  const closeModal = useCallback(() => setOpen(false), [setOpen]);
+  const closeModal = useCallback(() => {
+    setOpen(false);
+  }, []);
+
+  const handleCancel = useCallback(() => {
+    dispatch(setPreviousDocDocumentId(null));
+    closeModal();
+  }, [closeModal, dispatch]);
 
   const handleModalOpen = useCallback(() => {
-    if (props.value) {
-      dispatch(setPreviousDocDocumentId(props.value));
+    if (!prevDocDocId && updatingDocDoc?.previous_doc_doc_id) {
+      dispatch(setPreviousDocDocumentId(updatingDocDoc.previous_doc_doc_id));
     }
     setOpen(true);
-  }, [dispatch, setOpen, props]);
+    return () => {
+      dispatch(setPreviousDocDocumentId(null));
+    };
+  }, [dispatch, prevDocDocId, updatingDocDoc?.previous_doc_doc_id]);
 
-  const handleSubmit = useCallback(() => {
-    props.onChange?.(previousDocDocumentId);
+  const handleSubmit = useCallback(async () => {
+    if (!prevDocDocId) throw new Error('prevDocDocId not found');
+    form.setFieldValue('previous_doc_doc_id', prevDocDocId);
     closeModal();
-  }, [props, previousDocDocumentId, closeModal]);
+  }, [prevDocDocId, form, closeModal]);
 
   return (
     <div className="flex space-x-8 items-center">
@@ -74,26 +123,14 @@ export function ExploreLineage(props: {
       <FullScreenModal
         title="Explore Lineage"
         open={open}
-        onCancel={closeModal}
+        onCancel={handleCancel}
         footer={[
-          <div className="flex">
-            <div className="mr-auto">
-              <Checkbox
-                checked={showCurrentDocument}
-                onChange={(e) => setShowCurrentDocument(e.target.checked)}
-              >
-                Show Current Document
-              </Checkbox>
-            </div>
-            <div>
-              <Button key="cancel" onClick={closeModal}>
-                Cancel
-              </Button>
-              <Button key="submit" type="primary" onClick={handleSubmit}>
-                Submit
-              </Button>
-            </div>
-          </div>,
+          <LineageModalFooter
+            showCurrentDocument={showCurrentDocument}
+            setShowCurrentDocument={setShowCurrentDocument}
+            handleCancel={handleCancel}
+            handleSubmit={handleSubmit}
+          />,
         ]}
       >
         <LineageModalBody showCurrentDocument={showCurrentDocument} />

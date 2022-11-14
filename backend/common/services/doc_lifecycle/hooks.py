@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 
+from beanie import PydanticObjectId
+
 from backend.common.core.enums import ApprovalStatus
 from backend.common.models.base_document import BaseModel
 from backend.common.models.content_extraction_task import ContentExtractionTask
@@ -12,17 +14,18 @@ from backend.common.models.doc_document import (
 )
 from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleService
 from backend.common.services.extraction.extraction_delta import DeltaCreator
+from backend.common.services.lineage.update_prev_document import update_lineage
 from backend.common.services.tag_compare import TagCompare
 from backend.common.task_queues.unique_task_insert import try_queue_unique_task
 
 
 class ChangeInfo(BaseModel):
     translation_change: bool = False
-    lineage_change: bool = False
+    lineage_change: PydanticObjectId | None = None
 
 
 async def recompare_tags(doc: DocDocument, prev_doc: DocDocument):
-    ther_tags, indi_tags = TagCompare().execute(doc, prev_doc)
+    ther_tags, indi_tags = await TagCompare().execute(doc, prev_doc)
     doc.therapy_tags = ther_tags
     doc.indication_tags = indi_tags
     await DocDocument.get_motor_collection().update_one(
@@ -83,6 +86,12 @@ async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = Cha
             await recompare_tags(next_doc, doc)
             await recompare_extractions(next_doc, doc)
 
+        await update_lineage(
+            updating_doc_doc=doc,
+            old_prev_doc_doc_id=change_info.lineage_change,
+            new_prev_doc_doc_id=doc.previous_doc_doc_id,
+        )
+
     await DocLifecycleService().assess_document_status(doc)
 
 
@@ -97,7 +106,8 @@ def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
     if (
         isinstance(updates, (UpdateDocDocument, ClassificationUpdateDocDocument))
         and updates.previous_doc_doc_id
+        and updates.previous_doc_doc_id != doc.previous_doc_doc_id
     ):
-        change_info.lineage_change = updates.previous_doc_doc_id != doc.previous_doc_doc_id
+        change_info.lineage_change = doc.previous_doc_doc_id
 
     return change_info
