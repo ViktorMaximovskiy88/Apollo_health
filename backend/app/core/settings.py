@@ -1,3 +1,5 @@
+from pprint import pprint
+
 from pydantic import AnyUrl, BaseSettings, Field, HttpUrl, RedisDsn
 
 from backend.common.core.config import env_type, load_dotenv
@@ -42,6 +44,9 @@ class Settings(BaseSettings):
     s3_endpoint_url: str
     s3_document_bucket: str
 
+    pdfdiff_worker_queue_url: str
+    lineage_worker_queue_url: str
+
     redis_url: RedisDsn
     redis_password: str
 
@@ -54,4 +59,4 @@ class Settings(BaseSettings):
 settings = Settings()
 
 if settings.is_local:
-    print(f"Env Loaded:\n\n {settings}\n\n")
+    pprint(f"Env Loaded: {settings}")

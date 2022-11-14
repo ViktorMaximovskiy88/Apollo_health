@@ -64,7 +64,7 @@ resource "aws_ecs_task_definition" "pdfdiffworker" {
           value = "${local.new_relic_app_name}-pdfdiffworker"
         },
         {
-          name = "PDFDIFF_WORKER_QUEUE_URL"
+          name  = "PDFDIFF_WORKER_QUEUE_URL"
           value = aws_sqs_queue.pdfdiffworker.url
         }
       ]
@@ -181,6 +181,7 @@ resource "aws_sqs_queue" "pdfdiffworker" {
   visibility_timeout_seconds = 30
   message_retention_seconds  = 345600 # 4 days
   delay_seconds              = 0
+  fifo_queue                 = true
 
   tags = merge(local.effective_tags, {
     component = "${local.service_name}-pdfdiffworker"

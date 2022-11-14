@@ -1,29 +1,38 @@
 import json
 import logging
 from abc import ABC
+from urllib.parse import urlparse
 
 import boto3
 
 
 class SQSBase(ABC):
-    def __init__(self, queue_name: str, endpoint_url: str, logger=logging) -> None:
+    def __init__(self, queue_url: str, logger=logging) -> None:
         self.logger = logger
-        self.queue_name = queue_name
-        self.sqs = boto3.resource("sqs", endpoint_url=endpoint_url)
+        # local vs aws parsing, mreh
+        self.parse_queue_url(queue_url)
+        self.sqs = boto3.resource("sqs", endpoint_url=self.endpoint_url)
         self.queue = self.sqs.get_queue_by_name(QueueName=self.queue_name)
-        self.logger.info(f"{self.queue_name} initialized for endpoint {endpoint_url}")
+        self.logger.info(f"{self.queue_name} initialized for endpoint {self.endpoint_url}")
+
+    # sets both queuename and endpoint url
+    def parse_queue_url(self, queue_url):
+        parsed_url = urlparse(queue_url)
+        paths = parsed_url.path.split("/")
+        self.queue_name = paths.pop()
+        self.endpoint_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+        self.endpoint_url += "/".join(paths)
 
 
 class SQSListener(SQSBase):
     def __init__(
         self,
-        queue_name: str,
-        endpoint_url: str,
+        queue_url: str,
         logger=logging,
         max_number_of_messages=1,
         wait_time_seconds=1,
     ) -> None:
-        super().__init__(queue_name, endpoint_url, logger)
+        super().__init__(queue_url, logger)
         self.max_number_of_messages = max_number_of_messages
         self.wait_time_seconds = wait_time_seconds
 

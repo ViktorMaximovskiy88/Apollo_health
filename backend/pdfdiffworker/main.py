@@ -9,6 +9,7 @@ sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 import asyncio
 import logging
 
+from backend.app.core.settings import settings
 from backend.common.db.init import init_db
 from backend.common.sqs.pdf_diff_task import PDFDiffTaskQueue
 
@@ -21,8 +22,7 @@ async def main():
     logger.info("Starting the pdfdiff queue worker")
 
     queue = PDFDiffTaskQueue(
-        queue_name="pdf-diff-queue.fifo",
-        endpoint_url="http://localhost:9324",
+        queue_url=settings.pdfdiff_worker_queue_url,
         logger=logger,
     )
 

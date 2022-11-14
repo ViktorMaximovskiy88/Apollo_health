@@ -6,6 +6,7 @@ from beanie.odm.queries.find import FindMany
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from fastapi.responses import StreamingResponse
 
+from backend.app.core.settings import settings
 from backend.app.routes.sites import Site
 from backend.app.routes.table_query import (
     TableFilterInfo,
@@ -40,8 +41,7 @@ router: APIRouter = APIRouter(
 
 
 pdf_diff_queue = PDFDiffTaskQueue(
-    queue_name="pdf-diff-queue.fifo",
-    endpoint_url="http://localhost:9324",
+    queue_url=settings.pdfdiff_worker_queue_url,
 )
 
 

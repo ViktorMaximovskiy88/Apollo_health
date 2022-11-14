@@ -51,6 +51,7 @@ class PDFDiffTaskQueue(SQSListener, SQSClient):
         task = await task.save()
 
         try:
+            self.logger.info("PDFDiffTask processing started")
             doc_client = DocumentStorageClient()
             dtc = DocTextCompare(doc_client)
 
@@ -63,6 +64,7 @@ class PDFDiffTaskQueue(SQSListener, SQSClient):
             task.is_complete = True
             task.status = TaskStatus.FINISHED
             task = await task.save()
+            self.logger.info("PDFDiffTask processing finished")
 
         except Exception as ex:
             self.logger.error("PDFDiffTask error:", exc_info=True)
