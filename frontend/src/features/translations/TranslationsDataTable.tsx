@@ -69,6 +69,7 @@ export function TranslationsDataTable() {
       columns={columns}
       rowHeight={50}
       activateRowOnFocus={false}
+      columnUserSelect
     />
   );
 }

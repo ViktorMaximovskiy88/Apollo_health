@@ -23,7 +23,7 @@ import {
   CheckCircleOutlined,
 } from '@ant-design/icons';
 
-import { prettyDate } from '../../common';
+import { prettyDateFromISO } from '../../common';
 import { useAddDocumentMutation } from '../retrieved_documents/documentsApi';
 import { baseApiUrl, client } from '../../app/base-api';
 import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
@@ -416,7 +416,7 @@ function DateItems(props: any) {
                     mode="date"
                     showTime={false}
                     style={{ width: '100%' }}
-                    format={(value) => prettyDate(value.toDate())}
+                    format={(value) => prettyDateFromISO(value.toISOString())}
                     disabled={isEditingDocFromOtherSite ? true : false}
                   />
                 </Form.Item>

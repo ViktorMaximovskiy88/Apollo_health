@@ -55,6 +55,7 @@ export interface CompareResponse extends BaseDocument {
   queued: boolean;
   new_key: string | null;
   prev_key: string | null;
+  diff: string; // silences error in DocCompareToPrevious.tsx
 }
 
 export interface DocDocument extends BaseDocument {
