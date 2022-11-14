@@ -31,7 +31,7 @@ from backend.common.models.shared import DocDocumentLocationView
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook, get_doc_change_info
-from backend.common.sqs.pdf_diff_task import PDFDiffTaskQueue
+from backend.common.sqs.pdfdiff_task_queue import PDFDiffTaskQueue
 from backend.common.storage.client import DocumentStorageClient
 
 router: APIRouter = APIRouter(

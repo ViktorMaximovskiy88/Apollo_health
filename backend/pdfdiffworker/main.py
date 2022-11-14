@@ -11,7 +11,7 @@ import logging
 
 from backend.app.core.settings import settings
 from backend.common.db.init import init_db
-from backend.common.sqs.pdf_diff_task import PDFDiffTaskQueue
+from backend.common.sqs.pdfdiff_task_queue import PDFDiffTaskQueue
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("pdfdiff")

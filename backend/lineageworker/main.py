@@ -11,7 +11,7 @@ import logging
 
 from backend.app.core.settings import settings
 from backend.common.db.init import init_db
-from backend.common.sqs.lineage_task import LineageTaskQueue
+from backend.common.sqs.lineage_task_queue import LineageTaskQueue
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("lineage")

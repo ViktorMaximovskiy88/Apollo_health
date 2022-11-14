@@ -5,7 +5,7 @@ from backend.app.core.settings import settings
 from backend.app.utils.user import get_current_user
 from backend.common.models.lineage import LineageDoc
 from backend.common.services.document import get_site_lineage
-from backend.common.sqs.lineage_task import LineageTaskQueue
+from backend.common.sqs.lineage_task_queue import LineageTaskQueue
 
 lineage_queue = LineageTaskQueue(
     queue_url=settings.lineage_worker_queue_url,
