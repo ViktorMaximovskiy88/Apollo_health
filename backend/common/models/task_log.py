@@ -24,6 +24,7 @@ class BaseTask(BaseDocument):
     error: str | None = None
     is_complete: bool = False
     dedupe_key: str
+    task_type: str
 
     @before_event(Insert)
     def insert_dates(self):
@@ -38,6 +39,7 @@ class BaseTask(BaseDocument):
 
 
 class PDFDiffTask(BaseTask):
+    task_type: str = "PDFDiffTask"
     current_checksum: str | None
     previous_checksum: str | None
 
@@ -46,6 +48,7 @@ class PDFDiffTask(BaseTask):
 
 
 class LineageTask(BaseTask):
+    task_type: str = "LineageTask"
     site_id: PydanticObjectId
     reprocess: bool = False
 
