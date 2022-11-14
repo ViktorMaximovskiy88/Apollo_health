@@ -54,6 +54,18 @@ variable "sourcehub-dbmigrations-version" {
   default = "latest"
 }
 
+variable "sourcehub-lineageworker-version" {
+  type = string
+  description = "Version tag of the SourceHub lineageworker container"
+  default = "latest"
+}
+
+variable "sourcehub-pdfdiffworker-version" {
+  type = string
+  description = "Version tag of the SourceHub pdfdiffworker container"
+  default = "latest"
+}
+
 variable "auth0-config" {
   type = object({
     domain = string,

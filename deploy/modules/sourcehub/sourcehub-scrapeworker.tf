@@ -70,6 +70,14 @@ resource "aws_ecs_task_definition" "scrapeworker" {
         {
           name = "NEW_RELIC_APP_NAME"
           value = "${local.new_relic_app_name}-ScrapeWorker"
+        },
+        {
+          name = "LINEAGE_WORKER_QUEUE_URL"
+          value = aws_sqs_queue.lineageworker.url
+        },
+        {
+          name = "PDFDIFF_WORKER_QUEUE_URL"
+          value = aws_sqs_queue.pdfdiffworker.url
         }
       ]
       essential = true

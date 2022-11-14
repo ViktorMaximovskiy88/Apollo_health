@@ -8,6 +8,8 @@ sourcehub-app-version          = "latest"
 sourcehub-scrapeworker-version = "latest"
 sourcehub-parseworker-version  = "latest"
 sourcehub-scheduler-version    = "latest"
+sourcehub-lineageworker-version    = "latest"
+sourcehub-pdfdiffworker-version    = "latest"
 
 auth0-config = {
   domain = "https://mmitnetwork.auth0.com"
