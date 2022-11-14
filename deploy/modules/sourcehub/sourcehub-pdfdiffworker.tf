@@ -176,7 +176,7 @@ resource "aws_ecs_service" "pdfdiffworker" {
 
 
 resource "aws_sqs_queue" "pdfdiffworker" {
-  name = format("%s-%s-%s-pdfdiffworker-%s-mmit-sqs-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
+  name = format("%s-%s-%s-pdfdiffworker-%s-mmit-sqs-%02d.fifo", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
 
   visibility_timeout_seconds = 30
   message_retention_seconds  = 345600 # 4 days
