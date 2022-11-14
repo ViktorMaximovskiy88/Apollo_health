@@ -78,6 +78,7 @@ export const DocDocumentLocations = ({ locations }: DocDocumentLocationsPropType
             setCreateDrawerOpen(false);
             setSelectedLocationIndex(-1);
           }}
+          mask={false}
         />
       ) : null}
 
