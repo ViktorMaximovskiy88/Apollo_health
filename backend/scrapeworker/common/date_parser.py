@@ -274,6 +274,7 @@ class DateParser:
                 continue
             if ends_with_comma:  # append previous line to current line to restore context
                 line = f"{prev_line} {line}"
+            label = ""
             for m in self.get_dates(line):
                 end_date = self.extract_date_span(line, m.end)
                 if end_date:
@@ -297,6 +298,8 @@ class DateParser:
                         self.update_label(m, label)
                 self.unclassified_dates.add(m.date)
                 latest_match = m.end if m.end > latest_match else latest_match
+            if not label and prev_label:
+                prev_label = None
             if line != "":
                 ends_with_comma = True if line[-1] == "," else False
                 prev_line = line
