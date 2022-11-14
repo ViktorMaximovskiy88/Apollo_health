@@ -379,7 +379,7 @@ function ValidationButtons() {
   const params = useParams();
   const siteId = params.siteId;
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
-  const { data: site, refetch } = useGetSiteQuery(siteId);
+  const { data: site } = useGetSiteQuery(siteId);
   if (!site) return null;
 
   if (site.collection_method == 'MANUAL' && activeStatuses.includes(site.last_run_status)) {
