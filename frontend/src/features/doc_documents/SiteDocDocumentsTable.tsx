@@ -54,6 +54,7 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
       rowHeight={50}
       columns={columns}
       renderLoadMask={() => <></>}
+      columnUserSelect
     />
   );
 }
