@@ -27,7 +27,22 @@ export function LineagePage() {
   };
 
   return (
-    <MainLayout sidebar={<SiteMenu />}>
+    <MainLayout
+      sidebar={<SiteMenu />}
+      sectionToolbar={
+        <>
+          <Button
+            onClick={() => {
+              processSiteLineage(siteId);
+              openNotification();
+            }}
+            className="ml-auto"
+          >
+            Reprocess Lineage
+          </Button>
+        </>
+      }
+    >
       <div className="flex flex-row h-full">
         <div className="flex flex-col w-64 mr-2">
           <div className="bg-white mb-1">
