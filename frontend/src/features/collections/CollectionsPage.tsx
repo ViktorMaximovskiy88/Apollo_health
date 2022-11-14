@@ -15,7 +15,6 @@ import { SiteMenu } from '../sites/SiteMenu';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
 import { MainLayout } from '../../components';
 import { isErrorWithData } from '../../common/helpers';
-import { useSiteScrapeTaskId } from '../doc_documents/manual_collection/useUpdateSelected';
 import { initialState } from './collectionsSlice';
 
 export function ManualCollectionButton(props: any) {
@@ -24,7 +23,6 @@ export function ManualCollectionButton(props: any) {
   const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
   const [isLoading, setIsLoading] = useState(false);
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
-  const scrapeTaskId = useSiteScrapeTaskId();
   const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
   const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
 
@@ -35,13 +33,20 @@ export function ManualCollectionButton(props: any) {
     sortInfo: initialState.table.sort,
     filterValue: initialState.table.filter,
   };
+
   const refreshDocs = async () => {
-    if (!scrapeTaskId) return;
     if (!site) return;
     const siteId = site._id;
     refetch();
-    await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
-    await getDocDocumentsQuery({ siteId, scrapeTaskId });
+    const scrapeTasks = await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
+    if (scrapeTasks) {
+      const scrapeTaskId = scrapeTasks.data?.data[0]._id;
+      if (scrapeTaskId) {
+        await getDocDocumentsQuery({ siteId, scrapeTaskId });
+      } else {
+        console.log('ERROR: refreshDocs unable to get id of most recent scrape task.');
+      }
+    }
   };
 
   async function handleRunManualScrape() {
@@ -49,8 +54,8 @@ export function ManualCollectionButton(props: any) {
       setIsLoading(true);
       let response: any = await runScrape(site!._id);
       if (response.data.success) {
-        refreshDocs();
         navigate(`../doc-documents?scrape_task_id=${response.data.nav_id}`);
+        refreshDocs();
       } else {
         setIsLoading(false);
         notification.error({
@@ -108,7 +113,7 @@ export function ManualCollectionButton(props: any) {
     }
   }
 
-  if (site.collection_method == 'MANUAL' && activeStatuses.includes(site.last_run_status)) {
+  if (site.collection_method === 'MANUAL' && activeStatuses.includes(site.last_run_status)) {
     return (
       <Button className="ml-auto" disabled={isLoading} onClick={handleCancelManualScrape}>
         End Manual Collection
@@ -136,7 +141,7 @@ export function CollectionsPage() {
       try {
         let response: any = await runScrape(site._id).unwrap();
         if (response.success) {
-          if (refetch) refetch();
+          refetch();
         } else {
           notification.error({
             message: 'Error Running Collection',

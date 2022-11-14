@@ -83,8 +83,7 @@ async def get_site_lineage(site_id: PydanticObjectId):
 
 
 async def create_doc_document_service(
-    retrieved_document: RetrievedDocument,
-    user: User,
+    retrieved_document: RetrievedDocument, user: User, doc_doc_fields: dict = {}
 ) -> DocDocument:
     # we always have one initially
     rt_doc_location: RetrievedDocumentLocation = retrieved_document.locations[0]
@@ -113,6 +112,9 @@ async def create_doc_document_service(
         locations=[DocDocumentLocation(**rt_doc_location.dict())],
     )
     doc_document.set_final_effective_date()
+    # Set doc doc specific fields which cannot be copied from retr doc.
+    for doc_field_key, doc_field_value in doc_doc_fields.items():
+        setattr(doc_document, doc_field_key, doc_field_value)
 
     logger: Logger = Logger()
     await create_and_log(logger, user, doc_document)
