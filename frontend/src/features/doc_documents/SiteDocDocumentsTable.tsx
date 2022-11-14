@@ -12,6 +12,7 @@ import {
 import { useDataTableSort, useDataTableFilter, useDataTablePagination } from '../../common/hooks';
 import { useSiteDocDocumentColumns } from './useSiteDocDocumentColumns';
 import { SiteDocDocument } from './types';
+import { useInterval } from '../../common/hooks';
 
 interface DataTablePropTypes {
   handleNewVersion: (data: SiteDocDocument) => void;
@@ -21,6 +22,7 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
   const { siteId } = useParams();
   const [searchParams] = useSearchParams();
   const scrapeTaskId = searchParams.get('scrape_task_id');
+  const { watermark } = useInterval(10000);
 
   const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
 
@@ -31,7 +33,7 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
       const count = data?.total ?? 0;
       return { data: sites, count };
     },
-    [getDocDocumentsQuery]
+    [getDocDocumentsQuery, watermark]
   );
 
   const columns = useSiteDocDocumentColumns({ handleNewVersion });
@@ -51,6 +53,7 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
       {...controlledPagination}
       rowHeight={50}
       columns={columns}
+      renderLoadMask={() => <></>}
     />
   );
 }

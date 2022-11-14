@@ -20,6 +20,7 @@ export function SiteDocumentsTable() {
     { pollingInterval: 5000 }
   );
 
+  // TODO belongs in the backend
   const documents =
     data?.map((document) => ({
       ...document,
