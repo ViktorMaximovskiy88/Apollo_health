@@ -12,7 +12,7 @@ class PDFDiffTaskQueue(BaseTaskQueue):
         super().__init__(**kwargs, class_id=PDFDiffTask)
 
     async def process_message(self, message: dict, body: dict):
-        task = self.begin_process_message(body)
+        task = await self.begin_process_message(body)
 
         try:
             doc_client = DocumentStorageClient()
@@ -27,4 +27,4 @@ class PDFDiffTaskQueue(BaseTaskQueue):
         except Exception as ex:
             await self.handle_exception(ex, message, body)
 
-        self.end_process_message(task)
+        await self.end_process_message(task)

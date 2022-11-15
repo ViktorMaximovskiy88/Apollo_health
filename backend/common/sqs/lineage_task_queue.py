@@ -9,7 +9,7 @@ class LineageTaskQueue(BaseTaskQueue):
         self.lineage_service = LineageService(logger=self.logger)
 
     async def process_message(self, message: dict, body: dict):
-        task = self.begin_process_message(body)
+        task = await self.begin_process_message(body)
 
         try:
             if task.reprocess:
@@ -20,4 +20,4 @@ class LineageTaskQueue(BaseTaskQueue):
         except Exception as ex:
             await self.handle_exception(ex, message, body)
 
-        self.end_process_message(task)
+        await self.end_process_message(task)
