@@ -142,7 +142,7 @@ resource "aws_ecs_service" "pdfdiffworker" {
   platform_version = "LATEST"
   cluster          = data.aws_ecs_cluster.ecs-cluster.id
   task_definition  = aws_ecs_task_definition.pdfdiffworker.arn
-  desired_count    = 0
+  desired_count    = 1
   deployment_circuit_breaker {
     enable   = true
     rollback = true
