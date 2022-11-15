@@ -5,13 +5,24 @@ from urllib.parse import urlparse
 
 import boto3
 
+from backend.common.core.config import config, is_local
+
 
 class SQSBase(ABC):
     def __init__(self, queue_url: str, logger=logging) -> None:
         self.logger = logger
         # local vs aws parsing, mreh
         self.parse_queue_url(queue_url)
-        self.sqs = boto3.resource("sqs", endpoint_url=self.endpoint_url)
+        if is_local:
+            self.sqs = boto3.resource(
+                "sqs",
+                endpoint_url=self.endpoint_url,
+                aws_access_key_id=config["AWS_ACCESS_KEY_ID"],
+                aws_secret_access_key=config["AWS_SECRET_ACCESS_KEY"],
+                region_name=config["AWS_REGION"],
+            )
+        else:
+            self.sqs = boto3.resource("sqs", endpoint_url=self.endpoint_url)
         self.queue = self.sqs.get_queue_by_name(QueueName=self.queue_name)
         self.logger.info(f"{self.queue_name} initialized for endpoint {self.endpoint_url}")
 
