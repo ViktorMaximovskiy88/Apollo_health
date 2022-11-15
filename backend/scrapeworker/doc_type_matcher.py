@@ -87,8 +87,10 @@ class DocTypeMatcher:
     # RULES
     ###
     def formulary_update(self, text: str) -> str | None:
-        if self._contains(text, ["PDL", "formulary", "drug list"]) and self._contains(
-            text, ["update", "change", "changes"] and self._not_contains(text, ["Medical"])
+        if (
+            self._contains(text, ["PDL", "formulary", "drug list"])
+            and self._contains(text, ["update", "change", "changes"])
+            and self._not_contains(text, ["Medical"])
         ):
             return DocumentType.FormularyUpdate
 
