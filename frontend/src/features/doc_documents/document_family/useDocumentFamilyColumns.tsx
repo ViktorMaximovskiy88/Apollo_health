@@ -36,7 +36,7 @@ export const createColumns = (
         fetchOptions: siteOptions,
       },
       render: ({ data: docFam }: { data: DocumentFamily }) => {
-        return sitesNamesById[docFam.site_id];
+        return docFam.site_ids.map((s) => sitesNamesById[s]).join(', ');
       },
     },
     {

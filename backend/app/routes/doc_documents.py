@@ -156,8 +156,36 @@ async def update_doc_document(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
+    new_doc_family = updates.document_family_id
+    if new_doc_family:
+        old_doc_family = doc.document_family_id
+        if old_doc_family:
+            await remove_site_from_old_doc_family(old_doc_family, doc)
+        await add_site_to_new_doc_family(new_doc_family, doc)
+
     updates.final_effective_date = calc_final_effective_date(updates)
     change_info = get_doc_change_info(updates, doc)
     updated = await update_and_log_diff(logger, current_user, doc, updates)
     await doc_document_save_hook(doc, change_info)
     return updated
+
+
+async def add_site_to_new_doc_family(doc_fam_id: PydanticObjectId, doc: DocDocument):
+    await DocumentFamily.get_motor_collection().update_one(
+        {"_id": doc_fam_id},
+        {"$addToSet": {"site_ids": {"$each": [location.site_id for location in doc.locations]}}},
+    )
+
+
+async def remove_site_from_old_doc_family(previous_doc_fam: PydanticObjectId, doc: DocDocument):
+    for location in doc.locations:
+        used_by_other_docs = await DocDocument.find_one(
+            {
+                "document_family_id": previous_doc_fam,
+                "locations": {"$elemMatch": {"site_id": location.site_id}},
+            }
+        )
+        if not used_by_other_docs:
+            await DocumentFamily.get_motor_collection().update_one(
+                {"_id": previous_doc_fam}, {"$pull": {"site_ids": location.site_id}}
+            )

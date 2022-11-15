@@ -4,6 +4,7 @@ from logging import Logger
 
 from beanie import PydanticObjectId
 
+from backend.app.routes.doc_documents import add_site_to_new_doc_family
 from backend.app.scripts.retag_document import ReTagger
 from backend.common.core.enums import ApprovalStatus
 from backend.common.models.doc_document import DocDocument
@@ -249,7 +250,7 @@ async def version_doc(
     return doc
 
 
-def inherit_prev_doc_fields(
+async def inherit_prev_doc_fields(
     doc: DocDocument, prev_doc: DocDocument | None, site_id: PydanticObjectId
 ):
     if not prev_doc:  # Nothing to inherit
@@ -263,6 +264,7 @@ def inherit_prev_doc_fields(
 
     if prev_doc.document_family_id:
         doc.document_family_id = prev_doc.document_family_id
+        await add_site_to_new_doc_family(doc.document_family_id, doc)
 
     loc = next(loc for loc in doc.locations if site_id == loc.site_id)
     prev_loc = next(loc for loc in prev_doc.locations if site_id == loc.site_id)

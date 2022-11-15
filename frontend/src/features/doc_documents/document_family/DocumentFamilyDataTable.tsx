@@ -62,7 +62,7 @@ const useControlledPagination = ({
 
 function uniqueSiteIds(items: DocumentFamily[]) {
   const usedSiteIds: { [key: string]: boolean } = {};
-  items.forEach((item) => (usedSiteIds[item.site_id] = true));
+  items.forEach((item) => item.site_ids.forEach((id) => (usedSiteIds[id] = true)));
   return Object.keys(usedSiteIds);
 }
 
