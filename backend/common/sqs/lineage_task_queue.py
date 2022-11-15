@@ -11,6 +11,10 @@ class LineageTaskQueue(BaseTaskQueue):
     async def process_message(self, message: dict, body: dict):
         task = await self.begin_process_message(body)
 
+        if not task:
+            self.logger.info(f"{self._task_class} is already complete")
+            return
+
         try:
             if task.reprocess:
                 await self.lineage_service.reprocess_lineage_for_site(task.site_id)
