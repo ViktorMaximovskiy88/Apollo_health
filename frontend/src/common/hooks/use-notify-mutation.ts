@@ -15,7 +15,7 @@ export function useNotifyMutation(
   }, [isSuccess, successNotificationArgs]);
   useEffect(() => {
     if (isError) {
-      notification.error({ message: 'Success!', ...errorNotificationArgs });
+      notification.error({ message: 'Error', ...errorNotificationArgs });
     }
   }, [isError, errorNotificationArgs]);
 }

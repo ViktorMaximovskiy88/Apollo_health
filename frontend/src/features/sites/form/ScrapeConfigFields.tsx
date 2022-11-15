@@ -82,6 +82,7 @@ export function WaitForTimeout() {
           </Tooltip>
         </>
       }
+      rules={[{ required: true, message: 'Required' }]}
     >
       <Input
         type={'number'}

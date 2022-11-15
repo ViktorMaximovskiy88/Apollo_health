@@ -31,7 +31,7 @@ from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.models import DownloadContext, Request
-from backend.scrapeworker.file_parsers import parse_by_type
+from backend.scrapeworker.file_parsers import get_tags, parse_by_type
 
 
 def copy_location_to(site: Site, location: RetrievedDocumentLocation, data: dict) -> dict:
@@ -211,6 +211,7 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
         parsed_content: dict[str, Any] | None = await parse_by_type(temp_path, download)
         if not parsed_content:
             raise Exception("Count not extract file contents")
+        await get_tags(parsed_content, focus_configs=[])
 
         text_checksum: str = await text_handler.save_text(parsed_content["text"])
         text_checksum_documents: List[RetrievedDocument] = await RetrievedDocument.find(
@@ -229,6 +230,7 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
                 response["data"] = copy_location_to(site, text_checksum_location, response["data"])
                 response["data"]["prev_location_doc_id"] = doc.id
                 response["data"] = await copy_doc_field_values(doc, response["data"])
+                await get_tags(parsed_content, doc)
                 break
 
         response["data"] = {

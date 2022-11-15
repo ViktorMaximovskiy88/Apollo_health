@@ -22,6 +22,11 @@ class FocusSectionConfig(BaseModel):
     end_separator: str | None = None
     all_focus: bool = False
 
+    def __hash__(self):
+        config = self.__dict__
+        config["section_type"] = tuple(config["section_type"])
+        return hash(tuple(config.values()))
+
 
 class ScrapeMethodConfiguration(BaseModel):
     document_extensions: list[str] = []

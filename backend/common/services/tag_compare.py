@@ -1,13 +1,9 @@
 from dataclasses import dataclass
-from datetime import datetime, timezone
-
-from beanie import PydanticObjectId
 
 from backend.common.core.enums import SectionType, TagUpdateStatus
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.shared import IndicationTag, TherapyTag
-from backend.common.models.site import Site
 from backend.common.services.text_compare.diff_utilities import Dmp
 from backend.common.storage.client import TextStorageClient
 from backend.scrapeworker.document_tagging.tag_focusing import FocusArea, FocusChecker
@@ -253,44 +249,13 @@ class TagCompare:
             unpaired_sections.append(prev_section)
         return paired_sections, unpaired_sections, unmatched_ref
 
-    async def _get_focus_configs(self, doc: RetrievedDocument | DocDocument, tag_type: SectionType):
-        latest_collection: datetime | None = None
-        site_id: PydanticObjectId | None = None
-        for location in doc.locations:
-            if latest_collection is None or (
-                location.last_collected_date
-                and latest_collection < location.last_collected_date.replace(tzinfo=timezone.utc)
-            ):
-                site_id = location.site_id
-                latest_collection = location.last_collected_date.replace(tzinfo=timezone.utc)
-        if not site_id:
-            return None
-
-        site = await Site.get(site_id)
-        if site:
-            return [
-                config
-                for config in site.scrape_method_configuration.focus_section_configs
-                if config.doc_type == doc.document_type and (tag_type in config.section_type)
-            ]
-        return None
-
     async def _get_focus_areas(
         self, doc: RetrievedDocument | DocDocument, doc_text: str, tag_type: SectionType
     ) -> list[FocusArea]:
-        doc_focus_configs = await self._get_focus_configs(doc, tag_type)
-        key_areas: list[FocusArea] = []
-        if doc_focus_configs is not None:
-            doc_focus_checker = FocusChecker(
-                full_text=doc_text,
-                focus_configs=doc_focus_configs,
-                url="",
-                link_text=None,
-                doc_type=doc.document_type,
-            )
-            key_areas = doc_focus_checker.key_areas
-
-        return key_areas
+        doc_focus_checker = await FocusChecker.with_all_location_configs(
+            doc=doc, tag_type=tag_type, full_text=doc_text, url="", link_text=None
+        )
+        return doc_focus_checker.key_areas
 
     async def compare_tags(
         self,
