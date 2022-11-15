@@ -1,4 +1,5 @@
-import { Input, Form, Switch, Radio } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
+import { Input, Form, Switch, Radio, Tooltip } from 'antd';
 import { SearchableType } from '../types';
 import { ElementInput, NameInput, ValueInput, ContainsTextInput } from './AttrSelectorField';
 
@@ -15,6 +16,32 @@ export function SearchTokens() {
 
   const groupDivClass = isSearchable ? 'border-solid border-slate-300 rounded p-2 pb-0' : undefined;
   const groupLabelClass = isSearchable ? 'text-lg' : undefined;
+
+  const SearchablePlaybook = () => (
+    <div>
+      <div>
+        {' '}
+        Searchable Playbook
+        <Tooltip className="ml-2" placement="right" title="Run playwright on each code iteration">
+          <QuestionCircleOutlined />
+        </Tooltip>
+      </div>
+
+      <Form.Item
+        name={['scrape_method_configuration', 'searchable_playbook']}
+        rules={[
+          {
+            validator: async (_, value) =>
+              !value || value.includes('playwright')
+                ? Promise.resolve()
+                : Promise.reject('Searchable Playbook must be a playwright script'),
+          },
+        ]}
+      >
+        <Input.TextArea />
+      </Form.Item>
+    </div>
+  );
 
   return (
     <div className={groupDivClass}>
@@ -59,9 +86,12 @@ export function SearchTokens() {
               <ValueInput displayLabel name={submitName} />
               <ContainsTextInput displayLabel name={submitName} />
             </Input.Group>
+            <br />
           </Form.Item>
         </>
       ) : null}
+
+      <SearchablePlaybook />
     </div>
   );
 }

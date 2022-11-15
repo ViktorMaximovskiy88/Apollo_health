@@ -74,6 +74,7 @@ const Playbook = () => (
     <Input.TextArea />
   </Form.Item>
 );
+
 const CustomSelectors = () => (
   <AttrSelectors
     displayIsResource
