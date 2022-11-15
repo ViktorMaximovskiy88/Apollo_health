@@ -64,7 +64,7 @@ resource "aws_ecs_task_definition" "lineageworker" {
           value = "${local.new_relic_app_name}-LineageWorker"
         },
         {
-          name = "LINEAGE_WORKER_QUEUE_URL"
+          name  = "LINEAGE_WORKER_QUEUE_URL"
           value = aws_sqs_queue.lineageworker.url
         }
       ]
@@ -176,11 +176,13 @@ resource "aws_ecs_service" "lineageworker" {
 
 
 resource "aws_sqs_queue" "lineageworker" {
-  name = format("%s-%s-%s-lineageworker-%s-mmit-sqs-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
+  name = format("%s-%s-%s-lineageworker-%s-mmit-sqs-%02d.fifo", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
 
   visibility_timeout_seconds = 30
   message_retention_seconds  = 345600 # 4 days
   delay_seconds              = 0
+  fifo_queue                 = true
+  deduplication_scope        = "messageGroup"
 
   tags = merge(local.effective_tags, {
     component = "${local.service_name}-lineageworker"
