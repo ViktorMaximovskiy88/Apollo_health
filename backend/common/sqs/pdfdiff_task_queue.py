@@ -14,6 +14,10 @@ class PDFDiffTaskQueue(BaseTaskQueue):
     async def process_message(self, message: dict, body: dict):
         task = await self.begin_process_message(body)
 
+        if not task:
+            self.logger.info(f"{self._task_class} is already complete")
+            return
+
         try:
             doc_client = DocumentStorageClient()
             dtc = DocTextCompare(doc_client)
