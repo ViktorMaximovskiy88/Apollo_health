@@ -36,3 +36,7 @@ class UpdatePayerFamily(BaseModel):
     plan_types: list[str] | None = None
     regions: list[str] | None = None
     disabled: bool | None = None
+
+
+class PayerFamilyView(PayerFamily):
+    doc_doc_count: int = 0
