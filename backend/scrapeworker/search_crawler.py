@@ -29,6 +29,7 @@ class SearchableCrawler:
             else None
         )
         self.log = log
+        self.searchable_playbook = ScrapePlaybook(config.searchable_playbook)
 
     async def __codes(self):
         search_codes = await SearchCodeSet.find_one({"type": self.config.searchable_type})
@@ -39,6 +40,11 @@ class SearchableCrawler:
     async def replay_playbook(self, page: Page, playbook_context: PlaybookContext):
         playbook = ScrapePlaybook(playbook_str=None, playbook_context=playbook_context)
         async for _ in playbook.run_playbook(page):
+            continue
+
+    async def run_searchable_playbook(self, page: Page):
+        searchable_playbook = self.searchable_playbook
+        async for _ in searchable_playbook.run_playbook(page):
             continue
 
     async def is_searchable(self, page: Page):
@@ -70,23 +76,15 @@ class SearchableCrawler:
         else:
             await page.keyboard.press("Enter")
 
-    async def __find_input_dropdown(self, page: Page):
-        try:
-            await page.locator(".form-item > .ant-text-input").click(force=True, timeout=500)
-            await page.locator("#codeDescription").click(force=True, timeout=500)
-        except Exception:
-            return
-
     async def run_searchable(self, page: Page, playbook_context: PlaybookContext):
         base_url = page.url
         codes = await self.__codes()
         for code in codes:
             nav_state = NavState()
             try:
-                page.on
                 page.on("load", nav_state.handle_nav)
-                # pre-type check, use actionability check from playright
-                await self.__find_input_dropdown(page)
+                # runs searchable playbook if provided from collection settings
+                await self.run_searchable_playbook(page)
                 await self.__type(page, code)
                 await self.__select(page, code)
                 await self.__search(page)
