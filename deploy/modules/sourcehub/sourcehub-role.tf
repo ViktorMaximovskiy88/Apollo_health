@@ -74,7 +74,8 @@ resource "aws_iam_role" "sourcehub" {
             "sqs:ChangeMessageVisibility"
           ]
           Resource = [
-            aws_sqs_queue.lineageworker.arn
+            aws_sqs_queue.lineageworker.arn,
+            aws_sqs_queue.pdfdiffworker.arn,
           ]
         }
       ]
@@ -87,7 +88,7 @@ resource "aws_iam_role" "sourcehub" {
   ]
 
   tags = merge(local.effective_tags, {
-    Name = format("%s-%s-%s-app-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
+    Name      = format("%s-%s-%s-app-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
     component = "${local.service_name}-app"
   })
 
