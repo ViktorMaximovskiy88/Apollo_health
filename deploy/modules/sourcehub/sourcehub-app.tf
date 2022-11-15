@@ -91,6 +91,14 @@ resource "aws_ecs_task_definition" "app" {
           name  = "NEW_RELIC_ENVIRONMENT"
           value = var.environment
         },
+        {
+          name = "LINEAGE_WORKER_QUEUE_URL"
+          value = aws_sqs_queue.lineageworker.url
+        },
+        {
+          name = "PDFDIFF_WORKER_QUEUE_URL"
+          value = aws_sqs_queue.pdfdiffworker.url
+        }
       ]
       essential = true
       portMappings = [

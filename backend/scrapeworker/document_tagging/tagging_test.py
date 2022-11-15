@@ -1,7 +1,21 @@
-from backend.common.core.enums import SectionType
-from backend.common.models.site import FocusSectionConfig
+from datetime import datetime
+from random import random
+
+import pytest
+import pytest_asyncio
+
+from backend.common.core.enums import DocumentType, SectionType
+from backend.common.db.init import init_db
+from backend.common.models.document import RetrievedDocument, RetrievedDocumentLocation
+from backend.common.models.site import FocusSectionConfig, ScrapeMethodConfiguration, Site
 from backend.scrapeworker.document_tagging.tag_focusing import FocusArea, FocusState
 from backend.scrapeworker.document_tagging.therapy_tagging import FocusChecker
+
+
+@pytest_asyncio.fixture()
+async def new_db():
+    random_name = str(random())
+    await init_db(mock=True, database_name=random_name)
 
 
 class MockSpan:
@@ -19,6 +33,58 @@ def simple_focus_config():
         end_separator="PA Indication",
         all_focus=False,
     )
+
+
+def simple_ret_doc(site1: Site, site2: Site) -> RetrievedDocument:
+    return RetrievedDocument(
+        name="test",
+        checksum="test",
+        text_checksum="test",
+        document_type="Formulary",
+        first_collected_date=datetime.now(),
+        last_collected_date=datetime.now(),
+        locations=[
+            RetrievedDocumentLocation(
+                site_id=site1.id,
+                first_collected_date=datetime.now(),
+                last_collected_date=datetime.now(),
+                url="https://www.example.com/doc",
+                base_url="https://www.example.com/",
+                link_text="",
+                closest_heading="",
+                siblings_text=None,
+            ),
+            RetrievedDocumentLocation(
+                site_id=site2.id,
+                first_collected_date=datetime.now(),
+                last_collected_date=datetime.now(),
+                url="https://www.example.com/doc",
+                base_url="https://www.example.com/",
+                link_text="",
+                closest_heading="",
+                siblings_text=None,
+            ),
+        ],
+    )
+
+
+async def simple_site(focus_configs: list[FocusSectionConfig] = []):
+    site = await Site(
+        name="Test",
+        scrape_method="",
+        scrape_method_configuration=ScrapeMethodConfiguration(
+            document_extensions=[],
+            url_keywords=[],
+            proxy_exclusions=[],
+            follow_links=False,
+            follow_link_keywords=[],
+            follow_link_url_keywords=[],
+            focus_section_configs=focus_configs,
+        ),
+        disabled=False,
+        cron="0 * * * *",
+    ).save()
+    return site
 
 
 test_text = """
@@ -142,7 +208,13 @@ class TestCheckFocus:
         link_text = "Download"
         config = simple_focus_config()
         config.all_focus = True
-        focus_checker = FocusChecker(test_text, [config], url, link_text)
+        focus_checker = FocusChecker(
+            test_text,
+            [config],
+            url,
+            link_text,
+            DocumentType.Formulary,
+        )
         focus_areas = focus_checker.focus_areas
         spans = [MockSpan("ACITRETIN", 330, 340), MockSpan("AUSTEDO", 250, 270)]
         for span in spans:
@@ -286,3 +358,44 @@ class TestCheckFocus:
         focus_span = MockSpan("ACITRETIN", 30, 40)
         focus_state = focus_checker.check_focus(focus_span, 0)
         assert focus_state == FocusState(focus=True, key=False, section=None)
+
+    @pytest.mark.asyncio
+    async def test_location_focus_configs(self, new_db):
+        config1 = simple_focus_config()
+        config1.start_separator = "config1"
+        config2 = simple_focus_config()
+        config2.start_separator = "config2"
+        config3 = simple_focus_config()
+        config3.start_separator = "config3"
+
+        site1 = await simple_site(focus_configs=[config1, config2])
+        site2 = await simple_site(focus_configs=[config2, config3])
+        doc = await simple_ret_doc(site1, site2).save()
+        all_configs = await FocusChecker._location_focus_configs(
+            doc, tag_type=SectionType.INDICATION
+        )
+        assert len(all_configs) == 3
+
+        site1 = await simple_site(focus_configs=[config1])
+        site2 = await simple_site(focus_configs=[config2])
+        doc = await simple_ret_doc(site1, site2).save()
+        all_configs = await FocusChecker._location_focus_configs(
+            doc, tag_type=SectionType.INDICATION
+        )
+        assert len(all_configs) == 2
+
+        site1 = await simple_site(focus_configs=[config1])
+        site2 = await simple_site(focus_configs=[config1])
+        doc = await simple_ret_doc(site1, site2).save()
+        all_configs = await FocusChecker._location_focus_configs(
+            doc, tag_type=SectionType.INDICATION
+        )
+        assert len(all_configs) == 1
+
+        site1 = await simple_site()
+        site2 = await simple_site()
+        doc = await simple_ret_doc(site1, site2).save()
+        all_configs = await FocusChecker._location_focus_configs(
+            doc, tag_type=SectionType.INDICATION
+        )
+        assert len(all_configs) == 0

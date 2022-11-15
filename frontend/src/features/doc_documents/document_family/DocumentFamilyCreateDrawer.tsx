@@ -10,6 +10,28 @@ import { useEffect } from 'react';
 import { fieldGroupsOptions, legacyRelevanceOptions } from './documentFamilyLevels';
 import { DocumentFamily } from './types';
 import { CloseOutlined } from '@ant-design/icons';
+import { DocumentTypes } from '../../retrieved_documents/types';
+
+const DocumentType = (props: { documentType?: string }) => (
+  <>
+    {props.documentType ? (
+      <div className="flex">
+        <div className="flex-1 mt-2 mb-4">
+          <h3>Document Type</h3>
+          <div>{props.documentType}</div>
+        </div>
+      </div>
+    ) : (
+      <Form.Item
+        label="Document Type"
+        name="document_type"
+        rules={[{ required: true, message: 'Please input a document type.' }]}
+      >
+        <Select showSearch options={DocumentTypes} />
+      </Form.Item>
+    )}
+  </>
+);
 
 interface DocumentFamilyCreateDrawerPropTypes {
   documentType?: string;
@@ -17,10 +39,11 @@ interface DocumentFamilyCreateDrawerPropTypes {
   onClose: () => void;
   documentFamilyData?: DocumentFamily;
   onSave: (documentFamily: DocumentFamily) => void;
+  mask?: boolean;
 }
 
 export const DocumentFamilyCreateDrawer = (props: DocumentFamilyCreateDrawerPropTypes) => {
-  const { documentType, open, documentFamilyData, onClose, onSave } = props;
+  const { open, documentFamilyData, onClose, onSave, mask = true } = props;
   const [form] = useForm();
   const [getDocumentFamilyByName] = useLazyGetDocumentFamilyByNameQuery();
   const [addDocumentFamily, { isLoading, data, isSuccess, reset }] = useAddDocumentFamilyMutation();
@@ -56,12 +79,13 @@ export const DocumentFamilyCreateDrawer = (props: DocumentFamilyCreateDrawerProp
       width="30%"
       placement="left"
       closable={false}
-      mask={false}
+      mask={mask}
       extra={
         <Button type="text" onClick={onClose}>
           <CloseOutlined />
         </Button>
       }
+      onClose={onClose}
     >
       <Form
         form={form}
@@ -73,20 +97,17 @@ export const DocumentFamilyCreateDrawer = (props: DocumentFamilyCreateDrawerProp
           if (documentFamilyData) {
             update({ body: values, _id: documentFamilyData._id });
             form.resetFields();
-          } else {
+          } else if (props.documentType) {
             addDocumentFamily({
               ...values,
-              document_type: documentType,
+              document_type: props.documentType,
             });
+          } else {
+            addDocumentFamily({ ...values });
           }
         }}
       >
-        <div className="flex">
-          <div className="flex-1 mt-2 mb-4">
-            <h3>Document Type</h3>
-            <div>{documentType}</div>
-          </div>
-        </div>
+        <DocumentType documentType={props.documentType} />
         <Form.Item
           label="Name"
           name="name"

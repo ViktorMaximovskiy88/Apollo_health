@@ -114,8 +114,8 @@ export const createColumns = ({ handleNewVersion }: CreateColumnsType) => {
       render: ({ data: doc }: { data: SiteDocDocument }) => {
         return (
           <>
-            <Link to={`/documents/${doc._id}`}>{doc.url}</Link>
             <a className="mx-2" href={doc.url} target="_blank" rel="noreferrer">
+              {doc.url}
               <LinkOutlined />
             </a>
           </>

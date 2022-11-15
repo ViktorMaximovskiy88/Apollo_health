@@ -4,7 +4,9 @@ from dataclasses import dataclass
 from spacy.tokens.span import Span
 
 from backend.common.core.enums import DocumentType, SectionType
-from backend.common.models.site import FocusSectionConfig
+from backend.common.models.doc_document import DocDocument
+from backend.common.models.document import RetrievedDocument
+from backend.common.models.site import FocusSectionConfig, Site
 
 
 @dataclass
@@ -60,11 +62,36 @@ class FocusChecker:
         if doc_type in all_focus_doc_types:
             return True
 
-        for config in self.focus_configs:
-            if config.all_focus is True:
-                return True
+    @staticmethod
+    async def _location_focus_configs(
+        doc: RetrievedDocument | DocDocument, tag_type: SectionType
+    ) -> list[FocusSectionConfig]:
+        """Get unique focus configs for all locations on this doc"""
+        site_ids = [location.site_id for location in doc.locations]
+        sites = await Site.find({"_id": {"$in": site_ids}}).to_list()
+        configs: set[FocusSectionConfig] = set()
+        for site in sites:
+            filtered_configs = [
+                config
+                for config in site.scrape_method_configuration.focus_section_configs
+                if config.doc_type == doc.document_type and tag_type in config.section_type
+            ]
+            configs.update(filtered_configs)
 
-        return False
+        return list(configs)
+
+    @classmethod
+    async def with_all_location_configs(
+        cls,
+        doc: RetrievedDocument | DocDocument,
+        tag_type: SectionType,
+        full_text: str,
+        url: str,
+        link_text: str | None,
+    ) -> "FocusChecker":
+        """`FocusChecker` with all location's focus configs"""
+        focus_configs = await cls._location_focus_configs(doc, tag_type)
+        return cls(full_text, focus_configs, url, link_text)
 
     def set_section_end(self, focus_areas: list[FocusArea]):
         for i, area in enumerate(focus_areas):

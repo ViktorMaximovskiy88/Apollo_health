@@ -92,15 +92,15 @@ def test_all_date_formats():
     text = """
         2023|01|01 02|01|2023
         03|23 04|2023 05.23
-        06.2023
+        06.2023 2023Jul
     """
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     dates = []
-    for m in range(1, 7):
+    for m in range(1, 8):
         dates.append(datetime(2023, m, 1))
 
-    assert len(parser.unclassified_dates) == 6
+    assert len(parser.unclassified_dates) == 7
     for date in dates:
         assert date in parser.unclassified_dates
 
@@ -287,9 +287,22 @@ def test_default_effective_date():
     assert parser.published_date.date == datetime(2022, 3, 9)
     assert parser.effective_date.date == datetime(2020, 5, 5)
 
+    text = "Contains only one date 1/30/2020"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 1
+    assert parser.effective_date.date == datetime(2020, 1, 30)
+
 
 def test_pick_valid_date_range():
     text = "Contains invalid date 01-1678"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 0
+
+
+def test_ignore_trailing_chars():
+    text = "Not a date 01-22 ml 01-23 mg 01-24 %"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 0

@@ -12,6 +12,7 @@ import magic
 
 def compile_date_rgx():
     date_formats = [
+        r"(?<!\d|[A-Za-z]|\/)[0-9]{4}[A-Za-z]{3}(?!\d|[A-Za-z]|\/)",  # yyyyMMM, i.e. 2020Dec # noqa
         r"[0-9]{6,8}",  # mmYYYY or YYYYmm or yyyyddMM or MMddyyyy w/o alpha-numeric bookends | # noqa
         r"(?<!\d|\/)[0-9]{4}[\/\-\.\|][0-9][0-9]?[\/\-\.\|][0-9][0-9]?(?!\d|\/)",  # yyyy-MM-dd with -, /, . or | # noqa
         r"(?<!\d|\/)[0-9][0-9]?[\/\-\.\|][0-9][0-9]?[\/\-\.\|](?:\d{4}|\d{2})(?!\d|\/)",  # dd-MM-yyyy, dd-mm-yy. With -, /, . or | # noqa
@@ -38,14 +39,14 @@ def compile_label_rgx():
         r"ends": "end_date",
         r"through": "end_date",
         r"updated": "last_updated_date",
+        r"updates": "last_updated_date",
         r"revision": "last_updated_date",
         r"revised": "last_updated_date",
         r"revis": "last_updated_date",
         r"rev\.": "last_updated_date",
         r"current": "last_updated_date",
-        r"reviewed on": "last_reviewed_date",
-        r"reviewed date": "last_reviewed_date",
-        r"reviewed as of": "last_reviewed_date",
+        r"version": "last_updated_date",
+        r"reviewed": "last_reviewed_date",  # this may need to be narrowed back to 'reviewed on', etc
         r"last review": "last_reviewed_date",
         r"recent review": "last_reviewed_date",
         r"next review": "next_review_date",
@@ -55,6 +56,9 @@ def compile_label_rgx():
         r"posted": "published_date",
         r"print date": "published_date",
         r"\bv\.": "published_date",
+        r"devised": "published_date",
+        r"issued": "published_date",
+        r"date of origin": "published_date",
     }
     label_rgxs = [re.compile(fmt, flags=re.IGNORECASE) for fmt in label_hash.keys()]
     return label_rgxs, label_hash

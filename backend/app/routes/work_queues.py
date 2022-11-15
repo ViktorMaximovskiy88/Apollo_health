@@ -115,7 +115,7 @@ class IdOnlyDocument(BaseModel):
 
 class LocationSubDocument(BaseModel):
     site_id: PydanticObjectId
-    link_text: str
+    link_text: str | None
 
 
 class IdNameLockOnlyDocument(IdOnlyDocument):

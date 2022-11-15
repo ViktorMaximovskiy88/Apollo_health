@@ -38,26 +38,24 @@ class ReTagger:
 
         location = next(loc for loc in rdoc.locations if loc.site_id == site.id)
 
-        focus_config = site.scrape_method_configuration.focus_section_configs
-
         document_type = rdoc.document_type or "N/A"
         link_text = normalize_string(location.link_text, url=False)
         url = normalize_string(location.url)
-        doc_text = await self.get_text(doc, rdoc, url, link_text, focus_config)
+        doc_text = await self.get_text(doc, rdoc, url, link_text)
         _doc_type, _confidence, doc_vectors = guess_doc_type(
             doc_text, location.link_text, location.url, doc.name
         )
         tokens = tokenize_string(doc_text)
 
         (therapy_tags, url_therapy_tags, link_therapy_tags) = await self.therapy.tag_document(
-            doc_text, document_type, url, link_text, focus_config
+            doc_text, document_type, url, link_text, document=rdoc
         )
         (
             indication_tags,
             url_indication_tags,
             link_indication_tags,
         ) = await self.indication.tag_document(
-            doc_text, document_type, url, link_text, focus_config
+            doc_text, document_type, url, link_text, document=rdoc
         )
 
         update = {
@@ -88,7 +86,6 @@ class ReTagger:
         rdoc: RetrievedDocument,
         url: str,
         link_text: str | None,
-        focus_config,
     ):
         text_client = TextStorageClient()
         file_extension = rdoc.file_extension
@@ -109,7 +106,7 @@ class ReTagger:
                 ParserClass = html.HtmlParser
             else:
                 ParserClass = text.TextParser
-            doc_text = await ParserClass(file_path, url, link_text, focus_config).get_text()
+            doc_text = await ParserClass(file_path, url, link_text).get_text()
 
             text_hash = hash_full_text(doc_text)
 

@@ -229,6 +229,7 @@ export function ExtractionResultsDataTable({
       pagination
       defaultFilterValue={defaultFilterValue}
       defaultSortInfo={defaultSortInfo}
+      columnUserSelect
     />
   );
 }

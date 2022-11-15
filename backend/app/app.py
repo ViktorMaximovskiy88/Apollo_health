@@ -35,7 +35,7 @@ from backend.app.scripts.create_work_queues import create_default_work_queues
 from backend.app.scripts.payer_backbone.load_payer_backbone import load_payer_backbone
 from backend.app.utils.cors import cors
 from backend.common.db.init import init_db
-from backend.common.db.migrations import run_migrations
+from backend.common.db.migrations import confirm_migration_quality, run_migrations
 from backend.common.models.proxy import Proxy
 
 app = FastAPI()
@@ -46,7 +46,8 @@ cors(app)  # local only
 async def app_init():
     await init_db()
     if settings.is_local:
-        await run_migrations()
+        if await confirm_migration_quality():
+            await run_migrations()
     await create_system_users()
     if not settings.disable_proxies and await Proxy.count() == 0:
         await create_proxies()

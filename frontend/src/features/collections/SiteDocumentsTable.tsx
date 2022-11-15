@@ -20,6 +20,7 @@ export function SiteDocumentsTable() {
     { pollingInterval: 5000 }
   );
 
+  // TODO belongs in the backend
   const documents =
     data?.map((document) => ({
       ...document,
@@ -44,6 +45,7 @@ export function SiteDocumentsTable() {
       {...controlledPagination}
       rowHeight={50}
       columns={columns}
+      columnUserSelect
     />
   );
 }
