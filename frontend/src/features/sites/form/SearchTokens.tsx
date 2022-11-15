@@ -1,6 +1,7 @@
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { Input, Form, Switch, Radio, Tooltip } from 'antd';
 import { SearchableType } from '../types';
+import { mustBePlaywright } from './utils';
 import { ElementInput, NameInput, ValueInput, ContainsTextInput } from './AttrSelectorField';
 
 export function SearchTokens() {
@@ -20,7 +21,6 @@ export function SearchTokens() {
   const SearchablePlaybook = () => (
     <div>
       <div>
-        {' '}
         Searchable Playbook
         <Tooltip className="ml-2" placement="right" title="Run playwright on each code iteration">
           <QuestionCircleOutlined />
@@ -31,11 +31,9 @@ export function SearchTokens() {
         name={['scrape_method_configuration', 'searchable_playbook']}
         rules={[
           {
-            validator: async (_, value) =>
-              !value || value.includes('playwright')
-                ? Promise.resolve()
-                : Promise.reject('Searchable Playbook must be a playwright script'),
+            required: false,
           },
+          mustBePlaywright(),
         ]}
       >
         <Input.TextArea />

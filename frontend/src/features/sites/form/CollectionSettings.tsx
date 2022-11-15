@@ -17,6 +17,7 @@ import { HtmlScrapeConfig } from './HtmlScrapeConfig';
 import { SearchTokens } from './SearchTokens';
 import { FollowLinks } from './FollowLinks';
 import { ThresholdWithOverride } from './ThresholdWithOverride';
+import { mustBePlaywright } from './utils';
 
 function CollectionMethodRadio() {
   const collections = [
@@ -64,11 +65,9 @@ const Playbook = () => (
     label="Playbook"
     rules={[
       {
-        validator: async (_, value) =>
-          !value || value.includes('playwright')
-            ? Promise.resolve()
-            : Promise.reject('Playbook must be a playwright script'),
+        required: false,
       },
+      mustBePlaywright(),
     ]}
   >
     <Input.TextArea />
