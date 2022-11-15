@@ -39,6 +39,7 @@ export interface Site extends BaseDocument {
     searchable_type: SearchableType | null;
     searchable_input: AttrSelector | null;
     searchable_submit: AttrSelector | null;
+    searchable_playbook: string | null;
     attr_selectors: AttrSelector[];
     html_attr_selectors: AttrSelector[];
     html_exclusion_selectors: AttrSelector[];
