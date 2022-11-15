@@ -88,12 +88,14 @@ class DocTypeMatcher:
     ###
     def formulary_update(self, text: str) -> str | None:
         if self._contains(text, ["PDL", "formulary", "drug list"]) and self._contains(
-            text, ["update", "change", "changes"]
+            text, ["update", "change", "changes"] and self._not_contains(text, ["Medical"])
         ):
             return DocumentType.FormularyUpdate
 
     def formulary(self, text: str) -> str | None:
-        if self._contains(text, ["PDL", "formulary", "drug list"]) and self._not_contains(
+        if self._contains(
+            text, ["PDL", "formulary", "drug list", "preferred-drug-list"]
+        ) and self._not_contains(
             text,
             [
                 "update",
@@ -115,9 +117,9 @@ class DocTypeMatcher:
             return DocumentType.Formulary
 
     def medical_coverage_list(self, text: str) -> str | None:
-        if self._contains(text, ["Medical Coverage", "Jcode"]) and self._not_contains(
-            text, ["policy", "policies"]
-        ):
+        if self._contains(
+            text, ["Medical", "Medical Coverage", "Jcode", "Medi-cal"]
+        ) and self._not_contains(text, ["policy", "policies"]):
             return DocumentType.MedicalCoverageList
 
     def restriction_list(self, text: str) -> str | None:
@@ -131,6 +133,7 @@ class DocTypeMatcher:
                     "Auth",
                     "Precertification",
                     "Pre-certification",
+                    "Prior Approval",
                 ],
             )
             or self._contains(text, ["ST", "Step Therapy", "Step-Therapy", "Step"])
@@ -140,7 +143,7 @@ class DocTypeMatcher:
 
     def specialty_list(self, text: str) -> str | None:
         if (self._contains(text, ["SP", "Specialty", "Specialty Pharmacy"])) and self._contains(
-            text, ["list"]
+            text, ["list", "DML"]
         ):
             return DocumentType.SpecialtyList
 
@@ -169,7 +172,7 @@ class DocTypeMatcher:
             return DocumentType.PreventiveDrugList
 
     def fee_schedule(self, text: str) -> str | None:
-        if self._contains(text, ["Fee Schedule"]):
+        if self._contains(text, ["Fee Schedule", "rates"]):
             return DocumentType.FeeSchedule
 
     def annual_notice_of_changes(self, text: str) -> str | None:
@@ -248,11 +251,20 @@ class DocTypeMatcher:
             return DocumentType.ProviderGuide
 
     def evidence_of_coverage(self, text: str) -> str | None:
-        if self._contains(text, ["EOC", "Evidence of Coverage"]):
+        if self._contains(text, ["EOC", "Evidence of Coverage", "bcm"]):
             return DocumentType.EvidenceOfCoverage
 
     def summary_of_benefits(self, text: str) -> str | None:
-        if self._contains(text, ["SOB", "Summary", "Benefits Summary", "Summary of Benefits"]):
+        if self._contains(
+            text,
+            [
+                "SOB",
+                "Summary",
+                "Benefits Summary",
+                "Summary of Benefits",
+                "Explanation of Benefits",
+            ],
+        ):
             return DocumentType.SummaryOfBenefits
 
     def nccn_guidlines(self, text: str) -> str | None:
@@ -270,7 +282,7 @@ class DocTypeMatcher:
     def review_committee_meetings(self, text: str) -> str | None:
         if self._contains(
             text, ["Meeting", "Committee", "Agenda", "P&T", "Pharmacy & Therapeutics"]
-        ) and self._not_contains(text, ["schedule"]):
+        ) and self._contains(text, ["schedule"]):
             return DocumentType.ReviewCommitteeMeetings
 
     def newsletter_announcement(self, text: str) -> str | None:
@@ -296,7 +308,9 @@ class DocTypeMatcher:
             return DocumentType.ReviewCommitteeSchedule
 
     def regulatory_document(self, text: str) -> str | None:
-        if self._contains(text, ["regulation", "law", "carve out", "carve-out"]):
+        if self._contains(
+            text, ["regulation", "law", "carve out", "carve-out"]
+        ) and self._not_contains(text, ["Prior Authorization"]):
             return DocumentType.RegulatoryDocument
 
     def directory(self, text: str) -> str | None:
