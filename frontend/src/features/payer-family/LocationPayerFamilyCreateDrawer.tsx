@@ -2,7 +2,6 @@ import { Button, Drawer, Form, Input } from 'antd';
 import { useLazyGetPayerFamilyByNameQuery } from './payerFamilyApi';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
 import { useAddPayerFamilyMutation } from './payerFamilyApi';
-import { useLazyGetPayerBackboneByLIdQuery } from '../payer-backbone/payerBackboneApi';
 import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
 import { useCallback, useState } from 'react';
@@ -21,7 +20,6 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
   const { location, onClose, onSave, open } = props;
   const [form] = useForm();
   const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
-  const [getPayerName] = useLazyGetPayerBackboneByLIdQuery();
 
   const [addPayerFamily, { isLoading }] = useAddPayerFamilyMutation();
   const [payerInfoError, setPayerInfoError] = useState<boolean>(false);
@@ -36,8 +34,7 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
   );
 
   const onSubmit = useCallback(async () => {
-    let { payer_type, payer_ids, channels, benefits, plan_types, regions } =
-      form.getFieldsValue(true);
+    const { payer_ids, channels, benefits, plan_types, regions } = form.getFieldsValue(true);
     if (
       !payer_ids.length &&
       !channels.length &&
@@ -48,24 +45,8 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
       setPayerInfoError(true);
       return;
     }
-    let getPayerNameVals = async () => {
-      const payers: any = [];
-      for (let i = 0; i < payer_ids.length; i++) {
-        const { data } = await getPayerName({ payerType: payer_type, id: payer_ids[i] });
-        payers.push(data?.name);
-      }
-      return payers;
-    };
-    let payerNames;
-    if (payer_ids && payer_ids[0] !== '') {
-      payerNames = await getPayerNameVals();
-    }
-    const newName = [regions, plan_types, benefits, channels, payerNames]
-      .filter((vals: any) => (!vals || vals.length === 0 ? false : true))
-      .join(' | ');
-    form.setFieldsValue({ name: newName });
     form.submit();
-  }, [form, getPayerName]);
+  }, [form]);
 
   if (!location) {
     return <></>;
@@ -113,11 +94,11 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
             name="name"
             className="w-96 mr-5"
             rules={[
-              { required: false, message: 'Please input a payer family name' },
-              mustBeUnique(getPayerFamilyByName),
+              { required: true, message: 'Please input a payer family name' },
+              mustBeUniqueName(getPayerFamilyByName),
             ]}
           >
-            <Input disabled={true} placeholder={'Custom Name will be generated'} />
+            <Input />
           </Form.Item>
         </Input.Group>
 
@@ -142,11 +123,10 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
 };
 
 // asyncValidator because rtk query makes this tough without hooks/dispatch
-function mustBeUnique(asyncValidator: Function) {
+export function mustBeUniqueName(asyncValidator: Function) {
   return {
     async validator(_rule: Rule, value: string) {
       const { data: payerFamily } = await asyncValidator({ name: value });
-
       if (payerFamily) {
         return Promise.reject(`Payer family name "${payerFamily.name}" already exists`);
       }
