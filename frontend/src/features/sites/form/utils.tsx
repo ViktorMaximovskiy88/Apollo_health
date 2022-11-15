@@ -1,6 +1,6 @@
 import { Rule } from 'antd/lib/form';
 
-export function mustBePlaywright() {
+export function playbookValidator() {
   return {
     async validator(_rule: Rule, playbook: string) {
       !playbook || playbook.includes('playwright')

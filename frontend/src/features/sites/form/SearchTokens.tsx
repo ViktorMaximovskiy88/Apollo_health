@@ -1,7 +1,7 @@
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { Input, Form, Switch, Radio, Tooltip } from 'antd';
 import { SearchableType } from '../types';
-import { mustBePlaywright } from './utils';
+import { playbookValidator } from './utils';
 import { ElementInput, NameInput, ValueInput, ContainsTextInput } from './AttrSelectorField';
 
 export function SearchTokens() {
@@ -33,7 +33,7 @@ export function SearchTokens() {
           {
             required: false,
           },
-          mustBePlaywright(),
+          playbookValidator(),
         ]}
       >
         <Input.TextArea />

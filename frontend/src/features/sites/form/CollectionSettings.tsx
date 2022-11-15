@@ -17,7 +17,7 @@ import { HtmlScrapeConfig } from './HtmlScrapeConfig';
 import { SearchTokens } from './SearchTokens';
 import { FollowLinks } from './FollowLinks';
 import { ThresholdWithOverride } from './ThresholdWithOverride';
-import { mustBePlaywright } from './utils';
+import { mustBePlaywright, playbookValidator } from './utils';
 
 function CollectionMethodRadio() {
   const collections = [
@@ -67,7 +67,7 @@ const Playbook = () => (
       {
         required: false,
       },
-      mustBePlaywright(),
+      playbookValidator(),
     ]}
   >
     <Input.TextArea />
