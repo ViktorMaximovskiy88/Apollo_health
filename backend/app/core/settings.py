@@ -44,8 +44,8 @@ class Settings(BaseSettings):
     s3_endpoint_url: str
     s3_document_bucket: str
 
-    pdfdiff_worker_queue_url: str
-    lineage_worker_queue_url: str
+    pdfdiff_worker_queue_url: str | None
+    lineage_worker_queue_url: str | None
 
     redis_url: RedisDsn
     redis_password: str
