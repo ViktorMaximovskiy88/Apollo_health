@@ -182,6 +182,7 @@ resource "aws_sqs_queue" "lineageworker" {
   message_retention_seconds  = 345600 # 4 days
   delay_seconds              = 0
   fifo_queue                 = true
+  deduplication_scope        = "messageGroup"
 
   tags = merge(local.effective_tags, {
     component = "${local.service_name}-lineageworker"

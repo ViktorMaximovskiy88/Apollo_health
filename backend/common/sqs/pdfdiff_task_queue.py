@@ -12,11 +12,9 @@ class PDFDiffTaskQueue(BaseTaskQueue):
         super().__init__(**kwargs, class_id=PDFDiffTask)
 
     async def process_message(self, message: dict, body: dict):
-        task = await self._get_task(body)
-        task = await task.update_progress()
+        task = self.begin_process_message(body)
 
         try:
-            self.logger.info(f"{self._task_class} processing started")
             doc_client = DocumentStorageClient()
             dtc = DocTextCompare(doc_client)
 
@@ -26,9 +24,7 @@ class PDFDiffTaskQueue(BaseTaskQueue):
             )
             dtc.compare(doc=current_doc, prev_doc=prev_doc)
 
-            task = await task.update_finished()
-            self.logger.info(f"{self._task_class} processing finished")
-
         except Exception as ex:
-            self.logger.error(f"{self._task_class} error:", exc_info=True)
             await self.handle_exception(ex, message, body)
+
+        self.end_process_message(task)

@@ -63,13 +63,13 @@ class SQSListener(SQSBase):
 
 class SQSClient(SQSBase):
     # JSON encode message and send it
-    def send(self, message: dict[str, any], dedupe_key: str):
+    def send(self, message: dict[str, any], group_id: str):
         # JSON encode message and send it
         body = json.dumps(message, default=str)
         response = self.queue.send_message(
             MessageBody=body,
-            MessageDeduplicationId=dedupe_key,
-            MessageGroupId=dedupe_key,
+            MessageDeduplicationId=body.get("id", None),
+            MessageGroupId=group_id,
         )
         return response
 

@@ -32,7 +32,7 @@ class BaseTask(BaseDocument):
 
     error: str | None = None
     is_complete: bool = False
-    dedupe_key: Indexed(str)
+    group_id: Indexed(str)
 
     log: list[TaskLogEntry] = []
 
@@ -51,8 +51,8 @@ class BaseTask(BaseDocument):
         return await task.save()
 
     @classmethod
-    async def get_incomplete(cls: GenericTaskType, dedupe_key: str) -> GenericTaskType | None:
-        return await cls.find_one({"dedupe_key": dedupe_key, "is_complete": False})
+    async def get_incomplete(cls: GenericTaskType, group_id: str) -> GenericTaskType | None:
+        return await cls.find_one({"group_id": group_id, "is_complete": False})
 
     async def update_queued(self, response: dict) -> GenericTaskType:
         return await self._update_status(TaskStatus.QUEUED, response=response)
@@ -103,7 +103,7 @@ class PDFDiffTask(BaseTask):
     previous_checksum: str | None
 
     @classmethod
-    def get_dedupe_key(cls, payload: dict):
+    def get_group_id(cls, payload: dict):
         return f"{cls.__name__}-{payload['current_checksum']}-{payload['previous_checksum']}"
 
     class Settings:
@@ -115,7 +115,7 @@ class LineageTask(BaseTask):
     reprocess: bool = False
 
     @classmethod
-    def get_dedupe_key(cls, payload: dict):
+    def get_group_id(cls, payload: dict):
         return f"{cls.__name__}-{payload['site_id']}-{payload['reprocess']}"
 
     class Settings:
