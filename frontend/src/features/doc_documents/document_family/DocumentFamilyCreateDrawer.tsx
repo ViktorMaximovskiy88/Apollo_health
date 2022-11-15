@@ -22,7 +22,11 @@ const DocumentType = (props: { documentType?: string }) => (
         </div>
       </div>
     ) : (
-      <Form.Item label="Document Type" name="document_type">
+      <Form.Item
+        label="Document Type"
+        name="document_type"
+        rules={[{ required: true, message: 'Please input a document type.' }]}
+      >
         <Select showSearch options={DocumentTypes} />
       </Form.Item>
     )}

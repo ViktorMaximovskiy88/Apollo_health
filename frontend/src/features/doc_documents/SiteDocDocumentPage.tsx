@@ -5,7 +5,6 @@ import { useParams } from 'react-router-dom';
 import { MainLayout } from '../../components';
 import { SiteMenu } from '../sites/SiteMenu';
 import { ManualCollectionButton } from '../collections/CollectionsPage';
-import { CollectionMethod } from '../sites/types';
 import { SiteDocDocumentsTable } from './SiteDocDocumentsTable';
 import { AddDocumentModal } from '../collections/AddDocumentModal';
 import { SiteDocDocument } from './types';
@@ -58,11 +57,11 @@ export function SiteDocDocumentsPage() {
       sidebar={<SiteMenu />}
       sectionToolbar={
         <>
-          {site.collection_method == 'MANUAL' && activeStatuses.includes(site.last_run_status) ? (
+          {site.collection_method === 'MANUAL' && activeStatuses.includes(site.last_run_status) ? (
             <ManualCollectionButton site={site} refetch={refetch} runScrape={runScrape} />
           ) : null}
 
-          {site.collection_method == 'MANUAL' && activeStatuses.includes(site.last_run_status) ? (
+          {site.collection_method === 'MANUAL' && activeStatuses.includes(site.last_run_status) ? (
             <Button onClick={() => setNewDocumentModalOpen(true)} className="ml-auto">
               Create Document
             </Button>

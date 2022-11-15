@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 from beanie import PydanticObjectId
 
@@ -258,10 +258,11 @@ class TagCompare:
         site_id: PydanticObjectId | None = None
         for location in doc.locations:
             if latest_collection is None or (
-                location.last_collected_date and latest_collection < location.last_collected_date
+                location.last_collected_date
+                and latest_collection < location.last_collected_date.replace(tzinfo=timezone.utc)
             ):
                 site_id = location.site_id
-                latest_collection = location.last_collected_date
+                latest_collection = location.last_collected_date.replace(tzinfo=timezone.utc)
         if not site_id:
             return None
 
