@@ -7,6 +7,7 @@ from spacy.tokens.span import Span
 from backend.common.core.config import config
 from backend.common.core.enums import SectionType
 from backend.common.models.doc_document import TherapyTag
+from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import FocusSectionConfig
 from backend.common.storage.client import ModelStorageClient
 from backend.scrapeworker.document_tagging.tag_focusing import FocusChecker
@@ -35,7 +36,7 @@ class TherapyTagger:
             page = page.replace(symbol, " ")
         return page
 
-    def __get_focus_configs(self, configs: list[FocusSectionConfig], doc_type: str):
+    def _filter_focus_configs(self, configs: list[FocusSectionConfig], doc_type: str):
         filtered = [
             config
             for config in configs
@@ -49,16 +50,24 @@ class TherapyTagger:
         doc_type: str,
         url: str,
         link_text: str | None,
-        focus_configs: list[FocusSectionConfig],
+        focus_configs: list[FocusSectionConfig] | None = None,
+        document: RetrievedDocument | None = None,
     ) -> tuple[list[TherapyTag], list[TherapyTag], list[TherapyTag]]:
         if not self.nlp:
+            return ([], [], [])
+        if focus_configs is not None:
+            focus_configs = self._filter_focus_configs(focus_configs, doc_type)
+            focus_checker = FocusChecker(full_text, focus_configs, url, link_text, doc_type)
+        elif document:
+            focus_checker = await FocusChecker.with_all_location_configs(
+                document, SectionType.THERAPY, full_text, url, link_text
+            )
+        else:
             return ([], [], [])
 
         tags: set[TherapyTag] = set()
         url_tags = set()
         link_tags = set()
-        focus_configs = self.__get_focus_configs(focus_configs, doc_type)
-        focus_checker = FocusChecker(full_text, focus_configs, url, link_text)
         pages = full_text.split("\f")
         loop = asyncio.get_running_loop()
         char_offset = 0

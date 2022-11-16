@@ -7,6 +7,33 @@ import { SiteStatus } from '../siteStatus';
 import { Assignee } from './AssigneeInput';
 import { SiteStatusRadio as Status } from './SiteStatusRadio';
 import { CommentWall } from '../../comments/CommentWall';
+import { useParams } from 'react-router-dom';
+import { useGetSiteQuery, useLazyGetSiteByNameQuery } from '../sitesApi';
+import { Rule } from 'antd/lib/form';
+import { useCallback } from 'react';
+
+const useMustBeUniqueNameRule = () => {
+  const { siteId } = useParams();
+  const { data: currentSite } = useGetSiteQuery(siteId);
+  const [getSiteByName] = useLazyGetSiteByNameQuery();
+
+  const mustBeUniqueName = useCallback(
+    () => ({
+      async validator(_rule: Rule, newName: string) {
+        if (currentSite && newName === currentSite.name) {
+          return Promise.resolve();
+        }
+        const { data: site } = await getSiteByName(newName);
+        if (site) {
+          return Promise.reject(`Site name "${site.name}" already exists`);
+        }
+        return Promise.resolve();
+      },
+    }),
+    [currentSite, getSiteByName]
+  );
+  return mustBeUniqueName;
+};
 
 const buildInitialValues = () => ({
   scrape_method: 'SimpleDocumentScrape',
@@ -24,6 +51,7 @@ const buildInitialValues = () => ({
     follow_link_keywords: [],
     follow_link_url_keywords: [],
     searchable: false,
+    searchable_playbook: null,
     searchable_type: null,
     searchable_input: null,
     searchable_submit: null,
@@ -49,14 +77,14 @@ const validateMessages = {
 /* eslint-enable no-template-curly-in-string */
 
 const SiteInformation = ({ initialValues }: { initialValues?: Site }) => {
-  const form = Form.useFormInstance();
+  const mustBeUniqueName = useMustBeUniqueNameRule();
   return (
     <>
       <Typography.Title level={3}>Site Information</Typography.Title>
-      <Form.Item name="name" label="Name" rules={[{ required: true }]}>
+      <Form.Item name="name" label="Name" rules={[{ required: true }, mustBeUniqueName]}>
         <Input />
       </Form.Item>
-      <UrlFormFields initialValues={initialValues} form={form} />
+      <UrlFormFields initialValues={initialValues} />
       <Form.Item name="tags" label="Site Tags">
         <Select mode="tags" />
       </Form.Item>
@@ -84,6 +112,7 @@ export function SiteForm(props: {
       onFinish={props.onFinish}
       initialValues={initialValues}
       validateMessages={validateMessages}
+      validateTrigger={['onBlur']}
     >
       <Row gutter={16} className="flex pb-[20%]">
         <Col span={12} className="space-y-4">

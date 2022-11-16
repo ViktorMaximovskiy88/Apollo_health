@@ -1,5 +1,6 @@
 {
     "configurations": [
+        {"name":"Python: Current File","type":"python","request":"launch","program":"${file}","console":"integratedTerminal","justMyCode":true},
         {
             "name": "Python: FastAPI",
             "type": "python",
@@ -21,15 +22,28 @@
             "justMyCode": true
         },
         {
-            "name": "Python: Current File",
+            "name": "Python: ParseWorker",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            "program": "main.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
+            "cwd": "${workspaceFolder}/backend/parseworker"
+        },
+        {
+            "name": "Python: ScrapeWorker",
+            "type": "python",
+            "request": "launch",
+            "program": "main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}/backend/scrapeworker"
         },
         {
             "type": "pwa-chrome",

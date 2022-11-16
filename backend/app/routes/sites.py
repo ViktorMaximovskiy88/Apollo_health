@@ -1,5 +1,4 @@
 import urllib.parse
-from typing import List
 
 from beanie import PydanticObjectId
 from beanie.operators import ElemMatch
@@ -9,6 +8,7 @@ from backend.app.routes.table_query import (
     TableFilterInfo,
     TableQueryResponse,
     TableSortInfo,
+    _prepare_table_query,
     get_query_json_list,
     query_table,
 )
@@ -16,7 +16,7 @@ from backend.app.utils.logger import Logger, create_and_log, get_logger, update_
 from backend.app.utils.uploads import get_sites_from_upload
 from backend.app.utils.user import get_current_user
 from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
-from backend.common.models.doc_document import DocDocument, DocDocumentLimitTags, SiteDocDocument
+from backend.common.models.doc_document import DocDocument, SiteDocDocument
 from backend.common.models.document import (
     RetrievedDocument,
     RetrievedDocumentLimitTags,
@@ -32,6 +32,7 @@ from backend.common.models.site import (
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.services.collection import CollectionService
+from backend.common.services.doc_document import get_site_doc_doc_table
 
 router = APIRouter(
     prefix="/sites",
@@ -39,10 +40,12 @@ router = APIRouter(
 )
 
 
-async def get_target(id: PydanticObjectId) -> Site:
-    site = await Site.get(id)
+async def get_target(site_id: PydanticObjectId) -> Site:
+    site = await Site.get(site_id)
     if not site:
-        raise HTTPException(detail=f"Site {id} Not Found", status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(
+            detail=f"Site {site_id} Not Found", status_code=status.HTTP_404_NOT_FOUND
+        )
     return site
 
 
@@ -86,7 +89,19 @@ async def check_url(
         return ActiveUrlResponse(in_use=False)
 
 
-@router.get("/{id}", response_model=Site, dependencies=[Security(get_current_user)])
+@router.get(
+    "/search",
+    dependencies=[Security(get_current_user)],
+    response_model=Site,
+)
+async def read_site_by_name(
+    name: str,
+):
+    site = await Site.find_one({"name": name})
+    return site
+
+
+@router.get("/{site_id}", response_model=Site, dependencies=[Security(get_current_user)])
 async def read_site(
     target: Site = Depends(get_target),
 ):
@@ -152,7 +167,7 @@ async def update_multiple_sites(
     return result
 
 
-@router.post("/{id}", response_model=Site)
+@router.post("/{site_id}", response_model=Site)
 async def update_site(
     updates: UpdateSite,
     target: Site = Depends(get_target),
@@ -183,13 +198,12 @@ async def update_site(
 
 
 @router.delete(
-    "/{id}",
+    "/{site_id}",
     responses={
         405: {"description": "Item can't be deleted because of associated collection records."},
     },
 )
 async def delete_site(
-    id: PydanticObjectId,
     target: Site = Depends(get_target),
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
@@ -212,9 +226,21 @@ async def delete_site(
 )
 async def get_site_docs(
     site_id: PydanticObjectId,
+    scrape_task_id: PydanticObjectId | None = None,
 ):
+    query = {"locations.site_id": site_id}
+    if scrape_task_id:
+        scrape_task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
+        if not scrape_task:
+            raise HTTPException(
+                status.HTTP_406_NOT_ACCEPTABLE,
+                f"Scrape Task {scrape_task_id} does not exist",
+            )
+        query["_id"] = {"$in": scrape_task.retrieved_document_ids}
+
     docs = (
-        await RetrievedDocument.find({"locations.site_id": site_id})
+        await RetrievedDocument.find(query)
+        .sort("-first_collected_date")
         .project(RetrievedDocumentLimitTags)
         .to_list()
     )
@@ -240,20 +266,17 @@ async def get_site_doc_by_id(
 
 @router.get(
     "/{site_id}/doc-documents",
-    response_model=list[SiteDocDocument],
     dependencies=[Security(get_current_user)],
 )
 async def get_site_doc_docs(
     site_id: PydanticObjectId,
+    site: Site = Depends(get_target),
     scrape_task_id: PydanticObjectId | None = None,
-) -> list[SiteDocDocument]:
-    if not site_id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve docs.")
-    query: dict[str, PydanticObjectId] = {"locations.site_id": site_id}
-    site: Site | None = await Site.find_one({"_id": site_id})
-    if not site:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve docs.")
-
+    limit: int = 50,
+    skip: int = 0,
+    sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
+    filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
+):
     current_task: SiteScrapeTask | None = await SiteScrapeTask.find_one(
         {
             "site_id": site_id,
@@ -261,17 +284,26 @@ async def get_site_doc_docs(
         },
         sort=[("start_time", -1)],
     )
+
+    (match_filter, sort_by) = _prepare_table_query(sorts, filters)
+
+    retrieved_document_ids = []
     if current_task and current_task.collection_method == CollectionMethod.Manual:
-        query["retrieved_document_id"] = {"$in": current_task.retrieved_document_ids}
+        retrieved_document_ids = current_task.retrieved_document_ids
     elif scrape_task_id:
         scrape_task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
         if scrape_task and scrape_task.status != TaskStatus.CANCELED:
-            query["retrieved_document_id"] = {"$in": scrape_task.retrieved_document_ids}
+            retrieved_document_ids = scrape_task.retrieved_document_ids
 
-    docs: List[DocDocumentLimitTags] = (
-        await DocDocument.find(query).project(DocDocumentLimitTags).to_list()
+    data, total = await get_site_doc_doc_table(
+        site_id,
+        retrieved_document_ids=retrieved_document_ids,
+        filters=match_filter,
+        sorts=sort_by,
+        limit=limit,
+        skip=skip,
     )
-    return [doc.for_site(site_id) for doc in docs]
+    return TableQueryResponse(data=data, total=total)
 
 
 @router.get(

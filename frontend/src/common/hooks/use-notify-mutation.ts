@@ -12,10 +12,10 @@ export function useNotifyMutation(
     if (isSuccess) {
       notification.success({ message: 'Success!', ...successNotificationArgs });
     }
-  }, [isSuccess]);
+  }, [isSuccess, successNotificationArgs]);
   useEffect(() => {
     if (isError) {
-      notification.error({ message: 'Success!', ...errorNotificationArgs });
+      notification.error({ message: 'Error', ...errorNotificationArgs });
     }
-  }, [isError]);
+  }, [isError, errorNotificationArgs]);
 }

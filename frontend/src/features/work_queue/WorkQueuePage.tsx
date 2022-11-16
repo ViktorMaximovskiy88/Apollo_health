@@ -235,6 +235,7 @@ export function WorkQueuePage() {
         {...filterProps}
         {...sortProps}
         {...paginationProps}
+        columnUserSelect
       />
     </MainLayout>
   );

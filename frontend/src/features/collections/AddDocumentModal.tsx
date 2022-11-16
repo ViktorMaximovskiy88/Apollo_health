@@ -10,8 +10,8 @@ import {
   Select,
   Tooltip,
   message,
-  Checkbox,
   notification,
+  Switch,
 } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { UploadChangeParam } from 'antd/lib/upload';
@@ -23,12 +23,13 @@ import {
   CheckCircleOutlined,
 } from '@ant-design/icons';
 
-import { prettyDate } from '../../common';
+import { prettyDateFromISO } from '../../common';
 import { useAddDocumentMutation } from '../retrieved_documents/documentsApi';
 import { baseApiUrl, client } from '../../app/base-api';
 import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
 import { SiteDocDocument } from '../doc_documents/types';
 import moment from 'moment';
+import { useGetSiteQuery } from '../sites/sitesApi';
 
 interface AddDocumentModalPropTypes {
   oldVersion?: SiteDocDocument;
@@ -37,22 +38,21 @@ interface AddDocumentModalPropTypes {
   refetch?: any;
 }
 
-const buildInitialValues = (oldVersion?: SiteDocDocument) => {
+const buildInitialValues = (initialBaseUrl: String, oldVersion?: SiteDocDocument) => {
   if (!oldVersion) {
     return {
+      base_url: initialBaseUrl,
       lang_code: 'en',
       internal_document: false,
     };
   }
   return {
+    base_url: initialBaseUrl,
     lang_code: oldVersion.lang_code,
     name: oldVersion.name,
     document_type: oldVersion.document_type,
     internal_document: oldVersion.internal_document,
     site_id: oldVersion.site_id,
-    link_text: oldVersion.link_text,
-    base_url: oldVersion.base_url,
-    url: oldVersion.url,
   };
 };
 
@@ -75,8 +75,14 @@ export function AddDocumentModal({
   const [oldLocationSiteId, setOldLocationSiteId] = useState('');
   const [oldLocationDocId, setOldLocationDocId] = useState('');
   const [isEditingDocFromOtherSite, setIsEditingDocFromOtherSite] = useState(false);
+  const [intitialBaseUrl, setIntitialBaseUrl] = useState('');
 
-  const initialValues = buildInitialValues(oldVersion);
+  // Set initial values.
+  const { data: site } = useGetSiteQuery(siteId);
+  if (site && site.base_urls.length === 1 && !intitialBaseUrl) {
+    setIntitialBaseUrl(site.base_urls[0].url);
+  }
+  const initialValues = buildInitialValues(intitialBaseUrl, oldVersion);
   if (docTitle !== 'Add New Version' && oldVersion) {
     setDocTitle('Add New Version');
   }
@@ -104,7 +110,7 @@ export function AddDocumentModal({
       newDocument.url = form.getFieldValue('url');
       newDocument.base_url = form.getFieldValue('base_url') ?? newDocument.url;
       newDocument.link_text = form.getFieldValue('link_text');
-
+      // Doc already exists on another site.
       if (oldLocationSiteId) {
         newDocument.prev_location_site_id = oldLocationSiteId;
         newDocument.prev_location_doc_id = oldLocationDocId;
@@ -114,8 +120,6 @@ export function AddDocumentModal({
       fileData.url = form.getFieldValue('url');
       fileData.base_url = form.getFieldValue('base_url') ?? newDocument.url;
       fileData.link_text = form.getFieldValue('link_text');
-      fileData.metadata.link_text = newDocument.link_text;
-      delete newDocument.link_text;
       delete newDocument.document_file;
 
       try {
@@ -123,8 +127,6 @@ export function AddDocumentModal({
           ...newDocument,
           ...fileData,
         });
-        // TODO: On success but has duplicate file from OTHER site,
-        // display notice.
         if (refetch) {
           refetch();
         }
@@ -150,7 +152,6 @@ export function AddDocumentModal({
   function setLocationValuesFromResponse(responseData: any) {
     form.setFieldsValue({
       name: responseData.doc_name,
-      base_url: responseData.base_url,
       document_type: responseData.document_type,
       lang_code: responseData.lang_code,
       effective_date: convertDate(responseData.effective_date),
@@ -180,31 +181,37 @@ export function AddDocumentModal({
         validateMessages={validateMessages}
         onFinish={saveDocument}
       >
-        <div className="flex grow space-x-3">
+        <div className="flex space-x-3">
           <UploadItem
             form={form}
             setFileData={setFileData}
             siteId={siteId}
             setLocationValuesFromResponse={setLocationValuesFromResponse}
           />
-          <InternalDocument
-            oldVersion={oldVersion}
-            isEditingDocFromOtherSite={isEditingDocFromOtherSite}
-          />
         </div>
 
         <div className="flex grow space-x-3">
           <Form.Item
             className="grow"
+            style={{ width: '43%' }}
             name="name"
             label="Document Name"
             rules={[{ required: true }]}
           >
             <Input disabled={isEditingDocFromOtherSite ? true : false} />
           </Form.Item>
-          <DocumentTypeItem isEditingDocFromOtherSite={isEditingDocFromOtherSite} />
           <LanguageItem isEditingDocFromOtherSite={isEditingDocFromOtherSite} />
         </div>
+
+        <div className="flex grow space-x-3">
+          <DocumentTypeItem isEditingDocFromOtherSite={isEditingDocFromOtherSite} />
+          <EffectiveDateItem isEditingDocFromOtherSite={isEditingDocFromOtherSite} />
+          <InternalDocument
+            oldVersion={oldVersion}
+            isEditingDocFromOtherSite={isEditingDocFromOtherSite}
+          />
+        </div>
+
         <div className="flex grow space-x-3">
           <Form.Item className="grow" name="base_url" label="Base Url" rules={[{ type: 'url' }]}>
             <Input type="url" />
@@ -221,7 +228,9 @@ export function AddDocumentModal({
             <Input type="url" />
           </Form.Item>
         </div>
-        <DateItems isEditingDocFromOtherSite={isEditingDocFromOtherSite} />
+
+        <DateItems oldVersion={oldVersion} isEditingDocFromOtherSite={isEditingDocFromOtherSite} />
+
         <Form.Item>
           <Space>
             <Button type="primary" htmlType="submit">
@@ -267,12 +276,18 @@ function UploadItem(props: any) {
   };
 
   return (
-    <div className="flex grow space-x-4">
+    <div className="flex grow space-x-1">
       <Form.Item
         name="document_file"
-        label="Document File"
         rules={[{ required: uploadStatus === 'done' ? false : true }]}
+        label="Document File"
+        style={{ width: '100%' }}
       >
+        <Tooltip placement="top" title="Only upload .pdf, .xlsx and .docx">
+          <QuestionCircleOutlined
+            style={{ marginTop: '-26px', marginLeft: '105px', float: 'left' }}
+          />
+        </Tooltip>
         <Upload
           name="file"
           accept=".pdf,.xlsx,.docx"
@@ -284,22 +299,17 @@ function UploadItem(props: any) {
           onChange={onChange}
         >
           {uploadStatus === 'uploading' ? (
-            <Button style={{ marginRight: '10px' }} icon={<LoadingOutlined />}>
-              Uploading {fileName}...
-            </Button>
+            <Button icon={<LoadingOutlined />}>Uploading {fileName}...</Button>
           ) : uploadStatus === 'done' ? (
-            <Button style={{ marginRight: '10px' }} icon={<CheckCircleOutlined />}>
+            <Button style={{ whiteSpace: 'normal' }} icon={<CheckCircleOutlined />}>
               {fileName} uploaded!
             </Button>
           ) : (
-            <Button style={{ marginRight: '10px' }} icon={<UploadOutlined />}>
+            <Button style={{ whiteSpace: 'normal' }} icon={<UploadOutlined />}>
               Click to Upload
             </Button>
           )}
         </Upload>
-        <Tooltip placement="right" title="Only upload .pdf, .xlsx and .docx">
-          <QuestionCircleOutlined />
-        </Tooltip>
       </Form.Item>
     </div>
   );
@@ -310,9 +320,14 @@ function InternalDocument(props: any) {
 
   return (
     <>
-      <div className="mt-1">Internal Document&nbsp;</div>
-      <Form.Item valuePropName="checked" className="grow" name="internal_document">
-        <Checkbox disabled={isEditingDocFromOtherSite || oldVersion ? true : false} />
+      <Form.Item
+        className="grow"
+        style={{ width: '100%' }}
+        valuePropName="checked"
+        label="Internal"
+        name="internal_document"
+      >
+        <Switch disabled={isEditingDocFromOtherSite || oldVersion ? true : false} />
       </Form.Item>
     </>
   );
@@ -324,11 +339,38 @@ function DocumentTypeItem(props: any) {
   return (
     <Form.Item
       className="grow"
+      style={{ width: '100%' }}
       name="document_type"
       label="Document Type"
       rules={[{ required: true }]}
     >
-      <Select options={DocumentTypes} disabled={isEditingDocFromOtherSite ? true : false} />
+      <Select
+        showSearch
+        options={DocumentTypes}
+        disabled={isEditingDocFromOtherSite ? true : false}
+      />
+    </Form.Item>
+  );
+}
+
+function EffectiveDateItem(props: any) {
+  const { isEditingDocFromOtherSite } = props;
+
+  return (
+    <Form.Item
+      className="grow"
+      style={{ width: '100%' }}
+      name="effective_date"
+      label="Effective Date"
+    >
+      <DatePicker
+        className="grow"
+        style={{ width: '100%' }}
+        mode="date"
+        showTime={false}
+        format={(value) => prettyDateFromISO(value.toISOString())}
+        disabled={isEditingDocFromOtherSite ? true : false}
+      />
     </Form.Item>
   );
 }
@@ -338,7 +380,11 @@ function LanguageItem(props: any) {
 
   return (
     <Form.Item className="grow" name="lang_code" label="Language" rules={[{ required: true }]}>
-      <Select options={languageCodes} disabled={isEditingDocFromOtherSite ? true : false} />
+      <Select
+        showSearch
+        options={languageCodes}
+        disabled={isEditingDocFromOtherSite ? true : false}
+      />
     </Form.Item>
   );
 }
@@ -352,12 +398,6 @@ function DateItems(props: any) {
   const { isEditingDocFromOtherSite } = props;
 
   let fields = [
-    [
-      {
-        name: 'effective_date',
-        title: 'Effective Date',
-      },
-    ],
     [
       {
         name: 'last_reviewed_date',
@@ -397,10 +437,11 @@ function DateItems(props: any) {
               return (
                 <Form.Item key={field.name} name={field.name} className="grow" label={field.title}>
                   <DatePicker
+                    className="grow"
+                    style={{ width: '100%' }}
                     mode="date"
                     showTime={false}
-                    style={{ width: '100%' }}
-                    format={(value) => prettyDate(value.toDate())}
+                    format={(value) => prettyDateFromISO(value.toISOString())}
                     disabled={isEditingDocFromOtherSite ? true : false}
                   />
                 </Form.Item>

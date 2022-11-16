@@ -43,7 +43,7 @@ from backend.scrapeworker.common.models import DownloadContext, Metadata, Reques
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.scrapeworker.common.update_documents import DocumentUpdater
 from backend.scrapeworker.common.utils import get_extension_from_path_like, supported_mimetypes
-from backend.scrapeworker.file_parsers import parse_by_type, pdf
+from backend.scrapeworker.file_parsers import get_tags, parse_by_type, pdf
 from backend.scrapeworker.playbook import ScrapePlaybook
 from backend.scrapeworker.scrapers import ScrapeHandler
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
@@ -220,7 +220,6 @@ class ScrapeWorker:
             parsed_content = await parse_by_type(
                 temp_path,
                 download,
-                focus_config=scrape_method_config.focus_section_configs,
                 scrape_method_config=scrape_method_config,
             )
 
@@ -253,14 +252,11 @@ class ScrapeWorker:
                 or self.site.scrape_method == "HtmlScrape"
             ):
                 async for pdf_path in self.html_to_pdf(url, download, checksum, temp_path):
-                    parsed_pdf = await pdf.PdfParse(
+                    await pdf.PdfParse(
                         pdf_path,
                         url,
                         link_text=download.metadata.link_text,
-                        focus_config=scrape_method_config.focus_section_configs,
-                    ).parse()
-                    parsed_content["therapy_tags"] = parsed_pdf["therapy_tags"]
-                    parsed_content["indication_tags"] = parsed_pdf["indication_tags"]
+                    ).update_parsed_content(parsed_content)
 
             if download.file_extension == "html":
                 text_checksum = hash_full_text(parsed_content["text"])
@@ -272,7 +268,7 @@ class ScrapeWorker:
 
             if document:
                 self.log.info("updating doc")
-
+                await get_tags(parsed_content, document=document)
                 # Can be removed after text added to older docs
                 if document.text_checksum is None and len(parsed_content["text"]) > 0:
                     text_checksum = await self.text_handler.save_text(parsed_content["text"])
@@ -300,6 +296,9 @@ class ScrapeWorker:
                 )
 
             else:
+                await get_tags(
+                    parsed_content, focus_configs=scrape_method_config.focus_section_configs
+                )
                 document = await self.doc_updater.create_retrieved_document(
                     parsed_content, download, checksum, url
                 )
@@ -459,11 +458,15 @@ class ScrapeWorker:
     def active_base_urls(self):
         return [url for url in self.site.base_urls if url.status == "ACTIVE"]
 
-    async def queue_downloads(self, url: str, base_url: str, cookies: list[Cookie] = []):
+    async def queue_downloads(
+        self, url: str, base_url: str, cookies: list[Cookie] = [], skip_playbook: bool = False
+    ):
         all_downloads: list[DownloadContext] = []
 
         async with self.playwright_context(url, cookies) as (base_page, context):
-            async for (page, playbook_context) in self.playbook.run_playbook(base_page):
+            async for (page, playbook_context) in self.playbook.run_playbook(
+                base_page, skip_playbook=skip_playbook
+            ):
 
                 scrape_handler = ScrapeHandler(
                     context=context,
@@ -473,33 +476,33 @@ class ScrapeWorker:
                     config=self.site.scrape_method_configuration,
                 )
 
-                if await self.search_crawler.is_searchable(page):
-                    async for code in self.search_crawler.run_searchable(page, playbook_context):
-                        await scrape_handler.run_scrapers(
-                            url, base_url, all_downloads, {"file_name": code}
-                        )
+                async for code in self.search_crawler.run_searchable(page, playbook_context):
+                    await scrape_handler.run_scrapers(
+                        url, base_url, all_downloads, {"file_name": code}
+                    )
                 else:
                     await scrape_handler.run_scrapers(url, base_url, all_downloads)
 
         return all_downloads
 
-    async def follow_links(self, url) -> tuple[list[str], list[Cookie]]:
-        urls: list[str] = []
+    async def follow_links(self, url) -> tuple[set[str], list[Cookie]]:
+        urls: set[str] = set()
         page: Page
         context: BrowserContext
         cookies: list[Cookie] = []
-        async with self.playwright_context(url) as (page, context):
-            crawler = FollowLinkScraper(
-                page=page,
-                context=context,
-                config=self.site.scrape_method_configuration,
-                url=url,
-            )
+        async with self.playwright_context(url) as (base_page, context):
+            async for page, _ in self.playbook.run_playbook(base_page):
+                crawler = FollowLinkScraper(
+                    page=page,
+                    context=context,
+                    config=self.site.scrape_method_configuration,
+                    url=url,
+                )
 
-            cookies = await context.cookies()
-            if await crawler.is_applicable():
-                for dl in await crawler.execute():
-                    urls.append(dl.request.url)
+                cookies = await context.cookies()
+                if await crawler.is_applicable():
+                    async for dl in crawler.execute():
+                        urls.add(dl.request.url)
 
         return urls, cookies
 
@@ -550,7 +553,7 @@ class ScrapeWorker:
                 for nested_url in links_found:
                     await self.scrape_task.update(Inc({SiteScrapeTask.follow_links_found: 1}))
                     all_downloads += await self.queue_downloads(
-                        nested_url, base_url=url, cookies=cookies
+                        nested_url, base_url=url, cookies=cookies, skip_playbook=True
                     )
 
         tasks = []
@@ -569,8 +572,10 @@ class ScrapeWorker:
         await self.lineage_service.process_lineage_for_site(site_id)  # type: ignore
 
         doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
-        change_info = ChangeInfo(translation_change=True, lineage_change=True)
         async for doc in DocDocument.find({"_id": {"$in": doc_doc_ids}}):
+            change_info = ChangeInfo(
+                translation_change=True, lineage_change=doc.previous_doc_doc_id
+            )
             await doc_document_save_hook(doc, change_info)
 
         self.site.last_run_documents = self.scrape_task.documents_found

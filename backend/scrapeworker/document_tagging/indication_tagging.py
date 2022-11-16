@@ -5,6 +5,7 @@ from spacy.tokens import Span
 
 from backend.common.core.enums import SectionType
 from backend.common.models.doc_document import IndicationTag
+from backend.common.models.document import RetrievedDocument
 from backend.common.models.indication import Indication
 from backend.common.models.site import FocusSectionConfig
 from backend.scrapeworker.document_tagging.tag_focusing import FocusChecker
@@ -37,7 +38,7 @@ class IndicationTagger:
                         )
         return self.nlp
 
-    def __get_focus_configs(self, configs: list[FocusSectionConfig], doc_type: str):
+    def _filter_focus_configs(self, configs: list[FocusSectionConfig], doc_type: str):
         filtered = [
             config
             for config in configs
@@ -51,17 +52,26 @@ class IndicationTagger:
         doc_type: str,
         url: str,
         link_text: str | None,
-        focus_configs: list[FocusSectionConfig],
+        focus_configs: list[FocusSectionConfig] | None = None,
+        document: RetrievedDocument | None = None,
     ) -> tuple[list[IndicationTag], list[IndicationTag], list[IndicationTag]]:
         nlp = await self.model()
         if not nlp:
+            return ([], [], [])
+        focus_checker: FocusChecker
+        if focus_configs:
+            focus_configs = self._filter_focus_configs(focus_configs, doc_type)
+            focus_checker = FocusChecker(text, focus_configs, url, link_text, doc_type)
+        elif document:
+            focus_checker = await FocusChecker.with_all_location_configs(
+                document, SectionType.INDICATION, text, url, link_text
+            )
+        else:
             return ([], [], [])
 
         tags = set()
         url_tags = set()
         link_tags = set()
-        focus_configs = self.__get_focus_configs(focus_configs, doc_type)
-        focus_checker = FocusChecker(text, focus_configs, url, link_text)
         pages = text.split("\f")
         loop = asyncio.get_running_loop()
         char_offset = 0

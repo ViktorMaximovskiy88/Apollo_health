@@ -12,18 +12,42 @@ from backend.common.services.lineage.core import LineageService
 from backend.common.services.tag_compare import TagCompare
 
 log = logging.getLogger(__name__)
-lineage_service = LineageService(logger=log)
 
 
 @click.group()
-async def lineage():
+@click.pass_context
+async def lineage(ctx):
+    ctx.obj = {"lineage_service": LineageService(logger=log)}
     await init_db()
 
 
-async def _run_tag_compare(current_id: PydanticObjectId, prev_id: PydanticObjectId):
-    log.info("Running tag compare")
-    current_doc = await DocDocument.get(current_id)
-    prev_doc = await DocDocument.get(prev_id)
+@lineage.command()
+@click.pass_context
+@click.option("--site-id", help="Site ID to reprocess", required=True, type=PydanticObjectId)
+async def reprocess(ctx, site_id: PydanticObjectId):
+    lineage_service: LineageService = ctx.obj["lineage_service"]
+    log.info(f"Reprocessing lineage for site id {site_id}")
+    await lineage_service.reprocess_lineage_for_site(site_id)
+
+
+@lineage.command()
+@click.pass_context
+@click.option("--site-id", help="Site ID to reprocess", required=True, type=PydanticObjectId)
+async def clear(ctx, site_id: PydanticObjectId):
+    lineage_service: LineageService = ctx.obj["lineage_service"]
+    log.info(f"Clearing lineage for site id {site_id}")
+    await lineage_service.clear_lineage_for_site(site_id)
+
+
+@lineage.command()
+@click.pass_context
+@click.option(
+    "--current-doc-id", help="Current doc to compare", required=True, type=PydanticObjectId
+)
+@click.option("--previous-doc-id", help="Prev doc to compare", required=True, type=PydanticObjectId)
+async def compare_tags(ctx, current_doc_id: PydanticObjectId, previous_doc_id: PydanticObjectId):
+    current_doc = await DocDocument.get(current_doc_id)
+    prev_doc = await DocDocument.get(previous_doc_id)
 
     if not current_doc or not prev_doc:
         raise Exception("Document(s) not found")
@@ -34,26 +58,3 @@ async def _run_tag_compare(current_id: PydanticObjectId, prev_id: PydanticObject
     current_doc.indication_tags = final_indi_tags
     await current_doc.save()
     log.info("Tag compare complete")
-
-
-@lineage.command()
-@click.option("--site-id", help="Site ID to reprocess", required=True, type=PydanticObjectId)
-async def reprocess(site_id: PydanticObjectId):
-    log.info(f"Reprocessing lineage for site id {site_id}")
-    await lineage_service.reprocess_lineage_for_site(site_id)
-
-
-@lineage.command()
-@click.option("--site-id", help="Site ID to reprocess", required=True, type=PydanticObjectId)
-async def clear(site_id: PydanticObjectId):
-    log.info(f"Clearing lineage for site id {site_id}")
-    await lineage_service.clear_lineage_for_site(site_id)
-
-
-@lineage.command()
-@click.option("--current-doc", help="Current doc to compare", required=True, type=PydanticObjectId)
-@click.option("--prev-doc", help="Prev doc to compare", required=True, type=PydanticObjectId)
-async def compare_tags(current_id: PydanticObjectId, prev_id: PydanticObjectId):
-    # this command likely doesn't work yet.
-    # haven't been able to update with the switch to click yet
-    await _run_tag_compare(current_id, prev_id)

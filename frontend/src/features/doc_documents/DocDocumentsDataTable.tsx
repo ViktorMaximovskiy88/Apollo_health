@@ -11,7 +11,7 @@ import {
   setDocDocumentTableLimit,
   setDocDocumentTableSkip,
 } from './docDocumentsSlice';
-import { prettyDateTimeFromISO } from '../../common';
+import { prettyDateTimeFromISO, prettyDateUTCFromISO } from '../../common';
 import { ButtonLink, GridPaginationToolbar } from '../../components';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { Site } from '../sites/types';
@@ -95,7 +95,10 @@ const useColumns = (siteNamesById: { [key: string]: string }) => {
       },
       defaultFlex: 1,
       render: ({ data }: { data: { locations: { site_id: string }[] } }) => {
-        return data.locations.map((s) => siteNamesById[s.site_id]).join(', ');
+        return data.locations
+          .filter((s) => siteNamesById[s.site_id])
+          .map((s) => siteNamesById[s.site_id])
+          .join(', ');
       },
     },
     {
@@ -112,7 +115,7 @@ const useColumns = (siteNamesById: { [key: string]: string }) => {
       },
       render: ({ data: doc }: { data: DocDocument }) => {
         if (!doc.final_effective_date) return null;
-        return prettyDateTimeFromISO(doc.final_effective_date);
+        return prettyDateUTCFromISO(doc.final_effective_date);
       },
     },
     {
@@ -324,6 +327,7 @@ export function DocDocumentsDataTable() {
       rowHeight={50}
       renderLoadMask={() => <></>}
       activateRowOnFocus={false}
+      columnUserSelect
     />
   );
 }

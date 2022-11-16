@@ -5,22 +5,42 @@ import { Site } from './types';
 import { RetrievedDocument } from '../retrieved_documents/types';
 import { SiteDocDocument } from '../doc_documents/types';
 
+// table query doesnt have site always...
+// purpose of types when everything is | undefined is fleeting
+export interface TableQueryInfo {
+  limit?: number;
+  skip?: number;
+  sortInfo?: TypeSortInfo;
+  filterValue?: TypeFilterValue;
+}
+
+export interface SiteQueryParams {
+  siteId: string | undefined;
+  scrapeTaskId: string | null;
+}
+
+export type SiteDocDocTableParams = TableQueryInfo & SiteQueryParams;
+
+// part of the type the construction of query builder...
+// make both re-usable (dont belong here honestly)
+function tableQueryInfoBuilder({ limit, skip, sortInfo, filterValue }: TableQueryInfo) {
+  const sorts = sortInfo ? [sortInfo] : [];
+  const args = [];
+  if (limit) args.push(`limit=${encodeURIComponent(limit)}`);
+  if (skip) args.push(`skip=${encodeURIComponent(skip)}`);
+  if (sorts) args.push(`sorts=${encodeURIComponent(JSON.stringify(sorts))}`);
+  if (filterValue) args.push(`filters=${encodeURIComponent(JSON.stringify(filterValue))}`);
+  return args;
+}
+
 export const sitesApi = createApi({
   reducerPath: 'sitesApi',
   baseQuery: fetchBaseQuery(),
   tagTypes: ['Site', 'ChangeLog', 'SiteDocDocument', 'RetrievedDocument'],
   endpoints: (builder) => ({
-    getSites: builder.query<
-      { data: Site[]; total: number },
-      { limit?: number; skip?: number; sortInfo?: TypeSortInfo; filterValue?: TypeFilterValue }
-    >({
+    getSites: builder.query<{ data: Site[]; total: number }, TableQueryInfo>({
       query: ({ limit, skip, sortInfo, filterValue }) => {
-        const sorts = sortInfo ? [sortInfo] : [];
-        const args = [];
-        if (limit) args.push(`limit=${encodeURIComponent(limit)}`);
-        if (skip) args.push(`skip=${encodeURIComponent(skip)}`);
-        if (sorts) args.push(`sorts=${encodeURIComponent(JSON.stringify(sorts))}`);
-        if (filterValue) args.push(`filters=${encodeURIComponent(JSON.stringify(filterValue))}`);
+        const args = tableQueryInfoBuilder({ limit, skip, sortInfo, filterValue });
         return `/sites/?${args.join('&')}`;
       },
       providesTags: (results) => {
@@ -32,6 +52,10 @@ export const sitesApi = createApi({
     getSite: builder.query<Site, string | null | undefined>({
       query: (id) => `/sites/${id}`,
       providesTags: (_r, _e, id) => (id ? [{ type: 'Site' as const, id }] : []),
+    }),
+    getSiteByName: builder.query<Site, string>({
+      query: (name) => `/sites/search?name=${name}`,
+      providesTags: (_r, _e, name) => [{ type: 'Site' as const, name }],
     }),
     getSiteRetrievedDocuments: builder.query<
       RetrievedDocument[],
@@ -58,22 +82,22 @@ export const sitesApi = createApi({
       providesTags: (_r, _e, id) => [{ type: 'Site' as const, id }],
     }),
     getSiteDocDocuments: builder.query<
-      SiteDocDocument[],
+      { data: SiteDocDocument[]; total: number },
       {
         siteId: String | undefined;
         scrapeTaskId: String | null;
-      }
+      } & TableQueryInfo
     >({
-      query: ({ siteId, scrapeTaskId }) => {
-        let url = `/sites/${siteId}/doc-documents`;
+      query: ({ siteId, scrapeTaskId, limit, skip, sortInfo, filterValue }) => {
+        const args = tableQueryInfoBuilder({ limit, skip, sortInfo, filterValue });
         if (scrapeTaskId) {
-          url += `?scrape_task_id=${scrapeTaskId}`;
+          args.push(`scrape_task_id=${scrapeTaskId}`);
         }
-        return url;
+        return `/sites/${siteId}/doc-documents?${args.join('&')}`;
       },
       providesTags: (results) => {
         const tags = [{ type: 'SiteDocDocument' as const, id: 'LIST' }];
-        results?.forEach(({ _id: id }) => tags.push({ type: 'SiteDocDocument', id }));
+        results?.data.forEach(({ _id: id }) => tags.push({ type: 'SiteDocDocument', id }));
         return tags;
       },
     }),
@@ -112,6 +136,7 @@ export const sitesApi = createApi({
 export const {
   useGetSiteQuery,
   useLazyGetSiteQuery,
+  useLazyGetSiteByNameQuery,
   useGetSitesQuery,
   useLazyGetSitesQuery,
   useAddSiteMutation,

@@ -22,6 +22,11 @@ class FocusSectionConfig(BaseModel):
     end_separator: str | None = None
     all_focus: bool = False
 
+    def __hash__(self):
+        config = self.__dict__
+        config["section_type"] = tuple(config["section_type"])
+        return hash(tuple(config.values()))
+
 
 class ScrapeMethodConfiguration(BaseModel):
     document_extensions: list[str] = []
@@ -35,6 +40,7 @@ class ScrapeMethodConfiguration(BaseModel):
     follow_link_keywords: list[str] = []
     follow_link_url_keywords: list[str] = []
     searchable: bool = False
+    searchable_playbook: str | None = None
     searchable_type: SearchableType | None = None
     searchable_input: AttrSelector | None = None
     searchable_submit: AttrSelector | None = None
@@ -54,6 +60,7 @@ class UpdateScrapeMethodConfiguration(BaseModel):
     follow_link_keywords: list[str] | None = None
     follow_link_url_keywords: list[str] | None = None
     searchable: bool | None = None
+    searchable_playbook: str | None = None
     searchable_type: SearchableType | None = None
     searchable_input: AttrSelector | None = None
     searchable_submit: AttrSelector | None = None

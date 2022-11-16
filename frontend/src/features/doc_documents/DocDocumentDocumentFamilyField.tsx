@@ -93,27 +93,26 @@ export const DocDocumentDocumentFamilyField = ({
   }, [document_family_id, docFamData]);
 
   return (
-    <div>
-      <Form.Item label="Document Family" name="document_family_id">
-        <RemoteSelect
-          allowClear
-          style={{
-            width: document_family_id ? 'calc(100% - 192px)' : 'calc(100% - 96px)',
-            marginRight: '8px',
-          }}
-          initialOptions={currentOption ? [currentOption] : []}
-          fetchOptions={fetchDocFamilyOptions}
-          value={currentOption}
-          onClear={() => {
-            form.setFieldsValue({ document_family_id: null });
-            setCurrentOption(undefined);
-          }}
-          onSelect={(document_family_id: any, option: any) => {
-            setCurrentOption(option);
-            form.setFieldsValue({ document_family_id });
-            onFieldChange();
-          }}
-        />
+    <Form.Item label="Document Family">
+      <div className="flex space-x-2 pt-1">
+        <Form.Item noStyle name="document_family_id">
+          <RemoteSelect
+            allowClear
+            className="flex-grow ant-select-expandable"
+            initialOptions={currentOption ? [currentOption] : []}
+            fetchOptions={fetchDocFamilyOptions}
+            value={currentOption}
+            onClear={() => {
+              form.setFieldsValue({ document_family_id: null });
+              setCurrentOption(undefined);
+            }}
+            onSelect={(document_family_id: any, option: any) => {
+              setCurrentOption(option);
+              form.setFieldsValue({ document_family_id });
+              onFieldChange();
+            }}
+          />
+        </Form.Item>
         {document_family_id && (
           <Button
             type="dashed"
@@ -138,6 +137,7 @@ export const DocDocumentDocumentFamilyField = ({
           onClose={() => {
             setIsEditVisible(false);
           }}
+          mask={false}
         />
 
         <Button
@@ -161,8 +161,9 @@ export const DocDocumentDocumentFamilyField = ({
           onClose={() => {
             setIsNewVisible(false);
           }}
+          mask={false}
         />
-      </Form.Item>
-    </div>
+      </div>
+    </Form.Item>
   );
 };

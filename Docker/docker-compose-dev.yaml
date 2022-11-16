@@ -10,11 +10,13 @@ services:
     volumes:
       - mongo:/data/db
     command: "mongod --dbpath /data/db"
+
   redis:
     image: redis:alpine
     ports:
       - "6379:6379"
     command: sh -c "redis-server --maxmemory 512mb --requirepass redis --maxmemory-policy allkeys-lfu"
+
   minio:
     image: minio/minio:latest
     environment:
@@ -26,6 +28,15 @@ services:
     volumes:
       - minio:/data
     command: minio server --console-address ":9001" /data
+
+  sqs:
+    container_name: sqs
+    image: softwaremill/elasticmq-native:1.3.13
+    volumes:
+      - ./elasticmq.conf:/opt/elasticmq.conf
+    ports:
+      - "9324:9324"
+      - "9325:9325"
 
 volumes:
   mongo:

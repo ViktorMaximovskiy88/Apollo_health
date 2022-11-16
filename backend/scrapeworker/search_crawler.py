@@ -29,6 +29,7 @@ class SearchableCrawler:
             else None
         )
         self.log = log
+        self.searchable_playbook = ScrapePlaybook(config.searchable_playbook)
 
     async def __codes(self):
         search_codes = await SearchCodeSet.find_one({"type": self.config.searchable_type})
@@ -39,6 +40,11 @@ class SearchableCrawler:
     async def replay_playbook(self, page: Page, playbook_context: PlaybookContext):
         playbook = ScrapePlaybook(playbook_str=None, playbook_context=playbook_context)
         async for _ in playbook.run_playbook(page):
+            continue
+
+    async def run_searchable_playbook(self, page: Page):
+        searchable_playbook = self.searchable_playbook
+        async for _ in searchable_playbook.run_playbook(page):
             continue
 
     async def is_searchable(self, page: Page):
@@ -60,7 +66,7 @@ class SearchableCrawler:
         """
         try:
             select_locator = page.locator(":not(input)", has_text=code).last
-            await select_locator.click(timeout=5000)
+            await select_locator.click()
         except Exception:
             return
 
@@ -73,11 +79,12 @@ class SearchableCrawler:
     async def run_searchable(self, page: Page, playbook_context: PlaybookContext):
         base_url = page.url
         codes = await self.__codes()
-
         for code in codes:
             nav_state = NavState()
             try:
                 page.on("load", nav_state.handle_nav)
+                # runs searchable playbook if provided from collection settings
+                await self.run_searchable_playbook(page)
                 await self.__type(page, code)
                 await self.__select(page, code)
                 await self.__search(page)

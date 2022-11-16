@@ -62,6 +62,21 @@ resource "aws_iam_role" "sourcehub" {
           Resource = [
             "arn:aws:ecs:${var.region}:${data.aws_caller_identity.current.account_id}:service/${data.aws_ecs_cluster.ecs-cluster.cluster_name}/${local.service_name}-scrapeworker"
           ]
+        },
+        {
+          Effect = "Allow"
+          Action = [
+            "sqs:SendMessage",
+            "sqs:ReceiveMessage",
+            "sqs:GetQueueUrl",
+            "sqs:GetQueueAttributes",
+            "sqs:DeleteMessage",
+            "sqs:ChangeMessageVisibility"
+          ]
+          Resource = [
+            aws_sqs_queue.lineageworker.arn,
+            aws_sqs_queue.pdfdiffworker.arn,
+          ]
         }
       ]
     })
@@ -73,7 +88,7 @@ resource "aws_iam_role" "sourcehub" {
   ]
 
   tags = merge(local.effective_tags, {
-    Name = format("%s-%s-%s-app-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
+    Name      = format("%s-%s-%s-app-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
     component = "${local.service_name}-app"
   })
 

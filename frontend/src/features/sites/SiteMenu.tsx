@@ -12,16 +12,6 @@ export function SiteMenu() {
   const subpages = [
     { key: 'scrapes', label: <Link to={`/sites/${siteId}/scrapes`}>Collections</Link> },
     {
-      key: 'documents',
-      label: (
-        <Link
-          to={`/sites/${siteId}/documents${scrapeTaskId ? `?scrape_task_id=${scrapeTaskId}` : ''}`}
-        >
-          Retrieved Documents
-        </Link>
-      ),
-    },
-    {
       key: 'doc-documents',
       label: (
         <Link

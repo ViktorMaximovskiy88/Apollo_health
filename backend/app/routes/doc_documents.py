@@ -1,11 +1,12 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import List
 
 from beanie import PydanticObjectId
 from beanie.odm.queries.find import FindMany
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
+from fastapi import APIRouter, Depends, HTTPException, Security, status
 from fastapi.responses import StreamingResponse
 
+from backend.app.core.settings import settings
 from backend.app.routes.sites import Site
 from backend.app.routes.table_query import (
     TableFilterInfo,
@@ -30,12 +31,17 @@ from backend.common.models.shared import DocDocumentLocationView
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook, get_doc_change_info
-from backend.common.services.text_compare.doc_text_compare import DocTextCompare
+from backend.common.sqs.pdfdiff_task_queue import PDFDiffTaskQueue
 from backend.common.storage.client import DocumentStorageClient
 
 router: APIRouter = APIRouter(
     prefix="/doc-documents",
     tags=["DocDocuments"],
+)
+
+
+pdf_diff_queue = PDFDiffTaskQueue(
+    queue_url=settings.pdfdiff_worker_queue_url,
 )
 
 
@@ -120,20 +126,12 @@ class CompareResponse(BaseModel):
 @router.post(
     "/diff/{id}",
     response_model=CompareResponse,
-    dependencies=[Security(get_current_user)],
 )
 async def create_diff(
     previous_doc_doc_id: PydanticObjectId,
-    background_tasks: BackgroundTasks,
     current_doc: DocDocument = Depends(get_target),
+    current_user: User = Security(get_current_user),
 ):
-    five_mins_ago = datetime.now(tz=timezone.utc) - timedelta(minutes=5)
-    if (
-        current_doc.compare_create_time
-        and current_doc.compare_create_time.replace(tzinfo=timezone.utc) > five_mins_ago
-    ):
-        # Do not requeue if creation queued in past five mins
-        return CompareResponse(exists=False, processing=True)
     prev_doc: DocDocument = await get_target(previous_doc_doc_id)
     doc_client = DocumentStorageClient()
     new_key = f"{current_doc.checksum}-{prev_doc.checksum}-new.pdf"
@@ -141,8 +139,14 @@ async def create_diff(
     if doc_client.object_exists(new_key) and doc_client.object_exists(prev_key):
         return CompareResponse(exists=True, processing=False, new_key=new_key, prev_key=prev_key)
     else:
-        dtc = DocTextCompare(doc_client)
-        background_tasks.add_task(dtc.compare, doc=current_doc, prev_doc=prev_doc)
+        await pdf_diff_queue.enqueue(
+            {
+                "current_checksum": current_doc.checksum,
+                "previous_checksum": prev_doc.checksum,
+                "created_by": current_user.id,
+            }
+        )
+
         current_doc.compare_create_time = datetime.now(tz=timezone.utc)
         await current_doc.save()
         return CompareResponse(exists=False, processing=True, queued=True)
@@ -151,7 +155,6 @@ async def create_diff(
 @router.post("/{id}", response_model=DocDocument)
 async def update_doc_document(
     updates: UpdateDocDocument,
-    background_tasks: BackgroundTasks,
     doc: DocDocument = Depends(get_target),
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),

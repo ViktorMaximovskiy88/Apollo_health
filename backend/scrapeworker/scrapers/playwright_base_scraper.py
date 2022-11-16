@@ -10,7 +10,7 @@ from backend.common.core.config import config
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.models import DownloadContext, Metadata
-from backend.scrapeworker.playbook import PlaybookContext
+from backend.scrapeworker.playbook import PlaybookContext, ScrapePlaybook
 
 is_maybe_modal: str = """
     (node) => {
@@ -187,6 +187,18 @@ class PlaywrightBaseScraper(ABC):
             )
 
         return [proxy, proxies]
+
+    async def replay_playbook(self):
+        playbook = ScrapePlaybook(playbook_str=None, playbook_context=self.playbook_context)
+        async for _ in playbook.run_playbook(self.page):
+            continue
+
+    async def nav_to_base(self):
+        try:
+            await self.page.goto(self.url)
+            await self.replay_playbook()
+        except Exception as ex:
+            self.log.error(ex, exc_info=True, stack_info=True)
 
     @abstractmethod
     async def execute(self) -> list[DownloadContext]:
