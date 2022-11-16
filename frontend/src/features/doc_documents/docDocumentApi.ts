@@ -84,7 +84,13 @@ export const docDocumentsApi = createApi({
     >({
       query: ({ id, limit, skip, sortInfo, filterValue }) => {
         const sorts = sortInfo ? [sortInfo] : [];
-        const filters = filterValue ?? [];
+        const filters =
+          filterValue?.map((f) => {
+            if (f.name === 'name' || f.name === 'link_text') {
+              return { ...f, operator: `text${f.operator}` };
+            }
+            return f;
+          }) || [];
         const args = [
           `limit=${encodeURIComponent(limit)}`,
           `skip=${encodeURIComponent(skip)}`,
