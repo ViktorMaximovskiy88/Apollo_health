@@ -31,6 +31,10 @@ from backend.common.models.shared import DocDocumentLocationView
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook, get_doc_change_info
+from backend.common.services.lineage.core import (
+    add_site_to_new_doc_family,
+    remove_site_from_old_doc_family,
+)
 from backend.common.sqs.pdfdiff_task_queue import PDFDiffTaskQueue
 from backend.common.storage.client import DocumentStorageClient
 
@@ -172,25 +176,3 @@ async def update_doc_document(
     updated = await update_and_log_diff(logger, current_user, doc, updates)
     await doc_document_save_hook(doc, change_info)
     return updated
-
-
-async def add_site_to_new_doc_family(doc_fam_id: PydanticObjectId, doc: DocDocument):
-    await DocumentFamily.get_motor_collection().update_one(
-        {"_id": doc_fam_id},
-        {"$addToSet": {"site_ids": {"$each": [location.site_id for location in doc.locations]}}},
-    )
-
-
-async def remove_site_from_old_doc_family(previous_doc_fam: PydanticObjectId, doc: DocDocument):
-    for location in doc.locations:
-        used_by_other_docs = await DocDocument.find_one(
-            {
-                "document_family_id": previous_doc_fam,
-                "_id": {"$ne": doc.id},
-                "locations": {"$elemMatch": {"site_id": location.site_id}},
-            }
-        )
-        if not used_by_other_docs:
-            await DocumentFamily.get_motor_collection().update_one(
-                {"_id": previous_doc_fam}, {"$pull": {"site_ids": location.site_id}}
-            )
