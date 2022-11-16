@@ -98,6 +98,7 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
             [("locations.site_id", pymongo.ASCENDING)],
             [("locations.link_text", pymongo.ASCENDING)],
             [("locks.user_id", pymongo.ASCENDING)],
+            [("name", pymongo.TEXT), ("locations.link_text", pymongo.TEXT)],
         ]
 
 
