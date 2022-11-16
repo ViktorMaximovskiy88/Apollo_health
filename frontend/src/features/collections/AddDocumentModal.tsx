@@ -120,7 +120,6 @@ export function AddDocumentModal({
       fileData.url = form.getFieldValue('url');
       fileData.base_url = form.getFieldValue('base_url') ?? newDocument.url;
       fileData.link_text = form.getFieldValue('link_text');
-      fileData.metadata.link_text = newDocument.link_text;
       delete newDocument.document_file;
 
       try {
