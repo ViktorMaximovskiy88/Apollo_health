@@ -17,7 +17,7 @@ import { HtmlScrapeConfig } from './HtmlScrapeConfig';
 import { SearchTokens } from './SearchTokens';
 import { FollowLinks } from './FollowLinks';
 import { ThresholdWithOverride } from './ThresholdWithOverride';
-import { mustBePlaywright, playbookValidator } from './utils';
+import { playbookValidator } from './utils';
 
 function CollectionMethodRadio() {
   const collections = [
