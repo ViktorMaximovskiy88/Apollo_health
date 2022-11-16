@@ -43,7 +43,7 @@ export function useSiteSelectOptions() {
         filterValue: [{ name: 'name', operator: 'contains', type: 'string', value: search }],
       });
       if (!data) return [];
-      return data.data.map((site) => ({ label: site.name, value: site._id }));
+      return data.data.map((site) => ({ label: site.name, value: site._id, id: site._id }));
     },
     [getSites]
   );

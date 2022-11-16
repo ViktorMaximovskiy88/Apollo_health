@@ -157,11 +157,12 @@ async def update_doc_document(
     logger: Logger = Depends(get_logger),
 ):
     new_doc_family = updates.document_family_id
-    if new_doc_family:
+    if doc.document_family_id != updates.document_family_id:
         old_doc_family = doc.document_family_id
         if old_doc_family:
             await remove_site_from_old_doc_family(old_doc_family, doc)
-        await add_site_to_new_doc_family(new_doc_family, doc)
+        if new_doc_family:
+            await add_site_to_new_doc_family(new_doc_family, doc)
 
     updates.final_effective_date = calc_final_effective_date(updates)
     change_info = get_doc_change_info(updates, doc)
@@ -182,6 +183,7 @@ async def remove_site_from_old_doc_family(previous_doc_fam: PydanticObjectId, do
         used_by_other_docs = await DocDocument.find_one(
             {
                 "document_family_id": previous_doc_fam,
+                "_id": {"$ne": doc.id},
                 "locations": {"$elemMatch": {"site_id": location.site_id}},
             }
         )

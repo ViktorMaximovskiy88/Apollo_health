@@ -7,7 +7,7 @@ export const initialState = {
     filter: [
       { name: 'document_type', operator: 'eq', type: 'select', value: '' },
       { name: 'name', operator: 'contains', type: 'string', value: '' },
-      { name: 'site_id', operator: 'eq', type: 'select', value: '' },
+      { name: 'site_ids', operator: 'eq', type: 'select', value: '' },
       { name: 'legacy_relevance', operator: 'eq', type: 'select', value: '' },
       { name: 'field_groups', operator: 'eq', type: 'select', value: '' },
     ],

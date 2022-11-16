@@ -7,7 +7,6 @@ import {
   FieldGroupsOptions,
   LegacyRelevanceOptions,
 } from '../../retrieved_documents/types';
-import { RemoteColumnFilter } from '../../../components/RemoteColumnFilter';
 import { ChangeLogModal } from '../../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './documentFamilyApi';
 import { TypeColumn } from '@inovua/reactdatagrid-community/types';
@@ -30,13 +29,21 @@ export const createColumns = (
     },
     {
       header: 'Sites',
-      name: 'site_id',
-      filterEditor: RemoteColumnFilter,
+      name: 'site_ids',
+      defaultFlex: 1,
+      filterEditor: SelectFilter,
       filterEditorProps: {
-        fetchOptions: siteOptions,
+        multiple: true,
+        wrapMultiple: false,
+        dataSource: siteOptions(''),
       },
       render: ({ data: docFam }: { data: DocumentFamily }) => {
-        return docFam.site_ids.map((s) => sitesNamesById[s]).join(', ');
+        return docFam.site_ids
+          .map((s) => sitesNamesById[s])
+          .filter((e) => {
+            return e != null;
+          })
+          .join(', ');
       },
     },
     {
@@ -45,7 +52,8 @@ export const createColumns = (
       filterEditor: SelectFilter,
       minWidth: 300,
       filterEditorProps: {
-        placeholder: 'All',
+        multiple: true,
+        wrapMultiple: false,
         dataSource: LegacyRelevanceOptions,
       },
       render: ({ data: docFam }: { data: DocumentFamily }) => {
@@ -68,6 +76,7 @@ export const createColumns = (
       minWidth: 300,
       filterEditorProps: {
         multiple: true,
+        wrapMultiple: false,
         dataSource: FieldGroupsOptions,
       },
       render: ({ data: docFam }: { data: DocumentFamily }) => {
