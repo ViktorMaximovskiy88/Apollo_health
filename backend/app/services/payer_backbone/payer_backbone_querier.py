@@ -50,6 +50,9 @@ class PayerBackboneQuerier:
         if PayerClass is UMP:
             result_ids = await self.convert_formulary_ids_to_ump(result_ids)
 
+        if PayerClass.payer_key == self.payer_info.payer_type and self.payer_info.payer_ids:
+            result_ids = result_ids & set(map(int, self.payer_info.payer_ids))
+
         return list(filter(None, result_ids))
 
     async def convert_formulary_ids_to_ump(self, result_ids: set[int | None]) -> set[int | None]:

@@ -138,3 +138,14 @@ async def test_querier_3():
 
     plan_ids = await pbbq.relevant_payer_ids_of_type(Plan)
     assert plan_ids == [3]
+
+
+@pytest.mark.asyncio
+async def test_querier_4():
+    """
+    If querying specific ids of backbone level, output should be filtered to same ids.
+    """
+    pi = PayerFamily(name="", payer_type="ump", payer_ids=["1"])
+    pbbq = PayerBackboneQuerier(pi)
+    ump_ids = await pbbq.relevant_payer_ids_of_type(UMP)
+    assert ump_ids == [1]
