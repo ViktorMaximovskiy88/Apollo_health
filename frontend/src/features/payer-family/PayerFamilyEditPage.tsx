@@ -1,5 +1,4 @@
-import { Checkbox, Form, Input } from 'antd';
-import { FormInstance } from 'antd/es/form/Form';
+import { Form, Input } from 'antd';
 import { Rule } from 'antd/lib/form';
 import { useForm } from 'antd/lib/form/Form';
 import { useCallback } from 'react';
