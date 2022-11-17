@@ -280,7 +280,7 @@ class CollectionService:
         return response
 
     async def set_first_collected(self, doc) -> CollectionResponse:
-        """Update all task retrieved_docs and doc_docs last_collected_date."""
+        """Update all task retrieved_docs and doc_docs first_collected_date."""
         response: CollectionResponse = CollectionResponse()
         retr_doc = await RetrievedDocument.find_one(
             {"_id": doc.id},
