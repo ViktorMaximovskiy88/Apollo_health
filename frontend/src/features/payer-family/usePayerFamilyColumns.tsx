@@ -7,8 +7,21 @@ import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './payerFamilyApi';
 import { TypeColumn } from '@inovua/reactdatagrid-community/types';
 import { Link } from 'react-router-dom';
+import { useAppDispatch } from '../../app/store';
+import {
+  docDocumentTableState,
+  setDocDocumentTableFilter,
+} from '../doc_documents/docDocumentsSlice';
+import { useSelector } from 'react-redux';
 
-export const createColumns = () => {
+interface Filter {
+  name: string;
+  operator: string;
+  type: string;
+  value: null | string;
+}
+
+export const createColumns = (dispatch: any, docDocumentFilters: Filter[]) => {
   return [
     {
       header: 'Family Name',
@@ -39,7 +52,25 @@ export const createColumns = () => {
       }: {
         value: number;
         data: PayerFamily;
-      }) => <Link to={`../documents?payer-family-id=${payerFamilyId}`}>{documentCount}</Link>,
+      }) => {
+        const handleClick = () => {
+          const newDocDocumentFilters = docDocumentFilters.map((filter) => {
+            if (filter.name !== 'locations.payer_family_id') return filter;
+            return {
+              name: 'locations.payer_family_id',
+              operator: 'eq',
+              type: 'select',
+              value: payerFamilyId,
+            };
+          });
+          dispatch(setDocDocumentTableFilter(newDocDocumentFilters));
+        };
+        return (
+          <Link to={`../documents`} onClick={handleClick}>
+            {documentCount}
+          </Link>
+        );
+      },
     },
     {
       header: 'Actions',
@@ -53,4 +84,8 @@ export const createColumns = () => {
   ];
 };
 
-export const usePayerFamilyColumns = (): TypeColumn[] => useMemo(() => createColumns(), []);
+export const usePayerFamilyColumns = (): TypeColumn[] => {
+  const dispatch = useAppDispatch();
+  const { filter: docDocumentFilters } = useSelector(docDocumentTableState);
+  return useMemo(() => createColumns(dispatch, docDocumentFilters), [dispatch, docDocumentFilters]);
+};
