@@ -114,6 +114,9 @@ class DocTypeMatcher:
                 "Quantity Limit",
                 "Precertification",
                 "Pre-certification",
+                "form",
+                "how-to",
+                "how to",
             ],
         ):
             return DocumentType.Formulary
@@ -144,9 +147,9 @@ class DocTypeMatcher:
             return DocumentType.RestrictionList
 
     def specialty_list(self, text: str) -> str | None:
-        if (self._contains(text, ["SP", "Specialty", "Specialty Pharmacy"])) and self._contains(
-            text, ["list", "DML"]
-        ):
+        if (
+            self._contains(text, ["SP", "Specialty", "Specialty Pharmacy", "Self-Administered"])
+        ) and self._contains(text, ["list", "DML"]):
             return DocumentType.SpecialtyList
 
     def exclusion_list(self, text: str) -> str | None:
@@ -218,6 +221,7 @@ class DocTypeMatcher:
                 "new to market",
                 "unlisted",
                 "non-formulary",
+                "privacy",
             ],
         ):
             return DocumentType.AuthorizationPolicy
@@ -243,7 +247,9 @@ class DocTypeMatcher:
             return DocumentType.PayerUnlistedPolicy
 
     def treatment_request_form(self, text: str) -> str | None:
-        if self._contains(text, ["form", "request", "submission"]):
+        if self._contains(text, ["form", "request", "submission", "waiver"]) and self._not_contains(
+            text, ["instructions"]
+        ):
             return "Treatment Request Form"
 
     def provider_guide(self, text: str) -> str | None:
@@ -253,7 +259,7 @@ class DocTypeMatcher:
             return DocumentType.ProviderGuide
 
     def evidence_of_coverage(self, text: str) -> str | None:
-        if self._contains(text, ["EOC", "Evidence of Coverage", "bcm"]):
+        if self._contains(text, ["EOC", "Evidence of Coverage"]):
             return DocumentType.EvidenceOfCoverage
 
     def summary_of_benefits(self, text: str) -> str | None:
@@ -265,12 +271,13 @@ class DocTypeMatcher:
                 "Benefits Summary",
                 "Summary of Benefits",
                 "Explanation of Benefits",
+                "bcm",
             ],
         ):
             return DocumentType.SummaryOfBenefits
 
     def nccn_guidlines(self, text: str) -> str | None:
-        if self._contains(text, ["NCCN", "NCCN Guideline"]):
+        if self._contains(text, ["NCCN", "Guidelines", "Guideline"]):
             return DocumentType.NCCNGuideline
 
     def ncd(self, text: str) -> str | None:
@@ -300,7 +307,7 @@ class DocTypeMatcher:
                 "Letter",
                 "Letters",
             ],
-        ):
+        ) and self._contains(text, ["Beneficiary"]):
             return DocumentType.NewsletterAnnouncement
 
     def review_committee_schedule(self, text: str) -> str | None:
@@ -318,6 +325,45 @@ class DocTypeMatcher:
     def directory(self, text: str) -> str | None:
         if self._contains(text, ["directory"]):
             return DocumentType.Directory
+
+    def member_resources(self, text: str) -> str | None:
+        if self._contains(
+            text,
+            [
+                "preventive screening",
+                "preventive screenings",
+                "website accessibility",
+                "rights & responsibilities",
+                "rights and responsibilities",
+                "notice of",
+                "how to",
+                "help",
+                "information",
+                "pharmacy services",
+                "pharmacy service",
+                "services",
+                "service",
+                "billing",
+                "options",
+                "handbook",
+                "membership list",
+                "membership guide",
+                "reference guide",
+                "catalog",
+                "payer sheet",
+                "rating",
+                "ratings",
+                "privacy notice",
+                "privacy policy",
+                "transparency in coverage",
+                "standards for",
+                "faq",
+                "frequently asked",
+                "presentation",
+                "underwriting guidelines",
+            ],
+        ):
+            return DocumentType.MemberResources
 
     def exec(self) -> DocTypeMatch | None:
 
@@ -392,6 +438,7 @@ class DocTypeMatcher:
             "review_committee_schedule",
             "regulatory_document",
             "directory",
+            "member_resources",
         ]
         match = None
 
