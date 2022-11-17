@@ -146,7 +146,9 @@ async def viewer_document_link(
     target: RetrievedDocument = Depends(get_target),
 ):
     client = DocumentStorageClient()
-    url = client.get_signed_url(f"{target.checksum}.{target.file_extension}")
+    url = client.get_signed_url(
+        f"{target.checksum}.{target.file_extension}", expires_in_seconds=60 * 60
+    )
     return {"url": url}
 
 
@@ -289,15 +291,17 @@ async def add_document(
     if not site:
         raise HTTPException(status.HTTP_409_CONFLICT, "Not able to upload document to site.")
     now: datetime = datetime.now(tz=timezone.utc)
-    link_text = uploaded_doc.metadata.get("link_text", None)
-    doc_doc_fields = {"internal_document": uploaded_doc.internal_document}
+    doc_doc_fields = {
+        "internal_document": uploaded_doc.internal_document,
+        "first_created_date": uploaded_doc.first_created_date,
+    }
     new_loc_fields = {
         "url": uploaded_doc.url,
         "base_url": uploaded_doc.base_url,
         "first_collected_date": now,
         "last_collected_date": now,
         "site_id": uploaded_doc.site_id,
-        "link_tex": link_text,
+        "link_text": uploaded_doc.link_text,
         "context_metadata": uploaded_doc.metadata,
     }
 

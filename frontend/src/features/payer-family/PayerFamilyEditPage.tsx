@@ -60,6 +60,7 @@ export const PayerFamilyEditPage = () => {
           >
             <Input />
           </Form.Item>
+          Custom Name
           <Input.Group className="space-x-2 flex"></Input.Group>
           <PayerFamilyInfoForm />
         </Form>

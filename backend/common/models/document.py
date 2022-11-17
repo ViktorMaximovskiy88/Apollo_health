@@ -65,11 +65,13 @@ class RetrievedDocument(BaseDocument, BaseRetrievedDocument, DocumentMixins):
 
 
 class UploadedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
-    internal_document: bool
     add_new_document: bool | None = None  # If adding new doc clicked from work item.
     upload_new_version_for_id: str | None = None  # If adding new version, this is original doc id.
     prev_location_site_id: str | None = None  # If same location but from different site, site_id.
     prev_location_doc_id: str | None = None  # If same location but from different site, doc_id.
+    # Fields used when populating doc_doc pair.
+    internal_document: bool
+    first_created_date: datetime | None = None
 
 
 class UpdateRetrievedDocument(BaseModel, DocumentMixins):

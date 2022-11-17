@@ -27,11 +27,17 @@ export const docDocumentsApi = createApi({
     >({
       query: ({ limit, skip, sortInfo, filterValue, scrape_task_id }) => {
         const sorts = sortInfo ? [sortInfo] : [];
+        const textFilterValue = filterValue?.map((f) => {
+          if (f.name === 'name' || f.name === 'link_text') {
+            return { ...f, operator: `text${f.operator}` };
+          }
+          return f;
+        });
         const args = [
           `limit=${encodeURIComponent(limit)}`,
           `skip=${encodeURIComponent(skip)}`,
           `sorts=${encodeURIComponent(JSON.stringify(sorts))}`,
-          `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
+          `filters=${encodeURIComponent(JSON.stringify(textFilterValue))}`,
         ];
         if (scrape_task_id) {
           args.push(`scrape_task_id=${scrape_task_id}`);
@@ -78,7 +84,13 @@ export const docDocumentsApi = createApi({
     >({
       query: ({ id, limit, skip, sortInfo, filterValue }) => {
         const sorts = sortInfo ? [sortInfo] : [];
-        const filters = filterValue ?? [];
+        const filters =
+          filterValue?.map((f) => {
+            if (f.name === 'name' || f.name === 'link_text') {
+              return { ...f, operator: `text${f.operator}` };
+            }
+            return f;
+          }) || [];
         const args = [
           `limit=${encodeURIComponent(limit)}`,
           `skip=${encodeURIComponent(skip)}`,

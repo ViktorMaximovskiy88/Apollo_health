@@ -51,6 +51,7 @@ const buildInitialValues = () => ({
     follow_link_keywords: [],
     follow_link_url_keywords: [],
     searchable: false,
+    searchable_playbook: null,
     searchable_type: null,
     searchable_input: null,
     searchable_submit: null,

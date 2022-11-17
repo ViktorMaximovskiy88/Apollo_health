@@ -109,6 +109,7 @@ async def create_doc_document_service(
         last_collected_date=retrieved_document.last_collected_date,
         first_collected_date=retrieved_document.first_collected_date,
         lineage_id=retrieved_document.lineage_id,
+        is_current_version=retrieved_document.is_current_version,
         locations=[DocDocumentLocation(**rt_doc_location.dict())],
     )
     doc_document.set_final_effective_date()

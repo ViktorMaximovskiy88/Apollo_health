@@ -85,6 +85,15 @@ const useColumns = (siteNamesById: { [key: string]: string }) => {
       minWidth: 300,
     },
     {
+      header: 'Link Text',
+      name: 'locations.link_text',
+      render: ({ data: docDocument }: { data: DocDocument }) => {
+        const linkTexts = docDocument.locations.map((location) => location.link_text);
+        return <>{linkTexts.join(', ')}</>;
+      },
+      minWidth: 300,
+    },
+    {
       header: 'Sites',
       name: 'locations.site_id',
       minWidth: 200,
@@ -119,6 +128,35 @@ const useColumns = (siteNamesById: { [key: string]: string }) => {
       },
     },
     {
+      header: 'Classification Status',
+      name: 'classification_status',
+      minWidth: 200,
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        placeholder: 'All',
+        dataSource: Object.values(ApprovalStatus).map((status) => ({
+          id: status,
+          label: approvalStatusDisplayName(status),
+        })),
+      },
+      render: ({ data: doc }: { data: DocDocument }) => {
+        return approvalStatusStyledDisplay(doc.classification_status);
+      },
+    },
+    {
+      header: 'Document Type',
+      name: 'document_type',
+      minWidth: 200,
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        placeholder: 'All',
+        dataSource: DocumentTypes,
+      },
+      render: ({ value: document_type }: { value: string }) => {
+        return <>{document_type}</>;
+      },
+    },
+    {
       header: 'First Collected Date',
       name: 'first_collected_date',
       minWidth: 200,
@@ -150,43 +188,6 @@ const useColumns = (siteNamesById: { [key: string]: string }) => {
       render: ({ data: doc }: { data: DocDocument }) => {
         if (!doc.last_collected_date) return null;
         return prettyDateTimeFromISO(doc.last_collected_date);
-      },
-    },
-    {
-      header: 'Classification Status',
-      name: 'classification_status',
-      minWidth: 200,
-      filterEditor: SelectFilter,
-      filterEditorProps: {
-        placeholder: 'All',
-        dataSource: Object.values(ApprovalStatus).map((status) => ({
-          id: status,
-          label: approvalStatusDisplayName(status),
-        })),
-      },
-      render: ({ data: doc }: { data: DocDocument }) => {
-        return approvalStatusStyledDisplay(doc.classification_status);
-      },
-    },
-    {
-      header: 'Document Type',
-      name: 'document_type',
-      minWidth: 200,
-      filterEditor: SelectFilter,
-      filterEditorProps: {
-        placeholder: 'All',
-        dataSource: DocumentTypes,
-      },
-      render: ({ value: document_type }: { value: string }) => {
-        return <>{document_type}</>;
-      },
-    },
-    {
-      header: 'Link Text',
-      name: 'locations.link_text',
-      render: ({ data: docDocument }: { data: DocDocument }) => {
-        const linkTexts = docDocument.locations.map((location) => location.link_text);
-        return <>{linkTexts.join(', ')}</>;
       },
     },
     {
