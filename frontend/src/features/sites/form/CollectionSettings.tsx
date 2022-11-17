@@ -103,7 +103,9 @@ interface CollectionSettingsPropTypes {
   initialValues: Partial<Site>;
 }
 export function CollectionSettings({ initialValues }: CollectionSettingsPropTypes) {
+  const [form] = Form.useForm();
   const currentScrapeMethod: ScrapeMethod = Form.useWatch('scrape_method');
+
   return (
     <>
       <Typography.Title level={3}>Collection Settings</Typography.Title>
