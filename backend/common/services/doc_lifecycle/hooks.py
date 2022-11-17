@@ -12,6 +12,7 @@ from backend.common.models.doc_document import (
     TranslationUpdateDocDocument,
     UpdateDocDocument,
 )
+from backend.common.models.payer_family import PayerFamily
 from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleService
 from backend.common.services.extraction.extraction_delta import DeltaCreator
 from backend.common.services.lineage.update_prev_document import update_lineage
@@ -22,6 +23,7 @@ from backend.common.task_queues.unique_task_insert import try_queue_unique_task
 class ChangeInfo(BaseModel):
     translation_change: bool = False
     lineage_change: PydanticObjectId | None = None
+    old_payer_family_ids: list[PydanticObjectId] = []
 
 
 async def recompare_tags(doc: DocDocument, prev_doc: DocDocument):
@@ -70,6 +72,29 @@ async def recompare_extractions(doc: DocDocument, prev_doc: DocDocument):
         await DeltaCreator().compute_delta(task, prev_task)
 
 
+def update_increments(
+    payer_family_increments: dict[PydanticObjectId, int],
+    old_payer_family_id: PydanticObjectId,
+    new_payer_family_id: PydanticObjectId,
+):
+    if old_payer_family_id == new_payer_family_id:
+        return payer_family_increments
+
+    payer_family_increments[old_payer_family_id] = (
+        payer_family_increments[old_payer_family_id] - 1
+        if old_payer_family_id in payer_family_increments
+        else -1
+    )
+
+    payer_family_increments[new_payer_family_id] = (
+        payer_family_increments[new_payer_family_id] + 1
+        if new_payer_family_id in payer_family_increments
+        else 1
+    )
+
+    return payer_family_increments
+
+
 async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = ChangeInfo()):
     if change_info.translation_change and doc.translation_id:
         await enqueue_translation_task(doc)
@@ -92,10 +117,30 @@ async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = Cha
             new_prev_doc_doc_id=doc.previous_doc_doc_id,
         )
 
+    if len(change_info.old_payer_family_ids) > 0 or len(doc.locations) > 0:
+        payer_family_increments = {}
+
+        new_payer_family_ids = [location.payer_family_id for location in doc.locations]
+
+        for idx, old_payer_family_id in enumerate(change_info.old_payer_family_ids):
+            new_payer_family_id = (
+                new_payer_family_ids[idx] if len(new_payer_family_ids) > idx else None
+            )
+            payer_family_increments = update_increments(
+                payer_family_increments=payer_family_increments,
+                old_payer_family_id=old_payer_family_id,
+                new_payer_family_id=new_payer_family_id,
+            )
+
+        for payer_family_id, doc_doc_count_inc in payer_family_increments.items():
+            await PayerFamily.get_motor_collection().find_one_and_update(
+                {"_id": payer_family_id}, {"$inc": {"doc_doc_count": doc_doc_count_inc}}
+            )
+
     await DocLifecycleService().assess_document_status(doc)
 
 
-def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
+async def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
     change_info = ChangeInfo()
     if (
         isinstance(updates, (UpdateDocDocument, TranslationUpdateDocDocument))
@@ -109,5 +154,14 @@ def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
         and updates.previous_doc_doc_id != doc.previous_doc_doc_id
     ):
         change_info.lineage_change = doc.previous_doc_doc_id
+
+    if (
+        isinstance(updates, (UpdateDocDocument))
+        and (updates.locations or doc.locations)
+        and (len(updates.locations) > 0 or len(doc.locations > 0))
+    ):
+        change_info.old_payer_family_ids = [
+            location.payer_family_id for location in updates.locations
+        ]
 
     return change_info

@@ -15,14 +15,8 @@ from backend.app.routes.table_query import (
 from backend.app.services.payer_backbone.payer_backbone_querier import PayerBackboneQuerier
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
-from backend.common.models.doc_document import DocDocument
 from backend.common.models.payer_backbone import PayerBackbone
-from backend.common.models.payer_family import (
-    NewPayerFamily,
-    PayerFamily,
-    PayerFamilyView,
-    UpdatePayerFamily,
-)
+from backend.common.models.payer_family import NewPayerFamily, PayerFamily, UpdatePayerFamily
 from backend.common.models.user import User
 
 router = APIRouter(prefix="/payer-family", tags=["Payer Family"])
@@ -44,14 +38,8 @@ async def read_payer_families(
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
-
-    query = PayerFamilyView.find_all()
-    tableQueryResponse = await query_table(query, limit, skip, sorts, filters)
-    for pf in tableQueryResponse.data:
-        pf.doc_doc_count = await DocDocument.find(
-            {"locations.payer_family_id": PydanticObjectId(pf.id)}
-        ).count()
-    return tableQueryResponse
+    query = PayerFamily.find_all()
+    return await query_table(query, limit, skip, sorts, filters)
 
 
 @router.get(
