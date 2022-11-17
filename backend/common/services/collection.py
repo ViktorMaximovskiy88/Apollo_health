@@ -293,7 +293,7 @@ class CollectionService:
         doc_doc = await DocDocument.find_one(
             {"retrieved_document_id": retr_doc.id},
         )
-        doc_doc.last_collected_date = datetime.now(tz=timezone.utc)
+        doc_doc.first_collected_date = datetime.now(tz=timezone.utc)
         if doc_doc.locations:
             loc = doc_doc.locations[-1]
             loc.first_collected_date = datetime.now(tz=timezone.utc)
