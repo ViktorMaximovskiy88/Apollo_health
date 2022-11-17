@@ -47,6 +47,7 @@ const buildInitialValues = () => ({
     url_keywords: [],
     proxy_exclusions: [],
     wait_for: [],
+    wait_for_timeout_ms: '500',
     follow_links: false,
     follow_link_keywords: [],
     follow_link_url_keywords: [],
