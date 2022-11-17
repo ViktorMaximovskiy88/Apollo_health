@@ -27,6 +27,7 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
 
   const handleClose = useCallback(() => {
     props.onClose();
+    setPayerInfoError(false);
     form.resetFields();
   }, [form, props]);
 
