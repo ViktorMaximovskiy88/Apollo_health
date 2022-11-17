@@ -192,7 +192,7 @@ async def update_site(
             current_user=current_user,
             logger=logger,
         )
-        await site_collection.stop_manual()
+        await site_collection.stop_collecting()
 
     return updated
 

@@ -50,9 +50,11 @@ class CollectionService:
     ]
 
     def __init__(self, site: Site, current_user: User, logger: Logger) -> None:
-        self.site, self.current_user, self.logger = site, current_user, logger
+        self.site: Site = site
+        self.current_user: User = current_user
+        self.logger: Logger = logger
         self.found_docs_total = 0
-        self.last_queued = None
+        self.last_queued: SiteScrapeTask | None = None
 
     async def has_queued(self) -> SiteScrapeTask | Boolean:
         if self.last_queued:
@@ -116,7 +118,7 @@ class CollectionService:
             case CollectionMethod.Automated:
                 result: CollectionResponse = await self.stop_all_tasks()
             case CollectionMethod.Manual:
-                result: CollectionResponse = await self.stop_manual()
+                result: CollectionResponse = await self.stop_manual_task()
             case _:
                 # This should not happen. Cancel tasks just to be safe.
                 result: CollectionResponse = await self.stop_all_tasks()
@@ -234,7 +236,7 @@ class CollectionService:
             response.nav_id = created_task.id
         return response
 
-    async def stop_manual(self) -> CollectionResponse:
+    async def stop_manual_task(self) -> CollectionResponse:
         """Cancel all manual tasks. Manual tasks have work_items
         which may need processed before canceling."""
         response: CollectionResponse = CollectionResponse()
