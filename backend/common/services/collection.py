@@ -314,7 +314,7 @@ class CollectionService:
         doc_doc: DocDocument | None = await DocDocument.find_one(
             {"retrieved_document_id": retr_doc.id},
         )
-        doc_doc.last_collected_date = now
+        doc_doc.first_collected_date = now
         if doc_doc.locations:
             loc = doc_doc.locations[-1]
             loc.first_collected_date = now
