@@ -117,25 +117,12 @@ async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = Cha
             new_prev_doc_doc_id=doc.previous_doc_doc_id,
         )
 
-    if len(change_info.old_payer_family_ids) > 0 or len(doc.locations) > 0:
-        payer_family_increments = {}
-
-        new_payer_family_ids = [location.payer_family_id for location in doc.locations]
-
-        for idx, old_payer_family_id in enumerate(change_info.old_payer_family_ids):
-            new_payer_family_id = (
-                new_payer_family_ids[idx] if len(new_payer_family_ids) > idx else None
-            )
-            payer_family_increments = update_increments(
-                payer_family_increments=payer_family_increments,
-                old_payer_family_id=old_payer_family_id,
-                new_payer_family_id=new_payer_family_id,
-            )
-
-        for payer_family_id, doc_doc_count_inc in payer_family_increments.items():
-            await PayerFamily.get_motor_collection().find_one_and_update(
-                {"_id": payer_family_id}, {"$inc": {"doc_doc_count": doc_doc_count_inc}}
-            )
+    new_payer_family_ids = {location.payer_family_id for location in doc.locations}
+    old_payer_family_ids = set(change_info.old_payer_family_ids)
+    added = list(new_payer_family_ids - old_payer_family_ids)
+    removed = list(old_payer_family_ids - new_payer_family_ids)
+    await PayerFamily.find({"_id": {"$in": added}}).update_many({"$inc": {"doc_doc_count": 1}})
+    await PayerFamily.find({"_id": {"$in": removed}}).update_many({"$inc": {"doc_doc_count": -1}})
 
     await DocLifecycleService().assess_document_status(doc)
 
