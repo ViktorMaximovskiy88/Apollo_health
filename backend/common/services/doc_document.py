@@ -15,7 +15,7 @@ async def get_site_doc_doc_table(
     sorts: list[dict],
     limit: int = 50,
     skip: int = 0,
-) -> list[SiteDocDocument]:
+) -> tuple[list[SiteDocDocument], int]:
     pipeline = []
 
     if len(retrieved_document_ids) > 0:
@@ -55,4 +55,8 @@ async def get_site_doc_doc_table(
         projection_model=SiteDocDocument,
     ).to_list()
 
-    return docs, count_result[0].checksum
+    count = 0
+    if count_result:
+        count = count_result[0].checksum
+
+    return docs, count
