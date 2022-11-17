@@ -114,7 +114,7 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
           {payerInfoError ? (
             <>
               <WarningFilled className="text-red-600" />
-              <span className="text-red-600">'At least one payer value is required'</span>
+              <span className="text-red-600">At least one payer value is required</span>
             </>
           ) : null}
 
