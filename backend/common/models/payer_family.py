@@ -13,7 +13,6 @@ class PayerFamily(BaseDocument):
     plan_types: list[str] = []
     regions: list[str] = []
     disabled: bool = False
-    auto_generated: bool = True
 
 
 class NewPayerFamily(BaseModel):
@@ -25,7 +24,6 @@ class NewPayerFamily(BaseModel):
     benefits: list[str] = []
     plan_types: list[str] = []
     regions: list[str] = []
-    auto_generated: bool = True
 
 
 class UpdatePayerFamily(BaseModel):
@@ -38,4 +36,3 @@ class UpdatePayerFamily(BaseModel):
     plan_types: list[str] | None = None
     regions: list[str] | None = None
     disabled: bool | None = None
-    auto_generated: bool | None = None
