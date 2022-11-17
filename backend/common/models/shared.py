@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from beanie import Indexed, PydanticObjectId
+from beanie import PydanticObjectId
 
 from backend.common.core.enums import TagUpdateStatus
 from backend.common.models.base_document import BaseModel
@@ -76,7 +76,7 @@ class LockableDocument(BaseModel):
 
 class Location(BaseModel):
     base_url: str
-    url: Indexed(str)
+    url: str
     link_text: str | None = None
     closest_heading: str | None = None
     siblings_text: str | None = None
