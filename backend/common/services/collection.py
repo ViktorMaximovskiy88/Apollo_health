@@ -385,12 +385,8 @@ class CollectionService:
                 await self.set_last_collected(retr_doc)
                 self.found_docs_total += 1
             case WorkItemOption.NEW_DOCUMENT:
-                await self.set_first_collected(retr_doc)
-                await self.set_last_collected(retr_doc)
                 self.found_docs_total += 1
             case WorkItemOption.NEW_VERSION:
-                await self.set_first_collected(retr_doc)
-                await self.set_last_collected(retr_doc)
                 self.found_docs_total += 1
             case WorkItemOption.NOT_FOUND:
                 target_task.retrieved_document_ids = [
