@@ -140,7 +140,7 @@ async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = Cha
     await DocLifecycleService().assess_document_status(doc)
 
 
-async def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
+def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
     change_info = ChangeInfo()
     if (
         isinstance(updates, (UpdateDocDocument, TranslationUpdateDocDocument))
@@ -160,8 +160,6 @@ async def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocumen
         and (updates.locations or doc.locations)
         and (len(updates.locations) > 0 or len(doc.locations > 0))
     ):
-        change_info.old_payer_family_ids = [
-            location.payer_family_id for location in updates.locations
-        ]
+        change_info.old_payer_family_ids = [location.payer_family_id for location in doc.locations]
 
     return change_info
