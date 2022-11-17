@@ -153,7 +153,7 @@ class CollectionService:
         new_scrape_task: SiteScrapeTask = SiteScrapeTask(
             site_id=self.site.id,
             queued_time=datetime.now(tz=timezone.utc),
-            documents_found=self.site.last_run_documents | 0,
+            documents_found=(self.site.last_run_documents if self.site.last_run_documents else 0),
         )
         scrape_task: SiteScrapeTask = await create_and_log(
             self.logger, self.current_user, new_scrape_task
