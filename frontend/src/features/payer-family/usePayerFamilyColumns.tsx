@@ -33,7 +33,13 @@ export const createColumns = () => {
       header: 'Document Count',
       name: 'doc_doc_count',
       minWidth: 50,
-      render: ({ value: documentCount }: { value: number }) => <>{documentCount}</>,
+      render: ({
+        value: documentCount,
+        data: { _id: payerFamilyId },
+      }: {
+        value: number;
+        data: PayerFamily;
+      }) => <Link to={`../documents?payer-family-id=${payerFamilyId}`}>{documentCount}</Link>,
     },
     {
       header: 'Actions',

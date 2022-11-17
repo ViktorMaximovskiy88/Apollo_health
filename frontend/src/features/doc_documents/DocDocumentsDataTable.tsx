@@ -29,6 +29,7 @@ import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
 import { useGetSiteQuery, useGetSitesQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
+import { useSearchParams } from 'react-router-dom';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
@@ -302,15 +303,27 @@ export function DocDocumentsDataTable() {
   const [getDocDocumentsFn] = useLazyGetDocDocumentsQuery();
   const { setSiteIds, siteNamesById } = useGetSiteNamesById();
 
+  const [searchParams] = useSearchParams();
+
   const loadData = useCallback(
     async (tableInfo: any) => {
+      const payerFamilyId = searchParams.get('payer-family-id');
+      if (payerFamilyId) {
+        tableInfo.filterValue.push({
+          name: 'locations.payer_family_id',
+          operator: 'eq',
+          type: 'string',
+          value: payerFamilyId,
+        });
+      }
+
       const { data } = await getDocDocumentsFn(tableInfo);
       const docDocuments = data?.data ?? [];
       const count = data?.total ?? 0;
       if (docDocuments) setSiteIds(uniqueSiteIds(docDocuments));
       return { data: docDocuments, count };
     },
-    [getDocDocumentsFn, setSiteIds, watermark] // eslint-disable-line react-hooks/exhaustive-deps
+    [getDocDocumentsFn, searchParams, setSiteIds, watermark] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const filterProps = useDataTableFilter(docDocumentTableState, setDocDocumentTableFilter);
