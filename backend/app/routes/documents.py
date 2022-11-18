@@ -5,7 +5,6 @@ from typing import Any, List
 
 import typer
 from beanie import PydanticObjectId
-from beanie.odm.operators.update.general import Set
 from fastapi import APIRouter, Depends, HTTPException, Security, UploadFile, status
 from fastapi.responses import StreamingResponse
 
@@ -441,15 +440,6 @@ async def add_document(
     current_task: SiteScrapeTask = await site_last_started_task(site.id)
     if not current_task:
         return created_retr_doc
-    # Doc was created or new_version so increment current_task doc count.
-    if not uploaded_doc.prev_location_doc_id:
-        await current_task.update(
-            Set(
-                {
-                    SiteScrapeTask.documents_found: len(current_task.retrieved_document_ids) + 1,
-                }
-            )
-        )
     # Process and update work items.
     created_work_item: ManualWorkItem = ManualWorkItem(
         document_id=f"{created_doc_doc.id}",
