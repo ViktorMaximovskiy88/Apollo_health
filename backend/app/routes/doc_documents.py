@@ -31,10 +31,6 @@ from backend.common.models.shared import DocDocumentLocationView
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook, get_doc_change_info
-from backend.common.services.lineage.core import (
-    add_site_to_new_doc_family,
-    remove_site_from_old_doc_family,
-)
 from backend.common.sqs.pdfdiff_task_queue import PDFDiffTaskQueue
 from backend.common.storage.client import DocumentStorageClient
 
@@ -163,14 +159,6 @@ async def update_doc_document(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    new_doc_family = updates.document_family_id
-    if doc.document_family_id != updates.document_family_id:
-        old_doc_family = doc.document_family_id
-        if old_doc_family:
-            await remove_site_from_old_doc_family(old_doc_family, doc)
-        if new_doc_family:
-            await add_site_to_new_doc_family(new_doc_family, doc)
-
     updates.final_effective_date = calc_final_effective_date(updates)
     change_info = get_doc_change_info(updates, doc)
     updated = await update_and_log_diff(logger, current_user, doc, updates)

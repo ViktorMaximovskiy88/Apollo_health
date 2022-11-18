@@ -119,3 +119,14 @@ export const languageCodes = [
   { value: 'es', label: 'Spanish' },
   { value: 'other', label: 'Other' },
 ];
+
+export const getFieldGroupLabel = (id: string) => {
+  return FieldGroupsOptions.find((e) => {
+    return e.id === id;
+  })?.label;
+};
+export const getLegacyRelevanceLable = (id: string) => {
+  return LegacyRelevanceOptions.find((e) => {
+    return e.id === id;
+  })?.label;
+};

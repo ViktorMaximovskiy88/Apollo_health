@@ -8,11 +8,11 @@ from backend.app.scripts.retag_document import ReTagger
 from backend.common.core.enums import ApprovalStatus
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
-from backend.common.models.document_family import DocumentFamily
 from backend.common.models.document_mixins import calc_final_effective_date
 from backend.common.models.lineage import DocumentAnalysis, DocumentAttrs
 from backend.common.models.shared import get_unique_focus_tags, get_unique_reference_tags
 from backend.common.models.site import Site
+from backend.common.services.doc_lifecycle.hooks import add_site_to_new_doc_family
 from backend.common.services.document import (
     SiteRetrievedDocument,
     get_site_docs,
@@ -389,25 +389,3 @@ def build_doc_analysis(
     )
 
     return doc_analysis
-
-
-async def add_site_to_new_doc_family(doc_fam_id: PydanticObjectId, doc: DocDocument):
-    await DocumentFamily.get_motor_collection().update_one(
-        {"_id": doc_fam_id},
-        {"$addToSet": {"site_ids": {"$each": [location.site_id for location in doc.locations]}}},
-    )
-
-
-async def remove_site_from_old_doc_family(previous_doc_fam: PydanticObjectId, doc: DocDocument):
-    for location in doc.locations:
-        used_by_other_docs = await DocDocument.find_one(
-            {
-                "document_family_id": previous_doc_fam,
-                "_id": {"$ne": doc.id},
-                "locations": {"$elemMatch": {"site_id": location.site_id}},
-            }
-        )
-        if not used_by_other_docs:
-            await DocumentFamily.get_motor_collection().update_one(
-                {"_id": previous_doc_fam}, {"$pull": {"site_ids": location.site_id}}
-            )

@@ -5,6 +5,8 @@ import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import {
   DocumentTypes,
   FieldGroupsOptions,
+  getFieldGroupLabel,
+  getLegacyRelevanceLable,
   LegacyRelevanceOptions,
 } from '../../retrieved_documents/types';
 import { ChangeLogModal } from '../../change-log/ChangeLogModal';
@@ -12,6 +14,7 @@ import { useGetChangeLogQuery } from './documentFamilyApi';
 import { TypeColumn } from '@inovua/reactdatagrid-community/types';
 import { Link } from 'react-router-dom';
 import { useSiteSelectOptions } from '../DocDocumentsDataTable';
+import { RemoteColumnFilter } from '../../../components/RemoteColumnFilter';
 
 export const createColumns = (
   siteOptions: (search: string) => Promise<{ label: string; value: string }[]>,
@@ -31,11 +34,11 @@ export const createColumns = (
       header: 'Sites',
       name: 'site_ids',
       defaultFlex: 1,
-      filterEditor: SelectFilter,
+      minWidth: 200,
+      filterEditor: RemoteColumnFilter,
       filterEditorProps: {
-        multiple: true,
-        wrapMultiple: false,
-        dataSource: siteOptions(''),
+        fetchOptions: siteOptions,
+        mode: 'multiple',
       },
       render: ({ data: docFam }: { data: DocumentFamily }) => {
         return docFam.site_ids
@@ -50,23 +53,14 @@ export const createColumns = (
       header: 'Legacy Relevance',
       name: 'legacy_relevance',
       filterEditor: SelectFilter,
-      minWidth: 300,
+      minWidth: 200,
       filterEditorProps: {
         multiple: true,
         wrapMultiple: false,
         dataSource: LegacyRelevanceOptions,
       },
       render: ({ data: docFam }: { data: DocumentFamily }) => {
-        return docFam.legacy_relevance
-          .map((val) => {
-            val = val
-              .toLocaleLowerCase()
-              .split('_')
-              .map((e) => e[0].toUpperCase() + e.slice(1))
-              .join(' ');
-            return val;
-          })
-          .join(', ');
+        return docFam.legacy_relevance.map(getLegacyRelevanceLable).join(', ');
       },
     },
     {
@@ -80,15 +74,7 @@ export const createColumns = (
         dataSource: FieldGroupsOptions,
       },
       render: ({ data: docFam }: { data: DocumentFamily }) => {
-        return docFam.field_groups
-          .map((val) => {
-            return val
-              .toLocaleLowerCase()
-              .split('_')
-              .map((e) => e[0].toUpperCase() + e.slice(1))
-              .join(' ');
-          })
-          .join(', ');
+        return docFam.field_groups.map(getFieldGroupLabel).join(', ');
       },
     },
     {
