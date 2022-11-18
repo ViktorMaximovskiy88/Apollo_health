@@ -5,7 +5,7 @@ import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { DocumentTypes } from '../retrieved_documents/types';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './payerFamilyApi';
-import { TypeColumn } from '@inovua/reactdatagrid-community/types';
+import { TypeColumn, TypeFilterValue } from '@inovua/reactdatagrid-community/types';
 import { Link } from 'react-router-dom';
 import { useAppDispatch } from '../../app/store';
 import {
@@ -14,14 +14,7 @@ import {
 } from '../doc_documents/docDocumentsSlice';
 import { useSelector } from 'react-redux';
 
-interface Filter {
-  name: string;
-  operator: string;
-  type: string;
-  value: null | string;
-}
-
-export const createColumns = (dispatch: any, docDocumentFilters: Filter[]) => {
+export const createColumns = (dispatch: any, docDocumentFilters: TypeFilterValue) => {
   return [
     {
       header: 'Family Name',
@@ -54,7 +47,7 @@ export const createColumns = (dispatch: any, docDocumentFilters: Filter[]) => {
         data: PayerFamily;
       }) => {
         const handleClick = () => {
-          const newDocDocumentFilters = docDocumentFilters.map((filter) => {
+          const newDocDocumentFilters = docDocumentFilters?.map((filter) => {
             if (filter.name !== 'locations.payer_family_id') return filter;
             return {
               name: 'locations.payer_family_id',
