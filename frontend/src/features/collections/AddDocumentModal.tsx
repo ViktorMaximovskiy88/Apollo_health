@@ -149,19 +149,22 @@ export function AddDocumentModal({
     setOpen(false);
   }
 
-  function setLocationValuesFromResponse(responseData: any) {
-    form.setFieldsValue({
-      name: responseData.doc_name,
-      document_type: responseData.document_type,
-      lang_code: responseData.lang_code,
-      effective_date: convertDate(responseData.effective_date),
-      last_reviewed_date: convertDate(responseData.last_reviewed_date),
-      last_updated_date: convertDate(responseData.last_updated_date),
-      next_review_date: convertDate(responseData.next_review_date),
-      next_update_date: convertDate(responseData.next_update_date),
-      published_date: convertDate(responseData.published_date),
-    });
+  // Doc exists on other site.
+  // Since only location fields are editable, override other form values
+  // with existing doc data.
+  function setDocFromOtherSiteValues(responseData: any) {
     if (responseData.prev_location_doc_id) {
+      form.setFieldsValue({
+        name: responseData.doc_name,
+        document_type: responseData.document_type,
+        lang_code: responseData.lang_code,
+        effective_date: convertDate(responseData.effective_date),
+        last_reviewed_date: convertDate(responseData.last_reviewed_date),
+        last_updated_date: convertDate(responseData.last_updated_date),
+        next_review_date: convertDate(responseData.next_review_date),
+        next_update_date: convertDate(responseData.next_update_date),
+        published_date: convertDate(responseData.published_date),
+      });
       displayDuplicateError('Document exists on other site');
       setOldLocationSiteId(responseData.prev_location_site_id);
       setOldLocationDocId(responseData.prev_location_doc_id);
@@ -186,7 +189,7 @@ export function AddDocumentModal({
             form={form}
             setFileData={setFileData}
             siteId={siteId}
-            setLocationValuesFromResponse={setLocationValuesFromResponse}
+            setDocFromOtherSiteValues={setDocFromOtherSiteValues}
           />
         </div>
 
@@ -247,7 +250,7 @@ export function AddDocumentModal({
 }
 
 function UploadItem(props: any) {
-  const { setFileData, siteId, setLocationValuesFromResponse } = props;
+  const { setFileData, siteId, setDocFromOtherSiteValues } = props;
   const [token, setToken] = useState('');
   const [fileName, setFileName] = useState('');
   const [uploadStatus, setUploadStatus] = useState('');
@@ -269,7 +272,7 @@ function UploadItem(props: any) {
         message.error(response.error);
       } else if (response.success) {
         setUploadStatus('done');
-        setLocationValuesFromResponse(response.data);
+        setDocFromOtherSiteValues(response.data);
         setFileData(response.data);
       }
     }
