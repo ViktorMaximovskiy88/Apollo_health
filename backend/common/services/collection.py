@@ -297,12 +297,10 @@ class CollectionService:
         retr_doc: RetrievedDocument | None = await RetrievedDocument.find_one(
             {"_id": doc.id},
         )
-        if not retr_doc.first_collected_date:
-            retr_doc.first_collected_date = now
+        retr_doc.first_collected_date = now
         if retr_doc.locations:
             site_loc_index: int = find_site_index(retr_doc, self.site.id)
-            if not retr_doc.locations[site_loc_index].first_collected_date:
-                retr_doc.locations[site_loc_index].first_collected_date = now
+            retr_doc.locations[site_loc_index].first_collected_date = now
             retr_doc.first_collected_date = min(
                 [loc.first_collected_date for loc in retr_doc.locations]
             )
@@ -310,12 +308,10 @@ class CollectionService:
         doc_doc: DocDocument | None = await DocDocument.find_one(
             {"retrieved_document_id": retr_doc.id},
         )
-        if not doc_doc.first_collected_date:
-            doc_doc.first_collected_date = now
+        doc_doc.first_collected_date = now
         if doc_doc.locations:
             site_loc_index: int = find_site_index(doc_doc, self.site.id)
-            if not doc_doc.locations[site_loc_index].first_collected_date:
-                doc_doc.locations[site_loc_index].first_collected_date = now
+            doc_doc.locations[site_loc_index].first_collected_date = now
             doc_doc.first_collected_date = min(
                 [loc.first_collected_date for loc in doc_doc.locations]
             )
