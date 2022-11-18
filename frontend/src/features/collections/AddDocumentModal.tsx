@@ -158,6 +158,7 @@ export function AddDocumentModal({
         name: responseData.doc_name,
         document_type: responseData.document_type,
         lang_code: responseData.lang_code,
+        internal_document: responseData.internal_document,
         effective_date: convertDate(responseData.effective_date),
         last_reviewed_date: convertDate(responseData.last_reviewed_date),
         last_updated_date: convertDate(responseData.last_updated_date),
