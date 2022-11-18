@@ -90,11 +90,13 @@ class CollectionService:
     async def start_collecting(self) -> CollectionResponse:
         """Create site scrape task using site config."""
         result: CollectionResponse = CollectionResponse()
+        last_run_status = TaskStatus.QUEUED
         match self.site.collection_method:
             case CollectionMethod.Automated:
                 result = await self.start_automated_task()
             case CollectionMethod.Manual:
                 result = await self.start_manual_task()
+                last_run_status = TaskStatus.IN_PROGRESS
             case _:
                 result.add_error(f"Collection Method Invalid: {self.site.collection_method}")
                 return result
@@ -102,7 +104,7 @@ class CollectionService:
             await self.site.update(
                 Set(
                     {
-                        Site.last_run_status: TaskStatus.QUEUED,
+                        Site.last_run_status: last_run_status,
                         Site.last_run_time: datetime.now(tz=timezone.utc),
                     }
                 )
