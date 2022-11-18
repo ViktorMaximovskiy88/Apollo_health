@@ -11,9 +11,11 @@ class Forward:
             [
                 {
                     "$set": {
-                        "scrape_method_configuration": {"searchable_type": ["$searchable_type"]}
+                        "scrape_method_configuration.searchable_type": [
+                            "$scrape_method_configuration.searchable_type"
+                        ]
                     }
-                },
+                }
             ],
         )
 
@@ -23,7 +25,11 @@ class Backward:
     async def make_searchable_type_for_site_a_str(self, session):
         await Site.get_motor_collection().update_many(
             {},
-            [
-                {"$set": {"scrape_method_configuration": {"searchable_type": "$searchable_type"}}},
-            ],
+            {
+                "$set": {
+                    "scrape_method_configuration.searchable_type": {
+                        "$scrape_method_configuration.searchable_type"
+                    }
+                }
+            },
         )
