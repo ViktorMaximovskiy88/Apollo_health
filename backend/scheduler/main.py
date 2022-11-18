@@ -221,7 +221,11 @@ async def start_hung_task_checker():
     while True:
         now = datetime.now(tz=timezone.utc)
         async for task in get_hung_tasks(now):
-            await requeue_lost_task(task, now)
+            if task.status == TaskStatus.IN_PROGRESS:
+                await requeue_lost_task(task, now)
+            elif task.status == TaskStatus.CANCELING:
+                await task.update({"$set": {"status": TaskStatus.CANCELED}})
+
         await asyncio.sleep(60)
 
 
