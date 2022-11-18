@@ -301,7 +301,9 @@ class CollectionService:
             retr_doc.first_collected_date = now
         if retr_doc.locations:
             site_loc_index: int = find_site_index(retr_doc, self.site.id)
-            retr_doc.locations[site_loc_index].first_collected_date = min(
+            if not retr_doc.locations[site_loc_index].first_collected_date:
+                retr_doc.locations[site_loc_index].first_collected_date = now
+            retr_doc.first_collected_date = min(
                 [loc.first_collected_date for loc in retr_doc.locations]
             )
         await retr_doc.save()
@@ -312,7 +314,9 @@ class CollectionService:
             doc_doc.first_collected_date = now
         if doc_doc.locations:
             site_loc_index: int = find_site_index(doc_doc, self.site.id)
-            doc_doc.locations[site_loc_index].first_collected_date = min(
+            if not doc_doc.locations[site_loc_index].first_collected_date:
+                doc_doc.locations[site_loc_index].first_collected_date = now
+            doc_doc.first_collected_date = min(
                 [loc.first_collected_date for loc in doc_doc.locations]
             )
         await doc_doc.save()
