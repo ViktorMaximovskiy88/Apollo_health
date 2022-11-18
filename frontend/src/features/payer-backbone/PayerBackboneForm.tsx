@@ -2,8 +2,14 @@ import { Form, FormInstance, Input, Select } from 'antd';
 import { useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { RemoteSelect } from '../../components';
+import { channelOptions, planTypeOptions, regionOptions } from '../payer-family/payerLevels';
 import { useGetPayerBackboneByLIdQuery, useLazyGetPayerBackbonesQuery } from './payerBackboneApi';
 import { PayerBackbone } from './types';
+
+const NationalOptions = [
+  { value: true, label: 'true' },
+  { value: false, label: 'false' },
+];
 
 function PayerSelect({ field, payerType }: { field: string; payerType: string }) {
   const id = Form.useWatch(field);
@@ -49,6 +55,33 @@ function PlanFields() {
       </Form.Item>
       <Form.Item label="Formulary">
         <PayerSelect field="l_formulary_id" payerType="formulary" />
+      </Form.Item>
+      <Form.Item name="l_mco_id" label="MCO">
+        <PayerSelect field="l_mco_id" payerType="mco" />
+      </Form.Item>
+      <Form.Item name="l_bm_id" label="Benefit Manager">
+        <PayerSelect field="l_bm_id" payerType="bm" />
+      </Form.Item>
+      <Form.Item name="medical_lives" label="Medical Lives">
+        <Input type="number" disabled />
+      </Form.Item>
+      <Form.Item name="pharmacy_lives" label="Pharmacy Lives">
+        <Input type="number" disabled />
+      </Form.Item>
+      <Form.Item name="is_national" label="Is National">
+        <Select options={NationalOptions} />
+      </Form.Item>
+      <Form.Item name="channel" label="Channel">
+        <Select mode="multiple" options={channelOptions} />
+      </Form.Item>
+      <Form.Item name="type" label="Type">
+        <Select mode="multiple" options={planTypeOptions} />
+      </Form.Item>
+      <Form.Item name="pharmacy_states" label="Pharmacy States">
+        <Select mode="multiple" options={regionOptions} />
+      </Form.Item>
+      <Form.Item name="medical_states" label="Medical States">
+        <Select mode="multiple" options={regionOptions} />
       </Form.Item>
     </>
   );
