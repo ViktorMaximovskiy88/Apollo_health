@@ -16,7 +16,7 @@ from backend.common.core.config import env_type
 from backend.common.core.enums import CollectionMethod, TaskStatus
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
-from backend.common.models.shared import DocDocumentLocation, RetrievedDocumentLocation
+from backend.common.models.document_mixins import find_site_index
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import ManualWorkItem, SiteScrapeTask, WorkItemOption
 from backend.common.models.user import User
@@ -292,36 +292,28 @@ class CollectionService:
         return response
 
     async def set_first_collected(self, doc) -> CollectionResponse:
-        """Update all task retrieved_docs and doc_docs last_collected_date."""
+        """Update all task retrieved_docs and doc_docs first_collected_date."""
         now: datetime = datetime.now(tz=timezone.utc)
         retr_doc: RetrievedDocument | None = await RetrievedDocument.find_one(
             {"_id": doc.id},
         )
         if not retr_doc.first_collected_date:
             retr_doc.first_collected_date = now
-            await retr_doc.save()
         if retr_doc.locations:
-            site_loc = await RetrievedDocumentLocation.find_one(
-                RetrievedDocument.id == PydanticObjectId(retr_doc.id),
-                Site.id == PydanticObjectId(self.site.id),
-            )
-            if not site_loc.first_collected_date:
-                site_loc.first_collected_date = now
-                await site_loc.save()
+            site_loc_index: int = find_site_index(retr_doc, self.site.id)
+            if not retr_doc.locations[site_loc_index].first_collected_date:
+                retr_doc.locations[site_loc_index].first_collected_date = now
+        await retr_doc.save()
         doc_doc: DocDocument | None = await DocDocument.find_one(
             {"retrieved_document_id": retr_doc.id},
         )
         if not doc_doc.first_collected_date:
             doc_doc.first_collected_date = now
-            await doc_doc.save()
         if doc_doc.locations:
-            site_loc = await DocDocumentLocation.find_one(
-                DocDocument.id == PydanticObjectId(doc_doc.id),
-                Site.id == PydanticObjectId(self.site.id),
-            )
-            if not site_loc.first_collected_date:
-                site_loc.first_collected_date = now
-                await site_loc.save()
+            site_loc_index: int = find_site_index(doc_doc, self.site.id)
+            if not doc_doc.locations[site_loc_index].first_collected_date:
+                doc_doc.locations[site_loc_index].first_collected_date = now
+        await doc_doc.save()
         return CollectionResponse(success=True)
 
     async def set_last_collected(self, doc) -> CollectionResponse:
@@ -333,26 +325,18 @@ class CollectionService:
             {"_id": doc.id},
         )
         retr_doc.last_collected_date = now
-        await retr_doc.save()
         if retr_doc.locations:
-            site_loc = await RetrievedDocumentLocation.find_one(
-                RetrievedDocument.id == PydanticObjectId(retr_doc.id),
-                Site.id == PydanticObjectId(self.site.id),
-            )
-            site_loc.last_collected_date = now
-            await site_loc.save()
+            site_loc_index: int = find_site_index(retr_doc, self.site.id)
+            retr_doc.locations[site_loc_index].last_collected_date = now
+        await retr_doc.save()
         doc_doc: DocDocument | None = await DocDocument.find_one(
             {"retrieved_document_id": retr_doc.id},
         )
         doc_doc.last_collected_date = now
-        await doc_doc.save()
         if doc_doc.locations:
-            site_loc = await DocDocumentLocation.find_one(
-                DocDocument.id == PydanticObjectId(doc_doc.id),
-                Site.id == PydanticObjectId(self.site.id),
-            )
-            site_loc.last_collected_date = now
-            await site_loc.save()
+            site_loc_index: int = find_site_index(doc_doc, self.site.id)
+            doc_doc.locations[site_loc_index].last_collected_date = now
+        await doc_doc.save()
         return CollectionResponse(success=True)
 
     async def set_task_complete(self, task) -> CollectionResponse:
