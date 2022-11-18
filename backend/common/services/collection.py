@@ -16,7 +16,7 @@ from backend.common.core.config import env_type
 from backend.common.core.enums import CollectionMethod, TaskStatus
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
-from backend.common.models.shared import RetrievedDocumentLocation
+from backend.common.models.shared import DocDocumentLocation, RetrievedDocumentLocation
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import ManualWorkItem, SiteScrapeTask, WorkItemOption
 from backend.common.models.user import User
@@ -297,21 +297,31 @@ class CollectionService:
         retr_doc: RetrievedDocument | None = await RetrievedDocument.find_one(
             {"_id": doc.id},
         )
-        retr_doc.first_collected_date = now
+        if not retr_doc.first_collected_date:
+            retr_doc.first_collected_date = now
+            await retr_doc.save()
         if retr_doc.locations:
-            loc: RetrievedDocumentLocation = retr_doc.locations[-1]
-            loc.first_collected_date = now
-            retr_doc.locations[-1] = loc
+            site_loc = await RetrievedDocumentLocation.find_one(
+                RetrievedDocument.id == PydanticObjectId(retr_doc.id),
+                Site.id == PydanticObjectId(self.site.id),
+            )
+            if not site_loc.first_collected_date:
+                site_loc.first_collected_date = now
+                await site_loc.save()
         doc_doc: DocDocument | None = await DocDocument.find_one(
             {"retrieved_document_id": retr_doc.id},
         )
-        doc_doc.first_collected_date = now
+        if not doc_doc.first_collected_date:
+            doc_doc.first_collected_date = now
+            await doc_doc.save()
         if doc_doc.locations:
-            loc = doc_doc.locations[-1]
-            loc.first_collected_date = now
-            doc_doc.locations[-1] = loc
-        await retr_doc.save()
-        await doc_doc.save()
+            site_loc = await DocDocumentLocation.find_one(
+                DocDocument.id == PydanticObjectId(doc_doc.id),
+                Site.id == PydanticObjectId(self.site.id),
+            )
+            if not site_loc.first_collected_date:
+                site_loc.first_collected_date = now
+                await site_loc.save()
         return CollectionResponse(success=True)
 
     async def set_last_collected(self, doc) -> CollectionResponse:
@@ -323,20 +333,26 @@ class CollectionService:
             {"_id": doc.id},
         )
         retr_doc.last_collected_date = now
+        await retr_doc.save()
         if retr_doc.locations:
-            loc: RetrievedDocumentLocation = retr_doc.locations[-1]
-            loc.last_collected_date = now
-            retr_doc.locations[-1] = loc
+            site_loc = await RetrievedDocumentLocation.find_one(
+                RetrievedDocument.id == PydanticObjectId(retr_doc.id),
+                Site.id == PydanticObjectId(self.site.id),
+            )
+            site_loc.last_collected_date = now
+            await site_loc.save()
         doc_doc: DocDocument | None = await DocDocument.find_one(
             {"retrieved_document_id": retr_doc.id},
         )
         doc_doc.last_collected_date = now
-        if doc_doc.locations:
-            loc = doc_doc.locations[-1]
-            loc.last_collected_date = now
-            doc_doc.locations[-1] = loc
-        await retr_doc.save()
         await doc_doc.save()
+        if doc_doc.locations:
+            site_loc = await DocDocumentLocation.find_one(
+                DocDocument.id == PydanticObjectId(doc_doc.id),
+                Site.id == PydanticObjectId(self.site.id),
+            )
+            site_loc.last_collected_date = now
+            await site_loc.save()
         return CollectionResponse(success=True)
 
     async def set_task_complete(self, task) -> CollectionResponse:
@@ -398,11 +414,13 @@ class CollectionService:
             case WorkItemOption.FOUND:
                 await self.set_last_collected(retr_doc)
                 self.found_docs_total += 1
-            # First collected and last collected are set when new_doc or new_vers
-            # are first saved (form validation passes) as per illona.
             case WorkItemOption.NEW_DOCUMENT:
+                await self.set_first_collected(retr_doc)
+                await self.set_last_collected(retr_doc)
                 self.found_docs_total += 1
             case WorkItemOption.NEW_VERSION:
+                await self.set_first_collected(retr_doc)
+                await self.set_last_collected(retr_doc)
                 self.found_docs_total += 1
             case WorkItemOption.NOT_FOUND:
                 target_task.retrieved_document_ids = [
