@@ -146,9 +146,10 @@ async def viewer_document_link(
     target: RetrievedDocument = Depends(get_target),
 ):
     client = DocumentStorageClient()
-    url = client.get_signed_url(
-        f"{target.checksum}.{target.file_extension}", expires_in_seconds=60 * 60
-    )
+    key = f"{target.checksum}.{target.file_extension}"
+    if target.file_extension == "html":
+        key = key + ".pdf"
+    url = client.get_signed_url(key, expires_in_seconds=60 * 60)
     return {"url": url}
 
 
