@@ -9,7 +9,7 @@ from backend.common.models.payer_family import PayerFamily
 class Forward:
     @free_fall_migration(document_models=[PayerFamily])
     async def add_doc_doc_counts(self, session):
-        for payer_family in PayerFamily.find_all():
+        async for payer_family in PayerFamily.find_all():
             count = await DocDocument.find({"locations.payer_family_id": payer_family.id}).count()
             await PayerFamily.get_motor_collection().find_one_and_update(
                 {"_id": payer_family.id},
