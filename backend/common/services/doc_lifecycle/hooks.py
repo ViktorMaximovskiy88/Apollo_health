@@ -23,7 +23,7 @@ from backend.common.task_queues.unique_task_insert import try_queue_unique_task
 class ChangeInfo(BaseModel):
     translation_change: bool = False
     lineage_change: PydanticObjectId | None = None
-    old_payer_family_ids: list[PydanticObjectId] = []
+    old_payer_family_ids: list[PydanticObjectId | None] = []
 
 
 async def recompare_tags(doc: DocDocument, prev_doc: DocDocument):
@@ -72,27 +72,13 @@ async def recompare_extractions(doc: DocDocument, prev_doc: DocDocument):
         await DeltaCreator().compute_delta(task, prev_task)
 
 
-def update_increments(
-    payer_family_increments: dict[PydanticObjectId, int],
-    old_payer_family_id: PydanticObjectId,
-    new_payer_family_id: PydanticObjectId,
-):
-    if old_payer_family_id == new_payer_family_id:
-        return payer_family_increments
-
-    payer_family_increments[old_payer_family_id] = (
-        payer_family_increments[old_payer_family_id] - 1
-        if old_payer_family_id in payer_family_increments
-        else -1
-    )
-
-    payer_family_increments[new_payer_family_id] = (
-        payer_family_increments[new_payer_family_id] + 1
-        if new_payer_family_id in payer_family_increments
-        else 1
-    )
-
-    return payer_family_increments
+async def update_payer_family_counts(doc, change_info):
+    new_payer_family_ids = {location.payer_family_id for location in doc.locations}
+    old_payer_family_ids = set(change_info.old_payer_family_ids)
+    added = list(new_payer_family_ids - old_payer_family_ids)
+    removed = list(old_payer_family_ids - new_payer_family_ids)
+    await PayerFamily.find({"_id": {"$in": added}}).update_many({"$inc": {"doc_doc_count": 1}})
+    await PayerFamily.find({"_id": {"$in": removed}}).update_many({"$inc": {"doc_doc_count": -1}})
 
 
 async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = ChangeInfo()):
@@ -117,12 +103,7 @@ async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = Cha
             new_prev_doc_doc_id=doc.previous_doc_doc_id,
         )
 
-    new_payer_family_ids = {location.payer_family_id for location in doc.locations}
-    old_payer_family_ids = set(change_info.old_payer_family_ids)
-    added = list(new_payer_family_ids - old_payer_family_ids)
-    removed = list(old_payer_family_ids - new_payer_family_ids)
-    await PayerFamily.find({"_id": {"$in": added}}).update_many({"$inc": {"doc_doc_count": 1}})
-    await PayerFamily.find({"_id": {"$in": removed}}).update_many({"$inc": {"doc_doc_count": -1}})
+    await update_payer_family_counts(doc, change_info)
 
     await DocLifecycleService().assess_document_status(doc)
 
@@ -142,10 +123,8 @@ def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
     ):
         change_info.lineage_change = doc.previous_doc_doc_id
 
-    if (
-        isinstance(updates, (UpdateDocDocument))
-        and (updates.locations or doc.locations)
-        and (len(updates.locations) > 0 or len(doc.locations > 0))
+    if isinstance(updates, (UpdateDocDocument, ClassificationUpdateDocDocument)) and (
+        updates.locations or doc.locations
     ):
         change_info.old_payer_family_ids = [location.payer_family_id for location in doc.locations]
 
