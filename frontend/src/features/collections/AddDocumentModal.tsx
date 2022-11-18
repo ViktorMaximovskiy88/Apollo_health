@@ -158,7 +158,6 @@ export function AddDocumentModal({
         name: responseData.doc_name,
         document_type: responseData.document_type,
         lang_code: responseData.lang_code,
-        internal_document: responseData.internal_document,
         effective_date: convertDate(responseData.effective_date),
         last_reviewed_date: convertDate(responseData.last_reviewed_date),
         last_updated_date: convertDate(responseData.last_updated_date),
@@ -166,6 +165,11 @@ export function AddDocumentModal({
         next_update_date: convertDate(responseData.next_update_date),
         published_date: convertDate(responseData.published_date),
       });
+      if (responseData.internal_document === true) {
+        form.setFieldsValue({
+          internal_document: responseData.internal_document,
+        });
+      }
       displayDuplicateError('Document exists on other site');
       setOldLocationSiteId(responseData.prev_location_site_id);
       setOldLocationDocId(responseData.prev_location_doc_id);
