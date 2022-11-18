@@ -145,11 +145,6 @@ class CollectionService:
         """Create automated scrape task with queue_time of now"""
         response: CollectionResponse = CollectionResponse()
         await self.stop_all_tasks()
-        previous_documents_found: int = 0
-        previous_task: SiteScrapeTask = await self.fetch_previous_task()
-        if previous_task and previous_task.documents_found:
-            previous_documents_found = previous_task.documents_found
-
         new_scrape_task: SiteScrapeTask = SiteScrapeTask(
             site_id=self.site.id,
             queued_time=datetime.now(tz=timezone.utc),
@@ -164,17 +159,20 @@ class CollectionService:
                 f"[{new_scrape_task.worker_id}] site[{self.site.id}]"
             )
             return response
-        # Set nav_id to created scrape task so we can nav after creating task.
+
+        # Set nav_id as task id to (optionally) navigate to after success.
         response.nav_id = scrape_task.id
-        # Set task status as in progress and doc count to prev task doc count.
+        # We set doc count to 0 for automated tasks because count is
+        # incremented as the site is scraped.
         await self.site.update(
             Set(
                 {
                     Site.last_run_status: scrape_task.status,
-                    Site.last_run_documents: previous_documents_found,
+                    Site.last_run_documents: 0,
                 }
             )
         )
+
         return response
 
     async def stop_all_tasks(self) -> Boolean:
