@@ -301,6 +301,9 @@ class CollectionService:
         if retr_doc.locations:
             site_loc_index: int = find_site_index(retr_doc, self.site.id)
             retr_doc.locations[site_loc_index].first_collected_date = now
+            # Set min first_collected_date to handle case where new_doc or new_version,
+            # but doc is from other site. Setting first_collected_date to now would
+            # reset the original first_collected_date.
             retr_doc.first_collected_date = min(
                 [loc.first_collected_date for loc in retr_doc.locations]
             )
