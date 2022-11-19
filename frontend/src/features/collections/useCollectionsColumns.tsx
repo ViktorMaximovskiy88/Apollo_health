@@ -44,12 +44,23 @@ export const createColumns = ({
       },
     },
     {
-      header: 'Elapsed',
+      header: 'Queued Time',
+      name: 'queued',
+      minWidth: 300,
+      defaultFlex: 1,
+      render: ({ data: task }: { data: SiteScrapeTask }) => {
+        return prettyDateDistance(task.queued_time, task.start_time);
+      },
+    },
+    {
+      header: 'Collection Time',
       name: 'elapsed',
       minWidth: 300,
       defaultFlex: 1,
       render: ({ data: task }: { data: SiteScrapeTask }) => {
-        return prettyDateDistance(task.start_time || task.queued_time, task.end_time);
+        if (task.start_time) {
+          return prettyDateDistance(task.start_time, task.end_time);
+        }
       },
     },
     {

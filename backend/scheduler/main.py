@@ -225,6 +225,9 @@ async def start_hung_task_checker():
                 await requeue_lost_task(task, now)
             elif task.status == TaskStatus.CANCELING:
                 await task.update({"$set": {"status": TaskStatus.CANCELED}})
+                await Site.find_one(Site.id == task.site_id).update(
+                    {"$set": {"last_run_status": TaskStatus.CANCELED}}
+                )
 
         await asyncio.sleep(60)
 
@@ -233,21 +236,29 @@ async def start_inactive_task_checker():
     """
     Cancel tasks where last document was scraped more than 1 hour ago
     """
-    now = datetime.now(tz=timezone.utc)
-    SiteScrapeTask.get_motor_collection().update_many(
-        {
-            "status": {"$in": [TaskStatus.IN_PROGRESS]},
-            "last_doc_collected": {"$lt": now - timedelta(hours=1)},
-        },
-        {
-            "$set": {
-                "status": TaskStatus.CANCELED,
-                "error_message": "Canceled due to inactivity",
-                "end_time": now,
+    while True:
+        now = datetime.now(tz=timezone.utc)
+        scrape_task_query = SiteScrapeTask.find(
+            {
+                "status": {"$in": [TaskStatus.IN_PROGRESS]},
+                "last_doc_collected": {"$lt": now - timedelta(hours=1)},
             }
-        },
-    )
-    await asyncio.sleep(60)
+        )
+        async for task in scrape_task_query:
+            await task.update(
+                {
+                    "$set": {
+                        "status": TaskStatus.CANCELED,
+                        "error_message": "Canceled due to inactivity",
+                        "end_time": now,
+                    }
+                }
+            )
+            await Site.find_one(Site.id == task.site_id).update(
+                {"$set": {"last_run_status": TaskStatus.CANCELED}}
+            )
+
+        await asyncio.sleep(60)
 
 
 background_tasks: list[asyncio.Task] = []
