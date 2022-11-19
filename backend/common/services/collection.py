@@ -1,6 +1,6 @@
 from ast import List
 from datetime import datetime, timezone
-from typing import Type, Union
+from typing import Literal, Type, Union
 from xmlrpc.client import Boolean
 
 import typer
@@ -89,13 +89,13 @@ class CollectionService:
 
     async def start_collecting(self) -> CollectionResponse:
         """Create site scrape task using site config."""
-        last_run_status = TaskStatus.QUEUED
         match self.site.collection_method:
             case CollectionMethod.Automated:
+                last_run_status: Literal[TaskStatus.QUEUED] = TaskStatus.QUEUED
                 response: CollectionResponse = await self.start_automated_task()
             case CollectionMethod.Manual:
+                last_run_status: Literal[TaskStatus.IN_PROGRESS] = TaskStatus.IN_PROGRESS
                 response: CollectionResponse = await self.start_manual_task()
-                last_run_status = TaskStatus.IN_PROGRESS
             case _:
                 response = CollectionResponse()
                 response.add_error(f"Collection Method Invalid: {self.site.collection_method}")
@@ -147,23 +147,24 @@ class CollectionService:
         """Create automated scrape task with queue_time of now"""
         response: CollectionResponse = CollectionResponse()
         await self.stop_all_tasks()
+
         new_scrape_task: SiteScrapeTask = SiteScrapeTask(
             site_id=self.site.id,
             queued_time=datetime.now(tz=timezone.utc),
             documents_found=0,  # Incremented during automated scrape.
         )
-        scrape_task: SiteScrapeTask = await create_and_log(
+        created_task: SiteScrapeTask = await create_and_log(
             self.logger, self.current_user, new_scrape_task
         )
-        if not scrape_task:
+        if not created_task:
             response.add_error(
-                f"Not able to create site_scrape_task for worker_id"
+                f"Not able to create site_scrape_task for worker_id "
                 f"[{new_scrape_task.worker_id}] site[{self.site.id}]"
             )
             return response
 
         # Set nav_id as task id to (optionally) navigate to after success.
-        response.nav_id = scrape_task.id
+        response.nav_id = created_task.id
         return response
 
     async def start_manual_task(self) -> CollectionResponse:
@@ -172,7 +173,7 @@ class CollectionService:
         await self.stop_all_tasks()
         now: datetime = datetime.now(tz=timezone.utc)
 
-        # Create a new in_progress manual task and set queued to now.
+        # Create a new in_progress manual task and respond with nav link.
         new_task: SiteScrapeTask = SiteScrapeTask(
             site_id=self.site.id,
             initiator_id=self.current_user.id,
@@ -198,15 +199,14 @@ class CollectionService:
                         retrieved_document_id=f"{doc_doc.retrieved_document_id}",
                     )
                 )
-
-        # Create new manual task and respond with nav link.
         created_task: SiteScrapeTask = await create_and_log(
             self.logger, self.current_user, new_task
         )
         if not created_task:
             response.add_error("Unable to create new scrape task.")
-        else:
-            response.nav_id = created_task.id
+            return response
+
+        response.nav_id = created_task.id
         return response
 
     async def stop_manual_task(self) -> CollectionResponse:
