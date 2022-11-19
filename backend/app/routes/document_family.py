@@ -10,6 +10,7 @@ from backend.app.routes.table_query import (
 )
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
+from backend.common.models.doc_document import DocDocument
 from backend.common.models.document_family import (
     DocumentFamily,
     NewDocumentFamily,
@@ -116,4 +117,7 @@ async def delete_document_family(
     logger: Logger = Depends(get_logger),
 ):
     await update_and_log_diff(logger, current_user, target, UpdateDocumentFamily(disabled=True))
+    await DocDocument.get_motor_collection().update_many(
+        {"document_family_id": id}, {"$set": {"document_family_id": None}}
+    )
     return {"success": True}

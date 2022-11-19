@@ -2,7 +2,7 @@ import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
 import { useDocumentFamilyColumns as useColumns } from './useDocumentFamilyColumns';
 import { useDataTableFilter, useDataTableSort, useInterval } from '../../../common/hooks';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GridPaginationToolbar } from '../../../components';
 import {
@@ -69,10 +69,12 @@ function uniqueSiteIds(items: DocumentFamily[]) {
 export function DocumentFamilyTable() {
   const { isActive, setActive, watermark } = useInterval(10000);
 
+  const [deletedDocumentFamily, setDeletedDocumentFamily] = useState('');
+
   const [getDocumentFamiliesFn] = useLazyGetDocumentFamiliesQuery();
   const { setSiteIds, siteNamesById } = useGetSiteNamesById();
 
-  const columns = useColumns(siteNamesById);
+  const columns = useColumns(siteNamesById, setDeletedDocumentFamily);
   const loadData = useCallback(
     async (tableInfo: TableInfoType) => {
       const { data } = await getDocumentFamiliesFn({ ...tableInfo });
@@ -81,7 +83,7 @@ export function DocumentFamilyTable() {
       if (families) setSiteIds(uniqueSiteIds(families));
       return { data: families, count };
     },
-    [getDocumentFamiliesFn, watermark] // eslint-disable-line react-hooks/exhaustive-deps
+    [getDocumentFamiliesFn, watermark, deletedDocumentFamily] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const filterProps = useDataTableFilter(documentFamilyTableState, setDocumentFamilyFilter);

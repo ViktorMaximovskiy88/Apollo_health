@@ -10,7 +10,7 @@ import {
   LegacyRelevanceOptions,
 } from '../../retrieved_documents/types';
 import { ChangeLogModal } from '../../change-log/ChangeLogModal';
-import { useGetChangeLogQuery } from './documentFamilyApi';
+import { useDeleteDocumentFamilyMutation, useGetChangeLogQuery } from './documentFamilyApi';
 import { TypeColumn, TypeFilterValue } from '@inovua/reactdatagrid-community/types';
 import { Link } from 'react-router-dom';
 import { useSiteSelectOptions } from '../useDocDocumentColumns';
@@ -18,18 +18,30 @@ import { RemoteColumnFilter } from '../../../components/RemoteColumnFilter';
 import { useAppDispatch } from '../../../app/store';
 import { useSelector } from 'react-redux';
 import { docDocumentTableState, setDocDocumentTableFilter } from '../docDocumentsSlice';
+import { ButtonLink } from '../../../components';
+import { Popconfirm } from 'antd';
 
 export const createColumns = ({
   siteOptions,
   siteNamesById,
   dispatch,
   docDocumentFilters,
+  deleteDocumentFamily,
+  setDeletedDocumentFamily,
 }: {
   siteOptions: (search: string) => Promise<{ label: string; value: string }[]>;
   siteNamesById: { [id: string]: string };
   dispatch: any;
   docDocumentFilters: TypeFilterValue;
+  deleteDocumentFamily: (
+    documentFamily: Pick<DocumentFamily, '_id'> & Partial<DocumentFamily>
+  ) => void;
+  setDeletedDocumentFamily: (id: string) => void;
 }) => {
+  const handleDeleteDocumentFamily = async (documentFamily: DocumentFamily) => {
+    await deleteDocumentFamily(documentFamily);
+    setDeletedDocumentFamily(documentFamily._id);
+  };
   return [
     {
       header: 'Family Name',
@@ -133,19 +145,47 @@ export const createColumns = ({
       render: ({ data: docFamily }: { data: DocumentFamily }) => (
         <>
           <ChangeLogModal target={docFamily} useChangeLogQuery={useGetChangeLogQuery} />
+          <Popconfirm
+            title={`Are you sure you want to delete '${docFamily.name}'?`}
+            okText="Yes"
+            cancelText="No"
+            onConfirm={() => {
+              handleDeleteDocumentFamily(docFamily);
+            }}
+          >
+            <ButtonLink danger>Delete</ButtonLink>
+          </Popconfirm>
         </>
       ),
     },
   ];
 };
 
-export const useDocumentFamilyColumns = (siteNamesById: {
-  [key: string]: string;
-}): TypeColumn[] => {
+export const useDocumentFamilyColumns = (
+  siteNamesById: {
+    [key: string]: string;
+  },
+  setDeletedDocumentFamily: (id: string) => void
+): TypeColumn[] => {
   const { siteOptions } = useSiteSelectOptions();
   const dispatch = useAppDispatch();
   const { filter: docDocumentFilters } = useSelector(docDocumentTableState);
+  const [deleteDocumentFamily] = useDeleteDocumentFamilyMutation();
   return useMemo(() => {
-    return createColumns({ siteOptions, siteNamesById, dispatch, docDocumentFilters });
-  }, [siteNamesById]);
+    return createColumns({
+      siteOptions,
+      siteNamesById,
+      dispatch,
+      docDocumentFilters,
+      deleteDocumentFamily,
+      setDeletedDocumentFamily,
+    });
+  }, [
+    siteOptions,
+    siteNamesById,
+    dispatch,
+    docDocumentFilters,
+    deleteDocumentFamily,
+    setDeletedDocumentFamily,
+  ]);
 };
