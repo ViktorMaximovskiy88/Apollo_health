@@ -53,7 +53,7 @@ class CollectionService:
         self.site: Site = site
         self.current_user: User = current_user
         self.logger: Logger = logger
-        self.found_docs_total = 0
+        self.found_docs_total: int = 0
         self.last_queued: SiteScrapeTask | None = None
 
     async def has_queued(self) -> SiteScrapeTask | Boolean:
@@ -89,18 +89,19 @@ class CollectionService:
 
     async def start_collecting(self) -> CollectionResponse:
         """Create site scrape task using site config."""
-        result: CollectionResponse = CollectionResponse()
         last_run_status = TaskStatus.QUEUED
         match self.site.collection_method:
             case CollectionMethod.Automated:
-                result = await self.start_automated_task()
+                response: CollectionResponse = await self.start_automated_task()
             case CollectionMethod.Manual:
-                result = await self.start_manual_task()
+                response: CollectionResponse = await self.start_manual_task()
                 last_run_status = TaskStatus.IN_PROGRESS
             case _:
-                result.add_error(f"Collection Method Invalid: {self.site.collection_method}")
-                return result
-        if not result.errors:
+                response = CollectionResponse()
+                response.add_error(f"Collection Method Invalid: {self.site.collection_method}")
+                return response
+
+        if not response.errors:
             await self.site.update(
                 Set(
                     {
@@ -109,30 +110,28 @@ class CollectionService:
                     }
                 )
             )
-        return result
+        return response
 
     async def stop_collecting(self) -> CollectionResponse:
         """
         Stop collecting all queued or running tasks.
         """
-        result = CollectionResponse()
-
         match self.site.collection_method:
             case CollectionMethod.Automated:
-                result: CollectionResponse = await self.stop_all_tasks()
+                response: CollectionResponse = await self.stop_all_tasks()
             case CollectionMethod.Manual:
-                result: CollectionResponse = await self.stop_manual_task()
+                response: CollectionResponse = await self.stop_manual_task()
             case _:
                 # This should not happen. Cancel tasks just to be safe.
-                result: CollectionResponse = await self.stop_all_tasks()
+                response: CollectionResponse = await self.stop_all_tasks()
                 typer.secho(
                     f"Unknown site [{self.site.id}] collection_method "
                     f"[{self.site.collection_method}]",
                     fg=typer.colors.RED,
                 )
-                return result
+                return response
 
-        if not result.errors:
+        if not response.errors:
             last_queued_task: SiteScrapeTask = await self.fetch_previous_task()
             await self.site.update(
                 Set(
@@ -142,7 +141,7 @@ class CollectionService:
                     }
                 )
             )
-        return result
+        return response
 
     async def start_automated_task(self) -> CollectionResponse:
         """Create automated scrape task with queue_time of now"""
@@ -238,7 +237,7 @@ class CollectionService:
 
         return response
 
-    async def cancel_in_progress(self) -> None:
+    async def cancel_in_progress(self) -> CollectionResponse:
         """
         Cancel only tasks which are in progress.
         Since a doc was never collected, set TaskStatus.CANCELED instead of CANCELING.
@@ -248,6 +247,7 @@ class CollectionService:
             {"$set": {"status": TaskStatus.CANCELED}},
         )
         await self.site.update(Set({Site.last_run_status: TaskStatus.CANCELED}))
+        return CollectionResponse(success=True)
 
     async def stop_all_tasks(self) -> Boolean:
         """Stop all queued or running site tasks."""
@@ -266,7 +266,6 @@ class CollectionService:
 
     async def set_all_last_collected(self, task) -> CollectionResponse:
         """Update all task retrieved_docs and doc_docs last_collected_date."""
-        response: CollectionResponse = CollectionResponse()
         now: datetime = datetime.now(tz=timezone.utc)
         retrieved_documents: list[RetrievedDocument] = (
             await RetrievedDocument.find_many({"_id": {"$in": task["retrieved_document_ids"]}})
@@ -274,6 +273,7 @@ class CollectionService:
             .to_list()
         )
         if not retrieved_documents:
+            response: CollectionResponse = CollectionResponse()
             response.add_error(
                 f"set_last_collected: No retrieved_docs for site_scrape_task[{task.id}]"
             )
@@ -289,7 +289,7 @@ class CollectionService:
                     {"retrieved_document_id": r_doc.id},
                     {"$set": {"last_collected_date": now}},
                 )
-        return response
+        return CollectionResponse(success=True)
 
     async def set_first_collected(self, doc) -> CollectionResponse:
         """Update all task retrieved_docs and doc_docs first_collected_date."""
@@ -384,7 +384,6 @@ class CollectionService:
         item_index: int,
     ) -> CollectionResponse:
         """Process a site_scrape_task work_item action"""
-        result: CollectionResponse = CollectionResponse()
         work_item.is_new = False
         work_item.action_datetime = datetime.now(tz=timezone.utc)
         target_task.work_list[item_index] = work_item
@@ -418,15 +417,16 @@ class CollectionService:
                     if f"{retr_id}" != f"{work_item.retrieved_document_id}"
                 ]
             case WorkItemOption.UNHANDLED:
-                result.add_error(f"{retr_doc.name}")
-                return result
+                response: CollectionResponse = CollectionResponse()
+                response.add_error(f"{retr_doc.name}")
+                return response
 
-        return result
+        return CollectionResponse(success=True)
 
 
 def find_work_item_index(doc, task, raise_exception=False, err_msg="") -> int:
     if not err_msg:
-        err_msg = f"ERROR: Not able to find doc.id in work list for task[{task.id}]"
+        err_msg: str = f"ERROR: Not able to find doc.id in work list for task[{task.id}]"
     # Is doc_doc.
     if hasattr(doc, "retrieved_document_id"):
         work_item_index: int = next(
