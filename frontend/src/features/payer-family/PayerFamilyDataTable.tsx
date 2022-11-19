@@ -2,7 +2,7 @@ import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
 import { usePayerFamilyColumns as useColumns } from './usePayerFamilyColumns';
 import { useDataTableFilter, useDataTableSort, useInterval } from '../../common/hooks';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GridPaginationToolbar } from '../../components';
 import {
