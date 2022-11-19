@@ -44,7 +44,7 @@ from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.scrapeworker.common.update_documents import DocumentUpdater
 from backend.scrapeworker.common.utils import get_extension_from_path_like, supported_mimetypes
 from backend.scrapeworker.file_parsers import get_tags, parse_by_type, pdf
-from backend.scrapeworker.playbook import ScrapePlaybook
+from backend.scrapeworker.playbook import PlaybookException, ScrapePlaybook
 from backend.scrapeworker.scrapers import ScrapeHandler
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
 from backend.scrapeworker.search_crawler import SearchableCrawler
@@ -449,6 +449,8 @@ class ScrapeWorker:
 
         try:
             yield page, context
+        except PlaybookException as ex:
+            raise ex
         except Exception as ex:
             self.log.error(ex, stack_info=True)
         finally:
