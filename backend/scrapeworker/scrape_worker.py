@@ -244,7 +244,15 @@ class ScrapeWorker:
                 break
 
             document = None
-            if not self.doc_client.object_exists(dest_path):
+
+            text_checksum = hash_full_text(parsed_content["text"])
+            document = await RetrievedDocument.find_one(RetrievedDocument.checksum == checksum)
+            if not document:
+                document = await RetrievedDocument.find_one(
+                    RetrievedDocument.text_checksum == text_checksum
+                )
+
+            if not document and not self.doc_client.object_exists(dest_path):
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
 
             if download.file_extension == "html" and (
@@ -257,14 +265,6 @@ class ScrapeWorker:
                         url,
                         link_text=download.metadata.link_text,
                     ).update_parsed_content(parsed_content)
-
-            if download.file_extension == "html":
-                text_checksum = hash_full_text(parsed_content["text"])
-                document = await RetrievedDocument.find_one(
-                    RetrievedDocument.text_checksum == text_checksum
-                )
-            else:
-                document = await RetrievedDocument.find_one(RetrievedDocument.checksum == checksum)
 
             if document:
                 self.log.info("updating doc")

@@ -37,13 +37,13 @@ class BaseDocDocument(BaseModel):
     classification_lock: TaskLock | None = None
 
     name: Indexed(str)  # type: ignore
-    checksum: Indexed(str)
+    checksum: Indexed(str)  # type: ignore
     file_extension: str | None = None
     text_checksum: str | None = None
     lang_code: LangCode | None = None
 
     # Document Type
-    document_type: str | None = None
+    document_type: Indexed(str) | None = None  # type: ignore
     doc_type_confidence: float | None = None
     internal_document: bool | None = None
 
