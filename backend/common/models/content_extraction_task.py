@@ -37,6 +37,8 @@ class FormularyDatum(BaseModel):
 
     dme: bool = False
 
+    pn: str | None = None
+
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, FormularyDatum):
             return False

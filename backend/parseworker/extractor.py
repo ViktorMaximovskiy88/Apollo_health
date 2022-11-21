@@ -249,6 +249,8 @@ class TableContentExtractor:
                 if rule.field == "PA":
                     t9n.pa = True
                     t9n.pan = note
+                if rule.field == "PN":
+                    t9n.pn = note
                 if rule.field == "CPA":
                     t9n.cpa = True
                     t9n.cpan = note
