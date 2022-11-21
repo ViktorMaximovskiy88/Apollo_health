@@ -13,7 +13,9 @@ import magic
 def compile_date_rgx():
     date_formats = [
         r"(?<!\d|[A-Za-z]|\/)[0-9]{4}[A-Za-z]{3}(?!\d|[A-Za-z]|\/)",  # yyyyMMM, i.e. 2020Dec # noqa
-        r"[0-9]{6,8}",  # mmYYYY or YYYYmm or yyyyddMM or MMddyyyy w/o alpha-numeric bookends | # noqa
+        r"(?<!\d|[\/\-\.])[0-9]{4}(?!\d|[\/\-\.])",  # yyyy
+        r"(?<!\d)[0-9]{6}(?!\d)",  # mmYYYY or YYYYmm
+        r"(?<!\d)[0-9]{8}(?!\d)",  # mmddyyyy yyyymmdd
         r"(?<!\d|\/)[0-9]{4}[\/\-\.\|][0-9][0-9]?[\/\-\.\|][0-9][0-9]?(?!\d|\/)",  # yyyy-MM-dd with -, /, . or | # noqa
         r"(?<!\d|\/)[0-9][0-9]?[\/\-\.\|][0-9][0-9]?[\/\-\.\|](?:\d{4}|\d{2})(?!\d|\/)",  # dd-MM-yyyy, dd-mm-yy. With -, /, . or | # noqa
         r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).? [0-9][0-9]?(?:st|nd|rd|th)?,? [0-9][0-9][0-9][0-9]",  # M d, yyyy # noqa
@@ -28,6 +30,22 @@ def compile_date_rgx():
         r"(?<!\d|\/|-|\||\.)[0-9][0-9]?\s?[\/\-\.\|]\d{4}(?!\d|\/|-|\||\.)",  # MM/yyyy with /, -, | or . # noqa
     ]
     return [re.compile(fmt, flags=re.IGNORECASE) for fmt in date_formats]
+
+
+def compile_qtr_rgx():
+    quarter_formats = [r"Q[1-4]", r"quarter of", r"quarter", r"qtr"]
+    qtr_num_formats = [
+        r"\b[1-4]\b",
+        r"\b(1st|2nd|3rd|4th)\b",
+        r"\b(first|second|third|fourth)\b",
+    ]
+    year_num = r"(?<!\d|[\/\-\.])[0-9]{4}(?!\d|[\/\-\.])"
+
+    return (
+        [re.compile(fmt, flags=re.IGNORECASE) for fmt in quarter_formats],
+        [re.compile(fmt, flags=re.IGNORECASE) for fmt in qtr_num_formats],
+        re.compile(year_num),
+    )
 
 
 def compile_label_rgx():
@@ -66,6 +84,7 @@ def compile_label_rgx():
 
 date_rgxs = compile_date_rgx()
 label_rgxs = compile_label_rgx()
+quarter_rgxs = compile_qtr_rgx()
 digit_rgx = r"\b\d+\b"
 
 # the builtin mimetype map is lacking some

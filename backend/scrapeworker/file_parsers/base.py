@@ -59,7 +59,8 @@ class FileParser(ABC):
         lang_code = detect_lang(self.text)
 
         date_parser = DateParser(date_rgxs, label_rgxs)
-        date_parser.extract_dates(self.text)
+        label_texts: list[str] = [text for text in [title, self.link_text] if text is not None]
+        date_parser.extract_dates(self.text, label_texts)
 
         identified_dates = list(date_parser.unclassified_dates)
         identified_dates.sort()
