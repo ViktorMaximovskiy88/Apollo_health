@@ -25,6 +25,7 @@ from backend.common.models.payer_backbone import (
     PayerBackboneUnionDoc,
     PayerParent,
     Plan,
+    PlanBenefit,
 )
 from backend.common.models.payer_family import PayerFamily
 from backend.common.models.proxy import Proxy
@@ -83,6 +84,7 @@ async def init_db(mock=False, database_name=None):
             DocumentAnalysis,
             PayerBackboneUnionDoc,
             PayerFamily,
+            PlanBenefit,
             Plan,
             PayerParent,
             BenefitManager,

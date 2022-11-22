@@ -60,6 +60,29 @@ class BenefitManagerControl(str, Enum):
     MAC = "MAC"
 
 
+class PlanBenefit(BaseDocument):
+    payer_key: ClassVar[str] = "plan_benefit"
+    start_date: datetime = datetime(1970, 1, 1)
+    end_date: datetime = datetime(2038, 1, 1)
+    l_plan_id: int
+    l_ump_id: int
+    l_controller_id: int
+    benefit: Benefit
+    lives: int = 0
+    states: list[str] = []
+
+    l_formulary_id: int | None = None
+    l_mco_id: int | None = None
+    l_parent_id: int | None = None
+    l_bm_id: int | None = None
+    type: PlanType
+    channel: Channel
+    is_national: bool = False
+
+    class Settings:
+        union_doc = PayerBackboneUnionDoc
+
+
 class Plan(BaseDocument):
     payer_key: ClassVar[str] = "plan"
     start_date: datetime = datetime(1970, 1, 1)
@@ -78,6 +101,8 @@ class Plan(BaseDocument):
     medical_lives: int = 0
     pharmacy_states: list[str] = []
     medical_states: list[str] = []
+    l_pharmacy_controller_id: int | None = None
+    l_medical_controller_id: int | None = None
 
     class Settings:
         union_doc = PayerBackboneUnionDoc

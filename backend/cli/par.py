@@ -24,21 +24,21 @@ async def par(ctx, file: str):
 @click.pass_context
 async def prev_par_ids(ctx):
     file = ctx.parent.params["file"]
-    df = pd.read_csv(file)
-    print(
-        f"ParDocumentId, ParChecksum, ParEffectiveDate, ParPolicyId, Version?, SHDocDocId, SHchecksum, SHFinalEffectiveDate, SHLineageId"  # noqa
-    )
+    df = pd.read_csv(file, skipinitialspace=True)
+
     for _index, row in df.iterrows():
-        doc = await DocDocument.find_one({"locations.url": row["DocumentUrl"]})
-        if doc:
-            version = "Last" if doc.checksum.lower() != row["Checksum"].lower() else "Same"
-            print(
-                f"{row['ParDocumentId']}, {row['Checksum']}, {row['EffectiveDate']}, {row['PolicyId']}, {version}, {doc.id}, {doc.checksum}, {doc.final_effective_date}, {doc.lineage_id}"  # noqa
+        doc = await DocDocument.find_one(
+            {
+                "locations.url": row["DocumentUrl"],
+            }
+        )
+
+        if doc and row["Checksum"].lower() != doc.checksum:
+            update = await DocDocument.get_motor_collection().find_one_and_update(
+                {"_id": doc.id},
+                {"$set": {"previous_par_id": row["ParDocumentId"]}},
             )
-        else:
-            print(
-                f"{row['ParDocumentId']}, {row['Checksum']}, {row['EffectiveDate']}, {row['PolicyId']}, , , , , "  # noqa
-            )
+            print(update["_id"], update.get("previous_par_id", None))
 
 
 @par.command()

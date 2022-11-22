@@ -14,6 +14,7 @@ from backend.common.models.payer_backbone import (
     Formulary,
     PayerParent,
     Plan,
+    PlanBenefit,
     PlanType,
 )
 from backend.common.models.payer_family import PayerFamily
@@ -34,6 +35,8 @@ async def before_each_test():
             channel=Channel.Medicare,
             pharmacy_states=["CA", "MA"],
             medical_states=["CA", "MA"],
+            l_medical_controller_id=1,
+            l_pharmacy_controller_id=1,
         ),
         Plan(
             name="p2",
@@ -46,6 +49,7 @@ async def before_each_test():
             channel=Channel.Medicare,
             pharmacy_states=["MA"],
             medical_states=[],
+            l_pharmacy_controller_id=1,
         ),
         Plan(
             name="p3",
@@ -58,6 +62,8 @@ async def before_each_test():
             channel=Channel.Medicare,
             pharmacy_states=["OH"],
             medical_states=["OH", "PA"],
+            l_medical_controller_id=1,
+            l_pharmacy_controller_id=1,
         ),
         Plan(
             name="p4",
@@ -70,6 +76,8 @@ async def before_each_test():
             channel=Channel.Commercial,
             pharmacy_states=["PA", "NV"],
             medical_states=["PA", "NV"],
+            l_medical_controller_id=1,
+            l_pharmacy_controller_id=1,
         ),
     ]
     formularies: list[Formulary] = [
@@ -100,17 +108,57 @@ async def before_each_test():
     ]
     for pb in plans + formularies + umps + parents + mcos + bms:
         await pb.insert()
+    await create_plan_benefits()
+
+
+async def create_plan_benefits():
+    async for plan in Plan.find_all():
+        formulary = await Formulary.find_one({"l_id": plan.l_formulary_id})
+        if not formulary:
+            continue
+        if formulary.l_pharmacy_ump_id and plan.l_pharmacy_controller_id:
+            await PlanBenefit(
+                l_plan_id=plan.l_id,
+                l_ump_id=formulary.l_pharmacy_ump_id,
+                l_controller_id=plan.l_pharmacy_controller_id,
+                lives=plan.pharmacy_lives,
+                states=plan.pharmacy_states,
+                benefit=Benefit.Pharmacy,
+                l_formulary_id=plan.l_formulary_id,
+                l_mco_id=plan.l_mco_id,
+                l_parent_id=plan.l_parent_id,
+                l_bm_id=plan.l_bm_id,
+                type=plan.type,
+                channel=plan.channel,
+                is_national=plan.is_national,
+            ).insert()
+        if formulary.l_medical_ump_id and plan.l_medical_controller_id:
+            await PlanBenefit(
+                l_plan_id=plan.l_id,
+                l_ump_id=formulary.l_medical_ump_id,
+                l_controller_id=plan.l_medical_controller_id,
+                lives=plan.medical_lives,
+                states=plan.medical_states,
+                benefit=Benefit.Medical,
+                l_formulary_id=plan.l_formulary_id,
+                l_mco_id=plan.l_mco_id,
+                l_parent_id=plan.l_parent_id,
+                l_bm_id=plan.l_bm_id,
+                type=plan.type,
+                channel=plan.channel,
+                is_national=plan.is_national,
+            ).insert()
 
 
 @pytest.mark.asyncio
 async def test_querier_1():
     pi = PayerFamily(name="", channels=[Channel.Commercial], benefits=[Benefit.Pharmacy])
     pbbq = PayerBackboneQuerier(pi)
-    plans = await pbbq.construct_plan_query()
-    plan_ids = [p.l_id async for p in plans]
+    plans = await pbbq.construct_plan_benefit_query()
+    plan_ids = await pbbq.convert_plans_to_ids_of_type(plans, Plan)
     assert plan_ids == [4]
 
-    plans = await pbbq.construct_plan_query()
+    plans = await pbbq.construct_plan_benefit_query()
     ump_ids = await pbbq.convert_plans_to_ids_of_type(plans, UMP)
     assert ump_ids == [5]
 

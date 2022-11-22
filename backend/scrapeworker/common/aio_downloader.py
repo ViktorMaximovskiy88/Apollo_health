@@ -207,17 +207,17 @@ class AioDownloader:
                         )
                         raise proxy_error
 
-                    self.log.info(f"Before link log {url} response")
+                self.log.info(f"Before link log {url} response")
 
-                    if not response.ok:
-                        invalid_response = InvalidResponse(
-                            proxy_url=proxy_url, **download.response.dict()
-                        )
-                        download.invalid_responses.append(invalid_response)
-                        self.log.error(invalid_response)
-                        # if its 404 skip... maybe others we retry?
-                        yield (None, None)
-
+                if not response.ok:
+                    invalid_response = InvalidResponse(
+                        proxy_url=proxy_url, **download.response.dict()
+                    )
+                    download.invalid_responses.append(invalid_response)
+                    self.log.error(invalid_response)
+                    # if its 404 skip... maybe others we retry?
+                    yield (None, None)
+                else:
                     download.valid_response = ValidResponse(
                         proxy_url=proxy_url, **download.response.dict()
                     )
