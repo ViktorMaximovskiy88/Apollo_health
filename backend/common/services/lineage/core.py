@@ -12,7 +12,6 @@ from backend.common.models.document_mixins import calc_final_effective_date
 from backend.common.models.lineage import DocumentAnalysis, DocumentAttrs
 from backend.common.models.shared import get_unique_focus_tags, get_unique_reference_tags
 from backend.common.models.site import Site
-from backend.common.services.doc_lifecycle.hooks import add_site_to_new_doc_family
 from backend.common.services.document import (
     SiteRetrievedDocument,
     get_site_docs,
@@ -284,7 +283,6 @@ async def inherit_prev_doc_fields(
 
     if prev_doc.document_family_id:
         doc.document_family_id = prev_doc.document_family_id
-        await add_site_to_new_doc_family(doc.document_family_id, doc)
 
     loc = next(loc for loc in doc.locations if site_id == loc.site_id)
     prev_loc = next((loc for loc in prev_doc.locations if site_id == loc.site_id), None)

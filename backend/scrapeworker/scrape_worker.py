@@ -573,8 +573,11 @@ class ScrapeWorker:
 
         doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
         async for doc in DocDocument.find({"_id": {"$in": doc_doc_ids}}):
+            document_family_change = doc.document_family_id if doc.document_family_id else False
             change_info = ChangeInfo(
-                translation_change=True, lineage_change=doc.previous_doc_doc_id
+                translation_change=True,
+                lineage_change=doc.previous_doc_doc_id,
+                document_family_change=document_family_change,
             )
             await doc_document_save_hook(doc, change_info)
 
