@@ -1,6 +1,6 @@
 from ast import List
 from datetime import datetime, timezone
-from typing import Literal, Type, Union
+from typing import Type, Union
 from xmlrpc.client import Boolean
 
 import typer
@@ -53,7 +53,7 @@ class CollectionService:
         self.site: Site = site
         self.current_user: User = current_user
         self.logger: Logger = logger
-        self.found_docs_total: int = 0
+        self.found_docs_total = 0
         self.last_queued: SiteScrapeTask | None = None
 
     async def has_queued(self) -> SiteScrapeTask | Boolean:
@@ -91,10 +91,10 @@ class CollectionService:
         """Create site scrape task using site config."""
         match self.site.collection_method:
             case CollectionMethod.Automated:
-                last_run_status: Literal[TaskStatus.QUEUED] = TaskStatus.QUEUED
+                last_run_status = TaskStatus.QUEUED
                 response: CollectionResponse = await self.start_automated_task()
             case CollectionMethod.Manual:
-                last_run_status: Literal[TaskStatus.IN_PROGRESS] = TaskStatus.IN_PROGRESS
+                last_run_status = TaskStatus.IN_PROGRESS
                 response: CollectionResponse = await self.start_manual_task()
             case _:
                 response = CollectionResponse()
@@ -298,7 +298,7 @@ class CollectionService:
             {"_id": doc.id},
         )
         if retr_doc.locations:
-            site_loc_index: int = find_site_index(retr_doc, self.site.id)
+            site_loc_index = find_site_index(retr_doc, self.site.id)
             retr_doc.locations[site_loc_index].first_collected_date = now
             # Set min first_collected_date to handle case where new_doc or new_version,
             # but doc is from other site. Setting first_collected_date to now would
@@ -311,7 +311,7 @@ class CollectionService:
             {"retrieved_document_id": retr_doc.id},
         )
         if doc_doc.locations:
-            site_loc_index: int = find_site_index(doc_doc, self.site.id)
+            site_loc_index = find_site_index(doc_doc, self.site.id)
             doc_doc.locations[site_loc_index].first_collected_date = now
             doc_doc.first_collected_date = min(
                 [loc.first_collected_date for loc in doc_doc.locations]
@@ -329,7 +329,7 @@ class CollectionService:
         )
         retr_doc.last_collected_date = now
         if retr_doc.locations:
-            site_loc_index: int = find_site_index(retr_doc, self.site.id)
+            site_loc_index = find_site_index(retr_doc, self.site.id)
             retr_doc.locations[site_loc_index].last_collected_date = now
         await retr_doc.save()
         doc_doc: DocDocument | None = await DocDocument.find_one(
@@ -337,7 +337,7 @@ class CollectionService:
         )
         doc_doc.last_collected_date = now
         if doc_doc.locations:
-            site_loc_index: int = find_site_index(doc_doc, self.site.id)
+            site_loc_index = find_site_index(doc_doc, self.site.id)
             doc_doc.locations[site_loc_index].last_collected_date = now
         await doc_doc.save()
         return CollectionResponse(success=True)
