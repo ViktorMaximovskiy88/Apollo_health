@@ -25,19 +25,22 @@ from backend.common.models.payer_backbone import (
     PayerBackboneUnionDoc,
     PayerParent,
     Plan,
+    PlanBenefit,
     PlanType,
 )
 
 
 @dataclass
 class Delivery:
-    plans: dict = field(default_factory=dict)
-    formularies: dict = field(default_factory=dict)
-    pump: dict = field(default_factory=dict)
-    mump: dict = field(default_factory=dict)
-    parents: dict = field(default_factory=dict)
-    mcos: dict = field(default_factory=dict)
-    bms: dict = field(default_factory=dict)
+    plans: dict[int | None, Plan] = field(default_factory=dict)
+    formularies: dict[int | None, Formulary] = field(default_factory=dict)
+    pump: dict[int | None, UMP] = field(default_factory=dict)
+    mump: dict[int | None, UMP] = field(default_factory=dict)
+    parents: dict[int | None, PayerParent] = field(default_factory=dict)
+    mcos: dict[int | None, MCO] = field(default_factory=dict)
+    bms: dict[int | None, BenefitManager] = field(default_factory=dict)
+    p_plan_benefits: dict[int | None, PlanBenefit] = field(default_factory=dict)
+    m_plan_benefits: dict[int | None, PlanBenefit] = field(default_factory=dict)
 
 
 def convert_plan_type(type: str | None):
@@ -120,6 +123,57 @@ def convert_bm_type(type: str | None):
     raise Exception(f"BM Type: {type}")
 
 
+def convert_plan_to_plan_benefits(
+    plan: Plan,
+):
+    pass
+
+
+def create_plan_benefits(delivery: Delivery):
+    for plan in delivery.plans.values():
+        formulary = delivery.formularies[plan.l_formulary_id]
+        if formulary.l_pharmacy_ump_id and plan.l_pharmacy_controller_id:
+            delivery.p_plan_benefits.setdefault(
+                plan.l_id,
+                PlanBenefit(
+                    start_date=plan.start_date,
+                    end_date=plan.end_date,
+                    l_plan_id=plan.l_id,
+                    l_ump_id=formulary.l_pharmacy_ump_id,
+                    l_controller_id=plan.l_pharmacy_controller_id,
+                    lives=plan.pharmacy_lives,
+                    states=plan.pharmacy_states,
+                    benefit=Benefit.Pharmacy,
+                    l_formulary_id=plan.l_formulary_id,
+                    l_mco_id=plan.l_mco_id,
+                    l_parent_id=plan.l_parent_id,
+                    l_bm_id=plan.l_bm_id,
+                    type=plan.type,
+                    channel=plan.channel,
+                    is_national=plan.is_national,
+                ),
+            )
+        if formulary.l_medical_ump_id and plan.l_medical_controller_id:
+            delivery.m_plan_benefits.setdefault(
+                plan.l_id,
+                PlanBenefit(
+                    l_plan_id=plan.l_id,
+                    l_ump_id=formulary.l_medical_ump_id,
+                    l_controller_id=plan.l_medical_controller_id,
+                    lives=plan.medical_lives,
+                    states=plan.medical_states,
+                    benefit=Benefit.Medical,
+                    l_formulary_id=plan.l_formulary_id,
+                    l_mco_id=plan.l_mco_id,
+                    l_parent_id=plan.l_parent_id,
+                    l_bm_id=plan.l_bm_id,
+                    type=plan.type,
+                    channel=plan.channel,
+                    is_national=plan.is_national,
+                ),
+            )
+
+
 def process_line(h, line, start_date, delivery: Delivery):
     plan_id = line[h["Plan ID"]] or ""
     plan_name = line[h["Plan Name"]] or ""
@@ -132,6 +186,8 @@ def process_line(h, line, start_date, delivery: Delivery):
     pharmacy_par_group_name = line[h["Pharmacy PAR Group Name"]] or ""
     medical_par_group_id = line[h["Medical PAR Group ID"]] or ""
     medical_par_group_name = line[h["Medical PAR Group Name"]] or ""
+    pharmacy_controller_id = line[h["Pharmacy Controller ID"]] or ""
+    medical_controller_id = line[h["Medical Controller ID"]] or ""
     parent_id = line[h["Parent ID"]] or ""
     parent_name = line[h["Parent Name"]] or ""
     mco_id = line[h["MCO ID"]] or ""
@@ -168,6 +224,17 @@ def process_line(h, line, start_date, delivery: Delivery):
         pharmacy_par_group_id = int(pharmacy_par_group_id)
     except ValueError:
         pharmacy_par_group_id = None
+    try:
+        medical_controller_id = int(medical_controller_id)
+    except ValueError:
+        medical_controller_id = None
+    try:
+        pharmacy_controller_id = int(pharmacy_controller_id)
+    except ValueError:
+        pharmacy_controller_id = None
+
+    pharmacy_lives = int(pharmacy_lives) if pharmacy_lives else 0
+    medical_lives = int(medical_lives) if medical_lives else 0
 
     delivery.plans.setdefault(
         plan_id,
@@ -178,16 +245,19 @@ def process_line(h, line, start_date, delivery: Delivery):
             l_parent_id=parent_id,
             l_mco_id=mco_id,
             l_bm_id=pbm_id,
+            l_pharmacy_controller_id=pharmacy_controller_id,
+            l_medical_controller_id=medical_controller_id,
             name=plan_name,
             type=convert_plan_type(plan_type),
             is_national=bool(is_national_plan),
             channel=convert_channel(channel),
-            pharmacy_lives=int(pharmacy_lives) if pharmacy_lives else 0,
-            medical_lives=int(medical_lives) if medical_lives else 0,
-            pharmacy_states=pharmacy_states.split(","),
-            medical_states=medical_states.split(","),
+            pharmacy_lives=pharmacy_lives,
+            medical_lives=medical_lives,
+            pharmacy_states=pharmacy_states.split(",") if pharmacy_states else [],
+            medical_states=medical_states.split(",") if medical_states else [],
         ),
     )
+
     if formulary_id:
         delivery.formularies.setdefault(
             formulary_id,
@@ -205,7 +275,7 @@ def process_line(h, line, start_date, delivery: Delivery):
             UMP(
                 start_date=start_date,
                 l_id=int(medical_par_group_id),
-                name=medical_par_group_name,
+                name=f"{medical_par_group_name} (Medical)",
                 benefit=Benefit.Medical,
             ),
         )
@@ -215,7 +285,7 @@ def process_line(h, line, start_date, delivery: Delivery):
             UMP(
                 start_date=start_date,
                 l_id=int(pharmacy_par_group_id),
-                name=pharmacy_par_group_name,
+                name=f"{pharmacy_par_group_name} (Pharmacy)",
                 benefit=Benefit.Pharmacy,
             ),
         )
@@ -273,6 +343,8 @@ async def process_backbone(filepath: str, previous_delivery: Delivery | None):
 
         process_line(h, line, start_date, delivery)
 
+    create_plan_benefits(delivery)
+
     if not previous_delivery:
         return delivery
 
@@ -308,6 +380,7 @@ async def process_backbone(filepath: str, previous_delivery: Delivery | None):
 
 
 async def load_payer_backbone():
+    # await PayerBackboneUnionDoc.find_all().delete_many()
     if await PayerBackboneUnionDoc.count():
         return
 
