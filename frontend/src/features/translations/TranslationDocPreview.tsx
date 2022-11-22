@@ -230,6 +230,12 @@ export function SampleTranslationTable(props: { docId: string; form: FormInstanc
           render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
           minWidth: 70,
         });
+      } else if (col.field === 'PN') {
+        cols.push({
+          header: 'PN',
+          name: 'pn',
+          minWidth: 70,
+        });
       }
       return cols;
     });
@@ -242,6 +248,7 @@ export function SampleTranslationTable(props: { docId: string; form: FormInstanc
       'st',
       'stn',
       'pa',
+      'pn',
       'pan',
       'cpa',
       'cpan',
