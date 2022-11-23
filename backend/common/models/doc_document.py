@@ -12,6 +12,7 @@ from backend.common.models.document_mixins import DocumentMixins
 from backend.common.models.shared import (
     DocDocumentLocation,
     DocDocumentLocationView,
+    DocTypeMatch,
     IndicationTag,
     LockableDocument,
     TaskLock,
@@ -45,6 +46,7 @@ class BaseDocDocument(BaseModel):
     # Document Type
     document_type: Indexed(str) | None = None  # type: ignore
     doc_type_confidence: float | None = None
+    doc_type_match: DocTypeMatch | None
     internal_document: bool | None = None
 
     document_family_id: PydanticObjectId | None = None

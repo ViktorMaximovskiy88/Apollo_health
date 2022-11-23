@@ -42,7 +42,7 @@ class ReTagger:
         link_text = normalize_string(location.link_text, url=False)
         url = normalize_string(location.url)
         doc_text = await self.get_text(doc, rdoc, url, link_text)
-        _doc_type, _confidence, doc_vectors = guess_doc_type(
+        _doc_type, _confidence, doc_vectors, doc_type_match = guess_doc_type(
             doc_text, location.link_text, location.url, doc.name
         )
         tokens = tokenize_string(doc_text)
@@ -68,6 +68,7 @@ class ReTagger:
                 "locations.$.url_indication_tags": [i.dict() for i in url_indication_tags],
                 "locations.$.link_indication_tags": [i.dict() for i in link_indication_tags],
                 "token_count": len(tokens),
+                "doc_type_match": doc_type_match,
             }
         }
 
