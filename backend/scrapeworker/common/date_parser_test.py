@@ -322,6 +322,13 @@ def test_default_effective_date():
     assert len(parser.unclassified_dates) == 2
     assert parser.effective_date.date == datetime(2022, 1, 10)
 
+    text = "Override with quarter label text 3/30/2022"
+    label_texts = ["BSP_2022_CMC_Formulary_Changes_Q3"]
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text, label_texts)
+    assert len(parser.unclassified_dates) == 2
+    assert parser.effective_date.date == datetime(2022, 7, 1)
+
     text = "Just a year 2022"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)

@@ -115,13 +115,11 @@ class DateParser:
         if year_match:
             return year_match.group()
 
-    def check_quarter_text(self, text: str):
-        """Find 1st Quarter 20XX dates or similar"""
+    def get_quarter_marker(self, text: str):
         for i, rgx in enumerate(QTR_FMTS):
             match = rgx.finditer(text)
             for m in match:
                 quarter: str | None = None
-                year: str | None = None
                 quarter_text = m.group()
                 if i == 0:
                     # we've got the quarter
@@ -136,26 +134,47 @@ class DateParser:
                     end = m.end() + 5
                     search_text = text[m.end() : end]  # noqa: E203
                     quarter = self.get_quarter_num(search_text)
-                if quarter:
-                    # search for year after
-                    end = m.end() + 8
-                    search_text = text[m.end() : end]  # noqa: E203
+                yield quarter, m
+
+    def construct_quarter_date(self, year: str, quarter: str):
+        year_num, month_num, day_num = int(year), (int(quarter) * 3) - 2, 1
+        if self.valid_range(month=month_num, year=year_num, day=day_num):
+            date_text = f"{year_num}-{month_num}-{day_num}"
+            date = parser.parse(date_text, ignoretz=True)
+            return date
+
+    def check_quarter_text(self, text: str):
+        """Find 1st Quarter 20XX dates or similar"""
+        for quarter, m in self.get_quarter_marker(text):
+            year: str | None = None
+            if quarter:
+                # search for year after
+                end = m.end() + 8
+                search_text = text[m.end() : end]  # noqa: E203
+                year = self.get_year_num(search_text)
+                if not year:
+                    # search for year before
+                    start = 0 if m.start() - 8 < 0 else m.start() - 8
+                    search_text = text[start : m.start()]  # noqa: E203
                     year = self.get_year_num(search_text)
-                    if not year:
-                        # search for year before
-                        start = 0 if m.start() - 8 < 0 else m.start() - 8
-                        search_text = text[start : m.start()]  # noqa: E203
-                        year = self.get_year_num(search_text)
-                if year and quarter:
-                    year_num, month_num, day_num = int(year), (int(quarter) * 3) - 2, 1
-                    if self.valid_range(month=month_num, year=year_num, day=day_num):
-                        date_text = f"{year_num}-{month_num}-{day_num}"
-                        date = parser.parse(date_text, ignoretz=True)
-                        return DateMatch(date, m)
+            if year and quarter:
+                date = self.construct_quarter_date(year, quarter)
+                if not date:
+                    continue
+                return DateMatch(date, m)
 
     def get_doc_label_dates(self, label_texts: list[str]):
         best_match: DateMatch | None = None
         for text in label_texts:
+            for quarter, m in self.get_quarter_marker(text):
+                year = self.get_year_num(text)
+                if not quarter or not year:
+                    continue
+                date = self.construct_quarter_date(year, quarter)
+                if not date:
+                    continue
+                self.unclassified_dates.add(date)
+                return DateMatch(date, m)
             for m in self.get_dates(text, rgx_excludes=self.NON_LABEL_RGX):
                 self.unclassified_dates.add(m.date)
                 if self.is_best_effective(m, best_match):
