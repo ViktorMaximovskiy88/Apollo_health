@@ -137,9 +137,12 @@ def get_worker_arns() -> set[str]:
     arns = []
     token = None
     while True:
-        response = ecs.list_tasks(
-            cluster=cluster_arn(), serviceName="sourcehub-scrapeworker", nextToken=token
-        )
+        if token:
+            response = ecs.list_tasks(
+                cluster=cluster_arn(), serviceName="sourcehub-scrapeworker", nextToken=token
+            )
+        else:
+            response = ecs.list_tasks(cluster=cluster_arn(), serviceName="sourcehub-scrapeworker")
         arns += response["taskArns"]
         token = response["nextToken"]
         if not token:
