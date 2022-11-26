@@ -6,7 +6,6 @@ newrelic.agent.initialize(Path(__file__).parent / "newrelic.ini")
 
 import asyncio
 import logging
-import math
 import signal
 import sys
 from datetime import datetime, timedelta, timezone
@@ -14,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 import boto3
 import typer
 from beanie import PydanticObjectId
+from beanie.odm.queries.find import FindMany
 
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 
@@ -132,34 +132,45 @@ def scrapeworker_service_arn() -> str | None:
     return config.get("SCRAPEWORKER_SERVICE_ARN")
 
 
-def determine_current_instance_count():
+def get_worker_arns() -> set[str]:
     ecs = boto3.client("ecs")
-    services = ecs.describe_services(cluster=cluster_arn(), services=[scrapeworker_service_arn()])
-    return services["services"][0]["desiredCount"]
+    arns = []
+    token = None
+    while True:
+        response = ecs.list_tasks(
+            cluster=cluster_arn(), serviceName="sourcehub-scrapeworker", nextToken=token
+        )
+        arns += response["taskArns"]
+        token = response["nextToken"]
+        if not token:
+            return set(arns)
 
 
-def update_cluster_size(size: int | None):
-    if size is None:
-        return
-
-    print("Settings cluster size to", size)
-
-    ecs_client = boto3.client("ecs")
-    response = ecs_client.update_service(
-        cluster=cluster_arn(),
-        service=scrapeworker_service_arn(),
-        desiredCount=size,
+def tasks_of_status(*statuses: TaskStatus) -> FindMany[SiteScrapeTask]:
+    return SiteScrapeTask.find(
+        {
+            "status": {"$in": list(statuses)},
+            "collection_method": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
+        },
     )
-    print(response)
 
 
-def get_new_cluster_size(queue_size, active_workers, tasks_per_worker):
-    workers_needed = math.ceil(queue_size / tasks_per_worker)
+async def identify_idle_workers(worker_arns: set[str]) -> list[str]:
+    active_worker_arns = set()
+    active_tasks = tasks_of_status(TaskStatus.IN_PROGRESS, TaskStatus.CANCELING)
+    async for active_task in active_tasks:
+        if active_task.task_arn in worker_arns:
+            active_worker_arns.add(active_task.task_arn)
+    return list(worker_arns - active_worker_arns)
 
-    if workers_needed > 100:
-        workers_needed = 100
 
-    return max(workers_needed, 2)  # never scale to zero
+async def get_surplus_worker_arns(worker_arns: set[str], workers_needed: int):
+    worker_surplus = len(worker_arns) - workers_needed
+    if worker_surplus <= 0:
+        return []
+
+    idle_workers = await identify_idle_workers(worker_arns)
+    return idle_workers[:worker_surplus]
 
 
 async def start_scaler():
@@ -168,16 +179,23 @@ async def start_scaler():
         return
 
     while True:
-        queue_size = await SiteScrapeTask.find(
-            {
-                "status": {"$in": [TaskStatus.IN_PROGRESS, TaskStatus.QUEUED]},
-                "collection_method": {"$ne": CollectionMethod.Manual},  # Isn't set to manual
-            },
-        ).count()
-        active_workers = determine_current_instance_count()
-        tasks_per_worker = 1  # some setting
-        new_cluster_size = get_new_cluster_size(queue_size, active_workers, tasks_per_worker)
-        update_cluster_size(new_cluster_size)
+        workers_needed = (
+            await tasks_of_status(
+                TaskStatus.QUEUED, TaskStatus.IN_PROGRESS, TaskStatus.CANCELING
+            ).count()
+            + 2
+        )
+        workers_needed = min(workers_needed, 100)
+
+        ecs = boto3.client("ecs")
+        worker_arns = get_worker_arns()
+        for worker_arn in await get_surplus_worker_arns(worker_arns, workers_needed):
+            ecs.stop_task(cluster=cluster_arn(), task=worker_arn)
+
+        ecs.update_cluster(
+            cluster=cluster_arn(), service=scrapeworker_service_arn(), desiredCount=workers_needed
+        )
+
         await asyncio.sleep(30)
 
 
@@ -214,6 +232,14 @@ async def get_hung_tasks(now: datetime):
         yield task
 
 
+def stop_task_worker(task: SiteScrapeTask):
+    if not task.task_arn:  # nothing to stop
+        return
+
+    ecs = boto3.client("ecs")
+    ecs.stop_task(cluster=cluster_arn(), task=task.task_arn)
+
+
 async def start_hung_task_checker():
     """
     Retry tasks that are in progress but are no longer sending a heartbeat
@@ -228,6 +254,8 @@ async def start_hung_task_checker():
                 await Site.find_one(Site.id == task.site_id).update(
                     {"$set": {"last_run_status": TaskStatus.CANCELED}}
                 )
+            # Always kill the worker because either the worker is already dead or in a bad state
+            stop_task_worker(task)
 
         await asyncio.sleep(60)
 
@@ -257,6 +285,9 @@ async def start_inactive_task_checker():
             await Site.find_one(Site.id == task.site_id).update(
                 {"$set": {"last_run_status": TaskStatus.CANCELED}}
             )
+            # Always kill the worker because it doesn't know we have killed the task
+            # so it won't pick up new tasks anyway, easiest to kill and boot a new worker
+            stop_task_worker(task)
 
         await asyncio.sleep(60)
 
