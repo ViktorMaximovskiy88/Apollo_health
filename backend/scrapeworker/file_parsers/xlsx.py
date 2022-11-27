@@ -1,5 +1,6 @@
 import pandas as pd
 from openpyxl import load_workbook
+
 from backend.scrapeworker.file_parsers.base import FileParser
 
 
@@ -16,8 +17,9 @@ class XlsxParser(FileParser):
         return text
 
     async def get_info(self) -> dict[str, str]:
-        workbook = load_workbook(self.file_path)
-        props = vars(workbook.properties)  # type: ignore
+        with open(self.file_path, "rb") as f:
+            workbook = load_workbook(f)
+            props = vars(workbook.properties)  # type: ignore
         return props
 
     def get_title(self, metadata) -> str | None:

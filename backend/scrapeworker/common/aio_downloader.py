@@ -189,7 +189,7 @@ class AioDownloader:
             response: ClientResponse | None = None
             proxy_url = None
             filedata_tuple = (None, None)
-            with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
+            with tempfile.NamedTemporaryFile() as temp:
                 async for attempt, proxy in self.proxy_with_backoff(proxies):
                     with attempt:
                         self.log.info(f"Attempting download {url}")
