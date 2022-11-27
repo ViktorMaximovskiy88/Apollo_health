@@ -195,7 +195,7 @@ async def start_scaler():
         for worker_arn in await get_surplus_worker_arns(worker_arns, workers_needed):
             ecs.stop_task(cluster=cluster_arn(), task=worker_arn)
 
-        ecs.update_cluster(
+        ecs.update_service(
             cluster=cluster_arn(), service=scrapeworker_service_arn(), desiredCount=workers_needed
         )
 
