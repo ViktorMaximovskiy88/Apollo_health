@@ -203,7 +203,7 @@ async def start_scaler():
 
 
 async def requeue_lost_task(task: SiteScrapeTask, now):
-    message = f"Requeuing task {task.id} from worker {task.worker_id}, likely lost to killed worker"
+    message = f"Requeuing task {task.id} from worker {task.task_arn}, likely lost to killed worker"
     typer.secho(message, fg=typer.colors.RED)
     new_task = SiteScrapeTask(
         id=task.id,
