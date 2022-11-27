@@ -64,6 +64,14 @@ resource "aws_iam_role" "sourcehub" {
           ]
         },
         {
+          Action = [
+            "ecs:ListTasks",
+            "ecs:StopTask"
+          ]
+          Effect = "Allow"
+          Resource = "*"
+        },
+        {
           Effect = "Allow"
           Action = [
             "sqs:SendMessage",
