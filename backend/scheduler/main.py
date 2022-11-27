@@ -240,8 +240,11 @@ def stop_task_worker(task: SiteScrapeTask):
         return
 
     ecs = boto3.client("ecs")
-    ecs.stop_task(cluster=cluster_arn(), task=task.task_arn)
-
+    # Ignore errors when task does not exist or is already stopped
+    try:
+        ecs.stop_task(task=task.task_arn)
+    except Exception:
+        pass
 
 async def start_hung_task_checker():
     """
