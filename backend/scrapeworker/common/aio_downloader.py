@@ -186,45 +186,50 @@ class AioDownloader:
                 )
                 yield download.file_path, download.file_hash
         else:
-            async for attempt, proxy in self.proxy_with_backoff(proxies):
-                with attempt:
-                    self.log.info(f"Attempting download {url}")
-                    response: ClientResponse
-                    proxy_url = proxy.proxy if proxy else None
-                    try:
-                        response = await self.send_request(download, proxy)
-                        download.response.from_aio_response(response)
-                        self.log.info(f"Attempting download {url} response")
-                    except ClientHttpProxyError as proxy_error:
-                        self.log.error(f"Client Proxy Error AIO {url}")
-                        # we catch so we can 'log' on the task and reraise for retry
-                        download.invalid_responses.append(
-                            InvalidResponse(
-                                proxy_url=proxy_url,
-                                status=proxy_error.status,
-                                message=proxy_error.message,
+            response: ClientResponse | None = None
+            proxy_url = None
+            filedata_tuple = (None, None)
+            with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
+                async for attempt, proxy in self.proxy_with_backoff(proxies):
+                    with attempt:
+                        self.log.info(f"Attempting download {url}")
+                        proxy_url = proxy.proxy if proxy else None
+                        try:
+                            response = await self.send_request(download, proxy)
+                            download.response.from_aio_response(response)
+                            self.log.info(f"Attempting download {url} response")
+                        except ClientHttpProxyError as proxy_error:
+                            self.log.error(f"Client Proxy Error AIO {url}")
+                            # we catch so we can 'log' on the task and reraise for retry
+                            download.invalid_responses.append(
+                                InvalidResponse(
+                                    proxy_url=proxy_url,
+                                    status=proxy_error.status,
+                                    message=proxy_error.message,
+                                )
                             )
-                        )
-                        raise proxy_error
+                            raise proxy_error
 
-                self.log.info(f"Before link log {url} response")
+                        self.log.info(f"Before link log {url} response")
 
-                if not response.ok:
-                    invalid_response = InvalidResponse(
-                        proxy_url=proxy_url, **download.response.dict()
-                    )
-                    download.invalid_responses.append(invalid_response)
-                    self.log.error(invalid_response)
-                    # if its 404 skip... maybe others we retry?
-                    yield (None, None)
-                else:
-                    download.valid_response = ValidResponse(
-                        proxy_url=proxy_url, **download.response.dict()
-                    )
+                        if not response or not response.ok:
+                            invalid_response = InvalidResponse(
+                                proxy_url=proxy_url, **download.response.dict()
+                            )
+                            download.invalid_responses.append(invalid_response)
+                            self.log.error(invalid_response)
+                            # if its 404 skip... maybe others we retry?
+                            yield (None, None)
+                            return
+                        else:
+                            download.valid_response = ValidResponse(
+                                proxy_url=proxy_url, **download.response.dict()
+                            )
 
-                    # We only need this now due to the xlsx lib needing an ext (derp)
-                    # TODO see if we can unhave this; the excel lib is dumb
-                    download.guess_extension()
+                            # We only need this now due to the xlsx lib needing an ext (derp)
+                            # TODO see if we can unhave this; the excel lib is dumb
+                            download.guess_extension()
 
-                    with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
-                        yield await self.write_response_to_file(download, response, temp)
+                        filedata_tuple = await self.write_response_to_file(download, response, temp)
+
+                yield filedata_tuple
