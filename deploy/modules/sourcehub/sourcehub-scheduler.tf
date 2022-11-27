@@ -172,17 +172,12 @@ resource "aws_iam_role" "scheduler-task" {
           ]
         },
         {
-          "Action": [
+          Action = [
             "ecs:ListTasks",
-            "ecs:StopTask",
-          ],
-          "Effect": "Allow",
-          "Resource": "*",
-          "Condition": {
-            "ArnEquals": {
-              "ecs:cluster": data.aws_ecs_cluster.ecs-cluster.arn
-            }
-          }
+            "ecs:StopTask"
+          ]
+          Effect = "Allow"
+          Resource = "*"
         }
       ]
     })
