@@ -47,7 +47,7 @@ class PdfParse(FileParser):
         """Supplement previous parse with PDF parsed content"""
 
         new_content = await self.parse()
-        if "therapy_tags" in new_content.keys():
+        if "therapy_tags" in new_content:
             prev_content["therapy_tags"] = new_content["therapy_tags"]
         if "indication_tags" in new_content.keys():
             prev_content["indication_tags"] = new_content["indication_tags"]
