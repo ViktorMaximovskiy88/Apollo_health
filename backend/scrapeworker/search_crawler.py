@@ -33,11 +33,10 @@ class SearchableCrawler:
 
     async def __codes(self):
         search_codes_list = []
-        if self.config.searchable_type:
-            for search_code in self.config.searchable_type:
-                search_codes = await SearchCodeSet.find_one({"type": search_code})
-                if search_codes:
-                    search_codes_list += list(search_codes.codes)
+        for search_code in self.config.searchable_type:
+            search_codes = await SearchCodeSet.find_one({"type": search_code})
+            if search_codes:
+                search_codes_list += list(search_codes.codes)
 
         if search_codes_list:
             return search_codes_list
