@@ -383,8 +383,6 @@ export function DocDocumentsDataTable() {
   const { setSiteIds, siteNamesById } = useGetSiteNamesById();
   const { setPayerFamilyIds, payerFamilyNamesById } = useGetPayerFamilyNamesById();
 
-  const [searchParams] = useSearchParams();
-
   const loadData = useCallback(
     async (tableInfo: any) => {
       const { data } = await getDocDocumentsFn(tableInfo);
@@ -396,7 +394,7 @@ export function DocDocumentsDataTable() {
       }
       return { data: docDocuments, count };
     },
-    [getDocDocumentsFn, searchParams, setSiteIds, watermark] // eslint-disable-line react-hooks/exhaustive-deps
+    [getDocDocumentsFn, setSiteIds, watermark] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const filterProps = useDataTableFilter(docDocumentTableState, setDocDocumentTableFilter);
