@@ -41,10 +41,6 @@ export function SearchTokens() {
     </div>
   );
 
-  const [form] = Form.useForm();
-
-  console.log(form.getFieldsValue(['scrape_method_configuration']));
-
   return (
     <div className={groupDivClass}>
       <Form.Item
