@@ -85,7 +85,6 @@ class SearchableCrawler:
     async def run_searchable(self, page: Page, playbook_context: PlaybookContext):
         base_url = page.url
         codes = await self.__codes()
-        print(codes)
         for code in codes:
             nav_state = NavState()
             try:
