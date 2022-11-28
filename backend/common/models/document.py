@@ -98,6 +98,7 @@ class UpdateRetrievedDocument(BaseModel, DocumentMixins):
     name: str | None = None
     document_type: str | None = None
     doc_type_confidence: float | None = None
+    doc_type_match: DocTypeMatch | None
     metadata: dict | None = None
 
     lang_code: LangCode | None = None
