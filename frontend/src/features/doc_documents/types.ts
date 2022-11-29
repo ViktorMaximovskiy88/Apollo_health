@@ -46,7 +46,7 @@ export interface TaskLock {
 
 export interface CompareRequest {
   currentDocDocId: string;
-  previousDocDocId: string;
+  previousDocDocId: string | undefined | null;
 }
 
 export interface CompareResponse extends BaseDocument {

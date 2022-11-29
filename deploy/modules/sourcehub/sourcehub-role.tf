@@ -82,8 +82,7 @@ resource "aws_iam_role" "sourcehub" {
             "sqs:ChangeMessageVisibility"
           ]
           Resource = [
-            aws_sqs_queue.lineageworker.arn,
-            aws_sqs_queue.pdfdiffworker.arn,
+            aws_sqs_queue.taskworker.arn,
           ]
         }
       ]

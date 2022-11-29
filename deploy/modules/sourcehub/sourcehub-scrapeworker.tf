@@ -68,16 +68,12 @@ resource "aws_ecs_task_definition" "scrapeworker" {
           value = local.event_source
         },
         {
-          name = "NEW_RELIC_APP_NAME"
+          name  = "NEW_RELIC_APP_NAME"
           value = "${local.new_relic_app_name}-ScrapeWorker"
         },
         {
-          name = "LINEAGE_WORKER_QUEUE_URL"
-          value = aws_sqs_queue.lineageworker.url
-        },
-        {
-          name = "PDFDIFF_WORKER_QUEUE_URL"
-          value = aws_sqs_queue.pdfdiffworker.url
+          name  = "TASK_WORKER_QUEUE_URL"
+          value = aws_sqs_queue.taskworker.url
         }
       ]
       essential = true
@@ -109,7 +105,7 @@ resource "aws_ecs_task_definition" "scrapeworker" {
 
       ulimits = [
         {
-          name = "nofile"
+          name      = "nofile"
           softLimit = 65535
           hardLimit = 65535
         }

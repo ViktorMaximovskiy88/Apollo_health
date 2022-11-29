@@ -8,10 +8,10 @@ import { useEffect, useRef, useState } from 'react';
  * @param future
  * @returns
  */
-const useInterval = (interval: number, future?: Promise<any>) => {
+const useInterval = (interval: number, active: boolean = true, future?: Promise<any>) => {
   useEffect(() => {});
   let timer = useRef<NodeJS.Timeout>();
-  const [isActive, setActive] = useState<boolean>(true);
+  const [isActive, setActive] = useState<boolean>(active);
   const [watermark, setWatermark] = useState<Date>();
 
   function startInterval() {

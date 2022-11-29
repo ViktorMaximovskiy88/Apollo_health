@@ -1,8 +1,9 @@
-import { Button, Input, notification } from 'antd';
+import { Button, Input } from 'antd';
 import { MainLayout } from '../../components';
 import { useParams } from 'react-router-dom';
-import { useGetSiteLineageQuery, useLazyProcessSiteLineageQuery } from './lineageApi';
-import useLineageSlice from './use-lineage-slice';
+import { useGetSiteLineageQuery, useProcessSiteLineageMutation } from './lineageApi';
+import { useLineageSlice } from './lineage-slice';
+import { useTaskWorker } from '../../app/taskSlice';
 import { SiteMenu } from '../sites/SiteMenu';
 import { FileTypeViewer } from '../retrieved_documents/RetrievedDocumentViewer';
 import { debounce } from 'lodash';
@@ -12,19 +13,15 @@ import classNames from 'classnames';
 export function LineagePage() {
   const { siteId } = useParams();
 
-  useGetSiteLineageQuery(siteId, {
-    pollingInterval: 5000,
-  });
+  const [processSiteLineage] = useProcessSiteLineageMutation();
+  const { refetch } = useGetSiteLineageQuery(siteId);
 
-  const [processSiteLineage] = useLazyProcessSiteLineageQuery();
   const { state, actions } = useLineageSlice();
   const { displayItems, domainItems, leftSideDoc, rightSideDoc } = state;
-
-  const openNotification = () => {
-    notification.success({
-      message: 'Processing lineage...',
-    });
-  };
+  const enqueueTask = useTaskWorker(
+    () => processSiteLineage(siteId),
+    () => refetch()
+  );
 
   return (
     <MainLayout
@@ -32,9 +29,8 @@ export function LineagePage() {
       sectionToolbar={
         <>
           <Button
-            onClick={() => {
-              processSiteLineage(siteId);
-              openNotification();
+            onClick={async () => {
+              enqueueTask();
             }}
             className="ml-auto"
           >
@@ -72,7 +68,8 @@ export function LineagePage() {
                       key={item._id}
                       doc={item}
                       isSelected={item._id === rightSideDoc?._id || item._id === leftSideDoc?._id}
-                      {...actions}
+                      setLeftSide={actions.setLeftSide}
+                      setRightSide={actions.setRightSide}
                     />
                   ))}
               </div>

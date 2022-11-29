@@ -1,10 +1,10 @@
-import { Button, Form, notification, Tooltip } from 'antd';
-import { useCallback, useState } from 'react';
+import { Button, Form, Tooltip } from 'antd';
+import { useState } from 'react';
 
 import { CompareDocViewer } from './CompareDocumentViewer';
-import { isErrorWithData } from '../../../common/helpers';
 import { FullScreenModal } from '../../../components/FullScreenModal';
 import { useCreateDiffMutation, useGetDocDocumentQuery } from './../docDocumentApi';
+import { useTaskWorker } from '../../../app/taskSlice';
 
 function CompareModalBody(props: { newFileKey?: string; prevFileKey?: string }) {
   return (
@@ -53,50 +53,33 @@ export function DocCompareToPrevious() {
   const [createDiff, { isLoading, isSuccess }] = useCreateDiffMutation();
 
   const { previous_doc_doc_id: previousDocDocId } = currentDocument ?? {};
-
-  function handleCloseModal() {
-    setModalOpen(false);
-  }
-  const handleCompare = useCallback(async () => {
-    if (!previousDocDocId) throw new Error('DocDocument has no Previous DocDoc Id');
-    try {
-      const diffRes = await createDiff({ currentDocDocId, previousDocDocId }).unwrap();
-      if (diffRes.queued) {
-        notification.success({
-          message: 'Generating Comparison Files',
-          description: 'The comparison files have been queued for creation.',
-        });
-      } else if (diffRes.processing) {
-        notification.info({
-          message: 'Generating Comparison Files',
-          description: 'The comparison files are being created.',
-        });
-      } else if (diffRes.exists && diffRes.new_key && diffRes.prev_key) {
-        setNewKey(diffRes.new_key);
-        setPrevKey(diffRes.prev_key);
-        setModalOpen(true);
-      } else {
-        throw new Error('Invalid Response');
-      }
-    } catch (err) {
-      if (isErrorWithData(err)) {
-        notification.error({
-          message: 'Error Creating Compare File',
-          description: `${err.data.detail}`,
-        });
-      } else {
-        notification.error({
-          message: 'Error Creating Compare File',
-          description: JSON.stringify(err),
-        });
-      }
+  const enqueueTask = useTaskWorker(
+    () =>
+      createDiff({
+        currentDocDocId,
+        previousDocDocId,
+      }),
+    (result: any) => {
+      const { payload } = result;
+      const new_key = `${payload.current_checksum}-${payload.previous_checksum}-new.pdf`;
+      const prev_key = `${payload.current_checksum}-${payload.previous_checksum}-prev.pdf`;
+      setNewKey(new_key);
+      setPrevKey(prev_key);
+      setModalOpen(true);
     }
-  }, [createDiff, currentDocDocId, previousDocDocId]);
+  );
 
   return (
     <div className="flex space-x-8 items-center">
       {previousDocDocId ? (
-        <Button className="mt-1" loading={isLoading} onClick={handleCompare} type="primary">
+        <Button
+          className="mt-1"
+          loading={isLoading}
+          onClick={() => {
+            enqueueTask();
+          }}
+          type="primary"
+        >
           Compare To Previous
         </Button>
       ) : (
@@ -110,7 +93,7 @@ export function DocCompareToPrevious() {
         newFileKey={newKey}
         prevFileKey={prevKey}
         modalOpen={modalOpen}
-        handleCloseModal={handleCloseModal}
+        handleCloseModal={() => setModalOpen(false)}
       />
     </div>
   );
