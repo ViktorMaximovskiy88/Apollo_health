@@ -1,8 +1,13 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
 import { useDocumentFamilyColumns as useColumns } from './useDocumentFamilyColumns';
-import { useDataTableFilter, useDataTableSort, useInterval } from '../../../common/hooks';
-import { useCallback, useState } from 'react';
+import {
+  useDataTableFilter,
+  useDataTableSort,
+  useInterval,
+  useNotifyMutation,
+} from '../../../common/hooks';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GridPaginationToolbar } from '../../../components';
 import {
@@ -13,9 +18,46 @@ import {
   setDocumentFamilyTableSkip,
 } from './documentFamilySlice';
 import { TableInfoType } from '../../../common/types';
-import { useLazyGetDocumentFamiliesQuery } from './documentFamilyApi';
 import { useGetSiteNamesById } from '../DocDocumentsDataTable';
 import { DocumentFamily } from './types';
+import {
+  useDeleteDocumentFamilyMutation,
+  useLazyGetDocumentFamiliesQuery,
+} from './documentFamilyApi';
+
+// prevents excessive rerenders
+const useNotificationArgs = () => {
+  const successArgs = useMemo(
+    () => ({
+      description: 'Document Family Deleted Successfully.',
+    }),
+    []
+  );
+  const errorArgs = useMemo(
+    () => ({
+      description: 'An error occurred while updating the document family.',
+    }),
+    []
+  );
+  return { successArgs, errorArgs };
+};
+
+const useDeleteDocumentFamily = () => {
+  const [deletedDocumentFamily, setDeletedDocumentFamily] = useState('');
+
+  const [deleteDocumentFamily, deleteResult] = useDeleteDocumentFamilyMutation();
+
+  useEffect(() => {
+    if (deleteResult.isSuccess && deleteResult.originalArgs) {
+      setDeletedDocumentFamily(deleteResult.originalArgs._id);
+    }
+  }, [deleteResult, setDeletedDocumentFamily]);
+
+  const { successArgs, errorArgs } = useNotificationArgs();
+  useNotifyMutation(deleteResult, successArgs, errorArgs);
+
+  return { deletedDocumentFamily, deleteDocumentFamily };
+};
 
 const useControlledPagination = ({
   isActive,
@@ -69,12 +111,12 @@ function uniqueSiteIds(items: DocumentFamily[]) {
 export function DocumentFamilyTable() {
   const { isActive, setActive, watermark } = useInterval(10000);
 
-  const [deletedDocumentFamily, setDeletedDocumentFamily] = useState('');
+  const { deletedDocumentFamily, deleteDocumentFamily } = useDeleteDocumentFamily();
 
   const [getDocumentFamiliesFn] = useLazyGetDocumentFamiliesQuery();
   const { setSiteIds, siteNamesById } = useGetSiteNamesById();
 
-  const columns = useColumns(siteNamesById, setDeletedDocumentFamily);
+  const columns = useColumns(siteNamesById, deleteDocumentFamily);
   const loadData = useCallback(
     async (tableInfo: TableInfoType) => {
       const { data } = await getDocumentFamiliesFn({ ...tableInfo });
