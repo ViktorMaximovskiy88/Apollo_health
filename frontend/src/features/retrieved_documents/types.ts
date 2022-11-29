@@ -51,7 +51,7 @@ export const DocumentTypes = [
   { id: 'Fee Schedule', label: 'Fee Schedule', value: 'Fee Schedule' },
   { id: 'Formulary Update', label: 'Formulary Update', value: 'Formulary Update' },
   { id: 'Formulary', label: 'Formulary', value: 'Formulary' },
-  { id: 'Internal Resource', label: 'Internal Resource', value: 'Internal Resource' },
+  { id: 'Internal Reference', label: 'Internal Reference', value: 'Internal Reference' },
   { id: 'LCD', label: 'LCD', value: 'LCD' },
   { id: 'Medical Coverage List', label: 'Medical Coverage List', value: 'Medical Coverage List' },
   { id: 'Member Resources', label: 'Member Resources', value: 'Member Resources' },
