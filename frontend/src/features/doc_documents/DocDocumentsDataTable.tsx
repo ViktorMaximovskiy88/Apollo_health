@@ -29,7 +29,6 @@ import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
 import { useGetSiteQuery, useGetSitesQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
-import { useSearchParams } from 'react-router-dom';
 import {
   useGetPayerFamiliesQuery,
   useGetPayerFamilyQuery,
@@ -213,6 +212,23 @@ const useColumns = (
       },
     },
     {
+      header: 'Payer Families',
+      name: 'locations.payer_family_id',
+      minWidth: 200,
+      filterEditor: RemoteColumnFilter,
+      filterEditorProps: {
+        fetchOptions: payerFamilyOptions,
+        initialOptions: initialPayerFamilyOptions,
+      },
+      defaultFlex: 1,
+      render: ({ data }: { data: { locations: { payer_family_id: string }[] } }) => {
+        return data.locations
+          .filter((s) => payerFamilyNamesById[s.payer_family_id])
+          .map((s) => payerFamilyNamesById[s.payer_family_id])
+          .join(', ');
+      },
+    },
+    {
       header: 'First Collected Date',
       name: 'first_collected_date',
       minWidth: 200,
@@ -265,23 +281,6 @@ const useColumns = (
       },
       render: ({ value: is_current_version }: { value: boolean }) => {
         return <>{is_current_version ? 'True' : 'False'}</>;
-      },
-    },
-    {
-      header: 'Payer Families',
-      name: 'locations.payer_family_id',
-      minWidth: 200,
-      filterEditor: RemoteColumnFilter,
-      filterEditorProps: {
-        fetchOptions: payerFamilyOptions,
-        initialOptions: initialPayerFamilyOptions,
-      },
-      defaultFlex: 1,
-      render: ({ data }: { data: { locations: { payer_family_id: string }[] } }) => {
-        return data.locations
-          .filter((s) => payerFamilyNamesById[s.payer_family_id])
-          .map((s) => payerFamilyNamesById[s.payer_family_id])
-          .join(', ');
       },
     },
     {

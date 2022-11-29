@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
 import { PayerFamily } from './types';
 
-import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
-import { DocumentTypes } from '../retrieved_documents/types';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './payerFamilyApi';
 import { TypeColumn, TypeFilterValue } from '@inovua/reactdatagrid-community/types';
@@ -23,16 +21,6 @@ export const createColumns = (dispatch: any, docDocumentFilters: TypeFilterValue
       minWidth: 200,
       render: ({ data: payerFamily }: { data: PayerFamily }) => {
         return <Link to={`${payerFamily._id}`}>{payerFamily.name}</Link>;
-      },
-    },
-    {
-      header: 'Document Type',
-      name: 'document_type',
-      filterEditor: SelectFilter,
-      minWidth: 200,
-      filterEditorProps: {
-        placeholder: 'All',
-        dataSource: DocumentTypes,
       },
     },
     {
