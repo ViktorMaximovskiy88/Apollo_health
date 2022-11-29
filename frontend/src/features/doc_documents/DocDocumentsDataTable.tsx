@@ -29,6 +29,11 @@ import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
 import { useGetSiteQuery, useGetSitesQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
+import {
+  useGetPayerFamiliesQuery,
+  useGetPayerFamilyQuery,
+  useLazyGetPayerFamiliesQuery,
+} from '../payer-family/payerFamilyApi';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
@@ -68,12 +73,62 @@ function useGetSiteNamesById() {
   return { setSiteIds, siteNamesById };
 }
 
-const useColumns = (siteNamesById: { [key: string]: string }) => {
+function usePayerFamilySelectOptions() {
+  const [getPayerFamilies] = useLazyGetPayerFamiliesQuery();
+  const payerFamilyOptions = useCallback(
+    async (search: string) => {
+      const { data } = await getPayerFamilies({
+        limit: 20,
+        skip: 0,
+        sortInfo: { name: 'name', dir: 1 },
+        filterValue: [{ name: 'name', operator: 'contains', type: 'string', value: search }],
+      });
+      if (!data) return [];
+      return data.data.map((site) => ({ label: site.name, value: site._id }));
+    },
+    [getPayerFamilies]
+  );
+  return { payerFamilyOptions };
+}
+
+function useGetPayerFamilyNamesById() {
+  const [payerFamilyIds, setPayerFamilyIds] = useState<string[]>([]);
+  const { data: payerFamilies } = useGetPayerFamiliesQuery({
+    limit: 1000,
+    skip: 0,
+    sortInfo: { name: 'name', dir: 1 },
+    filterValue: [{ name: '_id', operator: 'eq', type: 'string', value: payerFamilyIds }],
+  });
+  const payerFamilyNamesById = useMemo(() => {
+    const map: { [key: string]: string } = {};
+    payerFamilies?.data.forEach((payerFamily) => {
+      map[payerFamily._id] = payerFamily.name;
+    });
+    return map;
+  }, [payerFamilies]);
+  return { setPayerFamilyIds, payerFamilyNamesById };
+}
+
+const useColumns = (
+  siteNamesById: { [key: string]: string },
+  payerFamilyNamesById: { [key: string]: string }
+) => {
   const { siteOptions } = useSiteSelectOptions();
+  const { payerFamilyOptions } = usePayerFamilySelectOptions();
   const res = useSelector(docDocumentTableState);
+
   const siteFilter = res.filter.find((f) => f.name === 'locations.site_id');
   const { data: site } = useGetSiteQuery(siteFilter?.value, { skip: !siteFilter?.value });
-  const initialOptions = site ? [{ value: site._id, label: site.name }] : [];
+  const initialSiteOptions = site ? [{ value: site._id, label: site.name }] : [];
+
+  const payerFamilyFilter = res.filter.find((f) => f.name === 'locations.payer_family_id');
+  const { data: payerFamily } = useGetPayerFamilyQuery(payerFamilyFilter?.value ?? undefined, {
+    skip: !payerFamilyFilter?.value,
+  });
+  const initialPayerFamilyOptions = payerFamily
+    ? [{ value: payerFamily._id, label: payerFamily.name }]
+    : [];
+
   return [
     {
       header: 'Name',
@@ -100,7 +155,7 @@ const useColumns = (siteNamesById: { [key: string]: string }) => {
       filterEditor: RemoteColumnFilter,
       filterEditorProps: {
         fetchOptions: siteOptions,
-        initialOptions,
+        initialOptions: initialSiteOptions,
       },
       defaultFlex: 1,
       render: ({ data }: { data: { locations: { site_id: string }[] } }) => {
@@ -154,6 +209,23 @@ const useColumns = (siteNamesById: { [key: string]: string }) => {
       },
       render: ({ value: document_type }: { value: string }) => {
         return <>{document_type}</>;
+      },
+    },
+    {
+      header: 'Payer Families',
+      name: 'locations.payer_family_id',
+      minWidth: 200,
+      filterEditor: RemoteColumnFilter,
+      filterEditorProps: {
+        fetchOptions: payerFamilyOptions,
+        initialOptions: initialPayerFamilyOptions,
+      },
+      defaultFlex: 1,
+      render: ({ data }: { data: { locations: { payer_family_id: string }[] } }) => {
+        return data.locations
+          .filter((s) => payerFamilyNamesById[s.payer_family_id])
+          .map((s) => payerFamilyNamesById[s.payer_family_id])
+          .join(', ');
       },
     },
     {
@@ -294,6 +366,13 @@ function uniqueSiteIds(items: DocDocument[]) {
   items.forEach((item) => item.locations.forEach((l) => (usedSiteIds[l.site_id] = true)));
   return Object.keys(usedSiteIds);
 }
+const uniquePayerFamilyIds = (items: DocDocument[]) => {
+  const usedPayerFamilyIds: { [key: string]: boolean } = {};
+  items.forEach((item) =>
+    item.locations.forEach((l) => (usedPayerFamilyIds[l.payer_family_id] = true))
+  );
+  return Object.keys(usedPayerFamilyIds);
+};
 
 export function DocDocumentsDataTable() {
   // Trigger update every 10 seconds by invalidating memoized callback
@@ -301,13 +380,17 @@ export function DocDocumentsDataTable() {
 
   const [getDocDocumentsFn] = useLazyGetDocDocumentsQuery();
   const { setSiteIds, siteNamesById } = useGetSiteNamesById();
+  const { setPayerFamilyIds, payerFamilyNamesById } = useGetPayerFamilyNamesById();
 
   const loadData = useCallback(
     async (tableInfo: any) => {
       const { data } = await getDocDocumentsFn(tableInfo);
       const docDocuments = data?.data ?? [];
       const count = data?.total ?? 0;
-      if (docDocuments) setSiteIds(uniqueSiteIds(docDocuments));
+      if (docDocuments) {
+        setSiteIds(uniqueSiteIds(docDocuments));
+        setPayerFamilyIds(uniquePayerFamilyIds(docDocuments));
+      }
       return { data: docDocuments, count };
     },
     [getDocDocumentsFn, setSiteIds, watermark] // eslint-disable-line react-hooks/exhaustive-deps
@@ -316,7 +399,7 @@ export function DocDocumentsDataTable() {
   const filterProps = useDataTableFilter(docDocumentTableState, setDocDocumentTableFilter);
   const sortProps = useDataTableSort(docDocumentTableState, setDocDocumentTableSort);
   const controlledPagination = useControlledPagination({ isActive, setActive });
-  const columns = useColumns(siteNamesById);
+  const columns = useColumns(siteNamesById, payerFamilyNamesById);
 
   return (
     <ReactDataGrid

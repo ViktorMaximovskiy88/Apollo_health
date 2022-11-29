@@ -41,7 +41,6 @@ async def read_payer_families(
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
-
     query = PayerFamily.find_all()
     return await query_table(query, limit, skip, sorts, filters)
 

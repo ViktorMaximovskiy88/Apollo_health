@@ -7,6 +7,7 @@ export const initialState = {
     filter: [
       { name: 'document_type', operator: 'eq', type: 'select', value: '' },
       { name: 'name', operator: 'contains', type: 'string', value: '' },
+      { name: 'doc_doc_count', operator: 'gte', type: 'number', value: null },
     ],
     pagination: { limit: 50, skip: 0 },
   },
