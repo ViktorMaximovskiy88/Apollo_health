@@ -8,12 +8,14 @@ class PdfParse(FileParser):
     async def get_info(self) -> dict[str, str]:
         process = await asyncio.create_subprocess_exec(
             "pdfinfo",
+            "-enc",
+            "UTF-8",
             self.file_path,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
         )
         pdfinfo_out, _ = await process.communicate()
-        info = pdfinfo_out.decode("iso-8859-1", "ignore").strip()
+        info = pdfinfo_out.decode("utf-8", "ignore").strip()
         metadata = {}
         key = ""
         for line in info.split("\n"):
@@ -34,20 +36,19 @@ class PdfParse(FileParser):
             "-raw",
             "-q",
             "-enc",
-            "Latin1",
+            "UTF-8",
             self.file_path,
             "-",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
         )
         pdftext_out, _ = await process.communicate()
-        return pdftext_out.decode("iso-8859-1", "ignore").strip()
+        return pdftext_out.decode("utf-8", "ignore").strip()
 
     async def update_parsed_content(self, prev_content: dict[str, Any]) -> None:
         """Supplement previous parse with PDF parsed content"""
+
         new_content = await self.parse()
-        prev_content["therapy_tags"] = new_content["therapy_tags"]
-        prev_content["indication_tags"] = new_content["indication_tags"]
         prev_content["effective_date"] = new_content["effective_date"]
         prev_content["end_date"] = new_content["end_date"]
         prev_content["last_updated_date"] = new_content["last_updated_date"]

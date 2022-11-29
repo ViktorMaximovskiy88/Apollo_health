@@ -31,7 +31,7 @@ class RateLimiter:
         if self.wait_between_requests > 1:
             self.wait_between_requests /= 1.5
 
-    async def attempt_with_backoff(self, stop_attempts=16):
+    async def attempt_with_backoff(self, stop_attempts=4):
         """
         Attempts to run the function, if it fails, increase the wait time and try again, max 60 sec.
         If it succeeds, reduce the wait time, min 1 second.

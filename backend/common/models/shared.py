@@ -1,8 +1,9 @@
 from datetime import datetime
+from enum import Enum
 
 from beanie import PydanticObjectId
 
-from backend.common.core.enums import TagUpdateStatus
+from backend.common.core.enums import DocumentType, TagUpdateStatus
 from backend.common.models.base_document import BaseModel
 from backend.common.models.payer_family import PayerFamily
 from backend.scrapeworker.common.utils import unique_by_attr
@@ -103,6 +104,21 @@ class DocDocumentLocation(SiteLocation):
 class DocDocumentLocationView(DocDocumentLocation):
     site_name: str | None = None
     payer_family: PayerFamily | None = None
+
+
+class MatchSource(str, Enum):
+    DocText = "DocText"
+    LinkText = "LinkText"
+    Filename = "Filename"
+    Name = "Name"
+
+
+class DocTypeMatch(BaseModel):
+    document_type: DocumentType
+    match_source: MatchSource
+    confidence: float
+    rule_name: str
+    texts: list[str] = []
 
 
 def get_reference_tags(tags: list[TherapyTag] | list[IndicationTag]):

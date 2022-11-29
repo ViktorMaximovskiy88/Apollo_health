@@ -12,7 +12,10 @@ from backend.app.routes.table_query import (
     get_query_json_list,
     query_table,
 )
-from backend.app.services.payer_backbone.payer_backbone_querier import PayerBackboneQuerier
+from backend.app.services.payer_backbone.payer_backbone_querier import (
+    ControlledLivesResponse,
+    PayerBackboneQuerier,
+)
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.models.payer_backbone import PayerBackbone
@@ -72,7 +75,7 @@ async def read_payer_family(
 
 
 @router.get("/{id}/convert", dependencies=[Security(get_current_user)], response_model=PayerFamily)
-async def document_family_payer_data(
+async def payer_family_payer_data(
     effective_date: str | None = None,
     PayerClass: Type[PayerBackbone] = Depends(payer_class),
     target: PayerFamily = Depends(get_target),
@@ -84,6 +87,20 @@ async def document_family_payer_data(
     target.payer_type = PayerClass.payer_key
     target.payer_ids = [str(id) for id in result_ids]
     return target
+
+
+@router.get(
+    "/{id}/lives-by-controller",
+    dependencies=[Security(get_current_user)],
+    response_model=list[ControlledLivesResponse],
+)
+async def lives_by_controller(
+    effective_date: str | None = None,
+    target: PayerFamily = Depends(get_target),
+):
+    pbbq = PayerBackboneQuerier(target, effective_date)
+    result = await pbbq.lives_by_controller()
+    return result
 
 
 @router.put("/", response_model=PayerFamily, status_code=status.HTTP_201_CREATED)

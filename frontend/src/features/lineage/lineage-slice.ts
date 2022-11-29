@@ -1,5 +1,7 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../app/store';
+import { makeActionDispatch } from '../../common/helpers';
 import { LineageGroup, LineageDoc } from './types';
 import { lineageApi } from './lineageApi';
 import _ from 'lodash';
@@ -10,7 +12,7 @@ interface FilterSettings {
   missingLineage: boolean;
 }
 
-interface InitialState {
+interface LineageState {
   searchTerm: string;
   leftSideDoc: undefined | LineageDoc;
   rightSideDoc: undefined | LineageDoc;
@@ -32,7 +34,7 @@ export const lineageSlice = createSlice({
       multipleLineage: false,
       missingLineage: false,
     },
-  } as InitialState,
+  } as LineageState,
   reducers: {
     setLeftSide: (state, action: PayloadAction<LineageDoc>) => {
       state.leftSideDoc = action.payload;
@@ -111,5 +113,13 @@ export const lineageSelector = createSelector(
   (lineageState) => lineageState
 );
 
-export const { actions } = lineageSlice;
+export function useLineageSlice() {
+  const state = useSelector(lineageSelector);
+  const dispatch = useDispatch();
+  return {
+    state: state as LineageState,
+    actions: makeActionDispatch(lineageSlice.actions, dispatch),
+  };
+}
+
 export default lineageSlice.reducer;

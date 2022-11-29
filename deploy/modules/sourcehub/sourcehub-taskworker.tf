@@ -1,30 +1,29 @@
-resource "aws_cloudwatch_log_group" "pdfdiffworker" {
-  name = format("/%s/%s-%s-pdfdiffworker", local.app_name, var.environment, local.service_name)
+resource "aws_cloudwatch_log_group" "taskworker" {
+  name = format("/%s/%s-%s-taskworker", local.app_name, var.environment, local.service_name)
   # TODO: Make this a variable and determine appropriate threshold
   retention_in_days = 30
 
   tags = merge(local.effective_tags, {
-    component = "${local.service_name}-pdfdiffworker"
+    component = "${local.service_name}-taskworker"
   })
 }
 
-resource "aws_ecs_task_definition" "pdfdiffworker" {
-  family                   = "${local.service_name}-pdfdiffworker"
+resource "aws_ecs_task_definition" "taskworker" {
+  family                   = "${local.service_name}-taskworker"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   # TODO: Make cpu, memory a variable and determine appropriate thresholds
   cpu    = 1024
   memory = 2048
 
-
   container_definitions = jsonencode([
     {
       name  = "${local.service_name}-app"
-      image = "${data.aws_ecr_repository.sourcehub-app.repository_url}:${var.sourcehub-pdfdiffworker-version}"
+      image = "${data.aws_ecr_repository.sourcehub-app.repository_url}:${var.sourcehub-taskworker-version}"
       command = [
         "/bin/bash",
         "-lc",
-        ". ./venv/bin/activate && python pdfdiffworker/main.py"
+        ". ./venv/bin/activate && python taskworker/main.py"
       ]
       environment = [
         {
@@ -61,11 +60,11 @@ resource "aws_ecs_task_definition" "pdfdiffworker" {
         },
         {
           name  = "NEW_RELIC_APP_NAME"
-          value = "${local.new_relic_app_name}-pdfdiffworker"
+          value = "${local.new_relic_app_name}-taskworker"
         },
         {
-          name  = "PDFDIFF_WORKER_QUEUE_URL"
-          value = aws_sqs_queue.pdfdiffworker.url
+          name  = "TASK_WORKER_QUEUE_URL"
+          value = aws_sqs_queue.taskworker.url
         }
       ]
       essential = true
@@ -79,7 +78,7 @@ resource "aws_ecs_task_definition" "pdfdiffworker" {
         LogDriver = "awslogs"
         Options = {
           awslogs-region        = var.region
-          awslogs-group         = aws_cloudwatch_log_group.pdfdiffworker.name
+          awslogs-group         = aws_cloudwatch_log_group.taskworker.name
           awslogs-stream-prefix = local.service_name
         }
       }
@@ -103,12 +102,12 @@ resource "aws_ecs_task_definition" "pdfdiffworker" {
   task_role_arn      = aws_iam_role.sourcehub.arn
 
   tags = merge(local.effective_tags, {
-    component = "${local.service_name}-pdfdiffworker"
+    component = "${local.service_name}-taskworker"
   })
 }
 
-resource "aws_security_group" "pdfdiffworker" {
-  name        = format("%s-%s-%s-pdfdiffworker-%s-mmit-sg-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
+resource "aws_security_group" "taskworker" {
+  name        = format("%s-%s-%s-taskworker-%s-mmit-sg-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
   description = "${title(local.app_name)} Lineage Worker Security Group"
   vpc_id      = data.aws_subnet.first-app-subnet.vpc_id
 
@@ -132,16 +131,16 @@ resource "aws_security_group" "pdfdiffworker" {
   ]
 
   tags = merge(local.effective_tags, {
-    Name      = format("%s-%s-%s-pdfdiffworker-%s-mmit-sg-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
-    component = "${local.service_name}-pdfdiffworker"
+    Name      = format("%s-%s-%s-taskworker-%s-mmit-sg-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
+    component = "${local.service_name}-taskworker"
   })
 }
 
-resource "aws_ecs_service" "pdfdiffworker" {
-  name             = "${local.service_name}-pdfdiffworker"
+resource "aws_ecs_service" "taskworker" {
+  name             = "${local.service_name}-taskworker"
   platform_version = "LATEST"
   cluster          = data.aws_ecs_cluster.ecs-cluster.id
-  task_definition  = aws_ecs_task_definition.pdfdiffworker.arn
+  task_definition  = aws_ecs_task_definition.taskworker.arn
   desired_count    = 1
   deployment_circuit_breaker {
     enable   = true
@@ -156,7 +155,7 @@ resource "aws_ecs_service" "pdfdiffworker" {
     assign_public_ip = false
     subnets          = data.aws_subnets.app-subnet-ids.ids
     security_groups = [
-      aws_security_group.pdfdiffworker.id
+      aws_security_group.taskworker.id
     ]
   }
   force_new_deployment = true
@@ -170,40 +169,41 @@ resource "aws_ecs_service" "pdfdiffworker" {
     ]
   }
   tags = merge(local.effective_tags, {
-    component = "${local.service_name}-pdfdiffworker"
+    component = "${local.service_name}-taskworker"
   })
 }
 
 
-resource "aws_sqs_queue" "pdfdiffworker" {
-  name = format("%s-%s-%s-pdfdiffworker-%s-mmit-sqs-%02d.fifo", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
+resource "aws_sqs_queue" "taskworker" {
+  name = format("%s-%s-%s-taskworker-%s-mmit-sqs-%02d.fifo", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
 
-  visibility_timeout_seconds = 30
+  receive_wait_time_seconds  = 1
+  visibility_timeout_seconds = 300    # 5 minutes
   message_retention_seconds  = 345600 # 4 days
   delay_seconds              = 0
   fifo_queue                 = true
   deduplication_scope        = "messageGroup"
 
   tags = merge(local.effective_tags, {
-    component = "${local.service_name}-pdfdiffworker"
+    component = "${local.service_name}-taskworker"
   })
 }
 
-resource "aws_appautoscaling_target" "pdfdiffworker" {
+resource "aws_appautoscaling_target" "taskworker" {
   max_capacity       = 3
-  min_capacity       = 0
-  resource_id        = "service/${data.aws_ecs_cluster.ecs-cluster.cluster_name}/${local.service_name}-pdfdiffworker"
+  min_capacity       = 1
+  resource_id        = "service/${data.aws_ecs_cluster.ecs-cluster.cluster_name}/${local.service_name}-taskworker"
   role_arn           = aws_iam_service_linked_role.autoscaling.arn
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
 }
 
-resource "aws_appautoscaling_policy" "pdfdiffworker_scale_up" {
+resource "aws_appautoscaling_policy" "taskworker_scale_up" {
   policy_type        = "StepScaling"
-  name               = "${local.app_name}-${local.service_name}-pdfdiffworker-sqs-scale-up"
-  resource_id        = aws_appautoscaling_target.pdfdiffworker.resource_id
-  scalable_dimension = aws_appautoscaling_target.pdfdiffworker.scalable_dimension
-  service_namespace  = aws_appautoscaling_target.pdfdiffworker.service_namespace
+  name               = "${local.app_name}-${local.service_name}-taskworker-sqs-scale-up"
+  resource_id        = aws_appautoscaling_target.taskworker.resource_id
+  scalable_dimension = aws_appautoscaling_target.taskworker.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.taskworker.service_namespace
 
   step_scaling_policy_configuration {
     adjustment_type         = "ExactCapacity"
@@ -226,12 +226,12 @@ resource "aws_appautoscaling_policy" "pdfdiffworker_scale_up" {
   }
 }
 
-resource "aws_appautoscaling_policy" "pdfdiffworker_scale_down" {
+resource "aws_appautoscaling_policy" "taskworker_scale_down" {
   policy_type        = "StepScaling"
-  name               = "${local.app_name}-${local.service_name}-pdfdiffworker-sqs-scale-down"
-  resource_id        = aws_appautoscaling_target.pdfdiffworker.resource_id
-  scalable_dimension = aws_appautoscaling_target.pdfdiffworker.scalable_dimension
-  service_namespace  = aws_appautoscaling_target.pdfdiffworker.service_namespace
+  name               = "${local.app_name}-${local.service_name}-taskworker-sqs-scale-down"
+  resource_id        = aws_appautoscaling_target.taskworker.resource_id
+  scalable_dimension = aws_appautoscaling_target.taskworker.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.taskworker.service_namespace
 
   step_scaling_policy_configuration {
     adjustment_type         = "ExactCapacity"
@@ -241,12 +241,11 @@ resource "aws_appautoscaling_policy" "pdfdiffworker_scale_down" {
       metric_interval_upper_bound = 0
       scaling_adjustment          = 0
     }
-
   }
 }
 
-resource "aws_cloudwatch_metric_alarm" "pdfdiffworker_scale_up" {
-  alarm_name = "${local.app_name}-${local.service_name}-pdfdiffworker-sqs-scale-up-alarm"
+resource "aws_cloudwatch_metric_alarm" "taskworker_scale_up" {
+  alarm_name = "${local.app_name}-${local.service_name}-taskworker-sqs-scale-up-alarm"
 
   comparison_operator       = "GreaterThanOrEqualToThreshold"
   evaluation_periods        = "1"
@@ -255,19 +254,19 @@ resource "aws_cloudwatch_metric_alarm" "pdfdiffworker_scale_up" {
   period                    = "60"
   threshold                 = "1"
   statistic                 = "Sum"
-  alarm_description         = "${local.app_name}-${local.service_name}-pdfdiffworker-sqs-scale-up-alarm"
+  alarm_description         = "${local.app_name}-${local.service_name}-taskworker-sqs-scale-up-alarm"
   insufficient_data_actions = []
   alarm_actions = [
-    aws_appautoscaling_policy.pdfdiffworker_scale_up.arn
+    aws_appautoscaling_policy.taskworker_scale_up.arn
   ]
 
   dimensions = {
-    QueueName = aws_sqs_queue.pdfdiffworker.name
+    QueueName = aws_sqs_queue.taskworker.name
   }
 }
 
-resource "aws_cloudwatch_metric_alarm" "pdfdiffworker_scale_down" {
-  alarm_name = "${local.app_name}-${local.service_name}-pdfdiffworker-sqs-scale-down-alarm"
+resource "aws_cloudwatch_metric_alarm" "taskworker_scale_down" {
+  alarm_name = "${local.app_name}-${local.service_name}-taskworker-sqs-scale-down-alarm"
 
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = "1"
@@ -276,13 +275,12 @@ resource "aws_cloudwatch_metric_alarm" "pdfdiffworker_scale_down" {
   period              = "60"
   threshold           = "1"
   statistic           = "Sum"
-  alarm_description   = "${local.app_name}-${local.service_name}-pdfdiffworker-sqs-scale-down-alarm"
+  alarm_description   = "${local.app_name}-${local.service_name}-taskworker-sqs-scale-down-alarm"
   alarm_actions = [
-    aws_appautoscaling_policy.pdfdiffworker_scale_down.arn
+    aws_appautoscaling_policy.taskworker_scale_down.arn
   ]
 
-
   dimensions = {
-    QueueName = aws_sqs_queue.pdfdiffworker.name
+    QueueName = aws_sqs_queue.taskworker.name
   }
 }

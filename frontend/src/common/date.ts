@@ -89,6 +89,28 @@ export function prettyDateDistance(startDate: string, endDate?: string): string 
 }
 
 /**
+ * Pretty relative date renders a date distance from the start date until the end date.
+ * If the end date is missing the start date is relative to now.
+ * Returns a single number like '4.93 minutes' or '2.1' hours
+ */
+export function prettyDateDistanceSingle(startDate: string, endDate?: string): string {
+  // precision
+  let dur = dateDuration(startDate, endDate);
+
+  // display format
+  dur = stripZeroUnitsFromDuration(dur, ['hours', 'minutes', 'seconds']);
+  if (dur.hours) {
+    const hours = dur.hours + (dur.minutes > 2 ? dur.minutes / 60 : 0);
+    return `${hours.toPrecision(3)} hour${hours == 1 ? '' : 's'}`;
+  }
+  if (dur.minutes) {
+    const min = dur.minutes + (dur.seconds > 2 ? dur.seconds / 60 : 0);
+    return `${min.toPrecision(3)} minute${min == 1 ? '' : 's'}`;
+  }
+  return dur.toHuman();
+}
+
+/**
  * Helper func to strip zero value units and only show units whitelisted
  * @param duration {Duration}
  * @param displayUnits {string[]} units that we want to display

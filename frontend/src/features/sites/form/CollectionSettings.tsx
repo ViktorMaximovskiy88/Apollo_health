@@ -104,6 +104,7 @@ interface CollectionSettingsPropTypes {
 }
 export function CollectionSettings({ initialValues }: CollectionSettingsPropTypes) {
   const currentScrapeMethod: ScrapeMethod = Form.useWatch('scrape_method');
+
   return (
     <>
       <Typography.Title level={3}>Collection Settings</Typography.Title>

@@ -37,7 +37,7 @@ def classify_doc_type(raw_text: str) -> Tuple[str, float, Any]:
 
 def guess_doc_type(
     raw_text: str, raw_link_text: str, raw_url: str, raw_name: str
-) -> Tuple[str, float, Any]:
+) -> Tuple[str, float, Any, Any]:
 
     doc_type_match = DocTypeMatcher(raw_text, raw_link_text, raw_url, raw_name).exec()
 
@@ -45,6 +45,6 @@ def guess_doc_type(
     _doc_type, _confidence, doc_vectors = classify_doc_type(raw_text)
 
     if not doc_type_match:
-        return _doc_type, _confidence, doc_vectors
+        return _doc_type, _confidence, doc_vectors, None
     else:
-        return doc_type_match.document_type, doc_type_match.confidence, doc_vectors
+        return doc_type_match.document_type, doc_type_match.confidence, doc_vectors, doc_type_match

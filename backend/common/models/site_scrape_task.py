@@ -32,7 +32,7 @@ class SiteScrapeTask(BaseDocument):
     site_id: Indexed(PydanticObjectId)  # type: ignore
     initiator_id: PydanticObjectId | None = None
     queued_time: datetime
-    start_time: Indexed(datetime) | None = None
+    start_time: Indexed(datetime) | None = None  # type: ignore
     end_time: datetime | None = None
     last_active: datetime | None = None
     last_doc_collected: datetime | None = None
@@ -42,6 +42,7 @@ class SiteScrapeTask(BaseDocument):
     retrieved_document_ids: list[PydanticObjectId] = []
     new_retrieved_document_ids: list[PydanticObjectId] = []
     worker_id: UUID | None = None
+    task_arn: str | None = None
     error_message: str | None = None
     links_found: int = 0
     follow_links_found: int = 0

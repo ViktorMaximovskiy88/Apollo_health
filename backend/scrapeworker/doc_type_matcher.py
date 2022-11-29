@@ -1,25 +1,10 @@
 import logging
-from enum import Enum
 
 from gensim.utils import simple_preprocess
-from pydantic import BaseModel
 
 from backend.common.core.enums import DocumentType
+from backend.common.models.shared import DocTypeMatch, MatchSource
 from backend.scrapeworker.common.utils import tokenize_filename, tokenize_url
-
-
-class MatchSource(str, Enum):
-    DocText = "DocText"
-    LinkText = "LinkText"
-    Filename = "Filename"
-    Name = "Name"
-
-
-class DocTypeMatch(BaseModel):
-    document_type: DocumentType
-    match_source: MatchSource
-    confidence: float
-    rule_name: str
 
 
 class DocTypeMatcher:
@@ -46,7 +31,8 @@ class DocTypeMatcher:
         else:
             self.doc_text = ""
 
-        if raw_link_text:
+        url_path = "/".join(path_parts + [filename])
+        if raw_link_text and url_path != raw_link_text:
             self.link_tokens = simple_preprocess(raw_link_text)
             self.link_text = " ".join(self.link_tokens).lower()
         else:
@@ -58,7 +44,7 @@ class DocTypeMatcher:
         else:
             self.name_text = ""
 
-        self.texts = [self.filename_text, self.link_text, self.name_text]
+        self.texts = [self.filename_text, self.link_text, self.name_text, self.doc_text]
 
         self.is_pennsylvania = False
         for text in self.texts:
@@ -277,7 +263,7 @@ class DocTypeMatcher:
             return DocumentType.SummaryOfBenefits
 
     def nccn_guidlines(self, text: str) -> str | None:
-        if self._contains(text, ["NCCN", "Guidelines", "Guideline"]):
+        if self._contains(text, ["NCCN", "NCCN Guidelines"]):
             return DocumentType.NCCNGuideline
 
     def ncd(self, text: str) -> str | None:
@@ -291,7 +277,7 @@ class DocTypeMatcher:
     def review_committee_meetings(self, text: str) -> str | None:
         if self._contains(
             text, ["Meeting", "Committee", "Agenda", "P&T", "Pharmacy & Therapeutics"]
-        ) and self._contains(text, ["schedule"]):
+        ):
             return DocumentType.ReviewCommitteeMeetings
 
     def newsletter_announcement(self, text: str) -> str | None:
@@ -307,14 +293,8 @@ class DocTypeMatcher:
                 "Letter",
                 "Letters",
             ],
-        ) and self._contains(text, ["Beneficiary"]):
+        ) and self._not_contains(text, ["Beneficiary"]):
             return DocumentType.NewsletterAnnouncement
-
-    def review_committee_schedule(self, text: str) -> str | None:
-        if self._contains(
-            text, ["Meeting", "Committee", "Agenda", "P&T", "Pharmacy & Therapeutics"]
-        ) and self._contains(text, ["schedule"]):
-            return DocumentType.ReviewCommitteeSchedule
 
     def regulatory_document(self, text: str) -> str | None:
         if self._contains(
@@ -361,6 +341,18 @@ class DocTypeMatcher:
                 "frequently asked",
                 "presentation",
                 "underwriting guidelines",
+                "rights and responsibilities",
+                "pharmacy network",
+                "pharmacy benefit services",
+                "flier",
+                "flyer",
+                "overview",
+                "enrollment",
+                "dental",
+                "vision",
+                "behavioral",
+                "brochure",
+                "fact sheet",
             ],
         ):
             return DocumentType.MemberResources
@@ -374,6 +366,7 @@ class DocTypeMatcher:
                 confidence=0.8,
                 rule_name=self.matched_rule,
                 document_type=match,
+                texts=self.texts,
             )
         elif match := self.run_rules(self.name_text):
             logging.info("name_text matched")
@@ -382,6 +375,7 @@ class DocTypeMatcher:
                 confidence=0.8,
                 rule_name=self.matched_rule,
                 document_type=match,
+                texts=self.texts,
             )
         elif match := self.run_rules(self.filename_text):
             logging.info("filename_text matched")
@@ -390,17 +384,16 @@ class DocTypeMatcher:
                 confidence=0.8,
                 rule_name=self.matched_rule,
                 document_type=match,
+                texts=self.texts,
             )
         elif match := self.run_rules(self.doc_text):
-            # disable doc text for now...
-            logging.info("doc_text skipped")
-            return None
             logging.info("doc_text matched")
             return DocTypeMatch(
                 match_source=MatchSource.DocText,
                 confidence=0.7,
                 rule_name=self.matched_rule,
                 document_type=match,
+                texts=self.texts,
             )
         else:
             logging.info("No match fallthrough to classifier")
@@ -435,7 +428,6 @@ class DocTypeMatcher:
             "lcd",
             "review_committee_meetings",
             "newsletter_announcement",
-            "review_committee_schedule",
             "regulatory_document",
             "directory",
             "member_resources",

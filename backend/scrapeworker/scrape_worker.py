@@ -44,7 +44,7 @@ from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.scrapeworker.common.update_documents import DocumentUpdater
 from backend.scrapeworker.common.utils import get_extension_from_path_like, supported_mimetypes
 from backend.scrapeworker.file_parsers import get_tags, parse_by_type, pdf
-from backend.scrapeworker.playbook import ScrapePlaybook
+from backend.scrapeworker.playbook import PlaybookException, ScrapePlaybook
 from backend.scrapeworker.scrapers import ScrapeHandler
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
 from backend.scrapeworker.search_crawler import SearchableCrawler
@@ -244,7 +244,15 @@ class ScrapeWorker:
                 break
 
             document = None
-            if not self.doc_client.object_exists(dest_path):
+
+            text_checksum = hash_full_text(parsed_content["text"])
+            document = await RetrievedDocument.find_one(RetrievedDocument.checksum == checksum)
+            if not document:
+                document = await RetrievedDocument.find_one(
+                    RetrievedDocument.text_checksum == text_checksum
+                )
+
+            if not document and not self.doc_client.object_exists(dest_path):
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
 
             if download.file_extension == "html" and (
@@ -257,14 +265,6 @@ class ScrapeWorker:
                         url,
                         link_text=download.metadata.link_text,
                     ).update_parsed_content(parsed_content)
-
-            if download.file_extension == "html":
-                text_checksum = hash_full_text(parsed_content["text"])
-                document = await RetrievedDocument.find_one(
-                    RetrievedDocument.text_checksum == text_checksum
-                )
-            else:
-                document = await RetrievedDocument.find_one(RetrievedDocument.checksum == checksum)
 
             if document:
                 self.log.info("updating doc")
@@ -449,6 +449,8 @@ class ScrapeWorker:
 
         try:
             yield page, context
+        except PlaybookException as ex:
+            raise ex
         except Exception as ex:
             self.log.error(ex, stack_info=True)
         finally:

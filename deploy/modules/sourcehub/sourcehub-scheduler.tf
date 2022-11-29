@@ -170,6 +170,14 @@ resource "aws_iam_role" "scheduler-task" {
           Resource = [
             aws_ecs_service.scrapeworker.id
           ]
+        },
+        {
+          Action = [
+            "ecs:ListTasks",
+            "ecs:StopTask"
+          ]
+          Effect = "Allow"
+          Resource = "*"
         }
       ]
     })

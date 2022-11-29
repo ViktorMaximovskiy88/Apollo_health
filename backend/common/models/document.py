@@ -7,7 +7,12 @@ from pydantic import Field
 from backend.common.core.enums import LangCode
 from backend.common.models.base_document import BaseDocument, BaseModel
 from backend.common.models.document_mixins import DocumentMixins
-from backend.common.models.shared import IndicationTag, RetrievedDocumentLocation, TherapyTag
+from backend.common.models.shared import (
+    DocTypeMatch,
+    IndicationTag,
+    RetrievedDocumentLocation,
+    TherapyTag,
+)
 
 
 class BaseRetrievedDocument(BaseModel):
@@ -29,6 +34,7 @@ class BaseRetrievedDocument(BaseModel):
     last_collected_date: datetime | None = None
     document_type: str | None = None
     doc_type_confidence: float | None = None
+    doc_type_match: DocTypeMatch | None
     identified_dates: list[datetime] = []
     lang_code: LangCode | None = None
     file_size: int = 0
@@ -92,6 +98,7 @@ class UpdateRetrievedDocument(BaseModel, DocumentMixins):
     name: str | None = None
     document_type: str | None = None
     doc_type_confidence: float | None = None
+    doc_type_match: DocTypeMatch | None
     metadata: dict | None = None
 
     lang_code: LangCode | None = None

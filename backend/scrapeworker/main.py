@@ -1,6 +1,8 @@
+import os
 from pathlib import Path
 
 import newrelic.agent
+import requests
 
 newrelic.agent.initialize(Path(__file__).parent / "newrelic.ini")
 
@@ -9,7 +11,6 @@ import logging
 import signal
 import sys
 from datetime import datetime, timezone
-from uuid import UUID, uuid4
 
 import pymongo
 import typer
@@ -19,6 +20,7 @@ from playwright.async_api import Playwright, async_playwright
 from pymongo import ReturnDocument
 
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
+from backend.common.core.config import is_local
 from backend.common.core.enums import CollectionMethod, TaskStatus
 from backend.common.db.init import init_db
 from backend.common.models.site import Site
@@ -42,7 +44,7 @@ async def signal_handler():
         await task.update(Set({SiteScrapeTask.retry_if_lost: True}))
 
 
-async def pull_task_from_queue(worker_id):
+async def pull_task_from_queue(task_arn):
     now = datetime.now(tz=timezone.utc)
     acquired = await SiteScrapeTask.get_motor_collection().find_one_and_update(
         {"status": TaskStatus.QUEUED, "collection_method": CollectionMethod.Automated},
@@ -50,7 +52,7 @@ async def pull_task_from_queue(worker_id):
             "$set": {
                 "start_time": now,
                 "last_active": now,
-                "worker_id": worker_id,
+                "task_arn": task_arn,
                 "status": TaskStatus.IN_PROGRESS,
             }
         },
@@ -72,14 +74,14 @@ async def heartbeat_task(scrape_task: SiteScrapeTask):
 
 
 async def worker_fn(
-    worker_id: UUID,
+    task_arn: str,
     playwright: Playwright,
 ):
     while True:
         if not accepting_tasks:
             return
 
-        scrape_task = await pull_task_from_queue(worker_id)
+        scrape_task = await pull_task_from_queue(task_arn)
         if not scrape_task:
             await asyncio.sleep(5)
             continue
@@ -118,7 +120,16 @@ async def worker_fn(
             task.cancel()
 
 
-async def start_worker_async(worker_id):
+def get_task_arn() -> str:
+    if is_local:
+        return "arn:aws:ecs:us-east-1:012345678910:task/deadc0de-dead-c0de-dead-c0dedeadc0de"
+
+    url = os.environ["ECS_CONTAINER_METADATA_URI_V4"]
+    json = requests.get(f"{url}/task").json()
+    return json["TaskARN"]
+
+
+async def start_worker_async(task_arn):
     await init_db()
 
     loop = asyncio.get_event_loop()
@@ -127,7 +138,7 @@ async def start_worker_async(worker_id):
     async with async_playwright() as playwright:
         workers = []
         for _ in range(1):
-            workers.append(worker_fn(worker_id, playwright))
+            workers.append(worker_fn(task_arn, playwright))
         await asyncio.gather(*workers)
     typer.secho("Shutdown Complete", fg=typer.colors.BLUE)
 
@@ -135,9 +146,9 @@ async def start_worker_async(worker_id):
 @app.command()
 @newrelic.agent.background_task()
 def start_worker():
-    worker_id = uuid4()
-    typer.secho(f"Starting Scrape Worker {worker_id}", fg=typer.colors.GREEN)
-    asyncio.run(start_worker_async(worker_id))
+    task_arn = get_task_arn()
+    typer.secho(f"Starting Scrape Worker {task_arn}", fg=typer.colors.GREEN)
+    asyncio.run(start_worker_async(task_arn))
 
 
 if __name__ == "__main__":

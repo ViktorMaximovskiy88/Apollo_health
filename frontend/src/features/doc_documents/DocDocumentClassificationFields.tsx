@@ -31,7 +31,7 @@ const Lineage = () => {
   const { docDocumentId } = useParams();
   const { data: docDocument } = useGetDocDocumentQuery(docDocumentId, { skip: !docDocumentId });
   const previousDocDocId: string | undefined = Form.useWatch('previous_doc_doc_id');
-  const { data: prevDoc } = useGetDocDocumentQuery(previousDocDocId, { skip: !docDocumentId });
+  const { data: prevDoc } = useGetDocDocumentQuery(previousDocDocId, { skip: !previousDocDocId });
 
   useEffect(() => {
     form.setFieldValue('previous_doc_doc_id', docDocument?.previous_doc_doc_id);

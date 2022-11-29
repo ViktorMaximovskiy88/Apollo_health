@@ -1,13 +1,17 @@
 import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { LineageDoc } from './types';
+import { Task } from '../../app/taskApi';
 
 export const lineageApi = createApi({
   reducerPath: 'lineageApi',
   baseQuery: fetchBaseQuery(),
   tagTypes: ['LineageDoc'],
   endpoints: (builder) => ({
-    processSiteLineage: builder.query<undefined, string | undefined>({
-      query: (siteId) => `/lineage/reprocess/${siteId}?_=${+new Date()}`,
+    processSiteLineage: builder.mutation<Task, string | undefined>({
+      query: (siteId) => ({
+        url: `/lineage/reprocess/${siteId}`,
+        method: 'POST',
+      }),
     }),
     getSiteLineage: builder.query<LineageDoc[], string | undefined>({
       query: (siteId) => `/lineage/${siteId}`,
@@ -20,4 +24,4 @@ export const lineageApi = createApi({
   }),
 });
 
-export const { useLazyProcessSiteLineageQuery, useGetSiteLineageQuery } = lineageApi;
+export const { useProcessSiteLineageMutation, useGetSiteLineageQuery } = lineageApi;
