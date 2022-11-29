@@ -32,6 +32,7 @@ class TaskQueue(SQSBase):
     async def listen(self):
         while True:
             for (message, payload) in self.receive():
+                self.logger.info(f"received message_id={message.message_id}")
                 try:
                     task: TaskLog = await self._get_task(payload)
 

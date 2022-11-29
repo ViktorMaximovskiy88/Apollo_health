@@ -60,9 +60,18 @@ export function DocCompareToPrevious() {
         previousDocDocId,
       }),
     (result: any) => {
-      const { payload } = result;
-      const new_key = `${payload.current_checksum}-${payload.previous_checksum}-new.pdf`;
-      const prev_key = `${payload.current_checksum}-${payload.previous_checksum}-prev.pdf`;
+      let new_key;
+      let prev_key;
+
+      if (result.task) {
+        const { payload } = result.task;
+        new_key = `${payload.current_checksum}-${payload.previous_checksum}-new.pdf`;
+        prev_key = `${payload.current_checksum}-${payload.previous_checksum}-prev.pdf`;
+      } else {
+        new_key = result.new_key;
+        prev_key = result.prev_key;
+      }
+
       setNewKey(new_key);
       setPrevKey(prev_key);
       setModalOpen(true);
