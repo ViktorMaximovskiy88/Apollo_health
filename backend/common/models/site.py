@@ -41,7 +41,7 @@ class ScrapeMethodConfiguration(BaseModel):
     follow_link_url_keywords: list[str] = []
     searchable: bool = False
     searchable_playbook: str | None = None
-    searchable_type: SearchableType | None = None
+    searchable_type: list[SearchableType] = []
     searchable_input: AttrSelector | None = None
     searchable_submit: AttrSelector | None = None
     attr_selectors: list[AttrSelector] = []
@@ -61,7 +61,7 @@ class UpdateScrapeMethodConfiguration(BaseModel):
     follow_link_url_keywords: list[str] | None = None
     searchable: bool | None = None
     searchable_playbook: str | None = None
-    searchable_type: SearchableType | None = None
+    searchable_type: list[SearchableType] = []
     searchable_input: AttrSelector | None = None
     searchable_submit: AttrSelector | None = None
     wait_for_timeout_ms: int = 0

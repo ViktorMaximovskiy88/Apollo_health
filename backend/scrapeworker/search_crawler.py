@@ -32,9 +32,14 @@ class SearchableCrawler:
         self.searchable_playbook = ScrapePlaybook(config.searchable_playbook)
 
     async def __codes(self):
-        search_codes = await SearchCodeSet.find_one({"type": self.config.searchable_type})
-        if search_codes:
-            return search_codes.codes
+        search_codes_list = []
+        for search_code in self.config.searchable_type:
+            search_codes = await SearchCodeSet.find_one({"type": search_code})
+            if search_codes:
+                search_codes_list += list(search_codes.codes)
+
+        if search_codes_list:
+            return search_codes_list
         return set()
 
     async def replay_playbook(self, page: Page, playbook_context: PlaybookContext):

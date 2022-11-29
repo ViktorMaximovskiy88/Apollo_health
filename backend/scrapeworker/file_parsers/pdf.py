@@ -47,6 +47,7 @@ class PdfParse(FileParser):
 
     async def update_parsed_content(self, prev_content: dict[str, Any]) -> None:
         """Supplement previous parse with PDF parsed content"""
+
         new_content = await self.parse()
         prev_content["effective_date"] = new_content["effective_date"]
         prev_content["end_date"] = new_content["end_date"]
