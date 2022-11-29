@@ -13,15 +13,15 @@ steps:
   - task: TerraformInstaller@0
     displayName: Install Terraform on Agent
     inputs:
-      terraformVersion: '1.1.7'
+      terraformVersion: "1.1.7"
   - task: AWSShellScript@1
     displayName: Terraform Apply
     inputs:
       awsCredentials: ${{ parameters.awsCredentials }}
-      regionName: 'us-east-1'
-      scriptType: 'inline'
+      regionName: "us-east-1"
+      scriptType: "inline"
       inlineScript: |
-          terraform init -backend-config=$(System.DefaultWorkingDirectory)/deploy/live/tfvars/${{ parameters.environment }}.s3.tfbackend
-          terraform apply -auto-approve -var-file=$(System.DefaultWorkingDirectory)/deploy/live/tfvars/${{ parameters.environment }}.tfvars -var='sourcehub-app-version=$(Build.SourceVersion)' -var='sourcehub-scrapeworker-version=$(Build.SourceVersion)'  -var='sourcehub-scheduler-version=$(Build.SourceVersion)' -var='sourcehub-parseworker-version=$(Build.SourceVersion)' -var='sourcehub-dbmigrations-version=$(Build.SourceVersion)' -var='sourcehub-lineageworker-version=$(Build.SourceVersion)'
+        terraform init -backend-config=$(System.DefaultWorkingDirectory)/deploy/live/tfvars/${{ parameters.environment }}.s3.tfbackend
+        terraform apply -auto-approve -var-file=$(System.DefaultWorkingDirectory)/deploy/live/tfvars/${{ parameters.environment }}.tfvars -var='sourcehub-app-version=$(Build.SourceVersion)' -var='sourcehub-scrapeworker-version=$(Build.SourceVersion)'  -var='sourcehub-scheduler-version=$(Build.SourceVersion)' -var='sourcehub-parseworker-version=$(Build.SourceVersion)' -var='sourcehub-dbmigrations-version=$(Build.SourceVersion)' -var='sourcehub-taskworker-version=$(Build.SourceVersion)'
       disableAutoCwd: true
-      workingDirectory: '$(System.DefaultWorkingDirectory)/deploy/live'
+      workingDirectory: "$(System.DefaultWorkingDirectory)/deploy/live"

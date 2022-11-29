@@ -126,6 +126,10 @@ export function ExtractionResultsDataTable({
       render: ({ value }: { value: boolean }) => (value ? 'True' : ''),
     },
     {
+      header: 'PN',
+      name: 'pn',
+    },
+    {
       header: 'QL',
       name: 't_ql',
       render: ({ value }: { value: boolean }) => (value ? 'True' : ''),

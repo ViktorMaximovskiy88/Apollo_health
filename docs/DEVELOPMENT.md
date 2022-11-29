@@ -191,6 +191,10 @@ python backend/parseworker/main.py
 source .venv/bin/activate
 python backend/scheduler/main.py
 
+# Async Task Worker
+source .venv/bin/activate
+python backend/taskworker/main.py
+
 # Frontend
 cd frontend
 yarn start
@@ -292,6 +296,10 @@ python backend/parseworker/main.py
 
 # Parse Worker
 python backend/scheduler/main.py
+
+# Async Task Workers
+# used with PDF Diffing and Lineage Reprocessing
+python backend/taskworker/main.py
 
 # Frontend
 cd frontend

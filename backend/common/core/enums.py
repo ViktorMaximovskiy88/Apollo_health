@@ -52,6 +52,7 @@ class SearchableType(str, Enum):
 class DocumentType(str, Enum):
     AnnualNoticeOfChanges = "Annual Notice of Changes"
     AuthorizationPolicy = "Authorization Policy"
+    Directory = "Directory"
     EvidenceOfCoverage = "Evidence of Coverage"
     ExclusionList = "Exclusion List"
     FeeSchedule = "Fee Schedule"
@@ -60,6 +61,7 @@ class DocumentType(str, Enum):
     InternalResource = "Internal Resource"
     LCD = "LCD"
     MedicalCoverageList = "Medical Coverage List"
+    MemberResources = "Member Resources"
     NCCNGuideline = "NCCN Guideline"
     NCD = "NCD"
     NewsletterAnnouncement = "Newsletter / Announcement"
@@ -71,7 +73,6 @@ class DocumentType(str, Enum):
     RegulatoryDocument = "Regulatory Document"
     RestrictionList = "Restriction List"
     ReviewCommitteeMeetings = "Review Committee Meetings"
-    ReviewCommitteeSchedule = "Review Committee Schedule"
     SiteOfCarePolicy = "Site of Care Policy"
     SpecialtyList = "Specialty List"
     SummaryOfBenefits = "Summary of Benefits"

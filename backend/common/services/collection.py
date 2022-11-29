@@ -16,6 +16,7 @@ from backend.common.core.config import env_type
 from backend.common.core.enums import CollectionMethod, TaskStatus
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
+from backend.common.models.document_mixins import find_site_index
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import ManualWorkItem, SiteScrapeTask, WorkItemOption
 from backend.common.models.user import User
@@ -49,9 +50,11 @@ class CollectionService:
     ]
 
     def __init__(self, site: Site, current_user: User, logger: Logger) -> None:
-        self.site, self.current_user, self.logger = site, current_user, logger
+        self.site: Site = site
+        self.current_user: User = current_user
+        self.logger: Logger = logger
         self.found_docs_total = 0
-        self.last_queued = None
+        self.last_queued: SiteScrapeTask | None = None
 
     async def has_queued(self) -> SiteScrapeTask | Boolean:
         if self.last_queued:
@@ -85,115 +88,106 @@ class CollectionService:
         return await SiteScrapeTask.find_one({"site_id": self.site.id}, sort=[("start_time", -1)])
 
     async def start_collecting(self) -> CollectionResponse:
-        """Start collecting / updating all queued tasks."""
-        result: CollectionResponse = CollectionResponse()
+        """Create site scrape task using site config."""
         match self.site.collection_method:
             case CollectionMethod.Automated:
-                result = await self.create_queued_task()
+                last_run_status = TaskStatus.QUEUED
+                response: CollectionResponse = await self.start_automated_task()
             case CollectionMethod.Manual:
-                result = await self.start_manual()
+                last_run_status = TaskStatus.IN_PROGRESS
+                response: CollectionResponse = await self.start_manual_task()
             case _:
-                result.add_error(f"Collection Method Invalid: {self.site.collection_method}")
-                return result
-        if not result.errors:
+                response = CollectionResponse()
+                response.add_error(f"Collection Method Invalid: {self.site.collection_method}")
+                return response
+
+        if not response.errors:
             await self.site.update(
                 Set(
                     {
-                        Site.last_run_status: TaskStatus.QUEUED,
+                        Site.last_run_status: last_run_status,
+                        Site.last_run_time: datetime.now(tz=timezone.utc),
                     }
                 )
             )
-        return result
+        return response
 
     async def stop_collecting(self) -> CollectionResponse:
-        """Stop collecting all queued tasks.
-        Cancel each queued task, then set site.last_run_status to finished."""
-        result = CollectionResponse()
-        if not await self.has_queued():
-            return result
-
+        """
+        Stop collecting all queued or running tasks.
+        """
         match self.site.collection_method:
             case CollectionMethod.Automated:
-                result: CollectionResponse = await self.stop_queued_tasks()
+                response: CollectionResponse = await self.stop_all_tasks()
             case CollectionMethod.Manual:
-                result = await self.stop_manual()
+                response: CollectionResponse = await self.stop_manual_task()
             case _:
                 # This should not happen. Cancel tasks just to be safe.
-                result = await self.stop_queued_tasks()
+                response: CollectionResponse = await self.stop_all_tasks()
                 typer.secho(
                     f"Unknown site [{self.site.id}] collection_method "
-                    "[{self.site.collection_method}]",
+                    f"[{self.site.collection_method}]",
                     fg=typer.colors.RED,
                 )
-                return result
+                return response
 
-        if not result.errors:
-            await self.site.update(Set({Site.last_run_status: TaskStatus.FINISHED}))
-        return result
+        if not response.errors:
+            last_queued_task: SiteScrapeTask = await self.fetch_previous_task()
+            await self.site.update(
+                Set(
+                    {
+                        Site.last_run_status: TaskStatus.FINISHED,
+                        Site.last_run_documents: len(last_queued_task.retrieved_document_ids),
+                    }
+                )
+            )
+        return response
 
-    async def create_queued_task(self) -> CollectionResponse:
+    async def start_automated_task(self) -> CollectionResponse:
         """Create automated scrape task with queue_time of now"""
-        await self.stop_queued_tasks()
-        result: CollectionResponse = CollectionResponse()
+        response: CollectionResponse = CollectionResponse()
+        await self.stop_all_tasks()
+
         new_scrape_task: SiteScrapeTask = SiteScrapeTask(
-            site_id=self.site.id, queued_time=datetime.now(tz=timezone.utc)
+            site_id=self.site.id,
+            queued_time=datetime.now(tz=timezone.utc),
+            documents_found=0,  # Incremented during automated scrape.
         )
-        scrape_task: SiteScrapeTask = await create_and_log(
+        created_task: SiteScrapeTask = await create_and_log(
             self.logger, self.current_user, new_scrape_task
         )
-        if not scrape_task:
-            result.add_error(
-                f"Not able to create site_scrape_task for worker_id"
+        if not created_task:
+            response.add_error(
+                f"Not able to create site_scrape_task for worker_id "
                 f"[{new_scrape_task.worker_id}] site[{self.site.id}]"
             )
-            return result
-        # Set site last_run status to created task status.
-        # and id to navigate to newly created site_task_id.
-        result.nav_id = scrape_task.id
-        await self.site.update(
-            Set(
-                {
-                    Site.last_run_status: scrape_task.status,
-                }
-            )
-        )
-        return result
+            return response
 
-    async def stop_queued_tasks(self) -> Boolean:
-        """Cancel all queued site tasks."""
-        err = await SiteScrapeTask.get_motor_collection().update_many(
-            {
-                "site_id": self.site.id,
-                "status": {"$in": self.queued_statuses},
-            },
-            {"$set": {"status": TaskStatus.FINISHED}},
-        )
-        if not err:
-            await self.site.update(Set({Site.last_run_status: TaskStatus.FINISHED}))
-            return True
-        else:
-            return False
+        # Set nav_id as task id to (optionally) navigate to after success.
+        response.nav_id = created_task.id
+        return response
 
-    async def start_manual(self) -> CollectionResponse:
+    async def start_manual_task(self) -> CollectionResponse:
         """Start site manual collection."""
         response: CollectionResponse = CollectionResponse()
-        await self.stop_queued_tasks()
+        await self.stop_all_tasks()
+        now: datetime = datetime.now(tz=timezone.utc)
 
-        # Create a new in_progress manual task and set queued to now.
+        # Create a new in_progress manual task and respond with nav link.
         new_task: SiteScrapeTask = SiteScrapeTask(
             site_id=self.site.id,
             initiator_id=self.current_user.id,
-            start_time=datetime.now(tz=timezone.utc),
-            queued_time=datetime.now(tz=timezone.utc),
-            last_active=datetime.now(tz=timezone.utc),
+            start_time=now,
+            queued_time=now,
+            last_active=now,
             status=TaskStatus.IN_PROGRESS,
             collection_method=CollectionMethod.Manual,
         )
-        # For the new collection, only include docs which have no work items.
-        # Since work_items are required to be finished before manual cancel,
-        # docs without work_items were generated outside manual process.
+        # If previous task, add previous task's docs to this task's work_list
+        # with a default work_item selection of unhandled.
         previous_task: SiteScrapeTask = await self.fetch_previous_task()
         if previous_task:
+            new_task.documents_found = previous_task.documents_found
             doc_docs: List[DocDocument] = await DocDocument.find(
                 {"retrieved_document_id": {"$in": previous_task.retrieved_document_ids}}
             ).to_list()
@@ -205,26 +199,26 @@ class CollectionService:
                         retrieved_document_id=f"{doc_doc.retrieved_document_id}",
                     )
                 )
-
-        # Create new manual task and respond with nav link.
         created_task: SiteScrapeTask = await create_and_log(
             self.logger, self.current_user, new_task
         )
         if not created_task:
             response.add_error("Unable to create new scrape task.")
-        else:
-            response.nav_id = created_task.id
+            return response
+
+        response.nav_id = created_task.id
         return response
 
-    async def stop_manual(self) -> CollectionResponse:
-        """Cancel all manual tasks. Manual tasks have work_items
-        which may need processed before canceling."""
+    async def stop_manual_task(self) -> CollectionResponse:
+        """
+        Cancel running manual task. If any pending work_items, raise error
+        """
         response: CollectionResponse = CollectionResponse()
 
         # Make sure there is a queued task with no unfinished work_items.
         last_queued_task: SiteScrapeTask = await self.fetch_last_queued()
         if not last_queued_task:
-            return CollectionResponse(success=True)
+            return response
         for work_item in last_queued_task.work_list:
             if work_item.selected == WorkItemOption.UNHANDLED:
                 retr_doc: RetrievedDocument | None = await RetrievedDocument.find_one(
@@ -239,12 +233,13 @@ class CollectionService:
         response = await self.process_work_lists()
         if not response.success:
             response.raise_error()
-        await self.stop_queued_tasks()
+        await self.stop_all_tasks()
 
         return response
 
-    async def cancel_in_progress(self) -> None:
-        """Cancel only tasks which are in progress.
+    async def cancel_in_progress(self) -> CollectionResponse:
+        """
+        Cancel only tasks which are in progress.
         Since a doc was never collected, set TaskStatus.CANCELED instead of CANCELING.
         """
         await SiteScrapeTask.get_motor_collection().update_many(
@@ -252,16 +247,33 @@ class CollectionService:
             {"$set": {"status": TaskStatus.CANCELED}},
         )
         await self.site.update(Set({Site.last_run_status: TaskStatus.CANCELED}))
+        return CollectionResponse(success=True)
+
+    async def stop_all_tasks(self) -> Boolean:
+        """Stop all queued or running site tasks."""
+        err = await SiteScrapeTask.get_motor_collection().update_many(
+            {
+                "site_id": self.site.id,
+                "status": {"$in": self.queued_statuses},
+            },
+            {"$set": {"status": TaskStatus.FINISHED}},
+        )
+        if not err:
+            await self.site.update(Set({Site.last_run_status: TaskStatus.FINISHED}))
+            return CollectionResponse(success=True)
+        else:
+            return CollectionResponse(success=False)
 
     async def set_all_last_collected(self, task) -> CollectionResponse:
         """Update all task retrieved_docs and doc_docs last_collected_date."""
-        response: CollectionResponse = CollectionResponse()
+        now: datetime = datetime.now(tz=timezone.utc)
         retrieved_documents: list[RetrievedDocument] = (
             await RetrievedDocument.find_many({"_id": {"$in": task["retrieved_document_ids"]}})
             .sort("-first_collected_date")
             .to_list()
         )
         if not retrieved_documents:
+            response: CollectionResponse = CollectionResponse()
             response.add_error(
                 f"set_last_collected: No retrieved_docs for site_scrape_task[{task.id}]"
             )
@@ -271,69 +283,74 @@ class CollectionService:
             if datetime.date(r_doc.last_collected_date) < datetime.today().date():
                 await RetrievedDocument.get_motor_collection().find_one_and_update(
                     {"_id": r_doc.id},
-                    {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
+                    {"$set": {"last_collected_date": now}},
                 )
                 await DocDocument.get_motor_collection().find_one_and_update(
                     {"retrieved_document_id": r_doc.id},
-                    {"$set": {"last_collected_date": datetime.now(tz=timezone.utc)}},
+                    {"$set": {"last_collected_date": now}},
                 )
-        return response
+        return CollectionResponse(success=True)
 
     async def set_first_collected(self, doc) -> CollectionResponse:
-        """Update all task retrieved_docs and doc_docs last_collected_date."""
-        response: CollectionResponse = CollectionResponse()
-        retr_doc = await RetrievedDocument.find_one(
+        """Update all task retrieved_docs and doc_docs first_collected_date."""
+        now: datetime = datetime.now(tz=timezone.utc)
+        retr_doc: RetrievedDocument | None = await RetrievedDocument.find_one(
             {"_id": doc.id},
         )
-        retr_doc.first_collected_date = datetime.now(tz=timezone.utc)
         if retr_doc.locations:
-            loc = retr_doc.locations[-1]
-            loc.first_collected_date = datetime.now(tz=timezone.utc)
-            retr_doc.locations[-1] = loc
-        doc_doc = await DocDocument.find_one(
+            site_loc_index = find_site_index(retr_doc, self.site.id)
+            retr_doc.locations[site_loc_index].first_collected_date = now
+            # Set min first_collected_date to handle case where new_doc or new_version,
+            # but doc is from other site. Setting first_collected_date to now would
+            # reset the original first_collected_date.
+            retr_doc.first_collected_date = min(
+                [loc.first_collected_date for loc in retr_doc.locations]
+            )
+        await retr_doc.save()
+        doc_doc: DocDocument | None = await DocDocument.find_one(
             {"retrieved_document_id": retr_doc.id},
         )
-        doc_doc.last_collected_date = datetime.now(tz=timezone.utc)
         if doc_doc.locations:
-            loc = doc_doc.locations[-1]
-            loc.first_collected_date = datetime.now(tz=timezone.utc)
-            doc_doc.locations[-1] = loc
-        await retr_doc.save()
+            site_loc_index = find_site_index(doc_doc, self.site.id)
+            doc_doc.locations[site_loc_index].first_collected_date = now
+            doc_doc.first_collected_date = min(
+                [loc.first_collected_date for loc in doc_doc.locations]
+            )
         await doc_doc.save()
-        return response
+        return CollectionResponse(success=True)
 
     async def set_last_collected(self, doc) -> CollectionResponse:
-        """Update all task retrieved_docs and doc_docs last_collected_date."""
-        response: CollectionResponse = CollectionResponse()
-        retr_doc = await RetrievedDocument.find_one(
+        """
+        Update all task retrieved_docs and doc_docs last_collected_date.
+        """
+        now: datetime = datetime.now(tz=timezone.utc)
+        retr_doc: RetrievedDocument | None = await RetrievedDocument.find_one(
             {"_id": doc.id},
         )
-        retr_doc.last_collected_date = datetime.now(tz=timezone.utc)
+        retr_doc.last_collected_date = now
         if retr_doc.locations:
-            loc = retr_doc.locations[-1]
-            loc.last_collected_date = datetime.now(tz=timezone.utc)
-            retr_doc.locations[-1] = loc
-        doc_doc = await DocDocument.find_one(
+            site_loc_index = find_site_index(retr_doc, self.site.id)
+            retr_doc.locations[site_loc_index].last_collected_date = now
+        await retr_doc.save()
+        doc_doc: DocDocument | None = await DocDocument.find_one(
             {"retrieved_document_id": retr_doc.id},
         )
-        doc_doc.last_collected_date = datetime.now(tz=timezone.utc)
+        doc_doc.last_collected_date = now
         if doc_doc.locations:
-            loc = doc_doc.locations[-1]
-            loc.last_collected_date = datetime.now(tz=timezone.utc)
-            doc_doc.locations[-1] = loc
-        await retr_doc.save()
+            site_loc_index = find_site_index(doc_doc, self.site.id)
+            doc_doc.locations[site_loc_index].last_collected_date = now
         await doc_doc.save()
-        return response
+        return CollectionResponse(success=True)
 
     async def set_task_complete(self, task) -> CollectionResponse:
         """
         Set sitescrapetask completed dates and statuses.
         """
-        response: CollectionResponse = CollectionResponse()
-        task.end_time = datetime.now(tz=timezone.utc)
-        task.last_doc_collected = datetime.now(tz=timezone.utc)
+        now: datetime = datetime.now(tz=timezone.utc)
+        task.end_time = now
+        task.last_doc_collected = now
         await task.save()
-        return response
+        return CollectionResponse(success=True)
 
     async def process_work_lists(self) -> CollectionResponse:
         """
@@ -365,7 +382,6 @@ class CollectionService:
         item_index: int,
     ) -> CollectionResponse:
         """Process a site_scrape_task work_item action"""
-        result: CollectionResponse = CollectionResponse()
         work_item.is_new = False
         work_item.action_datetime = datetime.now(tz=timezone.utc)
         target_task.work_list[item_index] = work_item
@@ -399,15 +415,16 @@ class CollectionService:
                     if f"{retr_id}" != f"{work_item.retrieved_document_id}"
                 ]
             case WorkItemOption.UNHANDLED:
-                result.add_error(f"{retr_doc.name}")
-                return result
+                response: CollectionResponse = CollectionResponse()
+                response.add_error(f"{retr_doc.name}")
+                return response
 
-        return result
+        return CollectionResponse(success=True)
 
 
 def find_work_item_index(doc, task, raise_exception=False, err_msg="") -> int:
     if not err_msg:
-        err_msg = f"ERROR: Not able to find doc.id in work list for task[{task.id}]"
+        err_msg: str = f"ERROR: Not able to find doc.id in work list for task[{task.id}]"
     # Is doc_doc.
     if hasattr(doc, "retrieved_document_id"):
         work_item_index: int = next(

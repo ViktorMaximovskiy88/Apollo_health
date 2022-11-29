@@ -174,25 +174,17 @@ async def update_site(
     current_user: User = Security(get_current_user),
     logger: Logger = Depends(get_logger),
 ):
-    original_collection_method: str | None = (
-        target.collection_method if target.collection_method else None
-    )
     updated = await update_and_log_diff(logger, current_user, target, updates)
     updated_collection_method = updated.get("collection_method", False)
 
-    # If site was automated but then switched to manual,
-    # stop manual tasks just in case pending work items are stuck in queue.
-    if (
-        updated_collection_method
-        and updated_collection_method == CollectionMethod.Manual
-        and original_collection_method != CollectionMethod.Manual
-    ):
+    # If changed collection method, stop all queued and running collections.
+    if updated_collection_method:
         site_collection: CollectionService = CollectionService(
             site=target,
             current_user=current_user,
             logger=logger,
         )
-        await site_collection.stop_manual()
+        await site_collection.stop_collecting()
 
     return updated
 

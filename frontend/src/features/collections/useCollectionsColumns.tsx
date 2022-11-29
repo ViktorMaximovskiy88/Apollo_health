@@ -3,11 +3,11 @@ import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Button } from 'antd';
 import {
-  prettyDateDistance,
   prettyDateTimeFromISO,
   TaskStatus,
   scrapeTaskStatusDisplayName as displayName,
   scrapeTaskStatusStyledDisplay as styledDisplay,
+  prettyDateDistanceSingle,
 } from '../../common';
 import { CollectionMethod } from '../sites/types';
 import { ButtonLink } from '../../components/ButtonLink';
@@ -44,12 +44,23 @@ export const createColumns = ({
       },
     },
     {
-      header: 'Elapsed',
-      name: 'elapsed',
-      minWidth: 300,
+      header: 'Queued Time',
+      name: 'queued',
+      minWidth: 150,
       defaultFlex: 1,
       render: ({ data: task }: { data: SiteScrapeTask }) => {
-        return prettyDateDistance(task.start_time || task.queued_time, task.end_time);
+        return prettyDateDistanceSingle(task.queued_time, task.start_time);
+      },
+    },
+    {
+      header: 'Collection Time',
+      name: 'elapsed',
+      minWidth: 150,
+      defaultFlex: 1,
+      render: ({ data: task }: { data: SiteScrapeTask }) => {
+        if (task.start_time) {
+          return prettyDateDistanceSingle(task.start_time, task.end_time);
+        }
       },
     },
     {

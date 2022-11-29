@@ -181,6 +181,16 @@ def test_select_best_match():
     assert parser.end_date.date == datetime(2023, 4, 30)
     assert parser.effective_date.date == datetime(2021, 10, 31)
 
+    text = """
+        End date label is out of range of this date ............. 12/15/2026
+        This label takes precedence end date 1/1/2026
+    """
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+
+    assert len(parser.unclassified_dates) == 2
+    assert parser.end_date.date == datetime(2026, 1, 1)
+
 
 def test_extract_date_span():
     text = "12/1/2020 - 10/15/23"
@@ -201,14 +211,16 @@ def test_extract_date_span():
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
-    assert parser.effective_date.date is None
+    # gets eff date because of heading date
+    assert parser.effective_date.date == datetime(2023, 7, 1)
     assert parser.end_date.date is None
 
     text = "This will not grab a date span 12-10-2021 - because July 2023 of the text right of dash"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
-    assert parser.effective_date.date is None
+    # gets eff date because of heading date
+    assert parser.effective_date.date == datetime(2023, 7, 1)
     assert parser.end_date.date is None
 
     text = """
@@ -265,6 +277,16 @@ def test_does_not_exclude_references():
     assert len(parser.unclassified_dates) == 1
 
 
+def test_dates_must_be_past():
+    text = """
+        last review must be in the past 12/1/2026
+    """
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 1
+    assert parser.last_reviewed_date.date is None
+
+
 def test_default_effective_date():
     text = "Contains two dates with no labels, 2/9/2022, May 5 2020"
     parser = DateParser(date_rgxs, label_rgxs)
@@ -293,6 +315,26 @@ def test_default_effective_date():
     assert len(parser.unclassified_dates) == 1
     assert parser.effective_date.date == datetime(2020, 1, 30)
 
+    text = "Override with link text 3/30/2022"
+    label_texts = ["Doc Link Text 1/10/2022"]
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text, label_texts)
+    assert len(parser.unclassified_dates) == 2
+    assert parser.effective_date.date == datetime(2022, 1, 10)
+
+    text = "Override with quarter label text 3/30/2022"
+    label_texts = ["BSP_2022_CMC_Formulary_Changes_Q3"]
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text, label_texts)
+    assert len(parser.unclassified_dates) == 2
+    assert parser.effective_date.date == datetime(2022, 7, 1)
+
+    text = "Just a year 2022"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 1
+    assert parser.effective_date.date == datetime(2022, 1, 1)
+
 
 def test_pick_valid_date_range():
     text = "Contains invalid date 01-1678"
@@ -306,3 +348,55 @@ def test_ignore_trailing_chars():
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 0
+
+
+def test_date_lists():
+    text = "Revised: 1/1/20, 1/1/21, 1/1/22"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 3
+    assert parser.last_updated_date.date == datetime(2022, 1, 1)
+
+    text = "Revised: 1/1/20, 1/1/21, not valid 1/1/22"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 3
+    assert parser.last_updated_date.date == datetime(2021, 1, 1)
+
+    text = "Multiple lines Revised: 1/1/20, 1/1/21, 1/1/22,\n 10/1/22, 11/1/22"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 5
+    assert parser.last_updated_date.date == datetime(2022, 11, 1)
+
+
+def test_quarter_dates():
+    text = "2nd quarter 2020"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 2
+    assert parser.effective_date.date == datetime(2020, 4, 1)
+
+    text = "With other text Q3 2020"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 2
+    assert parser.effective_date.date == datetime(2020, 7, 1)
+
+    text = "Other format Quarter 4 2021"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 2
+    assert parser.effective_date.date == datetime(2021, 10, 1)
+
+    text = "Other format Third Quarter of 2022"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 2
+    assert parser.effective_date.date == datetime(2022, 7, 1)
+
+    text = "Quarter 4 not valid 2021"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 1
+    assert parser.effective_date.date == datetime(2021, 1, 1)

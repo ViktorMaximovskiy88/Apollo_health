@@ -426,6 +426,7 @@ function TranslationRule(props: {
 }) {
   const options = [
     { value: 'PA', label: 'Prior Authorization' },
+    { value: 'PN', label: 'Prescriber Notes' },
     { value: 'CPA', label: 'Conditional PA' },
     { value: 'QL', label: 'Quantity Limit' },
     { value: 'QLC', label: 'QL Component' },
@@ -454,7 +455,7 @@ function TranslationRule(props: {
         <Form.Item className="grow" label="Field" name={[props.name, 'field']} {...props.field}>
           <Select options={options} />
         </Form.Item>
-        {['PA', 'CPA', 'QL', 'ST', 'SP', 'STPA', 'MB', 'SCO', 'DME'].includes(field) && (
+        {['PA', 'PN', 'CPA', 'QL', 'ST', 'SP', 'STPA', 'MB', 'SCO', 'DME'].includes(field) && (
           <PatternTranslationInput name={props.name} field={props.field} />
         )}
         {['Brand', 'Generic'].includes(field) && (

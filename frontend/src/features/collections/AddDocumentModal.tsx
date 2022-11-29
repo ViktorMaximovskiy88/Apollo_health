@@ -76,6 +76,7 @@ export function AddDocumentModal({
   const [oldLocationDocId, setOldLocationDocId] = useState('');
   const [isEditingDocFromOtherSite, setIsEditingDocFromOtherSite] = useState(false);
   const [intitialBaseUrl, setIntitialBaseUrl] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   // Set initial values.
   const { data: site } = useGetSiteQuery(siteId);
@@ -121,12 +122,14 @@ export function AddDocumentModal({
       fileData.base_url = form.getFieldValue('base_url') ?? newDocument.url;
       fileData.link_text = form.getFieldValue('link_text');
       delete newDocument.document_file;
+      setIsLoading(true);
 
       try {
         const response = await addDoc({
           ...newDocument,
           ...fileData,
         });
+        setIsLoading(false);
         if (refetch) {
           refetch();
         }
@@ -136,12 +139,14 @@ export function AddDocumentModal({
           setOpen(false);
         }
       } catch (error: any) {
+        setIsLoading(false);
         notification.error({
           message: error.data.detail,
           description: 'Upload a new document or enter a new location.',
         });
       }
     } catch (error) {
+      setIsLoading(false);
       message.error('We could not save this document');
     }
   }
@@ -149,19 +154,27 @@ export function AddDocumentModal({
     setOpen(false);
   }
 
-  function setLocationValuesFromResponse(responseData: any) {
-    form.setFieldsValue({
-      name: responseData.doc_name,
-      document_type: responseData.document_type,
-      lang_code: responseData.lang_code,
-      effective_date: convertDate(responseData.effective_date),
-      last_reviewed_date: convertDate(responseData.last_reviewed_date),
-      last_updated_date: convertDate(responseData.last_updated_date),
-      next_review_date: convertDate(responseData.next_review_date),
-      next_update_date: convertDate(responseData.next_update_date),
-      published_date: convertDate(responseData.published_date),
-    });
+  // Doc exists on other site.
+  // Since only location fields are editable, override other form values
+  // with existing doc data.
+  function setDocFromOtherSiteValues(responseData: any) {
     if (responseData.prev_location_doc_id) {
+      form.setFieldsValue({
+        name: responseData.doc_name,
+        document_type: responseData.document_type,
+        lang_code: responseData.lang_code,
+        effective_date: convertDate(responseData.effective_date),
+        last_reviewed_date: convertDate(responseData.last_reviewed_date),
+        last_updated_date: convertDate(responseData.last_updated_date),
+        next_review_date: convertDate(responseData.next_review_date),
+        next_update_date: convertDate(responseData.next_update_date),
+        published_date: convertDate(responseData.published_date),
+      });
+      if (responseData.internal_document === true) {
+        form.setFieldsValue({
+          internal_document: responseData.internal_document,
+        });
+      }
       displayDuplicateError('Document exists on other site');
       setOldLocationSiteId(responseData.prev_location_site_id);
       setOldLocationDocId(responseData.prev_location_doc_id);
@@ -186,7 +199,7 @@ export function AddDocumentModal({
             form={form}
             setFileData={setFileData}
             siteId={siteId}
-            setLocationValuesFromResponse={setLocationValuesFromResponse}
+            setDocFromOtherSiteValues={setDocFromOtherSiteValues}
           />
         </div>
 
@@ -233,7 +246,7 @@ export function AddDocumentModal({
 
         <Form.Item>
           <Space>
-            <Button type="primary" htmlType="submit">
+            <Button type="primary" disabled={isLoading} htmlType="submit">
               Save
             </Button>
             <Button onClick={onCancel} htmlType="submit">
@@ -247,7 +260,7 @@ export function AddDocumentModal({
 }
 
 function UploadItem(props: any) {
-  const { setFileData, siteId, setLocationValuesFromResponse } = props;
+  const { setFileData, siteId, setDocFromOtherSiteValues } = props;
   const [token, setToken] = useState('');
   const [fileName, setFileName] = useState('');
   const [uploadStatus, setUploadStatus] = useState('');
@@ -269,7 +282,7 @@ function UploadItem(props: any) {
         message.error(response.error);
       } else if (response.success) {
         setUploadStatus('done');
-        setLocationValuesFromResponse(response.data);
+        setDocFromOtherSiteValues(response.data);
         setFileData(response.data);
       }
     }

@@ -146,9 +146,10 @@ async def viewer_document_link(
     target: RetrievedDocument = Depends(get_target),
 ):
     client = DocumentStorageClient()
-    url = client.get_signed_url(
-        f"{target.checksum}.{target.file_extension}", expires_in_seconds=60 * 60
-    )
+    key = f"{target.checksum}.{target.file_extension}"
+    if target.file_extension == "html":
+        key = key + ".pdf"
+    url = client.get_signed_url(key, expires_in_seconds=60 * 60)
     return {"url": url}
 
 
@@ -436,10 +437,11 @@ async def add_document(
         created_doc_doc.indication_tags = tag_compare_response[1]
         await created_doc_doc.save()
 
-    # Process and update work items.
+    # Update current task work list and doc counts.
     current_task: SiteScrapeTask = await site_last_started_task(site.id)
     if not current_task:
         return created_retr_doc
+    # Process and update work items.
     created_work_item: ManualWorkItem = ManualWorkItem(
         document_id=f"{created_doc_doc.id}",
         retrieved_document_id=f"{created_retr_doc.id}",

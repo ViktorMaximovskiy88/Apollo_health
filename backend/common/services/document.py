@@ -94,6 +94,7 @@ async def create_doc_document_service(
         text_checksum=retrieved_document.text_checksum,
         document_type=retrieved_document.document_type,
         doc_type_confidence=retrieved_document.doc_type_confidence,
+        doc_type_match=retrieved_document.doc_type_match,
         end_date=retrieved_document.end_date,
         effective_date=retrieved_document.effective_date,
         last_updated_date=retrieved_document.last_updated_date,

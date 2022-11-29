@@ -22,12 +22,17 @@ class PlaybookStep(BaseModel):
 PlaybookContext = list[PlaybookStep]
 
 
+class PlaybookException(Exception):
+    ...
+
+
 class ScrapePlaybook:
     playbook: list[PlaybookStep] = []
 
     def __init__(
         self, playbook_str: str | None, playbook_context: list[PlaybookStep] | None = None
     ) -> None:
+        self.invalid_playbook: str | None = None
         if playbook_context:
             self.playbook = playbook_context
         else:
@@ -73,7 +78,7 @@ class ScrapePlaybook:
                     steps.append(step)
                     continue
 
-            raise Exception(f"Unknown Playbook Action: {step_block}")
+            self.invalid_playbook = step_block
 
         return steps
 
@@ -195,12 +200,15 @@ class ScrapePlaybook:
             next_steps = self.handle_click(page, step, remaining_steps, context)
 
         if not next_steps:
-            raise Exception(f"could not handle step {step}")
+            raise PlaybookException(f"could not handle step {step}")
 
         async for next_page, context in next_steps:
             yield next_page, context
 
     async def run_playbook(self, page: Page, skip_playbook: bool = False):
+        if self.invalid_playbook:
+            raise PlaybookException(f"Unknown Playbook Action: {self.invalid_playbook}")
+
         if not self.playbook or skip_playbook:
             yield page, []
             return
