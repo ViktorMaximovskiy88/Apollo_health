@@ -27,6 +27,7 @@ class ChangeInfo(BaseModel):
     lineage_change: PydanticObjectId | None = None
     old_payer_family_ids: list[PydanticObjectId | None] = []
     document_family_change: PydanticObjectId | bool = False
+    old_document_family_id: PydanticObjectId | None = None
 
 
 async def recompare_tags(doc: DocDocument, prev_doc: DocDocument):
@@ -84,6 +85,18 @@ async def update_payer_family_counts(doc, change_info):
     await PayerFamily.find({"_id": {"$in": removed}}).update_many({"$inc": {"doc_doc_count": -1}})
 
 
+async def update_document_family_counts(new_document_family_id, old_document_family_id):
+    if new_document_family_id == old_document_family_id:
+        return
+
+    await DocumentFamily.find({"_id": new_document_family_id}).update(
+        {"$inc": {"doc_doc_count": 1}}
+    )
+    await DocumentFamily.find({"_id": old_document_family_id}).update(
+        {"$inc": {"doc_doc_count": -1}}
+    )
+
+
 async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = ChangeInfo()):
     if change_info.translation_change and doc.translation_id:
         await enqueue_translation_task(doc)
@@ -113,6 +126,10 @@ async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = Cha
         )
 
     await update_payer_family_counts(doc, change_info)
+    await update_document_family_counts(
+        new_document_family_id=doc.document_family_id,
+        old_document_family_id=change_info.old_document_family_id,
+    )
 
     await DocLifecycleService().assess_document_status(doc)
 
@@ -142,6 +159,12 @@ def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
         updates.locations or doc.locations
     ):
         change_info.old_payer_family_ids = [location.payer_family_id for location in doc.locations]
+
+    if (
+        isinstance(updates, (UpdateDocDocument, ClassificationUpdateDocDocument))
+        and updates.document_family_id != doc.document_family_id
+    ):
+        change_info.old_document_family_id = doc.document_family_id
 
     return change_info
 

@@ -10,6 +10,7 @@ export const initialState = {
       { name: 'site_ids', operator: 'eq', type: 'select', value: [] },
       { name: 'legacy_relevance', operator: 'eq', type: 'select', value: '' },
       { name: 'field_groups', operator: 'eq', type: 'select', value: '' },
+      { name: 'doc_doc_count', operator: 'gte', type: 'number', value: null },
     ],
     pagination: { limit: 50, skip: 0 },
   },
