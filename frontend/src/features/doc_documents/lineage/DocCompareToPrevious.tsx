@@ -63,8 +63,8 @@ export function DocCompareToPrevious() {
       let new_key;
       let prev_key;
 
-      if (result.task) {
-        const { payload } = result.task;
+      if (result.payload) {
+        const { payload } = result;
         new_key = `${payload.current_checksum}-${payload.previous_checksum}-new.pdf`;
         prev_key = `${payload.current_checksum}-${payload.previous_checksum}-prev.pdf`;
       } else {
