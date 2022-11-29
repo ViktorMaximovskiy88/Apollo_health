@@ -177,7 +177,7 @@ resource "aws_ecs_service" "taskworker" {
 resource "aws_sqs_queue" "taskworker" {
   name = format("%s-%s-%s-taskworker-%s-mmit-sqs-%02d.fifo", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
 
-  visibility_timeout_seconds = 30
+  visibility_timeout_seconds = 1200   # 20 minutes ... need to add DLQs
   message_retention_seconds  = 345600 # 4 days
   delay_seconds              = 0
   fifo_queue                 = true
