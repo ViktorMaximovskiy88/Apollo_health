@@ -16,7 +16,6 @@ resource "aws_ecs_task_definition" "taskworker" {
   cpu    = 1024
   memory = 2048
 
-
   container_definitions = jsonencode([
     {
       name  = "${local.service_name}-app"
@@ -64,7 +63,7 @@ resource "aws_ecs_task_definition" "taskworker" {
           value = "${local.new_relic_app_name}-taskworker"
         },
         {
-          name  = "PDFDIFF_WORKER_QUEUE_URL"
+          name  = "TASK_WORKER_QUEUE_URL"
           value = aws_sqs_queue.taskworker.url
         }
       ]
@@ -191,7 +190,7 @@ resource "aws_sqs_queue" "taskworker" {
 
 resource "aws_appautoscaling_target" "taskworker" {
   max_capacity       = 3
-  min_capacity       = 0
+  min_capacity       = 1
   resource_id        = "service/${data.aws_ecs_cluster.ecs-cluster.cluster_name}/${local.service_name}-taskworker"
   role_arn           = aws_iam_service_linked_role.autoscaling.arn
   scalable_dimension = "ecs:service:DesiredCount"
@@ -241,7 +240,6 @@ resource "aws_appautoscaling_policy" "taskworker_scale_down" {
       metric_interval_upper_bound = 0
       scaling_adjustment          = 0
     }
-
   }
 }
 
@@ -280,7 +278,6 @@ resource "aws_cloudwatch_metric_alarm" "taskworker_scale_down" {
   alarm_actions = [
     aws_appautoscaling_policy.taskworker_scale_down.arn
   ]
-
 
   dimensions = {
     QueueName = aws_sqs_queue.taskworker.name
