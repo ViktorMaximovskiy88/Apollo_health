@@ -326,13 +326,6 @@ async def add_document(
         if not new_doc_doc:
             raise HTTPException(status.HTTP_409_CONFLICT, err_msg)
         new_doc_doc_loc: DocDocumentLocation = DocDocumentLocation(**new_loc_fields)
-        prev_loc: DocDocumentLocation = next(
-            loc
-            for loc in new_doc_doc.locations
-            if uploaded_doc.prev_location_site_id == f"{loc.site_id}"
-        )
-        if prev_loc.payer_family_id:
-            new_doc_doc_loc.payer_family_id = prev_loc.payer_family_id
         new_doc_doc.locations.append(new_doc_doc_loc)
         await new_retr_document.save()
         await new_doc_doc.save()
@@ -408,7 +401,7 @@ async def add_document(
         created_retr_doc = new_retr_document
         created_doc_doc = new_doc_doc
 
-    # Generate new_version tags, location payer_family.
+    # Generate new_version tags.
     if uploaded_doc.upload_new_version_for_id:
         # We set document_family_id and translation_id here
         # because they are only set on doc_doc.
@@ -419,15 +412,6 @@ async def add_document(
         # Need to update previous_doc_doc_id since new_retr_doc is retr_doc which does not have
         # a previous_doc_doc_id. New retr_document.previous_doc_id is set before create.
         created_doc_doc.previous_doc_doc_id = original_doc_doc.id
-        # Update location with prev_loc payer_family_id.
-        loc: DocDocumentLocation = next(
-            loc for loc in created_doc_doc.locations if site.id == loc.site_id
-        )
-        prev_loc: DocDocumentLocation = next(
-            loc for loc in original_doc_doc.locations if site.id == loc.site_id
-        )
-        if prev_loc.payer_family_id:
-            loc.payer_family_id = prev_loc.payer_family_id
         # Generate delta tags for new version from old version.
         tag_compare: TagCompare = TagCompare()
         tag_compare_response: tuple[
