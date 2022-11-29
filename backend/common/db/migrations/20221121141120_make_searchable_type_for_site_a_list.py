@@ -8,7 +8,12 @@ class Forward:
     @free_fall_migration(document_models=[Site])
     async def make_searchable_type_for_site_a_list(self, session):
         await Site.get_motor_collection().update_many(
-            {"scrape_method_configuration.searchable_type": {"$in": ["CPTCODES", "JCODES"]}},
+            {
+                "scrape_method_configuration.searchable_type": {
+                    "$not": {"$gte": []},
+                    "$in": ["CPTCODES", "JCODES"],
+                }
+            },
             [
                 {
                     "$set": {
@@ -22,11 +27,16 @@ class Forward:
 
         await Site.get_motor_collection().update_many(
             {"scrape_method_configuration.searchable_type": None},
-            {"scrape_method_configuration.searchable_type": []},
+            {"$set": {"scrape_method_configuration.searchable_type": []}},
         )
 
         await SiteScrapeTask.get_motor_collection().update_many(
-            {},
+            {
+                "scrape_method_configuration.searchable_type": {
+                    "$not": {"$gte": []},
+                    "$in": ["CPTCODES", "JCODES"],
+                }
+            },
             [
                 {
                     "$set": {
@@ -47,7 +57,7 @@ class Backward:
             {
                 "$set": {
                     "scrape_method_configuration.searchable_type": {
-                        "$scrape_method_configuration.searchable_type"
+                        "$scrape_method_configuration.searchable_type.0"
                     }
                 }
             },
@@ -58,7 +68,7 @@ class Backward:
             {
                 "$set": {
                     "scrape_method_configuration.searchable_type": {
-                        "$scrape_method_configuration.searchable_type"
+                        "$scrape_method_configuration.searchable_type.0"
                     }
                 }
             },
