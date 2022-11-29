@@ -60,6 +60,7 @@ class LineageService:
         return docs
 
     async def clear_lineage_for_site(self, site_id: PydanticObjectId):
+        self.logger.info(f"before clear_lineage_for_site {site_id}")
         await asyncio.gather(
             RetrievedDocument.get_motor_collection().update_many(
                 {"locations.site_id": site_id},
@@ -83,6 +84,7 @@ class LineageService:
             ),
             DocumentAnalysis.get_motor_collection().delete_many({"site_id": site_id}),
         )
+        self.logger.info(f"after clear_lineage_for_site {site_id}")
 
     async def clear_all_lineage(self):
         await asyncio.gather(
@@ -112,12 +114,14 @@ class LineageService:
     async def update_site_docs(self, site_id):
         # Updates tags, doc vecs and whatever else we need for lineage
         # using retagger for now
+        self.logger.info(f"before update_site_docs {site_id}")
         retagger = ReTagger()
         await retagger.indication.model()
         site = await Site.get(site_id)
         if not site:
             raise Exception(f"Site Id {site_id} does not exists")
         await retagger.retag_docs_on_site(site, 0)
+        self.logger.info(f"after update_site_docs {site_id}")
 
     async def process_all_sites(self):
         async for site in Site.find():
@@ -138,7 +142,7 @@ class LineageService:
     async def reprocess_lineage_for_site(self, site_id: PydanticObjectId):
         # we also want to clear for shared lineage sites
         site_ids = await self.get_shared_lineage_sites(site_id)
-
+        self.logger.info(f"reprocess_lineage_for_site({site_id}) with site_ids={site_ids}")
         for site_id in site_ids:
             self.logger.info(f"clear/update for site {site_id}")
             await self.clear_lineage_for_site(site_id)
@@ -205,16 +209,18 @@ class LineageService:
                     break
 
             if matched_item:
-                self.logger.debug(f"'{pending_item.filename}' '{matched_item.filename}' -> MATCHED")
+                self.logger.info(f"'{pending_item.filename}' '{matched_item.filename}' -> MATCHED")
                 pending_item.lineage_id = matched_item.lineage_id
                 await pending_item.save()
                 lineaged_items.append(pending_item)
             else:
-                self.logger.debug(f"'{pending_item.filename_text}' -> UNMATCHED")
+                self.logger.info(f"'{pending_item.filename_text}' -> UNMATCHED")
                 pending_item = await create_lineage(pending_item)
                 lineaged_items.append(pending_item)
 
+        self.logger.info(f"before _version_matched {len(lineaged_items)}")
         await self._version_matched(lineaged_items)
+        self.logger.info(f"after _version_matched {len(lineaged_items)}")
 
     def sort_matched(self, items: list[DocumentAnalysis]):
         items.sort(key=lambda x: x.final_effective_date or x.year_part or 0)
@@ -223,7 +229,9 @@ class LineageService:
     async def compare_tags(
         self, doc: RetrievedDocument, doc_doc: DocDocument, prev_doc: RetrievedDocument
     ) -> tuple[RetrievedDocument, DocDocument]:
+        self.logger.info(f"'before compare tags {doc_doc.id}")
         ther_tags, indi_tags = await self.tag_compare.execute(doc, prev_doc)
+        self.logger.info(f"'after compare tags {doc_doc.id}")
         doc.therapy_tags = ther_tags
         doc.indication_tags = indi_tags
         doc_doc.therapy_tags = ther_tags

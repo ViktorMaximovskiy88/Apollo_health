@@ -49,6 +49,7 @@ class TaskQueue(SQSBase):
                     except Exception:
                         self.logger.error("task error:", exc_info=True)
                         await task.update_failed(error=traceback.format_exc())
+                        message.delete()
                         continue
 
                     task = await task.update_finished()
