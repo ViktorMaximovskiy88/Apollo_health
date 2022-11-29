@@ -182,6 +182,8 @@ class DateParser:
         return best_match
 
     def check_effective_date(self, label_texts: list[str]):
+        if self.effective_date.date is not None:
+            return
         if label_date := self.get_doc_label_dates(label_texts):
             # search other texts for dates. if found, assign as effective
             self.effective_date = label_date
@@ -193,7 +195,7 @@ class DateParser:
                     best_match = match
             if best_match is not None:
                 self.effective_date = best_match
-        elif len(self.unclassified_dates) == 1 and self.effective_date.date is None:
+        elif len(self.unclassified_dates) == 1:
             eff_date = list(self.unclassified_dates)[0]
             if self.end_date.date == eff_date:
                 return
@@ -429,9 +431,7 @@ class DateParser:
 
     def is_references_header(self, line: str) -> bool:
         search = "references"
-        if search in line and not any(c.isalpha() for c in line.replace(search, "")):
-            return True
-        return False
+        return search in line and not any(c.isalpha() for c in line.replace(search, ""))
 
     def extract_dates(self, text: str, label_texts: list[str] = []) -> None:
         """

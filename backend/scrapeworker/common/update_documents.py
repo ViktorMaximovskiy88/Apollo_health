@@ -145,6 +145,7 @@ class DocumentUpdater:
                 doc_document.document_type = retrieved_document.document_type
 
                 doc_document.effective_date = retrieved_document.effective_date
+                doc_document.end_date = retrieved_document.end_date
                 doc_document.last_reviewed_date = retrieved_document.last_reviewed_date
                 doc_document.last_updated_date = retrieved_document.last_updated_date
                 doc_document.next_review_date = retrieved_document.next_review_date

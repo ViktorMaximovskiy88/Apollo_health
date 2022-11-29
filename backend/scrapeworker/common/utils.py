@@ -64,6 +64,7 @@ def compile_label_rgx():
         r"rev\.": "last_updated_date",
         r"current": "last_updated_date",
         r"version": "last_updated_date",
+        r"last res\.": "last_updated_date",
         r"reviewed": "last_reviewed_date",  # this may need to be narrowed back to 'reviewed on', etc
         r"last review": "last_reviewed_date",
         r"recent review": "last_reviewed_date",

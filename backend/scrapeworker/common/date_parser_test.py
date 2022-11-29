@@ -292,6 +292,7 @@ def test_default_effective_date():
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
+    assert parser.effective_date.date == datetime(2022, 2, 9)
 
     text = "Contains two dates with updated date override, updated 2/9/2022, effective May 5 2020"
     parser = DateParser(date_rgxs, label_rgxs)
@@ -334,6 +335,13 @@ def test_default_effective_date():
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 1
     assert parser.effective_date.date == datetime(2022, 1, 1)
+
+    text = "Labeled effective 3/3/2021 takes precedence over label text"
+    label_texts = ["Doc Link Text 2/10/2022"]
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text, label_texts)
+    assert len(parser.unclassified_dates) == 1
+    assert parser.effective_date.date == datetime(2021, 3, 3)
 
 
 def test_pick_valid_date_range():
