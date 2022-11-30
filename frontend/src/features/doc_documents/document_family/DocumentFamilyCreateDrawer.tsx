@@ -54,6 +54,11 @@ export const DocumentFamilyCreateDrawer = (props: DocumentFamilyCreateDrawerProp
 
   filteredlegacyRelevanceOptions = filterLegacyRelevanceOptions(legacyRelevanceOptions, nameValue);
 
+  const handleClose = () => {
+    form.resetFields();
+    onClose();
+  };
+
   useEffect(() => {
     if (isSuccess && data) {
       onSave(data);
@@ -81,11 +86,11 @@ export const DocumentFamilyCreateDrawer = (props: DocumentFamilyCreateDrawerProp
       closable={false}
       mask={mask}
       extra={
-        <Button type="text" onClick={onClose}>
+        <Button type="text" onClick={handleClose}>
           <CloseOutlined />
         </Button>
       }
-      onClose={onClose}
+      onClose={handleClose}
     >
       <Form
         form={form}
@@ -133,7 +138,7 @@ export const DocumentFamilyCreateDrawer = (props: DocumentFamilyCreateDrawerProp
           </Form.Item>
         </Input.Group>
         <div className="space-x-2 flex justify-end">
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={handleClose}>Cancel</Button>
           <Button type="primary" onClick={form.submit} loading={isLoading || isUpdateLoading}>
             Submit
           </Button>
