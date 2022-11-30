@@ -412,6 +412,15 @@ async def add_document(
         # Need to update previous_doc_doc_id since new_retr_doc is retr_doc which does not have
         # a previous_doc_doc_id. New retr_document.previous_doc_id is set before create.
         created_doc_doc.previous_doc_doc_id = original_doc_doc.id
+        # Update location with prev_loc payer_family_id.
+        loc: DocDocumentLocation = next(
+            loc for loc in created_doc_doc.locations if site.id == loc.site_id
+        )
+        prev_loc: DocDocumentLocation = next(
+            loc for loc in original_doc_doc.locations if site.id == loc.site_id
+        )
+        if prev_loc.payer_family_id:
+            loc.payer_family_id = prev_loc.payer_family_id
         # Generate delta tags for new version from old version.
         tag_compare: TagCompare = TagCompare()
         tag_compare_response: tuple[
