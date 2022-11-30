@@ -7,6 +7,7 @@ import { ChangeLogModal } from '../../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './documentFamilyApi';
 import { TypeColumn } from '@inovua/reactdatagrid-community/types';
 import { Link } from 'react-router-dom';
+import { CopyDocumentFamily } from './CopyDocumentFamily';
 
 export const createColumns = () => {
   return [
@@ -35,6 +36,7 @@ export const createColumns = () => {
       render: ({ data: docFamily }: { data: DocumentFamily }) => (
         <>
           <ChangeLogModal target={docFamily} useChangeLogQuery={useGetChangeLogQuery} />
+          <CopyDocumentFamily documentFamily={docFamily} />
         </>
       ),
     },
