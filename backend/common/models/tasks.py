@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import TypeVar
 
 from beanie import Indexed, Insert, PydanticObjectId, before_event
@@ -77,11 +77,42 @@ class TaskLog(BaseDocument):
     ) -> GenericTaskType | None:
         return await cls.find_many({"created_by": user_id, "is_complete": False}).to_list()
 
+    def is_finished(self) -> bool:
+        return self.is_complete and self.status == TaskStatus.FINISHED
+
+    def has_failed(self) -> bool:
+        return self.is_complete and self.status == TaskStatus.FAILED
+
+    def is_queued(self) -> bool:
+        return not self.is_complete and self.status == TaskStatus.QUEUED
+
+    def is_stale(self, seconds: int) -> bool:
+        return (
+            not self.is_complete
+            and self.status == TaskStatus.IN_PROGRESS
+            and self.status_at.replace(tzinfo=None)
+            < datetime.now(tz=timezone.utc) - timedelta(seconds=seconds)
+        )
+
+    def should_process(self, message_id: str, seconds: int) -> bool:
+        return (
+            self.is_queued() or self.has_failed() or self.is_stale(seconds)
+        ) and self.message_id == message_id
+
+    def has_been_queued(self) -> bool:
+        queued = [log for log in self.log if log.status == TaskStatus.QUEUED]
+        # TODO think on the message id part...
+        return len(queued) > 0 and self.message_id
+
     async def update_queued(self, message_id: str) -> GenericTaskType:
         return await self._update_status(TaskStatus.QUEUED, message_id=message_id)
 
     async def update_progress(self) -> GenericTaskType:
-        return await self._update_status(TaskStatus.IN_PROGRESS)
+        return await self._update_status(TaskStatus.IN_PROGRESS, is_complete=False)
+
+    async def keep_alive(self) -> GenericTaskType:
+        self.status_at = datetime.now(tz=timezone.utc)
+        return await self.save()
 
     async def update_finished(self) -> GenericTaskType:
         return await self._update_status(TaskStatus.FINISHED, is_complete=True)
