@@ -27,9 +27,10 @@ class TaskQueue(SQSBase):
             self.current_message.change_visibility(VisibilityTimeout=10)
 
         loop = asyncio.get_event_loop()
-        tasks = asyncio.gather(*asyncio.all_tasks(loop=loop), return_exceptions=False)
-        tasks.cancel()
+        tasks = asyncio.gather(*asyncio.all_tasks(loop=loop), return_exceptions=True)
         tasks.add_done_callback(lambda t: loop.stop())
+        tasks.cancel()
+
         while not tasks.done() and not loop.is_closed():
             loop.run_forever()
 
@@ -53,6 +54,9 @@ class TaskQueue(SQSBase):
             message_id = response["MessageId"]
             task = await task.update_queued(message_id)
 
+        # if its stale (queued with for so long?) and has a message id
+        # maybe the message dropped... just delete message and sqs.send again?
+
         return task
 
     async def keep_alive(self, message, task: TaskLog, seconds: int):
@@ -68,7 +72,7 @@ class TaskQueue(SQSBase):
             for (message, _payload) in self.receive():
                 self.current_message = message
                 self.logger.info(f"received message_id={message.message_id}")
-                task: TaskLog
+                task: TaskLog = None
                 try:
                     task = await self._get_task_by_message_id(message.message_id)
                     self.current_task = task
@@ -82,10 +86,10 @@ class TaskQueue(SQSBase):
                     self.logger.info(f"{task.task_type} processing started")
 
                     try:
-                        Processor = get_task_processor(task.payload)
                         self.keep_alive_task = asyncio.create_task(
                             self.keep_alive(message, task, self.keep_alive_seconds)
                         )
+                        Processor = get_task_processor(task.payload)
                         await Processor(logger=self.logger).exec(task.payload)
                         self.keep_alive_task.cancel()
 
@@ -101,13 +105,8 @@ class TaskQueue(SQSBase):
 
                 except asyncio.CancelledError:
                     self.logger.warn("canceling tasks")
-                    if task:
-                        await task.update_failed(error=traceback.format_exc())
-
                 except Exception:
                     self.logger.error("queue error:", exc_info=True)
-                    if task:
-                        await task.update_failed(error=traceback.format_exc())
 
                 self.current_message = None
 

@@ -90,8 +90,8 @@ class TaskLog(BaseDocument):
         return (
             not self.is_complete
             and self.status == TaskStatus.IN_PROGRESS
-            and self.status_at.replace(tzinfo=None)
-            < datetime.now(tz=timezone.utc) - timedelta(seconds=seconds)
+            and self.status_at
+            < datetime.now(tz=timezone.utc).replace(tzinfo=None) - timedelta(seconds=seconds)
         )
 
     def should_process(self, message_id: str, seconds: int) -> bool:
