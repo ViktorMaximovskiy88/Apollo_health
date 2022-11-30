@@ -326,13 +326,6 @@ async def add_document(
         if not new_doc_doc:
             raise HTTPException(status.HTTP_409_CONFLICT, err_msg)
         new_doc_doc_loc: DocDocumentLocation = DocDocumentLocation(**new_loc_fields)
-        prev_loc: DocDocumentLocation = next(
-            loc
-            for loc in new_doc_doc.locations
-            if uploaded_doc.prev_location_site_id == f"{loc.site_id}"
-        )
-        if prev_loc.payer_family_id:
-            new_doc_doc_loc.payer_family_id = prev_loc.payer_family_id
         new_doc_doc.locations.append(new_doc_doc_loc)
         await new_retr_document.save()
         await new_doc_doc.save()
@@ -408,7 +401,7 @@ async def add_document(
         created_retr_doc = new_retr_document
         created_doc_doc = new_doc_doc
 
-    # Generate new_version tags, location payer_family.
+    # Generate new_version tags.
     if uploaded_doc.upload_new_version_for_id:
         # We set document_family_id and translation_id here
         # because they are only set on doc_doc.
