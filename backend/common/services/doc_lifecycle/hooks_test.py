@@ -6,12 +6,12 @@ from beanie import PydanticObjectId
 from backend.common.core.enums import DocumentType
 from backend.common.db.init import init_db
 from backend.common.models.doc_document import DocDocument, DocDocumentLocation
-from backend.common.models.payer_family import PayerFamily
 from backend.common.models.document_family import DocumentFamily
+from backend.common.models.payer_family import PayerFamily
 from backend.common.services.doc_lifecycle.hooks import (
     ChangeInfo,
-    update_payer_family_counts,
     update_document_family_counts,
+    update_payer_family_counts,
 )
 
 
@@ -44,6 +44,14 @@ async def test_update_payer_family_counts_added():
     pf = await PayerFamily.find_one({"_id": pf.id})
     assert pf and pf.doc_doc_count == 1
 
+    change_info = ChangeInfo(old_payer_family_ids=[pf.id])
+    doc = BasicDoc(locations=[BasicLocation(payer_family_id=None)])
+
+    await update_payer_family_counts(doc, change_info)
+
+    pf = await PayerFamily.find_one({"_id": pf.id})
+    assert pf and pf.doc_doc_count == 0
+
 
 async def test_update_document_family_counts_added():
     df = DocumentFamily(name="df1", document_type=DocumentType.Formulary)
@@ -53,3 +61,7 @@ async def test_update_document_family_counts_added():
 
     df = await DocumentFamily.find_one({"_id": df.id})
     assert df and df.doc_doc_count == 1
+
+    await update_document_family_counts(old_document_family_id=df.id, new_document_family_id=None)
+    df = await DocumentFamily.find_one({"_id": df.id})
+    assert df and df.doc_doc_count == 0

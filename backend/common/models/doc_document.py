@@ -46,7 +46,7 @@ class BaseDocDocument(BaseModel):
     # Document Type
     document_type: Indexed(str) | None = None  # type: ignore
     doc_type_confidence: float | None = None
-    doc_type_match: DocTypeMatch | None
+    doc_type_match: DocTypeMatch | None = None
     internal_document: bool | None = None
 
     document_family_id: Indexed(PydanticObjectId) | None = None  # type: ignore
@@ -103,7 +103,6 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
             [("locks.user_id", pymongo.ASCENDING)],
             [("locations.payer_family_id", pymongo.ASCENDING)],
             [("name", pymongo.TEXT), ("locations.link_text", pymongo.TEXT)],
-            [("document_family_id", pymongo.ASCENDING)],
         ]
 
 

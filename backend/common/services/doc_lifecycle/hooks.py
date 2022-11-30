@@ -27,7 +27,6 @@ class ChangeInfo(BaseModel):
     lineage_change: PydanticObjectId | None = None
     old_payer_family_ids: list[PydanticObjectId | None] = []
     document_family_change: PydanticObjectId | bool = False
-    old_document_family_id: PydanticObjectId | None = None
 
 
 async def recompare_tags(doc: DocDocument, prev_doc: DocDocument):
@@ -107,6 +106,11 @@ async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = Cha
         if doc.document_family_id:
             await add_site_to_new_doc_family(doc.document_family_id, doc)
 
+        await update_document_family_counts(
+            new_document_family_id=doc.document_family_id,
+            old_document_family_id=change_info.document_family_change,
+        )
+
     if change_info.lineage_change:
         if doc.previous_doc_doc_id:
             prev_doc = await DocDocument.get(doc.previous_doc_doc_id)
@@ -126,10 +130,6 @@ async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = Cha
         )
 
     await update_payer_family_counts(doc, change_info)
-    await update_document_family_counts(
-        new_document_family_id=doc.document_family_id,
-        old_document_family_id=change_info.old_document_family_id,
-    )
 
     await DocLifecycleService().assess_document_status(doc)
 
@@ -155,16 +155,10 @@ def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
     ):
         change_info.document_family_change = doc.document_family_id or True
 
-    if isinstance(updates, (UpdateDocDocument, ClassificationUpdateDocDocument)) and (
+    if isinstance(updates, (UpdateDocDocument, FamilyUpdateDocDocument)) and (
         updates.locations or doc.locations
     ):
         change_info.old_payer_family_ids = [location.payer_family_id for location in doc.locations]
-
-    if (
-        isinstance(updates, (UpdateDocDocument, ClassificationUpdateDocDocument))
-        and updates.document_family_id != doc.document_family_id
-    ):
-        change_info.old_document_family_id = doc.document_family_id
 
     return change_info
 
