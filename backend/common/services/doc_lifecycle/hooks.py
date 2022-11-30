@@ -14,6 +14,7 @@ from backend.common.models.doc_document import (
     UpdateDocDocument,
 )
 from backend.common.models.document_family import DocumentFamily
+from backend.common.models.payer_family import PayerFamily
 from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleService
 from backend.common.services.extraction.extraction_delta import DeltaCreator
 from backend.common.services.lineage.update_prev_document import update_lineage
@@ -24,6 +25,7 @@ from backend.common.task_queues.unique_task_insert import try_queue_unique_task
 class ChangeInfo(BaseModel):
     translation_change: bool = False
     lineage_change: PydanticObjectId | None = None
+    old_payer_family_ids: list[PydanticObjectId | None] = []
     document_family_change: PydanticObjectId | bool = False
 
 
@@ -73,6 +75,15 @@ async def recompare_extractions(doc: DocDocument, prev_doc: DocDocument):
         await DeltaCreator().compute_delta(task, prev_task)
 
 
+async def update_payer_family_counts(doc, change_info):
+    new_payer_family_ids = {location.payer_family_id for location in doc.locations}
+    old_payer_family_ids = set(change_info.old_payer_family_ids)
+    added = list(new_payer_family_ids - old_payer_family_ids)
+    removed = list(old_payer_family_ids - new_payer_family_ids)
+    await PayerFamily.find({"_id": {"$in": added}}).update_many({"$inc": {"doc_doc_count": 1}})
+    await PayerFamily.find({"_id": {"$in": removed}}).update_many({"$inc": {"doc_doc_count": -1}})
+
+
 async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = ChangeInfo()):
     if change_info.translation_change and doc.translation_id:
         await enqueue_translation_task(doc)
@@ -101,6 +112,8 @@ async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = Cha
             new_prev_doc_doc_id=doc.previous_doc_doc_id,
         )
 
+    await update_payer_family_counts(doc, change_info)
+
     await DocLifecycleService().assess_document_status(doc)
 
 
@@ -124,6 +137,11 @@ def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
         and updates.document_family_id != doc.document_family_id
     ):
         change_info.document_family_change = doc.document_family_id or True
+
+    if isinstance(updates, (UpdateDocDocument, ClassificationUpdateDocDocument)) and (
+        updates.locations or doc.locations
+    ):
+        change_info.old_payer_family_ids = [location.payer_family_id for location in doc.locations]
 
     return change_info
 

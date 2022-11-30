@@ -80,6 +80,10 @@ def _prepare_table_query(
         else:
             value = transform_value(filter.value, filter.type)
 
+        if filter.operator == "textcontains":
+            match.append({"$text": {"$search": value}})
+        if filter.operator == "textnotContains":
+            match.append({"$text": {"$search": f'-"{value}"'}})
         if filter.operator == "contains":
             match.append({filter.name: {"$regex": value, "$options": "i"}})
         if filter.operator == "notContains":

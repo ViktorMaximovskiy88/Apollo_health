@@ -12,6 +12,7 @@ from backend.common.models.document_mixins import DocumentMixins
 from backend.common.models.shared import (
     DocDocumentLocation,
     DocDocumentLocationView,
+    DocTypeMatch,
     IndicationTag,
     LockableDocument,
     TaskLock,
@@ -37,14 +38,15 @@ class BaseDocDocument(BaseModel):
     classification_lock: TaskLock | None = None
 
     name: Indexed(str)  # type: ignore
-    checksum: Indexed(str)
+    checksum: Indexed(str)  # type: ignore
     file_extension: str | None = None
     text_checksum: str | None = None
     lang_code: LangCode | None = None
 
     # Document Type
-    document_type: str | None = None
+    document_type: Indexed(str) | None = None  # type: ignore
     doc_type_confidence: float | None = None
+    doc_type_match: DocTypeMatch | None
     internal_document: bool | None = None
 
     document_family_id: PydanticObjectId | None = None
@@ -97,7 +99,10 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
         indexes = [
             [("locations.site_id", pymongo.ASCENDING)],
             [("locations.link_text", pymongo.ASCENDING)],
+            [("locations.url", pymongo.ASCENDING)],
             [("locks.user_id", pymongo.ASCENDING)],
+            [("locations.payer_family_id", pymongo.ASCENDING)],
+            [("name", pymongo.TEXT), ("locations.link_text", pymongo.TEXT)],
         ]
 
 

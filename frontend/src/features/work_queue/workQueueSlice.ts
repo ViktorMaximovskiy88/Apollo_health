@@ -16,7 +16,6 @@ export const initialState = {
     sort: undefined,
     filter: [
       { name: 'name', operator: 'contains', type: 'string', value: '' },
-      { name: 'locations.link_text', operator: 'eq', type: 'string', value: '' },
       { name: 'locations.site_id', operator: 'eq', type: 'string', value: '' },
       {
         name: 'locks.user_id',

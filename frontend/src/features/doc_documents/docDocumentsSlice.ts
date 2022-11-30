@@ -3,17 +3,14 @@ import { RootState } from '../../app/store';
 
 export const initialState = {
   table: {
-    sort: { name: 'final_effective_date', dir: -1 as 1 | -1 | 0 },
+    sort: undefined,
     filter: [
       { name: 'name', operator: 'contains', type: 'string', value: '' },
       { name: 'locations.site_id', operator: 'eq', type: 'select', value: '' },
       { name: 'final_effective_date', operator: 'before', type: 'date', value: '' },
-      { name: 'first_collected_date', operator: 'before', type: 'date', value: '' },
-      { name: 'last_collected_date', operator: 'before', type: 'date', value: '' },
       { name: 'classification_status', operator: 'eq', type: 'select', value: null },
       { name: 'document_type', operator: 'eq', type: 'select', value: null },
-      { name: 'is_current_version', operator: 'eq', type: 'boolean', value: null },
-      { name: 'locations.link_text', operator: 'contains', type: 'string', value: '' },
+      { name: 'locations.payer_family_id', operator: 'eq', type: 'select', value: '' },
     ],
     pagination: { limit: 50, skip: 0 },
   },

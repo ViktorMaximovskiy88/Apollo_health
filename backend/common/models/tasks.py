@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import TypeVar
 
-from beanie import Indexed, Insert, PydanticObjectId, Replace, UnionDoc, before_event
+from beanie import Indexed, Insert, PydanticObjectId, before_event
 
 from backend.common.core.enums import TaskStatus
 from backend.common.models.base_document import BaseDocument, BaseModel
@@ -9,53 +9,76 @@ from backend.common.models.base_document import BaseDocument, BaseModel
 GenericTaskType = TypeVar("GenericTaskType", "LineageTask", "PDFDiffTask")
 
 
-class TaskLog(UnionDoc):
-    class Settings:
-        name = "TaskLog"
-        use_revision = False
+class PDFDiffTask(BaseModel):
+    current_checksum: str
+    previous_checksum: str
+
+
+class LineageTask(BaseModel):
+    site_id: PydanticObjectId
+    reprocess: bool = False
+
+
+def get_group_id(payload: GenericTaskType):
+    values = [str(value) for value in payload.dict().values()]
+    group_id = "-".join(values)
+    return f"{type(payload).__name__}-{group_id}"
 
 
 class TaskLogEntry(BaseModel):
-    response: dict | None
     status: TaskStatus
-    created_at: datetime
+    status_at: datetime
 
 
-class BaseTask(BaseDocument):
+class TaskLog(BaseDocument):
     created_at: datetime | None = None
-    updated_at: datetime | None = None
-
     created_by: PydanticObjectId | None
 
     status: TaskStatus = TaskStatus.PENDING
     status_at: datetime | None = None
 
-    error: str | None = None
+    completed_at: datetime | None = None
     is_complete: bool = False
+
+    error: str | None = None
     group_id: Indexed(str)
+    message_id: Indexed(str) | None
 
     log: list[TaskLogEntry] = []
 
+    task_type: Indexed(str)
+    payload: GenericTaskType
+
+    def get_group_id(self):
+        return get_group_id(self.payload)
+
     @classmethod
-    async def create_pending(cls: GenericTaskType, **payload) -> GenericTaskType:
-        task: GenericTaskType = cls(
-            **payload,
-            status=TaskStatus.PENDING,
-        )
+    async def create_pending(cls, payload: GenericTaskType, **kwargs):
+        task_type = type(payload).__name__
+        task = cls(payload=payload, status=TaskStatus.PENDING, task_type=task_type, **kwargs)
+        now = datetime.now(tz=timezone.utc)
+        task.status_at = now
         task.log.append(
             TaskLogEntry(
                 status=task.status,
-                created_at=datetime.now(tz=timezone.utc),
+                status_at=now,
             )
         )
-        return await task.save()
+        task = await task.save()
+        return task
 
     @classmethod
     async def get_incomplete(cls: GenericTaskType, group_id: str) -> GenericTaskType | None:
         return await cls.find_one({"group_id": group_id, "is_complete": False})
 
-    async def update_queued(self, response: dict) -> GenericTaskType:
-        return await self._update_status(TaskStatus.QUEUED, response=response)
+    @classmethod
+    async def get_incomplete_for_user(
+        cls: GenericTaskType, user_id: PydanticObjectId
+    ) -> GenericTaskType | None:
+        return await cls.find_many({"created_by": user_id, "is_complete": False}).to_list()
+
+    async def update_queued(self, message_id: str) -> GenericTaskType:
+        return await self._update_status(TaskStatus.QUEUED, message_id=message_id)
 
     async def update_progress(self) -> GenericTaskType:
         return await self._update_status(TaskStatus.IN_PROGRESS)
@@ -69,54 +92,33 @@ class BaseTask(BaseDocument):
     async def _update_status(
         self,
         task_status: TaskStatus,
-        response: dict = None,
+        message_id: str = None,
         is_complete=False,
         error: str | None = None,
     ) -> GenericTaskType:
+        now = datetime.now(tz=timezone.utc)
         self.status = task_status
         self.is_complete = is_complete
+        self.status_at = now
+
+        if is_complete:
+            self.completed_at = now
+
         if error:
             self.error = error
+
+        if message_id:
+            self.message_id = message_id
+
         self.log.append(
             TaskLogEntry(
-                response=response,
                 status=self.status,
-                created_at=datetime.now(tz=timezone.utc),
+                status_at=now,
             )
         )
+
         return await self.save()
 
     @before_event(Insert)
     def before_insert(self):
-        now = datetime.now(tz=timezone.utc)
-        self.created_at = now
-        self.updated_at = now
-        self.status_at = now
-
-    @before_event(Replace)
-    def before_replace(self):
-        self.updated_at = datetime.now(tz=timezone.utc)
-
-
-class PDFDiffTask(BaseTask):
-    current_checksum: str | None
-    previous_checksum: str | None
-
-    @classmethod
-    def get_group_id(cls, payload: dict):
-        return f"{cls.__name__}-{payload['current_checksum']}-{payload['previous_checksum']}"
-
-    class Settings:
-        union_doc = TaskLog
-
-
-class LineageTask(BaseTask):
-    site_id: PydanticObjectId
-    reprocess: bool = False
-
-    @classmethod
-    def get_group_id(cls, payload: dict):
-        return f"{cls.__name__}-{payload['site_id']}-{payload['reprocess']}"
-
-    class Settings:
-        union_doc = TaskLog
+        self.created_at = datetime.now(tz=timezone.utc)

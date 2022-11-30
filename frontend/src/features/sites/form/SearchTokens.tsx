@@ -1,5 +1,5 @@
 import { QuestionCircleOutlined } from '@ant-design/icons';
-import { Input, Form, Switch, Radio, Tooltip } from 'antd';
+import { Input, Form, Switch, Select, Tooltip } from 'antd';
 import { SearchableType } from '../types';
 import { playbookValidator } from './utils';
 import { ElementInput, NameInput, ValueInput, ContainsTextInput } from './AttrSelectorField';
@@ -59,7 +59,7 @@ export function SearchTokens() {
             rules={[{ required: true, message: 'Required' }]}
             tooltip={'Type of inputs to search for'}
           >
-            <Radio.Group options={searchableTypes} optionType="button" buttonStyle="solid" />
+            <Select options={searchableTypes} mode="multiple" />
           </Form.Item>
           <Form.Item
             name={inputName}

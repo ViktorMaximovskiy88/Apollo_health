@@ -28,7 +28,8 @@ mongodump --uri="mongodb://localhost:27017/${DB_NAME}" \
 #     -u "${AWS_ACCESS_KEY_ID}" \
 #     -p "${AWS_SECRET_ACCESS_KEY}" \
 #     -o "${BACKUP_NAME}" \
-#     --excludeCollection "ChangeLog"
+#     --excludeCollection "ChangeLog" \
+#     --excludeCollection "LinkTaskLog"
 
 echo "Archiving backup to ${ARCHIVE_NAME}"
 tar -czf "${ARCHIVE_NAME}" "${BACKUP_NAME}"

@@ -45,6 +45,7 @@ export const DocumentTypes = [
     value: 'Annual Notice of Changes',
   },
   { id: 'Authorization Policy', label: 'Authorization Policy', value: 'Authorization Policy' },
+  { id: 'Directory', label: 'Directory', value: 'Directory' },
   { id: 'Evidence of Coverage', label: 'Evidence of Coverage', value: 'Evidence of Coverage' },
   { id: 'Exclusion List', label: 'Exclusion List', value: 'Exclusion List' },
   { id: 'Fee Schedule', label: 'Fee Schedule', value: 'Fee Schedule' },
@@ -53,6 +54,7 @@ export const DocumentTypes = [
   { id: 'Internal Resource', label: 'Internal Resource', value: 'Internal Resource' },
   { id: 'LCD', label: 'LCD', value: 'LCD' },
   { id: 'Medical Coverage List', label: 'Medical Coverage List', value: 'Medical Coverage List' },
+  { id: 'Member Resources', label: 'Member Resources', value: 'Member Resources' },
   { id: 'NCCN Guideline', label: 'NCCN Guideline', value: 'NCCN Guideline' },
   { id: 'NCD', label: 'NCD', value: 'NCD' },
   { id: 'New-to-Market Policy', label: 'New-to-Market Policy', value: 'New-to-Market Policy' },
@@ -74,11 +76,6 @@ export const DocumentTypes = [
     id: 'Review Committee Meetings',
     label: 'Review Committee Meetings',
     value: 'Review Committee Meetings',
-  },
-  {
-    id: 'Review Committee Schedule',
-    label: 'Review Committee Schedule',
-    value: 'Review Committee Schedule',
   },
   {
     id: 'Treatment Request Form',

@@ -31,48 +31,42 @@ variable "sourcehub-app-version" {
 }
 
 variable "sourcehub-scrapeworker-version" {
-  type = string
+  type        = string
   description = "Version tag of the SourceHub scrapeworker container"
-  default = "latest"
+  default     = "latest"
 }
 
 variable "sourcehub-parseworker-version" {
-  type = string
+  type        = string
   description = "Version tag of the SourceHub parseworker container"
-  default = "latest"
+  default     = "latest"
 }
 
 variable "sourcehub-scheduler-version" {
-  type = string
+  type        = string
   description = "Version tag of the SourceHub scheduler container"
-  default = "latest"
+  default     = "latest"
 }
 
 variable "sourcehub-dbmigrations-version" {
-  type = string
+  type        = string
   description = "Version tag of the SourceHub db migrations container"
-  default = "latest"
+  default     = "latest"
 }
 
-variable "sourcehub-lineageworker-version" {
-  type = string
-  description = "Version tag of the SourceHub lineageworker container"
-  default = "latest"
-}
-
-variable "sourcehub-pdfdiffworker-version" {
-  type = string
-  description = "Version tag of the SourceHub pdfdiffworker container"
-  default = "latest"
+variable "sourcehub-taskworker-version" {
+  type        = string
+  description = "Version tag of the SourceHub taskworker container"
+  default     = "latest"
 }
 
 variable "auth0-config" {
   type = object({
-    domain = string,
-    client_id = string,
-    audience = string,
+    domain        = string,
+    client_id     = string,
+    audience      = string,
     wellknown_url = string,
-    issuer = string,
+    issuer        = string,
   })
   description = "Auth0 configuration for SSO"
 }

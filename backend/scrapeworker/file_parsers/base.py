@@ -53,13 +53,14 @@ class FileParser(ABC):
         self.metadata = await self.get_info()
         self.text = await self.get_text()
         title = self.get_title(self.metadata)
-        document_type, confidence, doc_vectors = guess_doc_type(
+        document_type, confidence, doc_vectors, doc_type_match = guess_doc_type(
             self.text, self.link_text, self.url, title
         )
         lang_code = detect_lang(self.text)
 
         date_parser = DateParser(date_rgxs, label_rgxs)
-        date_parser.extract_dates(self.text)
+        label_texts: list[str] = [text for text in [title, self.link_text] if text is not None]
+        date_parser.extract_dates(self.text, label_texts)
 
         identified_dates = list(date_parser.unclassified_dates)
         identified_dates.sort()
@@ -85,6 +86,7 @@ class FileParser(ABC):
             "doc_vectors": doc_vectors,
             "scrubbed_url": scrubbed_url,
             "scrubbed_link_text": scrubbed_link_text,
+            "doc_type_match": doc_type_match,
         }
 
         return self.result

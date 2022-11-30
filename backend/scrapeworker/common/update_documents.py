@@ -113,6 +113,7 @@ class DocumentUpdater:
             doc_vectors=parsed_content["doc_vectors"],
             file_size=download.file_size,
             token_count=len(tokens),
+            doc_type_match=parsed_content["doc_type_match"],
         )
 
         await document.update(Set(updated_doc.dict(exclude_unset=True)))
@@ -144,6 +145,7 @@ class DocumentUpdater:
                 doc_document.document_type = retrieved_document.document_type
 
                 doc_document.effective_date = retrieved_document.effective_date
+                doc_document.end_date = retrieved_document.end_date
                 doc_document.last_reviewed_date = retrieved_document.last_reviewed_date
                 doc_document.last_updated_date = retrieved_document.last_updated_date
                 doc_document.next_review_date = retrieved_document.next_review_date
@@ -155,13 +157,13 @@ class DocumentUpdater:
 
                 doc_document.therapy_tags = retrieved_document.therapy_tags
                 doc_document.indication_tags = retrieved_document.indication_tags
-
                 doc_document.lang_code = retrieved_document.lang_code
             else:
                 doc_document.therapy_tags = doc_document.therapy_tags + new_therapy_tags
                 doc_document.indication_tags = doc_document.indication_tags + new_indicate_tags
 
             # Can be removed after text added to older docs
+            doc_document.doc_type_match = retrieved_document.doc_type_match
             doc_document.text_checksum = retrieved_document.text_checksum
             doc_document.last_collected_date = retrieved_document.last_collected_date
             doc_document.set_final_effective_date()
@@ -204,6 +206,7 @@ class DocumentUpdater:
             first_collected_date=now,
             last_collected_date=now,
             token_count=len(tokens),
+            doc_type_match=parsed_content["doc_type_match"],
             locations=[
                 RetrievedDocumentLocation(
                     base_url=download.metadata.base_url,

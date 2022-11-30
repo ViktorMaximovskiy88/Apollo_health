@@ -11,18 +11,18 @@ import logging
 
 from backend.app.core.settings import settings
 from backend.common.db.init import init_db
-from backend.common.sqs.pdfdiff_task_queue import PDFDiffTaskQueue
+from backend.common.sqs.task_queue import TaskQueue
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("pdfdiff")
+logger = logging.getLogger("task")
 
 
 async def main():
     await init_db()
-    logger.info("Starting the pdfdiff queue worker")
+    logger.info("Starting the task queue worker")
 
-    queue = PDFDiffTaskQueue(
-        queue_url=settings.pdfdiff_worker_queue_url,
+    queue = TaskQueue(
+        queue_url=settings.task_worker_queue_url,
         logger=logger,
     )
 

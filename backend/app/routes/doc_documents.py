@@ -29,9 +29,10 @@ from backend.common.models.document_mixins import calc_final_effective_date
 from backend.common.models.payer_family import PayerFamily
 from backend.common.models.shared import DocDocumentLocationView
 from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.models.tasks import PDFDiffTask, TaskLog
 from backend.common.models.user import User
 from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook, get_doc_change_info
-from backend.common.sqs.pdfdiff_task_queue import PDFDiffTaskQueue
+from backend.common.sqs.task_queue import TaskQueue
 from backend.common.storage.client import DocumentStorageClient
 
 router: APIRouter = APIRouter(
@@ -40,8 +41,8 @@ router: APIRouter = APIRouter(
 )
 
 
-pdf_diff_queue = PDFDiffTaskQueue(
-    queue_url=settings.pdfdiff_worker_queue_url,
+task_queue = TaskQueue(
+    queue_url=settings.task_worker_queue_url,
 )
 
 
@@ -116,9 +117,7 @@ async def read_extraction_task(
 
 
 class CompareResponse(BaseModel):
-    exists: bool
-    processing: bool
-    queued: bool = False
+    task: TaskLog | None
     new_key: str | None = None
     prev_key: str | None = None
 
@@ -137,19 +136,17 @@ async def create_diff(
     new_key = f"{current_doc.checksum}-{prev_doc.checksum}-new.pdf"
     prev_key = f"{current_doc.checksum}-{prev_doc.checksum}-prev.pdf"
     if doc_client.object_exists(new_key) and doc_client.object_exists(prev_key):
-        return CompareResponse(exists=True, processing=False, new_key=new_key, prev_key=prev_key)
+        return CompareResponse(new_key=new_key, prev_key=prev_key)
     else:
-        await pdf_diff_queue.enqueue(
-            {
-                "current_checksum": current_doc.checksum,
-                "previous_checksum": prev_doc.checksum,
-                "created_by": current_user.id,
-            }
+        task_payload: PDFDiffTask = PDFDiffTask(
+            current_checksum=current_doc.checksum, previous_checksum=prev_doc.checksum
         )
+        task: TaskLog = await task_queue.enqueue(task_payload, current_user.id)
 
         current_doc.compare_create_time = datetime.now(tz=timezone.utc)
         await current_doc.save()
-        return CompareResponse(exists=False, processing=True, queued=True)
+
+        return CompareResponse(task=task)
 
 
 @router.post("/{id}", response_model=DocDocument)

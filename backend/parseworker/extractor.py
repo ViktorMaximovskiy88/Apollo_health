@@ -86,18 +86,24 @@ class TableContentExtractor:
 
         return False
 
+    def _match(self, line, header, col):
+        try:
+            return line[self.hmap(header, col)]
+        except IndexError:
+            return False
+
     def drop_line_if_required_or_banned(self, line, header) -> bool:
         for col in self.config.extraction.required_columns:
-            if not line[self.hmap(header, col)]:
+            if not self._match(line, header, col):
                 return True
         for col in self.config.extraction.banned_columns:
-            if line[self.hmap(header, col)]:
+            if self._match(line, header, col):
                 return True
         return False
 
     def merge_on_missing_columns(self, line, row_n, header, table, clean_table) -> bool:
         for col in self.config.extraction.merge_on_missing_columns:
-            if not line[self.hmap(header, col)]:
+            if not self._match(line, header, col):
                 if self.config.extraction.merge_strategy == "DOWN":
                     next_line = table[row_n + 1]
                     for i in range(len(next_line)):
@@ -194,7 +200,9 @@ class TableContentExtractor:
         t9n = FormularyDatum()
         bvg, ql_time, ql_quantity = None, None, None
         for column_rules in self.config.translation.column_rules:
-            value = str(line[self.hmap(header, column_rules.column)])
+            value = self._match(line, header, column_rules.column)
+            if not value:
+                continue
             value = re.sub(r"\s+", " ", value, re.MULTILINE).strip()
             for rule in column_rules.rules:
                 if rule.field == "Tier":
@@ -241,6 +249,8 @@ class TableContentExtractor:
                 if rule.field == "PA":
                     t9n.pa = True
                     t9n.pan = note
+                if rule.field == "PN":
+                    t9n.pn = note
                 if rule.field == "CPA":
                     t9n.cpa = True
                     t9n.cpan = note
