@@ -13,32 +13,32 @@ class Forward:
     )
     async def change_internal_resource_to_internal_reference(self, session):
 
-        InternalResource = "Internal Resource"
+        internal_resource = "Internal Resource"
 
         # DocDocument
-        await DocDocument.find(DocDocument.document_type == InternalResource).set(
-            {DocDocument.document_type: DocumentType.InternalReference}
+        await DocDocument.find({"document_type": internal_resource}).update_many(
+            {"$set": {"document_type": DocumentType.InternalReference}}
         )
-        await DocDocument.find(DocDocument.doc_type_match.document_type == InternalResource).set(
-            {DocDocument.doc_type_match.document_type: DocumentType.InternalReference}
+        await DocDocument.find({"doc_type_match.document_type": internal_resource}).update_many(
+            {"$set": {"doc_type_match.document_type": DocumentType.InternalReference}}
         )
 
         # DocumentFamily
-        await DocumentFamily.find(DocumentFamily.document_type == InternalResource).set(
-            {DocumentFamily.document_type: DocumentType.InternalReference}
+        await DocumentFamily.find({"document_type": internal_resource}).update_many(
+            {"$set": {"document_type": DocumentType.InternalReference}}
         )
 
         # RetrievedDocument
-        await RetrievedDocument.find(RetrievedDocument.document_type == InternalResource).set(
-            {RetrievedDocument.document_type: DocumentType.InternalReference}
+        await RetrievedDocument.find({"document_type": internal_resource}).update_many(
+            {"$set": {"document_type": DocumentType.InternalReference}}
         )
         await RetrievedDocument.find(
-            RetrievedDocument.doc_type_match.document_type == InternalResource
-        ).set({RetrievedDocument.doc_type_match.document_type: DocumentType.InternalReference})
+            {"doc_type_match.document_type": internal_resource}
+        ).update_many({"$set": {"doc_type_match.document_type": DocumentType.InternalReference}})
 
         # DocumentAnalysis
-        await DocumentAnalysis.find(DocumentAnalysis.document_type == InternalResource).set(
-            {DocumentAnalysis.document_type: DocumentType.InternalReference}
+        await DocumentAnalysis.find({"document_type": internal_resource}).update_many(
+            {"$set": {"document_type": DocumentType.InternalReference}}
         )
 
 
