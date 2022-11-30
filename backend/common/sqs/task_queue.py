@@ -74,7 +74,7 @@ class TaskQueue(SQSBase):
                 self.logger.info(f"received message_id={message.message_id}")
                 task: TaskLog = None
                 try:
-                    task = await self._get_task_by_message_id(message.message_id)
+                    task = await self._get_task_by_message(message)
                     self.current_task = task
 
                     if not task.should_process(message.message_id, self.keep_alive_seconds):
@@ -110,10 +110,11 @@ class TaskQueue(SQSBase):
 
                 self.current_message = None
 
-    async def _get_task_by_message_id(self, message_id: str):
-        task = await TaskLog.find_one({"message_id": message_id})
+    async def _get_task_by_message(self, message):
+        task = await TaskLog.find_one({"message_id": message.message_id})
         if not task:
-            raise Exception(f"TaskLog not found message_id={message_id}")
+            message.change_visibility(VisibilityTimeout=self.keep_alive_seconds)
+            raise Exception(f"TaskLog not found message_id={message.message_id}")
 
         return task
 
