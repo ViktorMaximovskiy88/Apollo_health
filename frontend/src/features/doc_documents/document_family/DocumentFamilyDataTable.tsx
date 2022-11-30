@@ -14,6 +14,8 @@ import {
 } from './documentFamilySlice';
 import { TableInfoType } from '../../../common/types';
 import { useLazyGetDocumentFamiliesQuery } from './documentFamilyApi';
+import { useGetSiteNamesById } from '../DocDocumentsDataTable';
+import { DocumentFamily } from './types';
 
 const useControlledPagination = ({
   isActive,
@@ -58,17 +60,25 @@ const useControlledPagination = ({
   return controlledPaginationProps;
 };
 
+function uniqueSiteIds(items: DocumentFamily[]) {
+  const usedSiteIds: { [key: string]: boolean } = {};
+  items.forEach((item) => item.site_ids.forEach((id) => (usedSiteIds[id] = true)));
+  return Object.keys(usedSiteIds);
+}
+
 export function DocumentFamilyTable() {
   const { isActive, setActive, watermark } = useInterval(10000);
 
-  const columns = useColumns();
   const [getDocumentFamiliesFn] = useLazyGetDocumentFamiliesQuery();
+  const { setSiteIds, siteNamesById } = useGetSiteNamesById();
 
+  const columns = useColumns(siteNamesById);
   const loadData = useCallback(
     async (tableInfo: TableInfoType) => {
       const { data } = await getDocumentFamiliesFn({ ...tableInfo });
       const families = data?.data ?? [];
       const count = data?.total ?? 0;
+      if (families) setSiteIds(uniqueSiteIds(families));
       return { data: families, count };
     },
     [getDocumentFamiliesFn, watermark] // eslint-disable-line react-hooks/exhaustive-deps

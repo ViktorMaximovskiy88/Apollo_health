@@ -88,7 +88,6 @@ async def create_document_family(
         name=document_family.name,
         document_type=document_family.document_type,
         description=document_family.description,
-        site_id=document_family.site_id,
         relevance=document_family.relevance,
         field_groups=document_family.field_groups,
         legacy_relevance=document_family.legacy_relevance,

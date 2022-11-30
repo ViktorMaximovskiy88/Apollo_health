@@ -8,10 +8,12 @@ from backend.common.models.content_extraction_task import ContentExtractionTask
 from backend.common.models.doc_document import (
     ClassificationUpdateDocDocument,
     DocDocument,
+    FamilyUpdateDocDocument,
     PartialDocDocumentUpdate,
     TranslationUpdateDocDocument,
     UpdateDocDocument,
 )
+from backend.common.models.document_family import DocumentFamily
 from backend.common.models.payer_family import PayerFamily
 from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleService
 from backend.common.services.extraction.extraction_delta import DeltaCreator
@@ -24,6 +26,7 @@ class ChangeInfo(BaseModel):
     translation_change: bool = False
     lineage_change: PydanticObjectId | None = None
     old_payer_family_ids: list[PydanticObjectId | None] = []
+    document_family_change: PydanticObjectId | bool = False
 
 
 async def recompare_tags(doc: DocDocument, prev_doc: DocDocument):
@@ -85,6 +88,12 @@ async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = Cha
     if change_info.translation_change and doc.translation_id:
         await enqueue_translation_task(doc)
 
+    if change_info.document_family_change:
+        if isinstance(change_info.document_family_change, PydanticObjectId):
+            await remove_site_from_old_doc_family(change_info.document_family_change, doc)
+        if doc.document_family_id:
+            await add_site_to_new_doc_family(doc.document_family_id, doc)
+
     if change_info.lineage_change:
         if doc.previous_doc_doc_id:
             prev_doc = await DocDocument.get(doc.previous_doc_doc_id)
@@ -122,6 +131,12 @@ def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
         and updates.previous_doc_doc_id != doc.previous_doc_doc_id
     ):
         change_info.lineage_change = doc.previous_doc_doc_id
+    if (
+        isinstance(updates, (UpdateDocDocument, FamilyUpdateDocDocument))
+        and updates.document_family_id
+        and updates.document_family_id != doc.document_family_id
+    ):
+        change_info.document_family_change = doc.document_family_id or True
 
     if isinstance(updates, (UpdateDocDocument, ClassificationUpdateDocDocument)) and (
         updates.locations or doc.locations
@@ -129,3 +144,26 @@ def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
         change_info.old_payer_family_ids = [location.payer_family_id for location in doc.locations]
 
     return change_info
+
+
+async def add_site_to_new_doc_family(doc_fam_id: PydanticObjectId, doc: DocDocument):
+    await DocumentFamily.get_motor_collection().update_one(
+        {"_id": doc_fam_id},
+        {"$addToSet": {"site_ids": {"$each": [location.site_id for location in doc.locations]}}},
+    )
+
+
+async def remove_site_from_old_doc_family(previous_doc_fam: PydanticObjectId, doc: DocDocument):
+    for location in doc.locations:
+        used_by_other_docs = await DocDocument.find(
+            {
+                "document_family_id": previous_doc_fam,
+                "_id": {"$ne": doc.id},
+                "locations.site_id": location.site_id,
+            }
+        ).count()
+
+        if not used_by_other_docs:
+            await DocumentFamily.find({"_id": previous_doc_fam}).update(
+                {"$pull": {"site_ids": location.site_id}}
+            )

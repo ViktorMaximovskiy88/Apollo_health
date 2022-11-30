@@ -37,7 +37,7 @@ import {
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
-function useSiteSelectOptions() {
+export function useSiteSelectOptions() {
   const [getSites] = useLazyGetSitesQuery();
   const siteOptions = useCallback(
     async (search: string) => {
@@ -48,14 +48,14 @@ function useSiteSelectOptions() {
         filterValue: [{ name: 'name', operator: 'contains', type: 'string', value: search }],
       });
       if (!data) return [];
-      return data.data.map((site) => ({ label: site.name, value: site._id }));
+      return data.data.map((site) => ({ label: site.name, value: site._id, id: site._id }));
     },
     [getSites]
   );
   return { siteOptions };
 }
 
-function useGetSiteNamesById() {
+export function useGetSiteNamesById() {
   const [siteIds, setSiteIds] = useState<string[]>([]);
   const { data: sites } = useGetSitesQuery(
     {
