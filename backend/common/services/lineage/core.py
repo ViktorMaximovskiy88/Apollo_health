@@ -277,7 +277,7 @@ async def version_doc(
     return doc
 
 
-async def inherit_prev_doc_fields(
+def inherit_prev_doc_fields(
     doc: DocDocument, prev_doc: DocDocument | None, site_id: PydanticObjectId
 ):
     if not prev_doc:  # Nothing to inherit

@@ -155,14 +155,15 @@ async def add_site_to_new_doc_family(doc_fam_id: PydanticObjectId, doc: DocDocum
 
 async def remove_site_from_old_doc_family(previous_doc_fam: PydanticObjectId, doc: DocDocument):
     for location in doc.locations:
-        used_by_other_docs = await DocDocument.find_one(
+        used_by_other_docs = await DocDocument.find(
             {
                 "document_family_id": previous_doc_fam,
                 "_id": {"$ne": doc.id},
-                "locations": {"$elemMatch": {"site_id": location.site_id}},
+                "locations.site_id": location.site_id,
             }
-        )
+        ).count()
+
         if not used_by_other_docs:
-            await DocumentFamily.get_motor_collection().update_one(
-                {"_id": previous_doc_fam}, {"$pull": {"site_ids": location.site_id}}
+            await DocumentFamily.find({"_id": previous_doc_fam}).update(
+                {"$pull": {"site_ids": location.site_id}}
             )

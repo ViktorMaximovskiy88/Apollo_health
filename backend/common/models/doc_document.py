@@ -49,7 +49,7 @@ class BaseDocDocument(BaseModel):
     doc_type_match: DocTypeMatch | None
     internal_document: bool | None = None
 
-    document_family_id: PydanticObjectId | None = None
+    document_family_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     previous_par_id: UUID | None = None
 
     # Extracted Dates
