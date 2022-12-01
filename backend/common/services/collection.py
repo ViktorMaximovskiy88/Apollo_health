@@ -16,7 +16,7 @@ from backend.common.core.config import env_type
 from backend.common.core.enums import CollectionMethod, TaskStatus
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
-from backend.common.models.document_mixins import find_site_index
+from backend.common.models.document_mixins import as_naive_date, find_site_index
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import ManualWorkItem, SiteScrapeTask, WorkItemOption
 from backend.common.models.user import User
@@ -304,7 +304,7 @@ class CollectionService:
             # but doc is from other site. Setting first_collected_date to now would
             # reset the original first_collected_date.
             retr_doc.first_collected_date = min(
-                [loc.first_collected_date for loc in retr_doc.locations]
+                [as_naive_date(loc.first_collected_date) for loc in retr_doc.locations]
             )
         await retr_doc.save()
         doc_doc: DocDocument | None = await DocDocument.find_one(
@@ -314,7 +314,7 @@ class CollectionService:
             site_loc_index = find_site_index(doc_doc, self.site.id)
             doc_doc.locations[site_loc_index].first_collected_date = now
             doc_doc.first_collected_date = min(
-                [loc.first_collected_date for loc in doc_doc.locations]
+                [as_naive_date(loc.first_collected_date) for loc in doc_doc.locations]
             )
         await doc_doc.save()
         return CollectionResponse(success=True)
