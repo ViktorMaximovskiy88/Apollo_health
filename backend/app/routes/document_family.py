@@ -117,7 +117,7 @@ async def delete_document_family(
     logger: Logger = Depends(get_logger),
 ):
     await update_and_log_diff(logger, current_user, target, UpdateDocumentFamily(disabled=True))
-    await DocDocument.get_motor_collection().update_many(
-        {"document_family_id": id}, {"$set": {"document_family_id": None}}
+    await DocDocument.find({"document_family_id": id}).update_many(
+        {"$set": {"document_family_id": None}}
     )
     return {"success": True}
