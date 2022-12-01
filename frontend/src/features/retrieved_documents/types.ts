@@ -51,7 +51,7 @@ export const DocumentTypes = [
   { id: 'Fee Schedule', label: 'Fee Schedule', value: 'Fee Schedule' },
   { id: 'Formulary Update', label: 'Formulary Update', value: 'Formulary Update' },
   { id: 'Formulary', label: 'Formulary', value: 'Formulary' },
-  { id: 'Internal Resource', label: 'Internal Resource', value: 'Internal Resource' },
+  { id: 'Internal Reference', label: 'Internal Reference', value: 'Internal Reference' },
   { id: 'LCD', label: 'LCD', value: 'LCD' },
   { id: 'Medical Coverage List', label: 'Medical Coverage List', value: 'Medical Coverage List' },
   { id: 'Member Resources', label: 'Member Resources', value: 'Member Resources' },
@@ -83,6 +83,31 @@ export const DocumentTypes = [
     value: 'Treatment Request Form',
   },
 ];
+export const FieldGroupsOptions = [
+  { id: 'AUTHORIZATION_DETAILS', label: 'Authorization Details', value: 'AUTHORIZATION_DETAILS' },
+  { id: 'TIER', label: 'Tier', value: 'TIER' },
+  { id: 'COVERAGE', label: 'Coverage', value: 'COVERAGE' },
+  { id: 'QL_GATE', label: 'QL Gate', value: 'QL_GATE' },
+  { id: 'QL_DETAILS', label: 'QL Details', value: 'QL_DETAILS' },
+  { id: 'PA', label: 'PA', value: 'PA' },
+  { id: 'ST', label: 'ST', value: 'ST' },
+  { id: 'SP_GATE', label: 'SP Gate', value: 'SP_GATE' },
+  { id: 'SP_DETAILS', label: 'SP Details', value: 'SP_DETAILS' },
+  {
+    id: 'TREATMENT_REQUEST_FORM',
+    label: 'Treatment Request Form',
+    value: 'TREATMENT_REQUEST_FORM',
+  },
+  { id: 'COVERAGE_NOTES', label: 'Coverage Notes', value: 'COVERAGE_NOTES' },
+  { id: 'SITE_OF_CARE', label: 'Site of Care', value: 'SITE_OF_CARE' },
+];
+
+export const LegacyRelevanceOptions = [
+  { id: 'EDITOR_MANUAL', label: 'Editor Manual', value: 'EDITOR_MANUAL' },
+  { id: 'EDITOR_AUTOMATED', label: 'Editor Automated ', value: 'EDITOR_AUTOMATED' },
+  { id: 'PAR', label: 'PAR', value: 'PAR' },
+  { id: 'N/A', label: 'N/A', value: 'N/A' },
+];
 
 export const documentTypes = DocumentTypes;
 
@@ -91,3 +116,14 @@ export const languageCodes = [
   { value: 'es', label: 'Spanish' },
   { value: 'other', label: 'Other' },
 ];
+
+export const getFieldGroupLabel = (id: string) => {
+  return FieldGroupsOptions.find((e) => {
+    return e.id === id;
+  })?.label;
+};
+export const getLegacyRelevanceLable = (id: string) => {
+  return LegacyRelevanceOptions.find((e) => {
+    return e.id === id;
+  })?.label;
+};

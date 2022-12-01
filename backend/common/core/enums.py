@@ -58,7 +58,7 @@ class DocumentType(str, Enum):
     FeeSchedule = "Fee Schedule"
     Formulary = "Formulary"
     FormularyUpdate = "Formulary Update"
-    InternalResource = "Internal Resource"
+    InternalReference = "Internal Reference"
     LCD = "LCD"
     MedicalCoverageList = "Medical Coverage List"
     MemberResources = "Member Resources"

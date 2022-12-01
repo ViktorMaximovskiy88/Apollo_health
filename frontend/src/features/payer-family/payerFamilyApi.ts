@@ -48,6 +48,14 @@ export const payerFamilyApi = createApi({
         { type: 'ChangeLog', id },
       ],
     }),
+    deletePayerFamily: builder.mutation<void, Pick<PayerFamily, '_id'> & Partial<PayerFamily>>({
+      query: ({ _id: id }) => ({ url: `/payer-family/${id}`, method: 'DELETE' }),
+      invalidatesTags: (_r, _e, { _id: id }) => [
+        { type: 'PayerFamily', id },
+        { type: 'PayerFamily', id: 'LIST' },
+        { type: 'ChangeLog', id },
+      ],
+    }),
     getChangeLog: builder.query<ChangeLog[], string>({
       query: (id) => `/change-log/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
@@ -63,5 +71,6 @@ export const {
   useLazyGetPayerFamilyByNameQuery,
   useAddPayerFamilyMutation,
   useUpdatePayerFamilyMutation,
+  useDeletePayerFamilyMutation,
   useGetChangeLogQuery,
 } = payerFamilyApi;

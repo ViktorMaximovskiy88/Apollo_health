@@ -18,6 +18,7 @@ from backend.app.services.payer_backbone.payer_backbone_querier import (
 )
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
+from backend.common.models.doc_document import DocDocument
 from backend.common.models.payer_backbone import PayerBackbone
 from backend.common.models.payer_family import NewPayerFamily, PayerFamily, UpdatePayerFamily
 from backend.common.models.user import User
@@ -41,7 +42,8 @@ async def read_payer_families(
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
-    query = PayerFamily.find_all()
+
+    query = PayerFamily.find({"disabled": False})
     return await query_table(query, limit, skip, sorts, filters)
 
 
@@ -142,4 +144,8 @@ async def delete_payer_family(
     logger: Logger = Depends(get_logger),
 ):
     await update_and_log_diff(logger, current_user, target, UpdatePayerFamily(disabled=True))
+    await DocDocument.get_motor_collection().update_many(
+        {"locations.payer_family_id": id},
+        {"$set": {"locations.$.payer_family_id": None}},
+    )
     return {"success": True}

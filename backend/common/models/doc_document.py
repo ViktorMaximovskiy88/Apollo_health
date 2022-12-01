@@ -46,10 +46,10 @@ class BaseDocDocument(BaseModel):
     # Document Type
     document_type: Indexed(str) | None = None  # type: ignore
     doc_type_confidence: float | None = None
-    doc_type_match: DocTypeMatch | None
+    doc_type_match: DocTypeMatch | None = None
     internal_document: bool | None = None
 
-    document_family_id: PydanticObjectId | None = None
+    document_family_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     previous_par_id: UUID | None = None
 
     # Extracted Dates

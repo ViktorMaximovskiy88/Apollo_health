@@ -1,8 +1,13 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
 import { useDocumentFamilyColumns as useColumns } from './useDocumentFamilyColumns';
-import { useDataTableFilter, useDataTableSort, useInterval } from '../../../common/hooks';
-import { useCallback } from 'react';
+import {
+  useDataTableFilter,
+  useDataTableSort,
+  useInterval,
+  useNotifyMutation,
+} from '../../../common/hooks';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GridPaginationToolbar } from '../../../components';
 import {
@@ -13,7 +18,46 @@ import {
   setDocumentFamilyTableSkip,
 } from './documentFamilySlice';
 import { TableInfoType } from '../../../common/types';
-import { useLazyGetDocumentFamiliesQuery } from './documentFamilyApi';
+import { useGetSiteNamesById } from '../DocDocumentsDataTable';
+import { DocumentFamily } from './types';
+import {
+  useDeleteDocumentFamilyMutation,
+  useLazyGetDocumentFamiliesQuery,
+} from './documentFamilyApi';
+
+// prevents excessive rerenders
+const useNotificationArgs = () => {
+  const successArgs = useMemo(
+    () => ({
+      description: 'Document Family Deleted Successfully.',
+    }),
+    []
+  );
+  const errorArgs = useMemo(
+    () => ({
+      description: 'An error occurred while updating the document family.',
+    }),
+    []
+  );
+  return { successArgs, errorArgs };
+};
+
+const useDeleteDocumentFamily = () => {
+  const [deletedFamily, setDeletedFamily] = useState('');
+
+  const [deleteDocumentFamily, deleteResult] = useDeleteDocumentFamilyMutation();
+
+  useEffect(() => {
+    if (deleteResult.isSuccess && deleteResult.originalArgs) {
+      setDeletedFamily(deleteResult.originalArgs._id);
+    }
+  }, [deleteResult, setDeletedFamily]);
+
+  const { successArgs, errorArgs } = useNotificationArgs();
+  useNotifyMutation(deleteResult, successArgs, errorArgs);
+
+  return { deletedFamily, deleteDocumentFamily };
+};
 
 const useControlledPagination = ({
   isActive,
@@ -58,20 +102,30 @@ const useControlledPagination = ({
   return controlledPaginationProps;
 };
 
+function uniqueSiteIds(items: DocumentFamily[]) {
+  const usedSiteIds: { [key: string]: boolean } = {};
+  items.forEach((item) => item.site_ids.forEach((id) => (usedSiteIds[id] = true)));
+  return Object.keys(usedSiteIds);
+}
+
 export function DocumentFamilyTable() {
   const { isActive, setActive, watermark } = useInterval(10000);
 
-  const columns = useColumns();
-  const [getDocumentFamiliesFn] = useLazyGetDocumentFamiliesQuery();
+  const { deletedFamily, deleteDocumentFamily } = useDeleteDocumentFamily();
 
+  const [getDocumentFamiliesFn] = useLazyGetDocumentFamiliesQuery();
+  const { setSiteIds, siteNamesById } = useGetSiteNamesById();
+
+  const columns = useColumns(siteNamesById, deleteDocumentFamily);
   const loadData = useCallback(
     async (tableInfo: TableInfoType) => {
       const { data } = await getDocumentFamiliesFn({ ...tableInfo });
       const families = data?.data ?? [];
       const count = data?.total ?? 0;
+      if (families) setSiteIds(uniqueSiteIds(families));
       return { data: families, count };
     },
-    [getDocumentFamiliesFn, watermark] // eslint-disable-line react-hooks/exhaustive-deps
+    [getDocumentFamiliesFn, watermark, deletedFamily] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const filterProps = useDataTableFilter(documentFamilyTableState, setDocumentFamilyFilter);

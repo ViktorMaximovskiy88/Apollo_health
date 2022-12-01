@@ -59,6 +59,17 @@ export const documentFamilyApi = createApi({
         { type: 'ChangeLog', id },
       ],
     }),
+    deleteDocumentFamily: builder.mutation<
+      void,
+      Pick<DocumentFamily, '_id'> & Partial<DocumentFamily>
+    >({
+      query: ({ _id: id }) => ({ url: `/document-family/${id}`, method: 'DELETE' }),
+      invalidatesTags: (_r, _e, { _id: id }) => [
+        { type: 'DocumentFamily', id },
+        { type: 'DocumentFamily', id: 'LIST' },
+        { type: 'ChangeLog', id },
+      ],
+    }),
     getChangeLog: builder.query<ChangeLog[], string>({
       query: (id) => `/change-log/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
@@ -73,5 +84,6 @@ export const {
   useGetDocumentFamilyQuery,
   useAddDocumentFamilyMutation,
   useUpdateDocumentFamilyMutation,
+  useDeleteDocumentFamilyMutation,
   useGetChangeLogQuery,
 } = documentFamilyApi;

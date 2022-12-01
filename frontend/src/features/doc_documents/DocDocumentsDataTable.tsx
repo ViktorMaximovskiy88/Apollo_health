@@ -1,7 +1,4 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
-import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
-import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
-import { Tag } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -11,51 +8,19 @@ import {
   setDocDocumentTableLimit,
   setDocDocumentTableSkip,
 } from './docDocumentsSlice';
-import { prettyDateTimeFromISO, prettyDateUTCFromISO } from '../../common';
-import { ButtonLink, GridPaginationToolbar } from '../../components';
-import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { Site } from '../sites/types';
-import { useGetChangeLogQuery, useLazyGetDocDocumentsQuery } from './docDocumentApi';
+import { GridPaginationToolbar } from '../../components';
+import { useLazyGetDocDocumentsQuery } from './docDocumentApi';
 import { DocDocument } from './types';
 import { useInterval } from '../../common/hooks';
-import { DocumentTypes } from '../retrieved_documents/types';
-import {
-  ApprovalStatus,
-  approvalStatusDisplayName,
-  approvalStatusStyledDisplay,
-} from '../../common/approvalStatus';
 import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
 import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
-import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
-import { useGetSiteQuery, useGetSitesQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
-import {
-  useGetPayerFamiliesQuery,
-  useGetPayerFamilyQuery,
-  useLazyGetPayerFamiliesQuery,
-} from '../payer-family/payerFamilyApi';
+import { useGetSitesQuery } from '../sites/sitesApi';
+import { useGetPayerFamiliesQuery } from '../payer-family/payerFamilyApi';
+import { useGetDocumentFamiliesQuery } from './document_family/documentFamilyApi';
+import { useColumns } from './useDocDocumentColumns';
 
-const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
-
-function useSiteSelectOptions() {
-  const [getSites] = useLazyGetSitesQuery();
-  const siteOptions = useCallback(
-    async (search: string) => {
-      const { data } = await getSites({
-        limit: 20,
-        skip: 0,
-        sortInfo: { name: 'name', dir: 1 },
-        filterValue: [{ name: 'name', operator: 'contains', type: 'string', value: search }],
-      });
-      if (!data) return [];
-      return data.data.map((site) => ({ label: site.name, value: site._id }));
-    },
-    [getSites]
-  );
-  return { siteOptions };
-}
-
-function useGetSiteNamesById() {
+export function useGetSiteNamesById() {
   const [siteIds, setSiteIds] = useState<string[]>([]);
   const { data: sites } = useGetSitesQuery(
     {
@@ -71,24 +36,6 @@ function useGetSiteNamesById() {
     return map;
   }, [sites]);
   return { setSiteIds, siteNamesById };
-}
-
-function usePayerFamilySelectOptions() {
-  const [getPayerFamilies] = useLazyGetPayerFamiliesQuery();
-  const payerFamilyOptions = useCallback(
-    async (search: string) => {
-      const { data } = await getPayerFamilies({
-        limit: 20,
-        skip: 0,
-        sortInfo: { name: 'name', dir: 1 },
-        filterValue: [{ name: 'name', operator: 'contains', type: 'string', value: search }],
-      });
-      if (!data) return [];
-      return data.data.map((site) => ({ label: site.name, value: site._id }));
-    },
-    [getPayerFamilies]
-  );
-  return { payerFamilyOptions };
 }
 
 function useGetPayerFamilyNamesById() {
@@ -109,214 +56,23 @@ function useGetPayerFamilyNamesById() {
   return { setPayerFamilyIds, payerFamilyNamesById };
 }
 
-const useColumns = (
-  siteNamesById: { [key: string]: string },
-  payerFamilyNamesById: { [key: string]: string }
-) => {
-  const { siteOptions } = useSiteSelectOptions();
-  const { payerFamilyOptions } = usePayerFamilySelectOptions();
-  const res = useSelector(docDocumentTableState);
-
-  const siteFilter = res.filter.find((f) => f.name === 'locations.site_id');
-  const { data: site } = useGetSiteQuery(siteFilter?.value, { skip: !siteFilter?.value });
-  const initialSiteOptions = site ? [{ value: site._id, label: site.name }] : [];
-
-  const payerFamilyFilter = res.filter.find((f) => f.name === 'locations.payer_family_id');
-  const { data: payerFamily } = useGetPayerFamilyQuery(payerFamilyFilter?.value ?? undefined, {
-    skip: !payerFamilyFilter?.value,
+function useGetDocumentFamilyNamesById() {
+  const [documentFamilyIds, setDocumentFamilyIds] = useState<string[]>([]);
+  const { data: documentFamilies } = useGetDocumentFamiliesQuery({
+    limit: 1000,
+    skip: 0,
+    sortInfo: { name: 'name', dir: 1 },
+    filterValue: [{ name: '_id', operator: 'eq', type: 'string', value: documentFamilyIds }],
   });
-  const initialPayerFamilyOptions = payerFamily
-    ? [{ value: payerFamily._id, label: payerFamily.name }]
-    : [];
-
-  return [
-    {
-      header: 'Name',
-      name: 'name',
-      render: ({ data: doc }: { data: DocDocument }) => {
-        return <ButtonLink to={`${doc._id}`}>{doc.name}</ButtonLink>;
-      },
-      defaultFlex: 1,
-      minWidth: 300,
-    },
-    {
-      header: 'Link Text',
-      name: 'locations.link_text',
-      render: ({ data: docDocument }: { data: DocDocument }) => {
-        const linkTexts = docDocument.locations.map((location) => location.link_text);
-        return <>{linkTexts.join(', ')}</>;
-      },
-      minWidth: 300,
-    },
-    {
-      header: 'Sites',
-      name: 'locations.site_id',
-      minWidth: 200,
-      filterEditor: RemoteColumnFilter,
-      filterEditorProps: {
-        fetchOptions: siteOptions,
-        initialOptions: initialSiteOptions,
-      },
-      defaultFlex: 1,
-      render: ({ data }: { data: { locations: { site_id: string }[] } }) => {
-        return data.locations
-          .filter((s) => siteNamesById[s.site_id])
-          .map((s) => siteNamesById[s.site_id])
-          .join(', ');
-      },
-    },
-    {
-      header: 'Final Effective Date',
-      name: 'final_effective_date',
-      minWidth: 200,
-      filterEditor: DateFilter,
-      filterEditorProps: () => {
-        return {
-          dateFormat: 'YYYY-MM-DD',
-          highlightWeekends: false,
-          placeholder: 'Select Date',
-        };
-      },
-      render: ({ data: doc }: { data: DocDocument }) => {
-        if (!doc.final_effective_date) return null;
-        return prettyDateUTCFromISO(doc.final_effective_date);
-      },
-    },
-    {
-      header: 'Classification Status',
-      name: 'classification_status',
-      minWidth: 200,
-      filterEditor: SelectFilter,
-      filterEditorProps: {
-        placeholder: 'All',
-        dataSource: Object.values(ApprovalStatus).map((status) => ({
-          id: status,
-          label: approvalStatusDisplayName(status),
-        })),
-      },
-      render: ({ data: doc }: { data: DocDocument }) => {
-        return approvalStatusStyledDisplay(doc.classification_status);
-      },
-    },
-    {
-      header: 'Document Type',
-      name: 'document_type',
-      minWidth: 200,
-      filterEditor: SelectFilter,
-      filterEditorProps: {
-        placeholder: 'All',
-        dataSource: DocumentTypes,
-      },
-      render: ({ value: document_type }: { value: string }) => {
-        return <>{document_type}</>;
-      },
-    },
-    {
-      header: 'Payer Families',
-      name: 'locations.payer_family_id',
-      minWidth: 200,
-      filterEditor: RemoteColumnFilter,
-      filterEditorProps: {
-        fetchOptions: payerFamilyOptions,
-        initialOptions: initialPayerFamilyOptions,
-      },
-      defaultFlex: 1,
-      render: ({ data }: { data: { locations: { payer_family_id: string }[] } }) => {
-        return data.locations
-          .filter((s) => payerFamilyNamesById[s.payer_family_id])
-          .map((s) => payerFamilyNamesById[s.payer_family_id])
-          .join(', ');
-      },
-    },
-    {
-      header: 'First Collected Date',
-      name: 'first_collected_date',
-      minWidth: 200,
-      filterEditor: DateFilter,
-      filterEditorProps: () => {
-        return {
-          dateFormat: 'YYYY-MM-DD',
-          highlightWeekends: false,
-          placeholder: 'Select Date',
-        };
-      },
-      render: ({ data: doc }: { data: DocDocument }) => {
-        if (!doc.first_collected_date) return null;
-        return prettyDateTimeFromISO(doc.first_collected_date);
-      },
-    },
-    {
-      header: 'Last Collected Date',
-      name: 'last_collected_date',
-      minWidth: 200,
-      filterEditor: DateFilter,
-      filterEditorProps: () => {
-        return {
-          dateFormat: 'YYYY-MM-DD',
-          highlightWeekends: false,
-          placeholder: 'Select Date',
-        };
-      },
-      render: ({ data: doc }: { data: DocDocument }) => {
-        if (!doc.last_collected_date) return null;
-        return prettyDateTimeFromISO(doc.last_collected_date);
-      },
-    },
-    {
-      header: 'Current Version',
-      name: 'is_current_version',
-      filterEditor: SelectFilter,
-      filterEditorProps: {
-        placeholder: true,
-        dataSource: [
-          {
-            id: true,
-            label: 'True',
-          },
-          {
-            id: false,
-            label: 'False',
-          },
-        ],
-      },
-      render: ({ value: is_current_version }: { value: boolean }) => {
-        return <>{is_current_version ? 'True' : 'False'}</>;
-      },
-    },
-    {
-      header: 'Tags',
-      name: 'tags',
-      render: ({ data: doc }: { data: DocDocument }) => {
-        return doc.tags
-          .filter((tag) => tag)
-          .map((tag) => {
-            const simpleHash = tag
-              .split('')
-              .map((c) => c.charCodeAt(0))
-              .reduce((a, b) => a + b);
-            const color = colors[simpleHash % colors.length];
-            return (
-              <Tag color={color} key={tag}>
-                {tag}
-              </Tag>
-            );
-          });
-      },
-    },
-    {
-      header: 'Actions',
-      name: 'action',
-      minWidth: 180,
-      render: ({ data: site }: { data: Site }) => {
-        return (
-          <>
-            <ChangeLogModal target={site} useChangeLogQuery={useGetChangeLogQuery} />
-          </>
-        );
-      },
-    },
-  ];
-};
+  const documentFamilyNamesById = useMemo(() => {
+    const map: { [key: string]: string } = {};
+    documentFamilies?.data.forEach((documentFamily) => {
+      map[documentFamily._id] = documentFamily.name;
+    });
+    return map;
+  }, [documentFamilies]);
+  return { setDocumentFamilyIds, documentFamilyNamesById };
+}
 
 const useControlledPagination = ({
   isActive,
@@ -374,6 +130,14 @@ const uniquePayerFamilyIds = (items: DocDocument[]) => {
   return Object.keys(usedPayerFamilyIds);
 };
 
+const uniqueDocumentFamilyIds = (docDocuments: DocDocument[]): string[] => {
+  const documentFamilyIds = docDocuments
+    .map(({ document_family_id }) => document_family_id ?? '')
+    .filter(Boolean);
+  const usedDocumentFamilyIds = new Set(documentFamilyIds);
+  return Array.from(usedDocumentFamilyIds);
+};
+
 export function DocDocumentsDataTable() {
   // Trigger update every 10 seconds by invalidating memoized callback
   const { isActive, setActive, watermark } = useInterval(10000);
@@ -381,6 +145,7 @@ export function DocDocumentsDataTable() {
   const [getDocDocumentsFn] = useLazyGetDocDocumentsQuery();
   const { setSiteIds, siteNamesById } = useGetSiteNamesById();
   const { setPayerFamilyIds, payerFamilyNamesById } = useGetPayerFamilyNamesById();
+  const { setDocumentFamilyIds, documentFamilyNamesById } = useGetDocumentFamilyNamesById();
 
   const loadData = useCallback(
     async (tableInfo: any) => {
@@ -390,6 +155,7 @@ export function DocDocumentsDataTable() {
       if (docDocuments) {
         setSiteIds(uniqueSiteIds(docDocuments));
         setPayerFamilyIds(uniquePayerFamilyIds(docDocuments));
+        setDocumentFamilyIds(uniqueDocumentFamilyIds(docDocuments));
       }
       return { data: docDocuments, count };
     },
@@ -399,7 +165,7 @@ export function DocDocumentsDataTable() {
   const filterProps = useDataTableFilter(docDocumentTableState, setDocDocumentTableFilter);
   const sortProps = useDataTableSort(docDocumentTableState, setDocDocumentTableSort);
   const controlledPagination = useControlledPagination({ isActive, setActive });
-  const columns = useColumns(siteNamesById, payerFamilyNamesById);
+  const columns = useColumns({ siteNamesById, payerFamilyNamesById, documentFamilyNamesById });
 
   return (
     <ReactDataGrid

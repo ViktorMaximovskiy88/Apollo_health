@@ -18,14 +18,15 @@ type FilterProps = {
 };
 
 type FilterState = {
-  value?: string | null;
+  value?: string | string[] | null;
 };
 
 export class RemoteColumnFilter extends React.Component<FilterProps, FilterState> {
   constructor(props: FilterProps) {
     super(props);
+    const defaultValue = props.filterEditorProps.mode === 'multiple' ? [] : '';
     this.state = {
-      value: props.filterValue ? props.filterValue.value : '',
+      value: props.filterValue ? props.filterValue.value : defaultValue,
     };
     this.onChange = this.onChange.bind(this);
     this.onValueChange = this.onValueChange.bind(this);
