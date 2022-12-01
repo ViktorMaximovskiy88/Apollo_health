@@ -43,20 +43,20 @@ const useNotificationArgs = () => {
 };
 
 const useDeleteDocumentFamily = () => {
-  const [deletedDocumentFamily, setDeletedDocumentFamily] = useState('');
+  const [deletedFamily, setDeletedFamily] = useState('');
 
   const [deleteDocumentFamily, deleteResult] = useDeleteDocumentFamilyMutation();
 
   useEffect(() => {
     if (deleteResult.isSuccess && deleteResult.originalArgs) {
-      setDeletedDocumentFamily(deleteResult.originalArgs._id);
+      setDeletedFamily(deleteResult.originalArgs._id);
     }
-  }, [deleteResult, setDeletedDocumentFamily]);
+  }, [deleteResult, setDeletedFamily]);
 
   const { successArgs, errorArgs } = useNotificationArgs();
   useNotifyMutation(deleteResult, successArgs, errorArgs);
 
-  return { deletedDocumentFamily, deleteDocumentFamily };
+  return { deletedFamily, deleteDocumentFamily };
 };
 
 const useControlledPagination = ({
@@ -111,7 +111,7 @@ function uniqueSiteIds(items: DocumentFamily[]) {
 export function DocumentFamilyTable() {
   const { isActive, setActive, watermark } = useInterval(10000);
 
-  const { deletedDocumentFamily, deleteDocumentFamily } = useDeleteDocumentFamily();
+  const { deletedFamily, deleteDocumentFamily } = useDeleteDocumentFamily();
 
   const [getDocumentFamiliesFn] = useLazyGetDocumentFamiliesQuery();
   const { setSiteIds, siteNamesById } = useGetSiteNamesById();
@@ -125,7 +125,7 @@ export function DocumentFamilyTable() {
       if (families) setSiteIds(uniqueSiteIds(families));
       return { data: families, count };
     },
-    [getDocumentFamiliesFn, watermark, deletedDocumentFamily] // eslint-disable-line react-hooks/exhaustive-deps
+    [getDocumentFamiliesFn, watermark, deletedFamily] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const filterProps = useDataTableFilter(documentFamilyTableState, setDocumentFamilyFilter);
