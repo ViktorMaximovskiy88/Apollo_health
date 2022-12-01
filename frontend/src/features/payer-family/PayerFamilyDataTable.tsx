@@ -1,8 +1,13 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
 import { usePayerFamilyColumns as useColumns } from './usePayerFamilyColumns';
-import { useDataTableFilter, useDataTableSort, useInterval } from '../../common/hooks';
-import { useCallback } from 'react';
+import {
+  useDataTableFilter,
+  useDataTableSort,
+  useInterval,
+  useNotifyMutation,
+} from '../../common/hooks';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GridPaginationToolbar } from '../../components';
 import {
@@ -13,7 +18,41 @@ import {
   setPayerFamilyTableSkip,
 } from './payerFamilySlice';
 import { TableInfoType } from '../../common/types';
-import { useLazyGetPayerFamiliesQuery } from './payerFamilyApi';
+import { useDeletePayerFamilyMutation, useLazyGetPayerFamiliesQuery } from './payerFamilyApi';
+
+// prevents excessive rerenders
+const useNotificationArgs = () => {
+  const successArgs = useMemo(
+    () => ({
+      description: 'Payer Family Deleted Successfully.',
+    }),
+    []
+  );
+  const errorArgs = useMemo(
+    () => ({
+      description: 'An error occurred while updating the payer family.',
+    }),
+    []
+  );
+  return { successArgs, errorArgs };
+};
+
+const useDeletePayerFamily = () => {
+  const [deletedFamily, setDeletedFamily] = useState('');
+
+  const [deletePayerFamily, deleteResult] = useDeletePayerFamilyMutation();
+
+  useEffect(() => {
+    if (deleteResult.isSuccess && deleteResult.originalArgs) {
+      setDeletedFamily(deleteResult.originalArgs._id);
+    }
+  }, [deleteResult, setDeletedFamily]);
+
+  const { successArgs, errorArgs } = useNotificationArgs();
+  useNotifyMutation(deleteResult, successArgs, errorArgs);
+
+  return { deletedFamily, deletePayerFamily };
+};
 
 const useControlledPagination = ({
   isActive,
@@ -61,7 +100,9 @@ const useControlledPagination = ({
 export function PayerFamilyTable() {
   const { isActive, setActive, watermark } = useInterval(10000);
 
-  const columns = useColumns();
+  const { deletedFamily, deletePayerFamily } = useDeletePayerFamily();
+
+  const columns = useColumns(deletePayerFamily);
   const [getPayerFamiliesFn] = useLazyGetPayerFamiliesQuery();
 
   const loadData = useCallback(
@@ -71,7 +112,7 @@ export function PayerFamilyTable() {
       const count = data?.total ?? 0;
       return { data: families, count };
     },
-    [getPayerFamiliesFn, watermark] // eslint-disable-line react-hooks/exhaustive-deps
+    [getPayerFamiliesFn, watermark, deletedFamily] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const filterProps = useDataTableFilter(payerFamilyTableState, setPayerFamilyFilter);
