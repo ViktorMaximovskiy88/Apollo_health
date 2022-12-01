@@ -11,15 +11,25 @@ import {
 } from '../../retrieved_documents/types';
 import { ChangeLogModal } from '../../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './documentFamilyApi';
-import { TypeColumn } from '@inovua/reactdatagrid-community/types';
+import { TypeColumn, TypeFilterValue } from '@inovua/reactdatagrid-community/types';
 import { Link } from 'react-router-dom';
-import { useSiteSelectOptions } from '../DocDocumentsDataTable';
+import { useSiteSelectOptions } from '../useDocDocumentColumns';
 import { RemoteColumnFilter } from '../../../components/RemoteColumnFilter';
+import { useAppDispatch } from '../../../app/store';
+import { useSelector } from 'react-redux';
+import { docDocumentTableState, setDocDocumentTableFilter } from '../docDocumentsSlice';
 
-export const createColumns = (
-  siteOptions: (search: string) => Promise<{ label: string; value: string }[]>,
-  sitesNamesById: { [key: string]: string }
-) => {
+export const createColumns = ({
+  siteOptions,
+  siteNamesById,
+  dispatch,
+  docDocumentFilters,
+}: {
+  siteOptions: (search: string) => Promise<{ label: string; value: string }[]>;
+  siteNamesById: { [id: string]: string };
+  dispatch: any;
+  docDocumentFilters: TypeFilterValue;
+}) => {
   return [
     {
       header: 'Family Name',
@@ -42,7 +52,7 @@ export const createColumns = (
       },
       render: ({ data: docFam }: { data: DocumentFamily }) => {
         return docFam.site_ids
-          .map((s) => sitesNamesById[s])
+          .map((s) => siteNamesById[s])
           .filter((e) => {
             return e != null;
           })
@@ -88,6 +98,36 @@ export const createColumns = (
       },
     },
     {
+      header: 'Document Count',
+      name: 'doc_doc_count',
+      minWidth: 50,
+      render: ({
+        value: documentCount,
+        data: { _id: documentFamilyId },
+      }: {
+        value: number;
+        data: DocumentFamily;
+      }) => {
+        const handleClick = () => {
+          const newDocDocumentFilters = docDocumentFilters?.map((filter) => {
+            if (filter.name !== 'document_family_id') return filter;
+            return {
+              name: 'document_family_id',
+              operator: 'eq',
+              type: 'select',
+              value: documentFamilyId,
+            };
+          });
+          dispatch(setDocDocumentTableFilter(newDocDocumentFilters));
+        };
+        return (
+          <Link to={`../../documents`} onClick={handleClick}>
+            {documentCount}
+          </Link>
+        );
+      },
+    },
+    {
       header: 'Actions',
       name: 'action',
       render: ({ data: docFamily }: { data: DocumentFamily }) => (
@@ -103,7 +143,9 @@ export const useDocumentFamilyColumns = (siteNamesById: {
   [key: string]: string;
 }): TypeColumn[] => {
   const { siteOptions } = useSiteSelectOptions();
+  const dispatch = useAppDispatch();
+  const { filter: docDocumentFilters } = useSelector(docDocumentTableState);
   return useMemo(() => {
-    return createColumns(siteOptions, siteNamesById);
+    return createColumns({ siteOptions, siteNamesById, dispatch, docDocumentFilters });
   }, [siteNamesById]);
 };

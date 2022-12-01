@@ -20,6 +20,7 @@ class NewDocumentFamily(BaseModel):
     relevance: list[str] = []
     legacy_relevance: list[str] = []
     field_groups: list[str] = []
+    doc_doc_count: int = 0
 
 
 class UpdateDocumentFamily(BaseModel):

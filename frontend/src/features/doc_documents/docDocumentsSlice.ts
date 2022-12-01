@@ -11,6 +11,7 @@ export const initialState = {
       { name: 'classification_status', operator: 'eq', type: 'select', value: null },
       { name: 'document_type', operator: 'eq', type: 'select', value: null },
       { name: 'locations.payer_family_id', operator: 'eq', type: 'select', value: '' },
+      { name: 'document_family_id', operator: 'eq', type: 'select', value: null },
     ],
     pagination: { limit: 50, skip: 0 },
   },
