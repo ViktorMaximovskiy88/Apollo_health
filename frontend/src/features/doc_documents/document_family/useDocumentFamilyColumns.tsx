@@ -20,6 +20,7 @@ import { docDocumentTableState, setDocDocumentTableFilter } from '../docDocument
 import { ButtonLink } from '../../../components';
 import { Popconfirm } from 'antd';
 import { useMemo } from 'react';
+import { CopyDocumentFamily } from './CopyDocumentFamily';
 
 export const createColumns = ({
   siteOptions,
@@ -138,6 +139,8 @@ export const createColumns = ({
     render: ({ data: docFamily }: { data: DocumentFamily }) => (
       <>
         <ChangeLogModal target={docFamily} useChangeLogQuery={useGetChangeLogQuery} />
+        <CopyDocumentFamily documentFamily={docFamily} />
+
         <Popconfirm
           title={`Are you sure you want to delete '${docFamily.name}'?`}
           okText="Yes"
