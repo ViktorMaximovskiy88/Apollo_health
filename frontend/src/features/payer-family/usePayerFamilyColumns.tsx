@@ -56,9 +56,9 @@ export const createColumns = (dispatch: any, docDocumentFilters: TypeFilterValue
     {
       header: 'Actions',
       name: 'action',
-      render: ({ data: PayerFamily }: { data: PayerFamily }) => (
+      render: ({ data: payerFamily }: { data: PayerFamily }) => (
         <>
-          <ChangeLogModal target={PayerFamily} useChangeLogQuery={useGetChangeLogQuery} />
+          <ChangeLogModal target={payerFamily} useChangeLogQuery={useGetChangeLogQuery} />
         </>
       ),
     },
