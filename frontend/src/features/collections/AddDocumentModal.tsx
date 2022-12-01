@@ -23,7 +23,7 @@ import {
   CheckCircleOutlined,
 } from '@ant-design/icons';
 
-import { prettyDateFromISO } from '../../common';
+import { dateToMoment, prettyDateFromISO } from '../../common';
 import { useAddDocumentMutation } from '../retrieved_documents/documentsApi';
 import { baseApiUrl, client } from '../../app/base-api';
 import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
@@ -163,12 +163,12 @@ export function AddDocumentModal({
         name: responseData.doc_name,
         document_type: responseData.document_type,
         lang_code: responseData.lang_code,
-        effective_date: convertDate(responseData.effective_date),
-        last_reviewed_date: convertDate(responseData.last_reviewed_date),
-        last_updated_date: convertDate(responseData.last_updated_date),
-        next_review_date: convertDate(responseData.next_review_date),
-        next_update_date: convertDate(responseData.next_update_date),
-        published_date: convertDate(responseData.published_date),
+        effective_date: dateToMoment(responseData.effective_date),
+        last_reviewed_date: dateToMoment(responseData.last_reviewed_date),
+        last_updated_date: dateToMoment(responseData.last_updated_date),
+        next_review_date: dateToMoment(responseData.next_review_date),
+        next_update_date: dateToMoment(responseData.next_update_date),
+        published_date: dateToMoment(responseData.published_date),
       });
       if (responseData.internal_document === true) {
         form.setFieldsValue({
@@ -400,11 +400,6 @@ function LanguageItem(props: any) {
       />
     </Form.Item>
   );
-}
-
-function convertDate(date?: string) {
-  if (date) return moment(date);
-  return undefined;
 }
 
 function DateItems(props: any) {
