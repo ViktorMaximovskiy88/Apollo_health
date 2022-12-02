@@ -116,7 +116,7 @@ class TaskLog(BaseDocument):
 
     def should_process(self, message_id: str, seconds: int) -> bool:
         return (
-            self.is_queued() or self.has_failed() or self.is_stale(seconds)
+            self.is_queued() or self.has_failed() or self.is_stale(seconds * 2)
         ) and self.message_id == message_id
 
     def can_be_queued(self) -> bool:

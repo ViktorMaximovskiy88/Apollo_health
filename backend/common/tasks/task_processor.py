@@ -40,8 +40,8 @@ class LineageTaskProcessor(TaskProcessor):
         else:
             await self.lineage_service.process_lineage_for_site(task.site_id)
 
-    async def get_progress(self) -> int:
-        return 0
+    async def get_progress(self) -> float:
+        return 0.0
 
 
 class PDFDiffTaskProcessor(TaskProcessor):
@@ -58,5 +58,5 @@ class PDFDiffTaskProcessor(TaskProcessor):
         )
         dtc.compare(doc=current_doc, prev_doc=prev_doc)
 
-    async def get_progress(self) -> int:
-        return 0
+    async def get_progress(self) -> float:
+        return 0.0
