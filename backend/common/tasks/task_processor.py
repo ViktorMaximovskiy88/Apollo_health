@@ -3,14 +3,14 @@ import logging
 from abc import ABC
 
 from backend.common.models.doc_document import DocDocument
-from backend.common.models.tasks import GenericTaskType, LineageTask, PDFDiffTask
+from backend.common.models.tasks import GenericTaskType, LineageTask, PDFDiffTask, TaskLog
 from backend.common.services.lineage.core import LineageService
 from backend.common.services.text_compare.doc_text_compare import DocTextCompare
 from backend.common.storage.client import DocumentStorageClient
 
 
-def task_processor_factory(task_payload: GenericTaskType):
-    task_type = type(task_payload).__name__
+def task_processor_factory(task: TaskLog):
+    task_type = type(task.payload).__name__
     if task_type == "PDFDiffTask":
         Processor = PDFDiffTaskProcessor
     elif task_type == "LineageTask":

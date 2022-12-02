@@ -30,7 +30,6 @@ def get_group_id(payload: GenericTaskType):
 class TaskLogEntry(BaseModel):
     status: TaskStatus
     status_at: datetime
-    error: str | None
 
 
 class TaskLog(BaseDocument):
@@ -81,17 +80,17 @@ class TaskLog(BaseDocument):
             ],
         )
 
-        task = await cls.get_motor_collection().find_one_and_update(
+        saved_task = await cls.get_motor_collection().find_one_and_update(
             {
                 "group_id": group_id,
                 "is_complete": False,
             },
-            {"$setOnInsert": payload.dict()},
+            {"$setOnInsert": task.dict()},
             upsert=True,
             return_document=ReturnDocument.AFTER,
         )
 
-        return task
+        return TaskLog(**saved_task)
 
     @classmethod
     async def get_incomplete_for_user(cls: T, user_id: PydanticObjectId) -> T | None:
@@ -116,7 +115,7 @@ class TaskLog(BaseDocument):
 
     def should_process(self, message_id: str, seconds: int) -> bool:
         return (
-            self.is_queued() or self.has_failed() or self.is_stale(seconds * 2)
+            self.is_queued() or self.has_failed() or self.is_stale(seconds)
         ) and self.message_id == message_id
 
     def can_be_queued(self) -> bool:
@@ -166,16 +165,15 @@ class TaskLog(BaseDocument):
         log_entry = TaskLogEntry(
             status=payload["status"],
             status_at=payload["status_at"],
-            error=payload["error"],
         )
 
-        updated = await self.get_motor_collection().find_and_modify(
+        updated = await self.get_motor_collection().find_one_and_update(
             {"_id": self.id},
-            {"$set": payload.dict(), "$push": {"log": log_entry.dict()}},
+            {"$set": payload, "$push": {"log": log_entry.dict()}},
             return_document=ReturnDocument.AFTER,
         )
 
-        return updated
+        return TaskLog(**updated)
 
     @before_event(Insert)
     def before_insert(self):

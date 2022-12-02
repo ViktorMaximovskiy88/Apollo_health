@@ -40,10 +40,10 @@ class TaskQueue(SQSBase):
     async def enqueue(
         self, payload: GenericTaskType, created_by: PydanticObjectId | None = None
     ) -> TaskLog:
-
-        task: TaskLog = await TaskLog.upsert(payload, created_by=created_by)
+        task: TaskLog = await TaskLog.upsert(payload=payload, created_by=created_by)
 
         if task.can_be_queued():
+            self.logger.info(f"queueing new message group_id={task.group_id}")
             response = self.send(task.dict(), task.group_id)
             task = await task.update_queued(message_id=response["MessageId"])
 
@@ -77,13 +77,13 @@ class TaskQueue(SQSBase):
                     self.logger.info(f"{task.task_type} processing started")
 
                     try:
-                        task_processor: TaskProcessor = task_processor_factory(logger=self.logger)
+                        task_processor: TaskProcessor = task_processor_factory(task)
                         self.keep_alive_task = asyncio.create_task(
                             self.keep_alive(
                                 self.keep_alive_seconds, message, task, task_processor.get_progress
                             )
                         )
-                        await task_processor.exec()
+                        await task_processor.exec(task.payload)
                         self.keep_alive_task.cancel()
 
                         task = await task.update_finished()
@@ -107,7 +107,7 @@ class TaskQueue(SQSBase):
         task = await TaskLog.find_by_message_id(message.message_id)
         if not task:
             message.change_visibility(VisibilityTimeout=self.keep_alive_seconds)
-            raise Exception(f"TaskLog not found message_id={message.message_id}")
+            raise Exception(f"TaskLog not found message_id={message.message_id} {message.body}")
         return task
 
     async def _get_task(self, body: dict):

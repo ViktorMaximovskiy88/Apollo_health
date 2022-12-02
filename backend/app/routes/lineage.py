@@ -25,7 +25,7 @@ async def reprocess_lineage_for_site(
     current_user: User = Security(get_current_user),
 ):
     task_payload = LineageTask(site_id=site_id, reprocess=True)
-    task = await task_queue.enqueue(task_payload, created_by=current_user)
+    task = await task_queue.enqueue(task_payload, current_user.id)
     return {"task": task}
 
 
