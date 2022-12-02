@@ -150,7 +150,7 @@ def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
         change_info.lineage_change = doc.previous_doc_doc_id
     if (
         isinstance(updates, (UpdateDocDocument, FamilyUpdateDocDocument))
-        and updates.document_family_id
+        and "document_family_id" in updates.__fields_set__
         and updates.document_family_id != doc.document_family_id
     ):
         change_info.document_family_change = doc.document_family_id or True

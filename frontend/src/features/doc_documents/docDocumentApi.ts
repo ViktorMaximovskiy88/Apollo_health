@@ -8,7 +8,7 @@ import {
   SubmitWorkItemRequest,
 } from '../work_queue/types';
 import { TableState } from '../work_queue/workQueueSlice';
-import { CompareRequest, CompareResponse, DocDocument } from './types';
+import { DocBulkUpdateResponse, CompareRequest, CompareResponse, DocDocument } from './types';
 
 export const docDocumentsApi = createApi({
   reducerPath: 'docDocumentsApi',
@@ -131,6 +131,24 @@ export const docDocumentsApi = createApi({
       }),
       invalidatesTags: (_r, _e, { docDocumentId: id }) => [{ type: 'DocDocument', id }],
     }),
+    updateMultipleDocs: builder.mutation<
+      DocBulkUpdateResponse,
+      {
+        ids: string[];
+        update: Partial<DocDocument>;
+        site_id?: string;
+        payer_family_id?: string;
+        all_sites?: boolean;
+      }
+    >({
+      query: (body) => {
+        return {
+          url: '/doc-documents/bulk',
+          method: 'POST',
+          body,
+        };
+      },
+    }),
   }),
 });
 
@@ -139,6 +157,7 @@ export const {
   useGetDocDocumentsQuery,
   useLazyGetDocDocumentsQuery,
   useUpdateDocDocumentMutation,
+  useUpdateMultipleDocsMutation,
   useCreateDiffMutation,
   useGetChangeLogQuery,
   useGetWorkQueueItemsQuery,

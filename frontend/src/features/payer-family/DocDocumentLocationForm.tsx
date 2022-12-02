@@ -8,7 +8,7 @@ import { RemoteSelect, TextEllipsis } from '../../components';
 import { LinkIcon } from '../../components/LinkIcon';
 import { useCallback } from 'react';
 
-const useFetchPayerFamilyOptions = () => {
+export const useFetchPayerFamilyOptions = () => {
   const [getPayerFamilies] = useLazyGetPayerFamiliesQuery();
   const fetchPayerFamilyOptions = useCallback(
     async (search: string) => {

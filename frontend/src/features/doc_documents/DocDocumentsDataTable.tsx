@@ -7,6 +7,7 @@ import {
   docDocumentTableState,
   setDocDocumentTableLimit,
   setDocDocumentTableSkip,
+  setDocDocumentTableSelect,
 } from './docDocumentsSlice';
 import { GridPaginationToolbar } from '../../components';
 import { useLazyGetDocDocumentsQuery } from './docDocumentApi';
@@ -19,6 +20,7 @@ import { useGetSitesQuery } from '../sites/sitesApi';
 import { useGetPayerFamiliesQuery } from '../payer-family/payerFamilyApi';
 import { useGetDocumentFamiliesQuery } from './document_family/documentFamilyApi';
 import { useColumns } from './useDocDocumentColumns';
+import { useDataTableSelection } from '../../common/hooks/use-data-table-select';
 
 export function useGetSiteNamesById() {
   const [siteIds, setSiteIds] = useState<string[]>([]);
@@ -147,6 +149,7 @@ export function DocDocumentsDataTable() {
   const { setPayerFamilyIds, payerFamilyNamesById } = useGetPayerFamilyNamesById();
   const { setDocumentFamilyIds, documentFamilyNamesById } = useGetDocumentFamilyNamesById();
 
+  const { forceUpdate } = useSelector(docDocumentTableState);
   const loadData = useCallback(
     async (tableInfo: any) => {
       const { data } = await getDocDocumentsFn(tableInfo);
@@ -159,25 +162,32 @@ export function DocDocumentsDataTable() {
       }
       return { data: docDocuments, count };
     },
-    [getDocDocumentsFn, setSiteIds, watermark] // eslint-disable-line react-hooks/exhaustive-deps
+    [getDocDocumentsFn, setSiteIds, watermark, forceUpdate] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const filterProps = useDataTableFilter(docDocumentTableState, setDocDocumentTableFilter);
   const sortProps = useDataTableSort(docDocumentTableState, setDocDocumentTableSort);
+  const selectionProps = useDataTableSelection(docDocumentTableState, setDocDocumentTableSelect);
   const controlledPagination = useControlledPagination({ isActive, setActive });
   const columns = useColumns({ siteNamesById, payerFamilyNamesById, documentFamilyNamesById });
 
   return (
-    <ReactDataGrid
-      dataSource={loadData}
-      {...filterProps}
-      {...sortProps}
-      {...controlledPagination}
-      columns={columns}
-      rowHeight={50}
-      renderLoadMask={() => <></>}
-      activateRowOnFocus={false}
-      columnUserSelect
-    />
+    <>
+      <ReactDataGrid
+        idProperty="_id"
+        dataSource={loadData}
+        {...filterProps}
+        {...sortProps}
+        {...selectionProps}
+        {...controlledPagination}
+        columns={columns}
+        rowHeight={50}
+        renderLoadMask={() => <></>}
+        activateRowOnFocus={false}
+        columnUserSelect
+        checkboxColumn
+        checkboxOnlyRowSelect
+      />
+    </>
   );
 }

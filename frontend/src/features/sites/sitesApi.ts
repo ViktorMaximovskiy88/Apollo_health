@@ -130,6 +130,18 @@ export const sitesApi = createApi({
       query: (id) => `/change-log/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
     }),
+    getAllDocIds: builder.query<
+      string[],
+      {
+        siteId?: string;
+        filterValue?: TypeFilterValue;
+      }
+    >({
+      query: ({ siteId, filterValue }) => {
+        const args = tableQueryInfoBuilder({ filterValue });
+        return `/doc-documents/ids?${args.join('&')}${siteId ? `&site_id=${siteId}` : ''}`;
+      },
+    }),
   }),
 });
 
@@ -148,4 +160,5 @@ export const {
   useGetSiteDocDocumentsQuery,
   useGetSiteDocDocumentQuery,
   useLazyGetSiteDocDocumentsQuery,
+  useLazyGetAllDocIdsQuery,
 } = sitesApi;

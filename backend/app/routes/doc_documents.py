@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 from typing import List
 
@@ -12,26 +13,28 @@ from backend.app.routes.table_query import (
     TableFilterInfo,
     TableQueryResponse,
     TableSortInfo,
+    construct_table_query,
     get_query_json_list,
     query_table,
 )
-from backend.app.utils.logger import Logger, get_logger, update_and_log_diff
-from backend.app.utils.user import get_current_user
+from backend.app.utils.user import get_current_admin_user, get_current_user
 from backend.common.models.base_document import BaseModel
 from backend.common.models.doc_document import (
+    BulkUpdateRequest,
+    BulkUpdateResponse,
     DocDocument,
     DocDocumentLimitTags,
     DocDocumentView,
+    IdOnlyDocument,
     UpdateDocDocument,
 )
 from backend.common.models.document_family import DocumentFamily
-from backend.common.models.document_mixins import calc_final_effective_date
 from backend.common.models.payer_family import PayerFamily
 from backend.common.models.shared import DocDocumentLocationView
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.tasks import PDFDiffTask, TaskLog
 from backend.common.models.user import User
-from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook, get_doc_change_info
+from backend.common.repositories.doc_document_repository import DocDocumentRepository
 from backend.common.sqs.task_queue import TaskQueue
 from backend.common.storage.client import DocumentStorageClient
 
@@ -54,6 +57,21 @@ async def get_target(id: PydanticObjectId) -> DocDocument:
             status_code=status.HTTP_404_NOT_FOUND,
         )
     return task
+
+
+@router.get(
+    "/ids",
+    response_model=list[PydanticObjectId],
+    dependencies=[Security(get_current_admin_user)],
+)
+async def get_all_doc_document_ids(
+    site_id: PydanticObjectId | None = None,
+    filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
+):
+    match = {"locations.site_id": site_id} if site_id else {}
+    query = DocDocument.find_many(match).project(IdOnlyDocument)
+    query = construct_table_query(query, [], filters)
+    return [doc.id async for doc in query]
 
 
 @router.get(
@@ -149,15 +167,53 @@ async def create_diff(
         return CompareResponse(task=task)
 
 
+@router.post("/bulk", response_model=BulkUpdateResponse)
+async def bulk_doc_type_update(
+    body: BulkUpdateRequest,
+    current_user: User = Security(get_current_admin_user),
+):
+    targets: FindMany[DocDocument] = DocDocument.find_many({"_id": {"$in": body.ids}})
+    update = body.update
+
+    doc_documents_repo = DocDocumentRepository()
+
+    counts, errors = {"suc": 0, "err": 0}, []
+
+    async def gather_tasks(tasks):
+        for res in await asyncio.gather(*tasks, return_exceptions=True):
+            if isinstance(res, Exception):
+                errors.append(str(res))
+                counts["err"] += 1
+            else:
+                counts["suc"] += 1
+
+    tasks = []
+    async for doc in targets:
+        full_update = update.copy()
+        if body.payer_family_id:
+            locations = []
+            for location in doc.locations:
+                if not body.site_id or body.site_id == location.site_id or body.all_sites:
+                    locations.append(
+                        location.copy(update={"payer_family_id": body.payer_family_id})
+                    )
+                else:
+                    locations.append(location)
+            full_update.locations = locations
+
+        tasks.append(doc_documents_repo.execute(doc, full_update, current_user))
+        if len(tasks) == 10:
+            await gather_tasks(tasks)
+            tasks = []
+    await gather_tasks(tasks)
+
+    return BulkUpdateResponse(count_success=counts["suc"], count_error=counts["err"], errors=errors)
+
+
 @router.post("/{id}", response_model=DocDocument)
 async def update_doc_document(
     updates: UpdateDocDocument,
     doc: DocDocument = Depends(get_target),
     current_user: User = Security(get_current_user),
-    logger: Logger = Depends(get_logger),
 ):
-    updates.final_effective_date = calc_final_effective_date(updates)
-    change_info = get_doc_change_info(updates, doc)
-    updated = await update_and_log_diff(logger, current_user, doc, updates)
-    await doc_document_save_hook(doc, change_info)
-    return updated
+    return await DocDocumentRepository().execute(doc, updates, current_user)

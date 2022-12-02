@@ -1,9 +1,11 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { LOCATION_CHANGE } from 'redux-first-history';
 import { RootState } from '../../app/store';
 
 export const initialState = {
   table: {
     sort: undefined,
+    selection: undefined,
     filter: [
       { name: 'name', operator: 'contains', type: 'string', value: '' },
       { name: 'locations.site_id', operator: 'eq', type: 'select', value: '' },
@@ -14,6 +16,7 @@ export const initialState = {
       { name: 'document_family_id', operator: 'eq', type: 'select', value: null },
     ],
     pagination: { limit: 50, skip: 0 },
+    forceUpdate: 0,
   },
 };
 
@@ -33,6 +36,20 @@ export const docDocuments = createSlice({
     setDocDocumentTableSkip: (state, action: PayloadAction<any>) => {
       state.table.pagination.skip = action.payload;
     },
+    setDocDocumentTableSelect: (state, action: PayloadAction<any>) => {
+      state.table.selection = action.payload;
+    },
+    setDocDocumentTableForceUpdate: (state) => {
+      state.table.forceUpdate += 1;
+    },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(LOCATION_CHANGE, (state, action: any) => {
+      const pathname: string = action.payload.location.pathname;
+      if (!pathname.startsWith('/documents')) {
+        state.table.selection = initialState.table.selection;
+      }
+    });
   },
 });
 
@@ -46,6 +63,8 @@ export const {
   setDocDocumentTableSort,
   setDocDocumentTableLimit,
   setDocDocumentTableSkip,
+  setDocDocumentTableSelect,
+  setDocDocumentTableForceUpdate,
 } = docDocuments.actions;
 
 export default docDocuments.reducer;

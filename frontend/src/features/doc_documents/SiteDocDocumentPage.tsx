@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Button } from 'antd';
 import { useParams } from 'react-router-dom';
 
@@ -16,6 +16,32 @@ import {
 import { useSiteScrapeTaskId } from './manual_collection/useUpdateSelected';
 import { initialState } from '../collections/collectionsSlice';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
+import { DocTypeUpdateModal } from './DocTypeBulkUpdateModal';
+import { useSelector } from 'react-redux';
+import {
+  setSiteDocDocumentTableForceUpdate,
+  setSiteDocDocumentTableSelect,
+  siteDocDocumentTableState,
+} from './siteDocDocumentsSlice';
+import { useAppDispatch } from '../../app/store';
+
+function DocTypeUpdateModalToolbar() {
+  const { siteId } = useParams();
+  const tableState = useSelector(siteDocDocumentTableState);
+  const dispatch = useAppDispatch();
+  const onBulkSubmit = useCallback(() => {
+    dispatch(setSiteDocDocumentTableForceUpdate());
+    dispatch(setSiteDocDocumentTableSelect({ selected: {}, unselected: {} }));
+  }, [dispatch, setSiteDocDocumentTableForceUpdate, setSiteDocDocumentTableSelect]);
+  return (
+    <DocTypeUpdateModal
+      selection={tableState.selection}
+      filterValue={tableState.filter}
+      siteId={siteId}
+      onBulkSubmit={onBulkSubmit}
+    />
+  );
+}
 
 export function SiteDocDocumentsPage() {
   const [newDocumentModalOpen, setNewDocumentModalOpen] = useState(false);
@@ -66,6 +92,7 @@ export function SiteDocDocumentsPage() {
               Create Document
             </Button>
           ) : null}
+          {site.collection_method !== 'MANUAL' ? <DocTypeUpdateModalToolbar /> : null}
         </>
       }
     >

@@ -115,3 +115,9 @@ export type SiteDocDocument = Omit<
   'locations' | 'first_collected_date' | 'last_collected_date'
 > &
   DocDocumentLocation;
+
+export interface DocBulkUpdateResponse {
+  count_success: number;
+  count_error: number;
+  errors: string[];
+}

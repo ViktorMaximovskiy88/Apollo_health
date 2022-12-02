@@ -224,3 +224,21 @@ class NoFocusTherapyTagDocDocument(DocDocument):
 
     class Collection:
         name = "DocDocument"
+
+
+class BulkUpdateRequest(BaseModel):
+    ids: list[PydanticObjectId]
+    update: UpdateDocDocument
+    site_id: PydanticObjectId | None
+    payer_family_id: PydanticObjectId | None
+    all_sites: bool = False
+
+
+class BulkUpdateResponse(BaseModel):
+    count_success: int
+    count_error: int
+    errors: list[str]
+
+
+class IdOnlyDocument(BaseModel):
+    id: PydanticObjectId = Field(None, alias="_id")

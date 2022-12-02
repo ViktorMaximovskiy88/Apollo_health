@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Form, Button } from 'antd';
+import { Form, Button, FormInstance } from 'antd';
 import { PlusOutlined, EditOutlined } from '@ant-design/icons';
 import { DocumentFamily } from './document_family/types';
 import { DocumentFamilyCreateDrawer } from './document_family/DocumentFamilyCreateDrawer';
@@ -36,8 +36,8 @@ const useOnDocTypeChangeClearDocumentFamily = (
   }, [doc?.document_family, doc?.document_type, document_type_selected, setCurrentOption]);
 };
 
-const useFetchDocFamilyOptions = () => {
-  const document_type_selected = Form.useWatch('document_type');
+export const useFetchDocFamilyOptions = (form?: FormInstance) => {
+  const document_type_selected = Form.useWatch('document_type', form);
   const [getDocumentFamilies] = useLazyGetDocumentFamiliesQuery();
 
   const fetchDocFamilyOptions = useCallback(
