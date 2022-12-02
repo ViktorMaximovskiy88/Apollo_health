@@ -1,9 +1,8 @@
 import { Button, Form, Select, Space, Input, DatePicker } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
-import moment from 'moment';
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { prettyDate } from '../../common';
+import { dateToMoment, prettyDate } from '../../common';
 import { useNotifyMutation } from '../../common/hooks';
 import { useUpdateDocumentMutation } from './documentsApi';
 import { RetrievedDocument, DocumentTypes, languageCodes } from './types';
@@ -47,11 +46,6 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     navigate(-1);
   }
 
-  function convertDate(date?: string) {
-    if (date) return moment(date);
-    return undefined;
-  }
-
   const initialValues = {
     name: doc.name,
     document_type: doc.document_type,
@@ -59,15 +53,15 @@ export function DocumentForm(props: { doc: RetrievedDocument }) {
     base_url: doc.base_url,
     lang_code: doc.lang_code,
     link_text: doc.context_metadata?.link_text,
-    effective_date: convertDate(doc.effective_date),
-    first_collected_date: convertDate(doc.first_collected_date),
-    last_collected_date: convertDate(doc.last_collected_date),
-    end_date: convertDate(doc.end_date),
-    last_updated_date: convertDate(doc.last_updated_date),
-    last_reviewed_date: convertDate(doc.last_reviewed_date),
-    next_review_date: convertDate(doc.next_review_date),
-    next_update_date: convertDate(doc.next_update_date),
-    published_date: convertDate(doc.published_date),
+    effective_date: dateToMoment(doc.effective_date),
+    first_collected_date: dateToMoment(doc.first_collected_date),
+    last_collected_date: dateToMoment(doc.last_collected_date),
+    end_date: dateToMoment(doc.end_date),
+    last_updated_date: dateToMoment(doc.last_updated_date),
+    last_reviewed_date: dateToMoment(doc.last_reviewed_date),
+    next_review_date: dateToMoment(doc.next_review_date),
+    next_update_date: dateToMoment(doc.next_update_date),
+    published_date: dateToMoment(doc.published_date),
   };
 
   const confidencePercent = docTypeConfidence ? `${Math.floor(docTypeConfidence * 100)}%` : '-';
