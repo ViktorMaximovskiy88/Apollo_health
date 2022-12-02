@@ -1,10 +1,11 @@
 import asyncio
 import signal
 import traceback
+from collections.abc import Coroutine
 
-from backend.common.models.tasks import GenericTaskType, PydanticObjectId, TaskLog, get_group_id
-from backend.common.sqs.core import SQSBase
-from backend.common.sqs.task_processor import get_task_processor
+from backend.common.models.tasks import GenericTaskType, PydanticObjectId, TaskLog
+from backend.common.tasks.sqs import SQSBase
+from backend.common.tasks.task_processor import TaskProcessor, task_processor_factory
 
 
 class TaskQueue(SQSBase):
@@ -24,44 +25,34 @@ class TaskQueue(SQSBase):
 
         if self.current_message:
             self.logger.info(f"message_id={self.current_message.message_id} change_visibility to 0")
-            self.current_message.change_visibility(VisibilityTimeout=10)
+            self.current_message.change_visibility(VisibilityTimeout=self.keep_alive_seconds)
 
         loop = asyncio.get_event_loop()
         tasks = asyncio.gather(*asyncio.all_tasks(loop=loop), return_exceptions=True)
         tasks.add_done_callback(lambda t: loop.stop())
         tasks.cancel()
 
+        # TODO some better handling here; lets catch the known exception?
+        # TODO can that backfire (aka is it a valid exception in some cases)?
         while not tasks.done() and not loop.is_closed():
             loop.run_forever()
 
     async def enqueue(
         self, payload: GenericTaskType, created_by: PydanticObjectId | None = None
     ) -> TaskLog:
-        group_id = get_group_id(payload)
-        # lets make sure its all going to primary or just redis...
-        # doesnt exist by group_id (wont have message_id yet) and incomplete
-        task: TaskLog = await TaskLog.get_incomplete(group_id)
 
-        if not task:
-            task = await TaskLog.create_pending(
-                payload=payload,
-                group_id=group_id,
-                created_by=created_by,
-            )
+        task: TaskLog = await TaskLog.upsert(payload, created_by=created_by)
 
-        if not task.has_been_queued():
-            response = self.send(task.dict(), group_id)
-            message_id = response["MessageId"]
-            task = await task.update_queued(message_id)
-
-        # if its stale (queued with for so long?) and has a message id
-        # maybe the message dropped... just delete message and sqs.send again?
+        if task.can_be_queued():
+            response = self.send(task.dict(), task.group_id)
+            task = await task.update_queued(message_id=response["MessageId"])
 
         return task
 
-    async def keep_alive(self, message, task: TaskLog, seconds: int):
+    async def keep_alive(self, seconds: int, message, task: TaskLog, on_progress: Coroutine):
         while True:
             message.change_visibility(VisibilityTimeout=seconds)
+            await on_progress()
             await task.keep_alive()
             await asyncio.sleep(seconds)
 
@@ -86,11 +77,13 @@ class TaskQueue(SQSBase):
                     self.logger.info(f"{task.task_type} processing started")
 
                     try:
+                        task_processor: TaskProcessor = task_processor_factory(logger=self.logger)
                         self.keep_alive_task = asyncio.create_task(
-                            self.keep_alive(message, task, self.keep_alive_seconds)
+                            self.keep_alive(
+                                self.keep_alive_seconds, message, task, task_processor.get_progress
+                            )
                         )
-                        Processor = get_task_processor(task.payload)
-                        await Processor(logger=self.logger).exec(task.payload)
+                        await task_processor.exec()
                         self.keep_alive_task.cancel()
 
                         task = await task.update_finished()
@@ -111,11 +104,10 @@ class TaskQueue(SQSBase):
                 self.current_message = None
 
     async def _get_task_by_message(self, message):
-        task = await TaskLog.find_one({"message_id": message.message_id})
+        task = await TaskLog.find_by_message_id(message.message_id)
         if not task:
             message.change_visibility(VisibilityTimeout=self.keep_alive_seconds)
             raise Exception(f"TaskLog not found message_id={message.message_id}")
-
         return task
 
     async def _get_task(self, body: dict):

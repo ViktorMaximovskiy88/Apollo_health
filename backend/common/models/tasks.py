@@ -2,11 +2,13 @@ from datetime import datetime, timedelta, timezone
 from typing import TypeVar
 
 from beanie import Indexed, Insert, PydanticObjectId, before_event
+from pymongo import ReturnDocument
 
 from backend.common.core.enums import TaskStatus
 from backend.common.models.base_document import BaseDocument, BaseModel
 
 GenericTaskType = TypeVar("GenericTaskType", "LineageTask", "PDFDiffTask")
+T = TypeVar("T", bound="TaskLog")
 
 
 class PDFDiffTask(BaseModel):
@@ -28,6 +30,7 @@ def get_group_id(payload: GenericTaskType):
 class TaskLogEntry(BaseModel):
     status: TaskStatus
     status_at: datetime
+    error: str | None
 
 
 class TaskLog(BaseDocument):
@@ -53,28 +56,45 @@ class TaskLog(BaseDocument):
         return get_group_id(self.payload)
 
     @classmethod
-    async def create_pending(cls, payload: GenericTaskType, **kwargs):
+    async def find_by_message_id(cls, message_id: str):
+        return await cls.find_one({"message_id": message_id})
+
+    @classmethod
+    async def upsert(cls, payload: GenericTaskType, created_by: PydanticObjectId | None):
         task_type = type(payload).__name__
-        task = cls(payload=payload, status=TaskStatus.PENDING, task_type=task_type, **kwargs)
         now = datetime.now(tz=timezone.utc)
-        task.status_at = now
-        task.log.append(
-            TaskLogEntry(
-                status=task.status,
-                status_at=now,
-            )
+        group_id = get_group_id(payload)
+        status = TaskStatus.PENDING
+
+        task = cls(
+            group_id=group_id,
+            payload=payload,
+            status=status,
+            task_type=task_type,
+            status_at=now,
+            created_by=created_by,
+            log=[
+                TaskLogEntry(
+                    status=status,
+                    status_at=now,
+                )
+            ],
         )
-        task = await task.save()
+
+        task = await cls.get_motor_collection().find_one_and_update(
+            {
+                "group_id": group_id,
+                "is_complete": False,
+            },
+            {"$setOnInsert": payload.dict()},
+            upsert=True,
+            return_document=ReturnDocument.AFTER,
+        )
+
         return task
 
     @classmethod
-    async def get_incomplete(cls: GenericTaskType, group_id: str) -> GenericTaskType | None:
-        return await cls.find_one({"group_id": group_id, "is_complete": False})
-
-    @classmethod
-    async def get_incomplete_for_user(
-        cls: GenericTaskType, user_id: PydanticObjectId
-    ) -> GenericTaskType | None:
+    async def get_incomplete_for_user(cls: T, user_id: PydanticObjectId) -> T | None:
         return await cls.find_many({"created_by": user_id, "is_complete": False}).to_list()
 
     def is_finished(self) -> bool:
@@ -99,25 +119,24 @@ class TaskLog(BaseDocument):
             self.is_queued() or self.has_failed() or self.is_stale(seconds)
         ) and self.message_id == message_id
 
-    def has_been_queued(self) -> bool:
+    def can_be_queued(self) -> bool:
         queued = [log for log in self.log if log.status == TaskStatus.QUEUED]
-        # TODO think on the message id part...
-        return len(queued) > 0 and self.message_id
+        return len(queued) == 0 and not self.message_id
 
-    async def update_queued(self, message_id: str) -> GenericTaskType:
+    async def update_queued(self, message_id: str) -> T:
         return await self._update_status(TaskStatus.QUEUED, message_id=message_id)
 
-    async def update_progress(self) -> GenericTaskType:
+    async def update_progress(self) -> T:
         return await self._update_status(TaskStatus.IN_PROGRESS, is_complete=False)
 
-    async def keep_alive(self) -> GenericTaskType:
+    async def keep_alive(self) -> T:
         self.status_at = datetime.now(tz=timezone.utc)
         return await self.save()
 
-    async def update_finished(self) -> GenericTaskType:
+    async def update_finished(self) -> T:
         return await self._update_status(TaskStatus.FINISHED, is_complete=True)
 
-    async def update_failed(self, error: str) -> GenericTaskType:
+    async def update_failed(self, error: str) -> T:
         return await self._update_status(TaskStatus.FAILED, is_complete=True, error=error)
 
     async def _update_status(
@@ -126,29 +145,37 @@ class TaskLog(BaseDocument):
         message_id: str = None,
         is_complete=False,
         error: str | None = None,
-    ) -> GenericTaskType:
+    ) -> T:
         now = datetime.now(tz=timezone.utc)
-        self.status = task_status
-        self.is_complete = is_complete
-        self.status_at = now
+
+        payload = {
+            "status": task_status,
+            "is_complete": is_complete,
+            "status_at": now,
+        }
 
         if is_complete:
-            self.completed_at = now
+            payload["completed_at"] = now
 
         if error:
-            self.error = error
+            payload["error"] = error
 
         if message_id:
-            self.message_id = message_id
+            payload["message_id"] = message_id
 
-        self.log.append(
-            TaskLogEntry(
-                status=self.status,
-                status_at=now,
-            )
+        log_entry = TaskLogEntry(
+            status=payload["status"],
+            status_at=payload["status_at"],
+            error=payload["error"],
         )
 
-        return await self.save()
+        updated = await self.get_motor_collection().find_and_modify(
+            {"_id": self.id},
+            {"$set": payload.dict(), "$push": {"log": log_entry.dict()}},
+            return_document=ReturnDocument.AFTER,
+        )
+
+        return updated
 
     @before_event(Insert)
     def before_insert(self):
