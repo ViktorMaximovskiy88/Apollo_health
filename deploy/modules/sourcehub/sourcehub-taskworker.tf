@@ -195,7 +195,7 @@ resource "aws_sqs_queue" "taskworker" {
 }
 
 resource "aws_sqs_queue" "taskworker_dlq" {
-  name = format("%s-%s-%s-taskworker-%s-mmit-sqs-%02d.dlq", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
+  name = format("%s-%s-%s-taskworker-%s-mmit-sqs-%02d-dlq", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
 
   tags = merge(local.effective_tags, {
     component = "${local.service_name}-taskworker"
