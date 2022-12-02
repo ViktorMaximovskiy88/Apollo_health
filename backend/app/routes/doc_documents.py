@@ -35,8 +35,8 @@ from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.tasks import PDFDiffTask, TaskLog
 from backend.common.models.user import User
 from backend.common.repositories.doc_document_repository import DocDocumentRepository
-from backend.common.sqs.task_queue import TaskQueue
 from backend.common.storage.client import DocumentStorageClient
+from backend.common.tasks.task_queue import TaskQueue
 
 router: APIRouter = APIRouter(
     prefix="/doc-documents",
