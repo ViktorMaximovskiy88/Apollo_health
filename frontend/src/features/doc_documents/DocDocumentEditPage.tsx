@@ -5,10 +5,21 @@ import { RetrievedDocumentViewer } from '../retrieved_documents/RetrievedDocumen
 import { MainLayout } from '../../components';
 import { useForm } from 'antd/lib/form/Form';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { WarningFilled } from '@ant-design/icons';
 import { DocDocument } from './types';
 import { useNotifyMutation } from '../../common/hooks';
+
+const useNavigateOnSuccess = (result: any) => {
+  const navigate = useNavigate();
+  // fixes bug where notification doesn't render in some cases.
+  useEffect(() => {
+    if (result.isSuccess) {
+      navigate(-1);
+      navigate('..');
+    }
+  }, [result.isSuccess]);
+};
 
 export function DocDocumentEditPage() {
   const navigate = useNavigate();
@@ -22,8 +33,9 @@ export function DocDocumentEditPage() {
   const [updateDocDocument, result] = useUpdateDocDocumentMutation();
   const updateDocDoc = async (doc: Partial<DocDocument>): Promise<void> => {
     await updateDocDocument(doc);
-    navigate(-1);
   };
+
+  useNavigateOnSuccess(result);
 
   useNotifyMutation(
     result,

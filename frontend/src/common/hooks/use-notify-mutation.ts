@@ -12,10 +12,10 @@ export function useNotifyMutation(
     if (isSuccess) {
       notification.success({ message: 'Success!', ...successNotificationArgs });
     }
-  }, [isSuccess, successNotificationArgs]);
+  }, [isSuccess]); // if successNotificationArgs in dep array, causes undesired renders
   useEffect(() => {
     if (isError) {
       notification.error({ message: 'Error', ...errorNotificationArgs });
     }
-  }, [isError, errorNotificationArgs]);
+  }, [isError]); // if errorNotificationArgs in dep array, causes undesired renders
 }
