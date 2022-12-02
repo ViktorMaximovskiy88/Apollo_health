@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import TypeVar
 
-from beanie import Indexed, Insert, PydanticObjectId, before_event
+from beanie import Indexed, PydanticObjectId
 from pymongo import ReturnDocument
 
 from backend.common.core.enums import TaskStatus
@@ -72,6 +72,7 @@ class TaskLog(BaseDocument):
             task_type=task_type,
             status_at=now,
             created_by=created_by,
+            created_at=now,
             log=[
                 TaskLogEntry(
                     status=status,
@@ -174,7 +175,3 @@ class TaskLog(BaseDocument):
         )
 
         return TaskLog(**updated)
-
-    @before_event(Insert)
-    def before_insert(self):
-        self.created_at = datetime.now(tz=timezone.utc)
