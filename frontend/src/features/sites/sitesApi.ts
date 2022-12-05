@@ -138,8 +138,15 @@ export const sitesApi = createApi({
       }
     >({
       query: ({ siteId, filterValue }) => {
-        const args = tableQueryInfoBuilder({ filterValue });
-        return `/doc-documents/ids?${args.join('&')}${siteId ? `&site_id=${siteId}` : ''}`;
+        const filters =
+          filterValue?.map((f) => {
+            if (f.name === 'name' || f.name === 'link_text') {
+              return { ...f, operator: `text${f.operator}` };
+            }
+            return f;
+          }) || [];
+        const filterStr = encodeURIComponent(JSON.stringify(filters));
+        return `/doc-documents/ids?filters=${filterStr}${siteId ? `&site_id=${siteId}` : ''}`;
       },
     }),
   }),
