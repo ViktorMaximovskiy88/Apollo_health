@@ -177,22 +177,6 @@ export const useColumns = ({
       },
     },
     {
-      header: 'Classification Status',
-      name: 'classification_status',
-      minWidth: 200,
-      filterEditor: SelectFilter,
-      filterEditorProps: {
-        placeholder: 'All',
-        dataSource: Object.values(ApprovalStatus).map((status) => ({
-          id: status,
-          label: approvalStatusDisplayName(status),
-        })),
-      },
-      render: ({ data: doc }: { data: DocDocument }) => {
-        return approvalStatusStyledDisplay(doc.classification_status);
-      },
-    },
-    {
       header: 'Document Type',
       name: 'document_type',
       minWidth: 200,
@@ -203,6 +187,20 @@ export const useColumns = ({
       },
       render: ({ value: document_type }: { value: string }) => {
         return <>{document_type}</>;
+      },
+    },
+    {
+      header: 'Document Family',
+      name: 'document_family_id',
+      minWidth: 200,
+      filterEditor: RemoteColumnFilter,
+      filterEditorProps: {
+        fetchOptions: documentFamilyOptions,
+        initialOptions: initialDocumentFamilyOptions,
+      },
+      defaultFlex: 1,
+      render: ({ data: { document_family_id } }: { data: DocDocument }) => {
+        return document_family_id ? documentFamilyNamesById[document_family_id] : null;
       },
     },
     {
@@ -220,6 +218,70 @@ export const useColumns = ({
           .filter((s) => payerFamilyNamesById[s.payer_family_id])
           .map((s) => payerFamilyNamesById[s.payer_family_id])
           .join(', ');
+      },
+    },
+    {
+      header: 'Status',
+      name: 'status',
+      minWidth: 200,
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        placeholder: 'All',
+        dataSource: Object.values(ApprovalStatus).map((status) => ({
+          id: status,
+          label: approvalStatusDisplayName(status),
+        })),
+      },
+      render: ({ data: doc }: { data: DocDocument }) => {
+        return approvalStatusStyledDisplay(doc.status);
+      },
+    },
+    {
+      header: 'Classification Status',
+      name: 'classification_status',
+      minWidth: 200,
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        placeholder: 'All',
+        dataSource: Object.values(ApprovalStatus).map((status) => ({
+          id: status,
+          label: approvalStatusDisplayName(status),
+        })),
+      },
+      render: ({ data: doc }: { data: DocDocument }) => {
+        return approvalStatusStyledDisplay(doc.classification_status);
+      },
+    },
+    {
+      header: 'Family Status',
+      name: 'family_status',
+      minWidth: 200,
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        placeholder: 'All',
+        dataSource: Object.values(ApprovalStatus).map((status) => ({
+          id: status,
+          label: approvalStatusDisplayName(status),
+        })),
+      },
+      render: ({ data: doc }: { data: DocDocument }) => {
+        return approvalStatusStyledDisplay(doc.family_status);
+      },
+    },
+    {
+      header: 'Content Extraction Status',
+      name: 'content_extraction_status',
+      minWidth: 200,
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        placeholder: 'All',
+        dataSource: Object.values(ApprovalStatus).map((status) => ({
+          id: status,
+          label: approvalStatusDisplayName(status),
+        })),
+      },
+      render: ({ data: doc }: { data: DocDocument }) => {
+        return approvalStatusStyledDisplay(doc.content_extraction_status);
       },
     },
     {
@@ -275,20 +337,6 @@ export const useColumns = ({
       },
       render: ({ value: is_current_version }: { value: boolean }) => {
         return <>{is_current_version ? 'True' : 'False'}</>;
-      },
-    },
-    {
-      header: 'Document Family',
-      name: 'document_family_id',
-      minWidth: 200,
-      filterEditor: RemoteColumnFilter,
-      filterEditorProps: {
-        fetchOptions: documentFamilyOptions,
-        initialOptions: initialDocumentFamilyOptions,
-      },
-      defaultFlex: 1,
-      render: ({ data: { document_family_id } }: { data: DocDocument }) => {
-        return document_family_id ? documentFamilyNamesById[document_family_id] : null;
       },
     },
     {

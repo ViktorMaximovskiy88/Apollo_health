@@ -31,6 +31,8 @@ function statusDisplayAndStyle(status: ApprovalStatus): StatusDisplay {
   switch (status) {
     case ApprovalStatus.Queued:
       return { name: 'Queued', style: 'text-yellow-500' };
+    case ApprovalStatus.Pending:
+      return { name: 'Pending', style: 'text-blue-500' };
     case ApprovalStatus.InProgress:
       return { name: 'In Progress', style: 'text-blue-500' };
     case ApprovalStatus.Hold:
