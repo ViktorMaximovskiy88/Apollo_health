@@ -35,4 +35,4 @@ const container = document.getElementById('root');
 const root = createRoot(container as Element);
 root.render(app);
 
-notification.config({ duration: 2 });
+notification.config({ duration: 2, placement: 'top' });
