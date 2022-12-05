@@ -9,7 +9,10 @@ class Forward:
     async def make_searchable_type_for_site_a_list(self, session):
         await SiteScrapeTask.get_motor_collection().update_many(
             {
-                "scrape_method_configuration": {"$exists": True},
+                "$and": [
+                    {"scrape_method_configuration": {"$exists": True}},
+                    {"scrape_method_configuration": {"$ne": None}},
+                ],
                 "scrape_method_configuration.searchable_type": None,
             },
             {"$set": {"scrape_method_configuration.searchable_type": []}},
