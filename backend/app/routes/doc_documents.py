@@ -135,7 +135,7 @@ async def read_extraction_task(
 
 
 class CompareResponse(BaseModel):
-    task: TaskLog | None
+    task: TaskLog | None = None
     new_key: str | None = None
     prev_key: str | None = None
 

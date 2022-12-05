@@ -38,7 +38,6 @@ class TestPreProcessText:
         """
         Should whiteout
             - page numbers
-            - repeated identical line diffs
             - repeated lines appearing once on every page
             - dates and date keywords
         """
@@ -47,9 +46,9 @@ class TestPreProcessText:
         b_text = (
             "string 1\ndifferent footer here\n\fstring 2\ndifferent footer here\n updated 12/20/21"
         )
-        expected_a = "string  \n                \n\fstring  \n                \n                 "
+        expected_a = "string  \n                \fstring  \n                \n                 "
         expected_b = (
-            "string  \n                     \n\fstring  \n                     \n                 "
+            "string  \n                     \fstring  \n                     \n                 "
         )
         cleaned_a, cleaned_b = dmp.preprocess_text(a_text, b_text)
         assert expected_a == cleaned_a
@@ -92,7 +91,7 @@ class TestGetDiffSections:
         assert deletes == [
             DiffSection(
                 char_spans=[(12, 14)],
-                word_spans=[WordSpan(page_num=None, start=3, end=4)],
+                word_spans=[WordSpan(page_num=0, start=3, end=4)],
                 diff_text="2 ",
                 diff_method=-1,
                 remove=False,
@@ -101,8 +100,42 @@ class TestGetDiffSections:
         assert inserts == [
             DiffSection(
                 char_spans=[(12, 16)],
-                word_spans=[WordSpan(page_num=None, start=3, end=4)],
+                word_spans=[WordSpan(page_num=0, start=3, end=4)],
                 diff_text="two ",
+                diff_method=1,
+                remove=False,
+            )
+        ]
+
+    def test_multiple_pages(self):
+        a_line = "line 1\nline 2\fline 3"
+        b_line = "line 1\nline two\fline three"
+        dmp = Dmp()
+        lines = dmp.diff_linesToChars(a_line, b_line)
+        diffs = dmp.diff_main(lines[0], lines[1], False)
+        dmp.diff_charsToLines(diffs, lines[2])
+        deletes, inserts = dmp.get_diff_sections(diffs)
+
+        assert deletes == [
+            DiffSection(
+                char_spans=[(7, 20)],
+                word_spans=[
+                    WordSpan(page_num=0, start=2, end=4),
+                    WordSpan(page_num=1, start=0, end=2),
+                ],
+                diff_text="line 2\x0cline 3",
+                diff_method=-1,
+                remove=False,
+            )
+        ]
+        assert inserts == [
+            DiffSection(
+                char_spans=[(7, 26)],
+                word_spans=[
+                    WordSpan(page_num=0, start=2, end=4),
+                    WordSpan(page_num=1, start=0, end=2),
+                ],
+                diff_text="line two\x0cline three",
                 diff_method=1,
                 remove=False,
             )
@@ -118,21 +151,21 @@ class TestGetDiffSections:
         assert deletes == [
             DiffSection(
                 char_spans=[(5, 9)],
-                word_spans=[WordSpan(page_num=None, start=1, end=2)],
+                word_spans=[WordSpan(page_num=0, start=1, end=2)],
                 diff_text="one ",
                 diff_method=-1,
                 remove=False,
             ),
             DiffSection(
                 char_spans=[(23, 29)],
-                word_spans=[WordSpan(page_num=None, start=5, end=6)],
+                word_spans=[WordSpan(page_num=0, start=5, end=6)],
                 diff_text="three ",
                 diff_method=-1,
                 remove=False,
             ),
             DiffSection(
                 char_spans=[(33, 37)],
-                word_spans=[WordSpan(page_num=None, start=7, end=8)],
+                word_spans=[WordSpan(page_num=0, start=7, end=8)],
                 diff_text="page",
                 diff_method=-1,
                 remove=False,
@@ -141,21 +174,21 @@ class TestGetDiffSections:
         assert inserts == [
             DiffSection(
                 char_spans=[(5, 7)],
-                word_spans=[WordSpan(page_num=None, start=1, end=2)],
+                word_spans=[WordSpan(page_num=0, start=1, end=2)],
                 diff_text="1 ",
                 diff_method=1,
                 remove=False,
             ),
             DiffSection(
                 char_spans=[(21, 23)],
-                word_spans=[WordSpan(page_num=None, start=5, end=6)],
+                word_spans=[WordSpan(page_num=0, start=5, end=6)],
                 diff_text="3 ",
                 diff_method=1,
                 remove=False,
             ),
             DiffSection(
                 char_spans=[(27, 36)],
-                word_spans=[WordSpan(page_num=None, start=7, end=9)],
+                word_spans=[WordSpan(page_num=0, start=7, end=9)],
                 diff_text="page here",
                 diff_method=1,
                 remove=False,

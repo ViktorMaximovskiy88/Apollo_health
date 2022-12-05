@@ -40,6 +40,8 @@ class Dmp(diff_match_patch):
     and for working with diff_match_patch returns
     """
 
+    SPECIAL_CHARS = re.compile(r"[^\w%<>= ]")  # any non-word char, except %<>=
+
     def __init__(self, exclude_digits: bool = False, *args, **kwargs):
         super(Dmp, self).__init__(*args, **kwargs)
         self.exclude_digits = exclude_digits
@@ -58,6 +60,8 @@ class Dmp(diff_match_patch):
         match = next(dates, None)
         if not match and self.exclude_digits:
             match = re.match(digit_rgx, strp_text)
+        if not match:
+            match = re.fullmatch(self.SPECIAL_CHARS, strp_text)
         if not match:
             for rgx in label_rgxs[0]:
                 match = re.match(rgx, strp_text)
@@ -88,6 +92,8 @@ class Dmp(diff_match_patch):
             word_count = 0
             lines = page.split("\n")
             for line in lines:
+                if line == "":
+                    continue
                 clean_line, word_spans = self._clean_line(line, i, word_count)
                 cleaned_page.append(clean_line)
                 words_removed += word_spans
@@ -106,7 +112,7 @@ class Dmp(diff_match_patch):
 
     def _remove_footers(self, text: str) -> tuple[str, list[WordSpan]]:
         repeat_lines: dict[str, list[LineInfo]] = {}
-        exclude_lines: dict[str, bool] = {}
+        exclude_lines: dict[str, bool] = {}  # non-removable lines
 
         pages = text.split("\f")
         page_count = len(pages)
@@ -123,6 +129,8 @@ class Dmp(diff_match_patch):
             line_word_start = 0
             line_word_end = 0
             for line_num, line in enumerate(lines):
+                if not line:
+                    continue
                 line_word_count = get_word_count(line)
                 line_word_end = line_word_start + line_word_count
                 line_word_idxs = (line_word_start, line_word_end)
@@ -182,22 +190,20 @@ class Dmp(diff_match_patch):
         _, b_removed = self._remove_footers(b_text)
         final_a_removed += a_removed
         final_b_removed += b_removed
-
-        _, _, a_removed, b_removed = self._remove_repeat_lines(a_text, b_text)
-        final_a_removed += a_removed
-        final_b_removed += b_removed
         _, _, a_removed, b_removed = self._remove_exclude_text(a_text, b_text)
         final_a_removed += a_removed
         final_b_removed += b_removed
         return final_a_removed, final_b_removed
 
-    def create_word_diffs(self, a: str, b: str) -> list[tuple[int, str]]:
-        words = self.diff_wordsToChars(a, b)
+    def create_word_diffs(
+        self, a: str, b: str, ignore_special_chars: bool = False
+    ) -> list[tuple[int, str]]:
+        words = self.diff_wordsToChars(a, b, ignore_special_chars)
         diffs = self.diff_main(words[0], words[1], False)
         self.diff_charsToLines(diffs, words[2])
         return diffs
 
-    def diff_wordsToChars(self, text1, text2):
+    def diff_wordsToChars(self, text1, text2, ignore_special_chars: bool = False):
         # Extending diff_match_patch with method for word mode
         # https://github.com/google/diff-match-patch/wiki/Line-or-Word-Diffs#word-mode
         """Split two texts into an array of strings.  Reduce the texts to a string
@@ -217,21 +223,26 @@ class Dmp(diff_match_patch):
 
         wordArray.append("")
 
-        def normalize_newlines(text: str):
-            return re.sub(r"[\n|\f]", " ", text)
+        def normalize_text(text: str):
+            normalized_text = re.sub(r"[\n\f]", " ", text.lower())
+            if ignore_special_chars and not re.fullmatch(r"\s*", normalized_text):
+                no_special_chars = re.sub(self.SPECIAL_CHARS, "", normalized_text)
+                if not re.fullmatch(r"\s*", no_special_chars):
+                    normalized_text = no_special_chars
+            return normalized_text
 
         def diff_wordsToCharsMunge(text: str):
             chars = []
             wordStart = 0
             wordEnd = -1
             while wordEnd < len(text) - 1:
-                word_match = re.search(r"[\s|\n|\f]", text[wordStart:])
+                word_match = re.search(r"[\s\n\f]", text[wordStart:])
                 if word_match:
                     wordEnd = word_match.start() + wordStart
                 else:
                     wordEnd = len(text) - 1
                 word = text[wordStart : wordEnd + 1]  # noqa
-                word = normalize_newlines(word)
+                word = normalize_text(word)
                 # if word is only white space, skip
                 if re.fullmatch(r"\s*", word):
                     pass
@@ -253,35 +264,70 @@ class Dmp(diff_match_patch):
         chars2 = diff_wordsToCharsMunge(text2)
         return (chars1, chars2, wordArray)
 
-    def get_diff_sections(self, diffs: list[tuple[int, str]]):
+    def exclude_diff_text(self, text: str):
+        exclude_diffs = ["\n", ""]
+        if text in exclude_diffs:
+            return True
+        return False
+
+    def word_count_by_page(self, diff_text: str) -> list[int]:
+        lengths: list[int] = []
+        pages = diff_text.split("\f")
+        for page in pages:
+            word_count = len([word for word in re.split(r"\s", page.strip()) if word])
+            lengths.append(word_count)
+        return lengths
+
+    def get_word_positions(self, word_counts: list[int], word_count: int, page_count: int | None):
+        word_spans: list[WordSpan] = []
+        word_end = word_count
+        page_end = page_count
+        for i, count in enumerate(word_counts):
+            if i == 0:
+                word_end = word_count + count
+                word_spans.append(WordSpan(page_num=page_count, start=word_count, end=word_end))
+            else:
+                word_end = count
+                if page_end is not None:
+                    page_end += 1
+                word_spans.append(WordSpan(page_num=page_end, start=0, end=count))
+        return word_end, page_end, word_spans
+
+    def get_diff_sections(self, diffs: list[tuple[int, str]], page_breaks: bool = True):
         """
         Parse diffs and return DiffSections for inserts and deletes.
         """
 
         deletes: dict[str, DiffSection] = {}
         inserts: dict[str, DiffSection] = {}
-
         a_char_count = 0  # Number of characters into the a_text string.
         b_char_count = 0  # Number of characters into the b_text string.
         a_word_count = 0  # Number of words into the a_text string.
         b_word_count = 0  # Number of words into the b_text string.
+        a_page_count = 0 if page_breaks else None  # Number of pages into the a_text string.
+        b_page_count = 0 if page_breaks else None  # Number of pages into the b_text string.
         for diff in diffs:
             diff_type, diff_text = diff
+            if self.exclude_diff_text(diff_text):
+                continue
             a_diff_end = a_char_count + len(diff_text)
             b_diff_end = b_char_count + len(diff_text)
-            a_word_end = a_word_count + len(re.split(r"\s", diff_text.strip()))
-            b_word_end = b_word_count + len(re.split(r"\s", diff_text.strip()))
+            word_counts = self.word_count_by_page(diff_text)
+            a_word_end, a_page_end, a_word_spans = self.get_word_positions(
+                word_counts, a_word_count, a_page_count
+            )
+            b_word_end, b_page_end, b_word_spans = self.get_word_positions(
+                word_counts, b_word_count, b_page_count
+            )
             if diff_type == self.DIFF_INSERT:
                 if diff_text in inserts:
                     inserts[diff_text].remove = True
                     inserts[diff_text].char_spans.append((b_char_count, b_diff_end))
-                    inserts[diff_text].word_spans.append(
-                        (WordSpan(page_num=None, start=b_word_count, end=b_word_end))
-                    )
+                    inserts[diff_text].word_spans += b_word_spans
                 else:
                     line_diff = DiffSection(
                         char_spans=[(b_char_count, b_diff_end)],
-                        word_spans=[WordSpan(page_num=None, start=b_word_count, end=b_word_end)],
+                        word_spans=b_word_spans,
                         diff_text=diff_text,
                         diff_method=diff_type,
                     )
@@ -290,13 +336,11 @@ class Dmp(diff_match_patch):
                 if diff_text in deletes:
                     deletes[diff_text].remove = True
                     deletes[diff_text].char_spans.append((a_char_count, a_diff_end))
-                    deletes[diff_text].word_spans.append(
-                        (WordSpan(page_num=None, start=a_word_count, end=a_word_end))
-                    )
+                    deletes[diff_text].word_spans += a_word_spans
                 else:
                     line_diff = DiffSection(
                         char_spans=[(a_char_count, a_diff_end)],
-                        word_spans=[WordSpan(page_num=None, start=a_word_count, end=a_word_end)],
+                        word_spans=a_word_spans,
                         diff_text=diff_text,
                         diff_method=diff_type,
                     )
@@ -304,9 +348,11 @@ class Dmp(diff_match_patch):
             # Update the current character count.
             if diff_type != self.DIFF_INSERT:
                 a_word_count = a_word_end
+                a_page_count = a_page_end
                 a_char_count += len(diff_text)
             if diff_type != self.DIFF_DELETE:
                 b_word_count = b_word_end
+                b_page_count = b_page_end
                 b_char_count += len(diff_text)
 
         final_deletes = [deletes[key] for key in deletes]

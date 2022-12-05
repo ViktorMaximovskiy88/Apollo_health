@@ -59,28 +59,20 @@ class CompareDoc:
         start_word = span.start - offsets[start_page]
         if start_page == end_page:
             end_word = span.end - offsets[start_page]
-            span.page_num = start_page
             span1 = WordSpan(page_num=start_page, start=start_word, end=end_word)
         else:
             page_break = offsets[end_page] - offsets[start_page]
             end_word = span.end - offsets[end_page]
             span1 = WordSpan(page_num=start_page, start=start_word, end=page_break)
-            span2 = WordSpan(page_num=end_page, start=page_break, end=end_word)
+            span2 = WordSpan(page_num=end_page, start=0, end=end_word)
 
         return span1, span2
 
     def set_clean_pages(self, removed_words: list[WordSpan]) -> None:
         clean_pages = deepcopy(self.pages) if not self.clean_pages else deepcopy(self.clean_pages)
         for span in removed_words:
-            page_span = span
-            if page_span.page_num is None:
-                span1, span2 = self.process_page_offset(span)
-                page_span = span1
-                if span2:
-                    removed_words.append(span2)
-            for word in range(page_span.start, page_span.end):
-                clean_pages[page_span.page_num][word] = None
-
+            for word in range(span.start, span.end):
+                clean_pages[span.page_num][word] = None
         for i, page in enumerate(clean_pages):
             clean_pages[i] = [word for word in page if word is not None]
         self.clean_pages = clean_pages
@@ -226,8 +218,12 @@ class DocTextCompare:
             self._save_files_to_storage(doc, prev_doc, new_temp.name, prev_temp.name)
 
     def apply_diffs(self):
-        diffs = self.dmp.create_word_diffs(self.prev_doc.clean_text, self.current_doc.clean_text)
-        deletes, inserts = self.dmp.get_diff_sections(diffs)
+        diffs = self.dmp.create_word_diffs(
+            self.prev_doc.clean_text,
+            self.current_doc.clean_text,
+            ignore_special_chars=True,
+        )
+        deletes, inserts = self.dmp.get_diff_sections(diffs, page_breaks=False)
         for section in deletes:
             self.prev_doc.apply_word_spans(section.word_spans, method=CompareDoc.DELETE)
         for section in inserts:

@@ -50,7 +50,7 @@ export function DocCompareToPrevious() {
   const [modalOpen, setModalOpen] = useState(false);
   const [newKey, setNewKey] = useState<string>();
   const [prevKey, setPrevKey] = useState<string>();
-  const [createDiff, { isLoading, isSuccess }] = useCreateDiffMutation();
+  const [createDiff, { isLoading }] = useCreateDiffMutation();
 
   const { previous_doc_doc_id: previousDocDocId } = currentDocument ?? {};
   const enqueueTask = useTaskWorker(

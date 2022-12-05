@@ -124,8 +124,8 @@ class TestCompareDoc:
         pdf_path = get_test_pdf_path()
         compare_doc = CompareDoc(fitz_pdf_doc=fitzDocument(pdf_path))
         removed_words = [
-            WordSpan(page_num=None, start=3, end=4),
-            WordSpan(page_num=None, start=12, end=13),
+            WordSpan(page_num=0, start=3, end=4),
+            WordSpan(page_num=1, start=1, end=2),
         ]
         compare_doc.set_clean_pages(removed_words)
         expected_page_lens = [10, 5]
@@ -142,11 +142,11 @@ class TestCompareDoc:
         compare_doc = CompareDoc(fitz_pdf_doc=fitzDocument(pdf_path))
         assert compare_doc.page_word_offsets == [0, 11]
         removed_words = [
-            WordSpan(page_num=None, start=3, end=4),
-            WordSpan(page_num=None, start=12, end=13),
+            WordSpan(page_num=0, start=3, end=4),
+            WordSpan(page_num=0, start=1, end=2),
         ]
         compare_doc.set_clean_pages(removed_words)
-        assert compare_doc.clean_page_word_offsets == [0, 10]
+        assert compare_doc.clean_page_word_offsets == [0, 9]
 
     def test_words_to_lines(self):
         pdf_path = get_test_pdf_path()
