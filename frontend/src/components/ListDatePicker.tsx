@@ -1,43 +1,21 @@
-import { Form, Button, DatePicker } from 'antd';
+import { Button, DatePicker } from 'antd';
 import { DateTime } from 'luxon';
 import { Dropdown, Menu } from 'antd';
-import { useState } from 'react';
 import { prettyDate, prettyFromISO, dateToMoment } from '../common';
-import { FormInstance } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
-import classNames from 'classnames';
-import { Rule } from 'antd/lib/form';
 
 export function ListDatePicker(props: {
-  className?: string;
   dateList?: string[];
-  form: FormInstance;
-  defaultValue?: string;
-  label: string;
-  name: string;
-  rules?: { validator(_rule: Rule, value: moment.Moment): Promise<void> }[];
   disabled?: boolean;
-  style?: object;
+  value?: string;
   onChange?: Function;
 }) {
   /*
    *  Togglable date picker to select a custom date, or a date from a predefined list.
    */
-  const {
-    className,
-    dateList,
-    form,
-    defaultValue,
-    label,
-    name,
-    style,
-    rules,
-    disabled = false,
-    onChange = () => {},
-  } = props;
+  const { dateList, value, disabled = false, onChange = () => {} } = props;
 
-  const defaultDate = dateToMoment(defaultValue);
-  const [value, setValue] = useState(defaultDate);
+  const valueDate = dateToMoment(value);
 
   const dateOptions = (dateList || [])
     .map((d) => ({
@@ -50,34 +28,20 @@ export function ListDatePicker(props: {
     <Menu
       onClick={(e: any) => {
         const value = dateToMoment(e.key);
-        setValue(value);
-        form.setFieldsValue({
-          [name]: value,
-        });
+        onChange(value);
       }}
       items={dateOptions}
     />
   );
 
   return (
-    <Form.Item
-      name={name}
-      className={classNames(className)}
-      label={label}
-      style={style}
-      rules={rules}
-    >
+    <>
       <DatePicker
         disabled={disabled}
         style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
-        defaultValue={defaultDate}
-        value={value}
+        value={valueDate}
         onChange={(value: any) => {
-          setValue(value);
-          form.setFieldsValue({
-            [name]: value,
-          });
-          onChange();
+          onChange(value);
         }}
         format={(value) => prettyDate(value.toDate())}
       />
@@ -98,6 +62,6 @@ export function ListDatePicker(props: {
           <DownOutlined />
         </Button>
       </Dropdown>
-    </Form.Item>
+    </>
   );
 }

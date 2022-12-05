@@ -37,15 +37,10 @@ export function DocDate(props: {
   const { data: doc } = useGetDocDocumentQuery(docId);
   if (!doc) return null;
   return (
-    <ListDatePicker
-      form={form}
-      className="flex-1"
+    <Form.Item
       name={props.name}
-      defaultValue={doc[props.name]}
+      className="flex-1"
       label={props.label}
-      disabled={props.disabled}
-      dateList={doc.identified_dates}
-      onChange={props.onFieldChange}
       rules={[
         {
           validator: (_rule, value) => {
@@ -56,6 +51,8 @@ export function DocDate(props: {
           },
         },
       ]}
-    />
+    >
+      <ListDatePicker disabled={props.disabled} dateList={doc.identified_dates} />
+    </Form.Item>
   );
 }
