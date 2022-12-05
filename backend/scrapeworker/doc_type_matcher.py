@@ -355,6 +355,18 @@ class DocTypeMatcher:
                 "behavioral",
                 "brochure",
                 "fact sheet",
+                "application",
+                "program",
+                "log",
+                "pharmacy services",
+                "fact",
+                "information book",
+                "contact",
+                "contacts",
+                "Register",
+                "conduct",
+                "certificate",
+                "support",
             ],
         ):
             return DocumentType.MemberResources
