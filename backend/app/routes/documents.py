@@ -421,7 +421,6 @@ async def add_document(
         )
         if prev_loc.payer_family_id:
             loc.payer_family_id = prev_loc.payer_family_id
-
         # Generate delta tags for new version from old version.
         tag_compare: TagCompare = TagCompare()
         tag_compare_response: tuple[
