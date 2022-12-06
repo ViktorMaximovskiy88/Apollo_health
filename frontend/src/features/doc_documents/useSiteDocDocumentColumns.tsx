@@ -5,11 +5,13 @@ import BoolFilter from '@inovua/reactdatagrid-community/BoolFilter';
 import { LinkOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { prettyDateUTCFromISO } from '../../common';
 import { DocDocument, SiteDocDocument } from './types';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { DocumentTypes } from '../retrieved_documents/types';
 import { ManualCollectionValidationButtons } from './manual_collection/ManualCollectionValidationButtons';
 import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
 import { useDocumentFamilySelectOptions } from './document_family/documentFamilyHooks';
+import { useGetSiteQuery } from '../sites/sitesApi';
+import { CollectionMethod } from '../sites/types';
 interface CreateColumnsType {
   handleNewVersion?: (data: SiteDocDocument) => void;
   documentFamilyOptions: (search: string) => Promise<
@@ -25,6 +27,7 @@ interface CreateColumnsType {
   documentFamilyNamesById: {
     [id: string]: string;
   };
+  isManualCollection: boolean;
 }
 
 export enum TextAlignType {
@@ -45,6 +48,7 @@ export const createColumns = ({
   documentFamilyOptions,
   initialDocumentFamilyOptions,
   documentFamilyNamesById,
+  isManualCollection,
 }: CreateColumnsType) => [
   {
     header: 'Last Collected',
@@ -157,6 +161,7 @@ export const createColumns = ({
     header: 'Validation',
     name: 'validation',
     minWidth: 230,
+    visible: isManualCollection,
     render: ({ data: doc }: { data: SiteDocDocument }) => {
       return (
         <>
@@ -181,6 +186,8 @@ export const useSiteDocDocumentColumns = ({
   documentFamilyNamesById,
 }: UseColumnsType) => {
   const { documentFamilyOptions, initialDocumentFamilyOptions } = useDocumentFamilySelectOptions();
+  const { siteId } = useParams();
+  const { data: site } = useGetSiteQuery(siteId);
   return useMemo(
     () =>
       createColumns({
@@ -188,7 +195,14 @@ export const useSiteDocDocumentColumns = ({
         documentFamilyOptions,
         initialDocumentFamilyOptions,
         documentFamilyNamesById,
+        isManualCollection: site?.collection_method === CollectionMethod.Manual,
       }),
-    [documentFamilyNamesById, documentFamilyOptions, handleNewVersion, initialDocumentFamilyOptions]
+    [
+      documentFamilyNamesById,
+      documentFamilyOptions,
+      handleNewVersion,
+      initialDocumentFamilyOptions,
+      site?.collection_method,
+    ]
   );
 };
