@@ -8,7 +8,7 @@ import { ManualCollectionButton } from '../collections/CollectionsPage';
 import { SiteDocDocumentsTable } from './SiteDocDocumentsTable';
 import { AddDocumentModal } from '../collections/AddDocumentModal';
 import { SiteDocDocument } from './types';
-import { useGetSiteQuery, useLazyGetSiteDocDocumentsQuery } from '../sites/sitesApi';
+import { useGetSiteQuery } from '../sites/sitesApi';
 import {
   useLazyGetScrapeTasksForSiteQuery,
   useRunSiteScrapeTaskMutation,
@@ -49,8 +49,8 @@ export function SiteDocDocumentsPage() {
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
   const { siteId } = useParams();
   const scrapeTaskId = useSiteScrapeTaskId();
+  const dispatch = useAppDispatch();
   const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
-  const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
   const [runScrape] = useRunSiteScrapeTaskMutation();
   const { data: site, refetch } = useGetSiteQuery(siteId);
   if (!site) return null;
@@ -74,8 +74,9 @@ export function SiteDocDocumentsPage() {
 
   const refreshDocs = async () => {
     if (!scrapeTaskId) return;
+    // Get scrape tasks so we can match manual work_list items to docs.
     await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
-    await getDocDocumentsQuery({ siteId, scrapeTaskId });
+    dispatch(setSiteDocDocumentTableForceUpdate());
   };
 
   return (
