@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 
+import typer
+
+from backend.common.core.config import env_type
 from backend.common.core.enums import SectionType, TagUpdateStatus
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
@@ -279,15 +282,28 @@ class TagCompare:
         self._mark_changed(paired)
         final_tags = self._collect_final_tags(paired, unpaired)
         final_tags.update(unmatched_ref)
+
+        if env_type == "local":
+            typer.secho(
+                f"doc_focus_areas[{doc_focus_areas}], prev_focus_areas[{prev_focus_areas}], ",
+                fg=typer.colors.BRIGHT_GREEN,
+            )
+            typer.secho(
+                f"paired[{paired}], unpaired[{unpaired}], unmatched_ref[{unmatched_ref}]",
+                fg=typer.colors.BRIGHT_GREEN,
+            )
+            typer.secho(
+                f"final_tags[{final_tags}]",
+                fg=typer.colors.BRIGHT_GREEN,
+            )
         return final_tags
 
     async def execute(
         self, doc: RetrievedDocument | DocDocument, prev_doc: RetrievedDocument | DocDocument
-    ):
+    ) -> tuple[list[TherapyTag], list[IndicationTag]]:
         doc_text = self._get_doc_text(doc)
         prev_doc_text = self._get_doc_text(prev_doc)
         clean_doc_text, clean_prev_text = self.dmp.preprocess_text(doc_text, prev_doc_text)
-
         final_therapy_tags: set[TherapyTag] = await self.compare_tags(
             doc, prev_doc, clean_doc_text, clean_prev_text, tag_type=self.THERAPY
         )
@@ -295,4 +311,10 @@ class TagCompare:
             doc, prev_doc, clean_doc_text, clean_prev_text, tag_type=self.INDICATION
         )
 
+        if env_type == "local":
+            typer.secho(f"clean_doc_text[{clean_doc_text}]", fg=typer.colors.BRIGHT_GREEN)
+            typer.secho(f"final_therapy_tags[{final_therapy_tags}]", fg=typer.colors.BRIGHT_GREEN)
+            typer.secho(
+                f"final_indication_tags[{final_indication_tags}]", fg=typer.colors.BRIGHT_GREEN
+            )
         return list(final_therapy_tags), list(final_indication_tags)
