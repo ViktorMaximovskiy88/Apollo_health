@@ -133,11 +133,14 @@ class CollectionService:
 
         if not response.errors:
             last_queued_task: SiteScrapeTask = await self.fetch_previous_task()
+            last_run_documents = 0
+            if last_queued_task and last_queued_task.retrieved_document_ids:
+                last_run_documents: int = len(last_queued_task.retrieved_document_ids)
             await self.site.update(
                 Set(
                     {
                         Site.last_run_status: TaskStatus.FINISHED,
-                        Site.last_run_documents: len(last_queued_task.retrieved_document_ids),
+                        Site.last_run_documents: last_run_documents,
                     }
                 )
             )

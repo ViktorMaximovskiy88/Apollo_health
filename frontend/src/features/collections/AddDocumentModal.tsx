@@ -28,7 +28,6 @@ import { useAddDocumentMutation } from '../retrieved_documents/documentsApi';
 import { baseApiUrl, client } from '../../app/base-api';
 import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
 import { SiteDocDocument } from '../doc_documents/types';
-import moment from 'moment';
 import { useGetSiteQuery } from '../sites/sitesApi';
 
 interface AddDocumentModalPropTypes {

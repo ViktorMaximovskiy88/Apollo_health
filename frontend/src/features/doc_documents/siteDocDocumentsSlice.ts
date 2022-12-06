@@ -49,7 +49,7 @@ export const siteDocDocuments = createSlice({
       const pathname: string = action.payload.location.pathname;
       if (pathname.startsWith('/sites')) {
         const siteId = pathname.split('/')[2];
-        if (state.siteId != siteId) {
+        if (state.siteId !== siteId) {
           state.table.selection = initialState.table.selection;
         }
         state.siteId = siteId;
