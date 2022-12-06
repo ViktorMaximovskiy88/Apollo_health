@@ -22,10 +22,7 @@ import {
   useGetPayerFamilyQuery,
   useLazyGetPayerFamiliesQuery,
 } from '../payer-family/payerFamilyApi';
-import {
-  useGetDocumentFamilyQuery,
-  useLazyGetDocumentFamiliesQuery,
-} from './document_family/documentFamilyApi';
+import { useDocumentFamilySelectOptions } from './document_family/documentFamilyHooks';
 
 export function useSiteSelectOptions() {
   const [getSites] = useLazyGetSitesQuery();
@@ -49,35 +46,6 @@ export function useSiteSelectOptions() {
   const initialSiteOptions = site ? [{ value: site._id, label: site.name }] : [];
 
   return { siteOptions, initialSiteOptions };
-}
-
-function useDocumentFamilySelectOptions() {
-  const [getDocumentFamilies] = useLazyGetDocumentFamiliesQuery();
-  const documentFamilyOptions = useCallback(
-    async (search: string) => {
-      const { data } = await getDocumentFamilies({
-        limit: 20,
-        skip: 0,
-        sortInfo: { name: 'name', dir: 1 },
-        filterValue: [{ name: 'name', operator: 'contains', type: 'string', value: search }],
-      });
-      if (!data) return [];
-      return data.data.map((df) => ({ label: df.name, value: df._id }));
-    },
-    [getDocumentFamilies]
-  );
-
-  const res = useSelector(docDocumentTableState);
-  const documentFamilyFilter = res.filter.find((f) => f.name === 'document_family_id');
-  const { data: documentFamily } = useGetDocumentFamilyQuery(
-    documentFamilyFilter?.value ?? undefined,
-    { skip: !documentFamilyFilter?.value }
-  );
-  const initialDocumentFamilyOptions = documentFamily
-    ? [{ value: documentFamily._id, label: documentFamily.name }]
-    : [];
-
-  return { documentFamilyOptions, initialDocumentFamilyOptions };
 }
 
 function usePayerFamilySelectOptions() {

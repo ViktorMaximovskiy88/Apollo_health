@@ -18,9 +18,12 @@ import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 import { useGetSitesQuery } from '../sites/sitesApi';
 import { useGetPayerFamiliesQuery } from '../payer-family/payerFamilyApi';
-import { useGetDocumentFamiliesQuery } from './document_family/documentFamilyApi';
 import { useColumns } from './useDocDocumentColumns';
 import { useDataTableSelection } from '../../common/hooks/use-data-table-select';
+import {
+  uniqueDocumentFamilyIds,
+  useGetDocumentFamilyNamesById,
+} from './document_family/documentFamilyHooks';
 
 export function useGetSiteNamesById() {
   const [siteIds, setSiteIds] = useState<string[]>([]);
@@ -56,24 +59,6 @@ function useGetPayerFamilyNamesById() {
     return map;
   }, [payerFamilies]);
   return { setPayerFamilyIds, payerFamilyNamesById };
-}
-
-function useGetDocumentFamilyNamesById() {
-  const [documentFamilyIds, setDocumentFamilyIds] = useState<string[]>([]);
-  const { data: documentFamilies } = useGetDocumentFamiliesQuery({
-    limit: 1000,
-    skip: 0,
-    sortInfo: { name: 'name', dir: 1 },
-    filterValue: [{ name: '_id', operator: 'eq', type: 'string', value: documentFamilyIds }],
-  });
-  const documentFamilyNamesById = useMemo(() => {
-    const map: { [key: string]: string } = {};
-    documentFamilies?.data.forEach((documentFamily) => {
-      map[documentFamily._id] = documentFamily.name;
-    });
-    return map;
-  }, [documentFamilies]);
-  return { setDocumentFamilyIds, documentFamilyNamesById };
 }
 
 const useControlledPagination = ({
@@ -130,14 +115,6 @@ const uniquePayerFamilyIds = (items: DocDocument[]) => {
     item.locations.forEach((l) => (usedPayerFamilyIds[l.payer_family_id] = true))
   );
   return Object.keys(usedPayerFamilyIds);
-};
-
-const uniqueDocumentFamilyIds = (docDocuments: DocDocument[]): string[] => {
-  const documentFamilyIds = docDocuments
-    .map(({ document_family_id }) => document_family_id ?? '')
-    .filter(Boolean);
-  const usedDocumentFamilyIds = new Set(documentFamilyIds);
-  return Array.from(usedDocumentFamilyIds);
 };
 
 export function DocDocumentsDataTable() {

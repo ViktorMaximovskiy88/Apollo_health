@@ -15,6 +15,7 @@ export const initialState = {
       { name: 'internal_document', operator: 'eq', type: 'select', value: null },
       { name: 'final_effective_date', operator: 'before', type: 'date', value: '' },
       { name: 'url', operator: 'contains', type: 'string', value: '' },
+      { name: 'document_family_id', operator: 'eq', type: 'select', value: null },
     ],
     pagination: { limit: 50, skip: 0 },
     forceUpdate: 0,
@@ -49,7 +50,7 @@ export const siteDocDocuments = createSlice({
       const pathname: string = action.payload.location.pathname;
       if (pathname.startsWith('/sites')) {
         const siteId = pathname.split('/')[2];
-        if (state.siteId != siteId) {
+        if (state.siteId !== siteId) {
           state.table.selection = initialState.table.selection;
         }
         state.siteId = siteId;

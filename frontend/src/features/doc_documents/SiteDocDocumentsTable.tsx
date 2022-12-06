@@ -16,6 +16,10 @@ import { useSiteDocDocumentColumns } from './useSiteDocDocumentColumns';
 import { SiteDocDocument } from './types';
 import { useInterval } from '../../common/hooks';
 import { useSelector } from 'react-redux';
+import {
+  uniqueDocumentFamilyIds,
+  useGetDocumentFamilyNamesById,
+} from './document_family/documentFamilyHooks';
 
 interface DataTablePropTypes {
   handleNewVersion: (data: SiteDocDocument) => void;
@@ -27,19 +31,23 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
   const scrapeTaskId = searchParams.get('scrape_task_id');
   const { watermark } = useInterval(10000);
   const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
+  const { setDocumentFamilyIds, documentFamilyNamesById } = useGetDocumentFamilyNamesById();
 
   const { forceUpdate } = useSelector(siteDocDocumentTableState);
   const loadData = useCallback(
     async (tableParams: TableQueryInfo) => {
       const { data } = await getDocDocumentsQuery({ siteId, scrapeTaskId, ...tableParams });
-      const sites = data?.data ?? [];
+      const docDocuments = data?.data ?? [];
       const count = data?.total ?? 0;
-      return { data: sites, count };
+      if (docDocuments) {
+        setDocumentFamilyIds(uniqueDocumentFamilyIds(docDocuments));
+      }
+      return { data: docDocuments, count };
     },
-    [getDocDocumentsQuery, watermark, forceUpdate]
+    [getDocDocumentsQuery, siteId, scrapeTaskId, setDocumentFamilyIds, watermark, forceUpdate] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  const columns = useSiteDocDocumentColumns({ handleNewVersion });
+  const columns = useSiteDocDocumentColumns({ handleNewVersion, documentFamilyNamesById });
   const filterProps = useDataTableFilter(siteDocDocumentTableState, setSiteDocDocumentTableFilter);
   const sortProps = useDataTableSort(siteDocDocumentTableState, setSiteDocDocumentTableSort);
   const selectionProps = useDataTableSelection(
