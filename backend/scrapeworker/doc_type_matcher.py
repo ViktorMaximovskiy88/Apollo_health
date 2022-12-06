@@ -75,8 +75,8 @@ class DocTypeMatcher:
     def formulary_update(self, text: str) -> str | None:
         if (
             self._contains(text, ["PDL", "formulary", "drug list"])
-            and self._contains(text, ["update", "change", "changes"])
-            and self._not_contains(text, ["Medical"])
+            and self._contains(text, ["update", "updates", "change", "changes", "NOC"])
+            and self._not_contains(text, ["Medical", "Request"])
         ):
             return DocumentType.FormularyUpdate
 
@@ -103,14 +103,15 @@ class DocTypeMatcher:
                 "form",
                 "how-to",
                 "how to",
+                "Request",
             ],
         ):
             return DocumentType.Formulary
 
     def medical_coverage_list(self, text: str) -> str | None:
-        if self._contains(
-            text, ["Medical", "Medical Coverage", "Jcode", "Medi-cal"]
-        ) and self._not_contains(text, ["policy", "policies"]):
+        if self._contains(text, ["Medical", "Medical Coverage", "Jcode"]) and self._not_contains(
+            text, ["policy", "policies", "standards", "presentation"]
+        ):
             return DocumentType.MedicalCoverageList
 
     def restriction_list(self, text: str) -> str | None:
@@ -119,6 +120,7 @@ class DocTypeMatcher:
             or self._contains(
                 text,
                 [
+                    "PA",
                     "Prior Authorization",
                     "Authorization",
                     "Auth",
@@ -159,7 +161,7 @@ class DocTypeMatcher:
                     "Zero Premium",
                 ],
             )
-        ) and self._contains(text, ["list"]):
+        ) and self._contains(text, ["list", "PDL"]):
             return DocumentType.PreventiveDrugList
 
     def fee_schedule(self, text: str) -> str | None:
@@ -187,7 +189,7 @@ class DocTypeMatcher:
                 ],
             )
         ) and self._not_contains(
-            text, ["list", "new to market", "unlisted", "non-formulary", "form"]
+            text, ["list", "new to market", "unlisted", "non-formulary", "form", "request"]
         ):
             return DocumentType.AuthorizationPolicy
 
@@ -208,6 +210,7 @@ class DocTypeMatcher:
                 "unlisted",
                 "non-formulary",
                 "privacy",
+                "form",
             ],
         ):
             return DocumentType.AuthorizationPolicy
@@ -234,7 +237,7 @@ class DocTypeMatcher:
 
     def treatment_request_form(self, text: str) -> str | None:
         if self._contains(text, ["form", "request", "submission", "waiver"]) and self._not_contains(
-            text, ["instructions"]
+            text, ["instructions", "guide"]
         ):
             return "Treatment Request Form"
 
@@ -253,7 +256,6 @@ class DocTypeMatcher:
             text,
             [
                 "SOB",
-                "Summary",
                 "Benefits Summary",
                 "Summary of Benefits",
                 "Explanation of Benefits",
@@ -353,6 +355,18 @@ class DocTypeMatcher:
                 "behavioral",
                 "brochure",
                 "fact sheet",
+                "application",
+                "program",
+                "log",
+                "pharmacy services",
+                "fact",
+                "information book",
+                "contact",
+                "contacts",
+                "Register",
+                "conduct",
+                "certificate",
+                "support",
             ],
         ):
             return DocumentType.MemberResources
