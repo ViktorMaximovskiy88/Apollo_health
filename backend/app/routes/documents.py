@@ -421,6 +421,9 @@ async def add_document(
         )
         if prev_loc.payer_family_id:
             loc.payer_family_id = prev_loc.payer_family_id
+        await created_doc_doc.save()
+
+        # self.background_tasks.add_task(self.log_change, user, target, action, delta)
         # Generate delta tags for new version from old version.
         tag_compare: TagCompare = TagCompare()
         tag_compare_response: tuple[

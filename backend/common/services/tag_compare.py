@@ -284,8 +284,10 @@ class TagCompare:
         final_tags.update(unmatched_ref)
 
         if env_type == "local":
-            typer.secho(f"doc_focus_areas[{doc_focus_areas}]", fg=typer.colors.BRIGHT_GREEN)
-            typer.secho(f"prev_focus_areas[{prev_focus_areas}]", fg=typer.colors.BRIGHT_GREEN)
+            typer.secho(
+                f"doc_focus_areas[{doc_focus_areas}], prev_focus_areas[{prev_focus_areas}], ",
+                fg=typer.colors.BRIGHT_GREEN,
+            )
             typer.secho(
                 f"paired[{paired}], unpaired[{unpaired}], unmatched_ref[{unmatched_ref}]",
                 fg=typer.colors.BRIGHT_GREEN,
