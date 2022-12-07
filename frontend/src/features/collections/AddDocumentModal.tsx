@@ -75,7 +75,7 @@ export function AddDocumentModal({
   const [oldLocationDocId, setOldLocationDocId] = useState('');
   const [isEditingDocFromOtherSite, setIsEditingDocFromOtherSite] = useState(false);
   const [intitialBaseUrl, setIntitialBaseUrl] = useState('');
-  const [existsOnThisSite, setExistsOnThisSite] = useState(true);
+  const [existsOnThisSite, setExistsOnThisSite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Set initial values.
