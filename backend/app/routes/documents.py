@@ -193,17 +193,16 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
     for doc in checksum_documents:
         if not doc.locations:
             continue
-        # Doc with checksum and location exists on THIS site.
-        checksum_same_site: RetrievedDocumentLocation = doc.get_site_location(from_site_id)
-        if checksum_same_site:
-            return {"error": "The document already exists for this site!"}
         # Doc with checksum and location exists on OTHER site.
         checksum_location: RetrievedDocumentLocation = doc.locations[-1]
         if checksum_location:
             response["data"] = copy_location_to(site, checksum_location, response["data"])
             response["data"]["prev_location_doc_id"] = doc.id
             response["data"] = await copy_doc_field_values(doc, response["data"])
-            break
+        # Doc with checksum and location exists on THIS site.
+        checksum_same_site: RetrievedDocumentLocation = doc.get_site_location(from_site_id)
+        if checksum_same_site:
+            response["data"]["exists_on_this_site"] = True
 
     with tempfile.NamedTemporaryFile(delete=True, suffix="." + file_extension) as tmp:
         tmp.write(content)
@@ -223,10 +222,6 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
         for doc in text_checksum_documents:
             if not doc.locations:
                 continue
-            # Doc with text_checksum and location exists on THIS site.
-            text_checksum_same_site: RetrievedDocumentLocation = doc.get_site_location(from_site_id)
-            if text_checksum_same_site:
-                return {"error": "The document already exists for this site!"}
             # Doc with checksum and location exists on OTHER site.
             text_checksum_location: RetrievedDocumentLocation = doc.locations[-1]
             if text_checksum_location:
@@ -234,7 +229,10 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
                 response["data"]["prev_location_doc_id"] = doc.id
                 response["data"] = await copy_doc_field_values(doc, response["data"])
                 await get_tags(parsed_content, doc)
-                break
+            # Doc with text_checksum and location exists on THIS site.
+            text_checksum_same_site: RetrievedDocumentLocation = doc.get_site_location(from_site_id)
+            if text_checksum_same_site:
+                response["data"]["exists_on_this_site"] = True
 
         response["data"] = {
             "checksum": checksum,
