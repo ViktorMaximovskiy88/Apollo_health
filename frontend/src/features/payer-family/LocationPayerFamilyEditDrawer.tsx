@@ -4,6 +4,7 @@ import {
   useUpdatePayerFamilyMutation,
   useLazyGetPayerFamilyByNameQuery,
   useGetPayerFamilyQuery,
+  useLazyConvertPayerFamilyDataQuery,
 } from './payerFamilyApi';
 import { Rule } from 'antd/lib/form';
 import { useForm } from 'antd/lib/form/Form';
@@ -25,11 +26,14 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyCreateDrawerPropTypes) =
   const [form] = useForm();
   const { data: payerFamily } = useGetPayerFamilyQuery(payer_family_id, { skip: !payer_family_id });
   const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
-  const [payerInfoError, setPayerInfoError] = useState<boolean>(false);
+  const [payerInfoError, setPayerInfoError] = useState<string>();
   const [updatePayerFamily, { isLoading }] = useUpdatePayerFamilyMutation();
+  const [convertPayerFamily] = useLazyConvertPayerFamilyDataQuery();
 
   const onSubmit = useCallback(async () => {
-    let { payer_ids, channels, benefits, plan_types, regions } = form.getFieldsValue(true);
+    form.validateFields();
+    let { name, payer_type, payer_ids, channels, benefits, plan_types, regions } =
+      form.getFieldsValue(true);
     if (
       !payer_ids?.length &&
       !channels?.length &&
@@ -37,9 +41,19 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyCreateDrawerPropTypes) =
       !plan_types?.length &&
       !regions?.length
     ) {
-      setPayerInfoError(true);
+      setPayerInfoError('At least one payer value is required');
       return;
     }
+    try {
+      await convertPayerFamily({
+        payerType: 'plan',
+        body: { name, payer_type, payer_ids, channels, benefits, plan_types, regions },
+      }).unwrap();
+    } catch (err: any) {
+      setPayerInfoError(err.data.detail);
+      return;
+    }
+
     form.submit();
   }, [form]);
 
@@ -49,7 +63,7 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyCreateDrawerPropTypes) =
       onSave(payerFamily);
       form.resetFields();
     },
-    [updatePayerFamily, onSave, form, payer_family_id]
+    [updatePayerFamily, payer_family_id, onSave, form]
   );
 
   if (!location || !payerFamily) {
@@ -103,7 +117,7 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyCreateDrawerPropTypes) =
           {payerInfoError ? (
             <>
               <WarningFilled className="text-red-600" />
-              <span className="text-red-600">At least one payer value is required</span>
+              <span className="text-red-600">{payerInfoError}</span>
             </>
           ) : null}
           <Button onClick={onClose}>Cancel</Button>

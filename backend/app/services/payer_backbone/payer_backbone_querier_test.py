@@ -154,11 +154,11 @@ async def create_plan_benefits():
 async def test_querier_1():
     pi = PayerFamily(name="", channels=[Channel.Commercial], benefits=[Benefit.Pharmacy])
     pbbq = PayerBackboneQuerier(pi)
-    plans = await pbbq.construct_plan_benefit_query()
+    plans = pbbq.construct_plan_benefit_query()
     plan_ids = await pbbq.convert_plans_to_ids_of_type(plans, Plan)
     assert plan_ids == [4]
 
-    plans = await pbbq.construct_plan_benefit_query()
+    plans = pbbq.construct_plan_benefit_query()
     ump_ids = await pbbq.convert_plans_to_ids_of_type(plans, UMP)
     assert ump_ids == [5]
 

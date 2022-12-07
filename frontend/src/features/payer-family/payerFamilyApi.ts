@@ -60,6 +60,16 @@ export const payerFamilyApi = createApi({
       query: (id) => `/change-log/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'ChangeLog', id }],
     }),
+    convertPayerFamilyData: builder.query<
+      PayerFamily,
+      { payerType?: string; body: Partial<PayerFamily> }
+    >({
+      query: ({ payerType, body }) => ({
+        url: `/payer-family/convert/${payerType}`,
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
 });
 
@@ -73,4 +83,6 @@ export const {
   useUpdatePayerFamilyMutation,
   useDeletePayerFamilyMutation,
   useGetChangeLogQuery,
+  useLazyConvertPayerFamilyDataQuery,
+  useConvertPayerFamilyDataQuery,
 } = payerFamilyApi;

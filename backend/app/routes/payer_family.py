@@ -105,6 +105,29 @@ async def lives_by_controller(
     return result
 
 
+@router.post(
+    "/convert/{type}", dependencies=[Security(get_current_user)], response_model=PayerFamily
+)
+async def convert_document_family_payer_data(
+    target: PayerFamily,
+    effective_date: str | None = None,
+    PayerClass: Type[PayerBackbone] = Depends(payer_class),
+):
+    pbbq = PayerBackboneQuerier(target, effective_date)
+
+    result_ids = await pbbq.relevant_payer_ids_of_type(PayerClass)
+
+    if not result_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The Payer Family must match at least one plan",
+        )
+
+    target.payer_type = PayerClass.payer_key
+    target.payer_ids = [str(id) for id in result_ids]
+    return target
+
+
 @router.put("/", response_model=PayerFamily, status_code=status.HTTP_201_CREATED)
 async def create_payer_family(
     payer_family: NewPayerFamily,

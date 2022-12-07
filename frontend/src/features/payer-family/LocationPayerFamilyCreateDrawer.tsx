@@ -1,7 +1,7 @@
 import { Button, Drawer, Form, Input } from 'antd';
 import { useLazyGetPayerFamilyByNameQuery } from './payerFamilyApi';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
-import { useAddPayerFamilyMutation } from './payerFamilyApi';
+import { useAddPayerFamilyMutation, useLazyConvertPayerFamilyDataQuery } from './payerFamilyApi';
 import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
 import { useCallback, useState } from 'react';
@@ -23,11 +23,12 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
   const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
 
   const [addPayerFamily, { isLoading }] = useAddPayerFamilyMutation();
-  const [payerInfoError, setPayerInfoError] = useState<boolean>(false);
+  const [convertPayerFamily] = useLazyConvertPayerFamilyDataQuery();
+  const [payerInfoError, setPayerInfoError] = useState<string>();
 
   const handleClose = useCallback(() => {
     props.onClose();
-    setPayerInfoError(false);
+    setPayerInfoError('');
     form.resetFields();
   }, [form, props]);
 
@@ -41,7 +42,9 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
   );
 
   const onSubmit = useCallback(async () => {
-    const { payer_ids, channels, benefits, plan_types, regions } = form.getFieldsValue(true);
+    await form.validateFields();
+    const { name, payer_type, payer_ids, channels, benefits, plan_types, regions } =
+      form.getFieldsValue(true);
     if (
       !payer_ids.length &&
       !channels.length &&
@@ -49,7 +52,16 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
       !plan_types.length &&
       !regions.length
     ) {
-      setPayerInfoError(true);
+      setPayerInfoError('At least one payer value is required');
+      return;
+    }
+    try {
+      await convertPayerFamily({
+        payerType: 'plan',
+        body: { name, payer_type, payer_ids, channels, benefits, plan_types, regions },
+      }).unwrap();
+    } catch (err: any) {
+      setPayerInfoError(err.data.detail);
       return;
     }
     form.submit();
@@ -114,7 +126,7 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
           {payerInfoError ? (
             <>
               <WarningFilled className="text-red-600" />
-              <span className="text-red-600">At least one payer value is required</span>
+              <span className="text-red-600">{payerInfoError}</span>
             </>
           ) : null}
 

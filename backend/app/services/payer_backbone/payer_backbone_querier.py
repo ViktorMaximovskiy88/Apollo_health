@@ -42,7 +42,7 @@ class PayerBackboneQuerier:
             )
 
     async def relevant_payer_ids_of_type(self, PayerClass: Type[PayerBackbone]) -> list[int]:
-        plan_benefits = await self.construct_plan_benefit_query()
+        plan_benefits = self.construct_plan_benefit_query()
         return await self.convert_plans_to_ids_of_type(plan_benefits, PayerClass)
 
     async def convert_plans_to_ids_of_type(
@@ -78,7 +78,7 @@ class PayerBackboneQuerier:
 
         return ump_ids
 
-    async def construct_plan_benefit_query(self) -> FindMany[PlanBenefit]:
+    def construct_plan_benefit_query(self) -> FindMany[PlanBenefit]:
         query = PlanBenefit.find(self.effective())
         if self.payer_info.benefits:
             query = query.find({"benefit": {"$in": self.payer_info.benefits}})
@@ -88,17 +88,17 @@ class PayerBackboneQuerier:
             query = query.find({"channel": {"$in": self.payer_info.channels}})
         if self.payer_info.plan_types:
             query = query.find({"plan_types": {"$in": self.payer_info.plan_types}})
-        query = await self.payer_id_criteria(query)
+        query = self.payer_id_criteria(query)
 
         return query
 
-    async def payer_id_criteria(self, query: FindMany[PlanBenefit]) -> FindMany[PlanBenefit]:
+    def payer_id_criteria(self, query: FindMany[PlanBenefit]) -> FindMany[PlanBenefit]:
         payer_type = self.payer_info.payer_type
         payer_ids = self.payer_info.payer_ids
         if payer_ids:
             payer_ids = list(map(int, payer_ids))
             if payer_type == "plan":
-                query = query.find({"l_id": {"$in": payer_ids}})
+                query = query.find({"l_plan_id": {"$in": payer_ids}})
             if payer_type == "formulary":
                 query = query.find({"l_formulary_id": {"$in": payer_ids}})
             if payer_type == "mco":
@@ -139,7 +139,7 @@ class PayerBackboneQuerier:
         return None
 
     async def lives_by_controller(self) -> list[ControlledLivesResponse]:
-        plan_benefits = await self.construct_plan_benefit_query()
+        plan_benefits = self.construct_plan_benefit_query()
         ccbl: dict[int, dict[Channel, dict[Benefit, int]]] = {}
         async for plan in plan_benefits:
             ccbl.setdefault(plan.l_controller_id, {})

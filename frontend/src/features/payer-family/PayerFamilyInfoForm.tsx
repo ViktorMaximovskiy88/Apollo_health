@@ -1,10 +1,11 @@
-import { Form, Input, Select } from 'antd';
-import { useCallback } from 'react';
+import { Button, Form, Input, Modal, Select } from 'antd';
+import { useCallback, useState } from 'react';
 import { RemoteSelect } from '../../components';
 import {
   useGetPayerBackbonesQuery,
   useLazyGetPayerBackbonesQuery,
 } from '../payer-backbone/payerBackboneApi';
+import { useConvertPayerFamilyDataQuery } from './payerFamilyApi';
 import {
   benefitOptions,
   channelOptions,
@@ -55,6 +56,78 @@ function PayerIdsSelector() {
   );
 }
 
+export function MatchingPlansModal() {
+  const [open, setOpen] = useState(false);
+  const onClick = useCallback(() => setOpen(true), [setOpen]);
+  const onClose = useCallback(() => setOpen(false), [setOpen]);
+  const name = Form.useWatch('name') || '';
+  const regions = Form.useWatch('regions');
+  const payer_type = Form.useWatch('payer_type');
+  const payer_ids = Form.useWatch('payer_ids');
+  const plan_types = Form.useWatch('plan_types');
+  const channels = Form.useWatch('channels');
+  const benefits = Form.useWatch('benefits');
+  const pf = { name, payer_type, payer_ids, plan_types, channels, benefits, regions };
+  const { data: convertedPf, isError } = useConvertPayerFamilyDataQuery(
+    { payerType: 'plan', body: pf },
+    { skip: !open }
+  );
+  const { data: planNames } = useGetPayerBackbonesQuery(
+    {
+      type: 'plan',
+      filterValue: [
+        {
+          name: 'l_id',
+          operator: 'eq',
+          type: 'number',
+          value: convertedPf?.payer_ids.map((x) => +x).slice(0, 100),
+        },
+      ],
+      sortInfo: { name: 'name', dir: 1 },
+    },
+    { skip: !open || !convertedPf || isError }
+  );
+
+  return (
+    <>
+      <Button className="pl-0" type="link" onClick={onClick}>
+        See Matching Plans
+      </Button>
+      <Modal
+        title="Matching Plans"
+        open={open}
+        onOk={onClose}
+        onCancel={onClose}
+        cancelButtonProps={{ className: 'hidden' }}
+      >
+        {isError ? (
+          'No Plans match this Payer Family'
+        ) : (
+          <>
+            <div className="max-h-72 overflow-auto">
+              <table className="w-full">
+                <tbody>
+                  {planNames?.data.map((plan) => {
+                    return (
+                      <tr className="even:bg-gray-100" key={plan.l_id}>
+                        <td className="p-2">{plan.l_id}</td>
+                        <td>{plan.name}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {planNames?.data.length === 100 ? (
+              <div className="pt-2">Note: Only the first 100 plans are shown</div>
+            ) : null}
+          </>
+        )}
+      </Modal>
+    </>
+  );
+}
+
 // add props and pass handleChange prop
 
 export const PayerFamilyInfoForm = () => {
@@ -90,6 +163,7 @@ export const PayerFamilyInfoForm = () => {
           <Select mode="multiple" options={regionOptions} />
         </Form.Item>
       </Input.Group>
+      <MatchingPlansModal />
     </div>
   );
 };

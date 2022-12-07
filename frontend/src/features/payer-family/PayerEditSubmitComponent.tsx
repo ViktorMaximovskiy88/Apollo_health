@@ -5,12 +5,15 @@ import { FormInstance } from 'antd/lib/form/Form';
 import { useCallback, useState } from 'react';
 
 import { Link } from 'react-router-dom';
+import { useLazyConvertPayerFamilyDataQuery } from './payerFamilyApi';
 
 export function PayerEditSubmitComponent({ form }: { form: FormInstance<any> }) {
-  const [payerInfoError, setPayerInfoError] = useState<boolean>(false);
+  const [payerInfoError, setPayerInfoError] = useState<string>('');
+  const [convertPayerFamily] = useLazyConvertPayerFamilyDataQuery();
 
   const onSubmit = useCallback(async () => {
-    let { payer_ids, channels, benefits, plan_types, regions } = form.getFieldsValue(true);
+    const { name, payer_type, payer_ids, channels, benefits, plan_types, regions } =
+      form.getFieldsValue(true);
     if (
       !payer_ids.length &&
       !channels.length &&
@@ -18,19 +21,39 @@ export function PayerEditSubmitComponent({ form }: { form: FormInstance<any> }) 
       !plan_types.length &&
       !regions.length
     ) {
-      setPayerInfoError(true);
+      setPayerInfoError(
+        'You must specify at least one Backbone Value, Channel, Benefit, Plan Type or Region'
+      );
+      return;
+    }
+    try {
+      await convertPayerFamily({
+        payerType: 'plan',
+        body: {
+          name,
+          payer_type,
+          payer_ids,
+          channels,
+          benefits,
+          plan_types,
+          regions,
+        },
+      }).unwrap();
+      setPayerInfoError('');
+    } catch (err: any) {
+      setPayerInfoError(err.data.detail);
       return;
     }
 
     form.submit();
-  }, [form]);
+  }, [form, setPayerInfoError, convertPayerFamily]);
 
   return (
     <div className="flex items-center space-x-4">
       {payerInfoError ? (
         <>
           <WarningFilled className="text-red-600" />
-          <span className="text-red-600">At least one payer value is required</span>
+          <span className="text-red-600">{payerInfoError}</span>
         </>
       ) : null}
 
