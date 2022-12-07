@@ -69,19 +69,19 @@ function PlanFields() {
         <Input type="number" disabled />
       </Form.Item>
       <Form.Item name="is_national" label="Is National">
-        <Select options={NationalOptions} />
+        <Select options={NationalOptions} disabled />
       </Form.Item>
       <Form.Item name="channel" label="Channel">
-        <Select mode="multiple" options={channelOptions} />
+        <Select mode="multiple" options={channelOptions} disabled />
       </Form.Item>
       <Form.Item name="type" label="Type">
-        <Select mode="multiple" options={planTypeOptions} />
+        <Select mode="multiple" options={planTypeOptions} disabled />
       </Form.Item>
       <Form.Item name="pharmacy_states" label="Pharmacy States">
-        <Select mode="multiple" options={regionOptions} />
+        <Select mode="multiple" options={regionOptions} disabled />
       </Form.Item>
-      <Form.Item name="medical_states" label="Medical States">
-        <Select mode="multiple" options={regionOptions} />
+      <Form.Item name="medical_states" className="pb-6" label="Medical States">
+        <Select mode="multiple" options={regionOptions} disabled />
       </Form.Item>
     </>
   );
