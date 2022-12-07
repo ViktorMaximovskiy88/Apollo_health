@@ -477,11 +477,11 @@ class ScrapeWorker:
                     log=self.log,
                     config=self.site.scrape_method_configuration,
                 )
-
-                async for code in self.search_crawler.run_searchable(page, playbook_context):
-                    await scrape_handler.run_scrapers(
-                        url, base_url, all_downloads, {"file_name": code}
-                    )
+                if await self.search_crawler.is_searchable(page):
+                    async for code in self.search_crawler.run_searchable(page, playbook_context):
+                        await scrape_handler.run_scrapers(
+                            url, base_url, all_downloads, {"file_name": code}
+                        )
                 else:
                     await scrape_handler.run_scrapers(url, base_url, all_downloads)
 
