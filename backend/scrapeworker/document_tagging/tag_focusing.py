@@ -159,6 +159,11 @@ class FocusChecker:
         section: tuple[int, int] | None = None
 
         start_char = span.start_char + offset
+        if not self.key_areas and not self.focus_areas:
+            # if sectionless document, every tag is own section
+            end_char = span.end_char + offset
+            section = start_char, end_char
+            return key_area, focus_area, section
         key_index = bisect(self.key_areas, start_char, key=lambda area: area.start)
         focus_index = bisect(self.focus_areas, start_char, key=lambda area: area.start)
         if key_index > 0:

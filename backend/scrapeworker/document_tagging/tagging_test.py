@@ -285,7 +285,9 @@ class TestCheckFocus:
         ]
         for span in spans:
             focus_state = focus_checker.check_focus(span, 0)
-            assert focus_state == FocusState(focus=False, key=False, section=None)
+            assert focus_state == FocusState(
+                focus=False, key=False, section=(span.start_char, span.end_char)
+            )
 
     def test_no_config(self):
         url = "www.test.com"
@@ -295,13 +297,13 @@ class TestCheckFocus:
         span = MockSpan("AUSTEDO", 1000, 2000)
         focus_state = focus_checker.check_focus(span, 0)
         assert focus_state == FocusState(
-            focus=True, key=False, section=None, is_in_link_text=True, is_in_url=False
+            focus=True, key=False, section=(1000, 2000), is_in_link_text=True, is_in_url=False
         )
 
         non_focus_span = MockSpan("ACITRETIN", 30, 38)
         focus_state = focus_checker.check_focus(non_focus_span, 0)
         assert focus_state == FocusState(
-            focus=False, key=False, section=None, is_in_link_text=False, is_in_url=False
+            focus=False, key=False, section=(30, 38), is_in_link_text=False, is_in_url=False
         )
 
     def test_offset(self):

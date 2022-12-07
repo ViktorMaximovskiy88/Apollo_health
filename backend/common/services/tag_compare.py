@@ -159,6 +159,7 @@ class TagCompare:
         unmatched_ref: TagList = []
         for tag in id_tags:
             if not tag.text_area:
+                unmatched_ref.append(tag)
                 continue
 
             if tag.text_area in text_areas:
@@ -270,6 +271,8 @@ class TagCompare:
     ) -> set[IndicationTag | TherapyTag]:
         doc_tags = doc.therapy_tags if tag_type == self.THERAPY else doc.indication_tags
         prev_tags = prev_doc.therapy_tags if tag_type == self.THERAPY else prev_doc.indication_tags
+        doc_tags = [tag for tag in doc_tags if tag.update_status != TagUpdateStatus.REMOVED]
+        prev_tags = [tag for tag in prev_tags if tag.update_status != TagUpdateStatus.REMOVED]
         doc_focus_areas = await self._get_focus_areas(doc, doc_text, tag_type)
         prev_focus_areas = await self._get_focus_areas(prev_doc, prev_text, tag_type)
         paired, unpaired, unmatched_ref = self.match_tags(
