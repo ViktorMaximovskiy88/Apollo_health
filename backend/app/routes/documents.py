@@ -440,9 +440,19 @@ async def add_document(
     if uploaded_doc.upload_new_version_for_id:  # new version
         created_work_item.selected = WorkItemOption.NEW_VERSION
         created_work_item.is_new = False
+    elif uploaded_doc.exists_on_this_site:
+        created_work_item.selected = WorkItemOption.FOUND
     else:
         created_work_item.selected = WorkItemOption.NEW_DOCUMENT
-    current_task.work_list.append(created_work_item)
+    # If uploaded_doc exists on THIS site, update existing work_item to FOUND.
+    existing_work_items = [
+        i for i, wi in enumerate(current_task.work_list) if wi.document_id == created_doc_doc.id
+    ]
+    if not existing_work_items:
+        current_task.work_list.append(created_work_item)
+    else:
+        if uploaded_doc.exists_on_this_site:
+            current_task.work_list[existing_work_items[0]].selected = WorkItemOption.FOUND
     # Set work_item current_version and lineage.
     if uploaded_doc.upload_new_version_for_id:
         # Set old version's work_item as not current.
@@ -469,7 +479,8 @@ async def add_document(
         created_item.is_new = False
         current_task.work_list[created_item_index] = created_item
     # Save updated work_list and add to task.retr_doc_ids for querying.
-    current_task.retrieved_document_ids.append(f"{created_retr_doc.id}")
+    if created_retr_doc.id not in current_task.retrieved_document_ids:
+        current_task.retrieved_document_ids.append(f"{created_retr_doc.id}")
     await current_task.save()
 
     # Start doc cycle workflow for add_doc and new_version.
