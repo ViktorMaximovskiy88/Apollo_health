@@ -36,6 +36,7 @@ export const createColumns = ({
     header: 'Document Count',
     name: 'doc_doc_count',
     minWidth: 50,
+    type: 'number',
     render: ({
       value: documentCount,
       data: { _id: payerFamilyId },
