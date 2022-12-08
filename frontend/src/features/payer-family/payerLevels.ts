@@ -102,7 +102,7 @@ export const backBoneLevelOptions = [
 export const fieldGroupsOptions = [
   { label: 'Authorization Details', value: 'AUTHORIZATION_DETAILS' },
   { label: 'Tier', value: 'TIER' },
-  { label: 'Coverage', value: 'COVERAGE' },
+  { label: 'Medical Coverage', value: 'MEDICAL_COVERAGE' },
   { label: 'QL Gate', value: 'QL_GATE' },
   { label: 'QL Details', value: 'QL_DETAILS' },
   { label: 'PA', value: 'PA' },
