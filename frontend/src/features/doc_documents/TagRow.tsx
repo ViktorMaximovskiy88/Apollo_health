@@ -1,7 +1,8 @@
-import { Button, Input, InputNumber, Select, Switch, Tag } from 'antd';
+import { Button, Input, InputNumber, Popconfirm, Select, Switch, Tag } from 'antd';
 import { CheckOutlined, CloseOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { VirtualItem } from '@tanstack/react-virtual';
 import { DocumentTag, TagUpdateStatus } from './types';
+import { useState } from 'react';
 
 function labelColorMap(type: string) {
   const colorMap: any = {
@@ -25,17 +26,20 @@ function getStatusDisplay(type?: TagUpdateStatus) {
 }
 
 export function EditTag({
+  existsCopy,
   onEditTag,
   onToggleEdit,
   tag,
   virtualRow,
 }: {
+  existsCopy: boolean;
   onDeleteTag: Function;
   onEditTag: Function;
   onToggleEdit: Function;
   tag: DocumentTag;
   virtualRow: VirtualItem<unknown>;
 }) {
+  const [open, setOpen] = useState(false);
   const update_status_options = [
     { label: 'None', value: null },
     { label: 'Added', value: TagUpdateStatus.Added },
@@ -109,10 +113,22 @@ export function EditTag({
           </Tag>
         </div>
         <div className="flex justify-center space-x-2">
-          <Button onClick={() => onToggleEdit(tag, false)}>
-            <CheckOutlined className="cursor-pointer" />
-          </Button>
-
+          <Popconfirm
+            open={open}
+            title={'Do you want to update all instances of this tag?'}
+            okText="Yes"
+            cancelText="No"
+            onConfirm={() => onToggleEdit(tag, false, false, true)}
+            onCancel={() => onToggleEdit(tag, false, false)}
+          >
+            <Button
+              onClick={() => {
+                existsCopy ? setOpen(true) : onToggleEdit(tag, false, false);
+              }}
+            >
+              <CheckOutlined className="cursor-pointer" />
+            </Button>
+          </Popconfirm>
           <Button onClick={() => onToggleEdit(tag, false, true)}>
             <CloseOutlined className="cursor-pointer" />
           </Button>

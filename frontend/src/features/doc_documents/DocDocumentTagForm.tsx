@@ -86,9 +86,14 @@ export function DocDocumentTagForm(props: {
     overscan: 10,
   });
 
-  const handleToggleEdit = (tag: DocumentTag, editState: boolean, cancel: boolean = false) => {
+  const handleToggleEdit = (
+    tag: DocumentTag,
+    editState: boolean,
+    cancel: boolean = false,
+    updateTags: boolean = false
+  ) => {
     if (!editState && !cancel) {
-      onEditTag(editTags[tag.id]);
+      onEditTag(editTags[tag.id], updateTags);
     }
     setEditTags((prevState) => {
       const update = { ...prevState };
@@ -158,6 +163,7 @@ export function DocDocumentTagForm(props: {
           {rowVirtualizer.getVirtualItems().map((virtualRow) => {
             const tag = filteredList[virtualRow.index];
             const readOnly = !editTags[tag.id];
+            const existsCopy = tags.some((t) => t.name === tag.name && t.id !== tag.id);
             if (readOnly) {
               return (
                 <ReadTag
@@ -171,6 +177,7 @@ export function DocDocumentTagForm(props: {
             } else {
               return (
                 <EditTag
+                  existsCopy={existsCopy}
                   key={tag.id}
                   onDeleteTag={onDeleteTag}
                   onEditTag={handleEditTag}

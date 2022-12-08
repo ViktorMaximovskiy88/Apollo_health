@@ -145,12 +145,19 @@ export function DocDocumentEditForm({
   const [tags, setTags] = useTagsState(docId);
   const onFinish = useOnFinish({ onSubmit, tags, setIsSaving, docId });
 
-  function handleTagEdit(newTag: DocumentTag) {
+  function handleTagEdit(newTag: DocumentTag, updateTags: boolean = false) {
     const update = [...tags];
     const index = update.findIndex((tag) => {
       return tag.id === newTag.id;
     });
     if (index > -1) {
+      if (updateTags) {
+        update.forEach((tag) => {
+          if (tag.id !== newTag.id && tag.name === newTag.name) {
+            tag.focus = newTag.focus;
+          }
+        });
+      }
       if (!isEqual(newTag, update[index])) setHasChanges(true);
       update[index] = newTag;
     }
