@@ -51,11 +51,7 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
         resource_attr: str = "href",
     ) -> None:
         link_handle: ElementHandle
-
-        base_tag = await self.page.query_selector("head base")
-        base_tag_href = None
-        if base_tag:
-            base_tag_href = await base_tag.get_attribute("href")
+        base_tag_href = await self.get_base_href()
 
         for link_handle in link_handles:
             metadata: Metadata = await self.extract_metadata(link_handle, resource_attr)

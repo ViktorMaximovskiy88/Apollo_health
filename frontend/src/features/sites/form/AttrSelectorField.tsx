@@ -191,7 +191,6 @@ export function NameInput({ displayLabel, name, field, ...props }: InputPropType
       {...field}
       name={nameProp}
       label={label}
-      rules={[{ required: true, message: 'Required' }]}
       tooltip={tooltip}
       className="mb-0 shrink-0 col-span-2"
       {...props}

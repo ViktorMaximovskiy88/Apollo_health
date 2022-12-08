@@ -106,3 +106,12 @@ class TestToXpath:
         attr_selector = AttrSelector(attr_element="input", attr_name="_ngcontent-uuw-c128")
         selector = to_xpath(attr_selector)
         assert selector == '//input[@*[contains(name(), "_ngcontent-uuw-c128")]]'
+
+    def test_no_attr_name(self):
+        attr_selector = AttrSelector(attr_element="input", attr_name="")
+        selector = to_xpath(attr_selector)
+        assert selector == "//input"
+
+        attr_selector = AttrSelector(attr_element="input", attr_name="", has_text="text_content")
+        selector = to_xpath(attr_selector)
+        assert selector == '//input[contains(text(), "text_content")]'

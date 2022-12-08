@@ -234,6 +234,6 @@ def normalize_string(input: str = "", html=False, url=True, lower=True, strip=Tr
 
 # cases '../abc' '/abc' 'abc' 'https://a.com/abc' 'http://a.com/abc' '//a.com/abc'
 # anchor targets can change behavior
-def normalize_url(base_url: str, target_url: str, base_tag_href: str = None) -> str:
+def normalize_url(base_url: str, target_url: str, base_tag_href: str | None = None) -> str:
     target_url = urljoin(base_tag_href, target_url)
     return urljoin(base_url, target_url)

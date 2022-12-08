@@ -50,12 +50,26 @@ def to_xpath(attr_selector: AttrSelector) -> str:
     ###
     # Convert AttrSelector to xpath string
     ###
-    base_selector = f'@*[contains(name(), "{attr_selector.attr_name}")]'
-    selector = base_selector
-    if attr_selector.attr_value:
-        selector = f'contains({base_selector}, "{attr_selector.attr_value}")'
-    if attr_selector.has_text:
-        selector = f'{selector} and contains(text(), "{attr_selector.has_text}")'
     if not attr_selector.attr_element:
         attr_selector.attr_element = "a"
-    return f"//{attr_selector.attr_element}[{selector}]"
+
+    if attr_selector.attr_name:
+        selector = f'@*[contains(name(), "{attr_selector.attr_name}")]'
+        if attr_selector.attr_value:
+            selector = f'contains({selector}, "{attr_selector.attr_value}")'
+    else:
+        selector = ""
+
+    if attr_selector.has_text:
+        text_selector = f'contains(text(), "{attr_selector.has_text}")'
+        if selector:
+            selector = f"{selector} and {text_selector}"
+        else:
+            selector = text_selector
+
+    final_selector = (
+        f"//{attr_selector.attr_element}[{selector}]"
+        if selector
+        else f"//{attr_selector.attr_element}"
+    )
+    return final_selector

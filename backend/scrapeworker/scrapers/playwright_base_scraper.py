@@ -117,12 +117,15 @@ class PlaywrightBaseScraper(ABC):
         self.log.info(f"{self.__class__.__name__} is_applicable -> {result}")
         return result
 
+    async def get_base_href(self) -> str | None:
+        base_tag_locator = self.page.locator("base")
+        return await base_tag_locator.get_attribute("href")
+
     async def extract_metadata(
         self, element: ElementHandle, resource_attr: str = "href"
     ) -> Metadata:
 
         closest_heading: str | None
-
         (
             element_content,
             element_text,
