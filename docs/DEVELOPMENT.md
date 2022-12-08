@@ -150,17 +150,16 @@ playwright install-deps
 
 ### RxNorm Therapy Tagging Setup
 
-To run therapy tagging locally, you must populate S3 with the rxNorm files
-
-Download https://www.dropbox.com/s/ufk4zrxbc82z1wd/RxNorm_full_06062022.zip?dl=1 and unzip somewhere on computer.
-
-This will take a few minutes to run.
+To run therapy tagging locally, you must populate S3 with the rxNorm files. Since rxNorm files are large, we do not want to request from S3 for every run. Use minio to access large files locally with an S3 compatiable api.
 
 ```bash
-python backend/parseworker/scripts/upload_rxnorm_files.py path/to/folder
-python backend/parseworker/scripts/build_rxnorm_linker.py
-python backend/parseworker/scripts/build_rxnorm_span_ruler.py
+brew install minio
 ```
+
+- Download https://www.dropbox.com/s/w5vo6dpxb4v4sn1/latest.zip?dl=1 and unzip
+- Drag 'latest' folder into source-hub/models/ prefix in Minio UI at http://localhost:9000 (username: admin, password: adminadmin)
+- If models folder does not exist, click 'Create new path' icon in Minio UI
+- Restart scrapeworker, run collection, get tags
 
 ## Running the services
 

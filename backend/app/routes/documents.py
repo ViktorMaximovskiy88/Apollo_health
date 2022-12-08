@@ -18,6 +18,7 @@ from backend.common.models.document import (
     UpdateRetrievedDocument,
     UploadedDocument,
 )
+from backend.common.models.document_mixins import find_site_index
 from backend.common.models.shared import DocDocumentLocation, IndicationTag, TherapyTag
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import ManualWorkItem, SiteScrapeTask, WorkItemOption
@@ -316,15 +317,25 @@ async def add_document(
         )
         if not new_retr_document:
             raise HTTPException(status.HTTP_409_CONFLICT, err_msg)
-        new_doc_loc: RetrievedDocumentLocation = RetrievedDocumentLocation(**new_loc_fields)
-        new_retr_document.locations.append(new_doc_loc)
+        if uploaded_doc.exists_on_this_site:
+            site_loc_index = find_site_index(new_retr_document, site.id)
+            new_retr_document.locations[site_loc_index] = RetrievedDocumentLocation(
+                **new_loc_fields
+            )
+        else:
+            new_doc_loc: RetrievedDocumentLocation = RetrievedDocumentLocation(**new_loc_fields)
+            new_retr_document.locations.append(new_doc_loc)
         new_doc_doc: DocDocument | None = await DocDocument.find_one(
             DocDocument.retrieved_document_id == new_retr_document.id
         )
         if not new_doc_doc:
             raise HTTPException(status.HTTP_409_CONFLICT, err_msg)
-        new_doc_doc_loc: DocDocumentLocation = DocDocumentLocation(**new_loc_fields)
-        new_doc_doc.locations.append(new_doc_doc_loc)
+        if uploaded_doc.exists_on_this_site:
+            site_loc_index = find_site_index(new_doc_doc, site.id)
+            new_doc_doc.locations[site_loc_index] = DocDocumentLocation(**new_loc_fields)
+        else:
+            new_doc_loc: DocDocumentLocation = DocDocumentLocation(**new_loc_fields)
+            new_doc_doc.locations.append(new_doc_loc)
         await new_retr_document.save()
         await new_doc_doc.save()
     # Create new doc from uploaded doc.
