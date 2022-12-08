@@ -44,7 +44,6 @@ export interface Site extends BaseDocument {
     html_attr_selectors: AttrSelector[];
     html_exclusion_selectors: AttrSelector[];
     focus_section_configs: FocusSectionConfig[];
-    allow_docdoc_updates: boolean;
   };
   tags: string[];
   disabled: boolean;

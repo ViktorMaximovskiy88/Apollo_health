@@ -60,7 +60,6 @@ const buildInitialValues = () => ({
     html_attr_selectors: [],
     html_exclusion_selectors: [],
     focus_section_configs: [],
-    allow_docdoc_updates: false,
   },
   doc_type_threshold_override: false,
   doc_type_threshold: 0.75,
