@@ -345,7 +345,7 @@ export function SampleExtractionTable(props: { docId: string; form: FormInstance
       {tables.length > 0 && (
         <ReactDataGrid
           loading={isFetching}
-          dataSource={tables[0]}
+          dataSource={tables.flat()}
           columns={columns[0]}
           columnUserSelect
         />
