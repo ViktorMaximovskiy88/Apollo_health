@@ -137,6 +137,7 @@ class UMP(BaseDocument):
     benefit: Benefit
     name: str
     l_id: int
+    legacy_policy_label: str | None = None
     start_date: datetime = datetime(1970, 1, 1)
     end_date: datetime = datetime(2038, 1, 1)
 

@@ -109,6 +109,9 @@ function UMPFields() {
       <Form.Item name="l_id" label="UMP ID">
         <Input type="number" />
       </Form.Item>
+      <Form.Item name="legacy_policy_label" label="Legacy Policy Label">
+        <Input />
+      </Form.Item>
       <Form.Item name="benefit" label="Benefit">
         <Select
           options={[
