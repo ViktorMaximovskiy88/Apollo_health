@@ -89,6 +89,11 @@ class DocLifecycleService:
 
         return False
 
+    def identified_dates_needs_review(self, doc: DocDocument) -> bool:
+        if doc.identified_dates and len(doc.identified_dates) > 10:
+            return True
+        return False
+
     async def assess_classification_status(self, doc: DocDocument) -> tuple[ApprovalStatus, bool]:
         if doc.classification_status != ApprovalStatus.PENDING:
             return doc.classification_status, False
@@ -107,6 +112,10 @@ class DocLifecycleService:
         if prev_doc:
             if self.tags_need_review(doc):
                 info.append("TAGS")
+
+        if self.identified_dates_needs_review(doc):
+            info.append("IDENTIFIED_DATES")
+
         else:
             info.append("LINEAGE")
 
