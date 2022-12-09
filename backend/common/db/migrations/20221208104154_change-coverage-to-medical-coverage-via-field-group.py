@@ -9,7 +9,8 @@ class Forward:
         await DocumentFamily.get_motor_collection().update_many(
             {"field_groups": {"$exists": True}},
             {"$set": {"field_groups.$[element]": "MEDICAL_COVERAGE"}},
-            {"arrayFilters": [{"element": "COVERAGE"}], "upsert": True},
+            False,
+            [{"element": "COVERAGE"}],
         )
 
 
