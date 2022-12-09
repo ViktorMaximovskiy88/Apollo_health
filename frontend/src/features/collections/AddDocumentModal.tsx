@@ -75,6 +75,7 @@ export function AddDocumentModal({
   const [oldLocationDocId, setOldLocationDocId] = useState('');
   const [isEditingDocFromOtherSite, setIsEditingDocFromOtherSite] = useState(false);
   const [intitialBaseUrl, setIntitialBaseUrl] = useState('');
+  const [existsOnThisSite, setExistsOnThisSite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Set initial values.
@@ -115,6 +116,7 @@ export function AddDocumentModal({
         newDocument.prev_location_site_id = oldLocationSiteId;
         newDocument.prev_location_doc_id = oldLocationDocId;
       }
+      newDocument.exists_on_this_site = existsOnThisSite;
 
       // For some reason, fileData never updates if browser auto fills.
       fileData.url = form.getFieldValue('url');
@@ -149,6 +151,7 @@ export function AddDocumentModal({
       message.error('We could not save this document');
     }
   }
+
   function onCancel() {
     setOpen(false);
   }
@@ -174,7 +177,13 @@ export function AddDocumentModal({
           internal_document: responseData.internal_document,
         });
       }
-      displayDuplicateError('Document exists on other site');
+      if (responseData.exists_on_this_site) {
+        setExistsOnThisSite(true);
+        displayDuplicateError('Document exists on this site!');
+      } else {
+        setExistsOnThisSite(false);
+        displayDuplicateError('Document exists on other site!');
+      }
       setOldLocationSiteId(responseData.prev_location_site_id);
       setOldLocationDocId(responseData.prev_location_doc_id);
       setIsEditingDocFromOtherSite(true);

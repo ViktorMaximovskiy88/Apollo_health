@@ -78,6 +78,7 @@ class UploadedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
     # Fields used when populating doc_doc pair.
     internal_document: bool
     first_created_date: datetime | None = None
+    exists_on_this_site: bool | None = False
 
 
 class UpdateRetrievedDocument(BaseModel, DocumentMixins):

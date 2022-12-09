@@ -18,6 +18,7 @@ from backend.common.models.document import (
     UpdateRetrievedDocument,
     UploadedDocument,
 )
+from backend.common.models.document_mixins import find_site_index
 from backend.common.models.shared import DocDocumentLocation, IndicationTag, TherapyTag
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import ManualWorkItem, SiteScrapeTask, WorkItemOption
@@ -193,17 +194,16 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
     for doc in checksum_documents:
         if not doc.locations:
             continue
-        # Doc with checksum and location exists on THIS site.
-        checksum_same_site: RetrievedDocumentLocation = doc.get_site_location(from_site_id)
-        if checksum_same_site:
-            return {"error": "The document already exists for this site!"}
         # Doc with checksum and location exists on OTHER site.
         checksum_location: RetrievedDocumentLocation = doc.locations[-1]
         if checksum_location:
             response["data"] = copy_location_to(site, checksum_location, response["data"])
             response["data"]["prev_location_doc_id"] = doc.id
             response["data"] = await copy_doc_field_values(doc, response["data"])
-            break
+        # Doc with checksum and location exists on THIS site.
+        checksum_same_site: RetrievedDocumentLocation = doc.get_site_location(from_site_id)
+        if checksum_same_site:
+            response["data"]["exists_on_this_site"] = True
 
     with tempfile.NamedTemporaryFile(delete=True, suffix="." + file_extension) as tmp:
         tmp.write(content)
@@ -223,10 +223,6 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
         for doc in text_checksum_documents:
             if not doc.locations:
                 continue
-            # Doc with text_checksum and location exists on THIS site.
-            text_checksum_same_site: RetrievedDocumentLocation = doc.get_site_location(from_site_id)
-            if text_checksum_same_site:
-                return {"error": "The document already exists for this site!"}
             # Doc with checksum and location exists on OTHER site.
             text_checksum_location: RetrievedDocumentLocation = doc.locations[-1]
             if text_checksum_location:
@@ -234,7 +230,10 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
                 response["data"]["prev_location_doc_id"] = doc.id
                 response["data"] = await copy_doc_field_values(doc, response["data"])
                 await get_tags(parsed_content, doc)
-                break
+            # Doc with text_checksum and location exists on THIS site.
+            text_checksum_same_site: RetrievedDocumentLocation = doc.get_site_location(from_site_id)
+            if text_checksum_same_site:
+                response["data"]["exists_on_this_site"] = True
 
         response["data"] = {
             "checksum": checksum,
@@ -318,15 +317,25 @@ async def add_document(
         )
         if not new_retr_document:
             raise HTTPException(status.HTTP_409_CONFLICT, err_msg)
-        new_doc_loc: RetrievedDocumentLocation = RetrievedDocumentLocation(**new_loc_fields)
-        new_retr_document.locations.append(new_doc_loc)
+        if uploaded_doc.exists_on_this_site:
+            site_loc_index = find_site_index(new_retr_document, site.id)
+            new_retr_document.locations[site_loc_index] = RetrievedDocumentLocation(
+                **new_loc_fields
+            )
+        else:
+            new_doc_loc: RetrievedDocumentLocation = RetrievedDocumentLocation(**new_loc_fields)
+            new_retr_document.locations.append(new_doc_loc)
         new_doc_doc: DocDocument | None = await DocDocument.find_one(
             DocDocument.retrieved_document_id == new_retr_document.id
         )
         if not new_doc_doc:
             raise HTTPException(status.HTTP_409_CONFLICT, err_msg)
-        new_doc_doc_loc: DocDocumentLocation = DocDocumentLocation(**new_loc_fields)
-        new_doc_doc.locations.append(new_doc_doc_loc)
+        if uploaded_doc.exists_on_this_site:
+            site_loc_index = find_site_index(new_doc_doc, site.id)
+            new_doc_doc.locations[site_loc_index] = DocDocumentLocation(**new_loc_fields)
+        else:
+            new_doc_loc: DocDocumentLocation = DocDocumentLocation(**new_loc_fields)
+            new_doc_doc.locations.append(new_doc_loc)
         await new_retr_document.save()
         await new_doc_doc.save()
     # Create new doc from uploaded doc.
@@ -442,9 +451,19 @@ async def add_document(
     if uploaded_doc.upload_new_version_for_id:  # new version
         created_work_item.selected = WorkItemOption.NEW_VERSION
         created_work_item.is_new = False
+    elif uploaded_doc.exists_on_this_site:
+        created_work_item.selected = WorkItemOption.FOUND
     else:
         created_work_item.selected = WorkItemOption.NEW_DOCUMENT
-    current_task.work_list.append(created_work_item)
+    # If uploaded_doc exists on THIS site, update existing work_item to FOUND.
+    existing_work_items = [
+        i for i, wi in enumerate(current_task.work_list) if wi.document_id == created_doc_doc.id
+    ]
+    if not existing_work_items:
+        current_task.work_list.append(created_work_item)
+    else:
+        if uploaded_doc.exists_on_this_site:
+            current_task.work_list[existing_work_items[0]].selected = WorkItemOption.FOUND
     # Set work_item current_version and lineage.
     if uploaded_doc.upload_new_version_for_id:
         # Set old version's work_item as not current.
@@ -471,7 +490,8 @@ async def add_document(
         created_item.is_new = False
         current_task.work_list[created_item_index] = created_item
     # Save updated work_list and add to task.retr_doc_ids for querying.
-    current_task.retrieved_document_ids.append(f"{created_retr_doc.id}")
+    if created_retr_doc.id not in current_task.retrieved_document_ids:
+        current_task.retrieved_document_ids.append(f"{created_retr_doc.id}")
     await current_task.save()
 
     # Start doc cycle workflow for add_doc and new_version.
