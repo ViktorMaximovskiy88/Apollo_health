@@ -18,8 +18,11 @@ async def get_site_doc_doc_table(
 ) -> tuple[list[SiteDocDocument], int]:
     pipeline = []
 
-    if len(retrieved_document_ids) > 0:
-        pipeline.append({"$match": {"retrieved_document_id": {"$in": retrieved_document_ids}}})
+    # retrieved_document_ids of [] is valid because sometimes you want to
+    # filter out 'not_found' retrieved_document_ids which can cause a []
+    # if all docs not_found. In that case, a blank doc table is valid as they would
+    # be adding documents.
+    pipeline.append({"$match": {"retrieved_document_id": {"$in": retrieved_document_ids}}})
 
     pipeline.append({"$match": {"locations.site_id": site_id}})
 

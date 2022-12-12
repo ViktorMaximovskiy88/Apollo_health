@@ -85,7 +85,9 @@ class CollectionService:
         ).to_list()
 
     async def fetch_previous_task(self) -> SiteScrapeTask:
-        return await SiteScrapeTask.find_one({"site_id": self.site.id}, sort=[("start_time", -1)])
+        return await SiteScrapeTask.find_one(
+            {"site_id": self.site.id, "documents_found": {"$gt": 0}}, sort=[("start_time", -1)]
+        )
 
     async def start_collecting(self) -> CollectionResponse:
         """Create site scrape task using site config."""
