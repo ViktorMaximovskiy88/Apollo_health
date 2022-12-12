@@ -18,11 +18,8 @@ import {
 } from '../../common/approvalStatus';
 import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
 import { useGetSiteQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
-import {
-  useGetPayerFamilyQuery,
-  useLazyGetPayerFamiliesQuery,
-} from '../payer-family/payerFamilyApi';
 import { useDocumentFamilySelectOptions } from './document_family/documentFamilyHooks';
+import { usePayerFamilySelectOptions } from '../payer-family/payerFamilyHooks';
 
 export function useSiteSelectOptions() {
   const [getSites] = useLazyGetSitesQuery();
@@ -48,34 +45,6 @@ export function useSiteSelectOptions() {
   return { siteOptions, initialSiteOptions };
 }
 
-function usePayerFamilySelectOptions() {
-  const [getPayerFamilies] = useLazyGetPayerFamiliesQuery();
-  const payerFamilyOptions = useCallback(
-    async (search: string) => {
-      const { data } = await getPayerFamilies({
-        limit: 20,
-        skip: 0,
-        sortInfo: { name: 'name', dir: 1 },
-        filterValue: [{ name: 'name', operator: 'contains', type: 'string', value: search }],
-      });
-      if (!data) return [];
-      return data.data.map((pf) => ({ label: pf.name, value: pf._id }));
-    },
-    [getPayerFamilies]
-  );
-
-  const res = useSelector(docDocumentTableState);
-  const payerFamilyFilter = res.filter.find((f) => f.name === 'locations.payer_family_id');
-  const { data: payerFamily } = useGetPayerFamilyQuery(payerFamilyFilter?.value ?? undefined, {
-    skip: !payerFamilyFilter?.value,
-  });
-  const initialPayerFamilyOptions = payerFamily
-    ? [{ value: payerFamily._id, label: payerFamily.name }]
-    : [];
-
-  return { payerFamilyOptions, initialPayerFamilyOptions };
-}
-
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
 export const useColumns = ({
@@ -88,7 +57,9 @@ export const useColumns = ({
   documentFamilyNamesById: { [id: string]: string };
 }) => {
   const { siteOptions, initialSiteOptions } = useSiteSelectOptions();
-  const { payerFamilyOptions, initialPayerFamilyOptions } = usePayerFamilySelectOptions();
+  const { payerFamilyOptions, initialPayerFamilyOptions } = usePayerFamilySelectOptions(
+    'locations.payer_family_id'
+  );
   const { documentFamilyOptions, initialDocumentFamilyOptions } = useDocumentFamilySelectOptions();
 
   return [
