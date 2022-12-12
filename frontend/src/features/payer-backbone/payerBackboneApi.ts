@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
 import { ChangeLog } from '../change-log/types';
 import { PayerBackbone } from './types';
+import { makeTableQueryParams } from '../../common/helpers';
 
 export const payerBackboneApi = createApi({
   reducerPath: 'payerBackboneApi',
@@ -28,21 +29,8 @@ export const payerBackboneApi = createApi({
         filterValue?: TypeFilterValue;
       }
     >({
-      query: ({ type, limit, skip, sortInfo, filterValue }) => {
-        const sorts = sortInfo ? [sortInfo] : [];
-        const args = [];
-        if (limit) {
-          args.push(`limit=${encodeURIComponent(limit)}`);
-        }
-        if (skip) {
-          args.push(`skip=${encodeURIComponent(skip)}`);
-        }
-        if (sorts) {
-          args.push(`sorts=${encodeURIComponent(JSON.stringify(sorts))}`);
-        }
-        if (filterValue) {
-          args.push(`filters=${encodeURIComponent(JSON.stringify(filterValue))}`);
-        }
+      query: ({ type, ...queryArgs }) => {
+        const args = makeTableQueryParams(queryArgs);
         return `/payer-backbone/${type}?${args.join('&')}`;
       },
     }),

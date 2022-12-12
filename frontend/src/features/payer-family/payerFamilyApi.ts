@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from '../../app/base-api';
+import { makeTableQueryParams } from '../../common/helpers';
 import { TableInfoType } from '../../common/types';
 import { ChangeLog } from '../change-log/types';
 import { PayerFamily } from './types';
@@ -9,14 +10,8 @@ export const payerFamilyApi = createApi({
   tagTypes: ['PayerFamily', 'ChangeLog'],
   endpoints: (builder) => ({
     getPayerFamilies: builder.query<{ data: PayerFamily[]; total: number }, TableInfoType>({
-      query: ({ limit, skip, filterValue, sortInfo }) => {
-        const args = [
-          `limit=${encodeURIComponent(limit)}`,
-          `skip=${encodeURIComponent(skip)}`,
-          `sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`,
-          `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
-        ];
-
+      query: (queryArgs) => {
+        const args = makeTableQueryParams(queryArgs);
         return `/payer-family/?${args.join('&')}`;
       },
       providesTags: (results) => {
