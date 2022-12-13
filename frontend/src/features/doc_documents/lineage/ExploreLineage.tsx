@@ -5,7 +5,12 @@ import { useCallback, useState } from 'react';
 import { useGetDocDocumentQuery } from '../docDocumentApi';
 import { LineageDocDocumentsTable } from './LineageDocDocumentsTable';
 import { useSelector } from 'react-redux';
-import { previousDocDocumentIdState, setPreviousDocDocumentId } from './lineageDocDocumentsSlice';
+import {
+  lineageDocDocumentTableState,
+  previousDocDocumentIdState,
+  setLineageDocDocumentTableFilter,
+  setPreviousDocDocumentId,
+} from './lineageDocDocumentsSlice';
 import { useAppDispatch } from '../../../app/store';
 import { DocDocument } from '../types';
 import { FullScreenModal } from '../../../components/FullScreenModal';
@@ -79,11 +84,6 @@ const LineageModalFooter = (props: {
 export function ExploreLineage() {
   const form = Form.useFormInstance();
 
-  const { docDocumentId: updatingDocDocId } = useParams();
-  const { data: updatingDocDoc } = useGetDocDocumentQuery(updatingDocDocId, {
-    skip: !updatingDocDocId,
-  });
-
   const dispatch = useAppDispatch();
   const prevDocDocId = useSelector(previousDocDocumentIdState);
   const [open, setOpen] = useState(false);
@@ -98,10 +98,20 @@ export function ExploreLineage() {
     closeModal();
   }, [closeModal, dispatch]);
 
+  const tableState = useSelector(lineageDocDocumentTableState);
+
   const handleModalOpen = useCallback(() => {
-    dispatch(setPreviousDocDocumentId(updatingDocDoc?.previous_doc_doc_id));
+    const prevDocId = form.getFieldValue('previous_doc_doc_id');
+    dispatch(setPreviousDocDocumentId(prevDocId));
+
+    const docType = form.getFieldValue('document_type');
+    const newFilters = tableState.filter.map((f) => {
+      return f.name === 'document_type' ? { ...f, value: docType } : f;
+    });
+    dispatch(setLineageDocDocumentTableFilter(newFilters));
+
     setOpen(true);
-  }, [dispatch, prevDocDocId, updatingDocDoc?.previous_doc_doc_id]);
+  }, [dispatch, form, tableState.filter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = useCallback(async () => {
     if (!prevDocDocId) throw new Error('prevDocDocId not found');
@@ -119,14 +129,14 @@ export function ExploreLineage() {
         title="Explore Lineage"
         open={open}
         onCancel={handleCancel}
-        footer={[
+        footer={
           <LineageModalFooter
             showCurrentDocument={showCurrentDocument}
             setShowCurrentDocument={setShowCurrentDocument}
             handleCancel={handleCancel}
             handleSubmit={handleSubmit}
-          />,
-        ]}
+          />
+        }
       >
         <LineageModalBody showCurrentDocument={showCurrentDocument} />
       </FullScreenModal>

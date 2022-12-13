@@ -19,7 +19,7 @@ const useNavigateOnSuccess = (result: any) => {
       navigate(-1);
       navigate('..');
     }
-  }, [result.isSuccess]);
+  }, [result.isSuccess, navigate]);
 };
 
 export function DocDocumentEditPage() {

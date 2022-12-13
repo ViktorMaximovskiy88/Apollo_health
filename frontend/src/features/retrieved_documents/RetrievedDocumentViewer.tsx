@@ -25,7 +25,7 @@ interface PropTypes {
 }
 
 export function FileTypeViewer({ docId, doc, onPageChange = () => {} }: PropTypes) {
-  if (!doc) return null;
+  if (!doc || !docId) return null;
 
   return ['pdf', 'html'].includes(doc.file_extension) ? (
     <PDFFileLoader docId={docId} onPageChange={onPageChange} />
