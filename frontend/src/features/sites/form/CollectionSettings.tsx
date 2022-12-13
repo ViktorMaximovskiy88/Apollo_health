@@ -8,6 +8,7 @@ import {
   WaitFor,
   WaitForTimeout,
   SearchInFrames,
+  AllowDocDocUpdate,
 } from './ScrapeConfigFields';
 
 import { AttrSelectors } from './AttrSelectorField';
@@ -129,6 +130,7 @@ export function CollectionSettings({ initialValues }: CollectionSettingsPropType
               <SearchTokens />
               <Playbook />
               <SearchInFrames />
+              <AllowDocDocUpdate />
               <ProxyExclusions />
               <FocusTagConfig initialValues={initialValues} />
               <DocumentTypeThreshold />
