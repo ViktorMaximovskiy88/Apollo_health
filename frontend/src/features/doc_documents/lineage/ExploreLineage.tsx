@@ -99,13 +99,8 @@ export function ExploreLineage() {
   }, [closeModal, dispatch]);
 
   const handleModalOpen = useCallback(() => {
-    if (!prevDocDocId && updatingDocDoc?.previous_doc_doc_id) {
-      dispatch(setPreviousDocDocumentId(updatingDocDoc.previous_doc_doc_id));
-    }
+    dispatch(setPreviousDocDocumentId(updatingDocDoc?.previous_doc_doc_id));
     setOpen(true);
-    return () => {
-      dispatch(setPreviousDocDocumentId(null));
-    };
   }, [dispatch, prevDocDocId, updatingDocDoc?.previous_doc_doc_id]);
 
   const handleSubmit = useCallback(async () => {

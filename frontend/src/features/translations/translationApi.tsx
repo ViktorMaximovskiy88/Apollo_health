@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
 import { ChangeLog } from '../change-log/types';
 import { TranslationConfig } from './types';
+import { makeTableQueryParams } from '../../common/helpers';
 
 export const translationsApi = createApi({
   reducerPath: 'translationsApi',
@@ -21,15 +22,8 @@ export const translationsApi = createApi({
         filterValue: TypeFilterValue;
       }
     >({
-      query: ({ limit, skip, sortInfo, filterValue }) => {
-        const sorts = sortInfo ? [sortInfo] : [];
-        const args = [
-          `limit=${encodeURIComponent(limit)}`,
-          `skip=${encodeURIComponent(skip)}`,
-          `sorts=${encodeURIComponent(JSON.stringify(sorts))}`,
-          `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
-        ].join('&');
-        return `/translations/?${args}`;
+      query: (queryArgs) => {
+        return `/translations/?${makeTableQueryParams(queryArgs).join('&')}`;
       },
       providesTags: [{ type: 'Translation', id: 'LIST' }],
     }),

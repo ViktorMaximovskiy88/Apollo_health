@@ -21,6 +21,7 @@ import { ButtonLink } from '../../../components';
 import { Popconfirm } from 'antd';
 import { useMemo } from 'react';
 import { CopyDocumentFamily } from './CopyDocumentFamily';
+import NumberFilter from '@inovua/reactdatagrid-community/NumberFilter';
 
 export const createColumns = ({
   siteOptions,
@@ -108,6 +109,7 @@ export const createColumns = ({
     name: 'doc_doc_count',
     minWidth: 50,
     type: 'number',
+    filterEditor: NumberFilter,
     render: ({
       value: documentCount,
       data: { _id: documentFamilyId },

@@ -72,28 +72,28 @@ const PayerFamily = ({
               form.setFieldsValue({ locations });
             }}
           />
-          {updatedLocation?.payer_family_id ? (
-            <Button
-              className="mr-3"
-              onClick={() => {
-                onShowPayerFamilyEdit(updatedLocation);
-              }}
-              type="dashed"
-            >
-              <EditOutlined />
-              Edit
-            </Button>
-          ) : null}
+        </Form.Item>
+        {updatedLocation?.payer_family_id ? (
           <Button
+            className="mr-3"
             onClick={() => {
-              onShowPayerFamilyCreate(location);
+              onShowPayerFamilyEdit(updatedLocation);
             }}
             type="dashed"
           >
-            <PlusOutlined />
-            New
+            <EditOutlined />
+            Edit
           </Button>
-        </Form.Item>
+        ) : null}
+        <Button
+          onClick={() => {
+            onShowPayerFamilyCreate(location);
+          }}
+          type="dashed"
+        >
+          <PlusOutlined />
+          New
+        </Button>
       </div>
     </Form.Item>
   );

@@ -4,6 +4,7 @@ import { RootState } from '../../app/store';
 export const initialState = {
   table: {
     sort: { name: 'last_run_time', dir: -1 as 1 | -1 | 0 },
+    selection: { selected: {}, unselected: {} },
     filter: [
       { name: 'name', operator: 'contains', type: 'string', value: '' },
       { name: 'status', operator: 'eq', type: 'select', value: null },
@@ -24,6 +25,7 @@ export const initialState = {
       { name: 'tags', operator: 'contains', type: 'string', value: '' },
     ],
     pagination: { limit: 50, skip: 0 },
+    forceUpdate: 0,
   },
 };
 
@@ -43,6 +45,12 @@ export const sitesSlice = createSlice({
     setSiteTableSkip: (state, action: PayloadAction<any>) => {
       state.table.pagination.skip = action.payload;
     },
+    setSiteTableSelect: (state, action: PayloadAction<any>) => {
+      state.table.selection = action.payload;
+    },
+    setSiteTableForceUpdate: (state) => {
+      state.table.forceUpdate += 1;
+    },
   },
 });
 
@@ -51,7 +59,13 @@ export const siteTableState = createSelector(
   (tableState) => tableState
 );
 
-export const { setSiteTableFilter, setSiteTableSort, setSiteTableLimit, setSiteTableSkip } =
-  sitesSlice.actions;
+export const {
+  setSiteTableFilter,
+  setSiteTableSort,
+  setSiteTableLimit,
+  setSiteTableSkip,
+  setSiteTableSelect,
+  setSiteTableForceUpdate,
+} = sitesSlice.actions;
 
 export default sitesSlice.reducer;

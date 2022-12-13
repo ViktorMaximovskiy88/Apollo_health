@@ -12,6 +12,7 @@ import {
 import { CollectionMethod } from '../sites/types';
 import { ButtonLink } from '../../components/ButtonLink';
 import { SiteScrapeTask } from './types';
+import NumberFilter from '@inovua/reactdatagrid-community/NumberFilter';
 
 interface CreateColumnsType {
   cancelScrape: (taskId: string) => void;
@@ -103,6 +104,7 @@ export const createColumns = ({
       header: 'Document Count',
       name: 'documents_found',
       defaultFlex: 1,
+      filterEditor: NumberFilter,
       minWidth: 300,
       render: ({ data: task }: { data: SiteScrapeTask }) => {
         const linksFound = `(${task.links_found} Links)`;

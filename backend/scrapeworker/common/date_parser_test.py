@@ -352,7 +352,12 @@ def test_pick_valid_date_range():
 
 
 def test_ignore_trailing_chars():
-    text = "Not a date 01-22 ml 01-23 mg 01-24 %"
+    text = "Not a date 01-22 ml     01-23 mg      01-24 %"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 0
+
+    text = "Not a date 1.22 ML      2.27 MG     8.24%"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 0

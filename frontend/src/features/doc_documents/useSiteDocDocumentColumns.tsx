@@ -7,14 +7,22 @@ import { prettyDateUTCFromISO } from '../../common';
 import { DocDocument, SiteDocDocument } from './types';
 import { Link, useParams } from 'react-router-dom';
 import { DocumentTypes } from '../retrieved_documents/types';
-import { ManualCollectionValidationButtons } from './manual_collection/ManualCollectionValidationButtons';
 import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
+import { ManualCollectionValidationButtons } from './manual_collection/ManualCollectionValidationButtons';
 import { useDocumentFamilySelectOptions } from './document_family/documentFamilyHooks';
 import { useGetSiteQuery } from '../sites/sitesApi';
 import { CollectionMethod } from '../sites/types';
+import { usePayerFamilySelectOptions } from '../payer-family/payerFamilyHooks';
+
 interface CreateColumnsType {
   handleNewVersion?: (data: SiteDocDocument) => void;
   documentFamilyOptions: (search: string) => Promise<
+    {
+      label: string;
+      value: string;
+    }[]
+  >;
+  payerFamilyOptions: (search: string) => Promise<
     {
       label: string;
       value: string;
@@ -24,7 +32,14 @@ interface CreateColumnsType {
     value: string;
     label: string;
   }[];
+  initialPayerFamilyOptions: {
+    value: string;
+    label: string;
+  }[];
   documentFamilyNamesById: {
+    [id: string]: string;
+  };
+  payerFamilyNamesById: {
     [id: string]: string;
   };
   isManualCollection: boolean;
@@ -47,7 +62,10 @@ export const createColumns = ({
   handleNewVersion,
   documentFamilyOptions,
   initialDocumentFamilyOptions,
+  payerFamilyOptions,
+  initialPayerFamilyOptions,
   documentFamilyNamesById,
+  payerFamilyNamesById,
   isManualCollection,
 }: CreateColumnsType) => [
   {
@@ -143,6 +161,20 @@ export const createColumns = ({
     },
   },
   {
+    header: 'Payer Family',
+    name: 'payer_family_id',
+    minWidth: 200,
+    filterEditor: RemoteColumnFilter,
+    filterEditorProps: {
+      fetchOptions: payerFamilyOptions,
+      initialOptions: initialPayerFamilyOptions,
+    },
+    defaultFlex: 1,
+    render: ({ data: { payer_family_id } }: { data: SiteDocDocument }) => {
+      return payer_family_id ? payerFamilyNamesById[payer_family_id] : null;
+    },
+  },
+  {
     header: 'URL',
     name: 'url',
     width: 80,
@@ -179,13 +211,19 @@ interface UseColumnsType {
   documentFamilyNamesById: {
     [id: string]: string;
   };
+  payerFamilyNamesById: {
+    [id: string]: string;
+  };
 }
 
 export const useSiteDocDocumentColumns = ({
   handleNewVersion,
   documentFamilyNamesById,
+  payerFamilyNamesById,
 }: UseColumnsType) => {
   const { documentFamilyOptions, initialDocumentFamilyOptions } = useDocumentFamilySelectOptions();
+  const { payerFamilyOptions, initialPayerFamilyOptions } =
+    usePayerFamilySelectOptions('payer_family_id');
   const { siteId } = useParams();
   const { data: site } = useGetSiteQuery(siteId);
   return useMemo(
@@ -194,14 +232,20 @@ export const useSiteDocDocumentColumns = ({
         handleNewVersion,
         documentFamilyOptions,
         initialDocumentFamilyOptions,
+        payerFamilyOptions,
+        initialPayerFamilyOptions,
         documentFamilyNamesById,
+        payerFamilyNamesById,
         isManualCollection: site?.collection_method === CollectionMethod.Manual,
       }),
     [
       documentFamilyNamesById,
+      payerFamilyNamesById,
       documentFamilyOptions,
+      payerFamilyOptions,
       handleNewVersion,
       initialDocumentFamilyOptions,
+      initialPayerFamilyOptions,
       site?.collection_method,
     ]
   );

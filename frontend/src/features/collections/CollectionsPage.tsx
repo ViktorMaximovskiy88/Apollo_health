@@ -16,6 +16,8 @@ import { TaskStatus } from '../../common/scrapeTaskStatus';
 import { MainLayout } from '../../components';
 import { isErrorWithData } from '../../common/helpers';
 import { initialState } from './collectionsSlice';
+import { useAppDispatch } from '../../app/store';
+import { setSiteDocDocumentTableForceUpdate } from '../doc_documents/siteDocDocumentsSlice';
 
 export function ManualCollectionButton(props: any) {
   const { site, refetch, runScrape } = props;
@@ -25,6 +27,7 @@ export function ManualCollectionButton(props: any) {
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
   const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
   const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
+  const dispatch = useAppDispatch();
 
   // Refresh site docs when starting / stopping collection.
   const mostRecentTask = {
@@ -43,6 +46,7 @@ export function ManualCollectionButton(props: any) {
       const scrapeTaskId = scrapeTasks.data?.data[0]._id;
       if (scrapeTaskId) {
         await getDocDocumentsQuery({ siteId, scrapeTaskId });
+        dispatch(setSiteDocDocumentTableForceUpdate());
       } else {
         console.log('ERROR: refreshDocs unable to get id of most recent scrape task.');
       }

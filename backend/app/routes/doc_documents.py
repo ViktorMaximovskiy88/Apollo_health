@@ -81,7 +81,7 @@ async def get_all_doc_document_ids(
 )
 async def read_doc_documents(
     scrape_task_id: PydanticObjectId | None = None,
-    limit: int | None = None,
+    limit: int | None = 50,
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
