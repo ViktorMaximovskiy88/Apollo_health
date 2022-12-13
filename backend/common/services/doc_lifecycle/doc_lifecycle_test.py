@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from random import random
 
+import numpy as n
 import pytest_asyncio
 from beanie import PydanticObjectId
 
@@ -111,8 +112,15 @@ async def test_assess_classification():
     doc.doc_type_confidence = 0.2
     doc.final_effective_date = datetime.now() + timedelta(weeks=100)
     doc.previous_doc_doc_id = None
+    dt_now = datetime.now()
+    doc.identified_dates = n.full(11, dt_now).tolist()
     await service.assess_classification_status(doc)
-    assert doc.classification_hold_info == ["DOC_TYPE", "EFFECTIVE_DATE", "LINEAGE"]
+    assert doc.classification_hold_info == [
+        "DOC_TYPE",
+        "EFFECTIVE_DATE",
+        "IDENTIFIED_DATES",
+        "LINEAGE",
+    ]
 
 
 async def test_assess_document_family():

@@ -109,13 +109,12 @@ class DocLifecycleService:
         if self.effective_date_needs_review(doc, prev_doc):
             info.append("EFFECTIVE_DATE")
 
-        if prev_doc:
-            if self.tags_need_review(doc):
-                info.append("TAGS")
-
         if self.identified_dates_needs_review(doc):
             info.append("IDENTIFIED_DATES")
 
+        if prev_doc:
+            if self.tags_need_review(doc):
+                info.append("TAGS")
         else:
             info.append("LINEAGE")
 
