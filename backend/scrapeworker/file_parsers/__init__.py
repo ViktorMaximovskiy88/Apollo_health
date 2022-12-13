@@ -6,7 +6,7 @@ from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.document_tagging.indication_tagging import indication_tagger
 from backend.scrapeworker.document_tagging.taggers import Taggers
 from backend.scrapeworker.document_tagging.therapy_tagging import therapy_tagger
-from backend.scrapeworker.file_parsers import docx, html, pdf, text, xlsx
+from backend.scrapeworker.file_parsers import docx, html, pdf, text, xls, xlsx
 
 __all__ = ["docx", "xlsx", "pdf", "html", "text"]
 
@@ -19,6 +19,8 @@ def get_parser_by_ext(file_extension: str):
         ParserClass = docx.DocxParser
     elif file_extension == "xlsx":
         ParserClass = xlsx.XlsxParser
+    elif file_extension == "xls":
+        ParserClass = xls.XlsParser
     elif file_extension == "html":
         ParserClass = html.HtmlParser
     elif file_extension in ["txt", "csv"]:
