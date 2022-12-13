@@ -9,7 +9,6 @@ import { useEffect, useState } from 'react';
 import { WarningFilled } from '@ant-design/icons';
 import { DocDocument } from './types';
 import { useNotifyMutation } from '../../common/hooks';
-import { ErrorBoundary } from 'react-error-boundary';
 
 const useNavigateOnSuccess = (result: any) => {
   const navigate = useNavigate();
