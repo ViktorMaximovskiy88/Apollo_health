@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
 import { BulkActionTypes, SiteScrapeTask, CollectionConfig, WorkItem } from './types';
 import { TableInfoType } from '../../common/types';
+import { makeTableQueryParams } from '../../common/helpers';
 
 interface BulkRunResponse {
   type: BulkActionTypes;
@@ -18,16 +19,8 @@ export const siteScrapeTasksApi = createApi({
       query: () => `/app-config/?key=collections`,
     }),
     getScrapeTasksForSite: builder.query<{ data: SiteScrapeTask[]; total: number }, TableInfoType>({
-      query: ({ limit, siteId, skip, filterValue, sortInfo }) => {
-        const args = [
-          `limit=${encodeURIComponent(limit)}`,
-          `skip=${encodeURIComponent(skip)}`,
-          `sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`,
-          `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
-        ];
-        if (siteId) {
-          args.push(`site_id=${encodeURIComponent(siteId)}`);
-        }
+      query: ({ siteId, ...queryArgs }) => {
+        const args = makeTableQueryParams(queryArgs, { site_id: siteId });
         return `/site-scrape-tasks/?${args.join('&')}`;
       },
       providesTags: (results) => {

@@ -122,6 +122,7 @@ class IdNameLockOnlyDocument(IdOnlyDocument):
     name: str
     document_type: str | None = None
     final_effective_date: datetime | None = None
+    first_collected_date: datetime | None = None
     locations: list[LocationSubDocument] = []
     locks: list[TaskLock] = []
 

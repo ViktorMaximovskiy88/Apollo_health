@@ -17,6 +17,7 @@ import { SiteStatus, siteStatusDisplayName, siteStatusStyledDisplay } from './si
 import { ReactNode, useMemo } from 'react';
 import { User } from '../users/types';
 import { TypeColumn } from '@inovua/reactdatagrid-community/types';
+import NumberFilter from '@inovua/reactdatagrid-community/NumberFilter';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
@@ -143,6 +144,7 @@ const createColumns = ({ deleteSite, setDeletedSite, users }: CreateColumnsType)
     {
       header: 'Last Run Document Count',
       name: 'last_run_documents',
+      filterEditor: NumberFilter,
       minWidth: 200,
     },
     {

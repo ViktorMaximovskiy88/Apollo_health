@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from '../../../app/base-api';
 import { TableInfoType } from '../../../common/types';
 import { ChangeLog } from '../../change-log/types';
 import { DocumentFamily } from './types';
+import { makeTableQueryParams } from '../../../common/helpers';
 
 export const documentFamilyApi = createApi({
   reducerPath: 'documentFamilyApi',
@@ -12,19 +13,8 @@ export const documentFamilyApi = createApi({
       { data: DocumentFamily[]; total: number },
       Partial<TableInfoType> & { documentType?: string }
     >({
-      query: ({ limit, skip, filterValue, sortInfo, documentType }) => {
-        const args = [];
-        if (limit && skip != null && filterValue && sortInfo) {
-          args.push(
-            `limit=${encodeURIComponent(limit)}`,
-            `skip=${encodeURIComponent(skip)}`,
-            `sorts=${encodeURIComponent(JSON.stringify([sortInfo]))}`,
-            `filters=${encodeURIComponent(JSON.stringify(filterValue))}`
-          );
-        }
-        if (documentType) {
-          args.push(`document_type=${encodeURIComponent(documentType)}`);
-        }
+      query: ({ documentType, ...queryArgs }) => {
+        const args = makeTableQueryParams(queryArgs, { document_type: documentType });
         return `/document-family/?${args.join('&')}`;
       },
       providesTags: (results) => {

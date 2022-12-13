@@ -40,7 +40,11 @@ const Lineage = () => {
   return (
     <>
       <Form.Item label="Lineage" className="flex-1">
-        {previousDocDocId ? <Link to={`../${prevDoc?._id}`}>{prevDoc?.name}</Link> : null}
+        {previousDocDocId ? (
+          <Link target="_blank" to={`/documents/${prevDoc?._id}`}>
+            {prevDoc?.name}
+          </Link>
+        ) : null}
       </Form.Item>
       <Form.Item hidden name="previous_doc_doc_id">
         <Input />

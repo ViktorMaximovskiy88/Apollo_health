@@ -17,13 +17,13 @@ import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
 import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
 import { useGetSitesQuery } from '../sites/sitesApi';
-import { useGetPayerFamiliesQuery } from '../payer-family/payerFamilyApi';
 import { useColumns } from './useDocDocumentColumns';
 import { useDataTableSelection } from '../../common/hooks/use-data-table-select';
 import {
   uniqueDocumentFamilyIds,
   useGetDocumentFamilyNamesById,
 } from './document_family/documentFamilyHooks';
+import { useGetPayerFamilyNamesById } from '../payer-family/payerFamilyHooks';
 
 export function useGetSiteNamesById() {
   const [siteIds, setSiteIds] = useState<string[]>([]);
@@ -41,24 +41,6 @@ export function useGetSiteNamesById() {
     return map;
   }, [sites]);
   return { setSiteIds, siteNamesById };
-}
-
-function useGetPayerFamilyNamesById() {
-  const [payerFamilyIds, setPayerFamilyIds] = useState<string[]>([]);
-  const { data: payerFamilies } = useGetPayerFamiliesQuery({
-    limit: 1000,
-    skip: 0,
-    sortInfo: { name: 'name', dir: 1 },
-    filterValue: [{ name: '_id', operator: 'eq', type: 'string', value: payerFamilyIds }],
-  });
-  const payerFamilyNamesById = useMemo(() => {
-    const map: { [key: string]: string } = {};
-    payerFamilies?.data.forEach((payerFamily) => {
-      map[payerFamily._id] = payerFamily.name;
-    });
-    return map;
-  }, [payerFamilies]);
-  return { setPayerFamilyIds, payerFamilyNamesById };
 }
 
 const useControlledPagination = ({

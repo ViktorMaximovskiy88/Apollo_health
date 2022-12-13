@@ -1,9 +1,14 @@
-import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
+import {
+  TypeFilterValue,
+  TypeSingleFilterValue,
+  TypeSortInfo,
+} from '@inovua/reactdatagrid-community/types';
 import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
 import { Site } from './types';
 import { RetrievedDocument } from '../retrieved_documents/types';
 import { SiteDocDocument } from '../doc_documents/types';
+import { makeTableQueryParams } from '../../common/helpers';
 
 // table query doesnt have site always...
 // purpose of types when everything is | undefined is fleeting
@@ -21,16 +26,11 @@ export interface SiteQueryParams {
 
 export type SiteDocDocTableParams = TableQueryInfo & SiteQueryParams;
 
-// part of the type the construction of query builder...
-// make both re-usable (dont belong here honestly)
-function tableQueryInfoBuilder({ limit, skip, sortInfo, filterValue }: TableQueryInfo) {
-  const sorts = sortInfo ? [sortInfo] : [];
-  const args = [];
-  if (limit) args.push(`limit=${encodeURIComponent(limit)}`);
-  if (skip) args.push(`skip=${encodeURIComponent(skip)}`);
-  if (sorts) args.push(`sorts=${encodeURIComponent(JSON.stringify(sorts))}`);
-  if (filterValue) args.push(`filters=${encodeURIComponent(JSON.stringify(filterValue))}`);
-  return args;
+function textSearch(f: TypeSingleFilterValue) {
+  if (f.name === 'name' || f.name === 'link_text') {
+    return { ...f, operator: `text${f.operator}` };
+  }
+  return f;
 }
 
 export const sitesApi = createApi({
@@ -39,8 +39,8 @@ export const sitesApi = createApi({
   tagTypes: ['Site', 'ChangeLog', 'SiteDocDocument', 'RetrievedDocument'],
   endpoints: (builder) => ({
     getSites: builder.query<{ data: Site[]; total: number }, TableQueryInfo>({
-      query: ({ limit, skip, sortInfo, filterValue }) => {
-        const args = tableQueryInfoBuilder({ limit, skip, sortInfo, filterValue });
+      query: (queryArgs) => {
+        const args = makeTableQueryParams(queryArgs);
         return `/sites/?${args.join('&')}`;
       },
       providesTags: (results) => {
@@ -88,11 +88,8 @@ export const sitesApi = createApi({
         scrapeTaskId: String | null;
       } & TableQueryInfo
     >({
-      query: ({ siteId, scrapeTaskId, limit, skip, sortInfo, filterValue }) => {
-        const args = tableQueryInfoBuilder({ limit, skip, sortInfo, filterValue });
-        if (scrapeTaskId) {
-          args.push(`scrape_task_id=${scrapeTaskId}`);
-        }
+      query: ({ siteId, scrapeTaskId, ...queryArgs }) => {
+        const args = makeTableQueryParams(queryArgs, { scrape_task_id: scrapeTaskId });
         return `/sites/${siteId}/doc-documents?${args.join('&')}`;
       },
       providesTags: (results) => {
@@ -138,15 +135,8 @@ export const sitesApi = createApi({
       }
     >({
       query: ({ siteId, filterValue }) => {
-        const filters =
-          filterValue?.map((f) => {
-            if (f.name === 'name' || f.name === 'link_text') {
-              return { ...f, operator: `text${f.operator}` };
-            }
-            return f;
-          }) || [];
-        const filterStr = encodeURIComponent(JSON.stringify(filters));
-        return `/doc-documents/ids?filters=${filterStr}${siteId ? `&site_id=${siteId}` : ''}`;
+        const args = makeTableQueryParams({ filterValue }, { site_id: siteId }, textSearch);
+        return `/doc-documents/ids?${args.join('&')}`;
       },
     }),
   }),

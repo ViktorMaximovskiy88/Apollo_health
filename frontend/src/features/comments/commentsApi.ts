@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from '../../app/base-api';
+import { makeTableQueryParams } from '../../common/helpers';
 import { Comment } from './types';
 
 export const commentsApi = createApi({
@@ -8,24 +9,21 @@ export const commentsApi = createApi({
   endpoints: (builder) => ({
     getComments: builder.query<{ data: Comment[]; total: number }, string | undefined>({
       query: (targetId) => {
-        const sorts = [
-          {
-            name: 'time',
-            dir: 1,
-          },
-        ];
-        const filterValue = [
-          {
-            name: 'target_id',
-            operator: 'eq',
-            type: 'string',
-            value: targetId,
-          },
-        ];
-        const args = [
-          `sorts=${encodeURIComponent(JSON.stringify(sorts))}`,
-          `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
-        ];
+        const sortInfo = {
+          name: 'time',
+          dir: 1 as 0 | 1 | -1,
+        };
+        const filterValue = targetId
+          ? [
+              {
+                name: 'target_id',
+                operator: 'eq',
+                type: 'string',
+                value: targetId,
+              },
+            ]
+          : [];
+        const args = makeTableQueryParams({ sortInfo, filterValue });
         return `/comments/?${args.join('&')}`;
       },
       providesTags: (_r, _e, targetId) => {

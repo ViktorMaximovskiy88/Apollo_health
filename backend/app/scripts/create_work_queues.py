@@ -18,6 +18,7 @@ async def classification_queues():
                 label="Hold",
                 reassignable=True,
                 require_comment=True,
+                dest_queue="Classification Hold",
                 submit_action={"classification_status": "HOLD"},
             ),
             SubmitAction(
@@ -60,6 +61,7 @@ async def family_queues():
                 label="Hold",
                 reassignable=True,
                 require_comment=True,
+                dest_queue="Document & Payer Family Hold",
                 submit_action={"family_status": "HOLD"},
             ),
             SubmitAction(
@@ -106,6 +108,7 @@ async def translation_config_queues():
                 label="Hold",
                 reassignable=True,
                 require_comment=True,
+                dest_queue="Translation Config Hold",
                 submit_action={"content_extraction_status": "HOLD"},
             ),
             SubmitAction(

@@ -13,6 +13,7 @@ import {
 import { useSelector } from 'react-redux';
 import { Popconfirm } from 'antd';
 import { ButtonLink } from '../../components';
+import NumberFilter from '@inovua/reactdatagrid-community/NumberFilter';
 
 export const createColumns = ({
   dispatch,
@@ -37,6 +38,7 @@ export const createColumns = ({
     name: 'doc_doc_count',
     minWidth: 50,
     type: 'number',
+    filterEditor: NumberFilter,
     render: ({
       value: documentCount,
       data: { _id: payerFamilyId },

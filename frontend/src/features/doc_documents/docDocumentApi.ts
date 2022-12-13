@@ -1,4 +1,8 @@
-import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
+import {
+  TypeFilterValue,
+  TypeSingleFilterValue,
+  TypeSortInfo,
+} from '@inovua/reactdatagrid-community/types';
 import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { ChangeLog } from '../change-log/types';
 import {
@@ -9,6 +13,14 @@ import {
 } from '../work_queue/types';
 import { TableState } from '../work_queue/workQueueSlice';
 import { DocBulkUpdateResponse, CompareRequest, CompareResponse, DocDocument } from './types';
+import { makeTableQueryParams } from '../../common/helpers';
+
+function textSearch(f: TypeSingleFilterValue) {
+  if (f.name === 'name' || f.name === 'link_text') {
+    return { ...f, operator: `text${f.operator}` };
+  }
+  return f;
+}
 
 export const docDocumentsApi = createApi({
   reducerPath: 'docDocumentsApi',
@@ -25,23 +37,8 @@ export const docDocumentsApi = createApi({
         scrape_task_id?: string;
       }
     >({
-      query: ({ limit, skip, sortInfo, filterValue, scrape_task_id }) => {
-        const sorts = sortInfo ? [sortInfo] : [];
-        const textFilterValue = filterValue?.map((f) => {
-          if (f.name === 'name' || f.name === 'link_text') {
-            return { ...f, operator: `text${f.operator}` };
-          }
-          return f;
-        });
-        const args = [
-          `limit=${encodeURIComponent(limit)}`,
-          `skip=${encodeURIComponent(skip)}`,
-          `sorts=${encodeURIComponent(JSON.stringify(sorts))}`,
-          `filters=${encodeURIComponent(JSON.stringify(textFilterValue))}`,
-        ];
-        if (scrape_task_id) {
-          args.push(`scrape_task_id=${scrape_task_id}`);
-        }
+      query: ({ scrape_task_id, ...queryArgs }) => {
+        const args = makeTableQueryParams(queryArgs, { scrape_task_id }, textSearch);
         return `/doc-documents/?${args.join('&')}`;
       },
       providesTags: (results) => {
@@ -82,22 +79,9 @@ export const docDocumentsApi = createApi({
         filterValue: TypeFilterValue;
       }
     >({
-      query: ({ id, limit, skip, sortInfo, filterValue }) => {
-        const sorts = sortInfo ? [sortInfo] : [];
-        const filters =
-          filterValue?.map((f) => {
-            if (f.name === 'name' || f.name === 'link_text') {
-              return { ...f, operator: `text${f.operator}` };
-            }
-            return f;
-          }) || [];
-        const args = [
-          `limit=${encodeURIComponent(limit)}`,
-          `skip=${encodeURIComponent(skip)}`,
-          `sorts=${encodeURIComponent(JSON.stringify(sorts))}`,
-          `filters=${encodeURIComponent(JSON.stringify(filters))}`,
-        ].join('&');
-        return `/work-queues/${id}/items?${args}`;
+      query: ({ id, ...queryArgs }) => {
+        const args = makeTableQueryParams(queryArgs, {}, textSearch);
+        return `/work-queues/${id}/items?${args.join('&')}`;
       },
       providesTags: (_r, _e, { id }) => [{ type: 'DocDocument' as const, id }],
     }),

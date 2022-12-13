@@ -16,6 +16,7 @@ export const initialState = {
       { name: 'final_effective_date', operator: 'before', type: 'date', value: '' },
       { name: 'url', operator: 'contains', type: 'string', value: '' },
       { name: 'document_family_id', operator: 'eq', type: 'select', value: null },
+      { name: 'payer_family_id', operator: 'eq', type: 'select', value: null },
     ],
     pagination: { limit: 50, skip: 0 },
     forceUpdate: 0,

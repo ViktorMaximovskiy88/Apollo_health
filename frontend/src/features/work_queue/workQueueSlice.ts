@@ -11,7 +11,7 @@ export interface TableState {
   };
 }
 
-export const initialState = {
+export const initialState: { table: TableState } = {
   table: {
     sort: undefined,
     filter: [
@@ -24,6 +24,8 @@ export const initialState = {
         value: null,
       },
       { name: 'document_type', operator: 'eq', type: 'select', value: null },
+      { name: 'final_effective_date', operator: 'after', type: 'date', value: '' },
+      { name: 'first_collected_date', operator: 'after', type: 'date', value: '' },
     ],
     pagination: { limit: 50, skip: 0 },
   },

@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
 import { ChangeLog } from '../change-log/types';
 import { ContentExtractionResult, ExtractionTask } from './types';
+import { makeTableQueryParams } from '../../common/helpers';
 
 export const extractionTasksApi = createApi({
   reducerPath: 'extractionTasksApi',
@@ -25,23 +26,13 @@ export const extractionTasksApi = createApi({
         fullSubset: string[];
       }
     >({
-      query: ({ limit, skip, sortInfo, filterValue, delta, deltaSubset, fullSubset, id }) => {
-        const args = [
-          `extraction_id=${encodeURIComponent(id)}`,
-          `limit=${encodeURIComponent(limit)}`,
-          `skip=${encodeURIComponent(skip)}`,
-          `sorts=${encodeURIComponent(JSON.stringify(sortInfo))}`,
-          `filters=${encodeURIComponent(JSON.stringify(filterValue))}`,
-        ];
-        if (delta) {
-          args.push(`delta=${encodeURIComponent(delta)}`);
-        }
-        if (deltaSubset) {
-          args.push(`delta_subset=${encodeURIComponent(JSON.stringify(deltaSubset))}`);
-        }
-        if (fullSubset) {
-          args.push(`full_subset=${encodeURIComponent(JSON.stringify(fullSubset))}`);
-        }
+      query: ({ delta, deltaSubset, fullSubset, id, ...queryArgs }) => {
+        const args = makeTableQueryParams(queryArgs, {
+          delta,
+          extraction_id: id,
+          delta_subset: deltaSubset,
+          full_subset: fullSubset,
+        });
         return `/extraction-tasks/results/?${args.join('&')}`;
       },
       providesTags: (_r, _e, { id }) => [{ type: 'ExtractionTaskResult' as const, id }],

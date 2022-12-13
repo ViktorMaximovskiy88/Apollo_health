@@ -19,11 +19,17 @@ class TableSortInfo(BaseModel):
     dir: int
 
 
+# can be dates or numbers but we parse elsewhere
+class RangeValue(BaseModel):
+    start: str
+    end: str
+
+
 class TableFilterInfo(BaseModel):
     name: str
     operator: str
     type: str
-    value: str | list[str] | None
+    value: str | list[str] | RangeValue | None
 
 
 class TableQueryResponse(BaseModel, Generic[T]):
@@ -45,13 +51,16 @@ def get_query_json_list(arg: str, type):
     return func
 
 
-def transform_value(filter_value: str, filter_type: str):
+def transform_value(
+    filter_value: str,
+    filter_type: str,
+):
     if filter_type == "number":
         value = float(filter_value)
     elif filter_type == "date":
         value = parser.parse(filter_value)
     elif filter_type == "boolean":
-        value = filter_value.lower() in ("true")
+        value = filter_value.lower() == "true"
     else:
         value = filter_value
 
@@ -66,7 +75,7 @@ def transform_value(filter_value: str, filter_type: str):
 def _prepare_table_query(
     sorts: list[TableSortInfo] = [],
     filters: list[TableFilterInfo] = [],
-) -> tuple[list[dict], list[tuple[str, int]]]:  # type: ignore
+) -> tuple[list[dict], list[tuple[str, int]]]:
     match = []
     for filter in filters:
         if not filter.value and filter.operator not in ["empty", "notEmpty"]:
@@ -77,6 +86,11 @@ def _prepare_table_query(
 
         if isinstance(filter.value, list):
             value = [transform_value(value, filter.type) for value in filter.value]
+        elif isinstance(filter.value, RangeValue):
+            value = [
+                transform_value(filter.value.start, filter.type),
+                transform_value(filter.value.end, filter.type),
+            ]
         else:
             value = transform_value(filter.value, filter.type)
 
@@ -116,6 +130,17 @@ def _prepare_table_query(
             match.append({filter.name: {"$lt": value}})
         if filter.operator == "beforeOrOn":
             match.append({filter.name: {"$lte": value}})
+        if filter.operator == "inrange" and isinstance(value, list):
+            match.append({filter.name: {"$gte": value[0], "$lte": value[1]}})
+        if filter.operator == "notinrange" and isinstance(value, list):
+            match.append(
+                {
+                    "$or": [
+                        {filter.name: {"$gt": value[1]}},
+                        {filter.name: {"$lt": value[0]}},
+                    ]
+                }
+            )
 
     sort_by = [(s.name, s.dir) for s in sorts if s.dir]
 
@@ -131,7 +156,7 @@ def construct_table_query(
     for filter in match_filter:
         query = query.find(filter)
     for sort in sort_by:
-        query = query.sort(sort)
+        query = query.sort(sort)  # type: ignore
     return query
 
 

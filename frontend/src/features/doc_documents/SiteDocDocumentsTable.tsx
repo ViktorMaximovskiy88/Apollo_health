@@ -20,6 +20,7 @@ import {
   uniqueDocumentFamilyIds,
   useGetDocumentFamilyNamesById,
 } from './document_family/documentFamilyHooks';
+import { uniquePayerFamilyIds, useGetPayerFamilyNamesById } from '../payer-family/payerFamilyHooks';
 
 interface DataTablePropTypes {
   handleNewVersion: (data: SiteDocDocument) => void;
@@ -32,6 +33,7 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
   const { watermark } = useInterval(10000);
   const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
   const { setDocumentFamilyIds, documentFamilyNamesById } = useGetDocumentFamilyNamesById();
+  const { setPayerFamilyIds, payerFamilyNamesById } = useGetPayerFamilyNamesById();
 
   const { forceUpdate } = useSelector(siteDocDocumentTableState);
   const loadData = useCallback(
@@ -41,13 +43,18 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
       const count = data?.total ?? 0;
       if (docDocuments) {
         setDocumentFamilyIds(uniqueDocumentFamilyIds(docDocuments));
+        setPayerFamilyIds(uniquePayerFamilyIds(docDocuments));
       }
       return { data: docDocuments, count };
     },
     [getDocDocumentsQuery, siteId, scrapeTaskId, setDocumentFamilyIds, watermark, forceUpdate] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  const columns = useSiteDocDocumentColumns({ handleNewVersion, documentFamilyNamesById });
+  const columns = useSiteDocDocumentColumns({
+    handleNewVersion,
+    documentFamilyNamesById,
+    payerFamilyNamesById,
+  });
   const filterProps = useDataTableFilter(siteDocDocumentTableState, setSiteDocDocumentTableFilter);
   const sortProps = useDataTableSort(siteDocDocumentTableState, setSiteDocDocumentTableSort);
   const selectionProps = useDataTableSelection(

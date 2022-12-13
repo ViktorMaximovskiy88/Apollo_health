@@ -72,6 +72,9 @@ class DateParser:
         self.heading_dates: list[DateMatch] = []
 
     NON_LABEL_RGX = [0, 2, 3, 14, 15]
+    CONTEXT_CHARS = re.compile(
+        r"\s*([\$\%]|mg|ml|oz)", re.IGNORECASE
+    )  # measurement prefix/suffixes
 
     def dump_dates(self):
         return {
@@ -304,7 +307,7 @@ class DateParser:
         # if all else fails not a date and we skip
         raise Exception("Invalid date range")
 
-    def check_context_chars(self, text: str, rgx: str, match: re.Match):
+    def check_context_chars(self, text: str, rgx: re.Pattern, match: re.Match):
         search_start = 0 if match.start() < 6 else match.start() - 6
         leading_text = text[search_start : match.start()]  # noqa: E203
         leading_search = re.search(rgx, leading_text)
@@ -339,7 +342,7 @@ class DateParser:
                         month, year = re.split(r"[/\-|\.]", datetext)
                         datetext = f"{year}-{month}-01"
                     if i + 2 == len(self.date_rgxs):
-                        if self.check_context_chars(text, r"\s*([\$\%]|mg|ml|oz)", m):
+                        if self.check_context_chars(text, self.CONTEXT_CHARS, m):
                             continue
                         month, year = re.split(r"[/\-|\.]", datetext)
                         datetext = f"20{year}-{month}-01"
