@@ -1,9 +1,9 @@
-import values from 'lodash/values';
 import { Button, Upload, Dropdown, Space, Menu, notification, Spin } from 'antd';
 import { LoadingOutlined, UploadOutlined, DownOutlined, DownloadOutlined } from '@ant-design/icons';
 import { UploadChangeParam } from 'antd/lib/upload';
 import { UploadFile } from 'antd/lib/upload/interface';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import { useRunBulkMutation } from '../collections/siteScrapeTasksApi';
@@ -14,8 +14,10 @@ import { MainLayout } from '../../components';
 import { isErrorWithData } from '../../common/helpers';
 import { BulkActionTypes } from '../collections/types';
 
-import { useUpdateMultipleSitesMutation } from './sitesApi';
+import { useLazyGetSitesQuery, useUpdateMultipleSitesMutation } from './sitesApi';
+import { setSiteTableForceUpdate, siteTableState } from './sitesSlice';
 import { Site } from './types';
+import { useAppDispatch } from '../../app/store';
 
 function CreateSite() {
   return (
@@ -25,18 +27,31 @@ function CreateSite() {
   );
 }
 
-interface AssignTypes {
-  selected: Object;
-  setSelected: any;
-}
-
-function Assign({ selected, setSelected }: AssignTypes) {
+function Assign() {
   const [updateMultipleSites] = useUpdateMultipleSitesMutation();
+  const { selection, filter } = useSelector(siteTableState);
+  const [getSites] = useLazyGetSitesQuery();
+  const dispatch = useAppDispatch();
 
-  const assignSites = async () => {
-    const sites = values(selected);
-    await updateMultipleSites(sites);
-  };
+  const assignSites = useCallback(async () => {
+    if (!selection) return;
+
+    let allSites: Site[] = [];
+    if (selection.selected === true) {
+      const { data } = await getSites({ filterValue: filter }).unwrap();
+      allSites = data;
+    }
+    if (selection.selected && typeof selection.selected === 'object') {
+      allSites = Object.values(selection.selected);
+    }
+    if (selection.unselected && typeof selection.unselected === 'object') {
+      const unselected = selection.unselected;
+      allSites = allSites.filter((site) => !(unselected as { [key: string]: Site })[site._id]);
+    }
+    await updateMultipleSites(allSites);
+    dispatch(setSiteTableForceUpdate());
+  }, [filter, getSites, selection, updateMultipleSites, dispatch, setSiteTableForceUpdate]);
+
   return <Button onClick={assignSites}>Assign to me</Button>;
 }
 
@@ -200,13 +215,12 @@ function BulkDownload() {
 
 export function SitesHomePage() {
   const [isLoading, setLoading] = useState(false);
-  const [selected, setSelected] = useState<{ [id: string]: Site }>({});
   return (
     <MainLayout
       sectionToolbar={
         <>
           <QuickFilter isLoading={isLoading} />
-          <Assign selected={selected} setSelected={setSelected} />
+          <Assign />
           <CreateSite />
           <BulkActions />
           <BulkUpload />
@@ -214,7 +228,7 @@ export function SitesHomePage() {
         </>
       }
     >
-      <SiteDataTable setLoading={setLoading} selected={selected} setSelected={setSelected} />
+      <SiteDataTable setLoading={setLoading} />
     </MainLayout>
   );
 }

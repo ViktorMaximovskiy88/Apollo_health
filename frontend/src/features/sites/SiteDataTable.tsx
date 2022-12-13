@@ -7,6 +7,7 @@ import {
   setSiteTableLimit,
   setSiteTableSkip,
   siteTableState,
+  setSiteTableSelect,
 } from './sitesSlice';
 import { GridPaginationToolbar } from '../../components';
 import { useDeleteSiteMutation, useLazyGetSitesQuery } from './sitesApi';
@@ -19,8 +20,7 @@ import {
 import { useColumns } from './useSiteColumns';
 import { useGetUsersQuery } from '../users/usersApi';
 import { TableInfoType } from '../../common/types';
-import { TypeOnSelectionChangeArg } from '@inovua/reactdatagrid-community/types/TypeDataGridProps';
-import { Site } from './types';
+import { useDataTableSelection } from '../../common/hooks/use-data-table-select';
 function disableLoadingMask(data: {
   visible: boolean;
   livePagination: boolean;
@@ -102,16 +102,15 @@ export const useSiteSort = () => {
 
 interface SiteDataTablePropTypes {
   setLoading: (loading: boolean) => void;
-  selected: { [id: string]: Site };
-  setSelected: (selected: { [id: string]: Site }) => void;
 }
-export function SiteDataTable({ setLoading, selected, setSelected }: SiteDataTablePropTypes) {
+export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
   // Trigger update every 10 seconds by invalidating memoized callback
   const { isActive, setActive, watermark } = useInterval(10000);
 
   const [getSitesFn] = useLazyGetSitesQuery();
 
   const [deletedSite, setDeletedSite] = useState('');
+  const { forceUpdate } = useSelector(siteTableState);
 
   const loadData = useCallback(
     async (tableInfo: TableInfoType) => {
@@ -123,7 +122,7 @@ export function SiteDataTable({ setLoading, selected, setSelected }: SiteDataTab
       return { data: sites, count };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [getSitesFn, watermark, setLoading, deletedSite] // watermark is not inside useCallback
+    [getSitesFn, watermark, setLoading, deletedSite, forceUpdate] // watermark is not inside useCallback
   );
 
   const { data: users } = useGetUsersQuery();
@@ -133,28 +132,17 @@ export function SiteDataTable({ setLoading, selected, setSelected }: SiteDataTab
   const filterProps = useSiteFilter();
   const sortProps = useSiteSort();
   const controlledPagination = useControlledPagination({ isActive, setActive });
-
-  const onSelectionChange = useCallback(
-    (config: TypeOnSelectionChangeArg): void => {
-      if (!config.selected) {
-        setSelected({});
-      } else {
-        setSelected(config.selected as { [id: string]: Site });
-      }
-    },
-    [setSelected]
-  );
+  const selectionProps = useDataTableSelection(siteTableState, setSiteTableSelect);
 
   return (
     <ReactDataGrid
       idProperty="_id"
       checkboxColumn
-      selected={selected}
-      onSelectionChange={onSelectionChange}
       dataSource={loadData}
       {...filterProps}
       {...sortProps}
       {...controlledPagination}
+      {...selectionProps}
       columns={columns}
       rowHeight={50}
       renderLoadMask={disableLoadingMask}
