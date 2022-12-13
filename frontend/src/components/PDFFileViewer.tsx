@@ -11,7 +11,7 @@ export function PDFFileLoader({ docId, onPageChange }: { docId?: string; onPageC
 
   const ViewerErrorFallback = () => {
     return (
-      <div className="flex flex-col justify-start items-start">
+      <div className="grid place-content-center h-screen">
         <span className="mr-2 mb-2">Error Loading File, please download to view</span>
 
         <Button type="primary" danger>
