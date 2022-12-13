@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timezone
 
 from backend.common.db.init import init_db
 from backend.common.models.work_queue import SubmitAction, WorkQueue
@@ -6,11 +7,40 @@ from backend.common.models.work_queue import SubmitAction, WorkQueue
 
 async def classification_queues():
     await WorkQueue(
+        name="Classification 2023",
+        collection_name="DocDocument",
+        update_model_name="ClassificationUpdateDocDocument",
+        frontend_component="DocDocumentClassificationPage",
+        document_query={
+            "classification_status": "QUEUED",
+            "final_effective_date": {"$gte": datetime(2023, 1, 1, tzinfo=timezone.utc)},
+        },
+        sort_query=["final_effective_date"],
+        user_query={"roles": {"$in": ["admin", "classification"]}},
+        submit_actions=[
+            SubmitAction(
+                label="Hold",
+                reassignable=True,
+                require_comment=True,
+                dest_queue="Classification Hold",
+                submit_action={"classification_status": "HOLD"},
+            ),
+            SubmitAction(
+                label="Submit",
+                submit_action={"classification_status": "APPROVED", "classification_hold_info": []},
+                primary=True,
+            ),
+        ],
+    ).save()
+    await WorkQueue(
         name="Classification",
         collection_name="DocDocument",
         update_model_name="ClassificationUpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
-        document_query={"classification_status": "QUEUED"},
+        document_query={
+            "final_effective_date": {"$lt": datetime(2023, 1, 1, tzinfo=timezone.utc)},
+            "classification_status": "QUEUED",
+        },
         sort_query=["final_effective_date"],
         user_query={"roles": {"$in": ["admin", "classification"]}},
         submit_actions=[
