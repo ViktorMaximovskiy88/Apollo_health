@@ -311,7 +311,7 @@ function UploadItem(props: any) {
         </Tooltip>
         <Upload
           name="file"
-          accept=".pdf,.xlsx,.docx"
+          accept=".pdf,.xlsx,.docx,.xls,.doc"
           action={`${baseApiUrl}/documents/upload/${siteId}`}
           headers={{
             Authorization: `Bearer ${token}`,
