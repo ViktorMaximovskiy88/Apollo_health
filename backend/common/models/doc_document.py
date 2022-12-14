@@ -104,6 +104,17 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
     def s3_text_key(self):
         return f"{self.text_checksum}.txt"
 
+    def set_unedited_attr(self, attr, value):
+        if attr not in self.user_edited_fields:
+            setattr(self, attr, value)
+
+    # has _any_ edits from attrs
+    def has_user_edit(self, *attrs):
+        for attr in attrs:
+            if attr in self.user_edited_fields:
+                return True
+        return False
+
     class Settings:
         indexes = [
             [

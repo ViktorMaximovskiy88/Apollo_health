@@ -285,10 +285,6 @@ class ScrapeWorker:
                 if len(parsed_content["text"]) == 0 and download.file_extension == "pdf":
                     document.text_checksum = checksum
 
-                # currently gets new tags from RT doc vs new content parsed
-                # i _think_ we want to update doc doc tags _if_ they havent been edited by user
-                # does that mean keep all edits and wipe/update the rest?
-                # should we no longer care about RT doc or still update that too (wholesale)
                 new_therapy_tags, new_indicate_tags = self.get_updated_tags(
                     doc_doc,
                     parsed_content["therapy_tags"],

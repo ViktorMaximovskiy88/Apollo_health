@@ -6,6 +6,7 @@ from async_lru import alru_cache
 from beanie.odm.operators.update.general import Set
 
 from backend.app.utils.logger import Logger, create_and_log
+from backend.common.core.enums import ApprovalStatus
 from backend.common.models.doc_document import DocDocument, IndicationTag, TherapyTag
 from backend.common.models.document import (
     RetrievedDocument,
@@ -129,8 +130,6 @@ class DocumentUpdater:
             DocDocument.retrieved_document_id == retrieved_document.id
         )
 
-        # always add new tags and reset approval status to queued
-
         if doc_document:
             self.log.debug(f"doc doc update -> {doc_document.id}")
             rt_doc_location = retrieved_document.get_site_location(self.site.id)
@@ -143,31 +142,47 @@ class DocumentUpdater:
             else:
                 doc_document.locations.append(DocDocumentLocation(**rt_doc_location.dict()))
 
-            if self.site.scrape_method_configuration.allow_docdoc_updates is True:
-                doc_document.document_type = retrieved_document.document_type
+            doc_document.identified_dates = retrieved_document.identified_dates
+            doc_document.first_collected_date = retrieved_document.first_collected_date
+            doc_document.last_collected_date = retrieved_document.last_collected_date
 
-                doc_document.effective_date = retrieved_document.effective_date
-                doc_document.end_date = retrieved_document.end_date
-                doc_document.last_reviewed_date = retrieved_document.last_reviewed_date
-                doc_document.last_updated_date = retrieved_document.last_updated_date
-                doc_document.next_review_date = retrieved_document.next_review_date
-                doc_document.next_update_date = retrieved_document.next_update_date
-                doc_document.published_date = retrieved_document.published_date
-                doc_document.identified_dates = retrieved_document.identified_dates
-                doc_document.first_collected_date = retrieved_document.first_collected_date
-                doc_document.last_collected_date = retrieved_document.last_collected_date
+            check_frozen_attrs = [
+                "document_type",
+                "lang_code",
+                "effective_date",
+                "end_date",
+                "last_updated_date",
+                "last_reviewed_date",
+                "next_review_date",
+                "next_update_date",
+                "published_date",
+                # TODO make sure keys match (aka not _focus) after merge
+                "therapy_tags",
+                "indication_tags",
+            ]
 
-                doc_document.therapy_tags = retrieved_document.therapy_tags
-                doc_document.indication_tags = retrieved_document.indication_tags
-                doc_document.lang_code = retrieved_document.lang_code
-            else:
-                doc_document.therapy_tags = doc_document.therapy_tags + new_therapy_tags
-                doc_document.indication_tags = doc_document.indication_tags + new_indicate_tags
+            for attr in check_frozen_attrs:
+                doc_document.set_unedited_attr(attr, getattr(retrieved_document, attr))
+
+            # if not edited for therapy_tags or indication_tags just wholesale assign
+            # if edited for therapy_tags or indication_tags just append diff
+            has_tag_updates = len(new_therapy_tags + new_indicate_tags) > 0
+            user_edited_tags = doc_document.has_user_edit("therapy_tags", "indication_tags")
+
+            if doc_document.has_user_edit("therapy_tags"):
+                doc_document.therapy_tags += new_therapy_tags
+
+            if doc_document.has_user_edit("indication_tags"):
+                doc_document.indication_tags += new_indicate_tags
+
+            if has_tag_updates and user_edited_tags:
+                doc_document.classification_status = ApprovalStatus.QUEUED
+
+            if not doc_document.has_user_edit("document_type"):
+                doc_document.doc_type_match = retrieved_document.doc_type_match
 
             # Can be removed after text added to older docs
-            doc_document.doc_type_match = retrieved_document.doc_type_match
             doc_document.text_checksum = retrieved_document.text_checksum
-            doc_document.last_collected_date = retrieved_document.last_collected_date
             doc_document.set_final_effective_date()
             await doc_document.save()
         else:
