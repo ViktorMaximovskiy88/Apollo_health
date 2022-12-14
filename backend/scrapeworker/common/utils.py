@@ -93,6 +93,7 @@ mimetype_to_extension_map = {
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
     "application/vnd.ms-excel": "xls",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    "application/msword": "doc",
     "application/pdf": "pdf",
     "text/html": "html",
     "text/csv": "csv",
