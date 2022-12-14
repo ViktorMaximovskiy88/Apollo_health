@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useGetDocumentViewerUrlQuery } from '../features/retrieved_documents/documentsApi';
+import {
+  useGetDocumentViewerUrlQuery,
+  useGetTextViewerUrlQuery,
+} from '../features/retrieved_documents/documentsApi';
 
 interface TextFileLoaderPropTypes {
   docId: string | undefined;
@@ -7,6 +10,11 @@ interface TextFileLoaderPropTypes {
 
 interface TextFileViewerPropTypes {
   url: string | undefined;
+}
+
+export function ExtractedTextLoader({ docId }: { docId: string }) {
+  const { data: viewer } = useGetTextViewerUrlQuery(docId);
+  return <TextFileViewer url={viewer?.url} />;
 }
 
 export function TextFileLoader({ docId }: TextFileLoaderPropTypes) {
@@ -30,8 +38,8 @@ export function TextFileViewer({ url }: TextFileViewerPropTypes) {
   }
 
   return (
-    <div data-type="text" className="bg-white p-8 border border-gray-200">
-      <pre>{content}</pre>
+    <div className="bg-white p-8 border border-gray-200 h-full">
+      <pre style={{ whiteSpace: 'pre-line', paddingBottom: 64 }}>{content}</pre>
     </div>
   );
 }

@@ -1,10 +1,11 @@
-import { Button, Form, Tooltip } from 'antd';
-import { useState } from 'react';
+import { Button, Tooltip } from 'antd';
+import { useEffect, useState } from 'react';
 
 import { CompareDocViewer } from './CompareDocumentViewer';
 import { FullScreenModal } from '../../../components/FullScreenModal';
-import { useCreateDiffMutation, useGetDocDocumentQuery } from './../docDocumentApi';
-import { useTaskWorker } from '../../../app/taskSlice';
+import { useLazyGetDiffExistsQuery } from './../docDocumentApi';
+import { useTaskWorker } from '../../tasks/taskSlice';
+import { CompareResponse } from '../types';
 
 function CompareModalBody(props: { newFileKey?: string; prevFileKey?: string }) {
   return (
@@ -25,7 +26,7 @@ function CompareModalBody(props: { newFileKey?: string; prevFileKey?: string }) 
   );
 }
 
-function CompareModal(props: {
+export function CompareModal(props: {
   newFileKey?: string;
   prevFileKey?: string;
   modalOpen: boolean;
@@ -38,54 +39,62 @@ function CompareModal(props: {
       open={props.modalOpen}
       onCancel={props.handleCloseModal}
     >
-      <CompareModalBody newFileKey={props.newFileKey} prevFileKey={props.prevFileKey} />
+      {props.newFileKey && props.prevFileKey ? (
+        <CompareModalBody newFileKey={props.newFileKey} prevFileKey={props.prevFileKey} />
+      ) : (
+        <div>Loading...</div>
+      )}
     </FullScreenModal>
   );
 }
 
-export function DocCompareToPrevious() {
-  const form = Form.useFormInstance();
-  const currentDocDocId: string = form.getFieldValue('docId');
-  const { data: currentDocument } = useGetDocDocumentQuery(currentDocDocId);
+export function DocCompareToPrevious({
+  currentChecksum,
+  previousChecksum,
+}: {
+  currentChecksum: string | undefined;
+  previousChecksum: string | undefined;
+}) {
   const [modalOpen, setModalOpen] = useState(false);
-  const [newKey, setNewKey] = useState<string>();
-  const [prevKey, setPrevKey] = useState<string>();
-  const [createDiff, { isLoading }] = useCreateDiffMutation();
+  const [compareResult, setCompareResult] = useState<CompareResponse | undefined>();
+  const [getDiffExists] = useLazyGetDiffExistsQuery();
 
-  const { previous_doc_doc_id: previousDocDocId } = currentDocument ?? {};
-  const enqueueTask = useTaskWorker(
-    () =>
-      createDiff({
-        currentDocDocId,
-        previousDocDocId,
-      }),
-    (result: any) => {
-      let new_key;
-      let prev_key;
-
-      if (result.payload) {
-        const { payload } = result;
-        new_key = `${payload.current_checksum}-${payload.previous_checksum}-new.pdf`;
-        prev_key = `${payload.current_checksum}-${payload.previous_checksum}-prev.pdf`;
-      } else {
-        new_key = result.new_key;
-        prev_key = result.prev_key;
-      }
-
-      setNewKey(new_key);
-      setPrevKey(prev_key);
-      setModalOpen(true);
+  const enqueueTask = useTaskWorker(() => {
+    setModalOpen(true);
+    if (compareResult) {
+      setCompareResult({ ...compareResult, exists: true, pending: false });
     }
-  );
+  });
+
+  useEffect(() => {
+    async function diffExists() {
+      if (currentChecksum && previousChecksum) {
+        const result = await getDiffExists({
+          current_checksum: currentChecksum,
+          previous_checksum: previousChecksum,
+        }).unwrap();
+        setCompareResult(result);
+      }
+    }
+    diffExists();
+  }, [getDiffExists, currentChecksum, previousChecksum]);
 
   return (
     <div className="flex space-x-8 items-center">
-      {previousDocDocId ? (
+      {currentChecksum && previousChecksum ? (
         <Button
+          loading={compareResult?.pending}
           className="mt-1"
-          loading={isLoading}
           onClick={() => {
-            enqueueTask();
+            if (compareResult && !compareResult.exists) {
+              enqueueTask('PDFDiffTask', {
+                current_checksum: currentChecksum,
+                previous_checksum: previousChecksum,
+              });
+              setCompareResult({ ...compareResult, pending: true });
+            } else {
+              setModalOpen(true);
+            }
           }}
           type="primary"
         >
@@ -99,8 +108,8 @@ export function DocCompareToPrevious() {
         </Tooltip>
       )}
       <CompareModal
-        newFileKey={newKey}
-        prevFileKey={prevKey}
+        newFileKey={compareResult?.new_key}
+        prevFileKey={compareResult?.prev_key}
         modalOpen={modalOpen}
         handleCloseModal={() => setModalOpen(false)}
       />

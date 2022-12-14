@@ -14,9 +14,9 @@ import { translationsApi } from '../features/translations/translationApi';
 import { payerBackboneApi } from '../features/payer-backbone/payerBackboneApi';
 import { documentFamilyApi } from '../features/doc_documents/document_family/documentFamilyApi';
 import { payerFamilyApi } from '../features/payer-family/payerFamilyApi';
-import { lineageApi } from '../features/lineage/lineageApi';
+import { lineageApi } from '../features/devtools/lineageApi';
 import { statsApi } from '../features/stats/statsApi';
-import { taskApi } from './taskApi';
+import { taskApi } from '../features/tasks/taskApi';
 import { commentsApi } from '../features/comments/commentsApi';
 import { rtkAuth } from '../common/auth-middleware';
 
@@ -34,9 +34,9 @@ import extractionsReducer from '../features/extractions/extractionsSlice';
 import translationsReducer from '../features/translations/translationSlice';
 import payerBackboneReducer from '../features/payer-backbone/payerBackboneSlice';
 import workQueueReducer from '../features/work_queue/workQueueSlice';
-import lineageReducer from '../features/lineage/lineage-slice';
+import lineageReducer from '../features/devtools/lineage-slice';
 import statsReducer from '../features/stats/stats-slice';
-import taskSlice from './taskSlice';
+import taskSlice from '../features/tasks/taskSlice';
 
 const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
   history: createBrowserHistory(),

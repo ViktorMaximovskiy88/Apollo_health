@@ -7,6 +7,7 @@ db.DocumentAnalysis.drop();
 db.LinkTaskLog.drop();
 db.RetrievedDocument.drop();
 db.SiteScrapeTask.drop();
+db.TaskLog.drop();
 
 // reset scrape data at site level too
 db.Site.updateMany(

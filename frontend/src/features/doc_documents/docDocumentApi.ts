@@ -25,7 +25,7 @@ function textSearch(f: TypeSingleFilterValue) {
 export const docDocumentsApi = createApi({
   reducerPath: 'docDocumentsApi',
   baseQuery: fetchBaseQuery(),
-  tagTypes: ['DocDocument', 'ChangeLog'],
+  tagTypes: ['DocDocument', 'ChangeLog', 'CompareResponse'],
   endpoints: (builder) => ({
     getDocDocuments: builder.query<
       { data: DocDocument[]; total: number },
@@ -59,11 +59,15 @@ export const docDocumentsApi = createApi({
       }),
       invalidatesTags: (_r, _e, { _id: id }) => ['DocDocument', { type: 'ChangeLog', id }],
     }),
-    createDiff: builder.mutation<CompareResponse, CompareRequest>({
-      query: (req) => ({
-        url: `/doc-documents/diff/${req.currentDocDocId}?previous_doc_doc_id=${req.previousDocDocId}`,
-        method: 'POST',
+    getDiffExists: builder.query<CompareResponse, CompareRequest>({
+      query: (params) => ({
+        url: `/doc-documents/diff`,
+        method: 'GET',
+        params,
       }),
+      providesTags: (_r, _e, params) => [
+        { type: 'CompareResponse', id: `${params.current_checksum}-${params.previous_checksum}` },
+      ],
     }),
     getChangeLog: builder.query<ChangeLog[], string>({
       query: (id) => `/change-log/${id}`,
@@ -142,7 +146,7 @@ export const {
   useLazyGetDocDocumentsQuery,
   useUpdateDocDocumentMutation,
   useUpdateMultipleDocsMutation,
-  useCreateDiffMutation,
+  useLazyGetDiffExistsQuery,
   useGetChangeLogQuery,
   useGetWorkQueueItemsQuery,
   useLazyGetWorkQueueItemsQuery,

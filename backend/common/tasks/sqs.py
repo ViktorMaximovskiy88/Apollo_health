@@ -54,9 +54,14 @@ class SQSBase(ABC):
         return [(message, json.loads(message.body)) for message in messages]
 
     # JSON encode multiple messages and send them
-    def send_batch(self, messages: list[dict[str, any]]):
+    def send_batch(self, messages: list[dict[str, any]], group_id: str | None = None):
         entries = [
-            {"Id": str(index), "MessageBody": json.dumps(message, default=str)}
+            {
+                "Id": str(index),
+                "MessageBody": json.dumps(message, default=str),
+                "MessageDeduplicationId": str(message.get("id", None)),
+                "MessageGroupId": group_id,
+            }
             for index, message in enumerate(messages)
         ]
         response = self.queue.send_messages(Entries=entries)

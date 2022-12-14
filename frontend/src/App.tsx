@@ -29,7 +29,7 @@ import { TranslationsEditPage } from './features/translations/TranslationsEditPa
 import { PayerBackbomeHomePage } from './features/payer-backbone/PayerBackboneHomePage';
 import { PayerBackboneNewPage } from './features/payer-backbone/PayerBackboneNewPage';
 import { PayerBackboneEditPage } from './features/payer-backbone/PayerBackboneEditPage';
-import { LineagePage } from './features/lineage/LineagePage';
+import { LineagePage } from './features/devtools/LineagePage';
 import { StatsRoutes } from './features/stats';
 import { DocumentFamilyHomePage } from './features/doc_documents/document_family/DocumentFamilyHomePage';
 import { DocumentFamilyEditPage } from './features/doc_documents/document_family/documentFamilyEditPage';
@@ -127,7 +127,7 @@ function App() {
                 <Route path="edit" element={<DocumentEditPage />} />
               </Route>
             </Route>
-            <Route path="lineage" element={<LineagePage />} />
+            <Route path="devtools" element={<LineagePage />} />
             <Route path="extraction">
               <Route index element={<ExtractionsPage />} />
               <Route path="document/:docId">

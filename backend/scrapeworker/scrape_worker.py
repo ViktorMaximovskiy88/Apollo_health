@@ -173,6 +173,7 @@ class ScrapeWorker:
     async def attempt_download(self, download: DownloadContext):
         # TODO: This function keeps getting added to.
         # Maybe turn this into a class after our deadlines...
+        # This is kinda you 'do thing' controller; i dunno about _it_ being a class
         url = download.request.url
         proxies = await self.get_proxy_settings()
         link_retrieved_task: LinkRetrievedTask = link_retrieved_task_from_download(

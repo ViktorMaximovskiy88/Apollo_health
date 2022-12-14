@@ -11,6 +11,22 @@ from backend.scrapeworker.file_parsers import docx, html, pdf, text, xlsx
 __all__ = ["docx", "xlsx", "pdf", "html", "text"]
 
 
+def get_parser_by_ext(file_extension: str):
+    ParserClass = None
+    if file_extension == "pdf":
+        ParserClass = pdf.PdfParse
+    elif file_extension == "docx":
+        ParserClass = docx.DocxParser
+    elif file_extension == "xlsx":
+        ParserClass = xlsx.XlsxParser
+    elif file_extension == "html":
+        ParserClass = html.HtmlParser
+    elif file_extension in ["txt", "csv"]:
+        ParserClass = text.TextParser
+
+    return ParserClass
+
+
 async def parse_by_type(
     file_path: str,
     download: DownloadContext,
@@ -21,21 +37,13 @@ async def parse_by_type(
     url = download.request.url
     link_text = download.metadata.link_text
 
-    if file_extension == "pdf":
-        return await pdf.PdfParse(file_path, url, link_text=link_text).parse()
-    elif file_extension == "docx":
-        return await docx.DocxParser(file_path, url, link_text=link_text).parse()
-    elif file_extension == "xlsx":
-        return await xlsx.XlsxParser(file_path, url, link_text=link_text).parse()
-    elif file_extension == "html":
-        return await html.HtmlParser(
-            file_path,
-            url,
-            link_text=link_text,
-            scrape_method_config=scrape_method_config,
-        ).parse()
-    elif file_extension in ["txt", "csv"]:
-        return await text.TextParser(file_path, url, link_text=link_text).parse()
+    Parser = get_parser_by_ext(file_extension)
+    if Parser:
+        parser = Parser(
+            file_path, url, link_text=link_text, scrape_method_config=scrape_method_config
+        )
+        result = await parser.parse()
+        return result
     else:
         # raise NotImplementedError(f"no parse for file ext {file_extension}")
         return None

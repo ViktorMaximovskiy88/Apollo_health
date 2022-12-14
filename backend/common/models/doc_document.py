@@ -9,6 +9,7 @@ from backend.common.core.enums import ApprovalStatus, LangCode
 from backend.common.models.base_document import BaseDocument, BaseModel
 from backend.common.models.document_family import DocumentFamily
 from backend.common.models.document_mixins import DocumentMixins
+from backend.common.models.pipeline import DocPipelineStages
 from backend.common.models.shared import (
     DocDocumentLocation,
     DocDocumentLocationView,
@@ -83,6 +84,7 @@ class BaseDocDocument(BaseModel):
     compare_create_time: datetime | None = None
 
     tags: list[str] = []
+    pipeline_stages: DocPipelineStages | None
 
 
 class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixins):
@@ -94,6 +96,12 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
         copy.pop("first_collected_date")
         copy.pop("last_collected_date")
         return SiteDocDocument(_id=self.id, **copy, **location.dict())
+
+    def s3_doc_key(self):
+        return f"{self.checksum}.{self.file_extension}"
+
+    def s3_text_key(self):
+        return f"{self.text_checksum}.txt"
 
     class Settings:
         indexes = [

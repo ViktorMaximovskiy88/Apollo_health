@@ -30,7 +30,7 @@ const routes = [
   '/sites/:siteId/extraction/document/:docDocId/edit',
   '/sites/:siteId/scrapes',
   '/sites/:siteId/view',
-  '/sites/:siteId/lineage',
+  '/sites/:siteId/devtools',
   '/sites/new',
   '/translations',
   '/translations/:translationId',
@@ -121,7 +121,7 @@ export const useBreadcrumbs = async () => {
         'doc-documents': 'Documents',
         extraction: 'Extracted Content',
         results: 'Results',
-        lineage: 'Lineage',
+        devtools: 'Devtools',
         ...asyncResolvers,
       },
       '/documents': {

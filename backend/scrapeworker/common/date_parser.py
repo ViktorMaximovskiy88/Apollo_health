@@ -76,16 +76,18 @@ class DateParser:
         r"\s*([\$\%]|mg|ml|oz)", re.IGNORECASE
     )  # measurement prefix/suffixes
 
-    def dump_dates(self):
+    def as_dict(self):
+        identified_dates = [date for date in self.unclassified_dates if date.date]
         return {
-            "effective_date": str(self.effective_date),
-            "end_date": str(self.end_date),
-            "last_updated_date": str(self.last_updated_date),
-            "last_reviewed_date": str(self.last_reviewed_date),
-            "next_review_date": str(self.next_review_date),
-            "next_update_date": str(self.next_update_date),
-            "published_date": str(self.published_date),
-            "unclassified_dates": [str(date) for date in self.unclassified_dates],
+            "effective_date": self.effective_date.date,
+            "end_date": self.end_date.date,
+            "last_updated_date": self.last_updated_date.date,
+            "last_reviewed_date": self.last_reviewed_date.date,
+            "next_review_date": self.next_review_date.date,
+            "next_update_date": self.next_update_date.date,
+            "published_date": self.published_date.date,
+            "unclassified_dates": identified_dates,
+            "identified_dates": identified_dates,
         }
 
     def exclude_text(self, text: str) -> bool:

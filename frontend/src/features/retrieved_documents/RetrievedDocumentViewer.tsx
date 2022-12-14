@@ -35,8 +35,6 @@ export function FileTypeViewer({ docId, doc, onPageChange = () => {} }: PropType
     <GoogleDocLoader docId={docId} />
   ) : doc.file_extension === 'csv' ? (
     <CsvFileLoader docId={docId} />
-  ) : doc.file_extension === 'html' ? (
-    <HtmlFileLoader docId={docId} />
   ) : (
     <TextFileLoader docId={docId} />
   );

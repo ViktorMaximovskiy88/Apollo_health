@@ -5,6 +5,7 @@ from pydantic import Field, HttpUrl
 
 from backend.common.core.enums import CollectionMethod, SearchableType, SectionType, SiteStatus
 from backend.common.models.base_document import BaseDocument, BaseModel
+from backend.common.models.pipeline import SitePipelineStages
 
 
 class AttrSelector(BaseModel):
@@ -129,6 +130,7 @@ class Site(BaseDocument, NewSite):
     last_run_time: datetime | None = None
     assignee: PydanticObjectId | None = None
     last_run_documents: int | None = None
+    pipeline_stages: SitePipelineStages | None
 
 
 # Deprecated
