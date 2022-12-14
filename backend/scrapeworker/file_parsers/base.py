@@ -54,7 +54,7 @@ class FileParser(ABC):
         self.text = await self.get_text()
         title = self.get_title(self.metadata)
         document_type, confidence, doc_vectors, doc_type_match = guess_doc_type(
-            self.text, self.link_text, self.url, title
+            self.text, self.link_text, self.url, title, self.scrape_method_config
         )
         lang_code = detect_lang(self.text)
 
