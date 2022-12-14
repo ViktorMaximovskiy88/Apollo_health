@@ -14,7 +14,11 @@ class XlsParser(FileParser):
 
     async def get_info(self):
         book: xlrd.Book = xlrd.open_workbook(self.file_path)
-        metadata = {"user_name": book.user_name, "sheet_count": book.nsheets}
+        metadata = {
+            "title": str(self.filename_no_ext),
+            "user_name": book.user_name,
+            "sheet_count": book.nsheets,
+        }
         return metadata
 
     def get_title(self, metadata) -> str | None:
