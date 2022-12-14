@@ -3,7 +3,6 @@ import logging
 import backend.common.models.tasks as tasks
 from backend.common.core.enums import ApprovalStatus
 from backend.common.models.doc_document import DocDocument
-from backend.common.models.document import RetrievedDocument
 from backend.common.models.pipeline import DocPipelineStages, PipelineRegistry
 from backend.common.models.tasks import TaskLog
 from backend.common.tasks.processors import task_processor_factory
@@ -11,6 +10,9 @@ from backend.common.tasks.task_processor import TaskProcessor
 
 
 class DocPipelineTaskProcessor(TaskProcessor):
+
+    dependencies: list[str] = []
+
     def __init__(
         self,
         logger=logging,
@@ -19,16 +21,7 @@ class DocPipelineTaskProcessor(TaskProcessor):
 
     async def exec(self, task: tasks.DocPipelineTask):
         stage_versions = await PipelineRegistry.fetch()
-
-        # TODO change doc doc and rt doc IDs (related to other ticket)
-        # this wont live much longer... ignore the backward naming
-        rdoc = await RetrievedDocument.get(task.doc_doc_id)
-        if not rdoc:
-            raise Exception(f"RetrievedDocument {task.doc_doc_id} not found")
-
-        doc = await DocDocument.find_one(DocDocument.retrieved_document_id == rdoc.id)
-        if not doc:
-            raise Exception(f"doc_doc {task.doc_doc_id} not found")
+        doc = await DocDocument.get(task.doc_doc_id)
 
         if doc.classification_status == ApprovalStatus.APPROVED:
             self.logger.info(f"{doc.id} classification_status={doc.classification_status} skipping")
@@ -45,25 +38,25 @@ class DocPipelineTaskProcessor(TaskProcessor):
             doc.pipeline_stages.content, stage_versions.content
         ):
             pipeline += [
-                tasks.ContentTask(doc_doc_id=rdoc.id),
-                tasks.DateTask(doc_doc_id=rdoc.id),
-                tasks.DocTypeTask(doc_doc_id=rdoc.id),
-                tasks.TagTask(doc_doc_id=rdoc.id),
+                tasks.ContentTask(doc_doc_id=doc.id),
+                tasks.DateTask(doc_doc_id=doc.id),
+                tasks.DocTypeTask(doc_doc_id=doc.id),
+                tasks.TagTask(doc_doc_id=doc.id),
             ]
         else:
             # check each dependency
             if not DocPipelineStages.is_stage_valid(doc.pipeline_stages.date, stage_versions.date):
-                pipeline.append(tasks.DateTask(doc_doc_id=rdoc.id))
+                pipeline.append(tasks.DateTask(doc_doc_id=doc.id))
 
             if not DocPipelineStages.is_stage_valid(
                 doc.pipeline_stages.doc_type, stage_versions.doc_type
             ):
                 pipeline += [
-                    tasks.DocTypeTask(doc_doc_id=rdoc.id),
-                    tasks.TagTask(doc_doc_id=rdoc.id),
+                    tasks.DocTypeTask(doc_doc_id=doc.id),
+                    tasks.TagTask(doc_doc_id=doc.id),
                 ]
             elif not DocPipelineStages.is_stage_valid(doc.pipeline_stages.tag, stage_versions.tag):
-                pipeline.append(tasks.TagTask(doc_doc_id=rdoc.id))
+                pipeline.append(tasks.TagTask(doc_doc_id=doc.id))
 
         results = []
         for task_payload in pipeline:
