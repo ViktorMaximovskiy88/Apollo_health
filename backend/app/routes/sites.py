@@ -289,6 +289,7 @@ async def get_site_doc_docs(
 
     data, total = await get_site_doc_doc_table(
         site_id,
+        scrape_task_id,
         retrieved_document_ids=retrieved_document_ids,
         filters=match_filter,
         sorts=sort_by,
