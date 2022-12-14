@@ -290,7 +290,7 @@ class ScrapeWorker:
                 # does that mean keep all edits and wipe/update the rest?
                 # should we no longer care about RT doc or still update that too (wholesale)
                 new_therapy_tags, new_indicate_tags = self.get_updated_tags(
-                    document,
+                    doc_doc,
                     parsed_content["therapy_tags"],
                     parsed_content["indication_tags"],
                 )

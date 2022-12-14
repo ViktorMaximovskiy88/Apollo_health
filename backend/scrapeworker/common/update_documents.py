@@ -129,6 +129,8 @@ class DocumentUpdater:
             DocDocument.retrieved_document_id == retrieved_document.id
         )
 
+        # always add new tags and reset approval status to queued
+
         if doc_document:
             self.log.debug(f"doc doc update -> {doc_document.id}")
             rt_doc_location = retrieved_document.get_site_location(self.site.id)
