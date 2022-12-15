@@ -25,18 +25,16 @@ interface PropTypes {
 }
 
 export function FileTypeViewer({ docId, doc, onPageChange = () => {} }: PropTypes) {
-  if (!doc) return null;
+  if (!doc || !docId) return null;
 
   return ['pdf', 'html'].includes(doc.file_extension) ? (
     <PDFFileLoader docId={docId} onPageChange={onPageChange} />
-  ) : doc.file_extension === 'xlsx' ? (
+  ) : ['xlsx', 'xls', 'doc'].includes(doc.file_extension) ? (
     <OfficeFileLoader docId={docId} />
   ) : doc.file_extension === 'docx' ? (
     <GoogleDocLoader docId={docId} />
   ) : doc.file_extension === 'csv' ? (
     <CsvFileLoader docId={docId} />
-  ) : doc.file_extension === 'html' ? (
-    <HtmlFileLoader docId={docId} />
   ) : (
     <TextFileLoader docId={docId} />
   );

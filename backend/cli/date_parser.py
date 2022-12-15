@@ -32,5 +32,5 @@ async def parse(ctx, file: str):
     async with aiofiles.open(file, mode="r") as file:
         text = await file.read()
     parser.extract_dates(text)
-    result = parser.dump_dates()
+    result = parser.as_dict()
     pprint(result)

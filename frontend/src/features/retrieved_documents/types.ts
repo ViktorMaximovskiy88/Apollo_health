@@ -7,6 +7,19 @@ export interface DocumentQuery {
   translation_id?: boolean;
 }
 
+export interface PipelineStage {
+  version: number;
+  version_at: string;
+  is_locked: boolean;
+}
+
+export interface DocPipelineStages {
+  content: PipelineStage | undefined;
+  date: PipelineStage | undefined;
+  doc_type: PipelineStage | undefined;
+  tag: PipelineStage | undefined;
+}
+
 export interface RetrievedDocument extends BaseDocument {
   _id: string;
   site_id: string;
@@ -35,6 +48,7 @@ export interface RetrievedDocument extends BaseDocument {
   lang_code: string;
   file_extension: string;
   is_current_version: boolean;
+  pipeline_stages: DocPipelineStages;
 }
 
 // id is added so that it can be used for both table filters and dropdown selections
@@ -86,7 +100,7 @@ export const DocumentTypes = [
 export const FieldGroupsOptions = [
   { id: 'AUTHORIZATION_DETAILS', label: 'Authorization Details', value: 'AUTHORIZATION_DETAILS' },
   { id: 'TIER', label: 'Tier', value: 'TIER' },
-  { id: 'COVERAGE', label: 'Coverage', value: 'COVERAGE' },
+  { id: 'MEDICAL_COVERAGE', label: 'Medical Coverage', value: 'MEDICAL_COVERAGE' },
   { id: 'QL_GATE', label: 'QL Gate', value: 'QL_GATE' },
   { id: 'QL_DETAILS', label: 'QL Details', value: 'QL_DETAILS' },
   { id: 'PA', label: 'PA', value: 'PA' },

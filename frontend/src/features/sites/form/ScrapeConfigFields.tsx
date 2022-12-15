@@ -7,7 +7,9 @@ export function DocumentExtensions() {
   const extensions = [
     { value: 'pdf', label: 'PDF (.pdf)' },
     { value: 'xlsx', label: 'Excel (.xlsx)' },
+    { value: 'xls', label: 'Excel (.xls)' },
     { value: 'docx', label: 'Word (.docx)' },
+    { value: 'doc', label: 'Word (.doc)' },
     { value: 'html', label: 'HTML (.html)' },
     { value: 'csv', label: 'CSV (.csv)' },
     { value: 'txt', label: 'TXT (.txt)' },

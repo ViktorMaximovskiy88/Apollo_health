@@ -259,7 +259,7 @@ async def attempt_lock_acquire(
 @router.post("/{id}/items/take-next", response_model=TakeNextWorkQueueResponse)
 async def take_next_work_item(
     filter: list[TableFilterInfo] = [],
-    sort: list[TableSortInfo] = [],
+    sort: TableSortInfo | list[TableSortInfo] = [],
     work_queue: WorkQueue = Depends(get_target),
     current_user: User = Security(get_current_user),
 ):
@@ -267,6 +267,8 @@ async def take_next_work_item(
     unclaimed_query = {
         "locks": {"$not": {"$elemMatch": {"work_queue_id": work_queue.id, "expires": {"$gt": now}}}}
     }
+    if isinstance(sort, TableSortInfo):
+        sort = [sort]
     query = combine_queue_query_with_user_query(work_queue, sort, filter)
     query = query.find(unclaimed_query)
     item = await query.project(IdOnlyDocument).first_or_none()

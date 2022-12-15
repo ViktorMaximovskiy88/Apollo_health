@@ -22,6 +22,7 @@ import { Popconfirm } from 'antd';
 import { useMemo } from 'react';
 import { CopyDocumentFamily } from './CopyDocumentFamily';
 import NumberFilter from '@inovua/reactdatagrid-community/NumberFilter';
+import { useCurrentUser } from '../../../common/hooks/use-current-user';
 
 export const createColumns = ({
   siteOptions,
@@ -29,6 +30,7 @@ export const createColumns = ({
   dispatch,
   docDocumentFilters,
   deleteDocumentFamily,
+  isAdminUser,
 }: {
   siteOptions: (search: string) => Promise<{ label: string; value: string }[]>;
   siteNamesById: { [id: string]: string };
@@ -37,6 +39,7 @@ export const createColumns = ({
   deleteDocumentFamily: (
     documentFamily: Pick<DocumentFamily, '_id'> & Partial<DocumentFamily>
   ) => void;
+  isAdminUser?: boolean;
 }) => [
   {
     header: 'Family Name',
@@ -152,7 +155,7 @@ export const createColumns = ({
             deleteDocumentFamily(docFamily);
           }}
         >
-          <ButtonLink danger>Delete</ButtonLink>
+          {isAdminUser && <ButtonLink danger>Delete</ButtonLink>}
         </Popconfirm>
       </>
     ),
@@ -169,6 +172,7 @@ export const useDocumentFamilyColumns = (
 ): TypeColumn[] => {
   const { siteOptions } = useSiteSelectOptions();
   const dispatch = useAppDispatch();
+  const user = useCurrentUser();
   const { filter: docDocumentFilters } = useSelector(docDocumentTableState);
   return useMemo(() => {
     return createColumns({
@@ -177,6 +181,14 @@ export const useDocumentFamilyColumns = (
       dispatch,
       docDocumentFilters,
       deleteDocumentFamily,
+      isAdminUser: user?.is_admin,
     });
-  }, [siteOptions, siteNamesById, dispatch, docDocumentFilters, deleteDocumentFamily]);
+  }, [
+    siteOptions,
+    siteNamesById,
+    dispatch,
+    docDocumentFilters,
+    deleteDocumentFamily,
+    user?.is_admin,
+  ]);
 };

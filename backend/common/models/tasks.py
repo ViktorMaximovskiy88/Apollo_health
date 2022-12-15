@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from beanie import Indexed, PydanticObjectId
 from pymongo import ReturnDocument
@@ -7,8 +7,37 @@ from pymongo import ReturnDocument
 from backend.common.core.enums import TaskStatus
 from backend.common.models.base_document import BaseDocument, BaseModel
 
-GenericTaskType = TypeVar("GenericTaskType", "LineageTask", "PDFDiffTask")
+GenericTaskType = TypeVar(
+    "GenericTaskType",
+    "LineageTask",
+    "PDFDiffTask",
+    "ContentTask",
+    "DateTask",
+    "DocTypeTask",
+    "TagTask",
+    "DocPipelineTask",
+)
 T = TypeVar("T", bound="TaskLog")
+
+
+class DocPipelineTask(BaseModel):
+    doc_doc_id: PydanticObjectId
+
+
+class ContentTask(BaseModel):
+    doc_doc_id: PydanticObjectId
+
+
+class DateTask(BaseModel):
+    doc_doc_id: PydanticObjectId
+
+
+class DocTypeTask(BaseModel):
+    doc_doc_id: PydanticObjectId
+
+
+class TagTask(BaseModel):
+    doc_doc_id: PydanticObjectId
 
 
 class PDFDiffTask(BaseModel):
@@ -50,6 +79,7 @@ class TaskLog(BaseDocument):
 
     task_type: Indexed(str)
     payload: GenericTaskType
+    result: Any | None = None
 
     def get_group_id(self):
         return get_group_id(self.payload)
@@ -90,7 +120,6 @@ class TaskLog(BaseDocument):
             upsert=True,
             return_document=ReturnDocument.AFTER,
         )
-
         return TaskLog(**saved_task)
 
     @classmethod
@@ -106,6 +135,9 @@ class TaskLog(BaseDocument):
     def is_queued(self) -> bool:
         return not self.is_complete and self.status == TaskStatus.QUEUED
 
+    def is_canceled(self) -> bool:
+        return self.is_complete and self.status == TaskStatus.CANCELED
+
     def is_stale(self, seconds: int) -> bool:
         return (
             not self.is_complete
@@ -116,7 +148,7 @@ class TaskLog(BaseDocument):
 
     def should_process(self, message_id: str, seconds: int) -> bool:
         return (
-            self.is_queued() or self.has_failed() or self.is_stale(seconds)
+            self.is_queued() or self.has_failed() or self.is_stale(seconds) or self.is_canceled()
         ) and self.message_id == message_id
 
     def can_be_queued(self) -> bool:
@@ -133,17 +165,21 @@ class TaskLog(BaseDocument):
         self.status_at = datetime.now(tz=timezone.utc)
         return await self.save()
 
-    async def update_finished(self) -> T:
-        return await self._update_status(TaskStatus.FINISHED, is_complete=True)
+    async def update_finished(self, result: dict[str, any] | None) -> T:
+        return await self._update_status(TaskStatus.FINISHED, is_complete=True, result=result)
 
     async def update_failed(self, error: str) -> T:
         return await self._update_status(TaskStatus.FAILED, is_complete=True, error=error)
+
+    async def update_canceled(self) -> T:
+        return await self._update_status(TaskStatus.CANCELED, is_complete=True)
 
     async def _update_status(
         self,
         task_status: TaskStatus,
         message_id: str = None,
         is_complete=False,
+        result: dict[str, any] | None = None,
         error: str | None = None,
     ) -> T:
         now = datetime.now(tz=timezone.utc)
@@ -153,6 +189,9 @@ class TaskLog(BaseDocument):
             "is_complete": is_complete,
             "status_at": now,
         }
+
+        if result:
+            payload["result"] = result
 
         if is_complete:
             payload["completed_at"] = now

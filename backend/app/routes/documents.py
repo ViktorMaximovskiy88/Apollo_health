@@ -28,7 +28,7 @@ from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook
 from backend.common.services.document import create_doc_document_service
 from backend.common.services.site import site_last_started_task
 from backend.common.services.tag_compare import TagCompare
-from backend.common.storage.client import DocumentStorageClient
+from backend.common.storage.client import DocumentStorageClient, TextStorageClient
 from backend.common.storage.hash import hash_bytes
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.models import DownloadContext, Request
@@ -144,13 +144,19 @@ async def download_document(
 
 @router.get("/viewer/{id}", dependencies=[Security(get_current_user)])
 async def viewer_document_link(
-    target: RetrievedDocument = Depends(get_target),
+    target: RetrievedDocument = Depends(get_target), view_type: str = "document"
 ):
-    client = DocumentStorageClient()
-    key = f"{target.checksum}.{target.file_extension}"
-    if target.file_extension == "html":
-        key = key + ".pdf"
-    url = client.get_signed_url(key, expires_in_seconds=60 * 60)
+    if view_type == "document":
+        client = DocumentStorageClient()
+        key = f"{target.checksum}.{target.file_extension}"
+        if target.file_extension == "html":
+            key = key + ".pdf"
+        url = client.get_signed_url(key, expires_in_seconds=60 * 60)
+    elif view_type == "text":
+        client = TextStorageClient()
+        key = f"{target.text_checksum}.txt"
+        url = client.get_signed_url(key, expires_in_seconds=60 * 60)
+
     return {"url": url}
 
 
@@ -214,7 +220,9 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
         parsed_content: dict[str, Any] | None = await parse_by_type(temp_path, download)
         if not parsed_content:
             raise Exception("Count not extract file contents")
-        await get_tags(parsed_content, focus_configs=[])
+        await get_tags(
+            parsed_content, focus_configs=site.scrape_method_configuration.focus_section_configs
+        )
 
         text_checksum: str = await text_handler.save_text(parsed_content["text"])
         text_checksum_documents: List[RetrievedDocument] = await RetrievedDocument.find(

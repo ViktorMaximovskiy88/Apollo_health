@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { RootState } from './store';
+import { RootState } from '../../app/store';
 import { useSelector, useDispatch } from 'react-redux';
-import { makeActionDispatch } from '../common/helpers';
+import { makeActionDispatch } from '../../common/helpers';
 import { notification } from 'antd';
 import { uniqBy } from 'lodash';
-import { Task, useLazyGetTaskQuery } from './taskApi';
-import { useInterval } from '../common/hooks';
+import { Task, useLazyGetTaskQuery, useEnqueueTaskMutation } from './taskApi';
+import { useInterval } from '../../common/hooks';
 
 interface TaskState {
   pending: Task[];
@@ -41,8 +41,9 @@ export function useTaskSlice() {
 export const { reducer } = taskSlice;
 export default taskSlice;
 
-export function useTaskWorker(createTaskFunc: Function, successFunc: Function = () => {}) {
+export function useTaskWorker(successFunc: Function = () => {}) {
   const [getTask] = useLazyGetTaskQuery();
+  const [enqueueTask] = useEnqueueTaskMutation();
 
   const { watermark, setActive, isActive } = useInterval(5000, false);
   const [task, setTask] = useState<Task | undefined>(undefined);
@@ -51,13 +52,13 @@ export function useTaskWorker(createTaskFunc: Function, successFunc: Function = 
     (async () => {
       if (task && isActive && watermark) {
         const { data } = await getTask(task._id);
-        if (data?.is_complete && data.status == 'FINISHED') {
+        if (data?.is_complete && data.status === 'FINISHED') {
           notification.success({
             message: `${data?.task_type}: ${data?.status}`,
           });
           setActive(false);
           successFunc(data);
-        } else if (data?.is_complete && data.status == 'FAILED') {
+        } else if (data?.is_complete && data.status === 'FAILED') {
           notification.error({
             message: `${data?.task_type}: ${data?.status}`,
           });
@@ -67,17 +68,16 @@ export function useTaskWorker(createTaskFunc: Function, successFunc: Function = 
     })();
   }, [watermark, isActive, task]);
 
-  return async () => {
-    const { data } = await createTaskFunc();
-    if (data?.task) {
-      const { task } = data;
+  return async (task_type: string, payload: any) => {
+    const task = await enqueueTask({ task_type, payload }).unwrap();
+    if (task) {
       notification.success({
         message: `${task.task_type}: ${task.status}`,
       });
       setTask(task);
       setActive(true);
     } else {
-      successFunc(data);
+      successFunc(task);
     }
   };
 }

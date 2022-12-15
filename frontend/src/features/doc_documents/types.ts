@@ -45,17 +45,15 @@ export interface TaskLock {
 }
 
 export interface CompareRequest {
-  currentDocDocId: string;
-  previousDocDocId: string | undefined | null;
+  current_checksum: string | undefined;
+  previous_checksum: string | undefined;
 }
 
 export interface CompareResponse extends BaseDocument {
   exists: boolean;
-  processing: boolean;
-  queued: boolean;
-  new_key: string | null;
-  prev_key: string | null;
-  diff: string; // silences error in DocCompareToPrevious.tsx
+  pending: boolean;
+  new_key: string | undefined;
+  prev_key: string | undefined;
 }
 
 export interface DocDocument extends BaseDocument {

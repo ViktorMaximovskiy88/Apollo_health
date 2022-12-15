@@ -17,6 +17,8 @@ export const initialState = {
       { name: 'document_type', operator: 'eq', type: 'select', value: null },
       { name: 'locations.payer_family_id', operator: 'eq', type: 'select', value: '' },
       { name: 'document_family_id', operator: 'eq', type: 'select', value: null },
+      { name: 'first_collected_date', operator: 'before', type: 'date', value: '' },
+      { name: 'last_collected_date', operator: 'before', type: 'date', value: '' },
     ],
     pagination: { limit: 50, skip: 0 },
     forceUpdate: 0,

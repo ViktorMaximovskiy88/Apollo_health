@@ -14,15 +14,18 @@ import { useSelector } from 'react-redux';
 import { Popconfirm } from 'antd';
 import { ButtonLink } from '../../components';
 import NumberFilter from '@inovua/reactdatagrid-community/NumberFilter';
+import { useCurrentUser } from '../../common/hooks/use-current-user';
 
 export const createColumns = ({
   dispatch,
   docDocumentFilters,
   deletePayerFamily,
+  isAdminUser,
 }: {
   dispatch: any;
   docDocumentFilters: TypeFilterValue;
   deletePayerFamily: (payerFamily: Pick<PayerFamily, '_id'> & Partial<PayerFamily>) => void;
+  isAdminUser?: boolean;
 }) => [
   {
     header: 'Family Name',
@@ -79,7 +82,7 @@ export const createColumns = ({
             deletePayerFamily(payerFamily);
           }}
         >
-          <ButtonLink danger>Delete</ButtonLink>
+          {isAdminUser && <ButtonLink danger>Delete</ButtonLink>}
         </Popconfirm>
       </>
     ),
@@ -89,10 +92,17 @@ export const createColumns = ({
 export const usePayerFamilyColumns = (
   deletePayerFamily: (payerFamily: Pick<PayerFamily, '_id'> & Partial<PayerFamily>) => void
 ): TypeColumn[] => {
+  const user = useCurrentUser();
   const dispatch = useAppDispatch();
   const { filter: docDocumentFilters } = useSelector(docDocumentTableState);
   return useMemo(
-    () => createColumns({ dispatch, docDocumentFilters, deletePayerFamily }),
-    [dispatch, docDocumentFilters, deletePayerFamily]
+    () =>
+      createColumns({
+        dispatch,
+        docDocumentFilters,
+        deletePayerFamily,
+        isAdminUser: user?.is_admin,
+      }),
+    [dispatch, docDocumentFilters, deletePayerFamily, user?.is_admin]
   );
 };

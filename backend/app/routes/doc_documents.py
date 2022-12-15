@@ -1,5 +1,4 @@
 import asyncio
-from datetime import datetime, timezone
 from typing import List
 
 from beanie import PydanticObjectId
@@ -32,7 +31,6 @@ from backend.common.models.document_family import DocumentFamily
 from backend.common.models.payer_family import PayerFamily
 from backend.common.models.shared import DocDocumentLocationView
 from backend.common.models.site_scrape_task import SiteScrapeTask
-from backend.common.models.tasks import PDFDiffTask, TaskLog
 from backend.common.models.user import User
 from backend.common.repositories.doc_document_repository import DocDocumentRepository
 from backend.common.storage.client import DocumentStorageClient
@@ -98,6 +96,28 @@ async def read_doc_documents(
     return await query_table(document_query, limit, skip, sorts, filters)
 
 
+class CompareResponse(BaseModel):
+    new_key: str | None = None
+    prev_key: str | None = None
+    exists: bool
+
+
+@router.get(
+    "/diff",
+    dependencies=[Security(get_current_user)],
+    response_model=CompareResponse,
+)
+async def get_diff(
+    current_checksum: str,
+    previous_checksum: str,
+):
+    doc_client = DocumentStorageClient()
+    new_key = f"{current_checksum}-{previous_checksum}-new.pdf"
+    prev_key = f"{current_checksum}-{previous_checksum}-prev.pdf"
+    exists = doc_client.object_exists(new_key) and doc_client.object_exists(prev_key)
+    return CompareResponse(new_key=new_key, prev_key=prev_key, exists=exists)
+
+
 @router.get("/diff/{key}.pdf", dependencies=[Security(get_current_user)])
 async def download_diff_document(key: str):
     client = DocumentStorageClient()
@@ -132,39 +152,6 @@ async def read_extraction_task(
         doc.document_family = await DocumentFamily.get(doc.document_family_id)
 
     return doc
-
-
-class CompareResponse(BaseModel):
-    task: TaskLog | None = None
-    new_key: str | None = None
-    prev_key: str | None = None
-
-
-@router.post(
-    "/diff/{id}",
-    response_model=CompareResponse,
-)
-async def create_diff(
-    previous_doc_doc_id: PydanticObjectId,
-    current_doc: DocDocument = Depends(get_target),
-    current_user: User = Security(get_current_user),
-):
-    prev_doc: DocDocument = await get_target(previous_doc_doc_id)
-    doc_client = DocumentStorageClient()
-    new_key = f"{current_doc.checksum}-{prev_doc.checksum}-new.pdf"
-    prev_key = f"{current_doc.checksum}-{prev_doc.checksum}-prev.pdf"
-    if doc_client.object_exists(new_key) and doc_client.object_exists(prev_key):
-        return CompareResponse(new_key=new_key, prev_key=prev_key)
-    else:
-        task_payload: PDFDiffTask = PDFDiffTask(
-            current_checksum=current_doc.checksum, previous_checksum=prev_doc.checksum
-        )
-        task: TaskLog = await task_queue.enqueue(task_payload, current_user.id)
-
-        current_doc.compare_create_time = datetime.now(tz=timezone.utc)
-        await current_doc.save()
-
-        return CompareResponse(task=task)
 
 
 @router.post("/bulk", response_model=BulkUpdateResponse)

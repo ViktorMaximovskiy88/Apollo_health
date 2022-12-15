@@ -23,6 +23,12 @@ export const initialState = {
         value: '',
       },
       { name: 'tags', operator: 'contains', type: 'string', value: '' },
+      {
+        name: 'collection_method',
+        operator: 'eq',
+        type: 'select',
+        value: '',
+      },
     ],
     pagination: { limit: 50, skip: 0 },
     forceUpdate: 0,

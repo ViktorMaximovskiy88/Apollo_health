@@ -42,7 +42,9 @@ const buildFilterValue = ({
 
 export function LineageDocDocumentsTable() {
   const { docDocumentId: currentDocDocumentId } = useParams();
-  const { data: currentDocDocument } = useGetDocDocumentQuery(currentDocDocumentId ?? '');
+  const { data: currentDocDocument } = useGetDocDocumentQuery(currentDocDocumentId, {
+    skip: !currentDocDocumentId,
+  });
 
   const [getDocDocumentsFn] = useLazyGetDocDocumentsQuery();
 

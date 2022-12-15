@@ -57,6 +57,11 @@ const Lineage = () => {
 };
 
 export function DocumentClassification() {
+  const { docDocumentId } = useParams();
+  const { data: docDocument } = useGetDocDocumentQuery(docDocumentId, { skip: !docDocumentId });
+  const previousDocDocId: string | undefined = Form.useWatch('previous_doc_doc_id');
+  const { data: prevDoc } = useGetDocDocumentQuery(previousDocDocId, { skip: !previousDocDocId });
+
   return (
     <>
       <div className="flex space-x-8">
@@ -72,8 +77,10 @@ export function DocumentClassification() {
           <Select options={languageCodes} />
         </Form.Item>
         <Lineage />
-
-        <DocCompareToPrevious />
+        <DocCompareToPrevious
+          previousChecksum={prevDoc?.checksum}
+          currentChecksum={docDocument?.checksum}
+        />
       </div>
     </>
   );

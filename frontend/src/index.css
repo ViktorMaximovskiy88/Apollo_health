@@ -127,10 +127,8 @@ a {
   border-color: var(--blue-primary);
 }
 .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
-  background-color: var(--blue-primary);
-}
-.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
-  color: white;
+  background-color: var(--bg-menu-selected);
+  color: var(--blue-primary);
 }
 
 .ant-collapse-header-text {
