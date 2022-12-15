@@ -204,7 +204,7 @@ export function DocDocumentViewer({ item, viewKey }: { item: LineageDoc; viewKey
 export function DocumentJsonView({ docId }: { docId: string }) {
   const { data } = useGetDocDocumentQuery(docId);
   // blacklist/nuke some _useless_ props
-  const doc = { ...data };
+  const doc = { ...data, doc_vectors: ['redacted'] };
   return (
     <CodeMirror
       width="100%"

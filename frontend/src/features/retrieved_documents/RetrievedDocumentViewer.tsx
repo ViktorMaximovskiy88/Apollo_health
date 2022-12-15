@@ -1,10 +1,4 @@
-import {
-  OfficeFileLoader,
-  TextFileLoader,
-  CsvFileLoader,
-  HtmlFileLoader,
-  GoogleDocLoader,
-} from '../../components';
+import { OfficeFileLoader, TextFileLoader, CsvFileLoader, GoogleDocLoader } from '../../components';
 
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
