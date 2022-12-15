@@ -12,11 +12,7 @@ from backend.common.models.document_mixins import calc_final_effective_date
 from backend.common.models.lineage import DocumentAnalysis, DocumentAttrs
 from backend.common.models.shared import get_unique_focus_tags, get_unique_reference_tags
 from backend.common.models.site import Site
-from backend.common.services.document import (
-    SiteRetrievedDocument,
-    get_site_docs,
-    get_site_docs_for_ids,
-)
+from backend.common.services.document import get_site_docs, get_site_docs_for_ids
 from backend.common.services.lineage.lineage_matcher import LineageMatcher
 from backend.common.services.tag_compare import TagCompare
 from backend.scrapeworker.common.lineage_parser import (
@@ -176,7 +172,7 @@ class LineageService:
                     await DocumentAnalysis.insert_one(doc_analysis, bulk_writer=bulk_writer)
 
     async def process_lineage_for_docs(
-        self, site_id: PydanticObjectId, docs: list[SiteRetrievedDocument]
+        self, site_id: PydanticObjectId, docs: list[SiteDocDocument]
     ):
         # build the model and save it
         self.logger.info(f"before doc analysis save len(docs)={len(docs)}")
@@ -358,11 +354,9 @@ def build_doc_analysis(
             site_id=doc.site_id,
         )
 
-    # TODO when rt goes away we need these still..
-    rdoc: RetrievedDocument = RetrievedDocument.get(doc.retrieved_document_id)
-    doc_analysis.file_size = rdoc.file_size
-    doc_analysis.doc_vectors = rdoc.doc_vectors
-    doc_analysis.token_count = rdoc.token_count
+    doc_analysis.file_size = doc.file_size
+    doc_analysis.doc_vectors = doc.doc_vectors
+    doc_analysis.token_count = doc.token_count
 
     doc_analysis.name = doc.name
     doc_analysis.final_effective_date = calc_final_effective_date(doc)

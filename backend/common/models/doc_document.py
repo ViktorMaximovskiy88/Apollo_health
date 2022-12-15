@@ -87,6 +87,12 @@ class BaseDocDocument(BaseModel):
     pipeline_stages: DocPipelineStages | None
     user_edited_fields: list[str] = []
 
+    # from rt doc, lets just do these now...
+    # TODO if we gen analysis doc earlier, this doesnt have to live here
+    doc_vectors: list[list[float]] = []
+    file_size: int = 0
+    token_count: int = 0
+
 
 class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixins):
     locations: list[DocDocumentLocation] = []

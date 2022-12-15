@@ -3,15 +3,15 @@ from typing import List
 from beanie import PydanticObjectId
 
 from backend.app.utils.logger import Logger, create_and_log
-from backend.common.models.doc_document import DocDocument, DocDocumentLocation
-from backend.common.models.document import RetrievedDocument, SiteRetrievedDocument
+from backend.common.models.doc_document import DocDocument, DocDocumentLocation, SiteDocDocument
+from backend.common.models.document import RetrievedDocument
 from backend.common.models.lineage import LineageDoc
 from backend.common.models.shared import RetrievedDocumentLocation
 from backend.common.models.user import User
 
 
-async def get_site_docs(site_id: PydanticObjectId) -> list[SiteRetrievedDocument]:
-    docs: List[SiteRetrievedDocument] = await RetrievedDocument.aggregate(
+async def get_site_docs(site_id: PydanticObjectId) -> list[SiteDocDocument]:
+    docs: List[SiteDocDocument] = await DocDocument.aggregate(
         aggregation_pipeline=[
             {"$match": {"locations.site_id": site_id}},
             {"$unwind": {"path": "$locations"}},
@@ -19,7 +19,7 @@ async def get_site_docs(site_id: PydanticObjectId) -> list[SiteRetrievedDocument
             {"$match": {"site_id": site_id}},
             {"$unset": ["locations"]},
         ],
-        projection_model=SiteRetrievedDocument,
+        projection_model=SiteDocDocument,
     ).to_list()
 
     return docs
@@ -27,8 +27,8 @@ async def get_site_docs(site_id: PydanticObjectId) -> list[SiteRetrievedDocument
 
 async def get_site_docs_for_ids(
     site_id: PydanticObjectId, doc_ids: list[PydanticObjectId]
-) -> list[SiteRetrievedDocument]:
-    docs: List[SiteRetrievedDocument] = await RetrievedDocument.aggregate(
+) -> list[SiteDocDocument]:
+    docs: List[SiteDocDocument] = await DocDocument.aggregate(
         aggregation_pipeline=[
             {"$match": {"_id": {"$in": doc_ids}}},
             {"$unwind": {"path": "$locations"}},
@@ -36,7 +36,7 @@ async def get_site_docs_for_ids(
             {"$match": {"site_id": site_id}},
             {"$unset": ["locations"]},
         ],
-        projection_model=SiteRetrievedDocument,
+        projection_model=SiteDocDocument,
     ).to_list()
 
     return docs
