@@ -46,7 +46,9 @@ const buildInitialValues = (initialBaseUrl: String, oldVersion?: SiteDocDocument
     };
   }
   return {
-    base_url: initialBaseUrl,
+    base_url: oldVersion.base_url,
+    url: oldVersion.url,
+    link_text: oldVersion.link_text,
     lang_code: oldVersion.lang_code,
     name: oldVersion.name,
     document_type: oldVersion.document_type,
@@ -159,7 +161,7 @@ export function AddDocumentModal({
   // Doc exists on other site.
   // Since only location fields are editable, override other form values
   // with existing doc data.
-  function setDocFromOtherSiteValues(responseData: any) {
+  function setLocationValues(responseData: any) {
     if (responseData.prev_location_doc_id) {
       form.setFieldsValue({
         name: responseData.doc_name,
@@ -207,7 +209,7 @@ export function AddDocumentModal({
             form={form}
             setFileData={setFileData}
             siteId={siteId}
-            setDocFromOtherSiteValues={setDocFromOtherSiteValues}
+            setLocationValues={setLocationValues}
           />
         </div>
 
@@ -268,7 +270,7 @@ export function AddDocumentModal({
 }
 
 function UploadItem(props: any) {
-  const { setFileData, siteId, setDocFromOtherSiteValues } = props;
+  const { setFileData, siteId, setLocationValues } = props;
   const [token, setToken] = useState('');
   const [fileName, setFileName] = useState('');
   const [uploadStatus, setUploadStatus] = useState('');
@@ -290,7 +292,7 @@ function UploadItem(props: any) {
         message.error(response.error);
       } else if (response.success) {
         setUploadStatus('done');
-        setDocFromOtherSiteValues(response.data);
+        setLocationValues(response.data);
         setFileData(response.data);
       }
     }
