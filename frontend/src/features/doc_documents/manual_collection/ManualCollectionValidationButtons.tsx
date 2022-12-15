@@ -376,14 +376,9 @@ const Unhandled = () => {
   }
 };
 
-function ValidationButtons() {
-  const { isLoading } = useContext(ValidationButtonsContext) ?? {};
-  const params = useParams();
-  const siteId = params.siteId;
-  const [searchParams] = useSearchParams();
-  const scrapeTaskId = searchParams.get('scrape_task_id');
-
-  // Only show buttons if scrape is active and site is manual
+// If scrapetaskid exists and is not most recent scrape task,
+// do not show validation button.
+export function ShowValidationButtons(siteId: string, scrapeTaskId?: string) {
   const mostRecentTask = {
     limit: 1,
     skip: 0,
@@ -391,32 +386,34 @@ function ValidationButtons() {
     filterValue: initialState.table.filter,
   };
 
-  // If scrapetaskid exists and is not most recent scrape task,
-  // do not show validation button.
-  const showValidationButtons = async () => {
-    if (!scrapeTaskId) return;
-    const { siteId } = useParams();
-    const { data }: { data?: { data?: SiteScrapeTask[] } } = useGetScrapeTasksForSiteQuery({
-      ...mostRecentTask,
-      siteId,
-    });
-    const siteScrapeTasks = data?.data;
-    if (!siteScrapeTasks) return;
-    const [siteScrapeTask] = siteScrapeTasks;
-    if (siteScrapeTask._id !== scrapeTaskId) {
-      return false;
-    } else {
-      return true;
-    }
-  };
+  const { data }: { data?: { data?: SiteScrapeTask[] } } = useGetScrapeTasksForSiteQuery({
+    ...mostRecentTask,
+    siteId,
+  });
+  const siteScrapeTasks = data?.data;
+  if (!siteScrapeTasks) return;
+  const [siteScrapeTask] = siteScrapeTasks;
+  if (siteScrapeTask._id !== scrapeTaskId) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
+function ValidationButtons() {
+  const { isLoading } = useContext(ValidationButtonsContext) ?? {};
+  const params = useParams();
+  const siteId = params.siteId;
+  const [searchParams] = useSearchParams();
+  const scrapeTaskId = searchParams.get('scrape_task_id');
 
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
   const { data: site } = useGetSiteQuery(siteId);
   if (!site) return null;
 
   if (site.collection_method === 'MANUAL' && activeStatuses.includes(site.last_run_status)) {
-    if (scrapeTaskId) {
-      const showValidation = await showValidationButtons();
+    if (siteId && scrapeTaskId) {
+      const showValidation = ShowValidationButtons(siteId, scrapeTaskId);
       if (showValidation === false) {
         return null;
       }
