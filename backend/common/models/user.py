@@ -28,7 +28,7 @@ class UserUpdate(BaseModel):
 class UserPublic(UserUpdate):
     id: PydanticObjectId = Field(..., alias="_id")
     email: Indexed(EmailStr, unique=True)  # type: ignore
-    full_name: Indexed(str)
+    full_name: str
     disabled: bool = False
     is_admin: bool = False
     roles: list[str] = []

@@ -1,7 +1,7 @@
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { useCallback, useMemo } from 'react';
-import { prettyDateFromISO } from '../../../common';
+import { prettyDateFromISO, prettyDateUTCFromISO } from '../../../common';
 import { ButtonLink } from '../../../components';
 import { DocDocument } from '../types';
 import { DocumentTypes } from '../../retrieved_documents/types';
@@ -68,7 +68,7 @@ export const useLineageDocDocumentColumns = () => {
           };
         },
         render: ({ value: final_effective_date }: { value: string }) => (
-          <>{prettyDateFromISO(final_effective_date)}</>
+          <>{prettyDateUTCFromISO(final_effective_date)}</>
         ),
       },
     ],
