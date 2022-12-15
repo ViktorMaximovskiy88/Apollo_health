@@ -97,6 +97,9 @@ async def create_doc_document_service(
         lineage_id=retrieved_document.lineage_id,
         is_current_version=retrieved_document.is_current_version,
         locations=[DocDocumentLocation(**rt_doc_location.dict())],
+        doc_vectors=retrieved_document.doc_vectors,
+        file_size=retrieved_document.file_size,
+        token_count=retrieved_document.token_count,
     )
     doc_document.set_final_effective_date()
     # Set doc doc specific fields which cannot be copied from retr doc.
