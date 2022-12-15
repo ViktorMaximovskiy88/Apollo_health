@@ -12,6 +12,7 @@ import {
   message,
   notification,
   Switch,
+  AutoComplete,
 } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { UploadChangeParam } from 'antd/lib/upload';
@@ -37,13 +38,17 @@ interface AddDocumentModalPropTypes {
   refetch?: any;
 }
 
-const buildInitialValues = (initialBaseUrl: String, oldVersion?: SiteDocDocument) => {
+const buildInitialValues = (oldVersion?: SiteDocDocument, baseUrlOptions?: any[]) => {
   if (!oldVersion) {
-    return {
-      base_url: initialBaseUrl,
+    const values = {
       lang_code: 'en',
       internal_document: false,
+      base_url: '',
     };
+    if (baseUrlOptions && baseUrlOptions.length > 0) {
+      values.base_url = baseUrlOptions[0];
+    }
+    return values;
   }
   return {
     base_url: oldVersion.base_url,
@@ -76,19 +81,34 @@ export function AddDocumentModal({
   const [oldLocationSiteId, setOldLocationSiteId] = useState('');
   const [oldLocationDocId, setOldLocationDocId] = useState('');
   const [isEditingDocFromOtherSite, setIsEditingDocFromOtherSite] = useState(false);
-  const [intitialBaseUrl, setIntitialBaseUrl] = useState('');
   const [existsOnThisSite, setExistsOnThisSite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [baseUrlOptions, setBaseUrlOptions] = useState<{ value: string }[]>([]);
+  const [initialBaseUrlOptions, setInitialBaseUrlOptions] = useState<{ value: string }[]>([]);
 
   // Set initial values.
   const { data: site } = useGetSiteQuery(siteId);
-  if (site && site.base_urls.length === 1 && !intitialBaseUrl) {
-    setIntitialBaseUrl(site.base_urls[0].url);
+  if (site && site.base_urls.length > 0 && initialBaseUrlOptions.length === 0) {
+    const base_urls = [] as any[];
+    site.base_urls.map((base_url) => base_urls.push({ value: base_url.url }));
+    setBaseUrlOptions(base_urls);
+    setInitialBaseUrlOptions(base_urls);
   }
-  const initialValues = buildInitialValues(intitialBaseUrl, oldVersion);
+  const initialValues = buildInitialValues(oldVersion, baseUrlOptions);
   if (docTitle !== 'Add New Version' && oldVersion) {
     setDocTitle('Add New Version');
   }
+
+  const onBaseUrlSearch = (searchText: string) => {
+    if (searchText) {
+      const newOptions = baseUrlOptions.filter((option) =>
+        option.value.toUpperCase().includes(searchText.toUpperCase())
+      );
+      setBaseUrlOptions(newOptions);
+    } else {
+      setBaseUrlOptions(initialBaseUrlOptions);
+    }
+  };
 
   /* eslint-disable no-template-curly-in-string */
   const validateMessages = {
@@ -145,7 +165,7 @@ export function AddDocumentModal({
         setIsLoading(false);
         notification.error({
           message: error.data.detail,
-          description: 'Upload a new document or enter a new location.',
+          description: 'Upload a new document or enter a new location',
         });
       }
     } catch (error) {
@@ -181,10 +201,10 @@ export function AddDocumentModal({
       }
       if (responseData.exists_on_this_site) {
         setExistsOnThisSite(true);
-        displayDuplicateError('Document exists on this site!');
+        displayDuplicateError('Document exists on this site');
       } else {
         setExistsOnThisSite(false);
-        displayDuplicateError('Document exists on other site!');
+        displayDuplicateError('Document exists on other site');
       }
       setOldLocationSiteId(responseData.prev_location_site_id);
       setOldLocationDocId(responseData.prev_location_doc_id);
@@ -236,12 +256,16 @@ export function AddDocumentModal({
         </div>
 
         <div className="flex grow space-x-3">
-          <Form.Item className="grow" name="base_url" label="Base Url" rules={[{ type: 'url' }]}>
-            <Input type="url" />
+          <Form.Item label="Base Url" name="base_url" rules={[{ type: 'url' }]} className="grow">
+            <AutoComplete onSearch={onBaseUrlSearch} options={baseUrlOptions} />
           </Form.Item>
+        </div>
+        <div className="flex grow space-x-3">
           <Form.Item className="grow" name="link_text" label="Link Text">
             <Input />
           </Form.Item>
+        </div>
+        <div className="flex grow space-x-3">
           <Form.Item
             className="grow"
             name="url"
