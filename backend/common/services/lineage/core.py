@@ -62,6 +62,16 @@ class LineageService:
     async def clear_lineage_for_site(self, site_id: PydanticObjectId):
         self.logger.info(f"before clear_lineage_for_site {site_id}")
         await asyncio.gather(
+            RetrievedDocument.get_motor_collection().update_many(
+                {"locations.site_id": site_id},
+                {
+                    "$set": {
+                        "lineage_id": None,
+                        "is_current_version": False,
+                        "previous_doc_id": None,
+                    }
+                },
+            ),
             DocDocument.get_motor_collection().update_many(
                 {"locations.site_id": site_id},
                 {
@@ -78,6 +88,16 @@ class LineageService:
 
     async def clear_all_lineage(self):
         await asyncio.gather(
+            RetrievedDocument.get_motor_collection().update_many(
+                {},
+                {
+                    "$set": {
+                        "lineage_id": None,
+                        "is_current_version": False,
+                        "previous_doc_id": None,
+                    }
+                },
+            ),
             DocDocument.get_motor_collection().update_many(
                 {},
                 {

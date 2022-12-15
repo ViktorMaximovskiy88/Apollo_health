@@ -34,6 +34,7 @@ interface CompareDocs {
 
 interface LineageState {
   searchTerm: string;
+  groupBy: string;
   viewItems: ViewItem[];
   displayItems: LineageGroup[];
   domainItems: LineageDoc[];
@@ -52,6 +53,7 @@ export const lineageSlice = createSlice({
       showModal: false,
       fileKeys: [],
     },
+    groupBy: 'lineage_id',
     filters: {
       singularLineage: false,
       multipleLineage: false,
@@ -83,7 +85,6 @@ export const lineageSlice = createSlice({
         state.compareDocs.showModal = !state.compareDocs.showModal;
       }
     },
-
     toggleCollapsed: (state, action: PayloadAction<LineageGroup>) => {
       const lineageGroup = state.displayItems.find(
         (item) => item.lineageId === action.payload.lineageId
@@ -131,7 +132,7 @@ function groupItems(items: LineageDoc[]): LineageGroup[] {
 
       while (items.length > 0) {
         const child = ordered[0];
-        const parentIndex = items.findIndex((item) => item._id === child.previous_doc_id);
+        const parentIndex = items.findIndex((item) => item._id === child.previous_doc_doc_id);
         const [parent] = items.splice(parentIndex, 1);
         ordered.unshift(parent);
       }

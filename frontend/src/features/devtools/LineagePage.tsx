@@ -18,11 +18,11 @@ import { debounce } from 'lodash';
 import { LineageDocRow } from './LineageDocRow';
 import classNames from 'classnames';
 import { LineageDoc } from './types';
-import { useGetDocumentQuery } from '../retrieved_documents/documentsApi';
+import { useGetDocDocumentQuery } from '../doc_documents/docDocumentApi';
 import { EditorView } from '@codemirror/view';
 import { langs } from '@uiw/codemirror-extensions-langs';
 import { prettyDateTimeFromISO } from '../../common';
-import { PipelineStage } from '../retrieved_documents/types';
+import { PipelineStage } from '../../common/types';
 import { CompareModal } from '../doc_documents/lineage/DocCompareToPrevious';
 
 function DocActionMenu({ doc }: { doc: LineageDoc }) {
@@ -141,35 +141,38 @@ export function LineagePage() {
                   {item.name}
                 </div>
               </div>
-              <div className={classNames('my-2 space-x-2')}>
-                <Radio.Group
-                  onChange={(e: any) => {
-                    actions.setViewItemDisplay({ index: i, viewKey: e.target.value });
-                  }}
-                  defaultValue={currentView}
-                >
-                  <Radio.Button value="info">
-                    <InfoCircleOutlined />
-                  </Radio.Button>
-                  <Radio.Button value="file">
-                    <FileSearchOutlined />
-                  </Radio.Button>
-                  <Radio.Button value="text">
-                    <FileTextOutlined />
-                  </Radio.Button>
-                  <Radio.Button value="json">
-                    <CodeOutlined />
-                  </Radio.Button>
-                </Radio.Group>
-
-                <Dropdown.Button
-                  onClick={() => {
-                    enqueueDocTask('DocPipelineTask', { doc_doc_id: item._id });
-                  }}
-                  overlay={<DocActionMenu doc={item} />}
-                >
-                  Reprocess Doc
-                </Dropdown.Button>
+              <div className={classNames('m-2 flex justify-between')}>
+                <div>
+                  <Radio.Group
+                    onChange={(e: any) => {
+                      actions.setViewItemDisplay({ index: i, viewKey: e.target.value });
+                    }}
+                    defaultValue={currentView}
+                  >
+                    <Radio.Button value="info">
+                      <InfoCircleOutlined />
+                    </Radio.Button>
+                    <Radio.Button value="file">
+                      <FileSearchOutlined />
+                    </Radio.Button>
+                    <Radio.Button value="text">
+                      <FileTextOutlined />
+                    </Radio.Button>
+                    <Radio.Button value="json">
+                      <CodeOutlined />
+                    </Radio.Button>
+                  </Radio.Group>
+                </div>
+                <div>
+                  <Dropdown.Button
+                    onClick={() => {
+                      enqueueDocTask('DocPipelineTask', { doc_doc_id: item._id });
+                    }}
+                    overlay={<DocActionMenu doc={item} />}
+                  >
+                    Reprocess Doc
+                  </Dropdown.Button>
+                </div>
               </div>
 
               <DocDocumentViewer item={item} viewKey={currentView} />
@@ -192,16 +195,16 @@ export function DocDocumentViewer({ item, viewKey }: { item: LineageDoc; viewKey
     <div className="h-full overflow-auto">
       {viewKey === 'json' && <DocumentJsonView docId={item._id} />}
       {viewKey === 'info' && <DocDocumentView docId={item._id} />}
-      {viewKey === 'file' && <FileTypeViewer doc={item} docId={item._id} />}
-      {viewKey === 'text' && <ExtractedTextLoader docId={item._id} />}
+      {viewKey === 'file' && <FileTypeViewer doc={item} docId={item.retrieved_document_id} />}
+      {viewKey === 'text' && <ExtractedTextLoader docId={item.retrieved_document_id} />}
     </div>
   );
 }
 
 export function DocumentJsonView({ docId }: { docId: string }) {
-  const { data } = useGetDocumentQuery(docId);
+  const { data } = useGetDocDocumentQuery(docId);
   // blacklist/nuke some _useless_ props
-  const doc = { ...data, doc_vectors: ['redacted'] };
+  const doc = { ...data };
   return (
     <CodeMirror
       width="100%"
@@ -247,7 +250,7 @@ function PipelineStageDisplay({ stage }: { stage: PipelineStage | undefined }) {
 }
 
 export function DocDocumentView({ docId }: { docId: string }) {
-  const { data: doc } = useGetDocumentQuery(docId);
+  const { data: doc } = useGetDocDocumentQuery(docId);
   return (
     <div>
       <Section header="Document Info">

@@ -13,6 +13,7 @@ interface TextFileViewerPropTypes {
 }
 
 export function ExtractedTextLoader({ docId }: { docId: string }) {
+  console.log(docId, 'ExtractedTextLoader');
   const { data: viewer } = useGetTextViewerUrlQuery(docId);
   return <TextFileViewer url={viewer?.url} />;
 }

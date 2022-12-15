@@ -12,7 +12,8 @@ class LineageDoc(BaseModel):
     name: str | None
     document_type: str | None
     final_effective_date: datetime | None
-    previous_doc_id: PydanticObjectId | None
+    previous_doc_doc_id: PydanticObjectId | None
+    retrieved_document_id: PydanticObjectId | None
     is_current_version: bool | None
     lineage_id: PydanticObjectId | None
     file_extension: str | None
@@ -33,7 +34,7 @@ class DocumentAnalysis(BaseDocument):
     retrieved_document_id: Indexed(PydanticObjectId)  # type: ignore
     doc_document_id: Indexed(PydanticObjectId)  # type: ignore
     site_id: Indexed(PydanticObjectId)  # type: ignore
-    lineage_id: PydanticObjectId | None = None
+    lineage_id: Indexed(PydanticObjectId) | None = None
     is_current_version: bool = False
 
     name: str | None = None
@@ -55,7 +56,10 @@ class DocumentAnalysis(BaseDocument):
     document_type: str | None = None
     final_effective_date: datetime | None = None
     file_size: int | None = None
+    doc_vectors: list[list[float]] = []
+    token_count: int = 0
 
+    # tags
     focus_therapy_tags: list[int] = []
     ref_therapy_tags: list[int] = []
     focus_indication_tags: list[int] = []
@@ -77,9 +81,6 @@ class DocumentAnalysis(BaseDocument):
     element: DocumentAttrs | None = None
     parent: DocumentAttrs | None = None
     siblings: DocumentAttrs | None = None
-
-    doc_vectors: list[list[float]] = []
-    token_count: int = 0
 
     created_at: datetime | None = None
     updated_at: datetime | None = None
