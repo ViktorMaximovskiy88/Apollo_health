@@ -183,6 +183,9 @@ class DocumentUpdater:
 
             # Can be removed after text added to older docs
             doc_document.text_checksum = retrieved_document.text_checksum
+            doc_document.doc_vectors = retrieved_document.doc_vectors
+            doc_document.file_size = retrieved_document.file_size
+            doc_document.token_count = retrieved_document.token_count
             doc_document.set_final_effective_date()
             await doc_document.save()
         else:
