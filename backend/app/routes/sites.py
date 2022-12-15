@@ -269,23 +269,25 @@ async def get_site_doc_docs(
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
-    current_task: SiteScrapeTask | None = await SiteScrapeTask.find_one(
-        {
-            "site_id": site_id,
-            "status": {"$in": CollectionService.queued_statuses},
-        },
-        sort=[("start_time", -1)],
-    )
-
     (match_filter, sort_by) = _prepare_table_query(sorts, filters)
 
     retrieved_document_ids = []
-    if current_task and current_task.collection_method == CollectionMethod.Manual:
-        retrieved_document_ids = current_task.retrieved_document_ids
-    elif scrape_task_id:
+    if scrape_task_id:
         scrape_task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
         if scrape_task and scrape_task.status != TaskStatus.CANCELED:
             retrieved_document_ids = scrape_task.retrieved_document_ids
+    else:
+        # If user is running manual collection but navigates to /sites/X/doc-documents,
+        # filter docs for active manual task.
+        current_task: SiteScrapeTask | None = await SiteScrapeTask.find_one(
+            {
+                "site_id": site_id,
+                "status": {"$in": CollectionService.queued_statuses},
+            },
+            sort=[("start_time", -1)],
+        )
+        if current_task and current_task.collection_method == CollectionMethod.Manual:
+            retrieved_document_ids = current_task.retrieved_document_ids
 
     data, total = await get_site_doc_doc_table(
         site_id,

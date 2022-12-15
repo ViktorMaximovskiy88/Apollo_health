@@ -7,13 +7,15 @@ import {
   FileUnknownOutlined,
 } from '@ant-design/icons';
 import { SiteDocDocument } from '../types';
-import { WorkItemOption } from '../../collections/types';
+import { SiteScrapeTask, WorkItemOption } from '../../collections/types';
 import { useContext } from 'react';
 import { ValidationButtonsContext, ValidationButtonsProvider } from './ManualCollectionContext';
 import { useUpdateSelected } from './useUpdateSelected';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useGetSiteQuery } from '../../sites/sitesApi';
 import { TaskStatus } from '../../../common/scrapeTaskStatus';
+import { useGetScrapeTasksForSiteQuery } from '../../collections/siteScrapeTasksApi';
+import { initialState } from '../../collections/collectionsSlice';
 
 const Found = () => {
   const updateSelected = useUpdateSelected();
@@ -378,11 +380,48 @@ function ValidationButtons() {
   const { isLoading } = useContext(ValidationButtonsContext) ?? {};
   const params = useParams();
   const siteId = params.siteId;
+  const [searchParams] = useSearchParams();
+  const scrapeTaskId = searchParams.get('scrape_task_id');
+
+  // Only show buttons if scrape is active and site is manual
+  const mostRecentTask = {
+    limit: 1,
+    skip: 0,
+    sortInfo: initialState.table.sort,
+    filterValue: initialState.table.filter,
+  };
+
+  // If scrapetaskid exists and is not most recent scrape task,
+  // do not show validation button.
+  const showValidationButtons = async () => {
+    if (!scrapeTaskId) return;
+    const { siteId } = useParams();
+    const { data }: { data?: { data?: SiteScrapeTask[] } } = useGetScrapeTasksForSiteQuery({
+      ...mostRecentTask,
+      siteId,
+    });
+    const siteScrapeTasks = data?.data;
+    if (!siteScrapeTasks) return;
+    const [siteScrapeTask] = siteScrapeTasks;
+    if (siteScrapeTask._id !== scrapeTaskId) {
+      return false;
+    } else {
+      return true;
+    }
+  };
+
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
   const { data: site } = useGetSiteQuery(siteId);
   if (!site) return null;
 
   if (site.collection_method === 'MANUAL' && activeStatuses.includes(site.last_run_status)) {
+    if (scrapeTaskId) {
+      const showValidation = await showValidationButtons();
+      if (showValidation === false) {
+        return null;
+      }
+    }
+
     return (
       <div className="flex space-x-1">
         <Found />

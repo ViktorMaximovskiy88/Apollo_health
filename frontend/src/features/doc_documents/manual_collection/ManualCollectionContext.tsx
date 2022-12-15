@@ -31,6 +31,7 @@ const useWorkList = (): { workList?: WorkItem[] } => {
   const siteScrapeTask = data?.data?.[0];
   if (!siteScrapeTask) return {};
   const { work_list: workList } = siteScrapeTask;
+
   return { workList };
 };
 
@@ -46,6 +47,7 @@ const useWorkItem = (docId: string): WorkItem | undefined => {
   if (!('work_list' in siteScrapeTask)) return;
   const { work_list: workList } = siteScrapeTask;
   const workItem = workList.find((item) => item.document_id === docId);
+
   return workItem;
 };
 
@@ -59,11 +61,9 @@ export const ValidationButtonsProvider = ({
   children: ReactNode;
 }) => {
   const docId = doc._id;
-
   const [isLoading, setIsLoading] = useState(false);
   const { workList } = useWorkList();
   const workItem = useWorkItem(docId);
-
   const value = {
     isLoading,
     setIsLoading,
@@ -73,6 +73,7 @@ export const ValidationButtonsProvider = ({
     workItem,
     handleNewVersion,
   };
+
   return (
     <ValidationButtonsContext.Provider value={value}>{children}</ValidationButtonsContext.Provider>
   );
