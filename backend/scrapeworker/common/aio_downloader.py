@@ -1,6 +1,7 @@
 import os
 import ssl
 import tempfile
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from random import shuffle
 from ssl import SSLContext
@@ -168,6 +169,7 @@ class AioDownloader:
         temp.write(doc)
         temp.seek(0)
 
+    @asynccontextmanager
     async def try_download_to_tempfile(
         self,
         download: DownloadContext,

@@ -181,8 +181,9 @@ class ScrapeWorker:
         )
         scrape_method_config = self.site.scrape_method_configuration
         # prob our fail
-        async for (temp_path, checksum) in self.downloader.try_download_to_tempfile(
-            download, proxies
+        async with self.downloader.try_download_to_tempfile(download, proxies) as (
+            temp_path,
+            checksum,
         ):
 
             # TODO temp until we undo download context
@@ -195,14 +196,14 @@ class ScrapeWorker:
                 self.log.error(message)
                 link_retrieved_task.error_message = message
                 await link_retrieved_task.save()
-                break
+                return
 
             if download.mimetype not in supported_mimetypes:
                 message = f"Mimetype not supported. mimetype={download.mimetype}"
                 self.log.error(message)
                 link_retrieved_task.error_message = message
                 await link_retrieved_task.save()
-                break
+                return
 
             # TODO can we separate the concept of extensions to scrape on
             # and ext we expect to download? for now just html
@@ -214,7 +215,7 @@ class ScrapeWorker:
                 self.log.error(message)
                 link_retrieved_task.error_message = message
                 await link_retrieved_task.save()
-                break
+                return
 
             link_retrieved_task.file_metadata = FileMetadata(checksum=checksum, **download.dict())
 
@@ -229,7 +230,7 @@ class ScrapeWorker:
                 self.log.error(message)
                 link_retrieved_task.error_message = message
                 await link_retrieved_task.save()
-                break
+                return
 
             dest_path = f"{checksum}.{download.file_extension}"
 
@@ -242,7 +243,7 @@ class ScrapeWorker:
                 self.log.error(message)
                 link_retrieved_task.error_message = message
                 await link_retrieved_task.save()
-                break
+                return
 
             document = None
 
