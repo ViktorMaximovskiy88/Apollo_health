@@ -1,22 +1,25 @@
 import { Button, notification } from 'antd';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ButtonLink } from '../../components/ButtonLink';
 import { WorkQueue } from './types';
-import { useGetWorkQueueCountsQuery, useGetWorkQueuesQuery } from './workQueuesApi';
+import { useGetWorkQueuesQuery, useLazyGetWorkQueueCountsQuery } from './workQueuesApi';
 import { MainLayout } from '../../components';
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { TypeColumn } from '@inovua/reactdatagrid-community/types';
 import { useSelector } from 'react-redux';
 import { workQueueTableState } from './workQueueSlice';
 import { useTakeNextWorkItemMutation } from '../doc_documents/docDocumentApi';
+import { useInterval } from '../../common/hooks';
 
 export function WorkQueueHomePage() {
   const { data: workQueues } = useGetWorkQueuesQuery();
-  const { data: workQueueCounts } = useGetWorkQueueCountsQuery(undefined, {
-    pollingInterval: 5000,
-    refetchOnMountOrArgChange: true,
-  });
+  const [getCounts, { data: workQueueCounts }] = useLazyGetWorkQueueCountsQuery();
+  const { watermark } = useInterval(5000);
+  useEffect(() => {
+    getCounts();
+  }, [watermark, getCounts]);
+
   const [takeNextWorkItem] = useTakeNextWorkItemMutation();
   const navigate = useNavigate();
   const tableState = useSelector(workQueueTableState);
