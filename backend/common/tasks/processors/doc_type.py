@@ -31,7 +31,9 @@ class DocTypeTaskProcessor(TaskProcessor):
         if not doc:
             raise Exception(f"doc_doc {task.doc_doc_id} not found")
 
-        if doc.classification_status == ApprovalStatus.APPROVED:
+        if doc.classification_status == ApprovalStatus.APPROVED or doc.has_user_edit(
+            "document_type"
+        ):
             self.logger.info(f"{doc.id} classification_status={doc.classification_status} skipping")
             return
 

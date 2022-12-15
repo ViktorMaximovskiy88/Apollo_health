@@ -35,7 +35,8 @@ class DateTaskProcessor(TaskProcessor):
         if not doc:
             raise Exception(f"doc_doc {task.doc_doc_id} not found")
 
-        if doc.classification_status == ApprovalStatus.APPROVED:
+        # TODO has_date_user_edits currently means it has to be all dates reviewed; one means all
+        if doc.classification_status == ApprovalStatus.APPROVED or doc.has_date_user_edits():
             self.logger.info(f"{doc.id} classification_status={doc.classification_status} skipping")
             return
 

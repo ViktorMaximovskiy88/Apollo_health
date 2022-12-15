@@ -121,6 +121,20 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
                 return True
         return False
 
+    def has_date_user_edits(self):
+        return self.has_user_edit(
+            "effective_date",
+            "end_date",
+            "last_updated_date",
+            "last_reviewed_date",
+            "next_review_date",
+            "next_update_date",
+            "published_date",
+        )
+
+    def has_tag_user_edits(self):
+        return self.has_user_edit("therapy_tags", "indication_tags")
+
     class Settings:
         indexes = [
             [

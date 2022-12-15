@@ -41,7 +41,7 @@ class TagTaskProcessor(TaskProcessor):
         if not doc:
             raise Exception(f"dqoc_doc {task.doc_doc_id} not found")
 
-        if doc.classification_status == ApprovalStatus.APPROVED:
+        if doc.classification_status == ApprovalStatus.APPROVED or doc.has_tag_user_edits():
             self.logger.info(f"{doc.id} classification_status={doc.classification_status} skipping")
             return
 
