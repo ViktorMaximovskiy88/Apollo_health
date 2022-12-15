@@ -86,6 +86,8 @@ class BaseDocDocument(BaseModel):
     tags: list[str] = []
     pipeline_stages: DocPipelineStages | None
 
+    user_edited_fields: list[str] = []
+
 
 class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixins):
     locations: list[DocDocumentLocation] = []
@@ -175,6 +177,8 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     content_extraction_task_id: PydanticObjectId | None = None
 
     locations: list[DocDocumentLocation] | None
+
+    user_edited_fields: list[str] = []
 
 
 class ClassificationUpdateDocDocument(BaseModel):
