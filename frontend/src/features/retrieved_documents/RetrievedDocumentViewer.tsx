@@ -23,7 +23,7 @@ export function FileTypeViewer({ docId, doc, onPageChange = () => {} }: PropType
   console.log(docId, doc, 'test');
   return ['pdf', 'html'].includes(doc.file_extension) ? (
     <PDFFileLoader docId={docId} onPageChange={onPageChange} />
-  ) : doc.file_extension === 'xlsx' ? (
+  ) : ['xlsx', 'xls', 'doc'].includes(doc.file_extension) ? (
     <OfficeFileLoader docId={docId} />
   ) : doc.file_extension === 'docx' ? (
     <GoogleDocLoader docId={docId} />

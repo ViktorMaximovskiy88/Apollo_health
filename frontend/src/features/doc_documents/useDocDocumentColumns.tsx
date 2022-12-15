@@ -1,6 +1,7 @@
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Tag } from 'antd';
+import { uniq } from 'lodash';
 import { useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { docDocumentTableState } from './docDocumentsSlice';
@@ -76,7 +77,7 @@ export const useColumns = ({
       header: 'Link Text',
       name: 'locations.link_text',
       render: ({ data: docDocument }: { data: DocDocument }) => {
-        const linkTexts = docDocument.locations.map((location) => location.link_text);
+        const linkTexts = uniq(docDocument.locations.map((location) => location.link_text));
         return <>{linkTexts.join(', ')}</>;
       },
       minWidth: 300,

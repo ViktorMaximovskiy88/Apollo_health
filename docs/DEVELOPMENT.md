@@ -29,7 +29,7 @@ apt-get install -y locales make build-essential libssl-dev zlib1g-dev \
     libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev git \
     neovim htop lsof sudo software-properties-common poppler-utils gcc \
     gfortran libblas-dev liblapack-dev \
-    g++ protobuf-compiler libprotobuf-dev libmagic1
+    g++ protobuf-compiler libprotobuf-dev libmagic1 antiword
 
 # Install Docker
 curl -fsSL https://get.docker.com | sudo sh
@@ -62,7 +62,7 @@ xcode-select --install
 # brew is apt more or less
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-brew install gnupg coreutils awscli protobuf libmagic swig xpdf imagemagick@6
+brew install gnupg coreutils awscli protobuf libmagic swig xpdf imagemagick@6 antiword
 
 # Install Docker
 brew install docker

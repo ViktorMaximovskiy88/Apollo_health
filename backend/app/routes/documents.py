@@ -220,7 +220,9 @@ async def upload_document(file: UploadFile, from_site_id: PydanticObjectId) -> d
         parsed_content: dict[str, Any] | None = await parse_by_type(temp_path, download)
         if not parsed_content:
             raise Exception("Count not extract file contents")
-        await get_tags(parsed_content, focus_configs=[])
+        await get_tags(
+            parsed_content, focus_configs=site.scrape_method_configuration.focus_section_configs
+        )
 
         text_checksum: str = await text_handler.save_text(parsed_content["text"])
         text_checksum_documents: List[RetrievedDocument] = await RetrievedDocument.find(

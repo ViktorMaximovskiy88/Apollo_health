@@ -134,7 +134,9 @@ export function CollectionSettings({ initialValues }: CollectionSettingsPropType
               <DocumentTypeThreshold />
               <LineageThreshold />
             </>
-          ) : null
+          ) : (
+            <FocusTagConfig initialValues={initialValues} />
+          )
         }
       </Form.Item>
     </>

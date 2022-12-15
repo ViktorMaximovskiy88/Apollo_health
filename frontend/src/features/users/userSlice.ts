@@ -3,7 +3,7 @@ import { RootState } from '../../app/store';
 
 export const initialState = {
   table: {
-    sort: { name: 'full_name', dir: -1 as 1 | -1 | 0 },
+    sort: { name: 'full_name', dir: 1 as 1 | -1 | 0 },
     filter: [
       { name: 'full_name', operator: 'contains', type: 'string', value: '' },
       { name: 'email', operator: 'contains', type: 'string', value: '' },

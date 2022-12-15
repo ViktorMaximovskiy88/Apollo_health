@@ -4,7 +4,7 @@ from backend.common.models.doc_document import DocDocument
 from backend.common.models.site import FocusSectionConfig, ScrapeMethodConfiguration
 from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.document_tagging.taggers import Taggers, indication_tagger, therapy_tagger
-from backend.scrapeworker.file_parsers import docx, html, pdf, text, xlsx
+from backend.scrapeworker.file_parsers import doc, docx, html, pdf, text, xls, xlsx
 
 __all__ = ["docx", "xlsx", "pdf", "html", "text"]
 taggers = Taggers(indication=indication_tagger, therapy=therapy_tagger)
@@ -16,8 +16,12 @@ def get_parser_by_ext(file_extension: str):
         ParserClass = pdf.PdfParse
     elif file_extension == "docx":
         ParserClass = docx.DocxParser
+    elif file_extension == "doc":
+        ParserClass = doc.DocParser
     elif file_extension == "xlsx":
         ParserClass = xlsx.XlsxParser
+    elif file_extension == "xls":
+        ParserClass = xls.XlsParser
     elif file_extension == "html":
         ParserClass = html.HtmlParser
     elif file_extension in ["txt", "csv"]:
