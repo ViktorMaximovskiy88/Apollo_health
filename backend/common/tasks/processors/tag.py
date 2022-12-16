@@ -76,8 +76,11 @@ class TagTaskProcessor(TaskProcessor):
         else:
             doc.pipeline_stages = DocPipelineStages(tag=current_stage)
 
-        doc.therapy_tags = therapy_tags
-        doc.indication_tags = indication_tags
+        if not doc.has_user_edit("therapy_tags"):
+            doc.therapy_tags = therapy_tags
+
+        if not doc.has_user_edit("indication_tags"):
+            doc.indication_tags = indication_tags
 
         new_therapy_tags, new_indication_tags = get_tag_diff(
             current_indication_tags=doc.indication_tags,
