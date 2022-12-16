@@ -13,16 +13,18 @@ import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
 import { PayerFamily } from './types';
 import { CloseOutlined, WarningFilled } from '@ant-design/icons';
 
-interface PayerFamilyCreateDrawerPropTypes {
-  location: DocDocumentLocation | undefined;
+interface PayerFamilyEditDrawerPropTypes {
+  location?: DocDocumentLocation | undefined;
   payer_family_id: string;
   open?: boolean;
   onClose: () => void;
   onSave: (updatedPayerFamily: PayerFamily) => void;
+  editPayerFromTable?: boolean;
+  mask?: boolean;
 }
 
-export const PayerFamilyEditDrawer = (props: PayerFamilyCreateDrawerPropTypes) => {
-  const { location, onClose, onSave, open, payer_family_id } = props;
+export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => {
+  const { location, onClose, onSave, open, payer_family_id, editPayerFromTable, mask } = props;
   const [form] = useForm();
   const { data: payerFamily } = useGetPayerFamilyQuery(payer_family_id, { skip: !payer_family_id });
   const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
@@ -60,24 +62,30 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyCreateDrawerPropTypes) =
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
       const payerFamily = await updatePayerFamily({ ...values, _id: payer_family_id }).unwrap();
+
       onSave(payerFamily);
       form.resetFields();
     },
     [updatePayerFamily, payer_family_id, onSave, form]
   );
+  console.log('drawer', open, payer_family_id, payerFamily);
 
-  if (!location || !payerFamily) {
+  if (editPayerFromTable) {
+    if (!payerFamily) {
+      return <></>;
+    }
+  } else if (!payerFamily || !location) {
     return <></>;
   }
 
   return (
     <Drawer
       open={open}
-      title={<>Edit Payer Family for {location.site_name}</>}
+      title={<>Edit Payer Family {location?.site_name ? `for ${location.site_name}` : ''}</>}
       width="30%"
       placement="left"
       closable={false}
-      mask={false}
+      mask={mask}
       extra={
         <Button type="text" onClick={onClose}>
           <CloseOutlined />
@@ -94,19 +102,24 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyCreateDrawerPropTypes) =
         validateTrigger={['onBlur']}
         onFinish={onFinish}
       >
-        <div className="flex">
-          <div className="flex-1 mt-2 mb-4">
+        {location?.site_name ? (
+          <>
             <h3>Site</h3>
-            <div>{location.site_name}</div>
-          </div>
-        </div>
+            <div className="flex">
+              <div className="flex-1 mt-2 mb-4">
+                <div>{location?.site_name}</div>
+              </div>
+            </div>
+          </>
+        ) : null}
+
         <Form.Item
           label="Name"
           name="name"
           className="w-96 mr-5"
           rules={[
             { required: true, message: 'Please input a payer family name' },
-            mustBeUniqueName(getPayerFamilyByName, payerFamily.name),
+            mustBeUniqueName(getPayerFamilyByName, payerFamily?.name),
           ]}
         >
           <Input />
