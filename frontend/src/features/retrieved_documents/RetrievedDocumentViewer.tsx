@@ -1,10 +1,4 @@
-import {
-  OfficeFileLoader,
-  TextFileLoader,
-  CsvFileLoader,
-  HtmlFileLoader,
-  GoogleDocLoader,
-} from '../../components';
+import { OfficeFileLoader, TextFileLoader, CsvFileLoader, GoogleDocLoader } from '../../components';
 
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
@@ -29,9 +23,9 @@ export function FileTypeViewer({ docId, doc, onPageChange = () => {} }: PropType
 
   return ['pdf', 'html'].includes(doc.file_extension) ? (
     <PDFFileLoader docId={docId} onPageChange={onPageChange} />
-  ) : ['xlsx', 'xls', 'doc'].includes(doc.file_extension) ? (
+  ) : ['xlsx', 'xls'].includes(doc.file_extension) ? (
     <OfficeFileLoader docId={docId} />
-  ) : doc.file_extension === 'docx' ? (
+  ) : ['docx', 'doc'].includes(doc.file_extension) ? (
     <GoogleDocLoader docId={docId} />
   ) : doc.file_extension === 'csv' ? (
     <CsvFileLoader docId={docId} />
