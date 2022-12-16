@@ -92,7 +92,7 @@ export const extractionTasksApi = createApi({
 });
 
 export const {
-  useGetExtractionTasksForDocQuery,
+  useLazyGetExtractionTasksForDocQuery,
   useGetExtractionTaskResultsQuery,
   useLazyGetExtractionTaskResultsQuery,
   useGetExtractionTaskQuery,

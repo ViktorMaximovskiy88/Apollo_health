@@ -1,7 +1,7 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link, useParams } from 'react-router-dom';
 import {
@@ -15,7 +15,8 @@ import { prettyDateFromISO, prettyDateTimeFromISO } from '../../common';
 import { RetrievedDocument, DocumentTypes } from '../retrieved_documents/types';
 import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
-import { useGetDocDocumentsQuery } from '../doc_documents/docDocumentApi';
+import { useLazyGetDocDocumentsQuery } from '../doc_documents/docDocumentApi';
+import { useInterval } from '../../common/hooks';
 
 const columns = [
   {
@@ -91,8 +92,10 @@ const useControlledPagination = () => {
 export function ExtractedDocumentsTable() {
   const params = useParams();
   const siteId = params.siteId;
-  const { data } = useGetDocDocumentsQuery(
-    {
+  const [getDocuments, { data }] = useLazyGetDocDocumentsQuery();
+  const { watermark } = useInterval(5000);
+  useEffect(() => {
+    getDocuments({
       limit: 5000,
       skip: 0,
       sortInfo: { name: 'name', dir: 1 },
@@ -100,9 +103,8 @@ export function ExtractedDocumentsTable() {
         { name: 'locations.site_id', operator: 'eq', type: 'string', value: siteId },
         { name: 'translation_id', operator: 'notEmpty', type: 'string', value: null },
       ],
-    },
-    { pollingInterval: 5000 }
-  );
+    });
+  }, [watermark, getDocuments, siteId]);
   const documents = data ? data.data : [];
 
   const filterProps = useDataTableFilter(
