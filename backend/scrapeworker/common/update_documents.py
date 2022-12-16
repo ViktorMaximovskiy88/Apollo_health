@@ -6,7 +6,6 @@ from async_lru import alru_cache
 from beanie.odm.operators.update.general import Set
 
 from backend.app.utils.logger import Logger, create_and_log
-from backend.common.core.enums import ApprovalStatus
 from backend.common.models.doc_document import DocDocument, IndicationTag, TherapyTag
 from backend.common.models.document import (
     RetrievedDocument,
@@ -164,19 +163,7 @@ class DocumentUpdater:
             for attr in check_frozen_attrs:
                 doc_document.set_unedited_attr(attr, getattr(retrieved_document, attr))
 
-            # if not edited for therapy_tags or indication_tags just wholesale assign
-            # if edited for therapy_tags or indication_tags just append diff
-            has_tag_updates = len(new_therapy_tags + new_indicate_tags) > 0
-            user_edited_tags = doc_document.has_user_edit("therapy_tags", "indication_tags")
-
-            if doc_document.has_user_edit("therapy_tags"):
-                doc_document.therapy_tags += new_therapy_tags
-
-            if doc_document.has_user_edit("indication_tags"):
-                doc_document.indication_tags += new_indicate_tags
-
-            if has_tag_updates and user_edited_tags:
-                doc_document.classification_status = ApprovalStatus.QUEUED
+            doc_document = doc_document.process_tag_changes(new_therapy_tags, new_indicate_tags)
 
             if not doc_document.has_user_edit("document_type"):
                 doc_document.doc_type_match = retrieved_document.doc_type_match

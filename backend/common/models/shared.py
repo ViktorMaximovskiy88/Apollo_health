@@ -18,7 +18,9 @@ class TherapyTag(BaseModel):
     focus: bool = False
     key: bool = False
     rxcui: str | None = None
+    created_at: datetime | None
     update_status: TagUpdateStatus | None = None
+    updated_at: datetime | None
     text_area: tuple[int, int] | None = None
 
     def __hash__(self):
@@ -38,7 +40,9 @@ class IndicationTag(BaseModel):
     page: int = 0
     focus: bool = False
     key: bool = False
+    created_at: datetime | None
     update_status: TagUpdateStatus | None = None
+    updated_at: datetime | None
     text_area: tuple[int, int] | None = None
 
     def __hash__(self):
