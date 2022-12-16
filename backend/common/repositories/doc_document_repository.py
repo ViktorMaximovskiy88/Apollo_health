@@ -56,11 +56,13 @@ class DocDocumentRepository:
         for idx, tag in enumerate(doc.therapy_tags):
             if updates.therapy_tags[idx] and tag.focus != updates.therapy_tags[idx].focus:
                 current_user_edited_fields.append("therapy_tag_focus")
+                current_user_edited_fields.append("therapy_tag")
                 break
 
         for idx, tag in enumerate(doc.indication_tags):
             if updates.indication_tags[idx] and tag.focus != updates.indication_tags[idx].focus:
                 current_user_edited_fields.append("indication_tag_focus")
+                current_user_edited_fields.append("indication_tag")
                 break
 
         # editable dates
