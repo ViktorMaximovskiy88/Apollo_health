@@ -85,7 +85,6 @@ class BaseDocDocument(BaseModel):
 
     tags: list[str] = []
     pipeline_stages: DocPipelineStages | None
-    user_edited_fields: list[str] = []
 
     # from rt doc, lets just do these now...
     # TODO if we gen analysis doc earlier, this doesnt have to live here
