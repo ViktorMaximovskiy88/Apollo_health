@@ -210,25 +210,24 @@ class LineageService:
                 pending_item = await create_lineage(pending_item)
                 lineaged_items.append(pending_item)
 
-        self.logger.info(f"before _version_matched {len(lineaged_items)}")
         await self._version_matched(lineaged_items)
-        self.logger.info(f"after _version_matched {len(lineaged_items)}")
 
     def sort_matched(self, items: list[DocumentAnalysis]):
         items.sort(key=lambda x: x.final_effective_date or x.year_part or 0)
         return items
 
     async def compare_tags(
-        self, doc: RetrievedDocument, doc_doc: DocDocument, prev_doc: RetrievedDocument
+        self, doc: RetrievedDocument, doc_doc: DocDocument, prev_doc_doc: DocDocument
     ) -> tuple[RetrievedDocument, DocDocument]:
-        self.logger.info(f"'before compare tags {doc_doc.id}")
-        ther_tags, indi_tags = await self.tag_compare.execute(doc, prev_doc)
+
+        therapy_tags, indication_tags = await self.tag_compare.execute(doc_doc, prev_doc_doc)
         self.logger.info(f"'after compare tags {doc_doc.id}")
-        doc.therapy_tags = ther_tags
-        doc.indication_tags = indi_tags
-        doc_doc.therapy_tags = ther_tags
-        doc_doc.indication_tags = indi_tags
-        # TODO need to think about saving here
+        # TODO will be removed with rtdoc banishment
+        doc.therapy_tags = therapy_tags
+        doc.indication_tags = indication_tags
+        # NOTE the result here are TagUpdate Status changes,  _not_ new tags...
+        doc_doc.therapy_tags = therapy_tags
+        doc_doc.indication_tags = indication_tags
         doc, doc_doc = await asyncio.gather(doc.save(), doc_doc.save())
         return doc, doc_doc
 
@@ -243,9 +242,10 @@ class LineageService:
                     version_doc(match, is_last, prev_doc),
                     version_doc_doc(match, is_last, prev_doc_doc),
                 )
-                # TODO what about our tag bits?
+
                 if is_last and prev_doc:
                     doc, doc_doc = await self.compare_tags(doc, doc_doc, prev_doc)
+
                 prev_doc = doc
                 prev_doc_doc = doc_doc
 
