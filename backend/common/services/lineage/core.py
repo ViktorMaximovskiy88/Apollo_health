@@ -243,8 +243,8 @@ class LineageService:
                     version_doc_doc(match, is_last, prev_doc_doc),
                 )
 
-                if is_last and prev_doc:
-                    doc, doc_doc = await self.compare_tags(doc, doc_doc, prev_doc)
+                if is_last and prev_doc_doc:
+                    doc, doc_doc = await self.compare_tags(doc, doc_doc, prev_doc_doc)
 
                 prev_doc = doc
                 prev_doc_doc = doc_doc
