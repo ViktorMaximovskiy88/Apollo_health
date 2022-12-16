@@ -17,6 +17,7 @@ const useInterval = (interval: number, active: boolean = true, future?: Promise<
   function startInterval() {
     setActive(true);
     timer.current = setInterval(() => {
+      if (document.hidden) return;
       setWatermark(new Date());
     }, interval);
   }
@@ -32,7 +33,18 @@ const useInterval = (interval: number, active: boolean = true, future?: Promise<
     } else {
       stopInterval();
     }
-    return () => stopInterval();
+
+    function onVisibilityChange() {
+      if (!document.hidden) {
+        if (isActive) setWatermark(new Date());
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      stopInterval();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [isActive]);
 
   return {
