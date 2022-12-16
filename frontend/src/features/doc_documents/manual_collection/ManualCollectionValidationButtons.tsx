@@ -412,7 +412,10 @@ function ValidationButtons() {
   if (!site) return null;
 
   if (site.collection_method === 'MANUAL' && activeStatuses.includes(site.last_run_status)) {
-    if (siteId && scrapeTaskId) {
+    if (!scrapeTaskId) {
+      return null;
+    }
+    if (siteId) {
       const showValidation = ShowValidationButtons(siteId, scrapeTaskId);
       if (showValidation === false) {
         return null;
