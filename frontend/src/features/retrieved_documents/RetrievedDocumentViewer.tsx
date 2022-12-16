@@ -20,7 +20,6 @@ interface PropTypes {
 
 export function FileTypeViewer({ docId, doc, onPageChange = () => {} }: PropTypes) {
   if (!doc || !docId) return null;
-  console.log(docId, doc, 'test');
   return ['pdf', 'html'].includes(doc.file_extension) ? (
     <PDFFileLoader docId={docId} onPageChange={onPageChange} />
   ) : ['xlsx', 'xls'].includes(doc.file_extension) ? (
