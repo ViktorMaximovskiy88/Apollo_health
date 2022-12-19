@@ -18,8 +18,8 @@ import { useAppDispatch } from '../../../app/store';
 import { useSelector } from 'react-redux';
 import { docDocumentTableState, setDocDocumentTableFilter } from '../docDocumentsSlice';
 import { ButtonLink } from '../../../components';
-import { Popconfirm } from 'antd';
-import { useMemo } from 'react';
+import { Button, Popconfirm } from 'antd';
+import { Dispatch, SetStateAction, useMemo } from 'react';
 import { CopyDocumentFamily } from './CopyDocumentFamily';
 import NumberFilter from '@inovua/reactdatagrid-community/NumberFilter';
 import { useCurrentUser } from '../../../common/hooks/use-current-user';
@@ -30,11 +30,15 @@ export const createColumns = ({
   dispatch,
   docDocumentFilters,
   deleteDocumentFamily,
+  setDocFamilyId,
+  setOpenEditDrawer,
   isAdminUser,
 }: {
   siteOptions: (search: string) => Promise<{ label: string; value: string }[]>;
   siteNamesById: { [id: string]: string };
   dispatch: any;
+  setDocFamilyId: Dispatch<SetStateAction<string>>;
+  setOpenEditDrawer: Dispatch<SetStateAction<boolean>>;
   docDocumentFilters: TypeFilterValue;
   deleteDocumentFamily: (
     documentFamily: Pick<DocumentFamily, '_id'> & Partial<DocumentFamily>
@@ -47,7 +51,17 @@ export const createColumns = ({
     defaultFlex: 1,
     minWidth: 200,
     render: ({ data: docFam }: { data: DocumentFamily }) => {
-      return <Link to={`/document-family/${docFam._id}`}>{docFam.name}</Link>;
+      return (
+        <Button
+          onClick={() => {
+            setDocFamilyId(docFam._id);
+            setOpenEditDrawer(true);
+          }}
+          type="link"
+        >
+          {docFam.name}
+        </Button>
+      );
     },
   },
   {
@@ -168,7 +182,9 @@ export const useDocumentFamilyColumns = (
   },
   deleteDocumentFamily: (
     documentFamily: Pick<DocumentFamily, '_id'> & Partial<DocumentFamily>
-  ) => void
+  ) => void,
+  setDocFamilyId: Dispatch<SetStateAction<string>>,
+  setOpenEditDrawer: Dispatch<SetStateAction<boolean>>
 ): TypeColumn[] => {
   const { siteOptions } = useSiteSelectOptions();
   const dispatch = useAppDispatch();
@@ -182,6 +198,8 @@ export const useDocumentFamilyColumns = (
       docDocumentFilters,
       deleteDocumentFamily,
       isAdminUser: user?.is_admin,
+      setDocFamilyId,
+      setOpenEditDrawer,
     });
   }, [
     siteOptions,
@@ -189,6 +207,8 @@ export const useDocumentFamilyColumns = (
     dispatch,
     docDocumentFilters,
     deleteDocumentFamily,
+    setOpenEditDrawer,
+    setDocFamilyId,
     user?.is_admin,
   ]);
 };
