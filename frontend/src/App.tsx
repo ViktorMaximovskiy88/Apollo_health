@@ -19,7 +19,6 @@ import { WorkQueuePage } from './features/work_queue/WorkQueuePage';
 import { SiteDocDocumentsPage } from './features/doc_documents/SiteDocDocumentPage';
 import { DocDocumentEditPage } from './features/doc_documents/DocDocumentEditPage';
 import { PayerFamilyHomePage } from './features/payer-family/PayerFamilyHomePage';
-import { PayerFamilyEditPage } from './features/payer-family/PayerFamilyEditPage';
 import { ProcessWorkItemPage, ReadonlyWorkItemPage } from './features/work_queue/WorkItemPage';
 import { AppLayout } from './app/AppLayout';
 import { SiteViewPage } from './features/sites/SiteViewPage';
@@ -32,7 +31,6 @@ import { PayerBackboneEditPage } from './features/payer-backbone/PayerBackboneEd
 import { LineagePage } from './features/devtools/LineagePage';
 import { StatsRoutes } from './features/stats';
 import { DocumentFamilyHomePage } from './features/doc_documents/document_family/DocumentFamilyHomePage';
-import { DocumentFamilyEditPage } from './features/doc_documents/document_family/documentFamilyEditPage';
 
 function AppHomePage() {
   return <>{'Home'}</>;
@@ -62,7 +60,6 @@ function DocumentFamilyRoutes() {
   return (
     <Routes>
       <Route index element={<DocumentFamilyHomePage />} />
-      <Route path=":documentFamilyId" element={<DocumentFamilyEditPage />} />
     </Routes>
   );
 }
@@ -92,7 +89,6 @@ function PayerFamilyRoutes() {
   return (
     <Routes>
       <Route index element={<PayerFamilyHomePage />} />
-      <Route path=":payerFamilyId" element={<PayerFamilyEditPage />} />
     </Routes>
   );
 }
