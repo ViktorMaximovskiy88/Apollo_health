@@ -68,7 +68,6 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => 
     },
     [updatePayerFamily, payer_family_id, onSave, form]
   );
-  console.log('drawer', open, payer_family_id, payerFamily);
 
   if (editPayerFromTable) {
     if (!payerFamily) {
