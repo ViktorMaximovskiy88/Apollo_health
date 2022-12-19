@@ -232,6 +232,8 @@ class TagCompare:
     ):
         doc_id_tags, doc_ref_tags = self._partition_tags_by_type(doc_tags)
         prev_id_tags, prev_ref_tags = self._partition_tags_by_type(prev_tags)
+        for tag in prev_id_tags + prev_ref_tags:
+            tag.update_status = None
         doc_sections, unmatched_ref = self._group_by_section(
             doc_id_tags, doc_ref_tags, doc_focus_areas
         )
