@@ -48,7 +48,7 @@ export function ManualCollectionButton(props: any) {
         await getDocDocumentsQuery({ siteId, scrapeTaskId });
         dispatch(setSiteDocDocumentTableForceUpdate());
       } else {
-        console.log('ERROR: refreshDocs unable to get id of most recent scrape task.');
+        console.error('refreshDocs unable to get id of most recent scrape task.');
       }
     }
   };

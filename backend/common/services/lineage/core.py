@@ -6,17 +6,13 @@ from beanie import BulkWriter, PydanticObjectId
 
 from backend.app.scripts.retag_document import ReTagger
 from backend.common.core.enums import ApprovalStatus
-from backend.common.models.doc_document import DocDocument
+from backend.common.models.doc_document import DocDocument, SiteDocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.document_mixins import calc_final_effective_date
 from backend.common.models.lineage import DocumentAnalysis, DocumentAttrs
 from backend.common.models.shared import get_unique_focus_tags, get_unique_reference_tags
 from backend.common.models.site import Site
-from backend.common.services.document import (
-    SiteRetrievedDocument,
-    get_site_docs,
-    get_site_docs_for_ids,
-)
+from backend.common.services.document import get_site_docs, get_site_docs_for_ids
 from backend.common.services.lineage.lineage_matcher import LineageMatcher
 from backend.common.services.tag_compare import TagCompare
 from backend.scrapeworker.common.lineage_parser import (
@@ -132,7 +128,7 @@ class LineageService:
         await self.process_lineage_for_docs(site_id, docs)
 
     async def get_shared_lineage_sites(self, site_id: PydanticObjectId):
-        docs = await RetrievedDocument.find_many({"locations.site_id": site_id}).to_list()
+        docs = await DocDocument.find_many({"locations.site_id": site_id}).to_list()
         site_ids = set()
         for doc in docs:
             for location in doc.locations:
@@ -158,15 +154,13 @@ class LineageService:
         docs = await get_site_docs_for_ids(site_id, doc_ids)
         await self.process_lineage_for_docs(site_id, docs)
 
-    async def refresh_doc_analyses(
-        self, site_id: PydanticObjectId, docs: list[SiteRetrievedDocument]
-    ):
+    async def refresh_doc_analyses(self, site_id: PydanticObjectId, docs: list[SiteDocDocument]):
         existing_analyses_query = DocumentAnalysis.find(
-            {"retrieved_document_id": {"$in": [doc.id for doc in docs]}, "site_id": site_id}
+            {"doc_document_id": {"$in": [doc.id for doc in docs]}, "site_id": site_id}
         )
         doc_analyses: dict[PydanticObjectId, DocumentAnalysis] = {}
         async for analysis in existing_analyses_query:
-            doc_analyses[analysis.retrieved_document_id] = analysis
+            doc_analyses[analysis.doc_document_id] = analysis
 
         async with BulkWriter() as bulk_writer:
             for doc in docs:
@@ -178,13 +172,11 @@ class LineageService:
                     await DocumentAnalysis.insert_one(doc_analysis, bulk_writer=bulk_writer)
 
     async def process_lineage_for_docs(
-        self, site_id: PydanticObjectId, docs: list[SiteRetrievedDocument]
+        self, site_id: PydanticObjectId, docs: list[SiteDocDocument]
     ):
         # build the model and save it
         self.logger.info(f"before doc analysis save len(docs)={len(docs)}")
-
         await self.refresh_doc_analyses(site_id, docs)
-
         self.logger.info(f"after doc analysis save len(docs)={len(docs)}")
 
         # pick all from DB that are most recent OR no lineage...
@@ -209,33 +201,33 @@ class LineageService:
                     break
 
             if matched_item:
-                self.logger.info(f"'{pending_item.filename}' '{matched_item.filename}' -> MATCHED")
+                self.logger.debug(f"'{pending_item.filename}' '{matched_item.filename}' -> MATCHED")
                 pending_item.lineage_id = matched_item.lineage_id
                 await pending_item.save()
                 lineaged_items.append(pending_item)
             else:
-                self.logger.info(f"'{pending_item.filename_text}' -> UNMATCHED")
+                self.logger.debug(f"'{pending_item.filename_text}' -> UNMATCHED")
                 pending_item = await create_lineage(pending_item)
                 lineaged_items.append(pending_item)
 
-        self.logger.info(f"before _version_matched {len(lineaged_items)}")
         await self._version_matched(lineaged_items)
-        self.logger.info(f"after _version_matched {len(lineaged_items)}")
 
     def sort_matched(self, items: list[DocumentAnalysis]):
         items.sort(key=lambda x: x.final_effective_date or x.year_part or 0)
         return items
 
     async def compare_tags(
-        self, doc: RetrievedDocument, doc_doc: DocDocument, prev_doc: RetrievedDocument
+        self, doc: RetrievedDocument, doc_doc: DocDocument, prev_doc_doc: DocDocument
     ) -> tuple[RetrievedDocument, DocDocument]:
-        self.logger.info(f"'before compare tags {doc_doc.id}")
-        ther_tags, indi_tags = await self.tag_compare.execute(doc, prev_doc)
+
+        therapy_tags, indication_tags = await self.tag_compare.execute(doc_doc, prev_doc_doc)
         self.logger.info(f"'after compare tags {doc_doc.id}")
-        doc.therapy_tags = ther_tags
-        doc.indication_tags = indi_tags
-        doc_doc.therapy_tags = ther_tags
-        doc_doc.indication_tags = indi_tags
+        # TODO will be removed with rtdoc banishment
+        doc.therapy_tags = therapy_tags
+        doc.indication_tags = indication_tags
+        # NOTE the result here are TagUpdate Status changes,  _not_ new tags...
+        doc_doc.therapy_tags = therapy_tags
+        doc_doc.indication_tags = indication_tags
         doc, doc_doc = await asyncio.gather(doc.save(), doc_doc.save())
         return doc, doc_doc
 
@@ -250,8 +242,10 @@ class LineageService:
                     version_doc(match, is_last, prev_doc),
                     version_doc_doc(match, is_last, prev_doc_doc),
                 )
-                if is_last and prev_doc:
-                    doc, doc_doc = await self.compare_tags(doc, doc_doc, prev_doc)
+
+                if is_last and prev_doc_doc:
+                    doc, doc_doc = await self.compare_tags(doc, doc_doc, prev_doc_doc)
+
                 prev_doc = doc
                 prev_doc_doc = doc_doc
 
@@ -264,7 +258,9 @@ async def create_lineage(item: DocumentAnalysis):
 
 
 async def version_doc(
-    doc_analysis: DocumentAnalysis, is_last: bool, prev_doc: RetrievedDocument | None
+    doc_analysis: DocumentAnalysis,
+    is_last: bool,
+    prev_doc: RetrievedDocument | None,
 ):
     doc = await RetrievedDocument.get(doc_analysis.retrieved_document_id)
     if not doc:
@@ -272,6 +268,8 @@ async def version_doc(
 
     doc.lineage_id = doc_analysis.lineage_id
     doc.is_current_version = is_last
+    # TODO do we need to respect the manually setting of `previous_doc_doc_id`
+    # if so... we have to do that further up?
     doc.previous_doc_id = prev_doc.id if prev_doc else None
     doc = await doc.save()
     return doc
@@ -302,9 +300,9 @@ def inherit_prev_doc_fields(
 async def version_doc_doc(
     doc_analysis: DocumentAnalysis, is_last: bool, prev_doc: DocDocument | None
 ):
-    doc = await DocDocument.find_one({"retrieved_document_id": doc_analysis.retrieved_document_id})
+    doc = await DocDocument.get(doc_analysis.doc_document_id)
     if not doc:
-        raise Exception(f"DocDocument {doc_analysis.retrieved_document_id} does not exists")
+        raise Exception(f"DocDocument {doc_analysis.doc_document_id} does not exists")
 
     # Don't modify DocDocument Lineage if Lineage is Already Approved
     if doc.classification_status == ApprovalStatus.APPROVED and doc.lineage_id:
@@ -347,21 +345,23 @@ def consensus_attr(model: DocumentAnalysis, attr: str):
 
 
 def build_doc_analysis(
-    doc: SiteRetrievedDocument, doc_analysis: DocumentAnalysis | None
+    doc: SiteDocDocument, doc_analysis: DocumentAnalysis | None
 ) -> DocumentAnalysis:
     if doc_analysis is None:
         doc_analysis = DocumentAnalysis(
-            retrieved_document_id=doc.id,
+            doc_document_id=doc.id,
+            retrieved_document_id=doc.retrieved_document_id,
             site_id=doc.site_id,
         )
+
+    doc_analysis.file_size = doc.file_size
+    doc_analysis.doc_vectors = doc.doc_vectors
+    doc_analysis.token_count = doc.token_count
 
     doc_analysis.name = doc.name
     doc_analysis.final_effective_date = calc_final_effective_date(doc)
     doc_analysis.document_type = doc.document_type
     doc_analysis.element_text = doc.link_text
-    doc_analysis.file_size = doc.file_size
-    doc_analysis.doc_vectors = doc.doc_vectors
-    doc_analysis.token_count = doc.token_count
 
     doc_analysis.focus_therapy_tags = get_unique_focus_tags(doc.therapy_tags)
     doc_analysis.focus_indication_tags = get_unique_focus_tags(doc.indication_tags)

@@ -1,4 +1,5 @@
 import { BaseDocument } from '../../common';
+import { DocPipelineStages } from '../../common/types';
 import { ApprovalStatus } from '../../common/approvalStatus';
 import { DocDocumentLocation } from './locations/types';
 
@@ -106,6 +107,7 @@ export interface DocDocument extends BaseDocument {
   content_extraction_task_id?: string;
 
   tags: string[];
+  pipeline_stages: DocPipelineStages;
 }
 
 export type SiteDocDocument = Omit<
