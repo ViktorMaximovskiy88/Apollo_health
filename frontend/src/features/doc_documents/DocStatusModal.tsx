@@ -17,6 +17,8 @@ function toStepStatus(status: ApprovalStatus) {
 
 function displayItem(item: string) {
   switch (item) {
+    case 'IDENTIFIED_DATES':
+      return 'Large Number of Dates Identified';
     case 'DOC_TYPE':
       return 'Low Document Type Confidence or Deviates from Previous Version';
     case 'EFFECTIVE_DATE':

@@ -606,3 +606,32 @@ class TestRefTags:
         assert len(a_section.ref_tags) == 2
         for tag in a_section.ref_tags:
             assert tag.update_status is None
+
+    async def test_remove_tag(
+        self,
+        mock_s3_client,  # noqa
+        monkeypatch: pytest.MonkeyPatch,
+        tag_compare: TagCompare,
+        site: Site,
+    ):
+        doc_text = [bytes("string one", "utf-8"), bytes("string two", "utf-8")]
+        mock = Mock(side_effect=doc_text)
+        monkeypatch.setattr(BaseS3Client, "read_object", mock)
+
+        ther_one = simple_therapy_tag(focus=True, text_area=(0, 20))
+        ther_one.update_status = TagUpdateStatus.ADDED
+        ther_two = simple_therapy_tag(focus=True, text_area=(0, 20))
+
+        ret_doc = await simple_ret_doc(
+            site=site,
+            therapy_tags=[ther_two],
+        ).save()
+        doc_doc = await simple_doc_doc(
+            site=site,
+            retrieved_doc=ret_doc,
+            therapy_tags=[ther_one],
+        ).save()
+
+        therapy_tags, _ = await tag_compare.execute(ret_doc, doc_doc)
+        group_tags = group_by_status(therapy_tags)
+        assert len(group_tags[TagUpdateStatus.REMOVED]) == 1

@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 import backend.common.models.tasks as tasks
 from backend.common.core.enums import ApprovalStatus
 from backend.common.models.doc_document import DocDocument
-from backend.common.models.document import RetrievedDocument
 from backend.common.models.pipeline import DocPipelineStages, PipelineRegistry, PipelineStage
 from backend.common.storage.client import DocumentStorageClient, TextStorageClient
 from backend.common.storage.hash import hash_full_text
@@ -13,26 +12,40 @@ from backend.scrapeworker.file_parsers import get_parser_by_ext
 
 
 class ContentTaskProcessor(TaskProcessor):
-    def __init__(self, logger=logging) -> None:
+
+    dependencies: list[str] = [
+        "doc_client",
+        "text_client",
+    ]
+
+    def __init__(
+        self,
+        logger=logging,
+        doc_client: DocumentStorageClient = DocumentStorageClient(),
+        text_client: TextStorageClient = TextStorageClient(),
+    ) -> None:
         self.logger = logger
-        self.doc_client = DocumentStorageClient()
-        self.text_client = TextStorageClient()
+        self.doc_client = doc_client
+        self.text_client = text_client
 
     async def exec(self, task: tasks.ContentTask):
         stage_versions = await PipelineRegistry.fetch()
-        # for now...
-        rdoc = await RetrievedDocument.get(task.doc_doc_id)
-        doc = await DocDocument.find_one(DocDocument.retrieved_document_id == rdoc.id)
+        doc = await DocDocument.get(task.doc_doc_id)
+
         if not doc:
             raise Exception(f"doc_doc {task.doc_doc_id} not found")
 
+        # TODO ask question... if any downstream bits were user edited (say tags)
+        # do we still want to reprocess text?
         if doc.classification_status == ApprovalStatus.APPROVED:
             self.logger.info(f"{doc.id} classification_status={doc.classification_status} skipping")
             return
 
         ParserClass = get_parser_by_ext(doc.file_extension)
         s3_key = doc.s3_doc_key()
-        # hate this
+
+        # TODO this will change when content includes images
+        # right now text == text across sites whereas images can change that
         location = doc.locations[0]
         with self.doc_client.read_object_to_tempfile(s3_key) as file_path:
             # TODO dont need url or link text to get text

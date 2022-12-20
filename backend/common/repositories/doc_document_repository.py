@@ -56,45 +56,35 @@ class DocDocumentRepository:
         for idx, tag in enumerate(doc.therapy_tags):
             if updates.therapy_tags[idx] and tag.focus != updates.therapy_tags[idx].focus:
                 current_user_edited_fields.append("therapy_tag_focus")
+                current_user_edited_fields.append("therapy_tag")
                 break
 
         for idx, tag in enumerate(doc.indication_tags):
             if updates.indication_tags[idx] and tag.focus != updates.indication_tags[idx].focus:
                 current_user_edited_fields.append("indication_tag_focus")
+                current_user_edited_fields.append("indication_tag")
                 break
 
         # editable dates
-        if updates.effective_date and doc.effective_date.date() != updates.effective_date.date():
+        if date_update_exists(doc.effective_date, updates.effective_date):
             current_user_edited_fields.append("effective_date")
 
-        if updates.end_date and doc.end_date.date() != updates.end_date.date():
+        if date_update_exists(doc.end_date, updates.end_date):
             current_user_edited_fields.append("end_date")
 
-        if (
-            updates.last_updated_date
-            and doc.last_updated_date.date() != updates.last_updated_date.date()
-        ):
+        if date_update_exists(doc.last_updated_date, updates.last_updated_date):
             current_user_edited_fields.append("last_updated_date")
 
-        if (
-            updates.last_reviewed_date
-            and doc.last_reviewed_date.date() != updates.last_reviewed_date.date()
-        ):
+        if date_update_exists(doc.last_reviewed_date, updates.last_reviewed_date):
             current_user_edited_fields.append("last_reviewed_date")
 
-        if (
-            updates.next_review_date
-            and doc.next_review_date.date() != updates.next_review_date.date()
-        ):
+        if date_update_exists(doc.next_review_date, updates.next_review_date):
             current_user_edited_fields.append("next_review_date")
 
-        if (
-            updates.next_update_date
-            and doc.next_update_date.date() != updates.next_update_date.date()
-        ):
+        if date_update_exists(doc.next_update_date, updates.next_update_date):
             current_user_edited_fields.append("next_update_date")
 
-        if updates.published_date and doc.published_date.date() != updates.published_date.date():
+        if date_update_exists(doc.published_date, updates.published_date):
             current_user_edited_fields.append("published_date")
 
         for field in doc.user_edited_fields:
@@ -103,3 +93,11 @@ class DocDocumentRepository:
 
         updates.user_edited_fields = current_user_edited_fields
         return updates
+
+
+def date_update_exists(original, update):
+    if not update:
+        return False
+    if not original:
+        return True
+    return original.date() != update.date()

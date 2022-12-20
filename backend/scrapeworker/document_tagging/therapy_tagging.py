@@ -6,7 +6,8 @@ from spacy.tokens.span import Span
 
 from backend.common.core.config import config
 from backend.common.core.enums import SectionType
-from backend.common.models.doc_document import TherapyTag
+from backend.common.core.utils import now
+from backend.common.models.doc_document import DocDocument, TherapyTag
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import FocusSectionConfig
 from backend.common.storage.client import ModelStorageClient
@@ -51,7 +52,7 @@ class TherapyTagger:
         url: str,
         link_text: str | None,
         focus_configs: list[FocusSectionConfig] | None = None,
-        document: RetrievedDocument | None = None,
+        document: RetrievedDocument | DocDocument | None = None,
     ) -> tuple[list[TherapyTag], list[TherapyTag], list[TherapyTag]]:
         if not self.nlp:
             return ([], [], [])
@@ -96,6 +97,7 @@ class TherapyTagger:
                         name=display_name,
                         page=-1,
                         focus=focus_state.focus,
+                        created_at=now(),
                     )
 
                     if focus_state.is_in_link_text:
@@ -112,6 +114,7 @@ class TherapyTagger:
                     focus=focus_state.focus,
                     key=focus_state.key,
                     text_area=focus_state.section,
+                    created_at=now(),
                 )
                 tags.add(tag)
             char_offset += len(page) + 1

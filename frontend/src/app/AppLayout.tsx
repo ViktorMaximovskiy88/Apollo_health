@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { useBreadcrumbs } from './use-breadcrumbs';
 import { Tooltip } from 'antd';
 import { breadcrumbState, menuState } from './navSlice';
+import { useCurrentUser } from '../common/hooks/use-current-user';
 
 import {
   ProjectTwoTone,
@@ -90,6 +91,7 @@ function isCurrentClasses(path: string, key: string) {
 function AppMenu() {
   const location = useLocation();
   const menu: any = useSelector(menuState);
+  const currentUser = useCurrentUser();
 
   const icons: any = {
     '/document-family': <GroupOutlined />,
@@ -104,20 +106,22 @@ function AppMenu() {
 
   return (
     <div className={classNames('flex flex-col items-center mt-4 space-y-4')}>
-      {menu.items.map(({ url, label, shortLabel }: any) => (
-        <Tooltip key={url} placement={'right'} title={label}>
-          <Link
-            className={classNames(
-              'cursor-pointer flex flex-col rounded-md select-none justify-center',
-              isCurrentClasses(location.pathname, url),
-              'text-[18px] p-2'
-            )}
-            to={url}
-          >
-            {icons[url]}
-          </Link>
-        </Tooltip>
-      ))}
+      {menu.items.map(({ url, label, adminRoleRequired }: any) =>
+        adminRoleRequired && !currentUser?.is_admin ? null : (
+          <Tooltip key={url} placement={'right'} title={label}>
+            <Link
+              className={classNames(
+                'cursor-pointer flex flex-col rounded-md select-none justify-center',
+                isCurrentClasses(location.pathname, url),
+                'text-[18px] p-2'
+              )}
+              to={url}
+            >
+              {icons[url]}
+            </Link>
+          </Tooltip>
+        )
+      )}
     </div>
   );
 }
