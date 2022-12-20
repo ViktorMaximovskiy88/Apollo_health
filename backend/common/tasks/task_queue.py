@@ -3,10 +3,25 @@ import traceback
 from collections.abc import Coroutine
 
 from backend.common.models.tasks import GenericTaskType, PydanticObjectId, TaskLog
+from backend.common.storage.client import DocumentStorageClient, TextStorageClient
 from backend.common.tasks.processors import task_processor_factory
 from backend.common.tasks.processors.doc_pipeline import DocPipelineTaskProcessor
 from backend.common.tasks.sqs import SQSBase
 from backend.common.tasks.task_processor import TaskProcessor
+
+# TODO shouldnt be here...
+from backend.scrapeworker.document_tagging.taggers import Taggers, indication_tagger, therapy_tagger
+
+# poor man's DI (to avoid _relatively_ costly operations from repeating)
+# TODO a 'caching; doc/text client since we know we are operating per
+# doc within our doc tasks
+taggers = Taggers(indication=indication_tagger, therapy=therapy_tagger)
+dependency_map = {
+    "indication_tagger": taggers.indication,
+    "therapy_tagger": taggers.therapy,
+    "text_client": TextStorageClient(),
+    "doc_client": DocumentStorageClient(),
+}
 
 
 class TaskQueue(SQSBase):

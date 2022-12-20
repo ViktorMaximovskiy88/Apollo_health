@@ -1,23 +1,10 @@
-import { BaseDocument } from '../../common/types';
+import { BaseDocument, DocPipelineStages } from '../../common/types';
 
 export interface DocumentQuery {
   scrape_task_id?: string | null;
   site_id?: string | null;
   logical_document_id?: string | null;
   translation_id?: boolean;
-}
-
-export interface PipelineStage {
-  version: number;
-  version_at: string;
-  is_locked: boolean;
-}
-
-export interface DocPipelineStages {
-  content: PipelineStage | undefined;
-  date: PipelineStage | undefined;
-  doc_type: PipelineStage | undefined;
-  tag: PipelineStage | undefined;
 }
 
 export interface RetrievedDocument extends BaseDocument {

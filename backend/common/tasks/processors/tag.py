@@ -1,37 +1,45 @@
 import logging
-from datetime import datetime, timezone
 
 import backend.common.models.tasks as tasks
-from backend.common.core.config import config
-from backend.common.core.enums import ApprovalStatus
+from backend.common.core.utils import now
 from backend.common.models.doc_document import DocDocument
-from backend.common.models.document import RetrievedDocument
 from backend.common.models.pipeline import DocPipelineStages, PipelineRegistry, PipelineStage
+from backend.common.models.shared import get_tag_diff
 from backend.common.storage.client import TextStorageClient
 from backend.common.tasks.task_processor import TaskProcessor
 from backend.scrapeworker.common.utils import normalize_string, tokenize_string
 from backend.scrapeworker.document_tagging.indication_tagging import IndicationTagger
+from backend.scrapeworker.document_tagging.taggers import Taggers, indication_tagger, therapy_tagger
 from backend.scrapeworker.document_tagging.therapy_tagging import TherapyTagger
+
+taggers = Taggers(indication=indication_tagger, therapy=therapy_tagger)
 
 
 class TagTaskProcessor(TaskProcessor):
-    def __init__(self, version: str = config["MODEL_VERSION"], logger=logging) -> None:
+
+    dependencies: list[str] = [
+        "text_client",
+        "indication_tagger",
+        "therapy_tagger",
+    ]
+
+    def __init__(
+        self,
+        logger=logging,
+        indication_tagger: IndicationTagger = taggers.indication,
+        therapy_tagger: TherapyTagger = taggers.therapy,
+        text_client: TextStorageClient = TextStorageClient(),
+    ) -> None:
         self.logger = logger
-        self.text_client = TextStorageClient()
-        self.indication_tagger = IndicationTagger()
-        self.therapy_tagger = TherapyTagger(version=version)
+        self.text_client = text_client
+        self.indication_tagger = indication_tagger
+        self.therapy_tagger = therapy_tagger
 
     async def exec(self, task: tasks.TagTask):
         stage_versions = await PipelineRegistry.fetch()
-        # for now...
-        rdoc = await RetrievedDocument.get(task.doc_doc_id)
-        doc = await DocDocument.find_one(DocDocument.retrieved_document_id == rdoc.id)
+        doc: DocDocument = await DocDocument.get(task.doc_doc_id)
         if not doc:
             raise Exception(f"doc_doc {task.doc_doc_id} not found")
-
-        if doc.classification_status == ApprovalStatus.APPROVED:
-            self.logger.info(f"{doc.id} classification_status={doc.classification_status} skipping")
-            return
 
         # TODO location vs locations
         location = doc.locations[0]
@@ -48,19 +56,19 @@ class TagTaskProcessor(TaskProcessor):
             url_therapy_tags,
             link_therapy_tags,
         ) = await self.therapy_tagger.tag_document(
-            raw_text, doc.document_type, url, link_text, document=rdoc
+            raw_text, doc.document_type, url, link_text, document=doc
         )
         (
             indication_tags,
             url_indication_tags,
             link_indication_tags,
         ) = await self.indication_tagger.tag_document(
-            raw_text, doc.document_type, url, link_text, document=rdoc
+            raw_text, doc.document_type, url, link_text, document=doc
         )
 
         current_stage = PipelineStage(
             version=stage_versions.tag.version,
-            version_at=datetime.now(tz=timezone.utc),
+            version_at=now(),
         )
 
         if doc.pipeline_stages:
@@ -68,9 +76,24 @@ class TagTaskProcessor(TaskProcessor):
         else:
             doc.pipeline_stages = DocPipelineStages(tag=current_stage)
 
+        if not doc.has_user_edit("therapy_tags"):
+            doc.therapy_tags = therapy_tags
+
+        if not doc.has_user_edit("indication_tags"):
+            doc.indication_tags = indication_tags
+
+        new_therapy_tags, new_indication_tags = get_tag_diff(
+            current_indication_tags=doc.indication_tags,
+            current_therapy_tags=doc.therapy_tags,
+            indication_tags=indication_tags,
+            therapy_tags=therapy_tags,
+        )
+
+        doc = doc.process_tag_changes(new_therapy_tags, new_indication_tags)
+
         updates = {
-            "therapy_tags": [t.dict() for t in therapy_tags],
-            "indication_tags": [i.dict() for i in indication_tags],
+            "therapy_tags": [t.dict() for t in doc.therapy_tags],
+            "indication_tags": [i.dict() for i in doc.indication_tags],
             "locations.$.url_therapy_tags": [t.dict() for t in url_therapy_tags],
             "locations.$.link_therapy_tags": [t.dict() for t in link_therapy_tags],
             "locations.$.url_indication_tags": [i.dict() for i in url_indication_tags],
