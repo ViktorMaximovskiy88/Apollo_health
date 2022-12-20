@@ -11,6 +11,7 @@ interface MenuItem {
   url: string;
   label: string;
   shortLabel: string;
+  adminRoleRequired: boolean;
 }
 
 export const navSlice = createSlice({
@@ -22,34 +23,44 @@ export const navSlice = createSlice({
     },
     menu: {
       items: [
-        { url: '/sites', label: 'Sites', shortLabel: 'Sites' },
+        { url: '/sites', label: 'Sites', shortLabel: 'Sites', adminRoleRequired: false },
         {
           url: '/document-family',
           label: 'Document Family',
           shortLabel: 'Document Family',
+          adminRoleRequired: false,
         },
-        { url: '/work-queues', label: 'Work Queues', shortLabel: 'Queues' },
+        {
+          url: '/work-queues',
+          label: 'Work Queues',
+          shortLabel: 'Queues',
+          adminRoleRequired: false,
+        },
         {
           url: '/documents',
           label: 'All Documents',
           shortLabel: 'Docs',
+          adminRoleRequired: false,
         },
         {
           url: '/translations',
           label: 'Translations',
           shortLabel: 'Translations',
+          adminRoleRequired: false,
         },
         {
           url: '/payer-family',
           label: 'Payer Family',
           shortLabel: 'Payer Family',
+          adminRoleRequired: false,
         },
         {
           url: '/payer-backbone',
           label: 'Payers',
           shortLabel: 'Payers',
+          adminRoleRequired: true,
         },
-        { url: '/users', label: 'Users', shortLabel: 'Users' },
+        { url: '/users', label: 'Users', shortLabel: 'Users', adminRoleRequired: false },
       ] as MenuItem[],
       currentItem: {} as MenuItem,
     },

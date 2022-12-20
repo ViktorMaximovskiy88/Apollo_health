@@ -20,6 +20,7 @@ import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 
 import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
+import { useCurrentUser } from '../../common/hooks/use-current-user';
 
 const useControlledPagination = () => {
   const tableState = useSelector(userTableState);
@@ -79,6 +80,7 @@ export const useSiteSort = () => {
 export function UsersHomePage() {
   const { data: users } = useGetUsersQuery();
   const [deleteUser] = useDeleteUserMutation();
+  const currentUser = useCurrentUser();
   const formattedUsers = users?.filter((u) => !u.disabled).map((u) => ({ ...u, key: u._id })) || [];
 
   const newColumns = [
@@ -134,7 +136,7 @@ export function UsersHomePage() {
               cancelText="No"
               onConfirm={() => deleteUser(user)}
             >
-              <ButtonLink danger>Delete</ButtonLink>
+              {currentUser?.is_admin && <ButtonLink danger>Delete</ButtonLink>}
             </Popconfirm>
           </>
         );
