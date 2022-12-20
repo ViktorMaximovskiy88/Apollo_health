@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, notification } from 'antd';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   useRunSiteScrapeTaskMutation,
   useCancelAllSiteScrapeTasksMutation,
@@ -24,6 +24,8 @@ export function ManualCollectionButton(props: any) {
   const navigate = useNavigate();
   const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
   const [isLoading, setIsLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const scrapeTaskId = searchParams.get('scrape_task_id');
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
   const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
   const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
@@ -117,18 +119,26 @@ export function ManualCollectionButton(props: any) {
     }
   }
 
-  if (site.collection_method === 'MANUAL' && activeStatuses.includes(site.last_run_status)) {
+  if (
+    site.collection_method === 'MANUAL' &&
+    activeStatuses.includes(site.last_run_status) &&
+    scrapeTaskId
+  ) {
     return (
       <Button className="ml-auto" disabled={isLoading} onClick={handleCancelManualScrape}>
         End Manual Collection
       </Button>
     );
   } else {
-    return (
-      <Button className="ml-auto" disabled={isLoading} onClick={handleRunManualScrape}>
-        Start Manual Collection
-      </Button>
-    );
+    if (!activeStatuses.includes(site.last_run_status)) {
+      return (
+        <Button className="ml-auto" disabled={isLoading} onClick={handleRunManualScrape}>
+          Start Manual Collection
+        </Button>
+      );
+    } else {
+      return null;
+    }
   }
 }
 
