@@ -136,7 +136,7 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
     def has_tag_user_edits(self):
         return self.has_user_edit("therapy_tags", "indication_tags")
 
-    async def process_tag_changes(self, new_therapy_tags, new_indication_tags):
+    def process_tag_changes(self, new_therapy_tags, new_indication_tags):
         # if not edited for therapy_tags or indication_tags just wholesale assign
         # if edited for therapy_tags or indication_tags just append diff
 
