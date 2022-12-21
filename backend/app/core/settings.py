@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     disable_scrape_scheduling: bool = False
+    debug: bool = Field(default=False, env="DEBUG")
 
 
 settings = Settings()
