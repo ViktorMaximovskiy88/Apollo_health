@@ -68,6 +68,26 @@ const displayDuplicateError = (err_msg: string) => {
   });
 };
 
+const setDatesToUtcStart = (newDocument: any) => {
+  // fixes bug where dates are sent as the next day after 8pm Eastern
+  const dates = [
+    'effective',
+    'last_reviewed',
+    'next_update',
+    'last_updated',
+    'next_review',
+    'first_created',
+    'published',
+  ];
+  for (const date of dates) {
+    if (!(date in newDocument)) {
+      continue;
+    }
+    newDocument[`${date}_date`].utc(true).startOf('day');
+  }
+  return newDocument;
+};
+
 export function AddDocumentModal({
   oldVersion,
   setOpen,
@@ -140,6 +160,8 @@ export function AddDocumentModal({
       }
       newDocument.exists_on_this_site = existsOnThisSite;
 
+      setDatesToUtcStart(newDocument);
+
       // For some reason, fileData never updates if browser auto fills.
       fileData.url = form.getFieldValue('url');
       fileData.base_url = form.getFieldValue('base_url') ?? newDocument.url;
@@ -171,6 +193,7 @@ export function AddDocumentModal({
     } catch (error) {
       setIsLoading(false);
       message.error('We could not save this document');
+      console.error(error);
     }
   }
 
