@@ -7,7 +7,7 @@ import {
   useInterval,
   useNotifyMutation,
 } from '../../../common/hooks';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GridPaginationToolbar } from '../../../components';
 import {
@@ -29,7 +29,7 @@ import {
 const useNotificationArgs = () => {
   const successArgs = useMemo(
     () => ({
-      description: 'Document Family Deleted Successfully.',
+      description: 'Document Family Edited Successfully.',
     }),
     []
   );
@@ -108,7 +108,15 @@ function uniqueSiteIds(items: DocumentFamily[]) {
   return Object.keys(usedSiteIds);
 }
 
-export function DocumentFamilyTable() {
+interface DocumentFamilyDataTableProps {
+  setDocFamilyId: Dispatch<SetStateAction<string>>;
+  setOpenEditDrawer: Dispatch<SetStateAction<boolean>>;
+}
+
+export function DocumentFamilyTable({
+  setDocFamilyId,
+  setOpenEditDrawer,
+}: DocumentFamilyDataTableProps) {
   const { isActive, setActive, watermark } = useInterval(10000);
 
   const { deletedFamily, deleteDocumentFamily } = useDeleteDocumentFamily();
@@ -116,7 +124,12 @@ export function DocumentFamilyTable() {
   const [getDocumentFamiliesFn] = useLazyGetDocumentFamiliesQuery();
   const { setSiteIds, siteNamesById } = useGetSiteNamesById();
 
-  const columns = useColumns(siteNamesById, deleteDocumentFamily);
+  const columns = useColumns(
+    siteNamesById,
+    deleteDocumentFamily,
+    setDocFamilyId,
+    setOpenEditDrawer
+  );
   const loadData = useCallback(
     async (tableInfo: TableInfoType) => {
       const { data } = await getDocumentFamiliesFn({ ...tableInfo });

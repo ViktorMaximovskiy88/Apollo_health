@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { Dispatch, SetStateAction, useMemo } from 'react';
 import { PayerFamily } from './types';
 
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
@@ -11,7 +11,7 @@ import {
   setDocDocumentTableFilter,
 } from '../doc_documents/docDocumentsSlice';
 import { useSelector } from 'react-redux';
-import { Popconfirm } from 'antd';
+import { Button, Popconfirm } from 'antd';
 import { ButtonLink } from '../../components';
 import NumberFilter from '@inovua/reactdatagrid-community/NumberFilter';
 import { useCurrentUser } from '../../common/hooks/use-current-user';
@@ -21,11 +21,15 @@ export const createColumns = ({
   docDocumentFilters,
   deletePayerFamily,
   isAdminUser,
+  setPayerFamilyId,
+  setOpenEditDrawer,
 }: {
   dispatch: any;
   docDocumentFilters: TypeFilterValue;
   deletePayerFamily: (payerFamily: Pick<PayerFamily, '_id'> & Partial<PayerFamily>) => void;
   isAdminUser?: boolean;
+  setPayerFamilyId: Dispatch<SetStateAction<string>>;
+  setOpenEditDrawer: Dispatch<SetStateAction<boolean>>;
 }) => [
   {
     header: 'Family Name',
@@ -33,7 +37,17 @@ export const createColumns = ({
     defaultFlex: 1,
     minWidth: 200,
     render: ({ data: payerFamily }: { data: PayerFamily }) => {
-      return <Link to={`${payerFamily._id}`}>{payerFamily.name}</Link>;
+      return (
+        <Button
+          onClick={() => {
+            setPayerFamilyId(payerFamily._id);
+            setOpenEditDrawer(true);
+          }}
+          type="link"
+        >
+          {payerFamily.name}
+        </Button>
+      );
     },
   },
   {
@@ -90,6 +104,8 @@ export const createColumns = ({
 ];
 
 export const usePayerFamilyColumns = (
+  setPayerFamilyId: Dispatch<SetStateAction<string>>,
+  setOpenEditDrawer: Dispatch<SetStateAction<boolean>>,
   deletePayerFamily: (payerFamily: Pick<PayerFamily, '_id'> & Partial<PayerFamily>) => void
 ): TypeColumn[] => {
   const user = useCurrentUser();
@@ -102,7 +118,16 @@ export const usePayerFamilyColumns = (
         docDocumentFilters,
         deletePayerFamily,
         isAdminUser: user?.is_admin,
+        setPayerFamilyId,
+        setOpenEditDrawer,
       }),
-    [dispatch, docDocumentFilters, deletePayerFamily, user?.is_admin]
+    [
+      dispatch,
+      docDocumentFilters,
+      deletePayerFamily,
+      user?.is_admin,
+      setOpenEditDrawer,
+      setPayerFamilyId,
+    ]
   );
 };
