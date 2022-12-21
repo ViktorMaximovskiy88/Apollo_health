@@ -8,7 +8,7 @@ import {
 } from './payerFamilyApi';
 import { Rule } from 'antd/lib/form';
 import { useForm } from 'antd/lib/form/Form';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
 import { PayerFamily } from './types';
 import { CloseOutlined, WarningFilled } from '@ant-design/icons';
@@ -59,6 +59,10 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => 
     form.submit();
   }, [form]);
 
+  useEffect(() => {
+    form.setFieldsValue(payerFamily);
+  }, [payerFamily]);
+
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
       const payerFamily = await updatePayerFamily({ ...values, _id: payer_family_id }).unwrap();
@@ -82,6 +86,7 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => 
       open={open}
       title={<>Edit Payer Family {location?.site_name ? `for ${location.site_name}` : ''}</>}
       width="30%"
+      forceRender
       placement="left"
       closable={false}
       mask={mask}
