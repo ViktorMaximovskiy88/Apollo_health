@@ -25,9 +25,9 @@ export const navSlice = createSlice({
       items: [
         { url: '/sites', label: 'Sites', shortLabel: 'Sites', adminRoleRequired: false },
         {
-          url: '/document-family',
-          label: 'Document Family',
-          shortLabel: 'Document Family',
+          url: '/documents',
+          label: 'All Documents',
+          shortLabel: 'Docs',
           adminRoleRequired: false,
         },
         {
@@ -37,21 +37,21 @@ export const navSlice = createSlice({
           adminRoleRequired: false,
         },
         {
-          url: '/documents',
-          label: 'All Documents',
-          shortLabel: 'Docs',
-          adminRoleRequired: false,
-        },
-        {
-          url: '/translations',
-          label: 'Translations',
-          shortLabel: 'Translations',
+          url: '/document-family',
+          label: 'Document Family',
+          shortLabel: 'Document Family',
           adminRoleRequired: false,
         },
         {
           url: '/payer-family',
           label: 'Payer Family',
           shortLabel: 'Payer Family',
+          adminRoleRequired: false,
+        },
+        {
+          url: '/translations',
+          label: 'Translations',
+          shortLabel: 'Translations',
           adminRoleRequired: false,
         },
         {

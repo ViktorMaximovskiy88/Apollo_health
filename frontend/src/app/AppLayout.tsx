@@ -9,11 +9,11 @@ import { breadcrumbState, menuState } from './navSlice';
 import { useCurrentUser } from '../common/hooks/use-current-user';
 
 import {
-  ProjectTwoTone,
+  ProjectOutlined,
   UserOutlined,
   IdcardOutlined,
   InboxOutlined,
-  FileTextTwoTone,
+  FileTextOutlined,
   MergeCellsOutlined,
   WalletOutlined,
   GroupOutlined,
@@ -96,9 +96,9 @@ function AppMenu() {
   const icons: any = {
     '/document-family': <GroupOutlined />,
     '/payer-family': <TeamOutlined />,
-    '/sites': <ProjectTwoTone />,
+    '/sites': <ProjectOutlined />,
     '/work-queues': <InboxOutlined />,
-    '/documents': <FileTextTwoTone />,
+    '/documents': <FileTextOutlined />,
     '/translations': <MergeCellsOutlined />,
     '/payer-backbone': <WalletOutlined />,
     '/users': <IdcardOutlined />,
