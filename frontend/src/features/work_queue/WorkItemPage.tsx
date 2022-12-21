@@ -216,7 +216,7 @@ export function ProcessWorkItemPage() {
   const workQueueId = params.queueId;
   const [takeWorkItem] = useTakeWorkItemMutation();
   const { data: wq } = useGetWorkQueueQuery(workQueueId);
-  const { watermark } = useInterval(5000);
+  const { watermark } = useInterval(5000, { background: true });
 
   useEffect(() => {
     (async () => {
