@@ -172,6 +172,7 @@ export function DocDocumentTagForm(props: {
                   onToggleEdit={handleToggleEdit}
                   tag={tag}
                   virtualRow={virtualRow}
+                  virtualizer={rowVirtualizer}
                 />
               );
             } else {
@@ -184,6 +185,7 @@ export function DocDocumentTagForm(props: {
                   onToggleEdit={handleToggleEdit}
                   tag={tag}
                   virtualRow={virtualRow}
+                  virtualizer={rowVirtualizer}
                 />
               );
             }

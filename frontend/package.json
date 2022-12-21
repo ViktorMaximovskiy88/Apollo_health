@@ -11,7 +11,7 @@
     "@react-pdf-viewer/default-layout": "^3.7.0",
     "@react-pdf-viewer/highlight": "^3.7.0",
     "@reduxjs/toolkit": "^1.5.1",
-    "@tanstack/react-virtual": "^3.0.0-beta.12",
+    "@tanstack/react-virtual": "^3.0.0-beta.30",
     "@uiw/codemirror-extensions-langs": "^4.19.3",
     "@uiw/react-codemirror": "^4.19.3",
     "antd": "^4.23.4",

@@ -2053,11 +2053,6 @@
     schema-utils "^3.0.0"
     source-map "^0.7.3"
 
-"@reach/observe-rect@^1.1.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@reach/observe-rect/-/observe-rect-1.2.0.tgz#d7a6013b8aafcc64c778a0ccb83355a11204d3b2"
-  integrity sha512-Ba7HmkFgfQxZqqaeIWWkNK0rEhpxVQHIoVyW1YDSkGsGIXzcaW4deC8B0pZrNSSyLTdIk7y+5olKt5+g0GmFIQ==
-
 "@react-pdf-viewer/attachment@3.7.0":
   version "3.7.0"
   resolved "https://registry.yarnpkg.com/@react-pdf-viewer/attachment/-/attachment-3.7.0.tgz#730e46aaffe32325f6a4711cef4c90bafe83772e"
@@ -2389,20 +2384,17 @@
     "@svgr/plugin-svgo" "^5.5.0"
     loader-utils "^2.0.0"
 
-"@tanstack/react-virtual@^3.0.0-beta.12":
-  version "3.0.0-beta.12"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-virtual/-/react-virtual-3.0.0-beta.12.tgz#e62a1f51d018635493ecaa1fa16876188db68dc7"
-  integrity sha512-5ZztFUDq7QdtvdeYO48a8nzWFkF7unrbRtQr0N81Msm2epSrDZ0PPcyE8oXbhmy2os8cMPTmMYDzEyWBWXE+Iw==
+"@tanstack/react-virtual@^3.0.0-beta.30":
+  version "3.0.0-beta.30"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-virtual/-/react-virtual-3.0.0-beta.30.tgz#7236f43bdc4755b00872dfef1cb2006dd8f717f7"
+  integrity sha512-Sn1SSbSjDwb++jVOtgiQ/OHFMdcXFg8Qx02/cn0eq9xxHIhm/SqrKDpywIeydgNdOsdfBomOfxm/4gqTLrY1gg==
   dependencies:
-    "@reach/observe-rect" "^1.1.0"
-    "@tanstack/virtual-core" "3.0.0-beta.12"
+    "@tanstack/virtual-core" "3.0.0-beta.30"
 
-"@tanstack/virtual-core@3.0.0-beta.12":
-  version "3.0.0-beta.12"
-  resolved "https://registry.yarnpkg.com/@tanstack/virtual-core/-/virtual-core-3.0.0-beta.12.tgz#db220052dbefa042ecaa2b78edaf735ce4eb536b"
-  integrity sha512-b2jAPFoPVvgEDxIygFG43d4sn3DJHeohYiSUMIWXha8TcM2LR5pNxYsf+muQETUzLmB+7UNf+e0IUNKbzwMphA==
-  dependencies:
-    "@reach/observe-rect" "^1.1.0"
+"@tanstack/virtual-core@3.0.0-beta.30":
+  version "3.0.0-beta.30"
+  resolved "https://registry.yarnpkg.com/@tanstack/virtual-core/-/virtual-core-3.0.0-beta.30.tgz#7fd5e206dd706297b8234227c330c203a795f061"
+  integrity sha512-fewNoKiJeG5v0T4jg7UO99G+hUYDHig6AkiIeqvC1O2zEw96MlzR6DXw91aqxcsIPSVp83IPsgNa7su8yZWldw==
 
 "@testing-library/dom@^8.5.0":
   version "8.13.0"
