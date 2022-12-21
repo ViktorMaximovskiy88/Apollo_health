@@ -138,8 +138,11 @@ class PayerBackboneQuerier:
             return "State Medicaid"
         return None
 
-    async def lives_by_controller(self) -> list[ControlledLivesResponse]:
-        plan_benefits = self.construct_plan_benefit_query()
+    async def lives_by_controller(
+        self, plan_benefits: FindMany[PlanBenefit] | None = None
+    ) -> list[ControlledLivesResponse]:
+        if not plan_benefits:
+            plan_benefits = self.construct_plan_benefit_query()
         ccbl: dict[int, dict[Channel, dict[Benefit, int]]] = {}
         async for plan in plan_benefits:
             ccbl.setdefault(plan.l_controller_id, {})

@@ -3,15 +3,15 @@ from typing import List
 from beanie import PydanticObjectId
 
 from backend.app.utils.logger import Logger, create_and_log
-from backend.common.models.doc_document import DocDocument, DocDocumentLocation
-from backend.common.models.document import RetrievedDocument, SiteRetrievedDocument
+from backend.common.models.doc_document import DocDocument, DocDocumentLocation, SiteDocDocument
+from backend.common.models.document import RetrievedDocument
 from backend.common.models.lineage import LineageDoc
 from backend.common.models.shared import RetrievedDocumentLocation
 from backend.common.models.user import User
 
 
-async def get_site_docs(site_id: PydanticObjectId) -> list[SiteRetrievedDocument]:
-    docs: List[SiteRetrievedDocument] = await RetrievedDocument.aggregate(
+async def get_site_docs(site_id: PydanticObjectId) -> list[SiteDocDocument]:
+    docs: List[SiteDocDocument] = await DocDocument.aggregate(
         aggregation_pipeline=[
             {"$match": {"locations.site_id": site_id}},
             {"$unwind": {"path": "$locations"}},
@@ -19,7 +19,7 @@ async def get_site_docs(site_id: PydanticObjectId) -> list[SiteRetrievedDocument
             {"$match": {"site_id": site_id}},
             {"$unset": ["locations"]},
         ],
-        projection_model=SiteRetrievedDocument,
+        projection_model=SiteDocDocument,
     ).to_list()
 
     return docs
@@ -27,8 +27,8 @@ async def get_site_docs(site_id: PydanticObjectId) -> list[SiteRetrievedDocument
 
 async def get_site_docs_for_ids(
     site_id: PydanticObjectId, doc_ids: list[PydanticObjectId]
-) -> list[SiteRetrievedDocument]:
-    docs: List[SiteRetrievedDocument] = await RetrievedDocument.aggregate(
+) -> list[SiteDocDocument]:
+    docs: List[SiteDocDocument] = await DocDocument.aggregate(
         aggregation_pipeline=[
             {"$match": {"_id": {"$in": doc_ids}}},
             {"$unwind": {"path": "$locations"}},
@@ -36,38 +36,23 @@ async def get_site_docs_for_ids(
             {"$match": {"site_id": site_id}},
             {"$unset": ["locations"]},
         ],
-        projection_model=SiteRetrievedDocument,
+        projection_model=SiteDocDocument,
     ).to_list()
 
     return docs
 
 
 async def get_site_lineage(site_id: PydanticObjectId):
-    docs = await RetrievedDocument.aggregate(
+    docs = await DocDocument.aggregate(
         aggregation_pipeline=[
             {"$match": {"locations.site_id": site_id}},
-            {
-                "$set": {
-                    "final_effective_date": {
-                        "$ifNull": [
-                            {
-                                "$max": [
-                                    "$effective_date",
-                                    "$last_reviewed_date",
-                                    "$last_updated_date",
-                                ]
-                            },
-                            "$first_collected_date",
-                        ]
-                    }
-                }
-            },
             {
                 "$project": {
                     "_id": 1,
                     "name": 1,
                     "lineage_id": 1,
-                    "previous_doc_id": 1,
+                    "previous_doc_doc_id": 1,
+                    "retrieved_document_id": 1,
                     "is_current_version": 1,
                     "checksum": 1,
                     "file_extension": 1,
@@ -112,6 +97,9 @@ async def create_doc_document_service(
         lineage_id=retrieved_document.lineage_id,
         is_current_version=retrieved_document.is_current_version,
         locations=[DocDocumentLocation(**rt_doc_location.dict())],
+        doc_vectors=retrieved_document.doc_vectors,
+        file_size=retrieved_document.file_size,
+        token_count=retrieved_document.token_count,
     )
     doc_document.set_final_effective_date()
     # Set doc doc specific fields which cannot be copied from retr doc.

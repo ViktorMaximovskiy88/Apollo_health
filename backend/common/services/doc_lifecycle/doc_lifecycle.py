@@ -128,6 +128,9 @@ class DocLifecycleService:
         return doc.classification_status, True
 
     def assess_doc_family_status(self, doc: DocDocument) -> tuple[ApprovalStatus, bool]:
+        if doc.family_status == ApprovalStatus.HOLD:
+            return doc.family_status, False
+
         info: list[str] = []
         if not doc.document_family_id:
             info.append("DOC_FAMILY")

@@ -45,7 +45,7 @@ export function useTaskWorker(successFunc: Function = () => {}) {
   const [getTask] = useLazyGetTaskQuery();
   const [enqueueTask] = useEnqueueTaskMutation();
 
-  const { watermark, setActive, isActive } = useInterval(5000, false);
+  const { watermark, setActive, isActive } = useInterval(5000, { active: false });
   const [task, setTask] = useState<Task | undefined>(undefined);
 
   useEffect(() => {

@@ -21,6 +21,7 @@ import {
   useGetDocumentFamilyNamesById,
 } from './document_family/documentFamilyHooks';
 import { uniquePayerFamilyIds, useGetPayerFamilyNamesById } from '../payer-family/payerFamilyHooks';
+import { Alert } from 'antd';
 
 interface DataTablePropTypes {
   handleNewVersion: (data: SiteDocDocument) => void;
@@ -69,6 +70,15 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
 
   return (
     <>
+      {scrapeTaskId ? (
+        <Alert
+          message={`Filtered by Site Scrape Task: ${scrapeTaskId}`}
+          type="success"
+          className="mb-1"
+        />
+      ) : (
+        <Alert message="Showing All Documents" type="success" className="mb-1" />
+      )}
       <ReactDataGrid
         idProperty="_id"
         dataSource={loadData}

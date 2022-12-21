@@ -132,8 +132,8 @@ export const createColumns = ({
       },
     },
     {
-      name: 'action',
       header: 'Actions',
+      name: 'action',
       render: ({ data: task }: { data: SiteScrapeTask }) => {
         switch (task.status) {
           case TaskStatus.InProgress:

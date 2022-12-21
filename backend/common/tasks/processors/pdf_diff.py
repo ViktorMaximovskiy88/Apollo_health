@@ -9,6 +9,9 @@ from backend.common.tasks.task_processor import TaskProcessor
 
 
 class PDFDiffTaskProcessor(TaskProcessor):
+
+    dependencies: list[str] = []
+
     def __init__(self, logger=logging) -> None:
         self.logger = logger
 

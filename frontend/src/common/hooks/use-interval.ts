@@ -8,7 +8,12 @@ import { useEffect, useRef, useState } from 'react';
  * @param future
  * @returns
  */
-const useInterval = (interval: number, active: boolean = true, future?: Promise<any>) => {
+const useInterval = (
+  interval: number,
+  { active = true, background = false }: { active?: boolean; background?: boolean } = {
+    active: true,
+  }
+) => {
   useEffect(() => {});
   let timer = useRef<NodeJS.Timeout>();
   const [isActive, setActive] = useState<boolean>(active);
@@ -17,6 +22,7 @@ const useInterval = (interval: number, active: boolean = true, future?: Promise<
   function startInterval() {
     setActive(true);
     timer.current = setInterval(() => {
+      if (document.hidden && !background) return;
       setWatermark(new Date());
     }, interval);
   }
@@ -32,7 +38,18 @@ const useInterval = (interval: number, active: boolean = true, future?: Promise<
     } else {
       stopInterval();
     }
-    return () => stopInterval();
+
+    function onVisibilityChange() {
+      if (!document.hidden) {
+        if (isActive) setWatermark(new Date());
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      stopInterval();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [isActive]);
 
   return {

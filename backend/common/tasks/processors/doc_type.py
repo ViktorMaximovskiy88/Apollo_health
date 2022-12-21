@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 import backend.common.models.tasks as tasks
 from backend.common.core.enums import ApprovalStatus
 from backend.common.models.doc_document import DocDocument
-from backend.common.models.document import RetrievedDocument
 from backend.common.models.pipeline import DocPipelineStages, PipelineRegistry, PipelineStage
 from backend.common.storage.client import TextStorageClient
 from backend.common.tasks.task_processor import TaskProcessor
@@ -12,19 +11,29 @@ from backend.scrapeworker.doc_type_classifier import guess_doc_type
 
 
 class DocTypeTaskProcessor(TaskProcessor):
-    def __init__(self, logger=logging) -> None:
+
+    dependencies: list[str] = [
+        "text_client",
+    ]
+
+    def __init__(
+        self,
+        logger=logging,
+        text_client: TextStorageClient = TextStorageClient(),
+    ) -> None:
         self.logger = logger
-        self.text_client = TextStorageClient()
+        self.text_client = text_client
 
     async def exec(self, task: tasks.DocTypeTask):
         stage_versions = await PipelineRegistry.fetch()
-        # for now...
-        rdoc = await RetrievedDocument.get(task.doc_doc_id)
-        doc = await DocDocument.find_one(DocDocument.retrieved_document_id == rdoc.id)
+        doc = await DocDocument.get(task.doc_doc_id)
+
         if not doc:
             raise Exception(f"doc_doc {task.doc_doc_id} not found")
 
-        if doc.classification_status == ApprovalStatus.APPROVED:
+        if doc.classification_status == ApprovalStatus.APPROVED or doc.has_user_edit(
+            "document_type"
+        ):
             self.logger.info(f"{doc.id} classification_status={doc.classification_status} skipping")
             return
 

@@ -1,7 +1,7 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import {
@@ -19,10 +19,11 @@ import {
   prettyDateDistanceSingle,
 } from '../../common';
 import { ButtonLink } from '../../components/ButtonLink';
-import { useGetExtractionTasksForDocQuery } from './extractionsApi';
+import { useLazyGetExtractionTasksForDocQuery } from './extractionsApi';
 import { ExtractionTask } from './types';
 import { useDataTableSort } from '../../common/hooks/use-data-table-sort';
 import { useDataTableFilter } from '../../common/hooks/use-data-table-filter';
+import { useInterval } from '../../common/hooks';
 
 const columns = [
   {
@@ -119,10 +120,11 @@ const useControlledPagination = () => {
 export function ExtractionTasksTable() {
   const params = useParams();
   const docId = params.docId;
-  const { data: documents } = useGetExtractionTasksForDocQuery(docId, {
-    skip: !docId,
-    pollingInterval: 5000,
-  });
+  const [getTasks, { data: documents }] = useLazyGetExtractionTasksForDocQuery();
+  const { watermark } = useInterval(5000);
+  useEffect(() => {
+    if (docId) getTasks(docId);
+  }, [watermark, docId]);
 
   const filterProps = useDataTableFilter(extractionTaskTableState, setExtractionTaskTableFilter);
   const sortProps = useDataTableSort(extractionTaskTableState, setExtractionTaskTableSort);

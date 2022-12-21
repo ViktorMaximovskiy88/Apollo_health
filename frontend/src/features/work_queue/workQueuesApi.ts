@@ -52,7 +52,7 @@ export const workQueuesApi = createApi({
 
 export const {
   useGetWorkQueueQuery,
-  useGetWorkQueueCountsQuery,
+  useLazyGetWorkQueueCountsQuery,
   useGetWorkQueuesQuery,
   useAddWorkQueueMutation,
   useUpdateWorkQueueMutation,

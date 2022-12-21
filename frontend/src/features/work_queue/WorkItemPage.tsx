@@ -105,7 +105,7 @@ function WorkItemSubmitBar(props: {
 
   return (
     <div className="flex space-x-2 items-center">
-      <Button onClick={() => navigate('../../..')}>Cancel</Button>
+      <Button onClick={() => navigate('../..')}>Cancel</Button>
       {props.wq.submit_actions.map((action) => (
         <WorkQueueActionButton
           docDocumentId={props.docDocumentId}
@@ -216,7 +216,7 @@ export function ProcessWorkItemPage() {
   const workQueueId = params.queueId;
   const [takeWorkItem] = useTakeWorkItemMutation();
   const { data: wq } = useGetWorkQueueQuery(workQueueId);
-  const { watermark } = useInterval(5000);
+  const { watermark } = useInterval(5000, { background: true });
 
   useEffect(() => {
     (async () => {

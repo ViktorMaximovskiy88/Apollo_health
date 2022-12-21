@@ -150,6 +150,7 @@ export function useWorkQueueColumns(
       },
     },
     {
+      name: 'action',
       header: 'Actions',
       render: ({ data: item }: { data: BaseDocument }) => {
         return (

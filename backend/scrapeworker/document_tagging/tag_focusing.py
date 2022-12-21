@@ -91,7 +91,7 @@ class FocusChecker:
     ) -> "FocusChecker":
         """`FocusChecker` with all location's focus configs"""
         focus_configs = await cls._location_focus_configs(doc, tag_type)
-        return cls(full_text, focus_configs, url, link_text)
+        return cls(full_text, focus_configs, url, link_text, doc.document_type)
 
     def set_section_end(self, focus_areas: list[FocusArea]):
         for i, area in enumerate(focus_areas):

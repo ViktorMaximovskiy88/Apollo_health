@@ -1,6 +1,6 @@
 import { Button, Input, InputNumber, Popconfirm, Select, Switch, Tag } from 'antd';
 import { CheckOutlined, CloseOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
-import { VirtualItem } from '@tanstack/react-virtual';
+import { VirtualItem, Virtualizer } from '@tanstack/react-virtual';
 import { DocumentTag, TagUpdateStatus } from './types';
 import { useState } from 'react';
 
@@ -31,13 +31,15 @@ export function EditTag({
   onToggleEdit,
   tag,
   virtualRow,
+  virtualizer,
 }: {
   existsCopy: boolean;
   onDeleteTag: Function;
   onEditTag: Function;
   onToggleEdit: Function;
   tag: DocumentTag;
-  virtualRow: VirtualItem<unknown>;
+  virtualRow: VirtualItem;
+  virtualizer: Virtualizer<HTMLDivElement, Element>;
 }) {
   const [open, setOpen] = useState(false);
   const update_status_options = [
@@ -59,7 +61,7 @@ export function EditTag({
         height: `${virtualRow.size}px`,
         transform: `translateY(${virtualRow.start}px)`,
       }}
-      ref={virtualRow.measureElement}
+      ref={virtualizer.measureElement}
     >
       <div className="flex">
         <Input
@@ -143,11 +145,13 @@ export function ReadTag({
   onDeleteTag,
   tag,
   virtualRow,
+  virtualizer,
 }: {
   onToggleEdit: Function;
   onDeleteTag: Function;
   tag: DocumentTag;
-  virtualRow: VirtualItem<unknown>;
+  virtualRow: VirtualItem;
+  virtualizer: Virtualizer<HTMLDivElement, Element>;
 }) {
   const statusDisplay = getStatusDisplay(tag.update_status);
 
@@ -163,7 +167,7 @@ export function ReadTag({
         height: `${virtualRow.size}px`,
         transform: `translateY(${virtualRow.start}px)`,
       }}
-      ref={virtualRow.measureElement}
+      ref={virtualizer.measureElement}
     >
       <div className="flex">
         <div className="flex flex-1 font-bold">{tag.name}</div>

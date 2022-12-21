@@ -4,6 +4,7 @@ import spacy
 from spacy.tokens import Span
 
 from backend.common.core.enums import SectionType
+from backend.common.core.utils import now
 from backend.common.models.doc_document import IndicationTag
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.indication import Indication
@@ -90,6 +91,7 @@ class IndicationTagger:
                         page=-1,
                         code=int(indication_number),
                         focus=focus_state.focus,
+                        created_at=now(),
                     )
                     if focus_state.is_in_link_text:
                         link_tags.add(context_tag)
@@ -103,6 +105,7 @@ class IndicationTagger:
                     focus=focus_state.focus,
                     key=focus_state.key,
                     text_area=focus_state.section,
+                    created_at=now(),
                 )
                 tags.add(tag)
             char_offset += len(page) + 1
