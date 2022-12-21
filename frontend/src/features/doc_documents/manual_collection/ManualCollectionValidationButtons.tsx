@@ -7,13 +7,15 @@ import {
   FileUnknownOutlined,
 } from '@ant-design/icons';
 import { SiteDocDocument } from '../types';
-import { WorkItemOption } from '../../collections/types';
-import { useContext } from 'react';
+import { SiteScrapeTask, WorkItemOption } from '../../collections/types';
+import { useContext, useState } from 'react';
 import { ValidationButtonsContext, ValidationButtonsProvider } from './ManualCollectionContext';
 import { useUpdateSelected } from './useUpdateSelected';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useGetSiteQuery } from '../../sites/sitesApi';
 import { TaskStatus } from '../../../common/scrapeTaskStatus';
+import { useGetScrapeTasksForSiteQuery } from '../../collections/siteScrapeTasksApi';
+import { initialState } from '../../collections/collectionsSlice';
 
 const Found = () => {
   const updateSelected = useUpdateSelected();
@@ -375,14 +377,9 @@ const Unhandled = () => {
 };
 
 function ValidationButtons() {
-  const { isLoading } = useContext(ValidationButtonsContext) ?? {};
-  const params = useParams();
-  const siteId = params.siteId;
-  const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
-  const { data: site } = useGetSiteQuery(siteId);
-  if (!site) return null;
+  const { isLoading, showValidationButtons } = useContext(ValidationButtonsContext) ?? {};
 
-  if (site.collection_method === 'MANUAL' && activeStatuses.includes(site.last_run_status)) {
+  if (showValidationButtons) {
     return (
       <div className="flex space-x-1">
         <Found />
@@ -405,8 +402,41 @@ export function ManualCollectionValidationButtons({
   doc: SiteDocDocument;
   handleNewVersion: (doc: SiteDocDocument) => void;
 }) {
+  const [showValidationButtons, setShowValidationButtons] = useState(false);
+  const params = useParams();
+  const siteId = params.siteId;
+  const [searchParams] = useSearchParams();
+  const scrapeTaskId = searchParams.get('scrape_task_id');
+  const mostRecentTask = {
+    limit: 1,
+    skip: 0,
+    sortInfo: initialState.table.sort,
+    filterValue: initialState.table.filter,
+  };
+  const { data }: { data?: { data?: SiteScrapeTask[] } } = useGetScrapeTasksForSiteQuery({
+    ...mostRecentTask,
+    siteId,
+  });
+  const siteScrapeTasks = data?.data;
+  const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
+  const { data: site } = useGetSiteQuery(siteId);
+  if (!site) return null;
+  if (site.collection_method === 'MANUAL' && activeStatuses.includes(site.last_run_status)) {
+    if (siteScrapeTasks && siteScrapeTasks[0]._id === scrapeTaskId && !showValidationButtons) {
+      setShowValidationButtons(true);
+    }
+  } else {
+    if (showValidationButtons === true) {
+      setShowValidationButtons(false);
+    }
+  }
+
   return (
-    <ValidationButtonsProvider doc={doc} handleNewVersion={handleNewVersion}>
+    <ValidationButtonsProvider
+      doc={doc}
+      handleNewVersion={handleNewVersion}
+      showValidationButtons={showValidationButtons}
+    >
       <ValidationButtons />
     </ValidationButtonsProvider>
   );

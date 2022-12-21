@@ -20,6 +20,7 @@ export const ValidationButtonsContext = createContext<{
   workList?: WorkItem[];
   workItem?: WorkItem;
   handleNewVersion: (doc: SiteDocDocument) => void;
+  showValidationButtons: boolean;
 } | null>(null);
 
 const useWorkList = (): { workList?: WorkItem[] } => {
@@ -31,6 +32,7 @@ const useWorkList = (): { workList?: WorkItem[] } => {
   const siteScrapeTask = data?.data?.[0];
   if (!siteScrapeTask) return {};
   const { work_list: workList } = siteScrapeTask;
+
   return { workList };
 };
 
@@ -46,24 +48,25 @@ const useWorkItem = (docId: string): WorkItem | undefined => {
   if (!('work_list' in siteScrapeTask)) return;
   const { work_list: workList } = siteScrapeTask;
   const workItem = workList.find((item) => item.document_id === docId);
+
   return workItem;
 };
 
 export const ValidationButtonsProvider = ({
   doc,
   handleNewVersion,
+  showValidationButtons,
   children,
 }: {
   doc: SiteDocDocument;
   handleNewVersion: (doc: SiteDocDocument) => void;
+  showValidationButtons: boolean;
   children: ReactNode;
 }) => {
   const docId = doc._id;
-
   const [isLoading, setIsLoading] = useState(false);
   const { workList } = useWorkList();
   const workItem = useWorkItem(docId);
-
   const value = {
     isLoading,
     setIsLoading,
@@ -72,7 +75,9 @@ export const ValidationButtonsProvider = ({
     workList,
     workItem,
     handleNewVersion,
+    showValidationButtons,
   };
+
   return (
     <ValidationButtonsContext.Provider value={value}>{children}</ValidationButtonsContext.Provider>
   );
