@@ -299,7 +299,7 @@ class ScrapeWorker:
                 )
 
                 doc_document = await self.doc_updater.update_doc_document(
-                    document, new_therapy_tags, new_indicate_tags
+                    document, new_therapy_tags, new_indicate_tags, parsed_content["priority"]
                 )
 
             else:
