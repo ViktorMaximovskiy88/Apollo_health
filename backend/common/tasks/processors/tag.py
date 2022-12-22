@@ -88,6 +88,10 @@ class TagTaskProcessor(TaskProcessor):
             indication_tags=indication_tags,
             therapy_tags=therapy_tags,
         )
+        priority_total = 0
+        for tag in therapy_tags:
+            if tag.priority:
+                priority_total = priority_total + tag.priority
 
         doc = doc.process_tag_changes(new_therapy_tags, new_indication_tags)
 
@@ -99,6 +103,7 @@ class TagTaskProcessor(TaskProcessor):
             "locations.$.url_indication_tags": [i.dict() for i in url_indication_tags],
             "locations.$.link_indication_tags": [i.dict() for i in link_indication_tags],
             "token_count": len(tokens),
+            "priority": priority_total,
             "pipeline_stages": doc.pipeline_stages.dict(),
         }
 

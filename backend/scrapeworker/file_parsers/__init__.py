@@ -86,4 +86,8 @@ async def get_tags(
     parsed_content["url_indication_tags"] = url_indication_tags
     parsed_content["link_therapy_tags"] = link_therapy_tags
     parsed_content["link_indication_tags"] = link_indication_tags
+    parsed_content["priority"] = 0
+    for tag in therapy_tags:
+        if tag.priority:
+            parsed_content["priority"] = parsed_content["priority"] + tag.priority
     return parsed_content
