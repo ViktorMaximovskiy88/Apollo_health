@@ -18,7 +18,7 @@ from backend.app.routes.table_query import (
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.models.base_document import BaseDocument, BaseModel
-from backend.common.models.comment import Comment
+from backend.common.models.comment import Comment, HoldType
 from backend.common.models.doc_document import (
     DocDocument,
     LockableDocument,
@@ -298,6 +298,7 @@ class SubmitWorkItemRequest(BaseModel):
     updates: dict[str, Any]
     reassignment: PydanticObjectId | None
     comment: str | None
+    type: HoldType | None
 
 
 @router.post("/{id}/items/{item_id}/submit", response_model=SubmitWorkItemResponse)
@@ -330,7 +331,11 @@ async def submit_work_item(
     if body.comment:
         now = datetime.now(tz=timezone.utc)
         comment = Comment(
-            target_id=item_id, user_id=current_user.id, time=now, text=body.comment  # type: ignore
+            target_id=item_id,
+            user_id=current_user.id,  # type: ignore
+            time=now,
+            text=body.comment,
+            type=body.type,
         )
         await comment.save()
 

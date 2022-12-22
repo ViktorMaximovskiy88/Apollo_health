@@ -11,6 +11,7 @@ import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
 import { workQueueTableState } from './workQueueSlice';
 import { useSelector } from 'react-redux';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
+import { WorkQueue } from './types';
 
 function useSiteSelectOptions() {
   const [getSites] = useLazyGetSitesQuery();
@@ -32,7 +33,8 @@ function useSiteSelectOptions() {
 
 export function useWorkQueueColumns(
   queueId: string | undefined,
-  siteNamesById: { [key: string]: string }
+  siteNamesById: { [key: string]: string },
+  wq: WorkQueue | undefined
 ) {
   const { data: users } = useGetUsersQuery();
   const { siteOptions } = useSiteSelectOptions();
@@ -149,17 +151,42 @@ export function useWorkQueueColumns(
         }
       },
     },
-    {
-      name: 'action',
-      header: 'Actions',
-      render: ({ data: item }: { data: BaseDocument }) => {
-        return (
-          <ButtonLink type="default" to={`${item._id}/process`}>
-            Take
-          </ButtonLink>
-        );
-      },
-    },
   ];
+
+  if (wq?.name.includes('Hold')) {
+    columns.push({
+      name: 'hold_comment',
+      header: 'Hold Comment',
+      defaultFlex: 0,
+      minWidth: 200,
+      render: () => {
+        return <p>commessnt</p>;
+      },
+    });
+    columns.push({
+      name: 'hold_time',
+      header: 'Hold Time',
+      render: ({ data: item }: { data: BaseDocument }) => {
+        return <p>time</p>;
+      },
+      defaultFlex: 0,
+      minWidth: 200,
+    });
+  }
+
+  columns.push({
+    name: 'action',
+    header: 'Actions',
+    render: ({ data: item }: { data: BaseDocument }) => {
+      return (
+        <ButtonLink type="default" to={`${item._id}/process`}>
+          Take
+        </ButtonLink>
+      );
+    },
+    defaultFlex: 0,
+    minWidth: 200,
+  });
+
   return { columns };
 }

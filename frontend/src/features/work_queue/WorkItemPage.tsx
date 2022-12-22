@@ -16,6 +16,7 @@ import {
   useTakeNextWorkItemMutation,
   useTakeWorkItemMutation,
 } from '../doc_documents/docDocumentApi';
+import { CommentType } from '../comments/types';
 
 function notifyFailedLock() {
   notification.open({
@@ -144,6 +145,16 @@ export function WorkQueueWorkItem(props: {
     }
   }, [action, form]);
 
+  function checkType() {
+    if (props.wq.name.includes('Classification')) {
+      return CommentType.ClassificationHold;
+    } else if (props.wq.name.includes('Document and Payer Family')) {
+      return CommentType.DocPayerHold;
+    } else if (props.wq.name.includes('Translation Config')) {
+      return CommentType.TranslationConfigHold;
+    }
+  }
+
   const onSubmit = useCallback(
     async (item: any) => {
       const defaultAction = props.wq.submit_actions.find((a) => a.primary);
@@ -154,6 +165,7 @@ export function WorkQueueWorkItem(props: {
       };
       const body = {
         action_label: chosenAction?.label,
+        type: comment && checkType(),
         comment,
         reassignment,
         updates,
