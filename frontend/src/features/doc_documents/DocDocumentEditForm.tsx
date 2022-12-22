@@ -7,12 +7,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { isEqual } from 'lodash';
 import { DocDocumentInfoForm } from './DocDocumentInfoForm';
 import { DocDocumentLocations } from './locations/DocDocumentLocations';
-import { useGetDocDocumentQuery } from './docDocumentApi';
+import { useGetChangeLogQuery, useGetDocDocumentQuery } from './docDocumentApi';
 import { DocDocumentExtractionTab } from './DocDocumentExtractionTab';
 import { calculateFinalEffectiveFromValues } from './helpers';
 import { DocStatusModal } from './DocStatusModal';
 import { HashRoutedTabs } from '../../components/HashRoutedTabs';
 import { CommentWall } from '../comments/CommentWall';
+import { ChangeLogModal } from '../change-log/ChangeLogModal';
 
 const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   const calculateFinalEffectiveDate = useCallback(() => {
@@ -237,7 +238,12 @@ export function DocDocumentEditForm({
         onFinish={onFinish}
       >
         <HashRoutedTabs
-          tabBarExtraContent={<DocStatusModal doc={doc} />}
+          tabBarExtraContent={
+            <>
+              <ChangeLogModal target={doc} useChangeLogQuery={useGetChangeLogQuery} />
+              <DocStatusModal doc={doc} />
+            </>
+          }
           items={tabs}
           className="h-full ant-tabs-h-full"
         />

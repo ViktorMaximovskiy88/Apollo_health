@@ -303,10 +303,10 @@ export const useColumns = ({
       header: 'Actions',
       name: 'action',
       minWidth: 180,
-      render: ({ data: site }: { data: Site }) => {
+      render: ({ data: doc }: { data: DocDocument }) => {
         return (
           <>
-            <ChangeLogModal target={site} useChangeLogQuery={useGetChangeLogQuery} />
+            <ChangeLogModal target={doc} useChangeLogQuery={useGetChangeLogQuery} />
           </>
         );
       },
