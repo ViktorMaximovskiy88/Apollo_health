@@ -55,6 +55,12 @@ export const DocumentTypes = [
   { id: 'Internal Reference', label: 'Internal Reference', value: 'Internal Reference' },
   { id: 'LCD', label: 'LCD', value: 'LCD' },
   { id: 'Medical Coverage List', label: 'Medical Coverage List', value: 'Medical Coverage List' },
+  {
+    id: 'Medical Coverage Status',
+    label: 'Medical Coverage Status',
+    value: 'Medical Coverage Status',
+  },
+
   { id: 'Member Resources', label: 'Member Resources', value: 'Member Resources' },
   { id: 'NCCN Guideline', label: 'NCCN Guideline', value: 'NCCN Guideline' },
   { id: 'NCD', label: 'NCD', value: 'NCD' },
