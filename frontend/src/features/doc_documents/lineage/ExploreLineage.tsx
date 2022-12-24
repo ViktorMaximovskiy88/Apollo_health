@@ -5,12 +5,7 @@ import { useCallback, useState } from 'react';
 import { useGetDocDocumentQuery } from '../docDocumentApi';
 import { LineageDocDocumentsTable } from './LineageDocDocumentsTable';
 import { useSelector } from 'react-redux';
-import {
-  lineageDocDocumentTableState,
-  previousDocDocumentIdState,
-  setLineageDocDocumentTableFilter,
-  setPreviousDocDocumentId,
-} from './lineageDocDocumentsSlice';
+import { previousDocDocumentIdState, setPreviousDocDocumentId } from './lineageDocDocumentsSlice';
 import { useAppDispatch } from '../../../app/store';
 import { DocDocument } from '../types';
 import { FullScreenModal } from '../../../components/FullScreenModal';
@@ -64,7 +59,7 @@ const LineageModalFooter = (props: {
           Show Current Document
         </Checkbox>
       </div>
-      <div>
+      <div className="flex">
         <Button key="cancel" onClick={props.handleCancel}>
           Cancel
         </Button>
@@ -81,41 +76,29 @@ const LineageModalFooter = (props: {
   );
 };
 
-export function ExploreLineage() {
+export function ExploreLineage({
+  open,
+  handleModalOpen,
+  closeModal,
+}: {
+  open: boolean;
+  handleModalOpen: () => void;
+  closeModal: () => void;
+}) {
   const form = Form.useFormInstance();
 
   const dispatch = useAppDispatch();
   const prevDocDocId = useSelector(previousDocDocumentIdState);
-  const [open, setOpen] = useState(false);
   const [showCurrentDocument, setShowCurrentDocument] = useState(true);
-
-  const closeModal = useCallback(() => {
-    setOpen(false);
-  }, []);
 
   const handleCancel = useCallback(() => {
     dispatch(setPreviousDocDocumentId(null));
     closeModal();
   }, [closeModal, dispatch]);
 
-  const tableState = useSelector(lineageDocDocumentTableState);
-
-  const handleModalOpen = useCallback(() => {
-    const prevDocId = form.getFieldValue('previous_doc_doc_id');
-    dispatch(setPreviousDocDocumentId(prevDocId));
-
-    const docType = form.getFieldValue('document_type');
-    const newFilters = tableState.filter.map((f) => {
-      return f.name === 'document_type' ? { ...f, value: docType } : f;
-    });
-    dispatch(setLineageDocDocumentTableFilter(newFilters));
-
-    setOpen(true);
-  }, [dispatch, form, tableState.filter]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const handleSubmit = useCallback(async () => {
     if (!prevDocDocId) throw new Error('prevDocDocId not found');
-    form.setFieldValue('previous_doc_doc_id', prevDocDocId);
+    form.setFieldsValue({ previous_doc_doc_id: prevDocDocId });
     closeModal();
   }, [prevDocDocId, form, closeModal]);
 

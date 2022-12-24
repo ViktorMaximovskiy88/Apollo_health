@@ -92,6 +92,7 @@ export interface DocDocument extends BaseDocument {
   last_collected_date: string;
 
   lineage_id: string;
+  is_current_version: boolean;
   version: string;
   internal_document: boolean;
   previous_doc_doc_id: string | null;
@@ -107,7 +108,10 @@ export interface DocDocument extends BaseDocument {
   content_extraction_task_id?: string;
 
   tags: string[];
+
   pipeline_stages: DocPipelineStages;
+
+  include_later_documents_in_lineage_update?: boolean;
 }
 
 export type SiteDocDocument = Omit<

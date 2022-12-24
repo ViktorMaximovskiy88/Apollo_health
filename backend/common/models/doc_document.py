@@ -3,6 +3,7 @@ from uuid import UUID
 
 import pymongo
 from beanie import Indexed, PydanticObjectId
+from beanie.odm.queries.find import FindOne
 from pydantic import Field
 
 from backend.common.core.enums import ApprovalStatus, LangCode
@@ -97,6 +98,10 @@ class BaseDocDocument(BaseModel):
 
 class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixins):
     locations: list[DocDocumentLocation] = []
+
+    @property
+    def next_doc_document(self) -> FindOne["DocDocument"]:
+        return DocDocument.find_one({"previous_doc_doc_id": self.id})
 
     def for_site(self, site_id: PydanticObjectId):
         location = self.get_site_location(site_id)
@@ -228,6 +233,7 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     locations: list[DocDocumentLocation] | None
 
     user_edited_fields: list[str] = []
+    include_later_documents_in_lineage_update: bool = False
 
 
 class ClassificationUpdateDocDocument(BaseModel):
@@ -256,6 +262,7 @@ class ClassificationUpdateDocDocument(BaseModel):
     first_created_date: datetime | None = None
     published_date: datetime | None = None
     end_date: datetime | None = None
+    include_later_documents_in_lineage_update: bool = False
 
 
 class FamilyUpdateDocDocument(BaseModel):

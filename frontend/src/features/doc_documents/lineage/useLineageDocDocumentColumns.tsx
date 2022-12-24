@@ -1,7 +1,7 @@
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { useCallback, useMemo } from 'react';
-import { prettyDateFromISO, prettyDateUTCFromISO } from '../../../common';
+import { prettyDateUTCFromISO } from '../../../common';
 import { ButtonLink } from '../../../components';
 import { DocDocument } from '../types';
 import { DocumentTypes } from '../../retrieved_documents/types';
@@ -35,6 +35,14 @@ export const useLineageDocDocumentColumns = () => {
         minWidth: 300,
       },
       {
+        header: 'Link Text',
+        name: 'locations.link_text',
+        render: ({ data: docDocument }: { data: DocDocument }) => {
+          const linkTexts = docDocument.locations.map((location) => location.link_text);
+          return <>{linkTexts.join(', ')}</>;
+        },
+      },
+      {
         header: 'Document Type',
         name: 'document_type',
         minWidth: 200,
@@ -45,14 +53,6 @@ export const useLineageDocDocumentColumns = () => {
         },
         render: ({ value: document_type }: { value: string }) => {
           return <>{document_type}</>;
-        },
-      },
-      {
-        header: 'Link Text',
-        name: 'locations.link_text',
-        render: ({ data: docDocument }: { data: DocDocument }) => {
-          const linkTexts = docDocument.locations.map((location) => location.link_text);
-          return <>{linkTexts.join(', ')}</>;
         },
       },
       {
