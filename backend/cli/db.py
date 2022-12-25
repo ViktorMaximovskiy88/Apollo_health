@@ -45,7 +45,7 @@ async def migrate(
 
 @db.command()
 @click.pass_context
-async def run_latest(ctx):
+async def forward(ctx):
     runner = await MigrationNode.build(migration_dir)
     mode = RunningMode(direction=RunningDirections.FORWARD, distance=1)
     await runner.run(mode, False)
@@ -53,7 +53,7 @@ async def run_latest(ctx):
 
 @db.command()
 @click.pass_context
-async def reset_latest(ctx):
+async def backward(ctx):
     runner = await MigrationNode.build(migration_dir)
     mode = RunningMode(direction=RunningDirections.BACKWARD, distance=1)
     await runner.run(mode, False)

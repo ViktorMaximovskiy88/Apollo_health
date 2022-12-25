@@ -36,8 +36,8 @@ class Forward:
 
         batch = []
         for id, fields in docs.items():
-            update = {"user_edited_fields": list(fields)}
-            batch.append(UpdateOne({"_id": id}, {"$set": update}))
+            update = {"user_edited_fields": {"$each": list(fields)}}
+            batch.append(UpdateOne({"_id": id}, {"$addToSet": update}))
 
         result = await DocDocument.get_motor_collection().bulk_write(batch)
         logging.info(
