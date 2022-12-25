@@ -1,4 +1,7 @@
+import logging
+
 from beanie import free_fall_migration
+from pymongo import UpdateOne
 
 from backend.common.models.change_log import ChangeLog
 from backend.common.models.doc_document import DocDocument
@@ -29,11 +32,17 @@ class Forward:
                 docs[key] = set()
 
             field = change_doc["delta"]["path"][1:]
-
             docs[key].add(field)
 
-        # how to efficiently batch
-        print(docs)
+        batch = []
+        for id, fields in docs.items():
+            update = {"user_edited_fields": list(fields)}
+            batch.append(UpdateOne({"_id": id}, {"$set": update}))
+
+        result = await DocDocument.get_motor_collection().bulk_write(batch)
+        logging.info(
+            f"bulk_write -> acknowledged={result.acknowledged} matched_count={result.matched_count} modified_count={result.modified_count}"  # noqa
+        )
 
 
 class Backward:

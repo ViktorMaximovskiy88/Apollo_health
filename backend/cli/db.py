@@ -28,7 +28,7 @@ async def db(ctx):
 @click.pass_context
 @click.option(
     "--direction",
-    help="Forward or backward migration",
+    help="FORWARD or BACKWARD migration",
     default=RunningDirections.FORWARD,
     type=RunningDirections,
 )
@@ -45,7 +45,7 @@ async def migrate(
 
 @db.command()
 @click.pass_context
-async def test_latest(ctx):
+async def run_latest(ctx):
     runner = await MigrationNode.build(migration_dir)
     mode = RunningMode(direction=RunningDirections.FORWARD, distance=1)
     await runner.run(mode, False)
