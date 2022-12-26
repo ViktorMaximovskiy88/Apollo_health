@@ -28,7 +28,6 @@ async def find_changes(tag_type: str, output: dict):
         ]
     ).to_list()
 
-    # semi redundant with the group above ...
     for change_doc in changed_docs:
         key = change_doc["_id"]
         if key not in output:
