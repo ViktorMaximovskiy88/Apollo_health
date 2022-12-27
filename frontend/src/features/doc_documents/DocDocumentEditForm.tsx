@@ -85,6 +85,8 @@ const useOnFinish = ({
         }
       }
 
+      submittedDoc.previous_par_id = submittedDoc.previous_par_id || null;
+
       await onSubmit({
         ...submittedDoc,
         indication_tags,
