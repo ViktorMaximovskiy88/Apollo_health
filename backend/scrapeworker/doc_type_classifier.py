@@ -44,8 +44,12 @@ def guess_doc_type(
     # always classify for vectors
     doc_type, confidence, doc_vectors = classify_doc_type(raw_text)
 
-    if not is_searchable:
-        doc_type_match = DocTypeMatcher(raw_text, raw_link_text, raw_url, raw_name).exec()
-        return doc_type_match.document_type, doc_type_match.confidence, doc_vectors, doc_type_match
+    if is_searchable:
+        doc_type = DocumentType.MedicalCoverageList
+        confidence = 1
     else:
-        return doc_type, confidence, doc_vectors, None
+        doc_type_match = DocTypeMatcher(raw_text, raw_link_text, raw_url, raw_name).exec()
+        doc_type = doc_type_match.document_type
+        confidence = doc_type_match.confidence
+
+    return doc_type, confidence, doc_vectors, doc_type_match
