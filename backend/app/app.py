@@ -1,9 +1,6 @@
-import logging
 from pathlib import Path
-from time import time
 from typing import Any
 
-import jwt
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse
@@ -39,14 +36,14 @@ from backend.app.scripts.create_proxy_records import create_proxies
 from backend.app.scripts.create_work_queues import create_default_work_queues
 from backend.app.scripts.payer_backbone.load_payer_backbone import load_payer_backbone
 from backend.app.utils.cors import cors
-from backend.app.utils.user import get_provider_detail
+from backend.app.utils.http_logger import http_logger
 from backend.common.db.init import init_db
 from backend.common.db.migrations import confirm_migration_quality, run_migrations
 from backend.common.models.proxy import Proxy
 
 app = FastAPI()
 cors(app)  # local only
-logger = logging.getLogger("wrapper")
+http_logger(app)
 
 
 @app.on_event("startup")
@@ -123,31 +120,3 @@ async def frontend_routing(request: Request, call_next: Any):
 
 
 app.mount("/", StaticFiles(directory=frontend_build_dir, html=True), name="static")
-
-
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    # TODO if this stays, lets move it...
-    auth_header = request.headers.get("authorization", None)
-    user = "anon"
-    if auth_header:
-        [_, token] = auth_header.split(" ")
-        [signing_key, algorithm] = get_provider_detail(token)
-        payload = jwt.decode(
-            token,
-            signing_key,
-            algorithms=[algorithm],
-            audience=settings.auth0.audience,
-        )
-        user = payload.get("https://mmit.com/email")
-
-    logger.info(f"request_start='{request.method}_{request.url.path}' user='{user}'")
-    start_time = time()
-    # TODO sometimes we get exception for no response
-    response = await call_next(request)
-    process_time = (time() - start_time) * 1000
-    format_time = "{0:.2f}".format(process_time)
-    logger.info(
-        f"request_stop='{request.method}_{request.url.path}' user='{user}' duration='{format_time}ms'"  # noqa
-    )
-    return response

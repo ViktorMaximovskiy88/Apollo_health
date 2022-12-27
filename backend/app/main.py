@@ -1,12 +1,16 @@
+import logging
+import sys
 from pathlib import Path
 
 import newrelic.agent
+import uvicorn
 
 newrelic.agent.initialize(Path(__file__).parent / "newrelic.ini")
 
-import sys
+# disable uvicorn logging
+logging.getLogger("uvicorn.error").propagate = False
+logging.getLogger("uvicorn.access").propagate = False
 
-import uvicorn
 
 if __name__ == "__main__":
     sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
