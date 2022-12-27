@@ -1,3 +1,4 @@
+import logging
 import sys
 from pathlib import Path
 
@@ -10,6 +11,8 @@ from backend.cli.doc_type import doc_type
 from backend.cli.lineage import lineage
 from backend.cli.par import par
 from backend.cli.text_parser import text_parser
+
+logging.getLogger().setLevel(logging.INFO)
 
 
 @click.group()

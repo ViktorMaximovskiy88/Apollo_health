@@ -1,4 +1,3 @@
-import logging
 import sys
 from pathlib import Path
 
@@ -12,7 +11,6 @@ from beanie.migrations.runner import MigrationNode
 
 from backend.common.db.init import get_motor_client, get_motor_db, init_db
 
-log = logging.getLogger(__name__)
 migration_dir = Path(__file__).parent.parent.joinpath("common", "db", "migrations").resolve()
 
 
