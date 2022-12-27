@@ -55,7 +55,6 @@ export const DocumentFamilyCreateDrawer = (props: DocumentFamilyCreateDrawerProp
   filteredlegacyRelevanceOptions = filterLegacyRelevanceOptions(legacyRelevanceOptions, nameValue);
 
   const handleClose = () => {
-    form.resetFields();
     onClose();
   };
 

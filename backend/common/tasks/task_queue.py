@@ -1,11 +1,27 @@
 import asyncio
-import signal
 import traceback
 from collections.abc import Coroutine
 
 from backend.common.models.tasks import GenericTaskType, PydanticObjectId, TaskLog
+from backend.common.storage.client import DocumentStorageClient, TextStorageClient
+from backend.common.tasks.processors import task_processor_factory
+from backend.common.tasks.processors.doc_pipeline import DocPipelineTaskProcessor
 from backend.common.tasks.sqs import SQSBase
-from backend.common.tasks.task_processor import TaskProcessor, task_processor_factory
+from backend.common.tasks.task_processor import TaskProcessor
+
+# TODO shouldnt be here...
+from backend.scrapeworker.document_tagging.taggers import Taggers, indication_tagger, therapy_tagger
+
+# poor man's DI (to avoid _relatively_ costly operations from repeating)
+# TODO a 'caching; doc/text client since we know we are operating per
+# doc within our doc tasks
+taggers = Taggers(indication=indication_tagger, therapy=therapy_tagger)
+dependency_map = {
+    "indication_tagger": taggers.indication,
+    "therapy_tagger": taggers.therapy,
+    "text_client": TextStorageClient(),
+    "doc_client": DocumentStorageClient(),
+}
 
 
 class TaskQueue(SQSBase):
@@ -16,26 +32,19 @@ class TaskQueue(SQSBase):
         self.current_task = None
         self.listening = False
         self.keep_alive_seconds = 10
-        signal.signal(signal.SIGTERM, lambda signum, frame: self.onshutdown(signum, frame))
-        signal.signal(signal.SIGINT, lambda signum, frame: self.onshutdown(signum, frame))
 
-    def onshutdown(self, signum, frame):
-        self.logger.info(f"Received Signal {signum}")
+    async def onshutdown(self):
+        self.logger.info("Shutting down")
         self.listening = False
+        await asyncio.sleep(5)
 
         if self.current_message:
             self.logger.info(f"message_id={self.current_message.message_id} change_visibility to 0")
             self.current_message.change_visibility(VisibilityTimeout=self.keep_alive_seconds)
 
-        loop = asyncio.get_event_loop()
-        tasks = asyncio.gather(*asyncio.all_tasks(loop=loop), return_exceptions=True)
-        tasks.add_done_callback(lambda t: loop.stop())
-        tasks.cancel()
-
-        # TODO some better handling here; lets catch the known exception?
-        # TODO can that backfire (aka is it a valid exception in some cases)?
-        while not tasks.done() and not loop.is_closed():
-            loop.run_forever()
+        if self.current_task:
+            self.logger.info(f"task_id={self.current_task.id} has been interupted")
+            await self.current_task.update_canceled()
 
     async def enqueue(
         self, payload: GenericTaskType, created_by: PydanticObjectId | None = None
@@ -73,20 +82,24 @@ class TaskQueue(SQSBase):
                         message.delete()
                         continue
 
-                    task = await task.update_progress()
-                    self.logger.info(f"{task.task_type} processing started")
-
                     try:
+                        task = await task.update_progress()
+                        self.logger.info(f"{task.task_type} processing started")
+
                         task_processor: TaskProcessor = task_processor_factory(task)
+                        # TODO need refactor due to circular dep, cheating now
+                        if not task_processor:
+                            task_processor = DocPipelineTaskProcessor()
+
                         self.keep_alive_task = asyncio.create_task(
                             self.keep_alive(
                                 self.keep_alive_seconds, message, task, task_processor.get_progress
                             )
                         )
-                        await task_processor.exec(task.payload)
+                        result = await task_processor.exec(task.payload)
                         self.keep_alive_task.cancel()
 
-                        task = await task.update_finished()
+                        task = await task.update_finished(result)
                         self.logger.info(f"{task.task_type} processing finished")
                         message.delete()
                     except asyncio.CancelledError:
@@ -96,27 +109,15 @@ class TaskQueue(SQSBase):
                         self.logger.error("task error:", exc_info=True)
                         await task.update_failed(error=traceback.format_exc())
 
-                except asyncio.CancelledError:
-                    self.logger.warn("canceling tasks")
                 except Exception:
                     self.logger.error("queue error:", exc_info=True)
 
                 self.current_message = None
+                self.current_task = None
 
     async def _get_task_by_message(self, message):
         task = await TaskLog.find_by_message_id(message.message_id)
         if not task:
             message.change_visibility(VisibilityTimeout=self.keep_alive_seconds)
             raise Exception(f"TaskLog not found message_id={message.message_id} {message.body}")
-        return task
-
-    async def _get_task(self, body: dict):
-        id = body.get("id", None)
-        if not id:
-            raise Exception("Missing message id")
-
-        task = await TaskLog.get(body["id"])
-        if not task:
-            raise Exception(f"TaskLog not found id={body['id']}")
-
         return task

@@ -62,6 +62,10 @@ export const documentsApi = createApi({
       query: (id) => `/documents/viewer/${id}?_=${+new Date()}`,
       providesTags: (_r, _e, id) => [{ type: 'RetrievedDocument' as const, id }],
     }),
+    getTextViewerUrl: builder.query<RetrievedDocument, string | undefined>({
+      query: (id) => `/documents/viewer/${id}?view_type=text&_=${+new Date()}`,
+      providesTags: (_r, _e, id) => [{ type: 'RetrievedDocument' as const, id }],
+    }),
   }),
 });
 
@@ -73,4 +77,5 @@ export const {
   useDeleteDocumentMutation,
   useGetChangeLogQuery,
   useGetDocumentViewerUrlQuery,
+  useGetTextViewerUrlQuery,
 } = documentsApi;

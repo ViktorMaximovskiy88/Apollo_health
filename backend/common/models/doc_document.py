@@ -3,12 +3,14 @@ from uuid import UUID
 
 import pymongo
 from beanie import Indexed, PydanticObjectId
+from beanie.odm.queries.find import FindOne
 from pydantic import Field
 
 from backend.common.core.enums import ApprovalStatus, LangCode
 from backend.common.models.base_document import BaseDocument, BaseModel
 from backend.common.models.document_family import DocumentFamily
 from backend.common.models.document_mixins import DocumentMixins
+from backend.common.models.pipeline import DocPipelineStages
 from backend.common.models.shared import (
     DocDocumentLocation,
     DocDocumentLocationView,
@@ -83,10 +85,23 @@ class BaseDocDocument(BaseModel):
     compare_create_time: datetime | None = None
 
     tags: list[str] = []
+    pipeline_stages: DocPipelineStages | None
+
+    # from rt doc, lets just do these now...
+    # TODO if we gen analysis doc earlier, this doesnt have to live here
+    doc_vectors: list[list[float]] = []
+    file_size: int = 0
+    token_count: int = 0
+
+    user_edited_fields: list[str] = []
 
 
 class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixins):
     locations: list[DocDocumentLocation] = []
+
+    @property
+    def next_doc_document(self) -> FindOne["DocDocument"]:
+        return DocDocument.find_one({"previous_doc_doc_id": self.id})
 
     def for_site(self, site_id: PydanticObjectId):
         location = self.get_site_location(site_id)
@@ -94,6 +109,55 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
         copy.pop("first_collected_date")
         copy.pop("last_collected_date")
         return SiteDocDocument(_id=self.id, **copy, **location.dict())
+
+    def s3_doc_key(self):
+        return f"{self.checksum}.{self.file_extension}"
+
+    def s3_text_key(self):
+        return f"{self.text_checksum}.txt"
+
+    def set_unedited_attr(self, attr, value):
+        if attr not in self.user_edited_fields:
+            setattr(self, attr, value)
+
+    # has _any_ edits from attrs
+    def has_user_edit(self, *attrs):
+        for attr in attrs:
+            if attr in self.user_edited_fields:
+                return True
+        return False
+
+    def has_date_user_edits(self):
+        return self.has_user_edit(
+            "effective_date",
+            "end_date",
+            "last_updated_date",
+            "last_reviewed_date",
+            "next_review_date",
+            "next_update_date",
+            "published_date",
+        )
+
+    def has_tag_user_edits(self):
+        return self.has_user_edit("therapy_tags", "indication_tags")
+
+    def process_tag_changes(self, new_therapy_tags, new_indication_tags):
+        # if not edited for therapy_tags or indication_tags just wholesale assign
+        # if edited for therapy_tags or indication_tags just append diff
+
+        has_tag_updates = len(new_therapy_tags + new_indication_tags) > 0
+        user_edited_tags = self.has_user_edit("therapy_tags", "indication_tags")
+
+        if self.has_user_edit("therapy_tags"):
+            self.therapy_tags += new_therapy_tags
+
+        if self.has_user_edit("indication_tags"):
+            self.indication_tags += new_indication_tags
+
+        if has_tag_updates and user_edited_tags:
+            self.classification_status = ApprovalStatus.QUEUED
+
+        return self
 
     class Settings:
         indexes = [
@@ -168,6 +232,9 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
 
     locations: list[DocDocumentLocation] | None
 
+    user_edited_fields: list[str] = []
+    include_later_documents_in_lineage_update: bool = False
+
 
 class ClassificationUpdateDocDocument(BaseModel):
     name: str | None = None
@@ -195,6 +262,7 @@ class ClassificationUpdateDocDocument(BaseModel):
     first_created_date: datetime | None = None
     published_date: datetime | None = None
     end_date: datetime | None = None
+    include_later_documents_in_lineage_update: bool = False
 
 
 class FamilyUpdateDocDocument(BaseModel):

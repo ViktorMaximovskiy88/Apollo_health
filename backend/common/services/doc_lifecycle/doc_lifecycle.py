@@ -89,6 +89,11 @@ class DocLifecycleService:
 
         return False
 
+    def identified_dates_needs_review(self, doc: DocDocument) -> bool:
+        if doc.identified_dates and len(doc.identified_dates) > 10:
+            return True
+        return False
+
     async def assess_classification_status(self, doc: DocDocument) -> tuple[ApprovalStatus, bool]:
         if doc.classification_status != ApprovalStatus.PENDING:
             return doc.classification_status, False
@@ -103,6 +108,9 @@ class DocLifecycleService:
 
         if self.effective_date_needs_review(doc, prev_doc):
             info.append("EFFECTIVE_DATE")
+
+        if self.identified_dates_needs_review(doc):
+            info.append("IDENTIFIED_DATES")
 
         if prev_doc:
             if self.tags_need_review(doc):
@@ -120,6 +128,9 @@ class DocLifecycleService:
         return doc.classification_status, True
 
     def assess_doc_family_status(self, doc: DocDocument) -> tuple[ApprovalStatus, bool]:
+        if doc.family_status == ApprovalStatus.HOLD:
+            return doc.family_status, False
+
         info: list[str] = []
         if not doc.document_family_id:
             info.append("DOC_FAMILY")

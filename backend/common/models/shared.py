@@ -18,7 +18,9 @@ class TherapyTag(BaseModel):
     focus: bool = False
     key: bool = False
     rxcui: str | None = None
+    created_at: datetime | None
     update_status: TagUpdateStatus | None = None
+    updated_at: datetime | None
     text_area: tuple[int, int] | None = None
 
     def __hash__(self):
@@ -38,7 +40,9 @@ class IndicationTag(BaseModel):
     page: int = 0
     focus: bool = False
     key: bool = False
+    created_at: datetime | None
     update_status: TagUpdateStatus | None = None
+    updated_at: datetime | None
     text_area: tuple[int, int] | None = None
 
     def __hash__(self):
@@ -119,6 +123,43 @@ class DocTypeMatch(BaseModel):
     confidence: float
     rule_name: str
     texts: list[str] = []
+
+
+def get_tag_diff(
+    current_therapy_tags: list[TherapyTag],
+    current_indication_tags: list[TherapyTag],
+    therapy_tags: list[TherapyTag],
+    indication_tags: list[IndicationTag],
+):
+    ###
+    # Return lists of new therapy and indication tags compared against existing tags
+    # Checks tag code and tag page for equality, ignoring changes in other attributes
+    ###
+    therapy_tags_hash: dict[str, list[int]] = {}
+    indicate_tags_hash: dict[int, list[int]] = {}
+    for tag in current_therapy_tags:
+        if tag.code in therapy_tags_hash:
+            therapy_tags_hash[tag.code].append(tag.page)
+        else:
+            therapy_tags_hash[tag.code] = [tag.page]
+
+    for tag in current_indication_tags:
+        if tag.code in indicate_tags_hash:
+            indicate_tags_hash[tag.code].append(tag.page)
+        else:
+            indicate_tags_hash[tag.code] = [tag.page]
+
+    new_therapy_tags = [
+        tag
+        for tag in therapy_tags
+        if tag.code not in therapy_tags_hash or tag.page not in therapy_tags_hash[tag.code]
+    ]
+    new_indicate_tags = [
+        tag
+        for tag in indication_tags
+        if tag.code not in indicate_tags_hash or tag.page not in indicate_tags_hash[tag.code]
+    ]
+    return new_therapy_tags, new_indicate_tags
 
 
 def get_reference_tags(tags: list[TherapyTag] | list[IndicationTag]):

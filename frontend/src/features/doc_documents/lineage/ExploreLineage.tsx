@@ -59,7 +59,7 @@ const LineageModalFooter = (props: {
           Show Current Document
         </Checkbox>
       </div>
-      <div>
+      <div className="flex">
         <Button key="cancel" onClick={props.handleCancel}>
           Cancel
         </Button>
@@ -76,36 +76,29 @@ const LineageModalFooter = (props: {
   );
 };
 
-export function ExploreLineage() {
+export function ExploreLineage({
+  open,
+  handleModalOpen,
+  closeModal,
+}: {
+  open: boolean;
+  handleModalOpen: () => void;
+  closeModal: () => void;
+}) {
   const form = Form.useFormInstance();
-
-  const { docDocumentId: updatingDocDocId } = useParams();
-  const { data: updatingDocDoc } = useGetDocDocumentQuery(updatingDocDocId, {
-    skip: !updatingDocDocId,
-  });
 
   const dispatch = useAppDispatch();
   const prevDocDocId = useSelector(previousDocDocumentIdState);
-  const [open, setOpen] = useState(false);
   const [showCurrentDocument, setShowCurrentDocument] = useState(true);
-
-  const closeModal = useCallback(() => {
-    setOpen(false);
-  }, []);
 
   const handleCancel = useCallback(() => {
     dispatch(setPreviousDocDocumentId(null));
     closeModal();
   }, [closeModal, dispatch]);
 
-  const handleModalOpen = useCallback(() => {
-    dispatch(setPreviousDocDocumentId(updatingDocDoc?.previous_doc_doc_id));
-    setOpen(true);
-  }, [dispatch, prevDocDocId, updatingDocDoc?.previous_doc_doc_id]);
-
   const handleSubmit = useCallback(async () => {
     if (!prevDocDocId) throw new Error('prevDocDocId not found');
-    form.setFieldValue('previous_doc_doc_id', prevDocDocId);
+    form.setFieldsValue({ previous_doc_doc_id: prevDocDocId });
     closeModal();
   }, [prevDocDocId, form, closeModal]);
 
@@ -119,14 +112,14 @@ export function ExploreLineage() {
         title="Explore Lineage"
         open={open}
         onCancel={handleCancel}
-        footer={[
+        footer={
           <LineageModalFooter
             showCurrentDocument={showCurrentDocument}
             setShowCurrentDocument={setShowCurrentDocument}
             handleCancel={handleCancel}
             handleSubmit={handleSubmit}
-          />,
-        ]}
+          />
+        }
       >
         <LineageModalBody showCurrentDocument={showCurrentDocument} />
       </FullScreenModal>

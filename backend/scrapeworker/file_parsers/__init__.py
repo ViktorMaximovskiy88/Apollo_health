@@ -1,14 +1,33 @@
 from typing import Any
 
-from backend.common.models.document import RetrievedDocument
+from backend.common.models.doc_document import DocDocument
 from backend.common.models.site import FocusSectionConfig, ScrapeMethodConfiguration
 from backend.scrapeworker.common.models import DownloadContext
-from backend.scrapeworker.document_tagging.indication_tagging import indication_tagger
-from backend.scrapeworker.document_tagging.taggers import Taggers
-from backend.scrapeworker.document_tagging.therapy_tagging import therapy_tagger
-from backend.scrapeworker.file_parsers import docx, html, pdf, text, xlsx
+from backend.scrapeworker.document_tagging.taggers import Taggers, indication_tagger, therapy_tagger
+from backend.scrapeworker.file_parsers import doc, docx, html, pdf, text, xls, xlsx
 
 __all__ = ["docx", "xlsx", "pdf", "html", "text"]
+taggers = Taggers(indication=indication_tagger, therapy=therapy_tagger)
+
+
+def get_parser_by_ext(file_extension: str):
+    ParserClass = None
+    if file_extension == "pdf":
+        ParserClass = pdf.PdfParse
+    elif file_extension == "docx":
+        ParserClass = docx.DocxParser
+    elif file_extension == "doc":
+        ParserClass = doc.DocParser
+    elif file_extension == "xlsx":
+        ParserClass = xlsx.XlsxParser
+    elif file_extension == "xls":
+        ParserClass = xls.XlsParser
+    elif file_extension == "html":
+        ParserClass = html.HtmlParser
+    elif file_extension in ["txt", "csv"]:
+        ParserClass = text.TextParser
+
+    return ParserClass
 
 
 async def parse_by_type(
@@ -21,21 +40,13 @@ async def parse_by_type(
     url = download.request.url
     link_text = download.metadata.link_text
 
-    if file_extension == "pdf":
-        return await pdf.PdfParse(file_path, url, link_text=link_text).parse()
-    elif file_extension == "docx":
-        return await docx.DocxParser(file_path, url, link_text=link_text).parse()
-    elif file_extension == "xlsx":
-        return await xlsx.XlsxParser(file_path, url, link_text=link_text).parse()
-    elif file_extension == "html":
-        return await html.HtmlParser(
-            file_path,
-            url,
-            link_text=link_text,
-            scrape_method_config=scrape_method_config,
-        ).parse()
-    elif file_extension in ["txt", "csv"]:
-        return await text.TextParser(file_path, url, link_text=link_text).parse()
+    Parser = get_parser_by_ext(file_extension)
+    if Parser:
+        parser = Parser(
+            file_path, url, link_text=link_text, scrape_method_config=scrape_method_config
+        )
+        result = await parser.parse()
+        return result
     else:
         # raise NotImplementedError(f"no parse for file ext {file_extension}")
         return None
@@ -43,13 +54,14 @@ async def parse_by_type(
 
 async def get_tags(
     parsed_content: dict[str, Any],
-    document: RetrievedDocument | None = None,
+    document: DocDocument | None = None,
     focus_configs: list[FocusSectionConfig] | None = None,
 ):
-    taggers = Taggers(indication=indication_tagger, therapy=therapy_tagger)
+    # if we have a doc use that doc type in the case its user edited
+    doc_type = document.document_type if document else parsed_content["document_type"]
     (therapy_tags, url_therapy_tags, link_therapy_tags) = await taggers.therapy.tag_document(
         parsed_content["text"],
-        parsed_content["document_type"],
+        doc_type,
         parsed_content["scrubbed_url"],
         parsed_content["scrubbed_link_text"],
         focus_configs,
@@ -61,7 +73,7 @@ async def get_tags(
         link_indication_tags,
     ) = await taggers.indication.tag_document(
         parsed_content["text"],
-        parsed_content["document_type"],
+        doc_type,
         parsed_content["scrubbed_url"],
         parsed_content["scrubbed_link_text"],
         focus_configs,

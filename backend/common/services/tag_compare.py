@@ -4,6 +4,7 @@ import typer
 
 from backend.common.core.config import env_type
 from backend.common.core.enums import SectionType, TagUpdateStatus
+from backend.common.core.utils import now
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.shared import IndicationTag, TherapyTag
@@ -25,9 +26,11 @@ class DocumentSection:
         for tag in self.id_tags:
             if not tag.update_status:
                 tag.update_status = status
+                tag.updated_at = now()
         for tag in self.ref_tags:
             if not tag.update_status:
                 tag.update_status = status
+                tag.updated_at = now()
 
     def tags_to_list(self):
         return self.id_tags + self.ref_tags
@@ -69,6 +72,7 @@ class SectionLineage:
         if b_tags is None:
             for tag in a_tags:
                 tag.update_status = TagUpdateStatus.ADDED
+                tag.updated_at = now()
             return
 
         a_tags_len = len(a_tags)
@@ -78,9 +82,11 @@ class SectionLineage:
         elif a_tags_len > b_tags_len:
             for i in range(b_tags_len - 1, a_tags_len - 1):
                 a_tags[i].update_status = TagUpdateStatus.ADDED
+                a_tags[i].updated_at = now()
         else:
             for i in range(a_tags_len - 1, b_tags_len - 1):
                 b_tags[i].update_status = TagUpdateStatus.REMOVED
+                b_tags[i].updated_at = now()
 
     def _compare_tags(self, a_tag_list: TagList, b_tag_list: TagList):
         a_tags_by_code = self._group_by_code(a_tag_list)
@@ -94,6 +100,8 @@ class SectionLineage:
             b_tags = b_tags_by_code[code]
             for tag in b_tags:
                 tag.update_status = TagUpdateStatus.REMOVED
+                tag.updated_at = now()
+
         self._concat_removed_tags(a_tag_list, b_tag_list)
 
     def compare_ref_tags(self):
@@ -232,6 +240,8 @@ class TagCompare:
     ):
         doc_id_tags, doc_ref_tags = self._partition_tags_by_type(doc_tags)
         prev_id_tags, prev_ref_tags = self._partition_tags_by_type(prev_tags)
+        for tag in prev_id_tags + prev_ref_tags:
+            tag.update_status = None
         doc_sections, unmatched_ref = self._group_by_section(
             doc_id_tags, doc_ref_tags, doc_focus_areas
         )

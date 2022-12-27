@@ -41,6 +41,13 @@ async def clear(ctx, site_id: PydanticObjectId):
 
 @lineage.command()
 @click.pass_context
+async def clear_all(ctx):
+    lineage_service: LineageService = ctx.obj["lineage_service"]
+    await lineage_service.clear_all_lineage()
+
+
+@lineage.command()
+@click.pass_context
 @click.option(
     "--current-doc-id", help="Current doc to compare", required=True, type=PydanticObjectId
 )

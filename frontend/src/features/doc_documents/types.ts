@@ -1,4 +1,5 @@
 import { BaseDocument } from '../../common';
+import { DocPipelineStages } from '../../common/types';
 import { ApprovalStatus } from '../../common/approvalStatus';
 import { DocDocumentLocation } from './locations/types';
 
@@ -45,17 +46,15 @@ export interface TaskLock {
 }
 
 export interface CompareRequest {
-  currentDocDocId: string;
-  previousDocDocId: string | undefined | null;
+  current_checksum: string | undefined;
+  previous_checksum: string | undefined;
 }
 
 export interface CompareResponse extends BaseDocument {
   exists: boolean;
-  processing: boolean;
-  queued: boolean;
-  new_key: string | null;
-  prev_key: string | null;
-  diff: string; // silences error in DocCompareToPrevious.tsx
+  pending: boolean;
+  new_key: string | undefined;
+  prev_key: string | undefined;
 }
 
 export interface DocDocument extends BaseDocument {
@@ -93,6 +92,7 @@ export interface DocDocument extends BaseDocument {
   last_collected_date: string;
 
   lineage_id: string;
+  is_current_version: boolean;
   version: string;
   internal_document: boolean;
   previous_doc_doc_id: string | null;
@@ -108,6 +108,10 @@ export interface DocDocument extends BaseDocument {
   content_extraction_task_id?: string;
 
   tags: string[];
+
+  pipeline_stages: DocPipelineStages;
+
+  include_later_documents_in_lineage_update?: boolean;
 }
 
 export type SiteDocDocument = Omit<

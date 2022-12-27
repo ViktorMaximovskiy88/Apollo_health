@@ -12,12 +12,13 @@ import { isErrorWithData } from '../../common/helpers';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './sitesApi';
-import { Site } from './types';
+import { CollectionMethod, collectionMethodOptions, collectMethodDisplayName, Site } from './types';
 import { SiteStatus, siteStatusDisplayName, siteStatusStyledDisplay } from './siteStatus';
 import { ReactNode, useMemo } from 'react';
 import { User } from '../users/types';
 import { TypeColumn } from '@inovua/reactdatagrid-community/types';
 import NumberFilter from '@inovua/reactdatagrid-community/NumberFilter';
+import { useCurrentUser } from '../../common/hooks/use-current-user';
 
 const colors = ['magenta', 'blue', 'green', 'orange', 'purple'];
 
@@ -25,8 +26,9 @@ interface CreateColumnsType {
   deleteSite: any;
   setDeletedSite: (site: string) => void;
   users?: User[];
+  isAdminUser?: boolean;
 }
-const createColumns = ({ deleteSite, setDeletedSite, users }: CreateColumnsType) => {
+const createColumns = ({ deleteSite, setDeletedSite, users, isAdminUser }: CreateColumnsType) => {
   async function handleDeleteSite(site: Site) {
     try {
       await deleteSite(site).unwrap();
@@ -148,6 +150,19 @@ const createColumns = ({ deleteSite, setDeletedSite, users }: CreateColumnsType)
       minWidth: 200,
     },
     {
+      header: 'Collection Method',
+      name: 'collection_method',
+      minWidth: 200,
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        placeholder: 'All',
+        dataSource: collectionMethodOptions,
+      },
+      render: ({ value: collectionMethod }: { value: string }): ReactNode => {
+        return <>{collectMethodDisplayName(collectionMethod)}</>;
+      },
+    },
+    {
       header: 'Assignee',
       name: 'assignee',
       minWidth: 200,
@@ -201,7 +216,7 @@ const createColumns = ({ deleteSite, setDeletedSite, users }: CreateColumnsType)
               cancelText="No"
               onConfirm={() => handleDeleteSite(site)}
             >
-              <ButtonLink danger>Delete</ButtonLink>
+              {isAdminUser && <ButtonLink danger>Delete</ButtonLink>}
             </Popconfirm>
           </>
         );
@@ -214,8 +229,10 @@ export const useColumns = ({
   deleteSite,
   setDeletedSite,
   users,
-}: CreateColumnsType): TypeColumn[] =>
-  useMemo(
-    () => createColumns({ deleteSite, setDeletedSite, users }),
-    [deleteSite, setDeletedSite, users]
+}: CreateColumnsType): TypeColumn[] => {
+  const user = useCurrentUser();
+  return useMemo(
+    () => createColumns({ deleteSite, setDeletedSite, users, isAdminUser: user?.is_admin }),
+    [deleteSite, setDeletedSite, user?.is_admin, users]
   );
+};

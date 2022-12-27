@@ -34,6 +34,7 @@ from backend.app.routes import (
     work_queues,
 )
 from backend.app.scripts.add_user import create_system_users
+from backend.app.scripts.create_pipeline_registry import create_pipeline_registry
 from backend.app.scripts.create_proxy_records import create_proxies
 from backend.app.scripts.create_work_queues import create_default_work_queues
 from backend.app.scripts.payer_backbone.load_payer_backbone import load_payer_backbone
@@ -59,6 +60,7 @@ async def app_init():
         await create_proxies()
     await create_default_work_queues()
     await load_payer_backbone()
+    await create_pipeline_registry()
 
 
 template_dir = Path(__file__).parent.joinpath("templates")
@@ -141,6 +143,7 @@ async def log_requests(request: Request, call_next):
 
     logger.info(f"request_start='{request.method}_{request.url.path}' user='{user}'")
     start_time = time()
+    # TODO sometimes we get exception for no response
     response = await call_next(request)
     process_time = (time() - start_time) * 1000
     format_time = "{0:.2f}".format(process_time)

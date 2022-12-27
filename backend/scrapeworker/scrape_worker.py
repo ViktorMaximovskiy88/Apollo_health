@@ -173,6 +173,7 @@ class ScrapeWorker:
     async def attempt_download(self, download: DownloadContext):
         # TODO: This function keeps getting added to.
         # Maybe turn this into a class after our deadlines...
+        # This is kinda your 'do thing' or controller; i dunno about _it_ being a class
         url = download.request.url
         proxies = await self.get_proxy_settings()
         link_retrieved_task: LinkRetrievedTask = link_retrieved_task_from_download(
@@ -180,8 +181,9 @@ class ScrapeWorker:
         )
         scrape_method_config = self.site.scrape_method_configuration
         # prob our fail
-        async for (temp_path, checksum) in self.downloader.try_download_to_tempfile(
-            download, proxies
+        async with self.downloader.try_download_to_tempfile(download, proxies) as (
+            temp_path,
+            checksum,
         ):
 
             # TODO temp until we undo download context
@@ -194,14 +196,14 @@ class ScrapeWorker:
                 self.log.error(message)
                 link_retrieved_task.error_message = message
                 await link_retrieved_task.save()
-                break
+                return
 
             if download.mimetype not in supported_mimetypes:
                 message = f"Mimetype not supported. mimetype={download.mimetype}"
                 self.log.error(message)
                 link_retrieved_task.error_message = message
                 await link_retrieved_task.save()
-                break
+                return
 
             # TODO can we separate the concept of extensions to scrape on
             # and ext we expect to download? for now just html
@@ -213,7 +215,7 @@ class ScrapeWorker:
                 self.log.error(message)
                 link_retrieved_task.error_message = message
                 await link_retrieved_task.save()
-                break
+                return
 
             link_retrieved_task.file_metadata = FileMetadata(checksum=checksum, **download.dict())
 
@@ -228,7 +230,7 @@ class ScrapeWorker:
                 self.log.error(message)
                 link_retrieved_task.error_message = message
                 await link_retrieved_task.save()
-                break
+                return
 
             dest_path = f"{checksum}.{download.file_extension}"
 
@@ -241,7 +243,7 @@ class ScrapeWorker:
                 self.log.error(message)
                 link_retrieved_task.error_message = message
                 await link_retrieved_task.save()
-                break
+                return
 
             document = None
 
@@ -269,7 +271,11 @@ class ScrapeWorker:
 
             if document:
                 self.log.info("updating doc")
-                await get_tags(parsed_content, document=document)
+                doc_doc = await DocDocument.find_one(
+                    DocDocument.retrieved_document_id == document.id
+                )
+                await get_tags(parsed_content, document=doc_doc)
+                # TODO this will get axed when the async tasks are ready to schedule
                 # Can be removed after text added to older docs
                 if document.text_checksum is None and len(parsed_content["text"]) > 0:
                     text_checksum = await self.text_handler.save_text(parsed_content["text"])
@@ -277,11 +283,12 @@ class ScrapeWorker:
 
                 # in the case where the pdf has no text (aka is an image),
                 # set the text checksum to the checksum
+                # TODO this will change will our pdf extract image content parsing...
                 if len(parsed_content["text"]) == 0 and download.file_extension == "pdf":
                     document.text_checksum = checksum
 
                 new_therapy_tags, new_indicate_tags = self.get_updated_tags(
-                    document,
+                    doc_doc,
                     parsed_content["therapy_tags"],
                     parsed_content["indication_tags"],
                 )

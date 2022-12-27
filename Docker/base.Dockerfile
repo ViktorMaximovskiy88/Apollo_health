@@ -11,7 +11,7 @@ RUN apt-get update && \
     neovim htop lsof sudo software-properties-common poppler-utils \
     gfortran libblas-dev liblapack-dev \
     g++ protobuf-compiler libprotobuf-dev libmagic1 \
-    libmagickwand-dev
+    libmagickwand-dev antiword
 
 RUN sed -i 's/rights="none" pattern="PDF"/rights="read | write" pattern="PDF"/g' /etc/ImageMagick-6/policy.xml
 

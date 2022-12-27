@@ -84,6 +84,7 @@ export const DocDocumentLocations = ({ locations }: DocDocumentLocationsPropType
 
       {editDrawerOpen ? (
         <PayerFamilyEditDrawer
+          mask={false}
           location={locations[selectedIndex]}
           payer_family_id={updatedLocations[selectedIndex].payer_family_id}
           open={editDrawerOpen}

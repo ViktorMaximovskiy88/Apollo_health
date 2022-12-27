@@ -1,4 +1,4 @@
-import { BaseDocument } from '../../common/types';
+import { BaseDocument, DocPipelineStages } from '../../common/types';
 
 export interface DocumentQuery {
   scrape_task_id?: string | null;
@@ -35,6 +35,7 @@ export interface RetrievedDocument extends BaseDocument {
   lang_code: string;
   file_extension: string;
   is_current_version: boolean;
+  pipeline_stages: DocPipelineStages;
 }
 
 // id is added so that it can be used for both table filters and dropdown selections
@@ -54,6 +55,12 @@ export const DocumentTypes = [
   { id: 'Internal Reference', label: 'Internal Reference', value: 'Internal Reference' },
   { id: 'LCD', label: 'LCD', value: 'LCD' },
   { id: 'Medical Coverage List', label: 'Medical Coverage List', value: 'Medical Coverage List' },
+  {
+    id: 'Medical Coverage Status',
+    label: 'Medical Coverage Status',
+    value: 'Medical Coverage Status',
+  },
+
   { id: 'Member Resources', label: 'Member Resources', value: 'Member Resources' },
   { id: 'NCCN Guideline', label: 'NCCN Guideline', value: 'NCCN Guideline' },
   { id: 'NCD', label: 'NCD', value: 'NCD' },
@@ -86,7 +93,7 @@ export const DocumentTypes = [
 export const FieldGroupsOptions = [
   { id: 'AUTHORIZATION_DETAILS', label: 'Authorization Details', value: 'AUTHORIZATION_DETAILS' },
   { id: 'TIER', label: 'Tier', value: 'TIER' },
-  { id: 'COVERAGE', label: 'Coverage', value: 'COVERAGE' },
+  { id: 'MEDICAL_COVERAGE', label: 'Medical Coverage', value: 'MEDICAL_COVERAGE' },
   { id: 'QL_GATE', label: 'QL Gate', value: 'QL_GATE' },
   { id: 'QL_DETAILS', label: 'QL Details', value: 'QL_DETAILS' },
   { id: 'PA', label: 'PA', value: 'PA' },

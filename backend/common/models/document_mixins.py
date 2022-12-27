@@ -41,13 +41,22 @@ def as_naive_date(_datetime: datetime) -> date:
 # TODO: i dont love this, but beanie wasnt having `date` (somewhere on the write side)
 # will investigate later, but poor mans date for now
 def cast_dates(doc):
-    doc.effective_date = as_naive_date(doc.effective_date)
-    doc.last_reviewed_date = as_naive_date(doc.last_reviewed_date)
-    doc.last_updated_date = as_naive_date(doc.last_updated_date)
-    doc.next_review_date = as_naive_date(doc.next_review_date)
-    doc.next_update_date = as_naive_date(doc.next_update_date)
-    doc.published_date = as_naive_date(doc.published_date)
-    doc.end_date = as_naive_date(doc.end_date)
+    # Pydantic BaseModel can differentiate between unset and None
+    # and we want to keep that distinction, so don't set to None if already None
+    if doc.effective_date:
+        doc.effective_date = as_naive_date(doc.effective_date)
+    if doc.last_reviewed_date:
+        doc.last_reviewed_date = as_naive_date(doc.last_reviewed_date)
+    if doc.last_updated_date:
+        doc.last_updated_date = as_naive_date(doc.last_updated_date)
+    if doc.next_review_date:
+        doc.next_review_date = as_naive_date(doc.next_review_date)
+    if doc.next_update_date:
+        doc.next_update_date = as_naive_date(doc.next_update_date)
+    if doc.published_date:
+        doc.published_date = as_naive_date(doc.published_date)
+    if doc.end_date:
+        doc.end_date = as_naive_date(doc.end_date)
 
 
 def calc_final_effective_date(doc) -> datetime | None:

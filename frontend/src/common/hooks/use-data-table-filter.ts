@@ -13,7 +13,7 @@ export const useDataTableFilter = (
     [dispatch, setTableFilter]
   );
   const filterProps = {
-    defaultFilterValue: filterValue,
+    filterValue: filterValue,
     onFilterValueChange: onFilterChange,
   };
   return filterProps;

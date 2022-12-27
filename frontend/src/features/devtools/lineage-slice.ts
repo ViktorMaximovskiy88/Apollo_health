@@ -12,23 +12,48 @@ interface FilterSettings {
   missingLineage: boolean;
 }
 
+interface ChangeDisplayView {
+  index: number;
+  viewKey: string;
+}
+
+interface ViewItem {
+  item: LineageDoc;
+  currentView: string;
+}
+
+interface CompareResult {
+  new_key: string;
+  prev_key: string;
+}
+
+interface CompareDocs {
+  showModal: boolean;
+  fileKeys: string[];
+}
+
 interface LineageState {
   searchTerm: string;
-  leftSideDoc: undefined | LineageDoc;
-  rightSideDoc: undefined | LineageDoc;
+  groupBy: string;
+  viewItems: ViewItem[];
   displayItems: LineageGroup[];
   domainItems: LineageDoc[];
   filters: FilterSettings;
+  compareDocs: CompareDocs;
 }
 
 export const lineageSlice = createSlice({
   name: 'lineage',
   initialState: {
+    viewItems: [],
     searchTerm: '',
-    leftSideDoc: undefined,
-    rightSideDoc: undefined,
     domainItems: [],
     displayItems: [],
+    compareDocs: {
+      showModal: false,
+      fileKeys: [],
+    },
+    groupBy: 'lineage_id',
     filters: {
       singularLineage: false,
       multipleLineage: false,
@@ -36,11 +61,29 @@ export const lineageSlice = createSlice({
     },
   } as LineageState,
   reducers: {
-    setLeftSide: (state, action: PayloadAction<LineageDoc>) => {
-      state.leftSideDoc = action.payload;
+    setViewItem: (state, action: PayloadAction<LineageDoc>) => {
+      state.viewItems = [{ item: action.payload, currentView: 'file' }];
     },
-    setRightSide: (state, action: PayloadAction<LineageDoc>) => {
-      state.rightSideDoc = action.payload;
+    setSplitItem: (state, action: PayloadAction<LineageDoc>) => {
+      const viewItem = { item: action.payload, currentView: 'file' };
+      state.viewItems = [...state.viewItems, viewItem];
+    },
+    removeViewItemByIndex: (state, action: PayloadAction<number>) => {
+      state.viewItems.splice(action.payload, 1);
+      state.viewItems = [...state.viewItems];
+    },
+    setViewItemDisplay: (state, action: PayloadAction<ChangeDisplayView>) => {
+      state.viewItems[action.payload.index].currentView = action.payload.viewKey;
+    },
+    setCompareResult: (state, action: PayloadAction<CompareResult>) => {
+      state.compareDocs.fileKeys = [action.payload.new_key, action.payload.prev_key];
+    },
+    toggleCompareModal: (state, action: PayloadAction<boolean | undefined>) => {
+      if (action.payload !== undefined) {
+        state.compareDocs.showModal = action.payload;
+      } else {
+        state.compareDocs.showModal = !state.compareDocs.showModal;
+      }
     },
     toggleCollapsed: (state, action: PayloadAction<LineageGroup>) => {
       const lineageGroup = state.displayItems.find(
@@ -89,7 +132,7 @@ function groupItems(items: LineageDoc[]): LineageGroup[] {
 
       while (items.length > 0) {
         const child = ordered[0];
-        const parentIndex = items.findIndex((item) => item._id === child.previous_doc_id);
+        const parentIndex = items.findIndex((item) => item._id === child.previous_doc_doc_id);
         const [parent] = items.splice(parentIndex, 1);
         ordered.unshift(parent);
       }

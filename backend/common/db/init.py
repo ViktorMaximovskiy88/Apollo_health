@@ -28,6 +28,7 @@ from backend.common.models.payer_backbone import (
     PlanBenefit,
 )
 from backend.common.models.payer_family import PayerFamily
+from backend.common.models.pipeline import PipelineRegistry
 from backend.common.models.proxy import Proxy
 from backend.common.models.search_codes import SearchCodeSet
 from backend.common.models.site import Site
@@ -93,5 +94,6 @@ async def init_db(mock=False, database_name=None):
             Formulary,
             SearchCodeSet,
             TaskLog,
+            PipelineRegistry,
         ],  # type: ignore
     )

@@ -20,7 +20,7 @@ from playwright.async_api import Playwright, async_playwright
 from pymongo import ReturnDocument
 
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
-from backend.common.core.config import is_local
+from backend.common.core.config import config, is_local
 from backend.common.core.enums import CollectionMethod, TaskStatus
 from backend.common.db.init import init_db
 from backend.common.models.site import Site
@@ -100,7 +100,13 @@ async def worker_fn(
             )
         )
 
-        browser = await playwright.chromium.launch(channel="chrome")
+        options = {"channel": "chrome"}
+        if config["DEBUG"]:
+            options["headless"] = False
+            options["slow_mo"] = 60
+            options["devtools"] = True
+
+        browser = await playwright.chromium.launch(**options)
         worker = ScrapeWorker(playwright, browser, scrape_task, site)
         task = asyncio.create_task(heartbeat_task(scrape_task))
         active_tasks[scrape_task.id] = scrape_task

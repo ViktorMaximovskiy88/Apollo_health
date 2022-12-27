@@ -7,7 +7,7 @@ import {
   useInterval,
   useNotifyMutation,
 } from '../../common/hooks';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GridPaginationToolbar } from '../../components';
 import {
@@ -97,12 +97,20 @@ const useControlledPagination = ({
   return controlledPaginationProps;
 };
 
-export function PayerFamilyTable() {
+interface PayerFamilyDataTableProps {
+  setPayerFamilyId: Dispatch<SetStateAction<string>>;
+  setOpenEditDrawer: Dispatch<SetStateAction<boolean>>;
+}
+
+export function PayerFamilyTable({
+  setOpenEditDrawer,
+  setPayerFamilyId,
+}: PayerFamilyDataTableProps) {
   const { isActive, setActive, watermark } = useInterval(10000);
 
   const { deletedFamily, deletePayerFamily } = useDeletePayerFamily();
 
-  const columns = useColumns(deletePayerFamily);
+  const columns = useColumns(setPayerFamilyId, setOpenEditDrawer, deletePayerFamily);
   const [getPayerFamiliesFn] = useLazyGetPayerFamiliesQuery();
 
   const loadData = useCallback(

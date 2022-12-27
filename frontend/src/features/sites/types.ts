@@ -73,6 +73,15 @@ export enum CollectionMethod {
   Manual = 'MANUAL',
 }
 
+export const collectionMethodOptions = [
+  { id: CollectionMethod.Automated, label: 'Automated' },
+  { id: CollectionMethod.Manual, label: 'Manual' },
+];
+
+export function collectMethodDisplayName(method: string) {
+  return collectionMethodOptions.find(({ id }) => id === method)?.label;
+}
+
 export enum ScrapeMethod {
   Simple = 'SimpleDocumentScrape',
   Html = 'HtmlScrape',

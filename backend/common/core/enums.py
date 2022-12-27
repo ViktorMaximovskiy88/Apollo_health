@@ -62,6 +62,7 @@ class DocumentType(str, Enum):
     InternalReference = "Internal Reference"
     LCD = "LCD"
     MedicalCoverageList = "Medical Coverage List"
+    MedicalCoverageStatus = "Medical Coverage Status"
     MemberResources = "Member Resources"
     NCCNGuideline = "NCCN Guideline"
     NCD = "NCD"
