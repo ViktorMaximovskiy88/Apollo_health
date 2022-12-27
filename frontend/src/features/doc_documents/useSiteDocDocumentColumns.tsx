@@ -94,6 +94,15 @@ export const createColumns = ({
   isManualCollection,
 }: CreateColumnsType) => [
   {
+    header: 'Priority',
+    name: 'priority',
+    width: 80,
+    filterSearch: true,
+    render: ({ data: doc }: { data: SiteDocDocument }) => {
+      return priorityStyle(doc.priority);
+    },
+  },
+  {
     header: 'Last Collected',
     name: 'last_collected_date',
     minWidth: 200,
@@ -212,15 +221,6 @@ export const createColumns = ({
           </a>
         </>
       );
-    },
-  },
-  {
-    header: 'Priority',
-    name: 'priority',
-    width: 80,
-    filterSearch: true,
-    render: ({ data: doc }: { data: SiteDocDocument }) => {
-      return priorityStyle(doc.priority);
     },
   },
   {

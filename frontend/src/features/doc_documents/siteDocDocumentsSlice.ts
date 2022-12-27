@@ -5,7 +5,7 @@ import { RootState } from '../../app/store';
 export const initialState = {
   siteId: '',
   table: {
-    sort: { name: 'link_text', dir: 1 as 1 | -1 | 0 },
+    sort: { name: 'priority', dir: -1 as 1 | -1 | 0 },
     selection: { selected: {}, unselected: {} },
     filter: [
       { name: 'last_collected_date', operator: 'before', type: 'date', value: '' },
