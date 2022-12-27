@@ -11,6 +11,7 @@ import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
 import { workQueueTableState } from './workQueueSlice';
 import { useSelector } from 'react-redux';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
+import { priorityStyle } from '../doc_documents/useSiteDocDocumentColumns';
 
 function useSiteSelectOptions() {
   const [getSites] = useLazyGetSitesQuery();
@@ -28,31 +29,6 @@ function useSiteSelectOptions() {
     [getSites]
   );
   return { siteOptions };
-}
-
-interface PriorityStyle {
-  style?: string;
-}
-
-export function priorityStyleMap(priority: number): PriorityStyle {
-  const range = (start: number, end: number) =>
-    Array.from(Array(end - start + 1).keys()).map((x) => x + start);
-
-  switch (true) {
-    case priority in range(0, 3):
-      return { style: 'text-blue-500' };
-    case priority in range(4, 7):
-      return { style: 'text-green-500' };
-    case priority >= 7:
-      return { style: 'text-red-500' };
-    default:
-      return { style: 'text-blue-500' };
-  }
-}
-
-export function priorityStyle(priority: number): React.ReactElement {
-  const { style } = priorityStyleMap(priority);
-  return <span className={style}>{priority}</span>;
 }
 
 export function useWorkQueueColumns(
