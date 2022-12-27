@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { BaseDocument } from '../../common';
 import { dateDuration, prettyDateUTCFromISO } from '../../common/date';
 import { ButtonLink } from '../../components/ButtonLink';
-import { TaskLock } from '../doc_documents/types';
+import { SiteDocDocument, TaskLock } from '../doc_documents/types';
 import { useGetUsersQuery } from '../users/usersApi';
 import { DocumentTypes } from '../retrieved_documents/types';
 import { useGetSiteQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
@@ -147,6 +147,15 @@ export function useWorkQueueColumns(
         if (firstCollectedDate) {
           return prettyDateUTCFromISO(firstCollectedDate);
         }
+      },
+    },
+    {
+      header: 'Priority',
+      name: 'priority',
+      width: 80,
+      filterSearch: true,
+      render: ({ data: doc }: { data: BaseDocument }) => {
+        return <>{doc.priority}</>;
       },
     },
     {

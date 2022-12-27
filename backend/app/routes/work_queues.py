@@ -125,6 +125,7 @@ class IdNameLockOnlyDocument(IdOnlyDocument):
     first_collected_date: datetime | None = None
     locations: list[LocationSubDocument] = []
     locks: list[TaskLock] = []
+    priority: int = 0
 
 
 def combine_queue_query_with_user_query(
