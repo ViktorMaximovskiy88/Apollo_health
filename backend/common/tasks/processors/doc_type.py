@@ -5,6 +5,7 @@ import backend.common.models.tasks as tasks
 from backend.common.core.enums import ApprovalStatus
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.pipeline import DocPipelineStages, PipelineRegistry, PipelineStage
+from backend.common.models.site import Site
 from backend.common.storage.client import TextStorageClient
 from backend.common.tasks.task_processor import TaskProcessor
 from backend.scrapeworker.doc_type_classifier import guess_doc_type
@@ -42,8 +43,11 @@ class DocTypeTaskProcessor(TaskProcessor):
         s3_key = doc.s3_text_key()
         raw_text = self.text_client.read_utf8_object(s3_key)
 
+        site: Site = await Site.get(location.site_id)
+        scrape_method_configuration = site.scrape_method_configuration if site else None
+
         document_type, confidence, doc_vectors, doc_type_match = guess_doc_type(
-            raw_text, location.link_text, location.url, doc.name
+            raw_text, location.link_text, location.url, doc.name, scrape_method_configuration
         )
 
         current_stage = PipelineStage(
