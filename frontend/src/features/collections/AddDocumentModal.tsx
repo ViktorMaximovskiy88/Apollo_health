@@ -80,7 +80,7 @@ const setDatesToUtcStart = (newDocument: any) => {
     'published',
   ];
   for (const date of dates) {
-    if (!(date in newDocument)) {
+    if (!(`${date}_date` in newDocument)) {
       continue;
     }
     newDocument[`${date}_date`].utc(true).startOf('day');
@@ -160,7 +160,7 @@ export function AddDocumentModal({
       }
       newDocument.exists_on_this_site = existsOnThisSite;
 
-      setDatesToUtcStart(newDocument);
+      newDocument = setDatesToUtcStart(newDocument);
 
       // For some reason, fileData never updates if browser auto fills.
       fileData.url = form.getFieldValue('url');
