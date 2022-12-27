@@ -34,7 +34,7 @@ def test_guess_doc_type_searchable_site_doc():
     doc_type, confidence, doc_vectors, doc_type_match = guess_doc_type(
         "raw_text", "raw_link_text", "raw_url", "J1234", config
     )
-    assert doc_type == DocumentType.MedicalCoverageList
+    assert doc_type == DocumentType.MedicalCoverageStatus
     assert confidence == 1
     assert len(doc_vectors) == 1 and len(doc_vectors[0]) > 1
     assert doc_type_match is None

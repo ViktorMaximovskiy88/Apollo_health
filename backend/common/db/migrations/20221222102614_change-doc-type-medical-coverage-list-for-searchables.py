@@ -2,6 +2,7 @@ import logging
 
 from beanie import free_fall_migration
 
+from backend.common.core.enums import DocumentType
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.search_codes import SearchCodeSet
@@ -24,7 +25,7 @@ class Forward:
 
         result = await DocDocument.get_motor_collection().update_many(
             {"locations.site_id": {"$in": site_ids}, "name": {"$in": codes}},
-            {"$set": {"document_type": "Medical Coverage List"}},
+            {"$set": {"document_type": DocumentType.MedicalCoverageStatus.value}},
         )
 
         logging.info(
@@ -33,7 +34,7 @@ class Forward:
 
         result = await RetrievedDocument.get_motor_collection().update_many(
             {"locations.site_id": {"$in": site_ids}, "name": {"$in": codes}},
-            {"$set": {"document_type": "Medical Coverage List"}},
+            {"$set": {"document_type": DocumentType.MedicalCoverageStatus.value}},
         )
         logging.info(
             f"RetrievedDocument -> acknowledged={result.acknowledged} matched_count={result.matched_count} modified_count={result.modified_count}"  # noqa

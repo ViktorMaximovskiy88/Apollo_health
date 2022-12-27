@@ -45,7 +45,7 @@ def guess_doc_type(
     _doc_type, _confidence, doc_vectors = classify_doc_type(raw_text)
 
     if is_searchable:
-        doc_type = DocumentType.MedicalCoverageList
+        doc_type = DocumentType.MedicalCoverageStatus
         confidence = 1
     elif doc_type_match := DocTypeMatcher(raw_text, raw_link_text, raw_url, raw_name).exec():
         doc_type = doc_type_match.document_type
