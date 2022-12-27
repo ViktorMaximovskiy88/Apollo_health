@@ -86,12 +86,6 @@ export const createColumns = ({
     },
   },
   {
-    header: 'Link Text',
-    name: 'link_text',
-    minWidth: 200,
-    render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
-  },
-  {
     header: 'Document Name',
     name: 'name',
     defaultFlex: 1,
@@ -175,6 +169,12 @@ export const createColumns = ({
     },
   },
   {
+    header: 'Link Text',
+    name: 'link_text',
+    minWidth: 200,
+    render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
+  },
+  {
     header: 'URL',
     name: 'url',
     width: 80,
@@ -187,6 +187,16 @@ export const createColumns = ({
           </a>
         </>
       );
+    },
+  },
+  {
+    header: 'Priority',
+    name: 'priority',
+    width: 80,
+    filterSearch: true,
+    // minWidth: 200,
+    render: ({ data: doc }: { data: SiteDocDocument }) => {
+      return <>{doc.priority}</>;
     },
   },
   {
