@@ -113,6 +113,7 @@ export interface DocDocument extends BaseDocument {
 
   include_later_documents_in_lineage_update?: boolean;
   priority: number;
+  previous_par_id: string | null;
 }
 
 export type SiteDocDocument = Omit<
