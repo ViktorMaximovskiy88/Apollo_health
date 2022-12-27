@@ -80,7 +80,7 @@ const setDatesToUtcStart = (newDocument: any) => {
     'published',
   ];
   for (const date of dates) {
-    if (!(`${date}_date` in newDocument)) {
+    if (!(`${date}_date` in newDocument) || !newDocument[`${date}_date`]) {
       continue;
     }
     newDocument[`${date}_date`].utc(true).startOf('day');
