@@ -194,7 +194,6 @@ export const createColumns = ({
     name: 'priority',
     width: 80,
     filterSearch: true,
-    // minWidth: 200,
     render: ({ data: doc }: { data: SiteDocDocument }) => {
       return <>{doc.priority}</>;
     },
