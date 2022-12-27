@@ -30,6 +30,31 @@ function useSiteSelectOptions() {
   return { siteOptions };
 }
 
+interface PriorityStyle {
+  style?: string;
+}
+
+export function priorityStyleMap(priority: number): PriorityStyle {
+  const range = (start: number, end: number) =>
+    Array.from(Array(end - start + 1).keys()).map((x) => x + start);
+
+  switch (true) {
+    case priority in range(0, 4):
+      return { style: 'text-blue-500' };
+    case priority in range(5, 8):
+      return { style: 'text-green-500' };
+    case priority >= 8:
+      return { style: 'text-red-500' };
+    default:
+      return { style: 'text-blue-500' };
+  }
+}
+
+export function priorityStyle(priority: number): React.ReactElement {
+  const { style } = priorityStyleMap(priority);
+  return <span className={style}>{priority}</span>;
+}
+
 export function useWorkQueueColumns(
   queueId: string | undefined,
   siteNamesById: { [key: string]: string }
@@ -155,7 +180,7 @@ export function useWorkQueueColumns(
       width: 80,
       filterSearch: true,
       render: ({ data: doc }: { data: BaseDocument }) => {
-        return <>{doc.priority}</>;
+        return priorityStyle(doc.priority);
       },
     },
     {
