@@ -148,6 +148,7 @@ export function SiteDataTable({ setLoading }: SiteDataTablePropTypes) {
       renderLoadMask={disableLoadingMask}
       activateRowOnFocus={false}
       columnUserSelect
+      checkboxOnlyRowSelect
     />
   );
 }
