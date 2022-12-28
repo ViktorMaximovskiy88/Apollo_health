@@ -113,6 +113,7 @@ export function SiteForm(props: {
       initialValues={initialValues}
       validateMessages={validateMessages}
       validateTrigger={['onBlur']}
+      disabled={props.form.getFieldValue('mode') === 'view'}
     >
       <Row gutter={16} className="flex pb-[20%]">
         <Col span={12} className="space-y-4">

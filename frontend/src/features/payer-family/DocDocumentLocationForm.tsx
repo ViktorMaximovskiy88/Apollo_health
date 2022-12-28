@@ -114,7 +114,7 @@ export function DocDocumentLocationForm({
     <div className="property-grid bg-white p-2 mb-4">
       {/* Our header is separate due to styles */}
       <div className="p-2">
-        <Link className="text-lg" target="_blank" to={`/sites/${location.site_id}/edit`}>
+        <Link className="text-lg" target="_blank" to={`/sites/${location.site_id}/view`}>
           <TextEllipsis text={location.site_name ?? ''} />
         </Link>
       </div>
