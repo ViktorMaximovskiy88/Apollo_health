@@ -46,7 +46,7 @@ const buildInitialValues = (oldVersion?: SiteDocDocument, baseUrlOptions?: any[]
       base_url: '',
     };
     if (baseUrlOptions && baseUrlOptions.length > 0) {
-      values.base_url = baseUrlOptions[0];
+      values.base_url = baseUrlOptions[0].value;
     }
     return values;
   }
@@ -115,6 +115,11 @@ export function AddDocumentModal({
     setInitialBaseUrlOptions(base_urls);
   }
   const initialValues = buildInitialValues(oldVersion, baseUrlOptions);
+  if (initialValues.base_url && !form.getFieldValue('base_url')) {
+    form.setFieldsValue({
+      base_url: `${initialValues.base_url}`,
+    });
+  }
   if (docTitle !== 'Add New Version' && oldVersion) {
     setDocTitle('Add New Version');
   }
