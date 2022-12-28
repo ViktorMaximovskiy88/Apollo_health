@@ -94,6 +94,7 @@ class BaseDocDocument(BaseModel):
     token_count: int = 0
 
     user_edited_fields: list[str] = []
+    priority: Indexed(int, pymongo.DESCENDING) = 0
 
 
 class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixins):

@@ -124,6 +124,7 @@ class DocumentUpdater:
         retrieved_document: RetrievedDocument,
         new_therapy_tags: list[TherapyTag],
         new_indicate_tags: list[IndicationTag],
+        priority: int = 0,
     ):
         doc_document: DocDocument | None = await DocDocument.find_one(
             DocDocument.retrieved_document_id == retrieved_document.id
@@ -174,6 +175,7 @@ class DocumentUpdater:
             doc_document.file_size = retrieved_document.file_size
             doc_document.token_count = retrieved_document.token_count
             doc_document.set_final_effective_date()
+            doc_document.priority = priority
             await doc_document.save()
         else:
             await self.create_doc_document(retrieved_document)

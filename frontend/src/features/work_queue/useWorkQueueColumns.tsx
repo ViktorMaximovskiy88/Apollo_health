@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { BaseDocument } from '../../common';
 import { dateDuration, prettyDateUTCFromISO } from '../../common/date';
 import { ButtonLink } from '../../components/ButtonLink';
-import { TaskLock } from '../doc_documents/types';
+import { SiteDocDocument, TaskLock } from '../doc_documents/types';
 import { useGetUsersQuery } from '../users/usersApi';
 import { DocumentTypes } from '../retrieved_documents/types';
 import { useGetSiteQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
@@ -11,6 +11,7 @@ import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
 import { workQueueTableState } from './workQueueSlice';
 import { useSelector } from 'react-redux';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
+import { priorityStyle } from '../doc_documents/useSiteDocDocumentColumns';
 
 function useSiteSelectOptions() {
   const [getSites] = useLazyGetSitesQuery();
@@ -42,6 +43,15 @@ export function useWorkQueueColumns(
   const { data: site } = useGetSiteQuery(siteFilter?.value, { skip: !siteFilter?.value });
   const initialOptions = site ? [{ value: site._id, label: site.name }] : [];
   const columns = [
+    {
+      header: 'Priority',
+      name: 'priority',
+      width: 80,
+      filterSearch: true,
+      render: ({ data: doc }: { data: BaseDocument }) => {
+        return priorityStyle(doc.priority);
+      },
+    },
     {
       name: 'name',
       header: 'Name',

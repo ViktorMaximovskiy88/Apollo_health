@@ -5,11 +5,10 @@ import { RootState } from '../../app/store';
 export const initialState = {
   siteId: '',
   table: {
-    sort: { name: 'link_text', dir: 1 as 1 | -1 | 0 },
+    sort: { name: 'priority', dir: -1 as 1 | -1 | 0 },
     selection: { selected: {}, unselected: {} },
     filter: [
       { name: 'last_collected_date', operator: 'before', type: 'date', value: '' },
-      { name: 'link_text', operator: 'contains', type: 'string', value: '' },
       { name: 'name', operator: 'contains', type: 'string', value: '' },
       { name: 'document_type', operator: 'eq', type: 'select', value: null },
       { name: 'internal_document', operator: 'eq', type: 'select', value: null },
@@ -17,6 +16,8 @@ export const initialState = {
       { name: 'url', operator: 'contains', type: 'string', value: '' },
       { name: 'document_family_id', operator: 'eq', type: 'select', value: null },
       { name: 'payer_family_id', operator: 'eq', type: 'select', value: null },
+      { name: 'link_text', operator: 'contains', type: 'string', value: '' },
+      { name: 'priority', operator: 'eq', type: 'number', value: null },
     ],
     pagination: { limit: 50, skip: 0 },
     forceUpdate: 0,

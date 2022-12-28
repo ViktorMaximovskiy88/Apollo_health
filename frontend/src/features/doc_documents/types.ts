@@ -112,6 +112,7 @@ export interface DocDocument extends BaseDocument {
   pipeline_stages: DocPipelineStages;
 
   include_later_documents_in_lineage_update?: boolean;
+  priority: number;
   previous_par_id: string | null;
 }
 

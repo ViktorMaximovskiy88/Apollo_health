@@ -22,6 +22,7 @@ class TherapyTag(BaseModel):
     update_status: TagUpdateStatus | None = None
     updated_at: datetime | None
     text_area: tuple[int, int] | None = None
+    priority: int = 0
 
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))

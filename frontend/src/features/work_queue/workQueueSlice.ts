@@ -13,7 +13,7 @@ export interface TableState {
 
 export const initialState: { table: TableState } = {
   table: {
-    sort: undefined,
+    sort: { name: 'priority', dir: -1 as 1 | -1 | 0 },
     filter: [
       { name: 'name', operator: 'contains', type: 'string', value: '' },
       { name: 'locations.site_id', operator: 'eq', type: 'string', value: '' },
@@ -26,6 +26,7 @@ export const initialState: { table: TableState } = {
       { name: 'document_type', operator: 'eq', type: 'select', value: null },
       { name: 'final_effective_date', operator: 'after', type: 'date', value: '' },
       { name: 'first_collected_date', operator: 'after', type: 'date', value: '' },
+      { name: 'priority', operator: 'eq', type: 'number', value: null },
     ],
     pagination: { limit: 50, skip: 0 },
   },

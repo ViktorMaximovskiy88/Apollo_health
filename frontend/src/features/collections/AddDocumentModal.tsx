@@ -46,7 +46,7 @@ const buildInitialValues = (oldVersion?: SiteDocDocument, baseUrlOptions?: any[]
       base_url: '',
     };
     if (baseUrlOptions && baseUrlOptions.length > 0) {
-      values.base_url = baseUrlOptions[0];
+      values.base_url = baseUrlOptions[0].value;
     }
     return values;
   }
