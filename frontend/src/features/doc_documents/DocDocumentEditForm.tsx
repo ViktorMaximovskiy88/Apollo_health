@@ -157,7 +157,7 @@ export function DocDocumentEditForm({
     if (index > -1) {
       if (updateTags) {
         update.forEach((tag) => {
-          if (tag.id !== newTag.id && tag.name === newTag.name) {
+          if (tag.id !== newTag.id && tag.text === newTag.text) {
             tag.focus = newTag.focus;
           }
         });
