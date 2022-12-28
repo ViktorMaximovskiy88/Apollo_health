@@ -266,6 +266,7 @@ class ScrapeWorker:
                         pdf_path,
                         url,
                         link_text=download.metadata.link_text,
+                        scrape_method_config=scrape_method_config,
                     ).update_parsed_content(parsed_content)
 
             if document:

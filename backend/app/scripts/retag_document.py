@@ -43,7 +43,7 @@ class ReTagger:
         url = normalize_string(location.url)
         doc_text = await self.get_text(doc, rdoc, url, link_text)
         _doc_type, _confidence, doc_vectors, doc_type_match = guess_doc_type(
-            doc_text, location.link_text, location.url, doc.name
+            doc_text, location.link_text, location.url, doc.name, site.scrape_method_configuration
         )
         tokens = tokenize_string(doc_text)
 

@@ -36,15 +36,22 @@ def classify_doc_type(raw_text: str) -> Tuple[str, float, Any]:
 
 
 def guess_doc_type(
-    raw_text: str, raw_link_text: str, raw_url: str, raw_name: str
+    raw_text: str, raw_link_text: str, raw_url: str, raw_name: str, scrape_method_config
 ) -> Tuple[str, float, Any, Any]:
 
-    doc_type_match = DocTypeMatcher(raw_text, raw_link_text, raw_url, raw_name).exec()
-
+    is_searchable = scrape_method_config and scrape_method_config.searchable and len(raw_name) == 5
+    doc_type_match = None
     # always classify for vectors
     _doc_type, _confidence, doc_vectors = classify_doc_type(raw_text)
 
-    if not doc_type_match:
-        return _doc_type, _confidence, doc_vectors, None
+    if is_searchable:
+        doc_type = DocumentType.MedicalCoverageStatus
+        confidence = 1
+    elif doc_type_match := DocTypeMatcher(raw_text, raw_link_text, raw_url, raw_name).exec():
+        doc_type = doc_type_match.document_type
+        confidence = doc_type_match.confidence
     else:
-        return doc_type_match.document_type, doc_type_match.confidence, doc_vectors, doc_type_match
+        doc_type = _doc_type
+        confidence = _confidence
+
+    return doc_type, confidence, doc_vectors, doc_type_match

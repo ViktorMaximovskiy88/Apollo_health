@@ -179,3 +179,4 @@ terragrunt-debug.tfvars.json
 tmp
 # mongodump by default
 dump
+appmap.yml
