@@ -36,14 +36,12 @@ from backend.app.scripts.create_proxy_records import create_proxies
 from backend.app.scripts.create_work_queues import create_default_work_queues
 from backend.app.scripts.payer_backbone.load_payer_backbone import load_payer_backbone
 from backend.app.utils.cors import cors
-from backend.app.utils.http_logger import http_logger
 from backend.common.db.init import init_db
 from backend.common.db.migrations import confirm_migration_quality, run_migrations
 from backend.common.models.proxy import Proxy
 
 app = FastAPI()
 cors(app)  # local only
-http_logger(app)
 
 
 @app.on_event("startup")

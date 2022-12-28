@@ -50,7 +50,7 @@ from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
 from backend.scrapeworker.search_crawler import SearchableCrawler
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 
 
 class ScrapeWorker:
