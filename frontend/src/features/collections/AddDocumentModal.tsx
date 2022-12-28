@@ -115,11 +115,6 @@ export function AddDocumentModal({
     setInitialBaseUrlOptions(base_urls);
   }
   const initialValues = buildInitialValues(oldVersion, baseUrlOptions);
-  if (initialValues.base_url && !form.getFieldValue('base_url')) {
-    form.setFieldsValue({
-      base_url: `${initialValues.base_url}`,
-    });
-  }
   if (docTitle !== 'Add New Version' && oldVersion) {
     setDocTitle('Add New Version');
   }
