@@ -53,11 +53,11 @@ async def get_current_user(auth: HTTPAuthorizationCredentials = Depends(scheme))
 
     if not user:
         logging.error(f"User not found: email={email}")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
     if user.disabled:
         logging.error(f"User account disabled: email={email}")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
     # check perms
 

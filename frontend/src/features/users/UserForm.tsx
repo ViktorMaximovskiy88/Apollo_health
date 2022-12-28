@@ -28,9 +28,6 @@ export function UserForm(props: { onFinish: (user: Partial<User>) => void; initi
       <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
         <Input />
       </Form.Item>
-      <Form.Item name="password" label="Password">
-        <Input type="password" />
-      </Form.Item>
       <Form.Item name="is_admin" label="Is Admin" valuePropName="checked">
         <Switch />
       </Form.Item>

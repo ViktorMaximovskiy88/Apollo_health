@@ -6,12 +6,8 @@ from pydantic import EmailStr, Field
 from backend.common.models.base_document import BaseDocument, BaseModel
 
 
-class UserAuth(BaseModel):
+class NewUser(BaseModel):
     email: EmailStr
-    password: str
-
-
-class NewUser(UserAuth):
     full_name: str
     roles: list[str] | None = None
     is_admin: bool | None = None
@@ -35,7 +31,7 @@ class UserPublic(UserUpdate):
 
 
 class User(BaseDocument, UserPublic):
-    hashed_password: str
+    hashed_password: str | None = ""
 
     @classmethod
     async def by_email(cls, email: str) -> Optional["User"]:
