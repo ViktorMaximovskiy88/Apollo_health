@@ -151,12 +151,13 @@ def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
     change_info = ChangeInfo()
     if (
         isinstance(updates, (UpdateDocDocument, TranslationUpdateDocDocument))
-        and updates.translation_id
+        and "translation_id" in updates.__fields_set__
     ):
         change_info.translation_change = updates.translation_id != doc.translation_id
 
     if (
         isinstance(updates, (UpdateDocDocument, ClassificationUpdateDocDocument))
+        and "previous_doc_doc_id" in updates.__fields_set__
         and updates.previous_doc_doc_id != doc.previous_doc_doc_id
     ):
         change_info.lineage_change = doc.previous_doc_doc_id or True

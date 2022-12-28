@@ -86,6 +86,7 @@ const useOnFinish = ({
       }
 
       submittedDoc.previous_par_id = submittedDoc.previous_par_id || null;
+      submittedDoc.document_family_id = submittedDoc.document_family_id || null;
 
       await onSubmit({
         ...submittedDoc,
