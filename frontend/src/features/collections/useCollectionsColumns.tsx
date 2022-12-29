@@ -162,7 +162,7 @@ export const createColumns = ({
   ];
 
   if (site.collection_method === CollectionMethod.Automated) {
-    columns.splice(2, 0, {
+    columns.splice(1, 0, {
       header: 'Queued Time',
       name: 'queued',
       minWidth: 150,
