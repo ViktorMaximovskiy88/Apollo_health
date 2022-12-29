@@ -88,12 +88,10 @@ class TagTaskProcessor(TaskProcessor):
             indication_tags=indication_tags,
             therapy_tags=therapy_tags,
         )
-        # TODO: change to max of any.
-        # Example: tags of 1-3, priority should be 3.
         priority = [0]
-        priority.append(tag.priority for tag in therapy_tags if tag.priority)
-        priority.append(tag.priority for tag in url_therapy_tags if tag.priority)
-        priority.append(tag.priority for tag in link_therapy_tags if tag.priority)
+        priority = priority + [tag.priority for tag in therapy_tags if tag.priority]
+        priority = priority + [tag.priority for tag in url_therapy_tags if tag.priority]
+        priority = priority + [tag.priority for tag in link_therapy_tags if tag.priority]
         priority: int = max(priority)
 
         doc = doc.process_tag_changes(new_therapy_tags, new_indication_tags)

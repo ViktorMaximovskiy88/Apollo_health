@@ -44,15 +44,6 @@ export function useWorkQueueColumns(
   const initialOptions = site ? [{ value: site._id, label: site.name }] : [];
   const columns = [
     {
-      header: 'Priority',
-      name: 'priority',
-      width: 80,
-      filterSearch: true,
-      render: ({ data: doc }: { data: BaseDocument }) => {
-        return priorityStyle(doc.priority);
-      },
-    },
-    {
       name: 'name',
       header: 'Name',
       defaultFlex: 1,
@@ -157,6 +148,15 @@ export function useWorkQueueColumns(
         if (firstCollectedDate) {
           return prettyDateUTCFromISO(firstCollectedDate);
         }
+      },
+    },
+    {
+      header: 'Priority',
+      name: 'priority',
+      width: 80,
+      filterSearch: true,
+      render: ({ data: doc }: { data: BaseDocument }) => {
+        return priorityStyle(doc.priority);
       },
     },
     {
