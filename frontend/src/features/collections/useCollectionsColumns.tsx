@@ -50,7 +50,11 @@ export const createColumns = ({
       minWidth: 150,
       defaultFlex: 1,
       render: ({ data: task }: { data: SiteScrapeTask }) => {
-        return prettyDateDistanceSingle(task.queued_time, task.start_time);
+        if (task.collection_method === CollectionMethod.Manual) {
+          return '-';
+        } else {
+          return prettyDateDistanceSingle(task.queued_time, task.start_time);
+        }
       },
     },
     {
