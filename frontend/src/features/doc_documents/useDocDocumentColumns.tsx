@@ -8,7 +8,6 @@ import { docDocumentTableState } from './docDocumentsSlice';
 import { prettyDateTimeFromISO, prettyDateUTCFromISO } from '../../common';
 import { ButtonLink } from '../../components';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { Site } from '../sites/types';
 import { useGetChangeLogQuery } from './docDocumentApi';
 import { DocDocument } from './types';
 import { DocumentTypes } from '../retrieved_documents/types';
