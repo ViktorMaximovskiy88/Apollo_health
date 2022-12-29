@@ -51,10 +51,11 @@ class Forward:
             update = {"user_edited_fields": {"$each": list(fields)}}
             batch.append(UpdateOne({"_id": id}, {"$addToSet": update}))
 
-        result = await DocDocument.get_motor_collection().bulk_write(batch)
-        logging.info(
-            f"bulk_write -> acknowledged={result.acknowledged} matched_count={result.matched_count} modified_count={result.modified_count}"  # noqa
-        )
+        if batch:
+            result = await DocDocument.get_motor_collection().bulk_write(batch)
+            logging.info(
+                f"bulk_write -> acknowledged={result.acknowledged} matched_count={result.matched_count} modified_count={result.modified_count}"  # noqa
+            )
 
 
 class Backward:
