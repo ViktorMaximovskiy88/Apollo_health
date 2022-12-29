@@ -171,8 +171,8 @@ class DateParser:
     def get_doc_label_dates(self, label_texts: list[str]):
         best_match: DateMatch | None = None
         for text in label_texts:
+            year = self.get_year_num(text)
             for quarter, m in self.get_quarter_marker(text):
-                year = self.get_year_num(text)
                 if not quarter or not year:
                     continue
                 date = self.construct_quarter_date(year, quarter)
@@ -184,6 +184,13 @@ class DateParser:
                 self.unclassified_dates.add(m.date)
                 if self.is_best_effective(m, best_match):
                     best_match = m
+            # check doc names with only year num. 2023-aetna-value-drug-list
+            if not best_match and year:
+                date = self.construct_quarter_date(year, "1")
+                if date:
+                    self.unclassified_dates.add(date)
+                    best_match = DateMatch(date)
+
         return best_match
 
     def check_effective_date(self, label_texts: list[str]):

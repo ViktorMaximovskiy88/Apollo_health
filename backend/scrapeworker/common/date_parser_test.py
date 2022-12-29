@@ -413,3 +413,16 @@ def test_quarter_dates():
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 1
     assert parser.effective_date.date == datetime(2021, 1, 1)
+
+
+def test_doc_name_dates():
+    text = "Not a date 01-22 ml"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text, ["2023-aetna-value-drug-list"])
+    assert len(parser.unclassified_dates) == 1
+    assert parser.effective_date.date == datetime(2023, 1, 1)
+
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text, ["aetna-value-drug-list"])
+    assert len(parser.unclassified_dates) == 0
+    assert parser.effective_date.date is None
