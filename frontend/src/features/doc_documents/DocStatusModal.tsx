@@ -26,7 +26,7 @@ function displayItem(item: string) {
     case 'TAGS':
       return 'Therapy/Indication Tags Deviate from Previous Version';
     case 'LINEAGE':
-      return 'No Previous Version Specified';
+      return 'Low Lineage Confidence';
     case 'DOC_FAMILY':
       return 'Document Family Not Set';
     case 'PAYER_FAMILY':

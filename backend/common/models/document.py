@@ -50,6 +50,7 @@ class BaseRetrievedDocument(BaseModel):
     lineage_id: PydanticObjectId | None = None
     previous_doc_id: PydanticObjectId | None = None
     is_current_version: bool = False
+    lineage_confidence: float = 0
 
 
 class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):

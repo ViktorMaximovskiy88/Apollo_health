@@ -112,10 +112,10 @@ class DocLifecycleService:
         if self.identified_dates_needs_review(doc):
             info.append("IDENTIFIED_DATES")
 
-        if prev_doc:
-            if self.tags_need_review(doc):
-                info.append("TAGS")
-        else:
+        if prev_doc and self.tags_need_review(doc):
+            info.append("TAGS")
+
+        if doc.lineage_confidence < 1:
             info.append("LINEAGE")
 
         if info:
@@ -205,13 +205,17 @@ class DocLifecycleService:
     async def assess_document_status(self, doc: DocDocument):
         fully_approved, edit = await self.assess_intermediate_statuses(doc)
         if fully_approved:
-            doc.status = ApprovalStatus.APPROVED
+            if doc.status != ApprovalStatus.APPROVED:
+                doc.status = ApprovalStatus.APPROVED
+                edit = True
             if not settings.is_local:
                 document_json = await EventConvert().convert(doc)
                 send_event_client = SendEventClient()
                 send_event_client.send_event("document-details", document_json)
         else:
-            doc.status = ApprovalStatus.PENDING
+            if doc.status != ApprovalStatus.PENDING:
+                doc.status = ApprovalStatus.PENDING
+                edit = True
 
         if edit:
             await DocDocument.get_motor_collection().update_one(

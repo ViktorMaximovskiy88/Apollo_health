@@ -32,10 +32,12 @@ class DocumentAttrs(BaseModel):
 
 class DocumentAnalysis(BaseDocument):
     retrieved_document_id: Indexed(PydanticObjectId)  # type: ignore
-    doc_document_id: Indexed(PydanticObjectId) | None  # type: ignore
+    doc_document_id: Indexed(PydanticObjectId)  # type: ignore
     site_id: Indexed(PydanticObjectId)  # type: ignore
     lineage_id: Indexed(PydanticObjectId) | None = None
+    confidence: float = 0.0
     is_current_version: bool = False
+    previous_doc_doc_id: PydanticObjectId | None = None
 
     name: str | None = None
     state_abbr: str | None = None

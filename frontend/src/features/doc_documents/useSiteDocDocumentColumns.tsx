@@ -130,6 +130,12 @@ export const createColumns = ({
     },
   },
   {
+    header: 'Link Text',
+    name: 'link_text',
+    minWidth: 200,
+    render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
+  },
+  {
     header: 'Document Type',
     name: 'document_type',
     minWidth: 200,
@@ -140,20 +146,6 @@ export const createColumns = ({
     },
     render: ({ value: document_type }: { value: string }) => {
       return <>{document_type}</>;
-    },
-  },
-  {
-    header: 'Internal',
-    name: 'internal_document',
-    width: 100,
-    filterEditor: BoolFilter,
-    textAlign: TextAlignType.Center,
-    filterEditorProps: {
-      placeholder: 'All',
-      dataSource: InternalDocs,
-    },
-    render: ({ value: internal_document }: { value: boolean }) => {
-      return internal_document ? <CheckCircleFilled /> : null;
     },
   },
   {
@@ -203,10 +195,18 @@ export const createColumns = ({
     },
   },
   {
-    header: 'Link Text',
-    name: 'link_text',
-    minWidth: 200,
-    render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
+    header: 'Internal',
+    name: 'internal_document',
+    width: 100,
+    filterEditor: BoolFilter,
+    textAlign: TextAlignType.Center,
+    filterEditorProps: {
+      placeholder: 'All',
+      dataSource: InternalDocs,
+    },
+    render: ({ value: internal_document }: { value: boolean }) => {
+      return internal_document ? <CheckCircleFilled /> : null;
+    },
   },
   {
     header: 'URL',
