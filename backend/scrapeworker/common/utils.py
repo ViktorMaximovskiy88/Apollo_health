@@ -39,7 +39,7 @@ def compile_qtr_rgx():
         r"\b(1st|2nd|3rd|4th)\b",
         r"\b(first|second|third|fourth)\b",
     ]
-    year_num = r"(?<!\d|[\/\-\.])[0-9]{4}(?!\d|[\/\-\.])"
+    year_num = r"(?<!\d|[\/\-\.])[0-9]{4}(?!\d|-[\/\-\.])"
 
     return (
         [re.compile(fmt, flags=re.IGNORECASE) for fmt in quarter_formats],

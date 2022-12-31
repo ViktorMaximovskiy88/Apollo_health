@@ -6,6 +6,8 @@ import asyncclick as click
 import pandas as pd
 
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
+from pymongo import UpdateOne
+
 from backend.common.db.init import init_db
 from backend.common.models.doc_document import DocDocument, PydanticObjectId
 from backend.scrapeworker.doc_type_matcher import DocTypeMatcher
@@ -24,21 +26,47 @@ async def par(ctx, file: str):
 @click.pass_context
 async def prev_par_ids(ctx):
     file = ctx.parent.params["file"]
+    parsed_path = Path(file)
+    output_file = parsed_path.parent / f"{parsed_path.stem}-proposed.csv"
     df = pd.read_csv(file, skipinitialspace=True)
+    df["EffectiveDate"] = pd.to_datetime(df["EffectiveDate"])
 
-    for _index, row in df.iterrows():
-        doc = await DocDocument.find_one(
-            {
-                "locations.url": row["DocumentUrl"],
-            }
+    batch = []
+    for index, row in df.iterrows():
+        docs = (
+            await DocDocument.find_many({"locations.url": row["DocumentUrl"]})
+            .sort("-final_effective_date")
+            .to_list()
         )
 
-        if doc and row["Checksum"].lower() != doc.checksum:
-            update = await DocDocument.get_motor_collection().find_one_and_update(
-                {"_id": doc.id},
-                {"$set": {"previous_par_id": row["ParDocumentId"]}},
+        if len(docs) >= 1:
+            print(index)
+            doc = docs[0]
+            df.loc[index, "SH_EffectiveDate"] = doc.final_effective_date
+            df.loc[index, "DateMatch"] = (
+                "SH_GTE_PAR" if doc.final_effective_date >= row["EffectiveDate"] else "SH_LT_PAR"
             )
-            print(update["_id"], update.get("previous_par_id", None))
+            df.loc[index, "SH_Checksum"] = doc.checksum
+            df.loc[index, "SH_DocDocId"] = doc.id
+            df.loc[index, "ChecksumMatch"] = (
+                "Lastest" if row["Checksum"].lower() != doc.checksum else "Same"
+            )
+
+            if (
+                doc.final_effective_date >= row["EffectiveDate"]
+                and row["Checksum"].lower() != doc.checksum
+            ):
+                batch.append(
+                    UpdateOne({"_id": doc.id}, {"$set": {"previous_par_id": row["ParDocumentId"]}})
+                )
+
+    logging.info(f"items pending bulk write -> {len(batch)}")
+    result = await DocDocument.get_motor_collection().bulk_write(batch)
+    logging.info(
+        f"bulk_write -> acknowledged={result.acknowledged} matched_count={result.matched_count} modified_count={result.modified_count}"  # noqa
+    )
+
+    df.to_csv(output_file)
 
 
 @par.command()

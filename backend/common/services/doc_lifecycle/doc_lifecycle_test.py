@@ -25,6 +25,7 @@ class BasicDoc(DocDocument):
     name: str = "d"
     retrieved_document_id: PydanticObjectId = PydanticObjectId()
     checksum: str = "d"
+    pipeline_stages: list[str] = []
 
 
 class BasicLocation(DocDocumentLocation):
@@ -39,10 +40,16 @@ class BasicDocFamily(DocumentFamily):
     site_id: PydanticObjectId | None = PydanticObjectId()
 
 
+class BasicSite(Site):
+    name: str = ""
+    doc_type_threshold: float = 0.5
+    pipeline_stages: list[str] = []
+
+
 async def test_doc_type():
     service = DocLifecycleService()
     doc = BasicDoc(document_type=DocumentType.AuthorizationPolicy, doc_type_confidence=0.6)
-    site = Site(name="Name", doc_type_threshold=0.7)
+    site = BasicSite(doc_type_threshold=0.7)
 
     # Unlineaged, use confidence only
     assert service.doc_type_needs_review(doc, None, site)
@@ -94,13 +101,14 @@ async def test_assess_classification():
     )
     await prev_doc.save()
 
-    site = Site(name="site", doc_type_threshold=0.7)
+    site = BasicSite(doc_type_threshold=0.7)
     await site.save()
 
     doc = BasicDoc(
         previous_doc_doc_id=prev_doc.id,
         document_type=DocumentType.AuthorizationPolicy,
         doc_type_confidence=0.9,
+        lineage_confidence=1,
         final_effective_date=datetime.now() + timedelta(weeks=1),
         locations=[BasicLocation(site_id=site.id)],
     )
@@ -110,6 +118,7 @@ async def test_assess_classification():
 
     doc.classification_status = ApprovalStatus.PENDING
     doc.doc_type_confidence = 0.2
+    doc.lineage_confidence = 0.9
     doc.final_effective_date = datetime.now() + timedelta(weeks=100)
     doc.previous_doc_doc_id = None
     dt_now = datetime.now()
@@ -152,7 +161,7 @@ async def test_content_extraction_needs_review():
 
 async def test_assess_content_extraction():
     service = DocLifecycleService()
-    site = Site(id=PydanticObjectId(), name="s")
+    site = BasicSite(id=PydanticObjectId())
     doc_family = BasicDocFamily(site_id=site.id, legacy_relevance=["PAR"])
     await doc_family.save()
     doc = BasicDoc(document_family_id=doc_family.id)
@@ -200,7 +209,7 @@ async def test_assess_content_extraction():
 
 async def test_intermediate_statuses():
     service = DocLifecycleService()
-    site = Site(id=PydanticObjectId(), name="s", doc_type_threshold=0.8)
+    site = BasicSite(id=PydanticObjectId(), doc_type_threshold=0.8)
     doc_family = BasicDocFamily(site_id=site.id, legacy_relevance=["EDITOR_AUTOMATED"])
     await doc_family.save()
     extraction = ContentExtractionTask(queued_time=datetime.now(), delta=DeltaStats(total=100))
@@ -216,6 +225,7 @@ async def test_intermediate_statuses():
     )
     await prev_doc.save()
     doc.document_type = DocumentType.AuthorizationPolicy
+    doc.lineage_confidence = 1
     doc.doc_type_confidence = 0.9
     doc.previous_doc_doc_id = prev_doc.id
     doc.final_effective_date = datetime.now()

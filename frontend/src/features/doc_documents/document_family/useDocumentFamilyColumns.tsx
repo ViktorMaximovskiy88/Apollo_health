@@ -12,8 +12,6 @@ import { ChangeLogModal } from '../../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './documentFamilyApi';
 import { TypeColumn, TypeFilterValue } from '@inovua/reactdatagrid-community/types';
 import { Link } from 'react-router-dom';
-import { useSiteSelectOptions } from '../useDocDocumentColumns';
-import { RemoteColumnFilter } from '../../../components/RemoteColumnFilter';
 import { useAppDispatch } from '../../../app/store';
 import { useSelector } from 'react-redux';
 import { docDocumentTableState, setDocDocumentTableFilter } from '../docDocumentsSlice';
@@ -25,8 +23,6 @@ import NumberFilter from '@inovua/reactdatagrid-community/NumberFilter';
 import { useCurrentUser } from '../../../common/hooks/use-current-user';
 
 export const createColumns = ({
-  siteOptions,
-  siteNamesById,
   dispatch,
   docDocumentFilters,
   deleteDocumentFamily,
@@ -34,8 +30,6 @@ export const createColumns = ({
   setOpenEditDrawer,
   isAdminUser,
 }: {
-  siteOptions: (search: string) => Promise<{ label: string; value: string }[]>;
-  siteNamesById: { [id: string]: string };
   dispatch: any;
   setDocFamilyId: Dispatch<SetStateAction<string>>;
   setOpenEditDrawer: Dispatch<SetStateAction<boolean>>;
@@ -62,25 +56,6 @@ export const createColumns = ({
           {docFam.name}
         </Button>
       );
-    },
-  },
-  {
-    header: 'Sites',
-    name: 'site_ids',
-    defaultFlex: 1,
-    minWidth: 200,
-    filterEditor: RemoteColumnFilter,
-    filterEditorProps: {
-      fetchOptions: siteOptions,
-      mode: 'multiple',
-    },
-    render: ({ data: docFam }: { data: DocumentFamily }) => {
-      return docFam.site_ids
-        .map((s) => siteNamesById[s])
-        .filter((e) => {
-          return e != null;
-        })
-        .join(', ');
     },
   },
   {
@@ -186,14 +161,11 @@ export const useDocumentFamilyColumns = (
   setDocFamilyId: Dispatch<SetStateAction<string>>,
   setOpenEditDrawer: Dispatch<SetStateAction<boolean>>
 ): TypeColumn[] => {
-  const { siteOptions } = useSiteSelectOptions();
   const dispatch = useAppDispatch();
   const user = useCurrentUser();
   const { filter: docDocumentFilters } = useSelector(docDocumentTableState);
   return useMemo(() => {
     return createColumns({
-      siteOptions,
-      siteNamesById,
       dispatch,
       docDocumentFilters,
       deleteDocumentFamily,
@@ -202,8 +174,6 @@ export const useDocumentFamilyColumns = (
       setOpenEditDrawer,
     });
   }, [
-    siteOptions,
-    siteNamesById,
     dispatch,
     docDocumentFilters,
     deleteDocumentFamily,

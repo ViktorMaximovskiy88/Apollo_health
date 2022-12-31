@@ -17,7 +17,7 @@ export function DocDocumentInfoForm({ onFieldChange }: DocDocumentInfoTypes) {
         <Input />
       </Form.Item>
       <Hr />
-      <DocumentClassification />
+      <DocumentClassification onFieldChange={onFieldChange} />
       <Hr />
       <DateFields onFieldChange={onFieldChange} />
       <Hr />

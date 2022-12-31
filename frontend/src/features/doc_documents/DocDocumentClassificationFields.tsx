@@ -97,7 +97,7 @@ const PrevDoc = () => {
   );
 };
 
-const Lineage = () => {
+const Lineage = ({ onFieldChange }: { onFieldChange: () => void }) => {
   const dispatch = useAppDispatch();
   const [modalOpen, setModalOpen] = useState(false);
   const { docDocumentId: updatingDocDocId } = useParams();
@@ -107,6 +107,10 @@ const Lineage = () => {
   const prevDocDocId = Form.useWatch('previous_doc_doc_id');
   const form = Form.useFormInstance();
   const tableState = useSelector(lineageDocDocumentTableState);
+
+  if (updatingDocDoc?.previous_doc_doc_id !== prevDocDocId) {
+    onFieldChange();
+  }
 
   const handleModalOpen = useCallback(() => {
     dispatch(setPreviousDocDocumentId(updatingDocDoc?.previous_doc_doc_id));
@@ -145,12 +149,11 @@ const Lineage = () => {
   );
 };
 
-export function DocumentClassification() {
+export function DocumentClassification({ onFieldChange }: { onFieldChange: () => void }) {
   const { docDocumentId } = useParams();
   const { data: docDocument } = useGetDocDocumentQuery(docDocumentId, { skip: !docDocumentId });
   const previousDocDocId: string | undefined = Form.useWatch('previous_doc_doc_id');
   const { data: prevDoc } = useGetDocDocumentQuery(previousDocDocId, { skip: !previousDocDocId });
-  const prevDocDocId = Form.useWatch('previous_doc_doc_id');
 
   return (
     <>
@@ -166,8 +169,8 @@ export function DocumentClassification() {
       </div>
 
       <div className="flex space-x-8">
-        <Lineage />
-        {prevDocDocId ? (
+        <Lineage onFieldChange={onFieldChange} />
+        {previousDocDocId ? (
           <DocCompareToPrevious
             previousChecksum={prevDoc?.checksum}
             currentChecksum={docDocument?.checksum}

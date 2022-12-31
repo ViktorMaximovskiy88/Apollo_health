@@ -1,4 +1,6 @@
 from functools import cache
+from typing import Tuple
+from urllib.parse import quote_plus
 
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
@@ -60,40 +62,64 @@ def get_motor_db(mock=False, database_name=None) -> AsyncIOMotorDatabase:
     return get_motor_client(mock)[database_name]
 
 
+document_models = [
+    User,
+    Site,
+    AppConfig,
+    Proxy,
+    Comment,
+    WorkQueue,
+    ChangeLog,
+    Indication,
+    DocDocument,
+    SiteScrapeTask,
+    TranslationConfig,
+    RetrievedDocument,
+    ContentExtractionTask,
+    ContentExtractionResult,
+    LinkTaskLog,
+    LinkBaseTask,
+    LinkRetrievedTask,
+    DocumentFamily,
+    DocumentAnalysis,
+    PayerBackboneUnionDoc,
+    PayerFamily,
+    PlanBenefit,
+    Plan,
+    PayerParent,
+    BenefitManager,
+    UMP,
+    MCO,
+    Formulary,
+    SearchCodeSet,
+    TaskLog,
+    PipelineRegistry,
+]
+
+
 async def init_db(mock=False, database_name=None):
     await init_beanie(
         database=get_motor_db(mock, database_name),
-        document_models=[
-            User,
-            Site,
-            AppConfig,
-            Proxy,
-            Comment,
-            WorkQueue,
-            ChangeLog,
-            Indication,
-            DocDocument,
-            SiteScrapeTask,
-            TranslationConfig,
-            RetrievedDocument,
-            ContentExtractionTask,
-            ContentExtractionResult,
-            LinkTaskLog,
-            LinkBaseTask,
-            LinkRetrievedTask,
-            DocumentFamily,
-            DocumentAnalysis,
-            PayerBackboneUnionDoc,
-            PayerFamily,
-            PlanBenefit,
-            Plan,
-            PayerParent,
-            BenefitManager,
-            UMP,
-            MCO,
-            Formulary,
-            SearchCodeSet,
-            TaskLog,
-            PipelineRegistry,
-        ],  # type: ignore
+        document_models=document_models,
     )
+
+
+# kinda derp but i dont want to copy again...
+# plus i want the usage to be explicit, not an accident
+def aws_get_motor(
+    host: str,
+    database: str,
+    user: str,
+    password: str,
+    session: str,
+) -> Tuple[AsyncIOMotorClient, AsyncIOMotorDatabase]:
+    user_escaped = quote_plus(user)
+    password_escaped = quote_plus(password)
+    session_escaped = quote_plus(session)
+    url = f"mongodb+srv://{user_escaped}:{password_escaped}@{host}/?authMechanism=MONGODB-AWS&authSource=$external&authMechanismProperties=AWS_SESSION_TOKEN:{session_escaped}"  # noqa
+    client = AsyncIOMotorClient(url)
+    return (client, client[database])
+
+
+async def aws_init_db_(database: AsyncIOMotorDatabase):
+    await init_beanie(database=database, document_models=document_models)

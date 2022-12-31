@@ -75,6 +75,7 @@ class BaseDocDocument(BaseModel):
     lineage_id: PydanticObjectId | None = None
     previous_doc_doc_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     is_current_version: bool = False
+    lineage_confidence: float = 0
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []

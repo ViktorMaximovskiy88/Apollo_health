@@ -70,14 +70,14 @@ state_names_regex = re.compile(
 )
 
 
-def guess_state_abbr(input: str | None):
+def guess_state_abbr(input: str | None) -> str | None:
     if input is None:
         return None
     match = re.search(state_abbr_regex, input)
     return match.group("state_abbr").upper() if match else None
 
 
-def guess_state_name(input: str | None):
+def guess_state_name(input: str | None) -> str | None:
     if input is None:
         return None
     match = re.search(state_names_regex, input)
