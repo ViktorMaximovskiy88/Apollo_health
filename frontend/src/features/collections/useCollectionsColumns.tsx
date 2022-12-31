@@ -9,7 +9,7 @@ import {
   scrapeTaskStatusStyledDisplay as styledDisplay,
   prettyDateDistanceSingle,
 } from '../../common';
-import { CollectionMethod } from '../sites/types';
+import { CollectionMethod, Site } from '../sites/types';
 import { ButtonLink } from '../../components/ButtonLink';
 import { SiteScrapeTask } from './types';
 import NumberFilter from '@inovua/reactdatagrid-community/NumberFilter';
@@ -19,6 +19,7 @@ interface CreateColumnsType {
   isCanceling: boolean;
   openErrorModal: (errorTraceback: string) => void;
   openNewDocumentModal: () => void;
+  site: Site;
 }
 
 export const createColumns = ({
@@ -26,8 +27,9 @@ export const createColumns = ({
   isCanceling,
   openErrorModal,
   openNewDocumentModal,
+  site,
 }: CreateColumnsType) => {
-  return [
+  const columns = [
     {
       header: 'Start Time',
       name: 'queued_time',
@@ -42,15 +44,6 @@ export const createColumns = ({
       },
       render: ({ value }: { value: string }) => {
         return prettyDateTimeFromISO(value);
-      },
-    },
-    {
-      header: 'Queued Time',
-      name: 'queued',
-      minWidth: 150,
-      defaultFlex: 1,
-      render: ({ data: task }: { data: SiteScrapeTask }) => {
-        return prettyDateDistanceSingle(task.queued_time, task.start_time);
       },
     },
     {
@@ -167,6 +160,20 @@ export const createColumns = ({
       },
     },
   ];
+
+  if (site.collection_method === CollectionMethod.Automated) {
+    columns.splice(1, 0, {
+      header: 'Queued Time',
+      name: 'queued',
+      minWidth: 150,
+      defaultFlex: 1,
+      render: ({ data: task }: { data: SiteScrapeTask }) => {
+        return prettyDateDistanceSingle(task.queued_time, task.start_time);
+      },
+    });
+  }
+
+  return columns;
 };
 
 export const useCollectionsColumns = ({
@@ -174,8 +181,9 @@ export const useCollectionsColumns = ({
   isCanceling,
   openErrorModal,
   openNewDocumentModal,
+  site,
 }: CreateColumnsType) =>
   useMemo(
-    () => createColumns({ cancelScrape, isCanceling, openErrorModal, openNewDocumentModal }),
-    [cancelScrape, isCanceling, openErrorModal, openNewDocumentModal]
+    () => createColumns({ cancelScrape, isCanceling, openErrorModal, openNewDocumentModal, site }),
+    [cancelScrape, isCanceling, openErrorModal, openNewDocumentModal, site]
   );
