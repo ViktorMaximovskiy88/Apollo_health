@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>$title</title>
+    <style>
+      body {
+        margin-right: auto;
+        margin-left: auto;
+        max-width: 960px;
+        padding-right: 10px;
+        padding-left: 10px;
+        font-family: "Lucida Console";
+        font-size: 15px;
+      }
+
+      h2 {
+        text-align: center;
+        font-size: 2em;
+      }
+
+      h3 {
+        text-align: left;
+        padding-left: 10px;
+        font-size: 1.6em;
+      }
+
+      h4 {
+        margin-left: 5px;
+        font-style: italic;
+        font-size: 1.2em;
+      }
+
+      label {
+        margin-left: 5px;
+        font-size: 1em;
+      }
+
+      table {
+        border: 2px solid #ffffff;
+        width: 100%;
+        text-align: left;
+        border-collapse: collapse;
+        margin-top: 10px;
+        margin-bottom: 10px;
+      }
+
+      table td,
+      table th {
+        border: 1px solid #ffffff;
+        padding: 3px 4px;
+      }
+
+      table td:nth-child(even) {
+        background: #ebebeb;
+      }
+
+      table thead {
+        background: #ffffff;
+        border-bottom: 4px solid #333333;
+      }
+
+      table thead th {
+        font-weight: bold;
+        color: #333333;
+        text-align: left;
+        border-left: 2px solid #333333;
+      }
+
+      table thead th:first-child {
+        border-left: none;
+      }
+
+      section {
+        clear: both;
+        padding: 10px 0 10px 0;
+      }
+
+      .b {
+        font-weight: bold;
+        margin-block-end: 0.2em;
+      }
+
+      .boxed {
+        border: 1px solid black;
+        padding: 10px;
+        margin: 10px;
+        width: 95%;
+      }
+
+      .groupControlBox {
+        padding: 4px;
+        margin: 10px;
+      }
+
+      .clearfix {
+        clear: both;
+      }
+
+      .col-3 {
+        float: left;
+        width: 33.33%;
+      }
+
+      .col-2 {
+        float: left;
+        width: 50%;
+      }
+
+      .row:after {
+        content: "";
+        display: table;
+        clear: both;
+      }
+
+      .keep-together {
+        page-break-inside: avoid;
+      }
+
+      .break-before {
+        page-break-before: always;
+      }
+
+      .break-after {
+        page-break-after: always;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h2>Local Coverage Article</h2>
+      <h3>$title (A$article_id v$article_version)</h3>
+    </header>
+    <section>
+      <span
+        >Links in PDF documents are not guaranteed to work. To follow a web
+        link, please use the MCD Website.</span
+      >
+    </section>
+    <hr />
+    <section class="break-after">
+      <h2>Contractor Information</h2>
+      <table style="border: black 1px solid">
+        <thead>
+          <tr>
+            <th>CONTRACTOR NAME</th>
+            <th>CONTRACT TYPE</th>
+            <th>CONTRACT NUMBER</th>
+            <th>JURISDICTION</th>
+            <th>STATE(S)</th>
+          </tr>
+        </thead>
+        <tbody>
+          $contractor_detail_table_rows
+        </tbody>
+      </table>
+    </section>
+    <section class="break-after">
+      <h2>Article Information</h2>
+      <h3>General Information</h3>
+      <div class="row">
+        <div class="col-2">
+          <p class="b">Article ID</p>
+          A$article_id
+          <p class="b">Original ICD-9 Article ID</p>
+          $source_article_id
+          <p class="b">Article Title</p>
+          $title
+          <p class="b">Article Type</p>
+          $article_type
+          <p class="b">AMA CPT / ADA CDT / AHA NUBC Copyright Statement</p>
+          <p>
+            CPT codes, descriptions and other data only are copyright 2018
+            American Medical Association. All Rights Reserved. Applicable
+            FARS/HHSARS apply.
+          </p>
+          <p>
+            Current Dental Terminology © 2018 American Dental Association. All
+            rights reserved.
+          </p>
+          <p>
+            Copyright © 2019, the American Hospital Association, Chicago,
+            Illinois. Reproduced with permission. No portion of the AHA
+            copyrighted materials contained within this publication may be
+            copied without the express written consent of the AHA. AHA
+            copyrighted materials including the UB-04 codes and descriptions may
+            not be removed, copied, or utilized within any software, product,
+            service, solution or derivative work without the written consent of
+            the AHA. If an entity wishes to utilize any AHA materials, please
+            contact the AHA at 312-893-6816. Making copies or utilizing the
+            content of the UB-04 Manual, including the codes and/or
+            descriptions, for internal purposes, resale and/or to be used in any
+            product or publication; creating any modified or derivative work of
+            the UB-04 Manual and/or codes and descriptions; and/or making any
+            commercial use of UB-04 Manual or any portion thereof, including the
+            codes and/or descriptions, is only authorized with an express
+            license from the American Hospital Association. To license the
+            electronic data file of UB-04 Data Specifications, contact Tim
+            Carlson at (312) 893-6816 or Laryssa Marshall at (312) 893-6814. You
+            may also contact us at ub04@healthforum.com.
+          </p>
+        </div>
+        <div class="col-2">
+          <p class="b">Original Effective Date</p>
+          $article_pub_date
+          <p class="b">Revision Effective Date</p>
+          $article_eff_date
+          <p class="b">Revision Ending Date</p>
+          $article_rev_end_date
+          <p class="b">Retirement Date</p>
+          $date_retired
+        </div>
+      </div>
+    </section>
+    <section>
+      <h3>CMS National Coverage Policy</h3>
+      <span>$cms_cov_policy</span>
+    </section>
+    <section class="break-after">
+      <h3>Article Guidance</h3>
+      <p class="b">Article Text:</p>
+      <span>$description</span>
+    </section>
+    <section>
+      <h3>Coding Information</h3>
+      <div class="boxed">
+        <h4>Bill Type Codes:</h4>
+        <p>
+          Contractors may specify Bill Types to help providers identify those
+          Bill Types typically used to report this service. Absence of a Bill
+          Type does not guarantee that the policy does not apply to that Bill
+          Type.Complete absence of all Bill Types indicates that coverage is not
+          influenced by Bill Type and the policy should be assumed to apply
+          equally to all claims.
+        </p>
+        $bill_code_table_rows
+      </div>
+      <div class="boxed">
+        <h4>Revenue Codes:</h4>
+        <p>
+          Contractors may specify Revenue Codes to help providers identify those
+          Revenue Codes typically used to report this service. In most instances
+          Revenue Codes are purely advisory. Unless specified in the policy,
+          services reported under other Revenue Codes are equally subject to
+          this coverage determination. Complete absence of all Revenue Codes
+          indicates that coverage is not influenced by Revenue Code and the
+          policy should be assumed to apply equally to all Revenue Codes.
+        </p>
+        $revenue_code_table_rows
+      </div>
+      <div class="boxed">
+        <h4>Other Coding Information</h4>
+        $other_code_group
+      </div>
+      <div class="boxed">
+        <h4>CPT/HCPCS Codes:</h4>
+        $cpt_hcps_code_group
+      </div>
+      <div class="boxed">
+        <h4>ICD-10 Codes that are covered:</h4>
+        $icd_10_codes_covered_group
+      </div>
+      <div class="boxed">
+        <h4>ICD-10 Codes that are not covered:</h4>
+        $icd_10_codes_not_covered_group
+      </div>
+    </section>
+
+    <section>
+      <h3>Revision History Information</h3>
+      $revision_history_table_rows
+    </section>
+    <section>
+      <h3>Associated Documents</h3>
+      <span> $associated_documents_list </span>
+    </section>
+    <section>
+      <h3>Keywords</h3>
+      <span>$keywords</span>
+    </section>
+  </body>
+</html>

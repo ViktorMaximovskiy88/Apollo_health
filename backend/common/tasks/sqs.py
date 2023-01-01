@@ -36,7 +36,6 @@ class SQSBase(ABC):
 
     # JSON encode message and send it
     def send(self, message: dict[str, any], group_id: str):
-        # JSON encode message and send it
         body = json.dumps(message, default=str)
         deduplication_id = message.get("id", None)  # None string is ok
         response = self.queue.send_message(

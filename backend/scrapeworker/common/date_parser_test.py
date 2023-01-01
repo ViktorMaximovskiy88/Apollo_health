@@ -40,6 +40,14 @@ def test_get_date_and_label():
     assert parser.last_reviewed_date.date == datetime(2020, 3, 1)
     assert parser.end_date.date == datetime(2023, 12, 1)
 
+    text = """
+        Does not match subwords depends 1/1/2025
+    """
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 1
+    assert parser.end_date.date is None
+
 
 def test_all_date_formats():
     text = """

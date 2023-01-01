@@ -16,7 +16,7 @@ from backend.common.db.init import init_db
 from backend.common.tasks.task_queue import TaskQueue
 
 logging.basicConfig()
-logger = logging.getLogger("task")
+logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 

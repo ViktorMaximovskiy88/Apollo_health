@@ -1,0 +1,417 @@
+{
+  "url_identifiers": ["articleId", "ver"],
+  "data_set_identifiers": ["article_id", "article_version"],
+  "mapping": [
+    {
+      "type": "group",
+      "field": "other_code_group",
+      "source": "article_x_other_coding_group",
+      "group_field": "other_coding_group",
+      "groups": [
+        {
+          "name": "Paragraph",
+          "type": "text",
+          "source": "article_x_other_coding_group",
+          "field": "paragraph"
+        },
+        {
+          "name": "Codes",
+          "type": "single_table",
+          "source": "article_x_other_coding_group",
+          "fields": [
+            {
+              "name": "Code",
+              "field": "codes"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "field": "article_type",
+      "type": "text",
+      "source": "article",
+      "transform": {
+        "source": "article_type_lookup",
+        "identifier": "article_type_id",
+        "field": "description"
+      }
+    },
+    {
+      "type": "list",
+      "field": "associated_documents_list",
+      "items": [
+        {
+          "name": "Related Local Coverage Document(s)",
+          "source": "article_related_documents",
+          "fields": [
+            {
+              "display_name": "Article(s)",
+              "column": "r_article_id",
+              "transform": {
+                "source": "article",
+                "identifier": "article_id",
+                "fields": ["article_id", "title"]
+              }
+            },
+            {
+              "display_name": "LCD(s)",
+              "column": "r_lcd_id",
+              "transform": {
+                "shared_source": 2,
+                "source": "lcd",
+                "identifier": "lcd_id",
+                "fields": ["lcd_id", "title"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Statutory Requirements URL(s)",
+          "source": "article_x_urls",
+          "fields": [
+            {
+              "column": "url_name",
+              "condition": {
+                "field": "url_type_id",
+                "equals": 1
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rules and Regulations URL(s)",
+          "source": "article_x_urls",
+          "fields": [
+            {
+              "column": "url_name",
+              "condition": {
+                "field": "url_type_id",
+                "equals": 2
+              }
+            }
+          ]
+        },
+        {
+          "name": "CMS Manual Explanations URL(s)",
+          "source": "article_x_urls",
+          "fields": [
+            {
+              "column": "url_name",
+              "condition": {
+                "field": "url_type_id",
+                "equals": 3
+              }
+            }
+          ]
+        },
+        {
+          "name": "Other URL(s)",
+          "source": "article_x_urls",
+          "fields": [
+            {
+              "column": "url_name",
+              "condition": {
+                "field": "url_type_id",
+                "equals": 4
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "field": "icd_10_codes_not_covered_group",
+      "source": "article_x_icd10_noncovered_group",
+      "group_field": "icd10_noncovered_group",
+      "groups": [
+        {
+          "name": "Paragraph",
+          "type": "text",
+          "source": "article_x_icd10_noncovered_group",
+          "field": "paragraph"
+        },
+        {
+          "name": "Codes",
+          "type": "single_table",
+          "source": "article_x_icd10_noncovered",
+          "fields": [
+            {
+              "name": "Code",
+              "field": "icd10_code_id"
+            },
+            {
+              "name": "Description",
+              "field": "description"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "field": "icd_10_codes_covered_group",
+      "source": "article_x_icd10_covered",
+      "group_field": "icd10_covered_group",
+      "groups": [
+        {
+          "name": "Paragraph",
+          "type": "text",
+          "source": "article_x_icd10_covered_group",
+          "field": "paragraph"
+        },
+        {
+          "name": "Codes",
+          "type": "single_table",
+          "source": "article_x_icd10_covered",
+          "fields": [
+            {
+              "name": "Code",
+              "field": "icd10_code_id"
+            },
+            {
+              "name": "Description",
+              "field": "description"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "field": "cpt_hcps_code_group",
+      "source": "article_x_hcpc_code",
+      "group_field": "hcpc_code_group",
+      "groups": [
+        {
+          "name": "Paragraph",
+          "type": "text",
+          "source": "article_x_hcpc_code_group",
+          "field": "paragraph"
+        },
+        {
+          "name": "Codes",
+          "type": "single_table",
+          "source": "article_x_hcpc_code",
+          "fields": [
+            {
+              "name": "Code",
+              "field": "hcpc_code_id"
+            },
+            {
+              "name": "Description",
+              "field": "short_description"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "single_table",
+      "field": "revision_history_table_rows",
+      "order_by_desc": "rev_hist_num",
+      "rows_source": {
+        "table": "article_x_revision_history",
+        "column": "article_id",
+        "exclude": "article_version"
+      },
+      "fields": [
+        {
+          "name": "Revision History Date",
+          "source": "revision_history_table_rows",
+          "field": "rev_hist_date",
+          "identifier": "article_id",
+          "format": "date"
+        },
+        {
+          "name": "Revision History Number",
+          "source": "revision_history_table_rows",
+          "prefix": "R",
+          "field": "rev_hist_num",
+          "identifier": "article_id"
+        },
+        {
+          "name": "Revision History Explanation",
+          "source": "revision_history_table_rows",
+          "field": "rev_hist_exp",
+          "identifier": "article_id"
+        }
+      ]
+    },
+    {
+      "type": "single_table",
+      "field": "bill_code_table_rows",
+      "order_by_asc": "bill_code_id",
+      "group_by": "CODE",
+      "rows_source": {
+        "table": "article_x_bill_code",
+        "column": "article_id"
+      },
+      "fields": [
+        {
+          "name": "CODE",
+          "source": "article_x_bill_code",
+          "field": "bill_code_id",
+          "identifier": "article_id"
+        },
+        {
+          "name": "DESCRIPTION",
+          "source": "article_x_bill_code",
+          "field": "description",
+          "identifier": "article_id"
+        }
+      ]
+    },
+    {
+      "type": "single_table",
+      "field": "revenue_code_table_rows",
+      "order_by_asc": "revenue_code_id",
+      "group_by": "CODE",
+      "rows_source": {
+        "table": "article_x_revenue_code",
+        "column": "article_id"
+      },
+      "fields": [
+        {
+          "name": "CODE",
+          "source": "article_x_revenue_code",
+          "field": "revenue_code_id",
+          "identifier": "article_id"
+        },
+        {
+          "name": "DESCRIPTION",
+          "source": "article_x_revenue_code",
+          "field": "description",
+          "identifier": "article_id"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "field": "contractor_detail_table_rows",
+      "rows_source": {
+        "table": "article_x_contractor",
+        "columns": ["contractor_id", "contractor_version"]
+      },
+      "order_by": "Contract Number",
+      "fields": [
+        {
+          "name": "Contractor Name",
+          "source": "contractor",
+          "field": "contractor_bus_name",
+          "identifier": "contractor_id"
+        },
+        {
+          "name": "Contract Type",
+          "source": "contractor_type_lookup",
+          "field": "description",
+          "identifier": "contractor_type_id",
+          "parent_source": "contractor",
+          "parent_source_lookup": "contractor_id",
+          "parent_identifier": "contractor_type_id"
+        },
+        {
+          "name": "Contract Number",
+          "source": "contractor",
+          "field": "contractor_number",
+          "identifier": "contractor_id",
+          "min_length": 5,
+          "append": {
+            "name": "Subtype",
+            "source": "contractor_subtype_lookup",
+            "field": "description",
+            "identifier": "contractor_subtype_id",
+            "parent_source": "contractor",
+            "parent_source_lookup": "contractor_id",
+            "parent_identifier": "contractor_subtype_id",
+            "delimiter": " - "
+          }
+        },
+        {
+          "name": "Jurisdiction",
+          "source": "dmerc_region_lookup",
+          "field": "super_mac_description",
+          "identifier": "region_id",
+          "parent_source": "contractor",
+          "parent_source_lookup": "contractor_id",
+          "parent_identifier": "dmerc_rgn"
+        },
+        {
+          "name": "State(s)",
+          "source": "state_lookup",
+          "field": "description",
+          "identifier": "state_id",
+          "parent_source": "contractor_jurisdiction",
+          "parent_source_lookup": "contractor_id",
+          "parent_identifier": "state_id"
+        }
+      ]
+    },
+    {
+      "field": "title",
+      "type": "text",
+      "source": "article"
+    },
+    {
+      "field": "article_id",
+      "type": "text",
+      "source": "article"
+    },
+    {
+      "field": "article_version",
+      "type": "text",
+      "source": "article"
+    },
+    {
+      "field": "article_eff_date",
+      "type": "date",
+      "source": "article"
+    },
+    {
+      "field": "article_pub_date",
+      "type": "date",
+      "source": "article"
+    },
+    {
+      "field": "article_rev_end_date",
+      "type": "date",
+      "source": "article"
+    },
+    {
+      "field": "date_retired",
+      "type": "date",
+      "source": "article"
+    },
+    {
+      "field": "description",
+      "type": "text",
+      "source": "article"
+    },
+    {
+      "field": "source_article_id",
+      "type": "text",
+      "source": "article_related_source_icd9",
+      "prefix": "A"
+    },
+    {
+      "field": "keywords",
+      "type": "text",
+      "source": "article",
+      "split_by": "|"
+    },
+    {
+      "field": "cms_cov_policy",
+      "type": "text",
+      "source": "article"
+    }
+  ],
+  "documents_list_info": {
+    "target_source": "article",
+    "source": "article_x_contractor",
+    "target_fields": ["article_id", "article_version"],
+    "url_template": "https://www.cms.gov/medicare-coverage-database/details/article-details.aspx?articleId=$article_id&ver=$article_version",
+    "url_identifiers": ["Cntrctr", "ContrVer"],
+    "data_set_identifiers": ["contractor_id", "contractor_version"]
+  }
+}

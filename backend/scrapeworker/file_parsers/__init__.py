@@ -43,7 +43,7 @@ async def parse_by_type(
     Parser = get_parser_by_ext(file_extension)
     if Parser:
         parser = Parser(
-            file_path, url, link_text=link_text, scrape_method_config=scrape_method_config
+            file_path, url, link_text, download=download, scrape_method_config=scrape_method_config
         )
         result = await parser.parse()
         return result

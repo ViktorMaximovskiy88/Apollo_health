@@ -1,0 +1,85 @@
+{
+  "url_identifiers": ["NCDId", "ncdver"],
+  "data_set_identifiers": ["NCD_id", "NCD_vrsn_num"],
+  "mapping": [
+    {
+      "field": "NCD_mnl_sect_title",
+      "type": "text",
+      "source": "ncd_trkg"
+    },
+    {
+      "field": "NCD_mnl_sect_title",
+      "type": "text",
+      "source": "ncd_trkg"
+    },
+    {
+      "field": "NCD_mnl_sect",
+      "type": "text",
+      "source": "ncd_trkg"
+    },
+    {
+      "type": "text",
+      "source": "ncd_trkg",
+      "field": "pblctn_cd",
+      "transform": {
+        "source": "ncd_pblctn_ref",
+        "field": "pblctn_num"
+      }
+    },
+    {
+      "field": "NCD_vrsn_num",
+      "type": "text",
+      "source": "ncd_trkg"
+    },
+    {
+      "field": "NCD_efctv_dt",
+      "type": "date",
+      "source": "ncd_trkg"
+    },
+    {
+      "field": "NCD_impltn_dt",
+      "type": "date",
+      "source": "ncd_trkg"
+    },
+    {
+      "field": "itm_srvc_desc",
+      "type": "text",
+      "source": "ncd_trkg"
+    },
+    {
+      "field": "indctn_lmtn",
+      "type": "text",
+      "source": "ncd_trkg"
+    },
+    {
+      "field": "trnsmtl_num",
+      "type": "text",
+      "source": "ncd_trkg"
+    },
+    {
+      "field": "trnsmtl_url",
+      "type": "text",
+      "source": "ncd_trkg"
+    },
+    {
+      "field": "rev_hstry",
+      "type": "text",
+      "source": "ncd_trkg"
+    },
+    {
+      "field": "bnft_ctgry_cd",
+      "type": "text",
+      "source": "ncd_trkg_bnft_xref",
+      "transform": {
+        "source": "ncd_bnft_ctgry_ref",
+        "field": "bnft_ctgry_desc"
+      }
+    }
+  ],
+  "documents_list_info": {
+    "source": "ncd_trkg",
+    "target_fields": ["NCD_id", "NCD_vrsn_num"],
+    "url_template": "https://www.cms.gov/medicare-coverage-database/details/ncd-details.aspx?NCDId=$NCD_id&ncdver=$NCD_vrsn_num",
+    "data_set_identifiers": ["NCD_id", "NCD_vrsn_num"]
+  }
+}

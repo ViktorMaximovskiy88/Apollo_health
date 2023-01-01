@@ -8,6 +8,7 @@ import aiofiles
 from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.date_parser import DateParser
 from backend.scrapeworker.common.detect_lang import detect_lang
+from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.common.utils import date_rgxs, label_rgxs, normalize_string
 from backend.scrapeworker.doc_type_classifier import guess_doc_type
 
@@ -23,11 +24,13 @@ class FileParser(ABC):
         file_path: str,
         url: str,
         link_text: str | None = None,
+        download: DownloadContext | None = None,
         scrape_method_config: ScrapeMethodConfiguration | None = None,
     ):
         self.file_path = file_path
+        self.download = download
         self.url = url
-        self.link_text = link_text
+        self.link_text = link_text or ""
         file_name = self.url.removesuffix("/")
         self.filename_no_ext = str(pathlib.Path(os.path.basename(file_name)).with_suffix(""))
         self.scrape_method_config = scrape_method_config
@@ -37,6 +40,9 @@ class FileParser(ABC):
 
     async def get_text(self) -> str:
         raise NotImplementedError("get_text is required")
+
+    async def get_image_checksums(self) -> list[str]:
+        return []
 
     def get_title(self, _):
         raise NotImplementedError("get_title is required")

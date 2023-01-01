@@ -1,7 +1,6 @@
 import logging
 
 import backend.common.models.tasks as tasks
-from backend.common.core.enums import ApprovalStatus
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.pipeline import DocPipelineStages, PipelineRegistry
 from backend.common.models.tasks import TaskLog
@@ -19,29 +18,32 @@ class DocPipelineTaskProcessor(TaskProcessor):
     ) -> None:
         self.logger = logger
 
-    async def exec(self, task: tasks.DocPipelineTask):
-        stage_versions = await PipelineRegistry.fetch()
-        doc = await DocDocument.get(task.doc_doc_id)
+    async def exec(
+        self,
+        task: tasks.DocPipelineTask,
+        stage_versions: PipelineRegistry | None = None,
+        doc: DocDocument | None = None,
+    ):
+        if not stage_versions:
+            stage_versions = await PipelineRegistry.fetch()
 
-        if doc.classification_status == ApprovalStatus.APPROVED:
-            self.logger.info(f"{doc.id} classification_status={doc.classification_status} skipping")
-            return
+        if not doc:
+            doc = await DocDocument.get(task.doc_doc_id)
 
         if not doc.pipeline_stages:
             doc.pipeline_stages = DocPipelineStages()
 
         pipeline = []
-
         # TODO get fancy later...
         # all dependencies are invalid
-        if not DocPipelineStages.is_stage_valid(
+        if task.reprocess or not DocPipelineStages.is_stage_valid(
             doc.pipeline_stages.content, stage_versions.content
         ):
             pipeline += [
-                tasks.ContentTask(doc_doc_id=doc.id),
-                tasks.DateTask(doc_doc_id=doc.id),
-                tasks.DocTypeTask(doc_doc_id=doc.id),
-                tasks.TagTask(doc_doc_id=doc.id),
+                tasks.ContentTask(doc_doc_id=doc.id, reprocess=task.reprocess),
+                tasks.DateTask(doc_doc_id=doc.id, reprocess=task.reprocess),
+                tasks.DocTypeTask(doc_doc_id=doc.id, reprocess=task.reprocess),
+                tasks.TagTask(doc_doc_id=doc.id, reprocess=task.reprocess),
             ]
         else:
             # check each dependency
@@ -70,11 +72,7 @@ class DocPipelineTaskProcessor(TaskProcessor):
             result = await task_processor.exec(task.payload)
             results.append(result)
 
-        # TODO some logic that updates the all_docs on site (for lineage purposes)
-        # thinking... everytime doc is proccessed check then lineage?
-        # what about cross site lineage?
-
-        self.logger.info(f"pipeline processed for doc_id={doc.id}")
+        self.logger.debug(f"pipeline processed for doc_id={doc.id}")
         return results
 
     async def get_progress(self) -> float:

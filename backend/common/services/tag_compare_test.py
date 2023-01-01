@@ -4,6 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 import pytest_asyncio
+from beanie import PydanticObjectId
 
 from backend.common.core.enums import TagUpdateStatus
 from backend.common.db.init import init_db
@@ -57,9 +58,10 @@ def simple_ret_doc(
         last_collected_date=datetime.now(),
         therapy_tags=therapy_tags,
         indication_tags=indication_tags,
+        doc_type_match=None,
         locations=[
             RetrievedDocumentLocation(
-                site_id=site.id,
+                site_id=site.id,  # type: ignore
                 first_collected_date=datetime.now(),
                 last_collected_date=datetime.now(),
                 url="https://www.example.com/doc",
@@ -74,22 +76,23 @@ def simple_ret_doc(
 
 def simple_doc_doc(
     site: Site,
-    retrieved_doc: RetrievedDocument,
+    retrieved_doc_id: PydanticObjectId = PydanticObjectId(),
     therapy_tags: list[TherapyTag] = [],
     indication_tags: list[IndicationTag] = [],
 ):
     return DocDocument(
         name="test",
-        retrieved_document_id=retrieved_doc.id,
+        retrieved_document_id=retrieved_doc_id,
         checksum="test",
         text_checksum="test",
         first_collected_date=datetime.now(),
         last_collected_date=datetime.now(),
         therapy_tags=therapy_tags,
         indication_tags=indication_tags,
+        pipeline_stages=None,
         locations=[
             DocDocumentLocation(
-                site_id=site.id,
+                site_id=site.id,  # type: ignore
                 first_collected_date=datetime.now(),
                 last_collected_date=datetime.now(),
                 url="https://www.example.com/doc",
@@ -103,13 +106,18 @@ def simple_doc_doc(
 
 
 def simple_therapy_tag(
-    focus: bool = False, text_area: tuple[int, int] | None = (0, 100), page: int = 0, key=False
+    focus: bool = False,
+    text_area: tuple[int, int] | None = (0, 100),
+    page: int = 0,
+    key=False,
+    text: str = "text_test",
+    name: str = "name_test",
 ):
     return TherapyTag(
-        text="text_test",
+        text=text,
         page=page,
         code=str(random()),
-        name="name_test",
+        name=name,
         key=key,
         focus=focus,
         text_area=text_area,
@@ -173,14 +181,14 @@ class TestTagChange:
             simple_indication_tag(focus=True, text_area=(0, 100)),
             simple_indication_tag(focus=False, text_area=(0, 100)),
         ]
-        ret_doc = await simple_ret_doc(
+        doc = await simple_doc_doc(
             site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
-        doc_doc = await simple_doc_doc(
-            site=site, retrieved_doc=ret_doc, therapy_tags=ther_tags, indication_tags=indi_tags
+        prev_doc = await simple_doc_doc(
+            site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
 
-        final_ther, final_indi = await tag_compare.execute(ret_doc, doc_doc)
+        final_ther, final_indi = await tag_compare.execute(doc, prev_doc)
         assert len(final_ther) == 2
         assert len(final_indi) == 2
         changed_ther = group_by_status(final_ther)[TagUpdateStatus.CHANGED]
@@ -206,14 +214,14 @@ class TestTagChange:
         indi_tags = [
             simple_indication_tag(focus=True, text_area=(0, 100)),
         ]
-        ret_doc = await simple_ret_doc(
+        doc_1 = await simple_doc_doc(
             site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
-        doc_doc = await simple_doc_doc(
-            site=site, retrieved_doc=ret_doc, therapy_tags=ther_tags, indication_tags=indi_tags
+        doc_2 = await simple_doc_doc(
+            site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
 
-        final_ther, final_indi = await tag_compare.execute(ret_doc, doc_doc)
+        final_ther, final_indi = await tag_compare.execute(doc_1, doc_2)
         assert len(final_ther) == 1
         assert len(final_indi) == 1
         ther_no_change = group_by_status(final_ther)["None"]
@@ -241,14 +249,14 @@ class TestTagChange:
         indi_tags = [
             simple_indication_tag(focus=True, text_area=(0, 100)),
         ]
-        ret_doc = await simple_ret_doc(
+        doc = await simple_doc_doc(
             site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
-        doc_doc = await simple_doc_doc(
-            site=site, retrieved_doc=ret_doc, therapy_tags=ther_tags, indication_tags=indi_tags
+        prev_doc = await simple_doc_doc(
+            site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
 
-        final_ther, final_indi = await tag_compare.execute(ret_doc, doc_doc)
+        final_ther, final_indi = await tag_compare.execute(doc, prev_doc)
         assert len(final_ther) == 1
         assert len(final_indi) == 1
         ther_no_change = group_by_status(final_ther)["None"]
@@ -279,14 +287,14 @@ class TestTagChange:
         indi_tags = [
             simple_indication_tag(focus=True, text_area=(0, 100)),
         ]
-        ret_doc = await simple_ret_doc(
+        doc = await simple_doc_doc(
             site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
-        doc_doc = await simple_doc_doc(
-            site=site, retrieved_doc=ret_doc, therapy_tags=ther_tags, indication_tags=indi_tags
+        prev_doc = await simple_doc_doc(
+            site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
 
-        final_ther, final_indi = await tag_compare.execute(ret_doc, doc_doc)
+        final_ther, final_indi = await tag_compare.execute(doc, prev_doc)
         assert len(final_ther) == 1
         assert len(final_indi) == 1
         ther_no_change = group_by_status(final_ther)["None"]
@@ -317,14 +325,14 @@ class TestTagChange:
         indi_tags = [
             simple_indication_tag(focus=True, text_area=(26, 51)),
         ]
-        ret_doc = await simple_ret_doc(
+        doc = await simple_doc_doc(
             site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
-        doc_doc = await simple_doc_doc(
-            site=site, retrieved_doc=ret_doc, therapy_tags=ther_tags, indication_tags=indi_tags
+        prev_doc = await simple_doc_doc(
+            site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
 
-        final_ther, final_indi = await tag_compare.execute(ret_doc, doc_doc)
+        final_ther, final_indi = await tag_compare.execute(doc, prev_doc)
         assert len(final_ther) == 1
         assert len(final_indi) == 1
         ther_no_change = group_by_status(final_ther)["None"]
@@ -354,14 +362,14 @@ class TestTagChange:
             simple_indication_tag(focus=True, text_area=(0, 4)),
             simple_indication_tag(focus=False, text_area=(0, 4)),
         ]
-        ret_doc = await simple_ret_doc(
+        doc = await simple_doc_doc(
             site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
-        doc_doc = await simple_doc_doc(
-            site=site, retrieved_doc=ret_doc, therapy_tags=ther_tags, indication_tags=indi_tags
+        prev_doc = await simple_doc_doc(
+            site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
 
-        final_ther, final_indi = await tag_compare.execute(ret_doc, doc_doc)
+        final_ther, final_indi = await tag_compare.execute(doc, prev_doc)
         assert len(final_ther) == 2
         assert len(final_indi) == 2
         for tag in final_ther:
@@ -387,19 +395,18 @@ class TestTagAddRemove:
         ther_tag_two = simple_therapy_tag(focus=False, text_area=(0, 20))
         indi_tag_one = simple_indication_tag(focus=True, text_area=(0, 20))
         indi_tag_two = simple_indication_tag(focus=False, text_area=(0, 20))
-        ret_doc = await simple_ret_doc(
+        doc = await simple_doc_doc(
             site=site,
             therapy_tags=[ther_tag_one, ther_tag_two],
             indication_tags=[indi_tag_one, indi_tag_two],
         ).save()
-        doc_doc = await simple_doc_doc(
+        prev_doc = await simple_doc_doc(
             site=site,
-            retrieved_doc=ret_doc,
             therapy_tags=[ther_tag_one],
             indication_tags=[indi_tag_one],
         ).save()
 
-        therapy_tags, indication_tags = await tag_compare.execute(ret_doc, doc_doc)
+        therapy_tags, indication_tags = await tag_compare.execute(doc, prev_doc)
         assert len(therapy_tags) == 2
         assert len(indication_tags) == 2
         added_tags = group_by_status(therapy_tags)[TagUpdateStatus.ADDED]
@@ -427,17 +434,16 @@ class TestTagAddRemove:
         focus_indi_tag = simple_indication_tag(focus=True)
         indi_tag = simple_indication_tag(focus=False)
         lost_indi_tag = simple_indication_tag(focus=False)
-        ret_doc = await simple_ret_doc(
+        doc = await simple_doc_doc(
             site=site, therapy_tags=[ther_tag], indication_tags=[indi_tag]
         ).save()
-        doc_doc = await simple_doc_doc(
+        prev_doc = await simple_doc_doc(
             site=site,
-            retrieved_doc=ret_doc,
             therapy_tags=[focus_ther_tag, ther_tag, lost_ther_tag],
             indication_tags=[indi_tag, focus_indi_tag, lost_indi_tag],
         ).save()
 
-        therapy_tags, indication_tags = await tag_compare.execute(ret_doc, doc_doc)
+        therapy_tags, indication_tags = await tag_compare.execute(doc, prev_doc)
         assert len(therapy_tags) == 4
         assert len(indication_tags) == 4
 
@@ -459,24 +465,23 @@ class TestTagAddRemove:
         tag_compare: TagCompare,
         site: Site,
     ):
-        doc_text = [bytes("string two", "utf-8"), bytes("string two", "utf-8")]
+        doc_text = [bytes("string one", "utf-8"), bytes("string two", "utf-8")]
         mock = Mock(side_effect=doc_text)
         monkeypatch.setattr(BaseS3Client, "read_object", mock)
 
-        tag_one = simple_therapy_tag(focus=True, text_area=(0, 20))
-        tag_two = simple_therapy_tag(focus=True, text_area=(0, 20))
-        ret_doc = await simple_ret_doc(site=site, therapy_tags=[tag_one]).save()
-        doc_doc = await simple_doc_doc(
-            site=site, retrieved_doc=ret_doc, therapy_tags=[tag_one, tag_two]
-        ).save()
+        focus_tag = simple_therapy_tag(focus=True, text_area=(0, 20))
+        removed_tag = simple_therapy_tag(text_area=(0, 20))
+        prev_doc = await simple_doc_doc(site=site, therapy_tags=[focus_tag, removed_tag]).save()
+        doc = await simple_doc_doc(site=site, therapy_tags=[focus_tag]).save()
+        therapy_tags, _ = await tag_compare.execute(doc, prev_doc)
 
-        therapy_tags, _ = await tag_compare.execute(ret_doc, doc_doc)
-        assert len(therapy_tags) == 3
+        assert len(therapy_tags) == 2
         removed_tags = group_by_status(therapy_tags)[TagUpdateStatus.REMOVED]
-        assert len(removed_tags) == 2
+        assert len(removed_tags) == 1
+        assert removed_tags[0].code == removed_tag.code
+
         added_tags = group_by_status(therapy_tags)[TagUpdateStatus.ADDED]
-        assert len(added_tags) == 1
-        assert added_tags[0].code == tag_one.code
+        assert len(added_tags) == 0
 
     def test_id_tag_compare(self):
         """Regardless of section status,
@@ -516,19 +521,18 @@ class TestTagAddRemove:
         indi_one = simple_indication_tag(focus=True, text_area=(0, 20))
         indi_ref_changed = simple_indication_tag(focus=False, text_area=(0, 20))
         indi_ref_added = simple_indication_tag(focus=False, text_area=(0, 20))
-        ret_doc = await simple_ret_doc(
+        doc = await simple_doc_doc(
             site=site,
             therapy_tags=[ther_one, ther_ref_changed, ther_ref_added],
             indication_tags=[indi_one, indi_ref_added, indi_ref_changed],
         ).save()
-        doc_doc = await simple_doc_doc(
+        prev_doc = await simple_doc_doc(
             site=site,
-            retrieved_doc=ret_doc,
             therapy_tags=[ther_one, ther_ref_changed],
             indication_tags=[indi_one, indi_ref_changed],
         ).save()
 
-        therapy_tags, indication_tags = await tag_compare.execute(ret_doc, doc_doc)
+        therapy_tags, indication_tags = await tag_compare.execute(doc, prev_doc)
 
         assert len(therapy_tags) == 3
         group_tags = group_by_status(therapy_tags)
@@ -555,17 +559,16 @@ class TestTagAddRemove:
 
         key_ther = simple_therapy_tag(focus=True, text_area=(0, 20), key=True)
         focus_ther = simple_therapy_tag(focus=False, text_area=(0, 20))
-        ret_doc = await simple_ret_doc(
+        doc = await simple_doc_doc(
             site=site,
             therapy_tags=[key_ther, focus_ther],
         ).save()
-        doc_doc = await simple_doc_doc(
+        prev_doc = await simple_doc_doc(
             site=site,
-            retrieved_doc=ret_doc,
             therapy_tags=[focus_ther],
         ).save()
 
-        therapy_tags, indication_tags = await tag_compare.execute(ret_doc, doc_doc)
+        therapy_tags, indication_tags = await tag_compare.execute(doc, prev_doc)
 
         assert len(therapy_tags) == 2
         group_tags = group_by_status(therapy_tags)
@@ -622,16 +625,15 @@ class TestRefTags:
         ther_one.update_status = TagUpdateStatus.ADDED
         ther_two = simple_therapy_tag(focus=True, text_area=(0, 20))
 
-        ret_doc = await simple_ret_doc(
+        doc = await simple_doc_doc(
             site=site,
             therapy_tags=[ther_two],
         ).save()
-        doc_doc = await simple_doc_doc(
+        prev_doc = await simple_doc_doc(
             site=site,
-            retrieved_doc=ret_doc,
             therapy_tags=[ther_one],
         ).save()
 
-        therapy_tags, _ = await tag_compare.execute(ret_doc, doc_doc)
+        therapy_tags, _ = await tag_compare.execute(doc, prev_doc)
         group_tags = group_by_status(therapy_tags)
         assert len(group_tags[TagUpdateStatus.REMOVED]) == 1

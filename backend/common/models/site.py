@@ -130,7 +130,7 @@ class Site(BaseDocument, NewSite):
     last_run_time: datetime | None = None
     assignee: PydanticObjectId | None = None
     last_run_documents: int | None = None
-    pipeline_stages: SitePipelineStages | None
+    pipeline_stages: SitePipelineStages | None = None
 
 
 # Deprecated

@@ -6,6 +6,8 @@ from backend.common.models.tasks import GenericTaskType, PydanticObjectId, TaskL
 from backend.common.storage.client import DocumentStorageClient, TextStorageClient
 from backend.common.tasks.processors import task_processor_factory
 from backend.common.tasks.processors.doc_pipeline import DocPipelineTaskProcessor
+from backend.common.tasks.processors.lineage import LineageTaskProcessor
+from backend.common.tasks.processors.site_docs_pipeline import SiteDocsPipelineTaskProcessor
 from backend.common.tasks.sqs import SQSBase
 from backend.common.tasks.task_processor import TaskProcessor
 
@@ -31,7 +33,9 @@ class TaskQueue(SQSBase):
         self.current_message = None
         self.current_task = None
         self.listening = False
-        self.keep_alive_seconds = 10
+        self.keep_alive_seconds = 5
+        self.visibility_timeout = self.keep_alive_seconds * 2
+        self.cancel_timeout = self.visibility_timeout * 2
 
     async def onshutdown(self):
         self.logger.info("Shutting down")
@@ -39,8 +43,10 @@ class TaskQueue(SQSBase):
         await asyncio.sleep(5)
 
         if self.current_message:
-            self.logger.info(f"message_id={self.current_message.message_id} change_visibility to 0")
-            self.current_message.change_visibility(VisibilityTimeout=self.keep_alive_seconds)
+            self.logger.info(
+                f"message_id={self.current_message.message_id} visibility={self.visibility_timeout}"
+            )
+            self.current_message.change_visibility(VisibilityTimeout=self.visibility_timeout)
 
         if self.current_task:
             self.logger.info(f"task_id={self.current_task.id} has been interupted")
@@ -60,10 +66,11 @@ class TaskQueue(SQSBase):
 
     async def keep_alive(self, seconds: int, message, task: TaskLog, on_progress: Coroutine):
         while True:
-            message.change_visibility(VisibilityTimeout=seconds)
-            await on_progress()
+            self.logger.info(f"task_id={task.id} heartbeat")
             await task.keep_alive()
-            await asyncio.sleep(seconds)
+            message.change_visibility(VisibilityTimeout=self.visibility_timeout)
+            await on_progress()
+            await asyncio.sleep(self.keep_alive_seconds)
 
     async def listen(self):
         self.listening = True
@@ -77,19 +84,37 @@ class TaskQueue(SQSBase):
                     task = await self._get_task_by_message(message)
                     self.current_task = task
 
-                    if not task.should_process(message.message_id, self.keep_alive_seconds):
-                        self.logger.info(f"message_id={message.message_id} is already complete")
+                    # something bad happened
+                    if task.is_stale(self.cancel_timeout):
+                        await task.update_canceled()
                         message.delete()
+                        self.logger.info(
+                            f"message_id={message.message_id} is stale and now canceled"
+                        )
+                        continue
+
+                    if task.is_hidden(message.message_id):
+                        self.logger.info(f"message_id={message.message_id} is hidden")
                         continue
 
                     try:
                         task = await task.update_progress()
                         self.logger.info(f"{task.task_type} processing started")
 
+                        # DocTask Processor
                         task_processor: TaskProcessor = task_processor_factory(task)
+
                         # TODO need refactor due to circular dep, cheating now
-                        if not task_processor:
+                        # this composite tasks are another breed; refactor incoming
+                        if task.task_type == "DocPipelineTask":
                             task_processor = DocPipelineTaskProcessor()
+                        elif task.task_type == "SiteDocsPipelineTask":
+                            task_processor = SiteDocsPipelineTaskProcessor()
+                        elif task.task_type == "LineageTask":
+                            task_processor = LineageTaskProcessor()
+
+                        if not task_processor:
+                            raise Exception("no task processor found")
 
                         self.keep_alive_task = asyncio.create_task(
                             self.keep_alive(

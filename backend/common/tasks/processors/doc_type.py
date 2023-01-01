@@ -38,6 +38,13 @@ class DocTypeTaskProcessor(TaskProcessor):
             self.logger.info(f"{doc.id} classification_status={doc.classification_status} skipping")
             return
 
+        # backend
+        if (
+            doc.get_stage_version("doc_type") == stage_versions.doc_type.version
+            and not task.reprocess
+        ):
+            return
+
         # TODO location vs locations
         location = doc.locations[0]
         s3_key = doc.s3_text_key()
@@ -71,7 +78,7 @@ class DocTypeTaskProcessor(TaskProcessor):
         await DocDocument.get_motor_collection().find_one_and_update(
             {"_id": doc.id}, {"$set": updates}
         )
-        self.logger.info(f"{doc.id} updated with doc type document_type={document_type}")
+        self.logger.debug(f"{doc.id} updated with doc type document_type={document_type}")
         updates.pop("doc_vectors")
 
         return updates

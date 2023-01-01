@@ -8,8 +8,9 @@ from playwright.async_api import BrowserContext, Page
 from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.playbook import PlaybookContext
-from backend.scrapeworker.scrapers.apps_humana_com import AppsHumanaComScraper
 from backend.scrapeworker.scrapers.aspnet_webform import AspNetWebFormScraper
+from backend.scrapeworker.scrapers.by_domain.formulary_navigator import FormularyNavigatorScraper
+from backend.scrapeworker.scrapers.by_domain.humana import HumanaScraper
 from backend.scrapeworker.scrapers.direct_download import (
     DirectDownloadScraper,
     PlaywrightBaseScraper,
@@ -22,7 +23,8 @@ scrapers: list[Type[PlaywrightBaseScraper]] = [
     DirectDownloadScraper,
     JavascriptClick,
     TargetedHtmlScraper,
-    AppsHumanaComScraper,
+    HumanaScraper,
+    FormularyNavigatorScraper,
 ]
 
 
@@ -78,6 +80,6 @@ class ScrapeHandler:
                 continue
 
             for download in await scraper.execute():
-                self.log.info(f"downloads ... {base_url} {download.request.url}")
+                self.log.debug(f"downloads ... {base_url} {download.request.url}")
                 self.__preprocess_download(download, base_url, metadata)
                 downloads.append(download)

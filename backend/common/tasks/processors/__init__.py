@@ -6,7 +6,6 @@ from backend.common.models.tasks import TaskLog
 from backend.common.tasks.processors.content import ContentTaskProcessor
 from backend.common.tasks.processors.date import DateTaskProcessor
 from backend.common.tasks.processors.doc_type import DocTypeTaskProcessor
-from backend.common.tasks.processors.lineage import LineageTaskProcessor
 from backend.common.tasks.processors.pdf_diff import PDFDiffTaskProcessor
 from backend.common.tasks.processors.tag import TagTaskProcessor
 
@@ -15,8 +14,6 @@ def task_processor_factory(task: TaskLog):
     task_type = task.task_type
     if task_type == "PDFDiffTask":
         Processor = PDFDiffTaskProcessor
-    elif task_type == "LineageTask":
-        Processor = LineageTaskProcessor
     elif task_type == "ContentTask":
         Processor = ContentTaskProcessor
     elif task_type == "DateTask":

@@ -72,6 +72,14 @@ export function LineagePage() {
           </Button>
           <Button
             onClick={async () => {
+              enqueueLineageTask('SiteDocsPipelineTask', { site_id: siteId, reprocess: true });
+            }}
+            className="ml-auto"
+          >
+            Reprocess Site Docs
+          </Button>
+          <Button
+            onClick={async () => {
               enqueueLineageTask('LineageTask', { site_id: siteId, reprocess: true });
             }}
             className="ml-auto"

@@ -31,8 +31,8 @@ class ManualWorkItem(BaseModel):
 class SiteScrapeTask(BaseDocument):
     site_id: Indexed(PydanticObjectId)  # type: ignore
     initiator_id: PydanticObjectId | None = None
-    queued_time: datetime
-    start_time: Indexed(datetime) | None = None  # type: ignore
+    queued_time: Indexed(datetime)
+    start_time: datetime | None = None  # type: ignore
     end_time: datetime | None = None
     last_active: datetime | None = None
     last_doc_collected: datetime | None = None

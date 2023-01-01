@@ -9,7 +9,6 @@ from beanie.odm.operators.update.general import Set
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
-from pyparsing import Optional
 
 from backend.app.utils.logger import Logger, create_and_log
 from backend.common.core.config import env_type
@@ -33,7 +32,7 @@ class CollectionResponse(BaseModel):
         self.errors.append(error)
 
     # Send http status code and object that matches isErrorWithData.
-    def raise_error(self, status: status = status.HTTP_409_CONFLICT) -> Optional:
+    def raise_error(self, status: status = status.HTTP_409_CONFLICT):
         raise HTTPException(status, jsonable_encoder("\n".join(self.errors)))
 
 
