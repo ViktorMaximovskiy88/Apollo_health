@@ -2,7 +2,6 @@ import logging
 from datetime import datetime, timezone
 
 import backend.common.models.tasks as tasks
-from backend.common.core.enums import ApprovalStatus
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.pipeline import DocPipelineStages, PipelineRegistry, PipelineStage
 from backend.common.storage.client import DocumentStorageClient, TextStorageClient
@@ -35,10 +34,12 @@ class ContentTaskProcessor(TaskProcessor):
         if not doc:
             raise Exception(f"doc_doc {task.doc_doc_id} not found")
 
-        # TODO ask question... if any downstream bits were user edited (say tags)
-        # do we still want to reprocess text?
-        if doc.classification_status == ApprovalStatus.APPROVED:
-            self.logger.info(f"{doc.id} classification_status={doc.classification_status} skipping")
+        #  TODO this is the gist of it
+
+        if (
+            doc.get_stage_version("content") == stage_versions.content.version
+            and not task.reprocess
+        ):
             return
 
         ParserClass = get_parser_by_ext(doc.file_extension)
@@ -72,7 +73,7 @@ class ContentTaskProcessor(TaskProcessor):
         await DocDocument.get_motor_collection().find_one_and_update(
             {"_id": doc.id}, {"$set": updates}
         )
-        self.logger.info(f"{doc.id} updated with text_checksum={text_hash}")
+        self.logger.debug(f"{doc.id} updated with text_checksum={text_hash}")
         return updates
 
     async def get_progress(self) -> float:

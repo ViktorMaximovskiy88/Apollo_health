@@ -1,9 +1,10 @@
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Security
+from fastapi import APIRouter, BackgroundTasks, Security
 
 import backend.common.models.tasks as tasks
 from backend.app.core.settings import settings
 from backend.app.utils.user import get_current_user
+from backend.common.models.site import Site
 from backend.common.models.user import User
 from backend.common.tasks.task_queue import TaskQueue
 
@@ -34,17 +35,29 @@ async def get_user_task(
     return tasks
 
 
+async def enqueue_site_tasks(task_type: str, current_user: User):
+    TaskType = getattr(tasks, task_type)
+    async for site in Site.find():
+        print(site)
+        task_payload = TaskType(site_id=site.id, reprocess=True)
+        await task_queue.enqueue(task_payload, current_user.id)
+
+
+@router.post("/reprocess/sites/{task_type}")
+async def bulk_reprocess_site_task(
+    task_type: str,
+    background_tasks: BackgroundTasks,
+    current_user: User = Security(get_current_user),
+) -> tasks.TaskLog:
+    background_tasks.add_task(enqueue_site_tasks, task_type, current_user)
+    return {}
+
+
 @router.post("/enqueue/{task_type}", response_model=tasks.TaskLog)
 async def enquque_task(
     task_type: str,
     # TODO reconcile 'typing' between generics and pydantic
-    payload: tasks.ContentTask
-    | tasks.LineageTask
-    | tasks.DateTask
-    | tasks.DocTypeTask
-    | tasks.DocPipelineTask
-    | tasks.TagTask
-    | tasks.PDFDiffTask,
+    payload: tasks.DocTask | tasks.SiteTask | tasks.PDFDiffTask,
     current_user: User = Security(get_current_user),
 ) -> tasks.TaskLog:
     TaskType = getattr(tasks, task_type)

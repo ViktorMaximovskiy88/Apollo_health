@@ -9,45 +9,59 @@ from backend.common.models.base_document import BaseDocument, BaseModel
 
 GenericTaskType = TypeVar(
     "GenericTaskType",
-    "LineageTask",
     "PDFDiffTask",
     "ContentTask",
     "DateTask",
     "DocTypeTask",
     "TagTask",
     "DocPipelineTask",
+    "SiteDocsPipelineTask",
+    "LineageTask",
 )
 T = TypeVar("T", bound="TaskLog")
 
 
-class DocPipelineTask(BaseModel):
+class DocTask(BaseModel):
     doc_doc_id: PydanticObjectId
+    reprocess: bool = False
 
 
-class ContentTask(BaseModel):
-    doc_doc_id: PydanticObjectId
+class DocPipelineTask(DocTask):
+    pass
 
 
-class DateTask(BaseModel):
-    doc_doc_id: PydanticObjectId
+class ContentTask(DocTask):
+    pass
 
 
-class DocTypeTask(BaseModel):
-    doc_doc_id: PydanticObjectId
+class DateTask(DocTask):
+    pass
 
 
-class TagTask(BaseModel):
-    doc_doc_id: PydanticObjectId
+class DocTypeTask(DocTask):
+    pass
+
+
+class TagTask(DocTask):
+    pass
+
+
+class SiteTask(BaseModel):
+    site_id: PydanticObjectId
+    reprocess: bool = False
+
+
+class SiteDocsPipelineTask(SiteTask):
+    pass
+
+
+class LineageTask(SiteTask):
+    pass
 
 
 class PDFDiffTask(BaseModel):
     current_checksum: str
     previous_checksum: str
-
-
-class LineageTask(BaseModel):
-    site_id: PydanticObjectId
-    reprocess: bool = False
 
 
 def get_group_id(payload: GenericTaskType):

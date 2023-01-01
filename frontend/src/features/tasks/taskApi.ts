@@ -1,32 +1,10 @@
 import { createApi, fetchBaseQuery } from '../../app/base-api';
-import { BaseDocument } from '../../common';
-
-export interface DocumentPipelineTask {
-  doc_doc_id: string | undefined;
-}
-
-export interface LineageTask {
-  site_id: string | undefined;
-  reprocess: boolean;
-}
-
-export interface EnqueueTask {
-  task_type: string;
-  payload: DocumentPipelineTask | LineageTask;
-}
-
-export interface Task extends BaseDocument {
-  task_type: string;
-  status: string;
-  status_at: string;
-  is_complete: boolean;
-  completed_at: string;
-}
+import { Task, EnqueueTask } from './types';
 
 export const taskApi = createApi({
   reducerPath: 'taskApi',
   baseQuery: fetchBaseQuery(),
-  tagTypes: ['Task', 'DocumentPipelineTask'],
+  tagTypes: ['Task', 'DocumentPipelineTask', 'SiteDocsPipelineTask'],
   endpoints: (builder) => ({
     getTask: builder.query<Task, string | undefined>({
       query: (taskId) => `/task/${taskId}`,

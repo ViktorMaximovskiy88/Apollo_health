@@ -203,8 +203,8 @@ resource "aws_sqs_queue" "taskworker_dlq" {
 }
 
 resource "aws_appautoscaling_target" "taskworker" {
-  max_capacity       = 3
-  min_capacity       = 1
+  max_capacity       = 4
+  min_capacity       = 2
   resource_id        = "service/${data.aws_ecs_cluster.ecs-cluster.cluster_name}/${local.service_name}-taskworker"
   role_arn           = aws_iam_service_linked_role.autoscaling.arn
   scalable_dimension = "ecs:service:DesiredCount"

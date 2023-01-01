@@ -35,9 +35,13 @@ class DateTaskProcessor(TaskProcessor):
         if not doc:
             raise Exception(f"doc_doc {task.doc_doc_id} not found")
 
-        # TODO has_date_user_edits currently means it has to be all dates reviewed; one means all
+        # user reviewed
         if doc.classification_status == ApprovalStatus.APPROVED or doc.has_date_user_edits():
             self.logger.info(f"{doc.id} classification_status={doc.classification_status} skipping")
+            return
+
+        # backend
+        if doc.get_stage_version("date") == stage_versions.date.version and not task.reprocess:
             return
 
         s3_key = doc.s3_text_key()
@@ -62,7 +66,7 @@ class DateTaskProcessor(TaskProcessor):
         await DocDocument.get_motor_collection().find_one_and_update(
             {"_id": doc.id}, {"$set": updates}
         )
-        self.logger.info(f"{doc.id} updated with dates {result}")
+        self.logger.debug(f"{doc.id} updated with dates {result}")
         return updates
 
     async def get_progress(self) -> float:

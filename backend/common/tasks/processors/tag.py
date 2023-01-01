@@ -38,8 +38,12 @@ class TagTaskProcessor(TaskProcessor):
     async def exec(self, task: tasks.TagTask):
         stage_versions = await PipelineRegistry.fetch()
         doc: DocDocument = await DocDocument.get(task.doc_doc_id)
+
         if not doc:
             raise Exception(f"doc_doc {task.doc_doc_id} not found")
+
+        if doc.get_stage_version("tag") == stage_versions.tag.version and not task.reprocess:
+            return
 
         # TODO location vs locations
         location = doc.locations[0]
@@ -95,6 +99,8 @@ class TagTaskProcessor(TaskProcessor):
 
         doc = doc.process_tag_changes(new_therapy_tags, new_indication_tags)
 
+        # TODO will be location and overall doc update..
+        # we have location specific stuff...
         updates = {
             "therapy_tags": [t.dict() for t in doc.therapy_tags],
             "indication_tags": [i.dict() for i in doc.indication_tags],
@@ -110,7 +116,7 @@ class TagTaskProcessor(TaskProcessor):
         await DocDocument.get_motor_collection().find_one_and_update(
             {"_id": doc.id, "locations.site_id": location.site_id}, {"$set": updates}
         )
-        self.logger.info(
+        self.logger.debug(
             f"{doc.id} indication_tags={len(indication_tags)} therapy_tags={len(therapy_tags)}"
         )
 

@@ -6,6 +6,7 @@ from backend.common.models.tasks import GenericTaskType, PydanticObjectId, TaskL
 from backend.common.storage.client import DocumentStorageClient, TextStorageClient
 from backend.common.tasks.processors import task_processor_factory
 from backend.common.tasks.processors.doc_pipeline import DocPipelineTaskProcessor
+from backend.common.tasks.processors.site_docs_pipeline import SiteDocsPipelineTaskProcessor
 from backend.common.tasks.sqs import SQSBase
 from backend.common.tasks.task_processor import TaskProcessor
 
@@ -88,8 +89,14 @@ class TaskQueue(SQSBase):
 
                         task_processor: TaskProcessor = task_processor_factory(task)
                         # TODO need refactor due to circular dep, cheating now
-                        if not task_processor:
+                        # this composite tasks are another breed; refactor incoming
+                        if task.task_type == "DocPipelineTask":
                             task_processor = DocPipelineTaskProcessor()
+                        elif task.task_type == "SiteDocsPipelineTask":
+                            task_processor = SiteDocsPipelineTaskProcessor()
+
+                        if not task_processor:
+                            raise Exception("no task processor found")
 
                         self.keep_alive_task = asyncio.create_task(
                             self.keep_alive(
