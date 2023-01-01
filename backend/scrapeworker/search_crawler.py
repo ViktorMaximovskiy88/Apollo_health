@@ -71,7 +71,7 @@ class SearchableCrawler:
         """
         try:
             select_locator = page.locator(":not(input)", has_text=code).last
-            await select_locator.click()
+            await select_locator.click(timeout=5000)
         except Exception:
             return
 

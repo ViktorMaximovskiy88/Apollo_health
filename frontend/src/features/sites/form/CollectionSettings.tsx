@@ -35,6 +35,7 @@ function ScrapeMethodSelect() {
   const scrapes = [
     { value: ScrapeMethod.Simple, label: 'Simple Document Scrape' },
     { value: ScrapeMethod.Html, label: 'Direct HTML Scrape' },
+    { value: ScrapeMethod.CMS, label: 'CMS Scrape' },
   ];
 
   return (

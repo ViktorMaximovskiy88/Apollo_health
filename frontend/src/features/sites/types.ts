@@ -85,6 +85,7 @@ export function collectMethodDisplayName(method: string) {
 export enum ScrapeMethod {
   Simple = 'SimpleDocumentScrape',
   Html = 'HtmlScrape',
+  CMS = 'CMSScrape',
 }
 
 export enum SearchableType {
