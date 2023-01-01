@@ -66,12 +66,11 @@ class TaskQueue(SQSBase):
 
     async def keep_alive(self, seconds: int, message, task: TaskLog, on_progress: Coroutine):
         while True:
-            print("before is this working as expected")
+            self.logger.info(f"task_id={task.id} heartbeat")
             await task.keep_alive()
             message.change_visibility(VisibilityTimeout=self.visibility_timeout)
             await on_progress()
             await asyncio.sleep(self.keep_alive_seconds)
-            print("afteris this working as expected")
 
     async def listen(self):
         self.listening = True

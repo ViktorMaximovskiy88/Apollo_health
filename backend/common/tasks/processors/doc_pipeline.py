@@ -72,7 +72,7 @@ class DocPipelineTaskProcessor(TaskProcessor):
             result = await task_processor.exec(task.payload)
             results.append(result)
 
-        self.logger.info(f"pipeline processed for doc_id={doc.id}")
+        self.logger.debug(f"pipeline processed for doc_id={doc.id}")
         return results
 
     async def get_progress(self) -> float:

@@ -37,7 +37,9 @@ class DateTaskProcessor(TaskProcessor):
 
         # user reviewed
         if doc.classification_status == ApprovalStatus.APPROVED or doc.has_date_user_edits():
-            self.logger.info(f"{doc.id} classification_status={doc.classification_status} skipping")
+            self.logger.info(
+                f"doc_doc_id={doc.id} classification_status={doc.classification_status} skipping"
+            )
             return
 
         # backend
