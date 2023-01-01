@@ -140,6 +140,9 @@ class TaskLog(BaseDocument):
     async def get_incomplete_for_user(cls: T, user_id: PydanticObjectId) -> T | None:
         return await cls.find_many({"created_by": user_id, "is_complete": False}).to_list()
 
+    def is_progressing(self) -> bool:
+        return not self.is_complete and self.status == TaskStatus.IN_PROGRESS
+
     def is_finished(self) -> bool:
         return self.is_complete and self.status == TaskStatus.FINISHED
 
@@ -160,9 +163,9 @@ class TaskLog(BaseDocument):
             < datetime.now(tz=timezone.utc).replace(tzinfo=None) - timedelta(seconds=seconds)
         )
 
-    def should_process(self, message_id: str, seconds: int) -> bool:
+    def is_hidden(self, message_id: str) -> bool:
         return (
-            self.is_queued() or self.has_failed() or self.is_stale(seconds) or self.is_canceled()
+            self.is_progressing() or self.has_failed() or self.is_canceled()
         ) and self.message_id == message_id
 
     def can_be_queued(self) -> bool:
@@ -176,8 +179,7 @@ class TaskLog(BaseDocument):
         return await self._update_status(TaskStatus.IN_PROGRESS, is_complete=False)
 
     async def keep_alive(self) -> T:
-        self.status_at = datetime.now(tz=timezone.utc)
-        return await self.save()
+        return await self._update_status(task_status=self.status, append_log=False)
 
     async def update_finished(self, result: dict[str, any] | None) -> T:
         return await self._update_status(TaskStatus.FINISHED, is_complete=True, result=result)
@@ -195,6 +197,7 @@ class TaskLog(BaseDocument):
         is_complete=False,
         result: dict[str, any] | None = None,
         error: str | None = None,
+        append_log: bool = True,
     ) -> T:
         now = datetime.now(tz=timezone.utc)
 
@@ -216,14 +219,17 @@ class TaskLog(BaseDocument):
         if message_id:
             payload["message_id"] = message_id
 
-        log_entry = TaskLogEntry(
-            status=payload["status"],
-            status_at=payload["status_at"],
-        )
+        update_op = {"$set": payload}
+        if append_log:
+            log_entry = TaskLogEntry(
+                status=payload["status"],
+                status_at=payload["status_at"],
+            )
+            update_op["$push"] = {"log": log_entry.dict()}
 
         updated = await self.get_motor_collection().find_one_and_update(
             {"_id": self.id},
-            {"$set": payload, "$push": {"log": log_entry.dict()}},
+            update_op,
             return_document=ReturnDocument.AFTER,
         )
 

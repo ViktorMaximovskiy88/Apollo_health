@@ -4,7 +4,6 @@ from logging import Logger
 
 from beanie import BulkWriter, PydanticObjectId
 
-from backend.app.scripts.retag_document import ReTagger
 from backend.common.core.enums import ApprovalStatus
 from backend.common.models.doc_document import DocDocument, SiteDocDocument
 from backend.common.models.document import RetrievedDocument
@@ -92,18 +91,6 @@ class LineageService:
             DocumentAnalysis.get_motor_collection().delete_many({}),
         )
 
-    async def update_site_docs(self, site_id):
-        # Updates tags, doc vecs and whatever else we need for lineage
-        # using retagger for now
-        self.logger.info(f"before update_site_docs {site_id}")
-        retagger = ReTagger()
-        await retagger.indication.model()
-        site = await Site.get(site_id)
-        if not site:
-            raise Exception(f"Site Id {site_id} does not exists")
-        await retagger.retag_docs_on_site(site, 0)
-        self.logger.info(f"after update_site_docs {site_id}")
-
     async def process_all_sites(self):
         async for site in Site.find():
             await self.process_lineage_for_site(site.id)  # type: ignore
@@ -127,7 +114,7 @@ class LineageService:
         for site_id in site_ids:
             self.logger.info(f"clear/update for site {site_id}")
             await self.clear_lineage_for_site(site_id)
-            await self.update_site_docs(site_id)
+            # TODO reconcile the 'up-to-date' bits
 
         for site_id in site_ids:
             self.logger.info(f"reprocessing for site {site_id}")
@@ -160,9 +147,9 @@ class LineageService:
         self, site_id: PydanticObjectId, docs: list[SiteDocDocument], overwrite=False
     ):
         # build the model and save it
-        self.logger.info(f"before doc analysis save len(docs)={len(docs)}")
+        self.logger.info(f"site {site_id} before doc analysis save len(docs)={len(docs)}")
         await self.refresh_doc_analyses(site_id, docs)
-        self.logger.info(f"after doc analysis save len(docs)={len(docs)}")
+        self.logger.info(f"site {site_id} after doc analysis save len(docs)={len(docs)}")
 
         # pick all from DB that are most recent OR no lineage...
         compare_docs = await self.get_comparision_docs(site_id)
