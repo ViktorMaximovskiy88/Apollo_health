@@ -41,6 +41,9 @@ class FileParser(ABC):
     async def get_text(self) -> str:
         raise NotImplementedError("get_text is required")
 
+    async def get_image_checksums(self) -> list[str]:
+        return []
+
     def get_title(self, _):
         raise NotImplementedError("get_title is required")
 

@@ -53,16 +53,13 @@ class ContentTaskProcessor(TaskProcessor):
             # TODO dont need url or link text to get text
             parser = ParserClass(file_path, location.url, location.link_text)
             doc_text = await parser.get_text()
-            # TODO this doesnt belong here, kinda mostly
-            if parser.get_image_checksums:
-                image_checksums = await parser.get_image_checksums()
-            else:
-                image_checksums = []
+            image_checksums = await parser.get_image_checksums()
             text_hash = hash_full_text(doc_text)
 
             file_hash = hashlib.md5()
             for hash in [text_hash] + image_checksums:
                 file_hash.update(hash.encode("UTF-8"))
+
             content_checksum = file_hash.hexdigest()
 
         self.text_client.write_object_mem(f"{text_hash}.txt", bytes(doc_text, "utf-8"))
