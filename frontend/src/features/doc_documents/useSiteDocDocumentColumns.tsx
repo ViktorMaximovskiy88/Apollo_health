@@ -205,7 +205,7 @@ export const createColumns = ({
   {
     header: 'Priority',
     name: 'priority',
-    width: 80,
+    width: 90,
     render: ({ data: doc }: { data: SiteDocDocument }) => {
       return priorityStyle(doc.priority);
     },

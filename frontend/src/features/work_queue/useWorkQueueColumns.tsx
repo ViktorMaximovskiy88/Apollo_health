@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { BaseDocument } from '../../common';
 import { dateDuration, prettyDateUTCFromISO } from '../../common/date';
 import { ButtonLink } from '../../components/ButtonLink';
-import { SiteDocDocument, TaskLock } from '../doc_documents/types';
+import { TaskLock } from '../doc_documents/types';
 import { useGetUsersQuery } from '../users/usersApi';
 import { DocumentTypes } from '../retrieved_documents/types';
 import { useGetSiteQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
@@ -153,10 +153,10 @@ export function useWorkQueueColumns(
     {
       header: 'Priority',
       name: 'priority',
-      width: 80,
+      width: 90,
       filterSearch: true,
-      render: ({ data: doc }: { data: BaseDocument }) => {
-        return priorityStyle(doc.priority);
+      render: ({ value: priority }: { value: number }) => {
+        return priorityStyle(priority);
       },
     },
     {

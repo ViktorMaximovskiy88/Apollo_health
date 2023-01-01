@@ -5,7 +5,7 @@ from spacy.tokens import Span
 
 from backend.common.core.enums import SectionType
 from backend.common.core.utils import now
-from backend.common.models.doc_document import IndicationTag
+from backend.common.models.doc_document import DocDocument, IndicationTag
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.indication import Indication
 from backend.common.models.site import FocusSectionConfig
@@ -54,7 +54,7 @@ class IndicationTagger:
         url: str,
         link_text: str | None,
         focus_configs: list[FocusSectionConfig] | None = None,
-        document: RetrievedDocument | None = None,
+        document: RetrievedDocument | DocDocument | None = None,
     ) -> tuple[list[IndicationTag], list[IndicationTag], list[IndicationTag]]:
         nlp = await self.model()
         if not nlp:

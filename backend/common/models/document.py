@@ -45,6 +45,7 @@ class BaseRetrievedDocument(BaseModel):
     indication_tags: list[IndicationTag] = []
     doc_vectors: list[list[float]] = []
     token_count: int = 0
+    priority: int = 0
 
     # lineage
     lineage_id: PydanticObjectId | None = None
@@ -109,6 +110,7 @@ class UpdateRetrievedDocument(BaseModel, DocumentMixins):
 
     therapy_tags: list[TherapyTag] | None = None
     indication_tags: list[IndicationTag] | None = None
+    priority: int | None = None
 
     automated_content_extraction: bool | None = None
     automated_content_extraction_class: str | None = None
@@ -116,6 +118,7 @@ class UpdateRetrievedDocument(BaseModel, DocumentMixins):
     locations: list[RetrievedDocumentLocation] = []
     doc_vectors: list[list[float]] = []
     file_size: int = 0
+    token_count: int | None = None
 
 
 class RetrievedDocumentLimitTags(RetrievedDocument):

@@ -1,6 +1,13 @@
 import { useMemo } from 'react';
 import { Form, FormInstance } from 'antd';
-import { DocDocument, DocumentTag, UIIndicationTag, UITherapyTag } from './types';
+import {
+  DocDocument,
+  DocumentTag,
+  IndicationTag,
+  TherapyTag,
+  UIIndicationTag,
+  UITherapyTag,
+} from './types';
 import { DocDocumentTagForm } from './DocDocumentTagForm';
 import { dateToMoment } from '../../common';
 import { useCallback, useEffect, useState } from 'react';
@@ -71,17 +78,14 @@ const useOnFinish = ({
     setIsSaving(true);
 
     try {
-      const indication_tags = [];
-      const therapy_tags = [];
-      for (const tag of tags) {
-        if (tag._type === 'indication') {
-          const { name, text, page, code, focus, update_status, text_area } =
-            tag as UIIndicationTag;
-          indication_tags.push({ name, text, page, code, focus, update_status, text_area });
+      const indication_tags: IndicationTag[] = [];
+      const therapy_tags: TherapyTag[] = [];
+      for (const uiTag of tags) {
+        const { id, _type, _normalized, ...tag } = uiTag;
+        if (_type === 'indication') {
+          indication_tags.push(tag as IndicationTag);
         } else {
-          const { name, text, page, score, code, focus, update_status, text_area } =
-            tag as UITherapyTag;
-          therapy_tags.push({ name, text, page, score, code, focus, update_status, text_area });
+          therapy_tags.push(tag as TherapyTag);
         }
       }
 

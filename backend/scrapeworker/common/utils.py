@@ -143,26 +143,26 @@ def get_extension_from_file_mimetype(file_path: str | None) -> str | None:
     return mimetype_to_extension_map.get(mimetype)
 
 
-def unique_by_attr(items: list[any], attr: str) -> list[any]:
+def unique_by_attr(items: list, attr: str) -> list:
     return list(set([getattr(item, attr) for item in items]))
 
 
-def sort_by_attr(items: list[any], attr: str):
+def sort_by_attr(items: list, attr: str):
     return sorted(items, key=lambda x: getattr(x, attr))
 
 
-def sort_by_key(items: list[any], key: str):
+def sort_by_key(items: list, key: str):
     return sorted(items, key=lambda x: x[key])
 
 
 # so you have to sort first for groupby to work...
-def group_by_attr(items: list[any], attr: str):
+def group_by_attr(items: list, attr: str):
     sorted_items = sort_by_attr(items, attr)
     return groupby(sorted_items, lambda x: getattr(x, attr))
 
 
 # so you have to sort first for groupby to work...
-def group_by_key(items: list[any], key: str):
+def group_by_key(items: list, key: str):
     sorted_items = sort_by_key(items, key)
     return groupby(sorted_items, lambda x: x[key])
 
@@ -212,7 +212,7 @@ def scrub_string(input: str = "") -> str:
 
 
 # maybe too much but we can break it out without boolean gating too
-def normalize_string(input: str = "", html=False, url=True, lower=True, strip=True) -> str:
+def normalize_string(input: str | None = "", html=False, url=True, lower=True, strip=True) -> str:
     # so much for types...
     if input is None:
         return ""
@@ -237,5 +237,5 @@ def normalize_string(input: str = "", html=False, url=True, lower=True, strip=Tr
 # cases '../abc' '/abc' 'abc' 'https://a.com/abc' 'http://a.com/abc' '//a.com/abc'
 # anchor targets can change behavior
 def normalize_url(base_url: str, target_url: str, base_tag_href: str | None = None) -> str:
-    target_url = urljoin(base_tag_href, target_url)
+    target_url = urljoin(base_tag_href or "", target_url)
     return urljoin(base_url, target_url)

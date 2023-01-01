@@ -1,5 +1,6 @@
 import asyncio
 import tempfile
+from pathlib import Path
 
 import spacy
 from spacy.tokens.span import Span
@@ -19,6 +20,8 @@ TRADEMARK_SYMBOLS = ["\u00AE", "\u2122", "\24C7"]
 class TherapyTagger:
     def __init__(self, version="latest") -> None:
         self.nlp = None
+        common_words_path = Path(__file__).parent.joinpath("common_words.txt")
+        self.common_words = {line.strip() for line in open(common_words_path)}
         try:
             self.client = ModelStorageClient()
             self.tempdir = tempfile.TemporaryDirectory()
@@ -77,15 +80,21 @@ class TherapyTagger:
             doc = await loop.run_in_executor(None, self.nlp, page)
             span: Span
             for span in doc.spans.get("sc", []):
-                focus_state = focus_checker.check_focus(span, offset=char_offset)
                 text = span.text
+                if text.lower() in self.common_words:
+                    continue
+
+                focus_state = focus_checker.check_focus(span, offset=char_offset)
                 lexeme = span.vocab[span.label]
                 splits = lexeme.text.split("|")
-                rxcui, drugid, display_name = "", "", ""
+                rxcui, drugid, display_name, priority = "", "", "", 0
                 if len(splits) == 2:
                     drugid, display_name = splits
                 elif len(splits) == 3:
                     drugid, rxcui, display_name = splits
+                if ":" in drugid:
+                    drugid, priority_str = drugid.split(":")
+                    priority = int(priority_str)
                 if not rxcui:
                     rxcui = None
 
@@ -97,6 +106,7 @@ class TherapyTagger:
                         name=display_name,
                         page=-1,
                         focus=focus_state.focus,
+                        priority=priority,
                         created_at=now(),
                     )
 
@@ -113,6 +123,7 @@ class TherapyTagger:
                     page=i,
                     focus=focus_state.focus,
                     key=focus_state.key,
+                    priority=priority,
                     text_area=focus_state.section,
                     created_at=now(),
                 )

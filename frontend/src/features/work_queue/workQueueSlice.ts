@@ -13,7 +13,6 @@ export interface TableState {
 
 export const initialState: { table: TableState } = {
   table: {
-    sort: { name: 'priority', dir: -1 as 1 | -1 | 0 },
     filter: [
       { name: 'name', operator: 'contains', type: 'string', value: '' },
       { name: 'locations.site_id', operator: 'eq', type: 'string', value: '' },

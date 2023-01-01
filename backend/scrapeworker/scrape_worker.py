@@ -136,7 +136,7 @@ class ScrapeWorker:
 
     def get_updated_tags(
         self,
-        existing_doc: RetrievedDocument,
+        existing_doc: RetrievedDocument | DocDocument,
         therapy_tags: list[TherapyTag],
         indication_tags: list[IndicationTag],
     ):
@@ -274,6 +274,10 @@ class ScrapeWorker:
                 doc_doc = await DocDocument.find_one(
                     DocDocument.retrieved_document_id == document.id
                 )
+                if not doc_doc:
+                    self.log.error(f"DocDocument {document.id} not found")
+                    return
+
                 await get_tags(parsed_content, document=doc_doc)
                 # TODO this will get axed when the async tasks are ready to schedule
                 # Can be removed after text added to older docs
@@ -300,7 +304,7 @@ class ScrapeWorker:
                 )
 
                 doc_document = await self.doc_updater.update_doc_document(
-                    document, new_therapy_tags, new_indicate_tags, parsed_content["priority"]
+                    document, new_therapy_tags, new_indicate_tags
                 )
 
             else:
@@ -590,6 +594,10 @@ class ScrapeWorker:
                 document_family_change=document_family_change,
             )
             await doc_document_save_hook(doc, change_info)
+        async for doc in DocDocument.find(
+            {"locations.site_id": site_id, "_id": {"$nin": doc_doc_ids}}
+        ):
+            await doc_document_save_hook(doc)
 
         self.site.last_run_documents = self.scrape_task.documents_found
         await self.site.save()
