@@ -1,4 +1,5 @@
 import asyncio
+import pathlib
 from typing import Any
 
 from backend.scrapeworker.file_parsers.base import FileParser
@@ -59,5 +60,16 @@ class PdfParse(FileParser):
         prev_content["identified_dates"] = new_content["identified_dates"]
 
     def get_title(self, metadata):
-        title = metadata.get("Title") or metadata.get("Subject") or str(self.filename_no_ext)
+        cont_disp_filename = None
+        if self.download:
+            cont_disp_filename = self.download.response.content_disposition_filename or ""
+            if cont_disp_filename:
+                cont_disp_filename = str(pathlib.Path(cont_disp_filename).with_suffix(""))
+
+        title = (
+            cont_disp_filename
+            or metadata.get("Title")
+            or metadata.get("Subject")
+            or str(self.filename_no_ext)
+        )
         return title

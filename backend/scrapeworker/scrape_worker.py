@@ -136,7 +136,7 @@ class ScrapeWorker:
 
     def get_updated_tags(
         self,
-        existing_doc: RetrievedDocument,
+        existing_doc: DocDocument,
         therapy_tags: list[TherapyTag],
         indication_tags: list[IndicationTag],
     ):
@@ -274,6 +274,10 @@ class ScrapeWorker:
                 doc_doc = await DocDocument.find_one(
                     DocDocument.retrieved_document_id == document.id
                 )
+                if not doc_doc:
+                    self.log.error(f"DocDocument not found for {document.id}")
+                    return
+
                 await get_tags(parsed_content, document=doc_doc)
                 # TODO this will get axed when the async tasks are ready to schedule
                 # Can be removed after text added to older docs
