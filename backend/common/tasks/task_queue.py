@@ -1,6 +1,9 @@
 import asyncio
+import gc
 import traceback
 from collections.abc import Coroutine
+
+from botocore import exceptions
 
 from backend.common.models.tasks import GenericTaskType, PydanticObjectId, TaskLog
 from backend.common.storage.client import DocumentStorageClient, TextStorageClient
@@ -34,23 +37,29 @@ class TaskQueue(SQSBase):
         self.current_task = None
         self.listening = False
         self.keep_alive_seconds = 5
-        self.visibility_timeout = self.keep_alive_seconds * 2
-        self.cancel_timeout = self.visibility_timeout * 2
+        self.visibility_timeout = self.keep_alive_seconds * 2  # 10 seconds
+        self.cancel_timeout = self.visibility_timeout * 2  # 20 seconds
 
     async def onshutdown(self):
-        self.logger.info("Shutting down")
+        self.logger.info("Shutdown starting")
         self.listening = False
-        await asyncio.sleep(5)
+        if self.keep_alive_task:
+            self.keep_alive_task.cancel()
+
+        await asyncio.sleep(2)
 
         if self.current_message:
             self.logger.info(
-                f"message_id={self.current_message.message_id} visibility={self.visibility_timeout}"
+                f"Shutdown message_id={self.current_message.message_id} visibility={self.visibility_timeout}"  # noqa
             )
             self.current_message.change_visibility(VisibilityTimeout=self.visibility_timeout)
 
         if self.current_task:
-            self.logger.info(f"task_id={self.current_task.id} has been interupted")
+            self.logger.info(f"Shutdown task_id={self.current_task.id} status=CANCELED")
             await self.current_task.update_canceled()
+
+        self.logger.info("Shutdown complete")
+        await asyncio.sleep(2)
 
     async def enqueue(
         self, payload: GenericTaskType, created_by: PydanticObjectId | None = None
@@ -66,13 +75,14 @@ class TaskQueue(SQSBase):
 
     async def keep_alive(self, seconds: int, message, task: TaskLog, on_progress: Coroutine):
         while True:
-            self.logger.info(f"task_id={task.id} heartbeat")
+            self.logger.debug(f"task_id={task.id} heartbeat")
             await task.keep_alive()
             message.change_visibility(VisibilityTimeout=self.visibility_timeout)
             await on_progress()
             await asyncio.sleep(self.keep_alive_seconds)
 
-    async def listen(self):
+    async def listen(self, worker_id):
+        self.worker_id = worker_id
         self.listening = True
         self.logger.info("listening for messages")
         while self.listening:
@@ -84,21 +94,25 @@ class TaskQueue(SQSBase):
                     task = await self._get_task_by_message(message)
                     self.current_task = task
 
-                    # something bad happened
+                    if task.is_success(message.message_id):
+                        self.logger.info(
+                            f"message_id={message.message_id} is already processed successfully"
+                        )
+                        message.delete()
+                        continue
+
+                    # something bad happened, re-queue
                     if task.is_stale(self.cancel_timeout):
                         await task.update_canceled()
-                        message.delete()
-                        self.logger.info(
-                            f"message_id={message.message_id} is stale and now canceled"
-                        )
+                        message.change_visibility(VisibilityTimeout=self.cancel_timeout)
+                        self.logger.info(f"message_id={message.message_id} is stale, re-queuing")
                         continue
 
-                    if task.is_hidden(message.message_id):
-                        self.logger.info(f"message_id={message.message_id} is hidden")
-                        continue
+                    if task.is_failure(message.message_id):
+                        self.logger.info(f"task_id={task.id} status={task.status} reprocessing")
 
                     try:
-                        task = await task.update_progress()
+                        task = await task.update_progress(self.worker_id)
                         self.logger.info(f"{task.task_type} processing started")
 
                         # DocTask Processor
@@ -130,6 +144,8 @@ class TaskQueue(SQSBase):
                     except asyncio.CancelledError:
                         # cancelling the keep alive
                         pass
+                    except exceptions.ClientError:
+                        self.logger.error("sqs message error:", exc_info=True)
                     except Exception:
                         self.logger.error("task error:", exc_info=True)
                         await task.update_failed(error=traceback.format_exc())
@@ -139,10 +155,13 @@ class TaskQueue(SQSBase):
 
                 self.current_message = None
                 self.current_task = None
+                self.keep_alive_task = None
+
+                gc.collect()
 
     async def _get_task_by_message(self, message):
         task = await TaskLog.find_by_message_id(message.message_id)
         if not task:
-            message.change_visibility(VisibilityTimeout=self.keep_alive_seconds)
+            message.change_visibility(VisibilityTimeout=self.cancel_timeout)
             raise Exception(f"TaskLog not found message_id={message.message_id} {message.body}")
         return task

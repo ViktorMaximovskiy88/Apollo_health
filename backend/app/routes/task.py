@@ -1,11 +1,11 @@
 from beanie import PydanticObjectId
-from fastapi import APIRouter, BackgroundTasks, Security
+from fastapi import APIRouter, Security
 
 import backend.common.models.tasks as tasks
 from backend.app.core.settings import settings
 from backend.app.utils.user import get_current_user
 from backend.common.models.site import Site
-from backend.common.models.user import User
+from backend.common.models.user import BaseModel, User
 from backend.common.tasks.task_queue import TaskQueue
 
 task_queue = TaskQueue(
@@ -35,21 +35,29 @@ async def get_user_task(
     return tasks
 
 
-async def enqueue_site_tasks(task_type: str, current_user: User):
+async def enqueue_site_tasks(
+    task_type: str, current_user: User, limit: int | None, force: bool = False
+):
     TaskType = getattr(tasks, task_type)
-    async for site in Site.find():
-        print(site)
-        task_payload = TaskType(site_id=site.id, reprocess=True)
+    async for site in Site.find(limit=limit):
+        task_payload = TaskType(site_id=site.id, reprocess=force)
         await task_queue.enqueue(task_payload, current_user.id)
 
 
-@router.post("/reprocess/sites/{task_type}")
-async def bulk_reprocess_site_task(
+class TaskOptions(BaseModel):
+    limit: int | None = None
+    force: bool = False
+
+
+@router.post("/bulk/sites/{task_type}")
+async def bulk_sites_task(
     task_type: str,
-    background_tasks: BackgroundTasks,
+    options: TaskOptions,
     current_user: User = Security(get_current_user),
 ) -> tasks.TaskLog:
-    background_tasks.add_task(enqueue_site_tasks, task_type, current_user)
+    # wtf... bg task just doesnt work now; Site.find hangs every way ive tried
+    # background_tasks.add_task(enqueue_site_tasks, task_type, current_user, **options.dict())
+    await enqueue_site_tasks(task_type, current_user, **options.dict())
     return {}
 
 

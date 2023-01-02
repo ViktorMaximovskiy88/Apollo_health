@@ -203,7 +203,7 @@ resource "aws_sqs_queue" "taskworker_dlq" {
 }
 
 resource "aws_appautoscaling_target" "taskworker" {
-  max_capacity       = 4
+  max_capacity       = 25
   min_capacity       = 2
   resource_id        = "service/${data.aws_ecs_cluster.ecs-cluster.cluster_name}/${local.service_name}-taskworker"
   role_arn           = aws_iam_service_linked_role.autoscaling.arn
@@ -225,16 +225,22 @@ resource "aws_appautoscaling_policy" "taskworker_scale_up" {
     step_adjustment {
       metric_interval_lower_bound = 0
       metric_interval_upper_bound = 10
-      scaling_adjustment          = 1
+      scaling_adjustment          = 2
     }
     step_adjustment {
       metric_interval_lower_bound = 10
       metric_interval_upper_bound = 20
-      scaling_adjustment          = 2
+      scaling_adjustment          = 5
     }
     step_adjustment {
       metric_interval_lower_bound = 20
-      scaling_adjustment          = 3
+      metric_interval_upper_bound = 40
+      scaling_adjustment          = 10
+    }
+
+    step_adjustment {
+      metric_interval_lower_bound = 40
+      scaling_adjustment          = 25
     }
   }
 }

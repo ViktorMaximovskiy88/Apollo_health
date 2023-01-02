@@ -79,13 +79,14 @@ class TaskLog(BaseDocument):
     created_at: datetime | None = None
     created_by: PydanticObjectId | None
 
-    status: TaskStatus = TaskStatus.PENDING
+    status: Indexed(str) = TaskStatus.PENDING
     status_at: datetime | None = None
 
     completed_at: datetime | None = None
     is_complete: bool = False
 
     error: str | None = None
+    worker_id: Indexed(str) | None = None
     group_id: Indexed(str)
     message_id: Indexed(str) | None
 
@@ -163,10 +164,11 @@ class TaskLog(BaseDocument):
             < datetime.now(tz=timezone.utc).replace(tzinfo=None) - timedelta(seconds=seconds)
         )
 
-    def is_hidden(self, message_id: str) -> bool:
-        return (
-            self.is_progressing() or self.has_failed() or self.is_canceled()
-        ) and self.message_id == message_id
+    def is_success(self, message_id: str) -> bool:
+        return self.is_finished() and self.message_id == message_id
+
+    def is_failure(self, message_id: str) -> bool:
+        return (self.has_failed() or self.is_canceled()) and self.message_id == message_id
 
     def can_be_queued(self) -> bool:
         queued = [log for log in self.log if log.status == TaskStatus.QUEUED]
@@ -175,8 +177,10 @@ class TaskLog(BaseDocument):
     async def update_queued(self, message_id: str) -> T:
         return await self._update_status(TaskStatus.QUEUED, message_id=message_id)
 
-    async def update_progress(self) -> T:
-        return await self._update_status(TaskStatus.IN_PROGRESS, is_complete=False)
+    async def update_progress(self, worker_id) -> T:
+        return await self._update_status(
+            TaskStatus.IN_PROGRESS, is_complete=False, worker_id=worker_id
+        )
 
     async def keep_alive(self) -> T:
         return await self._update_status(task_status=self.status, append_log=False)
@@ -198,6 +202,7 @@ class TaskLog(BaseDocument):
         result: dict[str, any] | None = None,
         error: str | None = None,
         append_log: bool = True,
+        worker_id: str | None = None,
     ) -> T:
         now = datetime.now(tz=timezone.utc)
 
@@ -218,6 +223,9 @@ class TaskLog(BaseDocument):
 
         if message_id:
             payload["message_id"] = message_id
+
+        if worker_id:
+            payload["worker_id"] = worker_id
 
         update_op = {"$set": payload}
         if append_log:
