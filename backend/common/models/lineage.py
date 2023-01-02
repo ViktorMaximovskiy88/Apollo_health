@@ -62,15 +62,15 @@ class DocumentAnalysis(BaseDocument):
     token_count: int = 0
 
     # tags
-    focus_therapy_tags: list[int] = []
-    ref_therapy_tags: list[int] = []
+    focus_therapy_tags: list[str | int] = []
+    ref_therapy_tags: list[str | int] = []
     focus_indication_tags: list[int] = []
     ref_indication_tags: list[int] = []
 
-    url_focus_therapy_tags: list[int] = []
+    url_focus_therapy_tags: list[str | int] = []
     url_focus_indication_tags: list[int] = []
 
-    link_focus_therapy_tags: list[int] = []
+    link_focus_therapy_tags: list[str | int] = []
     link_focus_indication_tags: list[int] = []
 
     # tokens

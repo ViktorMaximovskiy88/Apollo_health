@@ -176,8 +176,17 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
         indexes = [
             [
                 ("classification_status", pymongo.ASCENDING),
+                ("priority", pymongo.DESCENDING),
+                ("final_effective_date", pymongo.ASCENDING),
+            ],
+            [
                 ("family_status", pymongo.ASCENDING),
+                ("priority", pymongo.DESCENDING),
+                ("final_effective_date", pymongo.ASCENDING),
+            ],
+            [
                 ("content_extraction_status", pymongo.ASCENDING),
+                ("priority", pymongo.DESCENDING),
                 ("final_effective_date", pymongo.ASCENDING),
             ],
             [("locations.site_id", pymongo.ASCENDING)],

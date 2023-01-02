@@ -4,7 +4,7 @@ import { RootState } from '../../app/store';
 
 export const initialState = {
   table: {
-    sort: undefined,
+    sort: { name: 'link_text', dir: 1 as 1 | -1 | 0 },
     selection: undefined,
     filter: [
       { name: 'name', operator: 'contains', type: 'string', value: '' },

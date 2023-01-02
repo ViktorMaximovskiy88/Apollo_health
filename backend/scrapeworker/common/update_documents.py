@@ -64,6 +64,7 @@ class DocumentUpdater:
         context_metadata = download.metadata.dict()
         text_checksum = await self.text_handler.save_text(parsed_content["text"])
         tokens = tokenize_string(parsed_content["text"])
+        new_location = None
 
         if location:
             location.link_text = download.metadata.link_text
@@ -75,21 +76,19 @@ class DocumentUpdater:
             location.link_therapy_tags = parsed_content["link_therapy_tags"]
             location.link_indication_tags = parsed_content["link_indication_tags"]
         else:
-            document.locations.append(
-                RetrievedDocumentLocation(
-                    base_url=download.metadata.base_url,
-                    first_collected_date=now,
-                    last_collected_date=now,
-                    site_id=self.site.id,
-                    url=download.request.url,
-                    context_metadata=context_metadata,
-                    link_text=download.metadata.link_text,
-                    siblings_text=download.metadata.siblings_text,
-                    url_therapy_tags=parsed_content["url_therapy_tags"],
-                    url_indication_tags=parsed_content["url_indication_tags"],
-                    link_therapy_tags=parsed_content["link_therapy_tags"],
-                    link_indication_tags=parsed_content["link_indication_tags"],
-                )
+            new_location = RetrievedDocumentLocation(
+                base_url=download.metadata.base_url,
+                first_collected_date=now,
+                last_collected_date=now,
+                site_id=self.site.id,
+                url=download.request.url,
+                context_metadata=context_metadata,
+                link_text=download.metadata.link_text,
+                siblings_text=download.metadata.siblings_text,
+                url_therapy_tags=parsed_content["url_therapy_tags"],
+                url_indication_tags=parsed_content["url_indication_tags"],
+                link_therapy_tags=parsed_content["link_therapy_tags"],
+                link_indication_tags=parsed_content["link_indication_tags"],
             )
 
         updated_doc = UpdateRetrievedDocument(
@@ -110,13 +109,22 @@ class DocumentUpdater:
             metadata=parsed_content["metadata"],
             name=name,
             text_checksum=text_checksum,
-            locations=document.locations,
             last_collected_date=now,
             doc_vectors=parsed_content["doc_vectors"],
             file_size=download.file_size,
             token_count=len(tokens),
             doc_type_match=parsed_content["doc_type_match"],
         )
+
+        # Must handle locations separately to avoid overwriting concurrent updates
+        if new_location:
+            await RetrievedDocument.find({"_id": document.id}).update(
+                {"$push": {"locations": new_location}}
+            )
+        elif location:
+            await RetrievedDocument.find(
+                {"_id": document.id, "locations.site_id": self.site.id}
+            ).update({"$set": {"locations.$": location}})
 
         await document.update(Set(updated_doc.dict(exclude_unset=True)))
         return updated_doc
@@ -140,7 +148,7 @@ class DocumentUpdater:
                 location.link_text = rt_doc_location.link_text
                 location.siblings_text = rt_doc_location.siblings_text
                 location.last_collected_date = rt_doc_location.last_collected_date
-            else:
+            elif rt_doc_location:
                 doc_document.locations.append(DocDocumentLocation(**rt_doc_location.dict()))
 
             doc_document.identified_dates = retrieved_document.identified_dates

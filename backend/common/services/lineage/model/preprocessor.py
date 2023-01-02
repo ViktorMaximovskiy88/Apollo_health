@@ -89,7 +89,7 @@ class LineagePreprocessor:
             features.append(int(attrs1.lang_code == attrs2.lang_code))
         return features
 
-    def tag_features(self, tags1: list[str] | list[int], tags2: list[str] | list[int]):
+    def tag_features(self, tags1: list[str | int] | list[int], tags2: list[str | int] | list[int]):
         return [
             len(tags1),
             len(tags2),

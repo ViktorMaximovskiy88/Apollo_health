@@ -1,4 +1,5 @@
 import asyncio
+import html
 import os
 import zipfile
 from datetime import datetime, timedelta
@@ -113,8 +114,10 @@ class CMSScraper:
         downloader: AioDownloader,
         doc_client: DocumentStorageClient,
         proxies: list[tuple[Proxy | None, ProxySettings | None]],
+        base_url: str | None = None,
     ) -> None:
         self.url = url
+        self.base_url = base_url or url
         self.downloader = downloader
         self.doc_client = doc_client
         self.proxies = proxies
@@ -528,7 +531,7 @@ class CMSScraper:
                 <tr>
         """
         for field in mapping_item["fields"]:
-            table_template += f'<th>{field["name"]}</th>'
+            table_template += f'<th>{html.escape(field["name"])}</th>'
         table_template += "</tr></thead><tbody>"
         target_table = mapping_item["rows_source"]["table"]
         data_source_item = self._get_data_source_item(target_table)
@@ -554,11 +557,11 @@ class CMSScraper:
                 table_template += "<td>"
                 field_item = row[field["field"]]
                 if "prefix" in field:
-                    table_template += field["prefix"]
+                    table_template += html.escape(field["prefix"])
                 if "format" in field:
                     if field["format"]:
                         field_item = to_date_string(str(field_item))
-                table_template += str(field_item)
+                table_template += html.escape(str(field_item))
                 table_template += "</td>"
             table_template += "</tr>"
         table_template += "</tbody></table>"
@@ -687,7 +690,7 @@ class CMSScraper:
                 file_extension="html",
                 file_hash=checksum,
                 file_name=self.url,
-                metadata=Metadata(base_url=self.url),
+                metadata=Metadata(base_url=self.base_url),
                 request=Request(url=self.url, filename=self.url),
             )
         )
@@ -715,7 +718,9 @@ class CMSScrapeController:
             if scraper.is_list():
                 url_list = await scraper.get_documents_list_urls()
                 new_scrapers = [
-                    CMSScraper(url, self.downloader, self.doc_client, self.proxies)
+                    CMSScraper(
+                        url, self.downloader, self.doc_client, self.proxies, self.initial_url
+                    )
                     for url in url_list
                 ]
                 unchecked_scrapers += new_scrapers

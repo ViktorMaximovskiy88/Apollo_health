@@ -21,7 +21,7 @@ def group_table_by(table_template: str) -> str:
     :param table_template: input HTML table as string
     :return: grouped HTML table as string
     """
-    html_document = etree.fromstring(table_template.replace("&", "&amp;"), None)
+    html_document = etree.fromstring(table_template, None)
     all_codes = [row.xpath(".//td")[0].text for row in html_document.xpath("//tbody/tr")]
     grouped_list = [item[0] for item in list(groupby(sorted(all_codes), lambda x: x[0:2]))]
     for item in grouped_list:

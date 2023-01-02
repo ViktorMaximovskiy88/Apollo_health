@@ -9,7 +9,7 @@ async def classification_queues():
     await WorkQueue(
         name="Classification 2023",
         collection_name="DocDocument",
-        update_model_name="ClassificationUpdateDocDocument",
+        update_model_name="UpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
         document_query={
             "classification_status": "QUEUED",
@@ -35,7 +35,7 @@ async def classification_queues():
     await WorkQueue(
         name="Classification",
         collection_name="DocDocument",
-        update_model_name="ClassificationUpdateDocDocument",
+        update_model_name="UpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
         document_query={
             "final_effective_date": {"$lt": datetime(2023, 1, 1, tzinfo=timezone.utc)},
@@ -61,7 +61,7 @@ async def classification_queues():
     await WorkQueue(
         name="Classification Hold",
         collection_name="DocDocument",
-        update_model_name="ClassificationUpdateDocDocument",
+        update_model_name="UpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
         document_query={"classification_status": "HOLD"},
         sort_query=["-priority", "final_effective_date"],
@@ -81,7 +81,7 @@ async def family_queues():
     await WorkQueue(
         name="Document & Payer Family",
         collection_name="DocDocument",
-        update_model_name="FamilyUpdateDocDocument",
+        update_model_name="UpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
         document_query={"classification_status": "APPROVED", "family_status": "QUEUED"},
         sort_query=["-priority", "final_effective_date"],
@@ -104,7 +104,7 @@ async def family_queues():
     await WorkQueue(
         name="Document & Payer Family Hold",
         collection_name="DocDocument",
-        update_model_name="FamilyUpdateDocDocument",
+        update_model_name="UpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
         document_query={"classification_status": "APPROVED", "family_status": "HOLD"},
         sort_query=["-priority", "final_effective_date"],
@@ -124,7 +124,7 @@ async def translation_config_queues():
     await WorkQueue(
         name="Translation Config",
         collection_name="DocDocument",
-        update_model_name="TranslationUpdateDocDocument",
+        update_model_name="UpdateDocDocument",
         sort_query=["-priority", "final_effective_date"],
         frontend_component="DocDocumentClassificationPage",
         document_query={
@@ -151,7 +151,7 @@ async def translation_config_queues():
     await WorkQueue(
         name="Translation Config Hold",
         collection_name="DocDocument",
-        update_model_name="TranslationUpdateDocDocument",
+        update_model_name="UpdateDocDocument",
         sort_query=["-priority", "final_effective_date"],
         frontend_component="DocDocumentClassificationPage",
         document_query={"content_extraction_status": "HOLD"},

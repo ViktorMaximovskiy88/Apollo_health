@@ -36,6 +36,7 @@ eczema
 ensure
 fantasy
 flutter
+flexible
 fusion
 garlic
 gelatin
