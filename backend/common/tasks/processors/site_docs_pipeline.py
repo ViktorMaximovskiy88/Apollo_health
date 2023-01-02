@@ -42,7 +42,7 @@ class SiteDocsPipelineTaskProcessor(TaskProcessor):
             results.append({"doc_doc_id": doc_doc.id, "result": result})
 
         self.logger.info(f"site docs pipeline processed for site_id={site.id}")
-        return results
+        return len(results)
 
     async def get_progress(self) -> float:
         return 0.0

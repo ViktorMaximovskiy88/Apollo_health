@@ -59,7 +59,7 @@ class LineageTaskProcessor(TaskProcessor):
             await self.lineage_service.process_lineage_for_doc_ids(site.id, doc_ids=doc_doc_ids)
 
         self.logger.info(f"lineage processed for site_id={site.id}")
-        return doc_doc_ids
+        return len(doc_doc_ids)
 
     async def get_progress(self) -> float:
         return 0.0
