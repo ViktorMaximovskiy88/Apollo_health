@@ -25,7 +25,9 @@ def read_s3_zip(client, input_path):
 
 def zip_csv(zip, filename):
     with zip.open(filename) as file:
-        for line in csv.DictReader(io.TextIOWrapper(file), delimiter="|"):
+        for line in csv.DictReader(
+            io.TextIOWrapper(file), delimiter="|", doublequote=False, escapechar="\\"
+        ):
             yield line
 
 
@@ -35,9 +37,13 @@ def main(output_folder: pathlib.Path = typer.Argument(None)):
     latest = ""
     for obj in client.bucket.objects.filter(Prefix=xref_path):
         if obj.key > latest and obj.key.startswith("models/upload/RxNorm-Xref"):
-            latest = obj.key.removeprefix("models/")
+            latest = obj.key
+    latest = latest.removeprefix("models/")
+
+    ntm = {line.strip() for line in open(Path(__file__).parent.joinpath("ntm.txt"))}
 
     data = []
+    print(f"Fitting {latest} data")
     with read_s3_zip(client, latest) as zip:
         for row in zip_csv(zip, "RxNorm_Xref.csv"):
             drugid = row["drugid"]
@@ -45,8 +51,9 @@ def main(output_folder: pathlib.Path = typer.Argument(None)):
             name = row["DrugName"]
             description = row["DrugDescription"]
             rxnorm = row["RxNORM_STR"]
+            priority = 2 if drugid in ntm else 0
             record = {
-                "concept_id": f"{drugid}|{rxcui}",
+                "concept_id": f"{drugid}:{priority}|{rxcui}",
                 "canonical_name": name,
                 "aliases": set([description, rxnorm]),
                 "types": set(),
@@ -57,8 +64,9 @@ def main(output_folder: pathlib.Path = typer.Argument(None)):
             drugid = row["drugid"]
             name = row["DrugName"]
             description = row["DrugDescription"]
+            priority = 2 if drugid in ntm else 0
             record = {
-                "concept_id": drugid,
+                "concept_id": f"{drugid}:{priority}",
                 "canonical_name": name,
                 "aliases": set([description]),
                 "types": set(),

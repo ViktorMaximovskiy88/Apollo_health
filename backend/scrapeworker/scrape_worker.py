@@ -135,7 +135,7 @@ class ScrapeWorker:
                 yield pdf_temp.name
 
                 pdf_doc = fitz.Document(pdf_temp)
-                pdf_bytes: bytes = pdf_doc.tobytes()
+                pdf_bytes: bytes = pdf_doc.tobytes()  # type: ignore
                 self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
         else:
             async with self.playwright_context(url, download.request.cookies) as (
@@ -294,7 +294,7 @@ class ScrapeWorker:
                     DocDocument.retrieved_document_id == document.id
                 )
                 if not doc_doc:
-                    self.log.error(f"DocDocument not found for {document.id}")
+                    self.log.error(f"DocDocument {document.id} not found")
                     return
 
                 await get_tags(parsed_content, document=doc_doc)
@@ -323,7 +323,7 @@ class ScrapeWorker:
                 )
 
                 doc_document = await self.doc_updater.update_doc_document(
-                    document, new_therapy_tags, new_indicate_tags, parsed_content["priority"]
+                    document, new_therapy_tags, new_indicate_tags
                 )
 
             else:
@@ -627,6 +627,10 @@ class ScrapeWorker:
                 document_family_change=document_family_change,
             )
             await doc_document_save_hook(doc, change_info)
+        async for doc in DocDocument.find(
+            {"locations.site_id": site_id, "_id": {"$nin": doc_doc_ids}}
+        ):
+            await doc_document_save_hook(doc)
 
         self.site.last_run_documents = self.scrape_task.documents_found
         await self.site.save()

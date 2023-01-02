@@ -1,7 +1,6 @@
 import { TypeFilterValue, TypeSortInfo } from '@inovua/reactdatagrid-community/types';
 export interface BaseDocument {
   _id: string;
-  priority: number; // used when projecting priority in work-queues/items/:id
 }
 
 export type NestedPartial<T> = {

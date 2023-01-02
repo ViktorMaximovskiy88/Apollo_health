@@ -195,8 +195,8 @@ class TableContentExtractor:
         return -1
 
     def translate_line(self, line, header):
-        brands: list[tuple[float, str, str | None, str]] = []
-        generics: list[tuple[float, str, str | None, str]] = []
+        brands: list[tuple[float, str, str | None, str, int]] = []
+        generics: list[tuple[float, str, str | None, str, int]] = []
         t9n = FormularyDatum()
         bvg, ql_time, ql_quantity = None, None, None
         for column_rules in self.config.translation.column_rules:
@@ -217,14 +217,17 @@ class TableContentExtractor:
                     for (_, candidate, name, score) in rxnorm_linker.find_candidates([value], rule):
                         if candidate:
                             splits = candidate.concept_id.split("|")
-                            drugid, rxcui = "", ""
+                            drugid, rxcui, priority = "", "", 0
                             if len(splits) == 1:
                                 drugid = splits[0]
                             elif len(splits) == 2:
                                 drugid, rxcui = splits
+                            if ":" in drugid:
+                                drugid, priority_str = drugid.split(":")
+                                priority = int(priority_str)
                             if not rxcui:
                                 rxcui = None
-                            codes.append((score, drugid, rxcui, name))
+                            codes.append((score, drugid, rxcui, name, priority))
                     continue
 
                 if rule.field == "BvG":
@@ -276,14 +279,28 @@ class TableContentExtractor:
             t9n.qln = f"{ql_quantity} / {ql_time}"
 
         if not bvg or bvg == "generic" or bvg == "both":
-            for (score, drugid, rxcui, name) in generics:
+            for (score, drugid, rxcui, name, priority) in generics:
                 yield t9n.copy(
-                    update={"score": score, "code": drugid, "rxcui": rxcui, "name": name}, deep=True
+                    update={
+                        "score": score,
+                        "code": drugid,
+                        "rxcui": rxcui,
+                        "name": name,
+                        "priority": priority,
+                    },
+                    deep=True,
                 )
         if not bvg or bvg == "brand" or bvg == "both":
-            for (score, drugid, rxcui, name) in brands:
+            for (score, drugid, rxcui, name, priority) in brands:
                 yield t9n.copy(
-                    update={"score": score, "code": drugid, "rxcui": rxcui, "name": name}
+                    update={
+                        "score": score,
+                        "code": drugid,
+                        "rxcui": rxcui,
+                        "name": name,
+                        "priority": priority,
+                    },
+                    deep=True,
                 )
 
         if not generics and not brands:
@@ -319,7 +336,7 @@ class TableContentExtractor:
                         }
                     )
                 ),
-                extract_task.update(Set({ContentExtractionTask.header: header})),
+                extract_task.update(Set({"header": header})),
                 result.save(),
             )
 

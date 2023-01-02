@@ -37,7 +37,10 @@ class TagTaskProcessor(TaskProcessor):
 
     async def exec(self, task: tasks.TagTask):
         stage_versions = await PipelineRegistry.fetch()
-        doc: DocDocument = await DocDocument.get(task.doc_doc_id)
+        if not stage_versions:
+            raise Exception("Pipeline Registry not found")
+
+        doc = await DocDocument.get(task.doc_doc_id)
 
         if not doc:
             raise Exception(f"doc_doc {task.doc_doc_id} not found")
@@ -55,19 +58,21 @@ class TagTaskProcessor(TaskProcessor):
         url = normalize_string(location.url)
         tokens = tokenize_string(raw_text)
 
+        doc_type = doc.document_type
+        if not doc_type:
+            raise Exception(f"No Document Type set for {doc.id}")
+
         (
             therapy_tags,
             url_therapy_tags,
             link_therapy_tags,
-        ) = await self.therapy_tagger.tag_document(
-            raw_text, doc.document_type, url, link_text, document=doc
-        )
+        ) = await self.therapy_tagger.tag_document(raw_text, doc_type, url, link_text, document=doc)
         (
             indication_tags,
             url_indication_tags,
             link_indication_tags,
         ) = await self.indication_tagger.tag_document(
-            raw_text, doc.document_type, url, link_text, document=doc
+            raw_text, doc_type, url, link_text, document=doc
         )
 
         current_stage = PipelineStage(
@@ -92,12 +97,14 @@ class TagTaskProcessor(TaskProcessor):
             indication_tags=indication_tags,
             therapy_tags=therapy_tags,
         )
-        priority = 0
-        priority += sum(tag.priority for tag in therapy_tags if tag.priority)
-        priority += sum(tag.priority for tag in url_therapy_tags if tag.priority)
-        priority += sum(tag.priority for tag in link_therapy_tags if tag.priority)
 
         doc = doc.process_tag_changes(new_therapy_tags, new_indication_tags)
+
+        # Always apply priority updates
+        priority = max(tag.priority for tag in therapy_tags) if therapy_tags else 0
+        priority_codes = {tag.code: tag.priority for tag in therapy_tags if tag.priority}
+        for tag in doc.therapy_tags:
+            tag.priority = priority_codes.get(tag.code, 0)
 
         # TODO will be location and overall doc update..
         # we have location specific stuff...

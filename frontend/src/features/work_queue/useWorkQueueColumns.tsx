@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { BaseDocument } from '../../common';
 import { dateDuration, prettyDateUTCFromISO } from '../../common/date';
 import { ButtonLink } from '../../components/ButtonLink';
-import { SiteDocDocument, TaskLock } from '../doc_documents/types';
+import { TaskLock } from '../doc_documents/types';
 import { useGetUsersQuery } from '../users/usersApi';
 import { DocumentTypes } from '../retrieved_documents/types';
 import { useGetSiteQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
@@ -43,15 +43,6 @@ export function useWorkQueueColumns(
   const { data: site } = useGetSiteQuery(siteFilter?.value, { skip: !siteFilter?.value });
   const initialOptions = site ? [{ value: site._id, label: site.name }] : [];
   const columns = [
-    {
-      header: 'Priority',
-      name: 'priority',
-      width: 80,
-      filterSearch: true,
-      render: ({ data: doc }: { data: BaseDocument }) => {
-        return priorityStyle(doc.priority);
-      },
-    },
     {
       name: 'name',
       header: 'Name',
@@ -157,6 +148,15 @@ export function useWorkQueueColumns(
         if (firstCollectedDate) {
           return prettyDateUTCFromISO(firstCollectedDate);
         }
+      },
+    },
+    {
+      header: 'Priority',
+      name: 'priority',
+      width: 90,
+      filterSearch: true,
+      render: ({ value: priority }: { value: number }) => {
+        return priorityStyle(priority);
       },
     },
     {

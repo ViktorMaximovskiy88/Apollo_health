@@ -31,10 +31,10 @@ class PipelineRegistry(BaseDocument):
 
 # for the target objects
 class DocPipelineStages(BaseModel):
-    content: PipelineStage | None
-    date: PipelineStage | None
-    doc_type: PipelineStage | None
-    tag: PipelineStage | None
+    content: PipelineStage | None = None
+    date: PipelineStage | None = None
+    doc_type: PipelineStage | None = None
+    tag: PipelineStage | None = None
 
     @classmethod
     def is_stage_valid(cls, doc_stage: PipelineStage, registry_stage: PipelineStage):

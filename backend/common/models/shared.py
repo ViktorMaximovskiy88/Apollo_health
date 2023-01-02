@@ -128,7 +128,7 @@ class DocTypeMatch(BaseModel):
 
 def get_tag_diff(
     current_therapy_tags: list[TherapyTag],
-    current_indication_tags: list[TherapyTag],
+    current_indication_tags: list[IndicationTag],
     therapy_tags: list[TherapyTag],
     indication_tags: list[IndicationTag],
 ):

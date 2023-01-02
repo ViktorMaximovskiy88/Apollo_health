@@ -67,8 +67,8 @@ class BaseDocDocument(BaseModel):
     first_created_date: datetime | None = None
     published_date: datetime | None = None
     identified_dates: list[datetime] | None = None
-    first_collected_date: Indexed(datetime, pymongo.DESCENDING) | None = None
-    last_collected_date: Indexed(datetime, pymongo.DESCENDING) | None = None
+    first_collected_date: Indexed(datetime, pymongo.DESCENDING) | None = None  # type: ignore
+    last_collected_date: Indexed(datetime, pymongo.DESCENDING) | None = None  # type: ignore
 
     # Manual/Calculated Dates
     final_effective_date: Indexed(datetime, pymongo.DESCENDING) | None = None  # type: ignore
@@ -89,7 +89,7 @@ class BaseDocDocument(BaseModel):
     compare_create_time: datetime | None = None
 
     tags: list[str] = []
-    pipeline_stages: DocPipelineStages | None
+    pipeline_stages: DocPipelineStages | None = None
 
     # from rt doc, lets just do these now...
     # TODO if we gen analysis doc earlier, this doesnt have to live here
@@ -98,7 +98,7 @@ class BaseDocDocument(BaseModel):
     token_count: int = 0
 
     user_edited_fields: list[str] = []
-    priority: Indexed(int, pymongo.DESCENDING) = 0
+    priority: Indexed(int, pymongo.DESCENDING) = 0  # type: ignore
 
 
 class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixins):

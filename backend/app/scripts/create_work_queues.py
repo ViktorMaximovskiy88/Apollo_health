@@ -15,7 +15,7 @@ async def classification_queues():
             "classification_status": "QUEUED",
             "final_effective_date": {"$gte": datetime(2023, 1, 1, tzinfo=timezone.utc)},
         },
-        sort_query=["final_effective_date"],
+        sort_query=["-priority", "final_effective_date"],
         user_query={"roles": {"$in": ["admin", "classification"]}},
         submit_actions=[
             SubmitAction(
@@ -41,7 +41,7 @@ async def classification_queues():
             "final_effective_date": {"$lt": datetime(2023, 1, 1, tzinfo=timezone.utc)},
             "classification_status": "QUEUED",
         },
-        sort_query=["final_effective_date"],
+        sort_query=["-priority", "final_effective_date"],
         user_query={"roles": {"$in": ["admin", "classification"]}},
         submit_actions=[
             SubmitAction(
@@ -64,7 +64,7 @@ async def classification_queues():
         update_model_name="ClassificationUpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
         document_query={"classification_status": "HOLD"},
-        sort_query=["final_effective_date"],
+        sort_query=["-priority", "final_effective_date"],
         user_query={"roles": {"$in": ["admin", "classification"]}},
         submit_actions=[
             SubmitAction(label="Back To Queue", submit_action={"classification_status": "QUEUED"}),
@@ -84,7 +84,7 @@ async def family_queues():
         update_model_name="FamilyUpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
         document_query={"classification_status": "APPROVED", "family_status": "QUEUED"},
-        sort_query=["final_effective_date"],
+        sort_query=["-priority", "final_effective_date"],
         user_query={"roles": {"$in": ["admin", "family"]}},
         submit_actions=[
             SubmitAction(
@@ -107,7 +107,7 @@ async def family_queues():
         update_model_name="FamilyUpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
         document_query={"classification_status": "APPROVED", "family_status": "HOLD"},
-        sort_query=["final_effective_date"],
+        sort_query=["-priority", "final_effective_date"],
         user_query={"roles": {"$in": ["admin", "family"]}},
         submit_actions=[
             SubmitAction(label="Back To Queue", submit_action={"family_status": "QUEUED"}),
@@ -125,7 +125,7 @@ async def translation_config_queues():
         name="Translation Config",
         collection_name="DocDocument",
         update_model_name="TranslationUpdateDocDocument",
-        sort_query=["final_effective_date"],
+        sort_query=["-priority", "final_effective_date"],
         frontend_component="DocDocumentClassificationPage",
         document_query={
             "classification_status": "APPROVED",
@@ -152,7 +152,7 @@ async def translation_config_queues():
         name="Translation Config Hold",
         collection_name="DocDocument",
         update_model_name="TranslationUpdateDocDocument",
-        sort_query=["final_effective_date"],
+        sort_query=["-priority", "final_effective_date"],
         frontend_component="DocDocumentClassificationPage",
         document_query={"content_extraction_status": "HOLD"},
         user_query={"roles": {"$in": ["admin", "translation"]}},

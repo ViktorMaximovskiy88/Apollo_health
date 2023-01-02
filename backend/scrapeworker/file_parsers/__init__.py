@@ -10,7 +10,7 @@ __all__ = ["docx", "xlsx", "pdf", "html", "text"]
 taggers = Taggers(indication=indication_tagger, therapy=therapy_tagger)
 
 
-def get_parser_by_ext(file_extension: str):
+def get_parser_by_ext(file_extension: str | None):
     ParserClass = None
     if file_extension == "pdf":
         ParserClass = pdf.PdfParse
@@ -58,7 +58,11 @@ async def get_tags(
     focus_configs: list[FocusSectionConfig] | None = None,
 ):
     # if we have a doc use that doc type in the case its user edited
-    doc_type = document.document_type if document else parsed_content["document_type"]
+    doc_type = (
+        document.document_type
+        if document and document.document_type
+        else parsed_content["document_type"]
+    )
     (therapy_tags, url_therapy_tags, link_therapy_tags) = await taggers.therapy.tag_document(
         parsed_content["text"],
         doc_type,
@@ -86,8 +90,5 @@ async def get_tags(
     parsed_content["url_indication_tags"] = url_indication_tags
     parsed_content["link_therapy_tags"] = link_therapy_tags
     parsed_content["link_indication_tags"] = link_indication_tags
-    parsed_content["priority"] = 0
-    for tag in therapy_tags:
-        if tag.priority:
-            parsed_content["priority"] = parsed_content["priority"] + tag.priority
+    parsed_content["priority"] = max(tag.priority for tag in therapy_tags) if therapy_tags else 0
     return parsed_content

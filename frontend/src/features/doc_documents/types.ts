@@ -21,6 +21,7 @@ export interface TherapyTag {
   code: string;
   score: number;
   focus: boolean;
+  priority: number;
   update_status?: TagUpdateStatus;
   text_area?: [number, number];
 }
@@ -31,6 +32,7 @@ export interface IndicationTag {
   page: number;
   code: number;
   focus?: boolean; // migrate and update
+  priority: number;
   update_status?: TagUpdateStatus;
   text_area?: [number, number];
 }

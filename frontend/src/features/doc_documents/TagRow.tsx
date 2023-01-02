@@ -182,6 +182,11 @@ export function ReadTag({
           )}
         </div>
         <div className="flex items-center px-5">
+          {tag.priority > 0 && (
+            <Tag color="red" className="select-none cursor-default">
+              Priority
+            </Tag>
+          )}
           {tag.focus && (
             <Tag color="gold" className="select-none cursor-default">
               Focus

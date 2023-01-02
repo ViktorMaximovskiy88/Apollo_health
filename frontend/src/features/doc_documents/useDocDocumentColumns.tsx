@@ -20,6 +20,7 @@ import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
 import { useGetSiteQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
 import { useDocumentFamilySelectOptions } from './document_family/documentFamilyHooks';
 import { usePayerFamilySelectOptions } from '../payer-family/payerFamilyHooks';
+import { priorityStyle } from '../doc_documents/useSiteDocDocumentColumns';
 
 export function useSiteSelectOptions() {
   const [getSites] = useLazyGetSitesQuery();
@@ -296,6 +297,15 @@ export const useColumns = ({
               </Tag>
             );
           });
+      },
+    },
+    {
+      header: 'Priority',
+      name: 'priority',
+      width: 90,
+      filterSearch: true,
+      render: ({ data: doc }: { data: DocDocument }) => {
+        return priorityStyle(doc.priority);
       },
     },
     {

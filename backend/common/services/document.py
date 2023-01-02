@@ -90,6 +90,7 @@ async def create_doc_document_service(
         lang_code=retrieved_document.lang_code,
         therapy_tags=retrieved_document.therapy_tags,
         indication_tags=retrieved_document.indication_tags,
+        priority=retrieved_document.priority,
         file_extension=retrieved_document.file_extension,
         identified_dates=retrieved_document.identified_dates,
         last_collected_date=retrieved_document.last_collected_date,
