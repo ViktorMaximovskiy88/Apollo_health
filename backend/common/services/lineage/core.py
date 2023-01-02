@@ -132,7 +132,8 @@ class LineageService:
         )
         doc_analyses: dict[PydanticObjectId, DocumentAnalysis] = {}
         async for analysis in existing_analyses_query:
-            doc_analyses[analysis.doc_document_id] = analysis
+            if analysis.doc_document_id:
+                doc_analyses[analysis.doc_document_id] = analysis
 
         async with BulkWriter() as bulk_writer:
             for doc in docs:
@@ -247,7 +248,7 @@ async def inherit_prev_doc_fields(doc: DocDocument, site_id: PydanticObjectId):
 
 
 async def version_doc_doc(doc_analysis: DocumentAnalysis, overwrite=False):
-    doc = await DocDocument.get(doc_analysis.doc_document_id)
+    doc = await DocDocument.get(doc_analysis.doc_document_id)  # type: ignore
     if not doc:
         raise Exception(f"DocDocument {doc_analysis.doc_document_id} does not exists")
 

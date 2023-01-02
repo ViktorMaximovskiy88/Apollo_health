@@ -78,6 +78,7 @@ class DateParser:
 
     def as_dict(self):
         identified_dates = [date for date in self.unclassified_dates if date.date]
+        identified_dates.sort()
         return {
             "effective_date": self.effective_date.date,
             "end_date": self.end_date.date,
@@ -87,7 +88,7 @@ class DateParser:
             "next_update_date": self.next_update_date.date,
             "published_date": self.published_date.date,
             "unclassified_dates": identified_dates,
-            "identified_dates": identified_dates,
+            "identified_dates": identified_dates[20:],
         }
 
     def exclude_text(self, text: str) -> bool:

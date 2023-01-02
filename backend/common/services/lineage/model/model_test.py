@@ -62,7 +62,9 @@ async def test_case_2():
     c1 = BasicDocAnalysis(lineage_id=l3, final_effective_date=datetime(2022, 1, 1))
     analyses: list[DocumentAnalysis] = [a1, b1, b2, c1]
     lineages = model.group_by_lineage_id(analyses)
-    lineage_map = {lineage[0].doc_document_id: lineage for lineage in lineages}
+    lineage_map = {
+        lineage[0].doc_document_id: lineage for lineage in lineages if lineage[0].doc_document_id
+    }
     docs = DocIndex([a1, b1, c1])
     graph = igraph.Graph.Bipartite([0, 1, 1], edges=[])
     pairs, weights = [(0, 1)], [0.9]

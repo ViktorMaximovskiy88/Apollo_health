@@ -25,7 +25,7 @@ class DocIndex:
     """
 
     def __init__(self, docs: list[DocumentAnalysis]) -> None:
-        self.doc_analyses_by_idx: dict[PydanticObjectId, int] = {}
+        self.doc_analyses_by_idx: dict[PydanticObjectId | None, int] = {}
         self.docs = docs
         for i, doc in enumerate(docs):
             self.doc_analyses_by_idx[doc.doc_document_id] = i
@@ -104,7 +104,7 @@ class LineageModel:
             for old_lineage, new_lineage in pairs:
                 yield old_lineage[-1], new_lineage[0]
 
-        new_lineage_map = {
+        new_lineage_map: dict[PydanticObjectId | None, list[DocumentAnalysis]] = {
             new_lineage[0].doc_document_id: new_lineage for new_lineage in new_lineages
         }
         docs = DocIndex([doc[-1] for doc in old_lineages] + [doc[0] for doc in new_lineages])
@@ -118,7 +118,7 @@ class LineageModel:
         self,
         graph: ig.Graph,
         docs: DocIndex,
-        new_lineage_map: dict[PydanticObjectId, list[DocumentAnalysis]],
+        new_lineage_map: dict[PydanticObjectId | None, list[DocumentAnalysis]],
     ):
         matches = graph.maximum_bipartite_matching().matching or []
         for node, match in enumerate(matches):
