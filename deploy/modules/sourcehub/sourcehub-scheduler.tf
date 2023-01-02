@@ -174,6 +174,7 @@ resource "aws_iam_role" "scheduler-task" {
         {
           Action = [
             "ecs:ListTasks",
+            "ecs:DescribeTasks",
             "ecs:StopTask"
           ]
           Effect = "Allow"

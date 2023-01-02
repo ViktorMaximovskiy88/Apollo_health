@@ -14,6 +14,7 @@ import boto3
 import typer
 from beanie import PydanticObjectId
 from beanie.odm.queries.find import FindMany
+from dateutil import parser
 
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 
@@ -143,7 +144,16 @@ def get_worker_arns() -> set[str]:
             )
         else:
             response = ecs.list_tasks(cluster=cluster_arn(), serviceName="sourcehub-scrapeworker")
-        arns += response["taskArns"]
+        task_arns = response["taskArns"]
+        describe_response = ecs.describe_tasks(cluster=cluster_arn(), tasks=task_arns)
+        for task in describe_response["tasks"]:
+            created_at = parser.parse(task["createdAt"])
+            now = datetime.now(tz=timezone.utc)
+            # Ignore recently launched tasks to avoid faling the deploy by immediately killing tasks
+            if now - created_at > timedelta(minutes=10):
+                arns.append(task["taskArn"])
+
+        arns += task_arns
         token = response.get("nextToken")
         if not token:
             return set(arns)
@@ -245,6 +255,7 @@ def stop_task_worker(task: SiteScrapeTask):
         ecs.stop_task(task=task.task_arn)
     except Exception:
         pass
+
 
 async def start_hung_task_checker():
     """
