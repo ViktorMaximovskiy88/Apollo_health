@@ -61,9 +61,9 @@ const InternalDocs = [
 
 export function priorityStyle(priority: number): React.ReactElement {
   switch (true) {
-    case priority == 0:
+    case priority === 0:
       return <span className="text-blue-500">Low</span>;
-    case priority == 1:
+    case priority === 1:
       return <span className="text-green-500">Medium</span>;
     case priority >= 2:
       return <span className="text-red-500">High</span>;

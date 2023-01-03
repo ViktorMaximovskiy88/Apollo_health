@@ -2,7 +2,7 @@ import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Tag } from 'antd';
 import { uniq } from 'lodash';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { docDocumentTableState } from './docDocumentsSlice';

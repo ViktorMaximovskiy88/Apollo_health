@@ -14,7 +14,6 @@ import {
   useLazyGetScrapeTasksForSiteQuery,
   useRunSiteScrapeTaskMutation,
 } from '../collections/siteScrapeTasksApi';
-import { useSiteScrapeTaskId } from './manual_collection/useUpdateSelected';
 import { initialState } from '../collections/collectionsSlice';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
 import { DocTypeUpdateModal } from './DocTypeBulkUpdateModal';

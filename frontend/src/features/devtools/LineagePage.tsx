@@ -59,7 +59,7 @@ export function LineagePage() {
       sectionToolbar={
         <>
           <Button
-            disabled={state.viewItems.length != 2}
+            disabled={state.viewItems.length !== 2}
             onClick={async () => {
               enqueueDiffTask('PDFDiffTask', {
                 previous_checksum: state.viewItems[0]?.item?.checksum,
