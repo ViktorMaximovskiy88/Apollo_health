@@ -371,7 +371,6 @@ async def add_document(
             first_collected_date=now,
             last_collected_date=now,
             locations=[RetrievedDocumentLocation(**new_loc_fields)],
-            classification_hold_info=[],
         )
 
     # Set new_document current_version and lineage.

@@ -105,7 +105,6 @@ async def create_doc_document_service(
     # Since user uploaded doc and manually set doc info,
     # skip classification queue and set to approved.
     if retrieved_document.uploader_id:
-        doc_document.classification_hold_info = []
         doc_document.classification_status = ApprovalStatus.APPROVED
 
     doc_document.set_final_effective_date()
