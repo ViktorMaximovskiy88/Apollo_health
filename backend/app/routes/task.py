@@ -1,5 +1,5 @@
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Security
+from fastapi import APIRouter, BackgroundTasks, Security
 
 import backend.common.models.tasks as tasks
 from backend.app.core.settings import settings
@@ -53,11 +53,10 @@ class TaskOptions(BaseModel):
 async def bulk_sites_task(
     task_type: str,
     options: TaskOptions,
+    background_tasks: BackgroundTasks,
     current_user: User = Security(get_current_user),
 ) -> tasks.TaskLog:
-    # wtf... bg task just doesnt work now; Site.find hangs every way ive tried
-    # background_tasks.add_task(enqueue_site_tasks, task_type, current_user, **options.dict())
-    await enqueue_site_tasks(task_type, current_user, **options.dict())
+    background_tasks.add_task(enqueue_site_tasks, task_type, current_user, **options.dict())
     return {}
 
 
