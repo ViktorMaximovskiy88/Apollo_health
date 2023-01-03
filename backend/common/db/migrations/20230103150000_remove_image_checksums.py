@@ -11,16 +11,12 @@ class Forward:
         result = await DocDocument.get_motor_collection().update_many(
             {"image_checksums": {"$exists": True}}, {"$unset": {"image_checksums": ""}}
         )
-        logging.info(
-            f"removing image_checksums records -> acknowledged={result.acknowledged} deleted_count={result.deleted_count}"  # noqa
-        )
+        logging.info(f"removing image_checksums records -> acknowledged={result.acknowledged}")
 
         result = await DocDocument.get_motor_collection().update_many(
             {"content_checksum": {"$exists": True}}, {"$unset": {"content_checksum": ""}}
         )
-        logging.info(
-            f"removing content_checksum records -> acknowledged={result.acknowledged} deleted_count={result.deleted_count}"  # noqa
-        )
+        logging.info(f"removing content_checksum records -> acknowledged={result.acknowledged}")
 
 
 class Backward:
