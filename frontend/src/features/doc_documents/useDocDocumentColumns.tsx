@@ -22,6 +22,7 @@ import { useGetSiteQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
 import { useDocumentFamilySelectOptions } from './document_family/documentFamilyHooks';
 import { usePayerFamilySelectOptions } from '../payer-family/payerFamilyHooks';
 import { priorityStyle } from '../doc_documents/useSiteDocDocumentColumns';
+import { TypeFilterValue } from '@inovua/reactdatagrid-community/types';
 
 export function useSiteSelectOptions() {
   const [getSites] = useLazyGetSitesQuery();
@@ -124,10 +125,12 @@ export const useColumns = ({
       name: 'document_type',
       minWidth: 200,
       filterEditor: SelectFilter,
-      filterEditorProps: {
-        placeholder: 'All',
+      filterEditorProps: ({ filterValue }: { filterValue: TypeFilterValue }) => ({
+        placeholder: filterValue ? null : 'All',
+        multiple: true,
+        wrapMultiple: false,
         dataSource: DocumentTypes,
-      },
+      }),
       render: ({ value: document_type }: { value: string }) => {
         return <>{document_type}</>;
       },

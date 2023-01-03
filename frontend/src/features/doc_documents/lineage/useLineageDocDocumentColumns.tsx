@@ -8,6 +8,7 @@ import { DocumentTypes } from '../../retrieved_documents/types';
 import { useSelector } from 'react-redux';
 import { previousDocDocumentIdState, setPreviousDocDocumentId } from './lineageDocDocumentsSlice';
 import { useAppDispatch } from '../../../app/store';
+import { TypeFilterValue } from '@inovua/reactdatagrid-community/types';
 
 export const useLineageDocDocumentColumns = () => {
   const dispatch = useAppDispatch();
@@ -47,10 +48,12 @@ export const useLineageDocDocumentColumns = () => {
         name: 'document_type',
         minWidth: 200,
         filterEditor: SelectFilter,
-        filterEditorProps: {
-          placeholder: 'All',
+        filterEditorProps: ({ filterValue }: { filterValue: TypeFilterValue }) => ({
+          placeholder: filterValue ? null : 'All',
+          multiple: true,
+          wrapMultiple: false,
           dataSource: DocumentTypes,
-        },
+        }),
         render: ({ value: document_type }: { value: string }) => {
           return <>{document_type}</>;
         },

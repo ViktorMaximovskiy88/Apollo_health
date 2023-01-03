@@ -12,6 +12,7 @@ import { workQueueTableState } from './workQueueSlice';
 import { useSelector } from 'react-redux';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import { priorityStyle } from '../doc_documents/useSiteDocDocumentColumns';
+import { TypeFilterValue } from '@inovua/reactdatagrid-community/types';
 
 function useSiteSelectOptions() {
   const [getSites] = useLazyGetSitesQuery();
@@ -106,10 +107,12 @@ export function useWorkQueueColumns(
       header: 'Document Type',
       minWidth: 200,
       filterEditor: SelectFilter,
-      filterEditorProps: {
-        placeholder: 'All',
+      filterEditorProps: ({ filterValue }: { filterValue: TypeFilterValue }) => ({
+        placeholder: filterValue ? null : 'All',
+        multiple: true,
+        wrapMultiple: false,
         dataSource: DocumentTypes,
-      },
+      }),
       render: ({ value: document_type }: { value: string }) => {
         return <>{document_type}</>;
       },

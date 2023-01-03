@@ -91,10 +91,12 @@ export const createColumns = ({
     name: 'document_type',
     filterEditor: SelectFilter,
     minWidth: 200,
-    filterEditorProps: {
-      placeholder: 'All',
+    filterEditorProps: ({ filterValue }: { filterValue: TypeFilterValue }) => ({
+      placeholder: filterValue ? null : 'All',
+      multiple: true,
+      wrapMultiple: false,
       dataSource: DocumentTypes,
-    },
+    }),
   },
   {
     header: 'Document Count',
