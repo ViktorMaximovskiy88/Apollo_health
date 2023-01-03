@@ -60,3 +60,27 @@ def test_guess_doc_type_matcher():
     assert confidence == 0.8
     assert len(doc_vectors) == 1 and len(doc_vectors[0]) > 1
     assert doc_type_match is not None
+
+
+def test_guess_doc_type_matcher_searchable_missing_texts():
+    config = ScrapeMethodConfiguration(searchable=True)
+    doc_type, confidence, doc_vectors, doc_type_match = guess_doc_type(
+        None, None, None, None, config
+    )
+    # falls to classifier
+    assert doc_type is not None
+    assert confidence is not None
+    assert len(doc_vectors) == 1 and len(doc_vectors[0]) > 1
+    assert doc_type_match is None
+
+
+def test_guess_doc_type_matcher_missing_texts():
+    config = ScrapeMethodConfiguration(searchable=False)
+    doc_type, confidence, doc_vectors, doc_type_match = guess_doc_type(
+        None, None, None, None, config
+    )
+    # falls to classifier
+    assert doc_type is not None
+    assert confidence is not None
+    assert len(doc_vectors) == 1 and len(doc_vectors[0]) > 1
+    assert doc_type_match is None

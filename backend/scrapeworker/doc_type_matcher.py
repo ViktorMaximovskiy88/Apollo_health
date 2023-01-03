@@ -17,10 +17,12 @@ class DocTypeMatcher:
         take_count: int = 50,
     ):
         self.matched_rule = None
+
         if raw_url:
             [*path_parts, filename] = tokenize_url(raw_url)
             self.filename_tokens = tokenize_filename(filename)
             self.filename_text = " ".join(self.filename_tokens).lower()
+            url_path = "/".join(path_parts + [filename])
         else:
             self.filename_text = ""
 
@@ -31,8 +33,7 @@ class DocTypeMatcher:
         else:
             self.doc_text = ""
 
-        url_path = "/".join(path_parts + [filename])
-        if raw_link_text and url_path != raw_link_text:
+        if raw_link_text and url_path and url_path != raw_link_text:
             self.link_tokens = simple_preprocess(raw_link_text)
             self.link_text = " ".join(self.link_tokens).lower()
         else:

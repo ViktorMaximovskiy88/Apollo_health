@@ -7,6 +7,7 @@ import fasttext
 import gensim
 
 from backend.common.core.enums import DocumentType
+from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.doc_type_matcher import DocTypeMatcher
 
 logging.basicConfig(format="%(asctime)s : %(levelname)s : %(message)s", level=logging.INFO)
@@ -36,8 +37,17 @@ def classify_doc_type(raw_text: str) -> Tuple[str, float, Any]:
 
 
 def guess_doc_type(
-    raw_text: str, raw_link_text: str, raw_url: str, raw_name: str, scrape_method_config
+    raw_text: str | None,
+    raw_link_text: str | None,
+    raw_url: str | None,
+    raw_name: str | None,
+    scrape_method_config: ScrapeMethodConfiguration | None = None,
 ) -> Tuple[str, float, Any, Any]:
+
+    raw_text = raw_text or ""
+    raw_link_text = raw_link_text or ""
+    raw_url = raw_url or ""
+    raw_name = raw_name or ""
 
     is_searchable = scrape_method_config and scrape_method_config.searchable and len(raw_name) == 5
     doc_type_match = None
