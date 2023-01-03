@@ -118,11 +118,19 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
     <>
       {siteScrapeTask && (
         <Alert
-          message={`${siteScrapeTaskStatusLabel(siteScrapeTask)} | ${collectionCountLabel(
-            siteScrapeTask
-          )} on ${dateLabel} ${collectionMethodLabel(siteScrapeTask)} | ${elapsedLable(
-            siteScrapeTask
-          )}`}
+          message={
+            <div>
+              <span className="table-data-alert">{siteScrapeTaskStatusLabel(siteScrapeTask)}</span>|
+              <span className="table-data-alert">
+                {collectionCountLabel(siteScrapeTask)} on {dateLabel}
+              </span>
+              |
+              <span className="table-data-alert-subheader">
+                {collectionMethodLabel(siteScrapeTask)}
+              </span>
+              |<span className="table-data-alert-subheader">{elapsedLable(siteScrapeTask)}</span>
+            </div>
+          }
           type="success"
           className="mb-1"
         />
