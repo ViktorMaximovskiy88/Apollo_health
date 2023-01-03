@@ -5,7 +5,7 @@ import BoolFilter from '@inovua/reactdatagrid-community/BoolFilter';
 import { LinkOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { prettyDateUTCFromISO } from '../../common';
 import { DocDocument, SiteDocDocument } from './types';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams, Location } from 'react-router-dom';
 import { DocumentTypes } from '../retrieved_documents/types';
 import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
 import { ManualCollectionValidationButtons } from './manual_collection/ManualCollectionValidationButtons';
@@ -43,6 +43,7 @@ interface CreateColumnsType {
     [id: string]: string;
   };
   isManualCollection: boolean;
+  location: Location;
 }
 
 export enum TextAlignType {
@@ -80,6 +81,7 @@ export const createColumns = ({
   documentFamilyNamesById,
   payerFamilyNamesById,
   isManualCollection,
+  location,
 }: CreateColumnsType) => [
   {
     header: 'Last Collected',
@@ -105,7 +107,11 @@ export const createColumns = ({
     minWidth: 300,
     filterSearch: true,
     render: ({ data: doc }: { data: SiteDocDocument }) => {
-      return <Link to={`/documents/${doc._id}`}>{doc.name}</Link>;
+      return (
+        <Link to={`/documents/${doc._id}?prevLocation=${location.pathname + location.search}`}>
+          {doc.name}
+        </Link>
+      );
     },
   },
   {
@@ -247,6 +253,7 @@ export const useSiteDocDocumentColumns = ({
     usePayerFamilySelectOptions('payer_family_id');
   const { siteId } = useParams();
   const { data: site } = useGetSiteQuery(siteId);
+  const location = useLocation();
   return useMemo(
     () =>
       createColumns({
@@ -258,6 +265,7 @@ export const useSiteDocDocumentColumns = ({
         documentFamilyNamesById,
         payerFamilyNamesById,
         isManualCollection: site?.collection_method === CollectionMethod.Manual,
+        location,
       }),
     [
       documentFamilyNamesById,
@@ -268,6 +276,7 @@ export const useSiteDocDocumentColumns = ({
       initialDocumentFamilyOptions,
       initialPayerFamilyOptions,
       site?.collection_method,
+      location,
     ]
   );
 };

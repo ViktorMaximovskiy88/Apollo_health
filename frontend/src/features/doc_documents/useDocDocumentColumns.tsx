@@ -2,8 +2,9 @@ import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { Tag } from 'antd';
 import { uniq } from 'lodash';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { docDocumentTableState } from './docDocumentsSlice';
 import { prettyDateTimeFromISO, prettyDateUTCFromISO } from '../../common';
 import { ButtonLink } from '../../components';
@@ -57,6 +58,8 @@ export const useColumns = ({
   payerFamilyNamesById: { [id: string]: string };
   documentFamilyNamesById: { [id: string]: string };
 }) => {
+  const location = useLocation();
+  const prevLocation = location.pathname + location.search;
   const { siteOptions, initialSiteOptions } = useSiteSelectOptions();
   const { payerFamilyOptions, initialPayerFamilyOptions } = usePayerFamilySelectOptions(
     'locations.payer_family_id'
@@ -68,7 +71,7 @@ export const useColumns = ({
       header: 'Name',
       name: 'name',
       render: ({ data: doc }: { data: DocDocument }) => {
-        return <ButtonLink to={`${doc._id}`}>{doc.name}</ButtonLink>;
+        return <ButtonLink to={`${doc._id}?prevLocation=${prevLocation}`}>{doc.name}</ButtonLink>;
       },
       defaultFlex: 1,
       minWidth: 300,

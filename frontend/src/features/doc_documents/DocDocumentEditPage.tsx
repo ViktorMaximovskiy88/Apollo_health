@@ -4,7 +4,7 @@ import { DocDocumentEditForm } from './DocDocumentEditForm';
 import { RetrievedDocumentViewer } from '../retrieved_documents/RetrievedDocumentViewer';
 import { MainLayout } from '../../components';
 import { useForm } from 'antd/lib/form/Form';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { WarningFilled } from '@ant-design/icons';
 import { DocDocument } from './types';
@@ -34,6 +34,8 @@ export function DocDocumentEditPage() {
   const updateDocDoc = async (doc: Partial<DocDocument>): Promise<void> => {
     await updateDocDocument(doc);
   };
+  const { search } = useLocation();
+  const prevLocation = new URLSearchParams(search).get('prevLocation');
 
   useNavigateOnSuccess(result);
 
@@ -58,7 +60,7 @@ export function DocDocumentEditPage() {
           <Button
             disabled={isSaving}
             onClick={() => {
-              navigate(-1);
+              prevLocation ? navigate(prevLocation, { replace: true }) : navigate(-1);
             }}
           >
             Cancel
