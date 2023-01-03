@@ -78,6 +78,7 @@ async def create_doc_document_service(
         name=retrieved_document.name,
         checksum=retrieved_document.checksum,
         text_checksum=retrieved_document.text_checksum,
+        content_checksum=retrieved_document.content_checksum,
         document_type=retrieved_document.document_type,
         doc_type_confidence=retrieved_document.doc_type_confidence,
         doc_type_match=retrieved_document.doc_type_match,

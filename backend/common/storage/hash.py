@@ -1,5 +1,8 @@
 import hashlib
 import re
+
+import aiofiles
+
 from backend.common.storage.text_extraction import TextExtractor
 
 
@@ -34,8 +37,29 @@ def hash_bytes(document_bytes: bytes) -> str:
     return DocStreamHasher(document_bytes).hexdigest()
 
 
-def hash_full_text(html_text: str) -> str:
+def hash_full_text(text: str) -> str:
     """Generate a hash from a fulltext string."""
-    stripped_text = re.sub(r"\s+", "", html_text)
+    stripped_text = re.sub(r"\s+", "", text)
     stripped_bytes = stripped_text.encode()
     return hash_bytes(document_bytes=stripped_bytes)
+
+
+async def get_raw_bytes(filename: str):
+    async with aiofiles.open(filename, "rb") as fd:
+        return await fd.read()
+
+
+async def hash_content(text: str, files: list[str] = []) -> str:
+    stripped_text = re.sub(r"\s+", "", text)
+    stripped_bytes = stripped_text.encode()
+
+    hasher: DocStreamHasher = DocStreamHasher(stripped_bytes)
+    for file in files:
+        image_bytes = await get_raw_bytes(file)
+        hasher.update(image_bytes)
+
+    # perform cleanup here too, mreh
+    for file in files:
+        await aiofiles.os.remove(file)
+
+    return hasher.hexdigest()

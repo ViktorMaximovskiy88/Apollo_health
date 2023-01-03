@@ -1,6 +1,6 @@
 import os
-import pathlib
 from abc import ABC
+from pathlib import Path
 from typing import Any
 
 import aiofiles
@@ -32,7 +32,7 @@ class FileParser(ABC):
         self.url = url
         self.link_text = link_text or ""
         file_name = self.url.removesuffix("/")
-        self.filename_no_ext = str(pathlib.Path(os.path.basename(file_name)).with_suffix(""))
+        self.filename_no_ext = str(Path(os.path.basename(file_name)).with_suffix(""))
         self.scrape_method_config = scrape_method_config
 
     async def get_info(self) -> dict[str, str]:
@@ -41,7 +41,7 @@ class FileParser(ABC):
     async def get_text(self) -> str:
         raise NotImplementedError("get_text is required")
 
-    async def get_image_checksums(self) -> list[str]:
+    async def get_images(self) -> list[str]:
         return []
 
     def get_title(self, _):
@@ -58,6 +58,7 @@ class FileParser(ABC):
     async def parse(self) -> dict[str, Any]:
         self.metadata = await self.get_info()
         self.text = await self.get_text()
+        self.images = await self.get_images()
         title = self.get_title(self.metadata)
 
         document_type, confidence, doc_vectors, doc_type_match = guess_doc_type(
@@ -87,6 +88,7 @@ class FileParser(ABC):
             "published_date": date_parser.published_date.date,
             "title": title,
             "text": self.text,
+            "images": self.images,
             "document_type": document_type,
             "confidence": confidence,
             "lang_code": lang_code,

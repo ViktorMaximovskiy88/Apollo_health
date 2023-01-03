@@ -114,6 +114,7 @@ class DocumentUpdater:
             file_size=download.file_size,
             token_count=len(tokens),
             doc_type_match=parsed_content["doc_type_match"],
+            content_checksum=parsed_content["content_checksum"],
         )
 
         # Must handle locations separately to avoid overwriting concurrent updates
@@ -189,6 +190,7 @@ class DocumentUpdater:
 
             # Can be removed after text added to older docs
             doc_document.text_checksum = retrieved_document.text_checksum
+            doc_document.content_checksum = retrieved_document.content_checksum
             doc_document.doc_vectors = retrieved_document.doc_vectors
             doc_document.file_size = retrieved_document.file_size
             doc_document.token_count = retrieved_document.token_count
@@ -211,6 +213,7 @@ class DocumentUpdater:
             file_size=download.file_size,
             checksum=checksum,
             text_checksum=text_checksum,
+            content_checksum=parsed_content["content_checksum"],
             doc_type_confidence=parsed_content["confidence"],
             document_type=parsed_content["document_type"],
             doc_vectors=parsed_content["doc_vectors"],

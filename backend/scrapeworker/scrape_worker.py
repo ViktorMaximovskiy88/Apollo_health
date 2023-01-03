@@ -36,7 +36,7 @@ from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleServ
 from backend.common.services.doc_lifecycle.hooks import ChangeInfo, doc_document_save_hook
 from backend.common.services.lineage.core import LineageService
 from backend.common.storage.client import DocumentStorageClient
-from backend.common.storage.hash import hash_full_text
+from backend.common.storage.hash import hash_content, hash_full_text
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.aio_downloader import AioDownloader, default_headers
 from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocsCollectedException
@@ -266,6 +266,10 @@ class ScrapeWorker:
             document = None
 
             text_checksum = hash_full_text(parsed_content["text"])
+            parsed_content["content_checksum"] = await hash_content(
+                parsed_content["text"], parsed_content["images"]
+            )
+
             document = await RetrievedDocument.find_one(RetrievedDocument.checksum == checksum)
             if not document:
                 document = await RetrievedDocument.find_one(
