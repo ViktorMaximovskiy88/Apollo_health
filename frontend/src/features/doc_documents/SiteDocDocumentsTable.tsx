@@ -116,7 +116,7 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
 
   return (
     <>
-      {siteScrapeTask ? (
+      {siteScrapeTask && (
         <Alert
           message={`${siteScrapeTaskStatusLabel(siteScrapeTask)} | ${collectionCountLabel(
             siteScrapeTask
@@ -126,9 +126,8 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
           type="success"
           className="mb-1"
         />
-      ) : (
-        <Alert message="Showing All Documents" type="success" className="mb-1" />
       )}
+
       <ReactDataGrid
         idProperty="_id"
         dataSource={loadData}
