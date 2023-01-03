@@ -489,6 +489,8 @@ class DateParser:
                     ):  # if no match and previous line ends with comma, check label from the start
                         label = self.get_date_label(line, 0, m.last_date_index, "START")
                     if label:
+                        if ends_with_comma:
+                            label.priority = True
                         # custom logic for saving labels in adjacent cells ahca.myflorida.com
                         prev_label = label if prev_line and prev_line[-1] == ":" else None
                         self.update_label(m, label)
