@@ -42,9 +42,8 @@ class BaseDocDocument(BaseModel):
     name: Indexed(str)  # type: ignore
     checksum: Indexed(str)  # type: ignore
     file_extension: str | None = None
-    text_checksum: str | None = None
-    image_checksums: list[str] = []
-    content_checksum: str | None = None
+    text_checksum: Indexed(str) | None = None
+    content_checksum: Indexed(str) | None = None
 
     lang_code: LangCode | None = None
 

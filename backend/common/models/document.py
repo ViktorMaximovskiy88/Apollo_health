@@ -20,6 +20,7 @@ class BaseRetrievedDocument(BaseModel):
     # scrape_task_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     checksum: Indexed(str)  # type: ignore
     text_checksum: Indexed(str) | None = None
+    content_checksum: Indexed(str) | None = None
     disabled: bool = False
     name: str
     metadata: dict = {}
@@ -97,6 +98,7 @@ class UpdateRetrievedDocument(BaseModel, DocumentMixins):
     last_collected_date: datetime | None = None
     checksum: str | None = None
     text_checksum: str | None = None
+    content_checksum: str | None = None
     disabled: bool | None = None
     name: str | None = None
     document_type: str | None = None

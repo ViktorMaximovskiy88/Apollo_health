@@ -38,7 +38,7 @@ const useMustBeUniqueNameRule = () => {
 const buildInitialValues = () => ({
   scrape_method: 'SimpleDocumentScrape',
   collection_method: CollectionMethod.Automated,
-  cron: '0 16 * * *',
+  cron: '0 8 * * *',
   tags: [],
   status: SiteStatus.New,
   base_urls: [{ url: '', name: '', status: 'ACTIVE' }],
