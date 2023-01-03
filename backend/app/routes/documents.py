@@ -24,6 +24,7 @@ from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import ManualWorkItem, SiteScrapeTask, WorkItemOption
 from backend.common.models.user import User
 from backend.common.services.collection import CollectionResponse, find_work_item_index
+from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook
 from backend.common.services.document import create_doc_document_service
 from backend.common.services.site import site_last_started_task
 from backend.common.services.tag_compare import TagCompare
@@ -500,5 +501,9 @@ async def add_document(
     if created_retr_doc.id not in current_task.retrieved_document_ids:
         current_task.retrieved_document_ids.append(f"{created_retr_doc.id}")
     await current_task.save()
+
+    # Start doc cycle workflow for add_doc and new_version.
+    if not uploaded_doc.prev_location_doc_id:
+        await doc_document_save_hook(created_doc_doc)
 
     return created_retr_doc
