@@ -105,16 +105,24 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
       return '0 seconds';
     }
   }
+  const collectionCount = siteScrapeTask?.retrieved_document_ids.length;
+  function collectionCountLabel(siteScrapeTask: SiteScrapeTask) {
+    if (siteScrapeTask.status === TaskStatus.InProgress) {
+      return `Collecting ${collectionCount} Documents`;
+    } else {
+      return `${collectionCount} Documents Collected`;
+    }
+  }
 
   return (
     <>
       {siteScrapeTask ? (
         <Alert
-          message={`${siteScrapeTaskStatusLabel(siteScrapeTask)} | ${
-            siteScrapeTask.retrieved_document_ids.length
-          } Documents Collected on ${dateLabel} ${collectionMethodLabel(
+          message={`${siteScrapeTaskStatusLabel(siteScrapeTask)} | ${collectionCountLabel(
             siteScrapeTask
-          )} | ${elapsedLable(siteScrapeTask)}`}
+          )} on ${dateLabel} ${collectionMethodLabel(siteScrapeTask)} | ${elapsedLable(
+            siteScrapeTask
+          )}`}
           type="success"
           className="mb-1"
         />
