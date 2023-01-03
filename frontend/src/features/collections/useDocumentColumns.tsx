@@ -5,6 +5,7 @@ import { RetrievedDocument, DocumentTypes } from '../retrieved_documents/types';
 import { useGetChangeLogQuery } from '../sites/sitesApi';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
+import { TypeFilterValue } from '@inovua/reactdatagrid-community/types';
 
 export const useDocumentColumns = () => [
   {
@@ -57,10 +58,12 @@ export const useDocumentColumns = () => [
     name: 'document_type',
     minWidth: 200,
     filterEditor: SelectFilter,
-    filterEditorProps: {
-      placeholder: 'All',
+    filterEditorProps: ({ filterValue }: { filterValue: TypeFilterValue }) => ({
+      placeholder: filterValue ? null : 'All',
+      multiple: true,
+      wrapMultiple: false,
       dataSource: DocumentTypes,
-    },
+    }),
     render: ({ value: document_type }: { value: string }) => {
       return <>{document_type}</>;
     },

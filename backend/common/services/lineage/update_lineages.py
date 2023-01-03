@@ -14,10 +14,7 @@ async def update_lineage(
     include_later_documents: bool = False,
 ):
     if old_prev_doc_doc_id == new_prev_doc_doc_id:
-        raise Exception(
-            f"old_prev_doc_doc_id == new_prev_doc_doc_id: (old_prev_doc_doc_id: {old_prev_doc_doc_id}). \
-                This should not be possible. There is a code error."
-        )
+        return updating_doc_doc
 
     if include_later_documents:
         return await insert_into_lineage_include_later_documents(
