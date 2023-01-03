@@ -10,7 +10,6 @@ from backend.common.events.event_convert import EventConvert
 from backend.common.events.send_event_client import SendEventClient
 from backend.common.models.content_extraction_task import ContentExtractionTask
 from backend.common.models.doc_document import DocDocument
-from backend.common.models.document import RetrievedDocument
 from backend.common.models.document_family import DocumentFamily
 from backend.common.models.shared import IndicationTag, TherapyTag
 from backend.common.models.site import Site
@@ -119,14 +118,7 @@ class DocLifecycleService:
         else:
             info.append("LINEAGE")
 
-        # If user uploaded doc, set to approved.
-        retr_doc: RetrievedDocument | None = await RetrievedDocument.find_one(
-            RetrievedDocument.id == PydanticObjectId(doc.retrieved_document_id)
-        )
-        if retr_doc and retr_doc.uploader_id is not None:
-            doc.classification_hold_info = []
-            doc.classification_status = ApprovalStatus.APPROVED
-        elif info:
+        if info:
             doc.classification_hold_info = info
             doc.classification_status = ApprovalStatus.QUEUED
         else:
