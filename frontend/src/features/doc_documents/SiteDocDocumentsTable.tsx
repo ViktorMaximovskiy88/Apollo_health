@@ -99,11 +99,18 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
     }
   }
   function elapsedLable(siteScrapeTask: SiteScrapeTask) {
-    if (siteScrapeTask && siteScrapeTask.start_time) {
-      return prettyDateDistanceSingle(siteScrapeTask.start_time, siteScrapeTask.end_time);
-    } else {
+    if (!siteScrapeTask || !siteScrapeTask.start_time) {
       return '0 seconds';
     }
+    const formattedDate = prettyDateDistanceSingle(
+      siteScrapeTask.start_time || siteScrapeTask.queued_time,
+      siteScrapeTask.end_time
+    );
+    if (!formattedDate) {
+      return '0 seconds';
+    }
+
+    return formattedDate;
   }
   const collectionCount = siteScrapeTask?.retrieved_document_ids.length;
   function collectionCountLabel(siteScrapeTask: SiteScrapeTask) {
