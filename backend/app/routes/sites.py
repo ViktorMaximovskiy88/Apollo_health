@@ -124,6 +124,7 @@ async def create_site(
         tags=site.tags,
         disabled=False,
         cron=site.cron,
+        playbook=site.playbook,
     )
 
     await create_and_log(logger, current_user, new_site)
