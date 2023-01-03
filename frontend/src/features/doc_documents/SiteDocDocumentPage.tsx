@@ -10,7 +10,7 @@ import { AddDocumentModal } from '../collections/AddDocumentModal';
 import { SiteDocDocument } from './types';
 import { useGetSiteQuery } from '../sites/sitesApi';
 import {
-  useGetScrapeTasksForSiteQuery,
+  useGetScrapeTaskQuery,
   useLazyGetScrapeTasksForSiteQuery,
   useRunSiteScrapeTaskMutation,
 } from '../collections/siteScrapeTasksApi';
@@ -24,7 +24,6 @@ import {
   siteDocDocumentTableState,
 } from './siteDocDocumentsSlice';
 import { useAppDispatch } from '../../app/store';
-import { SiteScrapeTask } from '../collections/types';
 
 function DocTypeUpdateModalToolbar() {
   const { siteId } = useParams();
@@ -55,19 +54,8 @@ export function SiteDocDocumentsPage() {
   const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
   const [runScrape] = useRunSiteScrapeTaskMutation();
   const { data: site, refetch } = useGetSiteQuery(siteId);
-
-  const mostRecentTask = {
-    limit: 1,
-    skip: 0,
-    sortInfo: initialState.table.sort,
-    filterValue: initialState.table.filter,
-  };
-  const { data }: { data?: { data?: SiteScrapeTask[] } } = useGetScrapeTasksForSiteQuery({
-    ...mostRecentTask,
-    siteId,
-  });
+  const { data: siteScrapeTask } = useGetScrapeTaskQuery(scrapeTaskId);
   if (!site) return null;
-  const siteScrapeTasks = data?.data;
 
   function handleNewVersion(data: SiteDocDocument) {
     setOldVersion(data);
@@ -79,6 +67,12 @@ export function SiteDocDocumentsPage() {
     setOldVersion(null);
   }
 
+  const mostRecentTask = {
+    limit: 1,
+    skip: 0,
+    sortInfo: initialState.table.sort,
+    filterValue: initialState.table.filter,
+  };
   const refreshDocs = async () => {
     if (!scrapeTaskId) return;
     // Get scrape tasks so we can match manual work_list items to docs.
@@ -92,16 +86,14 @@ export function SiteDocDocumentsPage() {
       sectionToolbar={
         <>
           {site.collection_method === 'MANUAL' &&
-          activeStatuses.includes(site.last_run_status) &&
-          siteScrapeTasks &&
-          siteScrapeTasks[0]._id === scrapeTaskId ? (
+          siteScrapeTask?.collection_method === 'MANUAL' &&
+          activeStatuses.includes(siteScrapeTask.status) ? (
             <ManualCollectionButton site={site} refetch={refetch} runScrape={runScrape} />
           ) : null}
 
           {site.collection_method === 'MANUAL' &&
-          activeStatuses.includes(site.last_run_status) &&
-          siteScrapeTasks &&
-          siteScrapeTasks[0]._id === scrapeTaskId ? (
+          siteScrapeTask?.collection_method === 'MANUAL' &&
+          activeStatuses.includes(siteScrapeTask.status) ? (
             <Button onClick={() => setNewDocumentModalOpen(true)} className="ml-auto">
               Create Document
             </Button>

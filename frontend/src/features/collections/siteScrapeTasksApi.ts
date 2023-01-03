@@ -29,7 +29,10 @@ export const siteScrapeTasksApi = createApi({
         return tags;
       },
     }),
-
+    getScrapeTask: builder.query<SiteScrapeTask, string | null | undefined>({
+      query: (id) => `/site-scrape-tasks/${id}`,
+      providesTags: (_r, _e, id) => (id ? [{ type: 'SiteScrapeTask' as const, id }] : []),
+    }),
     runSiteScrapeTask: builder.mutation<SiteScrapeTask, string>({
       query: (siteId) => ({
         url: `/site-scrape-tasks/?site_id=${siteId}`,
@@ -117,4 +120,5 @@ export const {
   useGetChangeLogQuery,
   useRunBulkMutation,
   useGetCollectionConfigQuery,
+  useGetScrapeTaskQuery,
 } = siteScrapeTasksApi;

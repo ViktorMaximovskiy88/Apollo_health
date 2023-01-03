@@ -22,6 +22,10 @@ import {
 } from './document_family/documentFamilyHooks';
 import { uniquePayerFamilyIds, useGetPayerFamilyNamesById } from '../payer-family/payerFamilyHooks';
 import { Alert } from 'antd';
+import { useGetScrapeTaskQuery } from '../collections/siteScrapeTasksApi';
+import { TaskStatus } from '../../common/scrapeTaskStatus';
+import { SiteScrapeTask } from '../collections/types';
+import { prettyDateDistanceSingle, prettyDateTimeFromISO } from '../../common';
 
 interface DataTablePropTypes {
   handleNewVersion: (data: SiteDocDocument) => void;
@@ -35,6 +39,7 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
   const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
   const { setDocumentFamilyIds, documentFamilyNamesById } = useGetDocumentFamilyNamesById();
   const { setPayerFamilyIds, payerFamilyNamesById } = useGetPayerFamilyNamesById();
+  const { data: siteScrapeTask } = useGetScrapeTaskQuery(scrapeTaskId);
 
   const { forceUpdate } = useSelector(siteDocDocumentTableState);
   const loadData = useCallback(
@@ -68,11 +73,48 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
     setSiteDocDocumentTableSkip
   );
 
+  function siteScrapeTaskStatusLabel(siteScrapeTask: SiteScrapeTask) {
+    if (siteScrapeTask.status === TaskStatus.Queued) {
+      return 'Queued';
+    } else if (siteScrapeTask.status === TaskStatus.Pending) {
+      return 'Pending';
+    } else if (siteScrapeTask.status === TaskStatus.InProgress) {
+      return 'Started';
+    } else if (siteScrapeTask.status === TaskStatus.Failed) {
+      return 'Failed';
+    } else if (siteScrapeTask.status === TaskStatus.Canceling) {
+      return 'Canceling';
+    } else if (siteScrapeTask.status === TaskStatus.Canceled) {
+      return 'Canceled';
+    } else {
+      return 'Finished';
+    }
+  }
+  const dateLabel = prettyDateTimeFromISO(siteScrapeTask?.start_time);
+  function collectionMethodLabel(siteScrapeTask: SiteScrapeTask) {
+    if (siteScrapeTask?.collection_method === 'MANUAL') {
+      return 'Manual Collection';
+    } else {
+      return 'Automated Collection';
+    }
+  }
+  function elapsedLable(siteScrapeTask: SiteScrapeTask) {
+    if (siteScrapeTask && siteScrapeTask.start_time) {
+      return prettyDateDistanceSingle(siteScrapeTask.start_time, siteScrapeTask.end_time);
+    } else {
+      return '0 seconds';
+    }
+  }
+
   return (
     <>
-      {scrapeTaskId ? (
+      {siteScrapeTask ? (
         <Alert
-          message={`Filtered by Site Scrape Task: ${scrapeTaskId}`}
+          message={`${siteScrapeTaskStatusLabel(siteScrapeTask)} | ${
+            siteScrapeTask.retrieved_document_ids.length
+          } Documents Collected on ${dateLabel} ${collectionMethodLabel(
+            siteScrapeTask
+          )} | ${elapsedLable(siteScrapeTask)}`}
           type="success"
           className="mb-1"
         />
