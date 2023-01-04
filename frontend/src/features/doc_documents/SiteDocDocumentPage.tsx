@@ -56,7 +56,6 @@ export function SiteDocDocumentsPage() {
   const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
   const [runScrape] = useRunSiteScrapeTaskMutation();
   const { data: site, refetch } = useGetSiteQuery(siteId);
-
   const mostRecentTask = {
     limit: 1,
     skip: 0,

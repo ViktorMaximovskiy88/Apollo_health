@@ -148,7 +148,10 @@ class LineageModel:
                 yield docf1, docf2
 
         graph = ig.Graph(len(docs))
-        graph = self.create_analyses_graph(graph, pair_generator(), docs)
+        # n choose k means 800 docs will have to do 319,600 comparisons
+        # just don't bother, each doc will be its own lineage
+        if len(doc_analyses) < 800:
+            graph = self.create_analyses_graph(graph, pair_generator(), docs)
         cc = graph.connected_components()
 
         lineages: list[list[DocumentAnalysis]] = []

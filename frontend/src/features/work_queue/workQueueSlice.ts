@@ -25,9 +25,7 @@ export const initialState: { table: TableState } = {
       { name: 'document_type', operator: 'eq', type: 'select', value: null },
       { name: 'final_effective_date', operator: 'after', type: 'date', value: '' },
       { name: 'first_collected_date', operator: 'after', type: 'date', value: '' },
-      // Frontend converts number to low, medium, high, but filter only works with number.
-      // May not need to filter priority anyway due to default sorting of high priority.
-      // { name: 'priority', operator: 'eq', type: 'number', value: null },
+      { name: 'priority', operator: 'eq', type: 'number', value: null },
     ],
     pagination: { limit: 50, skip: 0 },
   },
