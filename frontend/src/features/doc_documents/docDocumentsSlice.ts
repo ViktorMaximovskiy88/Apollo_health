@@ -19,6 +19,7 @@ export const initialState = {
       { name: 'document_family_id', operator: 'eq', type: 'select', value: null },
       { name: 'first_collected_date', operator: 'before', type: 'date', value: '' },
       { name: 'last_collected_date', operator: 'before', type: 'date', value: '' },
+      { name: 'priority', operator: 'eq', type: 'number', value: null },
     ],
     pagination: { limit: 50, skip: 0 },
     forceUpdate: 0,

@@ -306,6 +306,13 @@ def build_doc_analysis(
             confidence=doc.lineage_confidence,
             site_id=doc.site_id,
         )
+    doc_analysis.previous_doc_doc_id = doc.previous_doc_doc_id
+    doc_analysis.lineage_id = doc.lineage_id
+    doc_analysis.doc_document_id = doc.id
+
+    doc_analysis.file_size = doc.file_size
+    doc_analysis.doc_vectors = doc.doc_vectors
+    doc_analysis.token_count = doc.token_count
 
     doc_analysis.file_size = doc.file_size
     doc_analysis.doc_vectors = doc.doc_vectors

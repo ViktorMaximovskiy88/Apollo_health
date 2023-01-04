@@ -38,9 +38,7 @@ class SearchableCrawler:
             if search_codes:
                 search_codes_list += list(search_codes.codes)
 
-        if search_codes_list:
-            return search_codes_list
-        return set()
+        return search_codes_list
 
     async def replay_playbook(self, page: Page, playbook_context: PlaybookContext):
         playbook = ScrapePlaybook(playbook_str=None, playbook_context=playbook_context)
