@@ -53,8 +53,14 @@ class DocTypeTaskProcessor(TaskProcessor):
         site: Site = await Site.get(location.site_id)
         scrape_method_configuration = site.scrape_method_configuration if site else None
 
+        is_searchable = (
+            scrape_method_configuration
+            and scrape_method_configuration.searchable
+            and len(doc.name) == 5
+        )
+
         document_type, confidence, doc_vectors, doc_type_match = guess_doc_type(
-            raw_text, location.link_text, location.url, doc.name, scrape_method_configuration
+            raw_text, location.link_text, location.url, doc.name, is_searchable
         )
 
         current_stage = PipelineStage(

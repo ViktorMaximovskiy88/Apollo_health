@@ -76,10 +76,14 @@ class ScrapeHandler:
                 log=self.log,
                 metadata=metadata,
             )
+
             if not await scraper.is_applicable():
                 continue
 
+            is_searchable = metadata.get("is_searchable", False)
+
             for download in await scraper.execute():
+                download.is_searchable = is_searchable
                 self.log.debug(f"downloads ... {base_url} {download.request.url}")
                 self.__preprocess_download(download, base_url, metadata)
                 downloads.append(download)
