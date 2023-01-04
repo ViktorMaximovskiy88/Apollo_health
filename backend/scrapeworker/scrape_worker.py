@@ -582,7 +582,9 @@ class ScrapeWorker:
             if self.is_cms_url(url):
                 self.log.info(f"Skip scrape & process CMS url: {url}")
                 proxies = await self.get_proxy_settings()
-                cms_scraper = CMSScrapeController(url, self.downloader, self.doc_client, proxies)
+                cms_scraper = CMSScrapeController(
+                    url, self.downloader, self.doc_client, proxies, self.log
+                )
                 downloads = await cms_scraper.execute()
                 all_downloads += downloads
                 continue
