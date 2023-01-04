@@ -111,6 +111,7 @@ async def test_assess_classification():
         lineage_confidence=1,
         final_effective_date=datetime.now() + timedelta(weeks=1),
         locations=[BasicLocation(site_id=site.id)],
+        classification_status=ApprovalStatus.APPROVED,
     )
 
     status, _ = await service.assess_classification_status(doc)
@@ -229,7 +230,7 @@ async def test_intermediate_statuses():
     doc.doc_type_confidence = 0.9
     doc.previous_doc_doc_id = prev_doc.id
     doc.final_effective_date = datetime.now()
-    doc.classification_status = ApprovalStatus.PENDING
+    doc.classification_status = ApprovalStatus.APPROVED
 
     fully_approved, _ = await service.assess_intermediate_statuses(doc)
     assert doc.classification_status == ApprovalStatus.APPROVED

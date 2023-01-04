@@ -21,7 +21,7 @@ import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
 import { useGetSiteQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
 import { useDocumentFamilySelectOptions } from './document_family/documentFamilyHooks';
 import { usePayerFamilySelectOptions } from '../payer-family/payerFamilyHooks';
-import { priorityStyle } from '../doc_documents/useSiteDocDocumentColumns';
+import { priorityOptions, priorityStyle } from '../doc_documents/useSiteDocDocumentColumns';
 import { TypeFilterValue } from '@inovua/reactdatagrid-community/types';
 
 export function useSiteSelectOptions() {
@@ -308,8 +308,11 @@ export const useColumns = ({
     {
       header: 'Priority',
       name: 'priority',
-      width: 90,
-      filterSearch: true,
+      width: 130,
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        dataSource: priorityOptions,
+      },
       render: ({ data: doc }: { data: DocDocument }) => {
         return priorityStyle(doc.priority);
       },

@@ -5,7 +5,7 @@ import BoolFilter from '@inovua/reactdatagrid-community/BoolFilter';
 import { LinkOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { prettyDateUTCFromISO } from '../../common';
 import { DocDocument, SiteDocDocument } from './types';
-import { Link, useLocation, useParams, Location } from 'react-router-dom';
+import { Link, useLocation, Location, useParams } from 'react-router-dom';
 import { DocumentTypes } from '../retrieved_documents/types';
 import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
 import { ManualCollectionValidationButtons } from './manual_collection/ManualCollectionValidationButtons';
@@ -58,6 +58,11 @@ export enum TextAlignType {
 const InternalDocs = [
   { id: true, value: true, label: 'true' },
   { id: false, value: false, label: 'false' },
+];
+
+export const priorityOptions = [
+  { label: 'Low', id: 0, value: 0 },
+  { label: 'High', id: 2, value: 2 },
 ];
 
 export function priorityStyle(priority: number): React.ReactElement {
@@ -214,7 +219,11 @@ export const createColumns = ({
   {
     header: 'Priority',
     name: 'priority',
-    width: 90,
+    width: 130,
+    filterEditor: SelectFilter,
+    filterEditorProps: {
+      dataSource: priorityOptions,
+    },
     render: ({ data: doc }: { data: SiteDocDocument }) => {
       return priorityStyle(doc.priority);
     },
