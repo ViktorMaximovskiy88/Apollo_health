@@ -2,6 +2,7 @@ import hashlib
 import re
 
 import aiofiles
+import aiofiles.os
 
 from backend.common.storage.text_extraction import TextExtractor
 
@@ -60,6 +61,9 @@ async def hash_content(text: str, files: list[str] = []) -> str:
 
     # perform cleanup here too, mreh
     for file in files:
-        await aiofiles.os.remove(file)
+        try:
+            await aiofiles.os.remove(file)
+        except Exception:
+            pass
 
     return hasher.hexdigest()
