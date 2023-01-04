@@ -93,7 +93,7 @@ export const DocumentTypes = [
 export const FieldGroupsOptions = [
   { id: 'AUTHORIZATION_DETAILS', label: 'Authorization Details', value: 'AUTHORIZATION_DETAILS' },
   { id: 'TIER', label: 'Tier', value: 'TIER' },
-  { id: 'MEDICAL_COVERAGE', label: 'Medical Coverage', value: 'MEDICAL_COVERAGE' },
+  { id: 'COVERAGE', label: 'Medical Coverage', value: 'MEDICAL_COVERAGE' },
   { id: 'QL_GATE', label: 'QL Gate', value: 'QL_GATE' },
   { id: 'QL_DETAILS', label: 'QL Details', value: 'QL_DETAILS' },
   { id: 'PA', label: 'PA', value: 'PA' },

@@ -7,7 +7,8 @@ import {
 import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
 import { useEffect } from 'react';
-import { fieldGroupsOptions, legacyRelevanceOptions } from './documentFamilyLevels';
+import { legacyRelevanceOptions } from './documentFamilyLevels';
+import { FieldGroupsOptions } from '../../retrieved_documents/types';
 import { DocumentFamily } from './types';
 import { CloseOutlined } from '@ant-design/icons';
 import { DocumentTypes } from '../../retrieved_documents/types';
@@ -133,7 +134,7 @@ export const DocumentFamilyCreateDrawer = (props: DocumentFamilyCreateDrawerProp
           </Form.Item>
 
           <Form.Item label="Field Groups" name="field_groups" className="w-full">
-            <Select mode="multiple" options={fieldGroupsOptions} />
+            <Select mode="multiple" options={FieldGroupsOptions} />
           </Form.Item>
         </Input.Group>
         <div className="space-x-2 flex justify-end">
