@@ -115,6 +115,7 @@ class DocumentUpdater:
             token_count=len(tokens),
             doc_type_match=parsed_content["doc_type_match"],
             content_checksum=parsed_content["content_checksum"],
+            is_searchable=download.is_searchable,
         )
 
         # Must handle locations separately to avoid overwriting concurrent updates
@@ -194,6 +195,7 @@ class DocumentUpdater:
             doc_document.doc_vectors = retrieved_document.doc_vectors
             doc_document.file_size = retrieved_document.file_size
             doc_document.token_count = retrieved_document.token_count
+            doc_document.is_searchable = retrieved_document.is_searchable
             doc_document.set_final_effective_date()
             await doc_document.save()
         else:
@@ -237,6 +239,7 @@ class DocumentUpdater:
             last_collected_date=now,
             token_count=len(tokens),
             doc_type_match=parsed_content["doc_type_match"],
+            is_searchable=download.is_searchable,
             locations=[
                 RetrievedDocumentLocation(
                     base_url=download.metadata.base_url,

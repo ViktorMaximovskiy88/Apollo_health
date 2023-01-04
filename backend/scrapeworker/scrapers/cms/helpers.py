@@ -1,5 +1,7 @@
 from datetime import datetime
 from itertools import groupby
+from logging import Logger
+from typing import Any, Hashable
 
 from lxml import etree
 from pandas import DataFrame
@@ -48,9 +50,10 @@ def search_data_frame(
     data_source: DataFrame,
     search_params: list[str],
     search_values,
+    logger: Logger,
     as_data_frame=False,
     operator="&",
-):
+) -> DataFrame | list[dict[Hashable, Any]]:
     """
     Perform a search within pandas DataFrame by the set of parameters and values
     :param data_source: source DataFrame
@@ -68,10 +71,14 @@ def search_data_frame(
     while x < len(search_params):
         conditions.append(f"{search_params[x]} == {search_values[x]}")
         x += 1
-    if as_data_frame:
-        return data_source.query(f" {operator} ".join(conditions))
-    else:
-        return data_source.query(f" {operator} ".join(conditions)).to_dict("records")
+    try:
+        if as_data_frame:
+            return data_source.query(f" {operator} ".join(conditions))
+        else:
+            return data_source.query(f" {operator} ".join(conditions)).to_dict("records")
+    except Exception:
+        logger.error("Error parsing dataframe", exc_info=True)
+        return []
 
 
 def greater_than_today(string_date: str) -> bool:

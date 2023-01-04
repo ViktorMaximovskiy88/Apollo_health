@@ -103,6 +103,7 @@ async def create_doc_document_service(
         doc_vectors=retrieved_document.doc_vectors,
         file_size=retrieved_document.file_size,
         token_count=retrieved_document.token_count,
+        is_searchable=retrieved_document.is_searchable,
     )
     # Since user uploaded doc and manually set doc info,
     # skip classification queue and set to approved.

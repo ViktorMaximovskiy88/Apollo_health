@@ -47,6 +47,7 @@ class BaseRetrievedDocument(BaseModel):
     doc_vectors: list[list[float]] = []
     token_count: int = 0
     priority: int = 0
+    is_searchable: bool = False
 
     # lineage
     lineage_id: PydanticObjectId | None = None
@@ -121,6 +122,7 @@ class UpdateRetrievedDocument(BaseModel, DocumentMixins):
     doc_vectors: list[list[float]] = []
     file_size: int = 0
     token_count: int | None = None
+    is_searchable: bool = False
 
 
 class RetrievedDocumentLimitTags(RetrievedDocument):

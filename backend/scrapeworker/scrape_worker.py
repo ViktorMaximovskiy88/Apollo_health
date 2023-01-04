@@ -200,8 +200,9 @@ class ScrapeWorker:
         link_retrieved_task: LinkRetrievedTask = link_retrieved_task_from_download(
             download, self.scrape_task
         )
+
         scrape_method_config = self.site.scrape_method_configuration
-        # prob our fail
+
         async with self.downloader.try_download_to_tempfile(download, proxies) as (
             temp_path,
             checksum,
@@ -290,6 +291,7 @@ class ScrapeWorker:
                         url,
                         link_text=download.metadata.link_text,
                         scrape_method_config=scrape_method_config,
+                        download=download,
                     ).update_parsed_content(parsed_content)
 
             if document:
@@ -515,7 +517,7 @@ class ScrapeWorker:
                 if await self.search_crawler.is_searchable(page):
                     async for code in self.search_crawler.run_searchable(page, playbook_context):
                         await scrape_handler.run_scrapers(
-                            url, base_url, all_downloads, {"file_name": code}
+                            url, base_url, all_downloads, {"file_name": code, "is_searchable": True}
                         )
                 else:
                     await scrape_handler.run_scrapers(url, base_url, all_downloads)
@@ -582,7 +584,9 @@ class ScrapeWorker:
             if self.is_cms_url(url):
                 self.log.info(f"Skip scrape & process CMS url: {url}")
                 proxies = await self.get_proxy_settings()
-                cms_scraper = CMSScrapeController(url, self.downloader, self.doc_client, proxies)
+                cms_scraper = CMSScrapeController(
+                    url, self.downloader, self.doc_client, proxies, self.log
+                )
                 downloads = await cms_scraper.execute()
                 all_downloads += downloads
                 continue

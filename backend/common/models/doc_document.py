@@ -98,6 +98,7 @@ class BaseDocDocument(BaseModel):
 
     user_edited_fields: list[str] = []
     priority: Indexed(int, pymongo.DESCENDING) = 0  # type: ignore
+    is_searchable: bool = False
 
 
 class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixins):

@@ -3,6 +3,7 @@ import html
 import os
 import zipfile
 from datetime import datetime, timedelta
+from logging import Logger
 from typing import Any, Hashable
 from urllib.parse import parse_qs, urlparse
 
@@ -114,6 +115,7 @@ class CMSScraper:
         downloader: AioDownloader,
         doc_client: DocumentStorageClient,
         proxies: list[tuple[Proxy | None, ProxySettings | None]],
+        log: Logger,
         base_url: str | None = None,
     ) -> None:
         self.url = url
@@ -124,6 +126,7 @@ class CMSScraper:
         self.cms_doc = CmsDoc.from_url(url)
         self.data_source: list[dict[str, str | DataFrame]] = []
         self._set_target_url_parameters()
+        self.log = log
 
     def _set_target_url_parameters(self):
         """
@@ -194,7 +197,7 @@ class CMSScraper:
                     for param in documents_list_info["url_identifiers"]
                 ]
                 list_of_identifiers = search_data_frame(
-                    target_dataset, data_set_identifiers, url_identifiers
+                    target_dataset, data_set_identifiers, url_identifiers, self.log
                 )
         if self.cms_doc.type == CmsDocType.LCD or self.cms_doc.type == CmsDocType.LCA:
             status_source = self._get_data_source_item(documents_list_info["target_source"])
@@ -203,7 +206,7 @@ class CMSScraper:
                 for field in target_fields:
                     target_identifiers.append(identifier[field])
                 found_items: list[dict[Hashable, Any]] = search_data_frame(
-                    status_source, target_fields, target_identifiers
+                    status_source, target_fields, target_identifiers, self.log
                 )
                 if len(found_items) > 0:
                     found_item = found_items[0]
@@ -261,7 +264,7 @@ class CMSScraper:
             parent_source = self._get_data_source_item(field["parent_source"])
             if parent_source is not None:
                 search_result: list[dict[Hashable, Any]] = search_data_frame(
-                    parent_source, identifiers, values
+                    parent_source, identifiers, values, self.log
                 )  # type: ignore
                 parent_identifier = [result[field["parent_identifier"]] for result in search_result]
         ds = self._get_data_source_item(field["source"])
@@ -269,13 +272,13 @@ class CMSScraper:
             return table_template
         if parent_identifier is not None:
             search_result = search_data_frame(
-                ds, [field["identifier"]], parent_identifier, operator="|"
+                ds, [field["identifier"]], parent_identifier, self.log, operator="|"
             )  # type: ignore
             table_template += "<br/>".join(
                 [str(search_item[field["field"]]) for search_item in search_result]
             )
         else:
-            search_result = search_data_frame(ds, identifiers, values)  # type: ignore
+            search_result = search_data_frame(ds, identifiers, values, self.log)  # type: ignore
             table_template += str(search_result[0][field["field"]])
             if "min_length" in field and len(table_template) < field["min_length"]:
                 return f"0{table_template}"
@@ -308,7 +311,7 @@ class CMSScraper:
                     if group_data_source is None:
                         continue
                     group_source: list[dict[Hashable, Any]] = search_data_frame(
-                        group_data_source, data_set_identifiers, url_identifiers
+                        group_data_source, data_set_identifiers, url_identifiers, self.log
                     )  # type: ignore
                     group_item = [
                         item
@@ -328,7 +331,7 @@ class CMSScraper:
                     if group_data_source is None:
                         continue
                     group_source: list[dict[Hashable, Any]] = search_data_frame(
-                        group_data_source, data_set_identifiers, url_identifiers
+                        group_data_source, data_set_identifiers, url_identifiers, self.log
                     )  # type: ignore
                     table_item_rows = [
                         item
@@ -379,7 +382,7 @@ class CMSScraper:
         if data_source_item is None:
             return "N/A"
         data_source_row: list[dict[Hashable, Any]] = search_data_frame(
-            data_source_item, data_set_identifiers, url_identifiers
+            data_source_item, data_set_identifiers, url_identifiers, self.log
         )  # type: ignore
         if "class" in mapping_item:
             if len(data_source_row) == 0:
@@ -399,7 +402,7 @@ class CMSScraper:
             if "identifier" in transformation:
                 fields = [transformation["identifier"]]
             result: list[dict[Hashable, Any]] = search_data_frame(
-                transformation_data_source, fields, rows, operator="|"
+                transformation_data_source, fields, rows, self.log, operator="|"
             )  # type: ignore
             if len(result) == 0:
                 return "N/A"
@@ -446,7 +449,7 @@ class CMSScraper:
             if data_source is None:
                 continue
             rows: list[dict[Hashable, Any]] = search_data_frame(
-                data_source, data_set_identifiers, url_identifiers
+                data_source, data_set_identifiers, url_identifiers, self.log
             )  # type: ignore
             for field in item["fields"]:
                 if "static" in field:
@@ -479,6 +482,7 @@ class CMSScraper:
                                 target_data_frame,
                                 [transform_item["identifier"]],
                                 results,
+                                self.log,
                                 operator="|",
                             )  # type: ignore
                         else:
@@ -492,6 +496,7 @@ class CMSScraper:
                                     transform_data_source,
                                     [field["transform"]["identifier"]],
                                     results,
+                                    self.log,
                                     operator="|",
                                 )  # type: ignore
                         if len(transform_results) > 0:
@@ -542,7 +547,7 @@ class CMSScraper:
         if data_source_item is None:
             return table_template
         rows: list[dict[Hashable, Any]] = search_data_frame(
-            data_source_item, data_set_identifiers, url_identifiers
+            data_source_item, data_set_identifiers, url_identifiers, self.log
         )  # type: ignore
         if len(rows) == 0:
             return "N/A"
@@ -586,7 +591,7 @@ class CMSScraper:
         if data_source_item is None:
             return "N/A"
         target_data_source: list[dict[Hashable, Any]] = search_data_frame(
-            data_source_item, data_set_identifiers, url_identifiers
+            data_source_item, data_set_identifiers, url_identifiers, self.log
         )  # type: ignore
         row_id_set = []
         for ds in target_data_source:
@@ -647,7 +652,7 @@ class CMSScraper:
                 if data_source_item is None:
                     continue
                 available_groups: list[dict[Hashable, Any]] = search_data_frame(
-                    data_source_item, data_set_identifiers, url_identifiers
+                    data_source_item, data_set_identifiers, url_identifiers, self.log
                 )  # type: ignore
                 if len(available_groups) == 0:
                     html_template = html_template.replace(f'${mapping_item["field"]}', "N/A")
@@ -703,15 +708,19 @@ class CMSScrapeController:
         downloader: AioDownloader,
         doc_client: DocumentStorageClient,
         proxies: list[tuple[Proxy | None, ProxySettings | None]],
+        log: Logger,
     ) -> None:
         self.initial_url = initial_url
         self.downloader = downloader
         self.doc_client = doc_client
         self.proxies = proxies
         self.scraper_queue: list[CMSScraper] = []
+        self.log = log
 
     async def create_all_scrapers(self):
-        base_scraper = CMSScraper(self.initial_url, self.downloader, self.doc_client, self.proxies)
+        base_scraper = CMSScraper(
+            self.initial_url, self.downloader, self.doc_client, self.proxies, self.log
+        )
         unchecked_scrapers: list[CMSScraper] = [base_scraper]
         while unchecked_scrapers:
             scraper = unchecked_scrapers.pop()
@@ -719,7 +728,12 @@ class CMSScrapeController:
                 url_list = await scraper.get_documents_list_urls()
                 new_scrapers = [
                     CMSScraper(
-                        url, self.downloader, self.doc_client, self.proxies, self.initial_url
+                        url,
+                        self.downloader,
+                        self.doc_client,
+                        self.proxies,
+                        self.log,
+                        self.initial_url,
                     )
                     for url in url_list
                 ]

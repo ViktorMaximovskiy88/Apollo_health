@@ -91,6 +91,7 @@ class DownloadContext(BaseModel):
     content_hash: str | None = None
     content_type: str | None = None
     mimetype: str | None = None
+    is_searchable: bool = False
 
     valid_response: ValidResponse | None = None
     invalid_responses: list[InvalidResponse] = []

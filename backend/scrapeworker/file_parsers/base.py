@@ -61,8 +61,9 @@ class FileParser(ABC):
         self.images = await self.get_images()
         title = self.get_title(self.metadata)
 
+        is_searchable = self.download.is_searchable if self.download else False
         document_type, confidence, doc_vectors, doc_type_match = guess_doc_type(
-            self.text, self.link_text, self.url, title, self.scrape_method_config
+            self.text, self.link_text, self.url, title, is_searchable
         )
         lang_code = detect_lang(self.text)
 
