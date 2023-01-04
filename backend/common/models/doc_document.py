@@ -42,8 +42,8 @@ class BaseDocDocument(BaseModel):
     name: Indexed(str)  # type: ignore
     checksum: Indexed(str)  # type: ignore
     file_extension: str | None = None
-    text_checksum: Indexed(str) | None = None
-    content_checksum: Indexed(str) | None = None
+    text_checksum: Indexed(str) | None = None  # type: ignore
+    content_checksum: Indexed(str) | None = None  # type: ignore
 
     lang_code: LangCode | None = None
 
@@ -176,18 +176,21 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
         indexes = [
             [
                 ("classification_status", pymongo.ASCENDING),
-                ("priority", pymongo.DESCENDING),
                 ("final_effective_date", pymongo.ASCENDING),
+                ("first_collected_date", pymongo.ASCENDING),
+                ("priority", pymongo.DESCENDING),
             ],
             [
                 ("family_status", pymongo.ASCENDING),
-                ("priority", pymongo.DESCENDING),
                 ("final_effective_date", pymongo.ASCENDING),
+                ("first_collected_date", pymongo.ASCENDING),
+                ("priority", pymongo.DESCENDING),
             ],
             [
                 ("content_extraction_status", pymongo.ASCENDING),
-                ("priority", pymongo.DESCENDING),
                 ("final_effective_date", pymongo.ASCENDING),
+                ("first_collected_date", pymongo.ASCENDING),
+                ("priority", pymongo.DESCENDING),
             ],
             [("locations.site_id", pymongo.ASCENDING)],
             [("locations.link_text", pymongo.ASCENDING)],
