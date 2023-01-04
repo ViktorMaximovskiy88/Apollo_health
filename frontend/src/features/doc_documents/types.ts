@@ -24,6 +24,7 @@ export interface TherapyTag {
   priority: number;
   update_status?: TagUpdateStatus;
   text_area?: [number, number];
+  created_at?: string;
 }
 
 export interface IndicationTag {

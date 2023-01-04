@@ -3,7 +3,9 @@ from datetime import datetime
 from beanie import Document
 from pydantic import BaseModel
 
-json_encoders = {datetime: lambda dt: dt.isoformat(timespec="milliseconds") + "Z"}
+json_encoders = {
+    datetime: lambda dt: dt.isoformat(timespec="milliseconds").replace("+00:00", "") + "Z"
+}
 
 
 class BaseDocument(Document):
