@@ -115,6 +115,11 @@ export const sitesApi = createApi({
         return { url: `/sites/bulk-assign`, method: 'POST', body };
       },
     }),
+    unassignMultipleSites: builder.mutation<Site[], any>({
+      query: (body) => {
+        return { url: `/sites/bulk-unassign`, method: 'POST', body };
+      },
+    }),
     deleteSite: builder.mutation<void, Pick<Site, '_id'> & Partial<Site>>({
       query: ({ _id: id }) => ({ url: `/sites/${id}`, method: 'DELETE' }),
       invalidatesTags: (_r, _e, { _id: id }) => [
@@ -151,6 +156,7 @@ export const {
   useAddSiteMutation,
   useUpdateSiteMutation,
   useUpdateMultipleSitesMutation,
+  useUnassignMultipleSitesMutation,
   useDeleteSiteMutation,
   useGetChangeLogQuery,
   useGetSiteRetrievedDocumentsQuery,

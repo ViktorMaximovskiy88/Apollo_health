@@ -14,7 +14,11 @@ import { MainLayout } from '../../components';
 import { isErrorWithData } from '../../common/helpers';
 import { BulkActionTypes } from '../collections/types';
 
-import { useLazyGetSitesQuery, useUpdateMultipleSitesMutation } from './sitesApi';
+import {
+  useLazyGetSitesQuery,
+  useUpdateMultipleSitesMutation,
+  useUnassignMultipleSitesMutation,
+} from './sitesApi';
 import { setSiteTableForceUpdate, siteTableState } from './sitesSlice';
 import { Site } from './types';
 import { useAppDispatch } from '../../app/store';
@@ -25,6 +29,51 @@ function CreateSite() {
       <Button>Create Site</Button>
     </Link>
   );
+}
+
+function Unassign() {
+  const [unassignMultipleSites] = useUnassignMultipleSitesMutation();
+  const { selection, filter } = useSelector(siteTableState);
+  const [getSites] = useLazyGetSitesQuery();
+  const dispatch = useAppDispatch();
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  async function selectionToSites(selection: any) {
+    let allSites: Site[] = [];
+    if (selection.selected === true) {
+      const { data } = await getSites({ filterValue: filter }).unwrap();
+      allSites = data;
+    }
+    if (selection.selected && typeof selection.selected === 'object') {
+      allSites = Object.values(selection.selected);
+    }
+    if (selection.unselected && typeof selection.unselected === 'object') {
+      const unselected = selection.unselected;
+      allSites = allSites.filter((site) => !(unselected as { [key: string]: Site })[site._id]);
+    }
+    return allSites;
+  }
+
+  const unassignSites = useCallback(async () => {
+    const allSites = await selectionToSites(selection);
+    if (!allSites.length) return;
+
+    try {
+      const data = await unassignMultipleSites(allSites).unwrap();
+      notification.success({
+        message: 'Sites Updated',
+        description: `${data.length} Sites Unassigned`,
+      });
+    } catch (err: any) {
+      notification.error({
+        message: 'Error Running Bulk Unassign',
+        description: err.errors[0],
+      });
+    }
+    dispatch(setSiteTableForceUpdate());
+  }, [selectionToSites, selection, dispatch, unassignMultipleSites]);
+
+  return <Button onClick={unassignSites}>Unassign Site(s)</Button>;
 }
 
 function Assign() {
@@ -221,6 +270,7 @@ export function SitesHomePage() {
         <>
           <QuickFilter isLoading={isLoading} />
           <Assign />
+          <Unassign />
           <CreateSite />
           <BulkActions />
           <BulkUpload />
