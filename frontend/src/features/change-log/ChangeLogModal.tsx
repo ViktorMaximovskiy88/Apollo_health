@@ -7,7 +7,7 @@ import {
 } from '@reduxjs/toolkit/dist/query';
 import { UseQuery } from '@reduxjs/toolkit/dist/query/react/buildHooks';
 import { Button, Modal, Table } from 'antd';
-import { prettyDateTimeFromISO } from '../../common';
+import { prettyDateUTCFromISO } from '../../common';
 import { useState } from 'react';
 import { useGetUsersQuery } from '../users/usersApi';
 import { ChangeLog, Patch } from './types';
@@ -143,7 +143,7 @@ export function ChangeLogModal(props: {
       title: 'Time',
       key: 'time',
       render: (log: ChangeLog) => {
-        return prettyDateTimeFromISO(log.time);
+        return prettyDateUTCFromISO(log.time);
       },
     },
   ];

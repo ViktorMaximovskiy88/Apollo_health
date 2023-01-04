@@ -8,10 +8,10 @@ export type NestedPartial<T> = {
 };
 
 export interface TableInfoType {
-  limit: number;
-  skip: number;
-  sortInfo: TypeSortInfo;
-  filterValue: TypeFilterValue;
+  limit?: number;
+  skip?: number;
+  sortInfo?: TypeSortInfo;
+  filterValue?: TypeFilterValue;
   siteId?: string;
 }
 

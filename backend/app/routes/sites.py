@@ -168,6 +168,25 @@ async def update_multiple_sites(
     return result
 
 
+@router.post("/bulk-unassign")
+async def unassign_multiple_sites(
+    updates: list[UpdateSiteAssigne],
+    current_user: User = Security(get_current_user),
+    logger: Logger = Depends(get_logger),
+):
+    site_ids: list[PydanticObjectId] = [update.id for update in updates]
+    targets: list[Site] = await Site.find_many(
+        {"_id": {"$in": site_ids}, "assignee": current_user.id}
+    ).to_list()
+    result = []
+
+    for target in targets:
+        updated = await update_and_log_diff(logger, current_user, target, UpdateSite(assignee=None))
+        result.append(updated)
+
+    return result
+
+
 @router.post("/{site_id}", response_model=Site)
 async def update_site(
     updates: UpdateSite,
