@@ -1,9 +1,5 @@
 import { Button, Drawer, Form, Input } from 'antd';
-import {
-  useGetPayerFamiliesQuery,
-  useLazyGetPayerFamiliesQuery,
-  useLazyGetPayerFamilyByNameQuery,
-} from './payerFamilyApi';
+import { useLazyGetPayerFamiliesQuery, useLazyGetPayerFamilyByNameQuery } from './payerFamilyApi';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
 import { useAddPayerFamilyMutation, useLazyConvertPayerFamilyDataQuery } from './payerFamilyApi';
 import { useForm } from 'antd/lib/form/Form';
@@ -69,7 +65,7 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
           { name: 'plan_types', value: plan_types, type: 'string', operator: 'leq' },
           { name: 'regions', value: regions, type: 'string', operator: 'leq' },
           { name: 'channels', value: channels, type: 'string', operator: 'leq' },
-          { name: 'benefits', value: channels, type: 'string', operator: 'leq' },
+          { name: 'benefits', value: benefits, type: 'string', operator: 'leq' },
         ],
       }).unwrap();
       const existingPf = existingPfs[0];

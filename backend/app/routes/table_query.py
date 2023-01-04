@@ -78,10 +78,10 @@ def _prepare_table_query(
 ) -> tuple[list[dict], list[tuple[str, int]]]:
     match = []
     for filter in filters:
-        if not filter.value and filter.operator not in ["empty", "notEmpty"]:
+        if not filter.value and filter.operator not in ["empty", "notEmpty", "leq"]:
             continue
 
-        if not filter.value:
+        if filter.value is None:
             filter.value = ""
 
         if isinstance(filter.value, list):
@@ -143,6 +143,7 @@ def _prepare_table_query(
             )
 
     sort_by = [(s.name, s.dir) for s in sorts if s.dir]
+    [print(m) for m in match]
 
     return (match, sort_by)
 
