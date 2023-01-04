@@ -106,13 +106,13 @@ def _prepare_table_query(
             match.append({filter.name: {"$regex": f"^{value}", "$options": "i"}})
         if filter.operator == "endsWith":
             match.append({filter.name: {"$regex": f"{value}$", "$options": "i"}})
-        if filter.operator == "eq":
-            if isinstance(value, list):
+        if filter.operator == "eq" or filter.operator == "leq":
+            if filter.operator == "eq" and isinstance(value, list):
                 match.append({filter.name: {"$in": value}})
             else:
                 match.append({filter.name: value})
-        if filter.operator == "neq":
-            if isinstance(value, list):
+        if filter.operator == "neq" or filter.operator == "nleq":
+            if filter.operator == "neq" and isinstance(value, list):
                 match.append({filter.name: {"$nin": value}})
             else:
                 match.append({filter.name: {"$ne": value}})

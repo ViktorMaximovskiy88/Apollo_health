@@ -5,10 +5,11 @@ import {
   useLazyGetPayerFamilyByNameQuery,
   useGetPayerFamilyQuery,
   useLazyConvertPayerFamilyDataQuery,
+  useLazyGetPayerFamiliesQuery,
 } from './payerFamilyApi';
 import { Rule } from 'antd/lib/form';
 import { useForm } from 'antd/lib/form/Form';
-import { useCallback, useEffect, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
 import { PayerFamily } from './types';
 import { CloseOutlined, WarningFilled } from '@ant-design/icons';
@@ -28,9 +29,10 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => 
   const [form] = useForm();
   const { data: payerFamily } = useGetPayerFamilyQuery(payer_family_id, { skip: !payer_family_id });
   const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
-  const [payerInfoError, setPayerInfoError] = useState<string>();
+  const [payerInfoError, setPayerInfoError] = useState<ReactNode>();
   const [updatePayerFamily, { isLoading }] = useUpdatePayerFamilyMutation();
   const [convertPayerFamily] = useLazyConvertPayerFamilyDataQuery();
+  const [queryPf] = useLazyGetPayerFamiliesQuery();
 
   const onSubmit = useCallback(async () => {
     form.validateFields();
@@ -46,6 +48,26 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => 
       setPayerInfoError('At least one payer value is required');
       return;
     }
+    try {
+      const { data: existingPfs } = await queryPf({
+        limit: 1,
+        filterValue: [
+          { name: '_id', value: payer_family_id, type: 'string', operator: 'neq' },
+          { name: 'payer_type', value: payer_type, type: 'string', operator: 'eq' },
+          { name: 'payer_ids', value: payer_ids, type: 'string', operator: 'leq' },
+          { name: 'plan_types', value: plan_types, type: 'string', operator: 'leq' },
+          { name: 'regions', value: regions, type: 'string', operator: 'leq' },
+          { name: 'channels', value: channels, type: 'string', operator: 'leq' },
+          { name: 'benefits', value: channels, type: 'string', operator: 'leq' },
+        ],
+      }).unwrap();
+      const existingPf = existingPfs[0];
+      if (existingPf) {
+        const message = `Payer Family '${existingPf.name}' already matches this criteria.`;
+        setPayerInfoError(message);
+        return;
+      }
+    } catch (err: any) {}
     try {
       await convertPayerFamily({
         payerType: 'plan',
@@ -130,12 +152,12 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => 
         </Form.Item>
 
         <PayerFamilyInfoForm />
-        <div className="space-x-2 flex justify-end">
+        <div className="space-x-2 flex items-start justify-end">
           {payerInfoError ? (
-            <>
-              <WarningFilled className="text-red-600" />
+            <div className="flex space-x-2">
+              <WarningFilled className="text-red-600 mt-1" />
               <span className="text-red-600">{payerInfoError}</span>
-            </>
+            </div>
           ) : null}
           <Button onClick={onClose}>Cancel</Button>
           <Button type="primary" onClick={onSubmit} loading={isLoading}>
