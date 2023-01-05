@@ -22,7 +22,7 @@ import {
 } from './document_family/documentFamilyHooks';
 import { uniquePayerFamilyIds, useGetPayerFamilyNamesById } from '../payer-family/payerFamilyHooks';
 import { Alert } from 'antd';
-import { TaskStatus } from '../../common/scrapeTaskStatus';
+import { statusDisplayAndStyle, TaskStatus } from '../../common/scrapeTaskStatus';
 import { SiteScrapeTask } from '../collections/types';
 import { prettyDateDistanceSingle, prettyDateTimeFromISO } from '../../common';
 import { collectMethodDisplayName } from '../sites/types';
@@ -80,21 +80,8 @@ export function SiteDocDocumentsTable({
   );
 
   function siteScrapeTaskStatusLabel(siteScrapeTask: SiteScrapeTask) {
-    if (siteScrapeTask.status === TaskStatus.Queued) {
-      return 'Queued';
-    } else if (siteScrapeTask.status === TaskStatus.Pending) {
-      return 'Pending';
-    } else if (siteScrapeTask.status === TaskStatus.InProgress) {
-      return 'Started';
-    } else if (siteScrapeTask.status === TaskStatus.Failed) {
-      return 'Failed';
-    } else if (siteScrapeTask.status === TaskStatus.Canceling) {
-      return 'Canceling';
-    } else if (siteScrapeTask.status === TaskStatus.Canceled) {
-      return 'Canceled';
-    } else {
-      return 'Finished';
-    }
+    const statusLabel = statusDisplayAndStyle(siteScrapeTask.status);
+    return statusLabel.name;
   }
   const dateLabel = prettyDateTimeFromISO(siteScrapeTask?.start_time);
   function elapsedLable(siteScrapeTask: SiteScrapeTask) {
