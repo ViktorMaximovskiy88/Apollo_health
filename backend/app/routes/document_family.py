@@ -63,8 +63,10 @@ async def read_document_family_by_name(
     site_id: PydanticObjectId | None = None,
 ):
     if site_id:
-        document_family = await DocumentFamily.find_one({"name": name, "site_id": site_id})
-    document_family = await DocumentFamily.find_one({"name": name})
+        document_family = await DocumentFamily.find_one(
+            {"name": name, "site_id": site_id, "disabled": False}
+        )
+    document_family = await DocumentFamily.find_one({"name": name, "disabled": False})
     return document_family
 
 
