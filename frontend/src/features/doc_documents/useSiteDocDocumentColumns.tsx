@@ -47,6 +47,7 @@ interface CreateColumnsType {
   isManualCollection: boolean;
   location: Location;
   siteScrapeTask: SiteScrapeTask | undefined;
+  setSiteScrapeTask: (value: SiteScrapeTask) => void;
 }
 
 export enum TextAlignType {
@@ -92,6 +93,7 @@ export const createColumns = ({
   isManualCollection,
   location,
   siteScrapeTask,
+  setSiteScrapeTask,
 }: CreateColumnsType) => [
   {
     header: 'Last Collected',
@@ -245,6 +247,7 @@ export const createColumns = ({
               doc={doc}
               handleNewVersion={handleNewVersion}
               siteScrapeTask={siteScrapeTask}
+              setSiteScrapeTask={setSiteScrapeTask}
             />
           ) : null}
         </>
@@ -262,6 +265,7 @@ interface UseColumnsType {
     [id: string]: string;
   };
   siteScrapeTask: SiteScrapeTask | undefined;
+  setSiteScrapeTask: (value: SiteScrapeTask) => void;
 }
 
 export const useSiteDocDocumentColumns = ({
@@ -269,6 +273,7 @@ export const useSiteDocDocumentColumns = ({
   documentFamilyNamesById,
   payerFamilyNamesById,
   siteScrapeTask,
+  setSiteScrapeTask,
 }: UseColumnsType) => {
   const { documentFamilyOptions, initialDocumentFamilyOptions } = useDocumentFamilySelectOptions();
   const { payerFamilyOptions, initialPayerFamilyOptions } =
@@ -289,6 +294,7 @@ export const useSiteDocDocumentColumns = ({
         isManualCollection: site?.collection_method === CollectionMethod.Manual,
         location,
         siteScrapeTask,
+        setSiteScrapeTask,
       }),
     [
       documentFamilyNamesById,

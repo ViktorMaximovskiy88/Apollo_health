@@ -86,7 +86,12 @@ export function SiteDocDocumentsPage() {
           {site.collection_method === 'MANUAL' &&
           siteScrapeTask?.collection_method === 'MANUAL' &&
           activeStatuses.includes(siteScrapeTask.status) ? (
-            <ManualCollectionButton site={site} refetch={refetch} runScrape={runScrape} />
+            <ManualCollectionButton
+              site={site}
+              refetch={refetch}
+              runScrape={runScrape}
+              setSiteScrapeTask={setSiteScrapeTask}
+            />
           ) : null}
 
           {site.collection_method === 'MANUAL' &&
@@ -108,7 +113,11 @@ export function SiteDocDocumentsPage() {
           refetch={refreshDocs}
         />
       )}
-      <SiteDocDocumentsTable handleNewVersion={handleNewVersion} siteScrapeTask={siteScrapeTask} />
+      <SiteDocDocumentsTable
+        handleNewVersion={handleNewVersion}
+        siteScrapeTask={siteScrapeTask}
+        setSiteScrapeTask={setSiteScrapeTask}
+      />
     </MainLayout>
   );
 }

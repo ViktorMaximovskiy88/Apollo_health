@@ -29,9 +29,14 @@ import { prettyDateDistanceSingle, prettyDateTimeFromISO } from '../../common';
 interface DataTablePropTypes {
   handleNewVersion: (data: SiteDocDocument) => void;
   siteScrapeTask: SiteScrapeTask | undefined;
+  setSiteScrapeTask: (value: SiteScrapeTask) => void;
 }
 
-export function SiteDocDocumentsTable({ handleNewVersion, siteScrapeTask }: DataTablePropTypes) {
+export function SiteDocDocumentsTable({
+  handleNewVersion,
+  siteScrapeTask,
+  setSiteScrapeTask,
+}: DataTablePropTypes) {
   const { siteId } = useParams();
   const { watermark } = useInterval(10000);
   const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
@@ -59,6 +64,7 @@ export function SiteDocDocumentsTable({ handleNewVersion, siteScrapeTask }: Data
     documentFamilyNamesById,
     payerFamilyNamesById,
     siteScrapeTask,
+    setSiteScrapeTask,
   });
   const filterProps = useDataTableFilter(siteDocDocumentTableState, setSiteDocDocumentTableFilter);
   const sortProps = useDataTableSort(siteDocDocumentTableState, setSiteDocDocumentTableSort);

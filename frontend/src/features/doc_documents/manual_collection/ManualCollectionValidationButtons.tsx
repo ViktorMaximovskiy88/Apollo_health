@@ -11,15 +11,13 @@ import { SiteScrapeTask, WorkItemOption } from '../../collections/types';
 import { useContext, useState } from 'react';
 import { ValidationButtonsContext, ValidationButtonsProvider } from './ManualCollectionContext';
 import { useUpdateSelected } from './useUpdateSelected';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useGetSiteQuery } from '../../sites/sitesApi';
 import { TaskStatus } from '../../../common/scrapeTaskStatus';
-import { useGetScrapeTasksForSiteQuery } from '../../collections/siteScrapeTasksApi';
-import { initialState } from '../../collections/collectionsSlice';
 
 const Found = () => {
-  const updateSelected = useUpdateSelected();
   const { workItem } = useContext(ValidationButtonsContext) ?? {};
+  const updateSelected = useUpdateSelected();
   if (!workItem) return null;
 
   switch (workItem.selected) {
@@ -399,10 +397,12 @@ export function ManualCollectionValidationButtons({
   doc,
   handleNewVersion,
   siteScrapeTask,
+  setSiteScrapeTask,
 }: {
   doc: SiteDocDocument;
   handleNewVersion: (doc: SiteDocDocument) => void;
   siteScrapeTask: SiteScrapeTask | undefined;
+  setSiteScrapeTask: (value: SiteScrapeTask) => void;
 }) {
   const [showValidationButtons, setShowValidationButtons] = useState(false);
   const params = useParams();
@@ -415,6 +415,7 @@ export function ManualCollectionValidationButtons({
     activeStatuses.includes(siteScrapeTask.status)
   ) {
     if (!showValidationButtons) {
+      // for some reason, must add condition here or render loop.
       setShowValidationButtons(true);
     }
   } else {
@@ -429,6 +430,7 @@ export function ManualCollectionValidationButtons({
       handleNewVersion={handleNewVersion}
       showValidationButtons={showValidationButtons}
       siteScrapeTask={siteScrapeTask}
+      setSiteScrapeTask={setSiteScrapeTask}
     >
       <ValidationButtons />
     </ValidationButtonsProvider>

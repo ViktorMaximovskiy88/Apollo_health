@@ -12,6 +12,7 @@ export const ValidationButtonsContext = createContext<{
   handleNewVersion: (doc: SiteDocDocument) => void;
   showValidationButtons: boolean;
   siteScrapeTask: SiteScrapeTask | undefined;
+  setSiteScrapeTask: (value: SiteScrapeTask) => void;
 } | null>(null);
 
 const useWorkList = (siteScrapeTask: SiteScrapeTask | undefined): { workList?: WorkItem[] } => {
@@ -38,12 +39,14 @@ export const ValidationButtonsProvider = ({
   showValidationButtons,
   children,
   siteScrapeTask,
+  setSiteScrapeTask,
 }: {
   doc: SiteDocDocument;
   handleNewVersion: (doc: SiteDocDocument) => void;
   showValidationButtons: boolean;
   children: ReactNode;
   siteScrapeTask: SiteScrapeTask | undefined;
+  setSiteScrapeTask: (value: SiteScrapeTask) => void;
 }) => {
   const docId = doc._id;
   const [isLoading, setIsLoading] = useState(false);
@@ -59,6 +62,7 @@ export const ValidationButtonsProvider = ({
     handleNewVersion,
     showValidationButtons,
     siteScrapeTask,
+    setSiteScrapeTask,
   };
 
   return (
