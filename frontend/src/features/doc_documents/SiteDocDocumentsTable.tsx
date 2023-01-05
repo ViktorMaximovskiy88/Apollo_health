@@ -113,7 +113,7 @@ export function SiteDocDocumentsTable({
   }
   const collectionCount = siteScrapeTask?.retrieved_document_ids.length || 0;
   function collectionCountLabel(siteScrapeTask: SiteScrapeTask) {
-    if (siteScrapeTask.status === TaskStatus.InProgress) {
+    if (siteScrapeTask && siteScrapeTask.status === TaskStatus.InProgress) {
       return `Collecting ${collectionCount} Documents`;
     } else {
       return `${collectionCount} Documents Collected`;
@@ -128,7 +128,7 @@ export function SiteDocDocumentsTable({
             <div>
               <span className="datagrid-info">{siteScrapeTaskStatusLabel(siteScrapeTask)}</span>|
               <span className="datagrid-info">
-                {collectMethodDisplayName(siteScrapeTask?.collection_method)} on {dateLabel}
+                {collectionCountLabel(siteScrapeTask)} on {dateLabel}
               </span>
               |
               <span className="datagrid-info-subheader">
