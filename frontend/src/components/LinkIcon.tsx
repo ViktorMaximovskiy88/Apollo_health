@@ -1,5 +1,4 @@
 import { LinkOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
 import { AnchorButtonProps, NativeButtonProps } from 'antd/lib/button/button';
 
 type ButtonType = 'link' | 'text' | 'default' | 'ghost' | 'primary' | 'dashed' | undefined;
@@ -21,7 +20,7 @@ const buildType = (originalType: any): ButtonType => {
 
 export function LinkIcon(props: Partial<AnchorButtonProps & NativeButtonProps>) {
   return (
-    <Button
+    <a
       className="p-0 focus:border focus:border-offset-2 focus:border-blue-500"
       target="_blank"
       rel="noreferrer noopener"
@@ -29,6 +28,6 @@ export function LinkIcon(props: Partial<AnchorButtonProps & NativeButtonProps>) 
       type={buildType(props.type) ?? 'link'}
     >
       <LinkOutlined className="text-gray-500 hover:text-blue-500 focus:text-blue-500" />
-    </Button>
+    </a>
   );
 }
