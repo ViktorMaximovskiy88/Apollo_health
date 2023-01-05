@@ -25,7 +25,7 @@ interface PayerFamilyEditDrawerPropTypes {
 }
 
 export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => {
-  const { location, onClose, onSave, open, payer_family_id, editPayerFromTable, mask } = props;
+  const { location, onSave, open, payer_family_id, editPayerFromTable, mask } = props;
   const [form] = useForm();
   const { data: payerFamily } = useGetPayerFamilyQuery(payer_family_id, { skip: !payer_family_id });
   const [getPayerFamilyByName] = useLazyGetPayerFamilyByNameQuery();
@@ -33,6 +33,12 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => 
   const [updatePayerFamily, { isLoading }] = useUpdatePayerFamilyMutation();
   const [convertPayerFamily] = useLazyConvertPayerFamilyDataQuery();
   const [queryPf] = useLazyGetPayerFamiliesQuery();
+
+  const onClose = useCallback(() => {
+    props.onClose();
+    setPayerInfoError(undefined);
+    form.resetFields();
+  }, [props.onClose]);
 
   const onSubmit = useCallback(async () => {
     form.validateFields();
@@ -58,7 +64,7 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => 
           { name: 'plan_types', value: plan_types, type: 'string', operator: 'leq' },
           { name: 'regions', value: regions, type: 'string', operator: 'leq' },
           { name: 'channels', value: channels, type: 'string', operator: 'leq' },
-          { name: 'benefits', value: channels, type: 'string', operator: 'leq' },
+          { name: 'benefits', value: benefits, type: 'string', operator: 'leq' },
         ],
       }).unwrap();
       const existingPf = existingPfs[0];
@@ -90,6 +96,7 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => 
       const payerFamily = await updatePayerFamily({ ...values, _id: payer_family_id }).unwrap();
 
       onSave(payerFamily);
+      setPayerInfoError(undefined);
       form.resetFields();
     },
     [updatePayerFamily, payer_family_id, onSave, form]

@@ -176,3 +176,11 @@ a {
   margin-left: 5px;
   margin-right: 5px;
 }
+
+/* DocDocument Edit Form: break long payer family into multiple lines */
+.multi-line-select .ant-select-selection-item {
+  white-space: normal;
+}
+.multi-line-select .ant-select-selector {
+  height: unset !important;
+}

@@ -51,7 +51,7 @@ const PayerFamily = ({
 
   return (
     <Form.Item label="Payer Family">
-      <div className="flex space-x-2 pt-1">
+      <div className="flex space-x-2 pt-1 multi-line-select">
         <Form.Item noStyle name={['locations', index, 'payer_family_id']}>
           <RemoteSelect
             className="flex-grow"
