@@ -50,13 +50,21 @@ function WorkQueueActionButton(props: {
   setComment: (a: string) => void;
   setReassignment: (a: string) => void;
 }) {
+  const [loading, setLoading] = useState(false);
   const [form] = useForm();
   const label = props.action.label;
   const type = props.action.primary ? 'primary' : 'default';
 
   if (!props.action.require_comment) {
     return (
-      <Button onClick={() => props.setAction(props.action)} type={type}>
+      <Button
+        onClick={() => {
+          props.setAction(props.action);
+          setLoading(true);
+        }}
+        type={type}
+        loading={loading}
+      >
         {label}
       </Button>
     );
