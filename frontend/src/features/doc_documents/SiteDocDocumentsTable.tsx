@@ -132,15 +132,15 @@ export function SiteDocDocumentsTable({
         <Alert
           message={
             <div>
-              <span className="datagrid-alert">{siteScrapeTaskStatusLabel(siteScrapeTask)}</span>|
-              <span className="datagrid-alert">
+              <span className="datagrid-info">{siteScrapeTaskStatusLabel(siteScrapeTask)}</span>|
+              <span className="datagrid-info">
                 {collectionCountLabel(siteScrapeTask)} on {dateLabel}
               </span>
               |
-              <span className="datagrid-alert-subheader">
+              <span className="datagrid-info-subheader">
                 {collectionMethodLabel(siteScrapeTask)}
               </span>
-              |<span className="datagrid-alert-subheader">{elapsedLable(siteScrapeTask)}</span>
+              |<span className="datagrid-info-subheader">{elapsedLable(siteScrapeTask)}</span>
             </div>
           }
           type="success"
