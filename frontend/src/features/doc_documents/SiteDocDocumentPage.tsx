@@ -11,10 +11,9 @@ import { SiteDocDocument } from './types';
 import { useGetSiteQuery } from '../sites/sitesApi';
 import {
   useGetScrapeTaskQuery,
-  useLazyGetScrapeTasksForSiteQuery,
+  useLazyGetScrapeTaskQuery,
   useRunSiteScrapeTaskMutation,
 } from '../collections/siteScrapeTasksApi';
-import { initialState } from '../collections/collectionsSlice';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
 import { DocTypeUpdateModal } from './DocTypeBulkUpdateModal';
 import { useSelector } from 'react-redux';
@@ -51,10 +50,14 @@ export function SiteDocDocumentsPage() {
   const [searchParams] = useSearchParams();
   const scrapeTaskId = searchParams.get('scrape_task_id');
   const dispatch = useAppDispatch();
-  const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
   const [runScrape] = useRunSiteScrapeTaskMutation();
   const { data: site, refetch } = useGetSiteQuery(siteId);
-  const { data: siteScrapeTask } = useGetScrapeTaskQuery(scrapeTaskId);
+  const { data: initialSiteScrapeTask } = useGetScrapeTaskQuery(scrapeTaskId);
+  const [getScrapeTaskQuery] = useLazyGetScrapeTaskQuery();
+  const [siteScrapeTask, setSiteScrapeTask] = useState(initialSiteScrapeTask);
+  if (siteScrapeTask === undefined && initialSiteScrapeTask) {
+    setSiteScrapeTask(initialSiteScrapeTask);
+  }
   if (!site) return null;
 
   function handleNewVersion(data: SiteDocDocument) {
@@ -67,16 +70,11 @@ export function SiteDocDocumentsPage() {
     setOldVersion(null);
   }
 
-  const mostRecentTask = {
-    limit: 1,
-    skip: 0,
-    sortInfo: initialState.table.sort,
-    filterValue: initialState.table.filter,
-  };
   const refreshDocs = async () => {
     if (!scrapeTaskId) return;
-    // Get scrape tasks so we can match manual work_list items to docs.
-    await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
+    // Refresh the sitescrape task so that we have up to date work_items.
+    const { data: refreshedSiteScrapeTask } = await getScrapeTaskQuery(scrapeTaskId);
+    setSiteScrapeTask(refreshedSiteScrapeTask);
     dispatch(setSiteDocDocumentTableForceUpdate());
   };
 
@@ -110,7 +108,7 @@ export function SiteDocDocumentsPage() {
           refetch={refreshDocs}
         />
       )}
-      <SiteDocDocumentsTable handleNewVersion={handleNewVersion} />
+      <SiteDocDocumentsTable handleNewVersion={handleNewVersion} siteScrapeTask={siteScrapeTask} />
     </MainLayout>
   );
 }

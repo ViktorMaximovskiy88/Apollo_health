@@ -121,4 +121,5 @@ export const {
   useRunBulkMutation,
   useGetCollectionConfigQuery,
   useGetScrapeTaskQuery,
+  useLazyGetScrapeTaskQuery,
 } = siteScrapeTasksApi;

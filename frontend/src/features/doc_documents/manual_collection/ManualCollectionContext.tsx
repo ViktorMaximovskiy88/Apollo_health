@@ -1,16 +1,6 @@
-import { createContext, ReactNode, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useGetScrapeTasksForSiteQuery } from '../../collections/siteScrapeTasksApi';
+import { createContext, ReactNode, useContext, useState } from 'react';
 import { SiteScrapeTask, WorkItem } from '../../collections/types';
 import { SiteDocDocument } from '../types';
-import { initialState } from '../../collections/collectionsSlice';
-
-const mostRecentTask = {
-  limit: 1,
-  skip: 0,
-  sortInfo: initialState.table.sort,
-  filterValue: initialState.table.filter,
-};
 
 export const ValidationButtonsContext = createContext<{
   isLoading: boolean;
@@ -21,31 +11,21 @@ export const ValidationButtonsContext = createContext<{
   workItem?: WorkItem;
   handleNewVersion: (doc: SiteDocDocument) => void;
   showValidationButtons: boolean;
+  siteScrapeTask: SiteScrapeTask | undefined;
 } | null>(null);
 
-const useWorkList = (): { workList?: WorkItem[] } => {
-  const { siteId } = useParams();
-  const { data }: { data?: { data?: SiteScrapeTask[] } } = useGetScrapeTasksForSiteQuery({
-    ...mostRecentTask,
-    siteId,
-  });
-  const siteScrapeTask = data?.data?.[0];
+const useWorkList = (siteScrapeTask: SiteScrapeTask | undefined): { workList?: WorkItem[] } => {
   if (!siteScrapeTask) return {};
   const { work_list: workList } = siteScrapeTask;
 
   return { workList };
 };
 
-const useWorkItem = (docId: string): WorkItem | undefined => {
-  const { siteId } = useParams();
-  const { data }: { data?: { data?: SiteScrapeTask[] } } = useGetScrapeTasksForSiteQuery({
-    ...mostRecentTask,
-    siteId,
-  });
-  const siteScrapeTasks = data?.data;
-  if (!siteScrapeTasks) return;
-  const [siteScrapeTask] = siteScrapeTasks;
-  if (!('work_list' in siteScrapeTask)) return;
+const useWorkItem = (
+  docId: string,
+  siteScrapeTask: SiteScrapeTask | undefined
+): WorkItem | undefined => {
+  if (!siteScrapeTask || !('work_list' in siteScrapeTask)) return;
   const { work_list: workList } = siteScrapeTask;
   const workItem = workList.find((item) => item.document_id === docId);
 
@@ -57,16 +37,18 @@ export const ValidationButtonsProvider = ({
   handleNewVersion,
   showValidationButtons,
   children,
+  siteScrapeTask,
 }: {
   doc: SiteDocDocument;
   handleNewVersion: (doc: SiteDocDocument) => void;
   showValidationButtons: boolean;
   children: ReactNode;
+  siteScrapeTask: SiteScrapeTask | undefined;
 }) => {
   const docId = doc._id;
   const [isLoading, setIsLoading] = useState(false);
-  const { workList } = useWorkList();
-  const workItem = useWorkItem(docId);
+  const { workList } = useWorkList(siteScrapeTask);
+  const workItem = useWorkItem(docId, siteScrapeTask);
   const value = {
     isLoading,
     setIsLoading,
@@ -76,6 +58,7 @@ export const ValidationButtonsProvider = ({
     workItem,
     handleNewVersion,
     showValidationButtons,
+    siteScrapeTask,
   };
 
   return (

@@ -14,6 +14,7 @@ import { useGetSiteQuery } from '../sites/sitesApi';
 import { CollectionMethod } from '../sites/types';
 import { usePayerFamilySelectOptions } from '../payer-family/payerFamilyHooks';
 import { TypeFilterValue } from '@inovua/reactdatagrid-community/types';
+import { SiteScrapeTask } from '../collections/types';
 
 interface CreateColumnsType {
   handleNewVersion?: (data: SiteDocDocument) => void;
@@ -45,6 +46,7 @@ interface CreateColumnsType {
   };
   isManualCollection: boolean;
   location: Location;
+  siteScrapeTask: SiteScrapeTask | undefined;
 }
 
 export enum TextAlignType {
@@ -62,6 +64,7 @@ const InternalDocs = [
 
 export const priorityOptions = [
   { label: 'Low', id: 0, value: 0 },
+  { label: 'Medium', id: 1, value: 1 },
   { label: 'High', id: 2, value: 2 },
 ];
 
@@ -88,6 +91,7 @@ export const createColumns = ({
   payerFamilyNamesById,
   isManualCollection,
   location,
+  siteScrapeTask,
 }: CreateColumnsType) => [
   {
     header: 'Last Collected',
@@ -237,7 +241,11 @@ export const createColumns = ({
       return (
         <>
           {handleNewVersion ? (
-            <ManualCollectionValidationButtons doc={doc} handleNewVersion={handleNewVersion} />
+            <ManualCollectionValidationButtons
+              doc={doc}
+              handleNewVersion={handleNewVersion}
+              siteScrapeTask={siteScrapeTask}
+            />
           ) : null}
         </>
       );
@@ -253,12 +261,14 @@ interface UseColumnsType {
   payerFamilyNamesById: {
     [id: string]: string;
   };
+  siteScrapeTask: SiteScrapeTask | undefined;
 }
 
 export const useSiteDocDocumentColumns = ({
   handleNewVersion,
   documentFamilyNamesById,
   payerFamilyNamesById,
+  siteScrapeTask,
 }: UseColumnsType) => {
   const { documentFamilyOptions, initialDocumentFamilyOptions } = useDocumentFamilySelectOptions();
   const { payerFamilyOptions, initialPayerFamilyOptions } =
@@ -278,6 +288,7 @@ export const useSiteDocDocumentColumns = ({
         payerFamilyNamesById,
         isManualCollection: site?.collection_method === CollectionMethod.Manual,
         location,
+        siteScrapeTask,
       }),
     [
       documentFamilyNamesById,
@@ -289,6 +300,7 @@ export const useSiteDocDocumentColumns = ({
       initialPayerFamilyOptions,
       site?.collection_method,
       location,
+      siteScrapeTask,
     ]
   );
 };

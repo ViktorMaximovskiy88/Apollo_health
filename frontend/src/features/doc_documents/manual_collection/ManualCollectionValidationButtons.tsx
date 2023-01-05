@@ -398,31 +398,23 @@ function ValidationButtons() {
 export function ManualCollectionValidationButtons({
   doc,
   handleNewVersion,
+  siteScrapeTask,
 }: {
   doc: SiteDocDocument;
   handleNewVersion: (doc: SiteDocDocument) => void;
+  siteScrapeTask: SiteScrapeTask | undefined;
 }) {
   const [showValidationButtons, setShowValidationButtons] = useState(false);
   const params = useParams();
   const siteId = params.siteId;
-  const [searchParams] = useSearchParams();
-  const scrapeTaskId = searchParams.get('scrape_task_id');
-  const mostRecentTask = {
-    limit: 1,
-    skip: 0,
-    sortInfo: initialState.table.sort,
-    filterValue: initialState.table.filter,
-  };
-  const { data }: { data?: { data?: SiteScrapeTask[] } } = useGetScrapeTasksForSiteQuery({
-    ...mostRecentTask,
-    siteId,
-  });
-  const siteScrapeTasks = data?.data;
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
   const { data: site } = useGetSiteQuery(siteId);
   if (!site) return null;
-  if (site.collection_method === 'MANUAL' && activeStatuses.includes(site.last_run_status)) {
-    if (siteScrapeTasks && siteScrapeTasks[0]._id === scrapeTaskId && !showValidationButtons) {
+  if (
+    siteScrapeTask?.collection_method === 'MANUAL' &&
+    activeStatuses.includes(siteScrapeTask.status)
+  ) {
+    if (!showValidationButtons) {
       setShowValidationButtons(true);
     }
   } else {
@@ -436,6 +428,7 @@ export function ManualCollectionValidationButtons({
       doc={doc}
       handleNewVersion={handleNewVersion}
       showValidationButtons={showValidationButtons}
+      siteScrapeTask={siteScrapeTask}
     >
       <ValidationButtons />
     </ValidationButtonsProvider>

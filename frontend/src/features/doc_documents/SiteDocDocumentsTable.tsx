@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { useLazyGetSiteDocDocumentsQuery, TableQueryInfo } from '../sites/sitesApi';
 import { useDataTableSelection } from '../../common/hooks/use-data-table-select';
@@ -22,24 +22,22 @@ import {
 } from './document_family/documentFamilyHooks';
 import { uniquePayerFamilyIds, useGetPayerFamilyNamesById } from '../payer-family/payerFamilyHooks';
 import { Alert } from 'antd';
-import { useGetScrapeTaskQuery } from '../collections/siteScrapeTasksApi';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
 import { SiteScrapeTask } from '../collections/types';
 import { prettyDateDistanceSingle, prettyDateTimeFromISO } from '../../common';
 
 interface DataTablePropTypes {
   handleNewVersion: (data: SiteDocDocument) => void;
+  siteScrapeTask: SiteScrapeTask | undefined;
 }
 
-export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) {
+export function SiteDocDocumentsTable({ handleNewVersion, siteScrapeTask }: DataTablePropTypes) {
   const { siteId } = useParams();
-  const [searchParams] = useSearchParams();
-  const scrapeTaskId = searchParams.get('scrape_task_id');
   const { watermark } = useInterval(10000);
   const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
+  const scrapeTaskId = siteScrapeTask?._id || null;
   const { setDocumentFamilyIds, documentFamilyNamesById } = useGetDocumentFamilyNamesById();
   const { setPayerFamilyIds, payerFamilyNamesById } = useGetPayerFamilyNamesById();
-  const { data: siteScrapeTask } = useGetScrapeTaskQuery(scrapeTaskId);
 
   const { forceUpdate } = useSelector(siteDocDocumentTableState);
   const loadData = useCallback(
@@ -60,6 +58,7 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
     handleNewVersion,
     documentFamilyNamesById,
     payerFamilyNamesById,
+    siteScrapeTask,
   });
   const filterProps = useDataTableFilter(siteDocDocumentTableState, setSiteDocDocumentTableFilter);
   const sortProps = useDataTableSort(siteDocDocumentTableState, setSiteDocDocumentTableSort);
@@ -112,7 +111,7 @@ export function SiteDocDocumentsTable({ handleNewVersion }: DataTablePropTypes) 
 
     return formattedDate;
   }
-  const collectionCount = siteScrapeTask?.retrieved_document_ids.length;
+  const collectionCount = siteScrapeTask?.retrieved_document_ids.length || 0;
   function collectionCountLabel(siteScrapeTask: SiteScrapeTask) {
     if (siteScrapeTask.status === TaskStatus.InProgress) {
       return `Collecting ${collectionCount} Documents`;
