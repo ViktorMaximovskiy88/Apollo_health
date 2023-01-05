@@ -25,6 +25,7 @@ import { Alert } from 'antd';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
 import { SiteScrapeTask } from '../collections/types';
 import { prettyDateDistanceSingle, prettyDateTimeFromISO } from '../../common';
+import { collectMethodDisplayName } from '../sites/types';
 
 interface DataTablePropTypes {
   handleNewVersion: (data: SiteDocDocument) => void;
@@ -96,13 +97,6 @@ export function SiteDocDocumentsTable({
     }
   }
   const dateLabel = prettyDateTimeFromISO(siteScrapeTask?.start_time);
-  function collectionMethodLabel(siteScrapeTask: SiteScrapeTask) {
-    if (siteScrapeTask?.collection_method === 'MANUAL') {
-      return 'Manual Collection';
-    } else {
-      return 'Automated Collection';
-    }
-  }
   function elapsedLable(siteScrapeTask: SiteScrapeTask) {
     if (!siteScrapeTask || !siteScrapeTask.start_time) {
       return '0 seconds';
@@ -134,11 +128,11 @@ export function SiteDocDocumentsTable({
             <div>
               <span className="datagrid-info">{siteScrapeTaskStatusLabel(siteScrapeTask)}</span>|
               <span className="datagrid-info">
-                {collectionCountLabel(siteScrapeTask)} on {dateLabel}
+                {collectMethodDisplayName(siteScrapeTask?.collection_method)} on {dateLabel}
               </span>
               |
               <span className="datagrid-info-subheader">
-                {collectionMethodLabel(siteScrapeTask)}
+                {collectMethodDisplayName(siteScrapeTask?.collection_method)}
               </span>
               |<span className="datagrid-info-subheader">{elapsedLable(siteScrapeTask)}</span>
             </div>
