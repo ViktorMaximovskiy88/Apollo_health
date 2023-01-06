@@ -98,9 +98,7 @@ class JavascriptClick(PlaywrightBaseScraper):
                     logging.info(f"Direct Download result: {content_type} - {response.url}")
                     download = DownloadContext(
                         response=Response(content_type=content_type, status=response.status),
-                        request=Request(
-                            url=response.url,
-                        ),
+                        request=Request(url=response.url, cookies=self.cookies),
                     )
                     download.metadata = await self.extract_metadata(link_handle)
                     downloads.append(download)
@@ -123,9 +121,7 @@ class JavascriptClick(PlaywrightBaseScraper):
                     )
                     download_context = DownloadContext(
                         response=Response(content_type=None),
-                        request=Request(
-                            url=download.url,
-                        ),
+                        request=Request(url=download.url, cookies=self.cookies),
                     )
                     download_context.metadata = await self.extract_metadata(link_handle)
                     downloads.append(download_context)

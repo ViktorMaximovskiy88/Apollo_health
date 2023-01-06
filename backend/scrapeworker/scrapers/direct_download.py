@@ -56,7 +56,9 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
         for link_handle in link_handles:
             metadata: Metadata = await self.extract_metadata(link_handle, resource_attr)
             url = normalize_url(base_url, metadata.resource_value, base_tag_href)
-            downloads.append(DownloadContext(metadata=metadata, request=Request(url=url)))
+            downloads.append(
+                DownloadContext(metadata=metadata, request=Request(url=url, cookies=self.cookies))
+            )
 
     async def scrape_and_queue(self, downloads: list[DownloadContext], page: Page) -> None:
         link_handles = await page.query_selector_all(self.css_selector)
@@ -68,6 +70,7 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
 
     async def execute(self) -> list[DownloadContext]:
         downloads: list[DownloadContext] = []
+        self.cookies = await self.context.cookies()
 
         await self.scrape_and_queue(downloads, page=self.page)
         # handle frame (not frames, although we could....)

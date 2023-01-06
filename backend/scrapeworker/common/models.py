@@ -2,6 +2,7 @@ import re
 from typing import Any
 
 from aiohttp import ClientResponse
+from playwright.async_api import Cookie
 
 from backend.common.models.base_document import BaseModel
 from backend.common.models.link_task_log import InvalidResponse, ValidResponse
@@ -30,7 +31,7 @@ class Request(BaseModel):
     headers: dict[str, str] = {}
     url: str
     data: Any | None = None
-    cookies: list[Any] = []
+    cookies: list[Cookie] = []
     # TODO move to response ..
     filename: str | None = None
 
