@@ -147,10 +147,13 @@ def combine_queue_query_with_user_query(
     return construct_table_query(query, sorts, filters)
 
 
-@router.get("/{id}/items", response_model=TableQueryResponse)
+@router.get(
+    "/{id}/items",
+    response_model=TableQueryResponse,
+    dependencies=[Security(get_current_user)],
+)
 async def get_work_queue_items(
     work_queue: WorkQueue = Depends(get_target),
-    current_user: User = Security(get_current_user),
     limit: int | None = None,
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
@@ -168,6 +171,16 @@ class TakeLockResponse(BaseModel):
 class TakeNextWorkQueueResponse(BaseModel):
     acquired_lock: bool
     item_id: PydanticObjectId | None = None
+
+
+def get_valid_lock(locks: list[Any], work_queued_id: PydanticObjectId, now: datetime):
+    return next(
+        filter(
+            lambda l: l.work_queue_id == work_queued_id and l.expires.now(tz=timezone.utc) > now,
+            locks,
+        ),
+        None,
+    )
 
 
 async def attempt_lock_acquire(
@@ -206,15 +219,10 @@ async def attempt_lock_acquire(
     )
     if already_owned:
         item = LockableDocument.parse_obj(already_owned)
-        lock = next(
-            filter(
-                lambda l: l.work_queue_id == work_queue.id and l.expires.now(tz=timezone.utc) > now,
-                item.locks,
-            )
-        )
+        lock = get_valid_lock(item.locks, work_queue.id, now)
         return TakeLockResponse(acquired_lock=True, lock=lock)
 
-    # Check if anyone owns the lock, if no take it
+    # Check if anyone owns the lock, if not take it
     acquired = await Collection.get_motor_collection().find_one_and_update(
         {
             "_id": item_id,
@@ -236,12 +244,7 @@ async def attempt_lock_acquire(
     )
     if acquired:
         item = LockableDocument.parse_obj(acquired)
-        lock = next(
-            filter(
-                lambda l: l.work_queue_id == work_queue.id and l.expires.now(tz=timezone.utc) > now,
-                item.locks,
-            )
-        )
+        lock = get_valid_lock(item.locks, work_queue.id, now)
         return TakeLockResponse(acquired_lock=True, lock=lock)
 
     item: LockableDocument | None = await Collection.find_one({"_id": item_id}).project(
@@ -253,7 +256,7 @@ async def attempt_lock_acquire(
             status_code=status.HTTP_404_NOT_FOUND,
         )
 
-    lock = next(filter(lambda l: l.work_queue_id == item_id and l.expires > now, item.locks))
+    lock = get_valid_lock(item.locks, item_id, now)
     return TakeLockResponse(acquired_lock=False, lock=lock)
 
 
@@ -320,8 +323,10 @@ async def submit_work_item(
     item = await Collection.get(item_id)
     if not item:
         raise HTTPException(detail=f"{item_id} Not Found", status_code=status.HTTP_404_NOT_FOUND)
-    action = next(filter(lambda a: a.label == body.action_label, work_queue.submit_actions))
-    if action.reassignable and action.dest_queue and body.reassignment:
+    action = next(filter(lambda a: a.label == body.action_label, work_queue.submit_actions), None)
+    # TODO adding None to prevent StopIteration, does the logic still work?
+    # raise?
+    if action and action.reassignable and action.dest_queue and body.reassignment:
         dest_user = await User.get(body.reassignment)
         dest_queue = await WorkQueue.find_one(WorkQueue.name == action.dest_queue)
         if dest_queue and dest_user:
