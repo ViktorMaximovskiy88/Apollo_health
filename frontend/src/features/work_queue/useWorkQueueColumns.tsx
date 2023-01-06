@@ -11,6 +11,8 @@ import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
 import { workQueueTableState } from './workQueueSlice';
 import { useSelector } from 'react-redux';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
+import { priorityOptions, priorityStyle } from '../doc_documents/useSiteDocDocumentColumns';
+import { TypeFilterValue } from '@inovua/reactdatagrid-community/types';
 import { WorkQueue } from './types';
 
 function useSiteSelectOptions() {
@@ -107,10 +109,12 @@ export function useWorkQueueColumns(
       header: 'Document Type',
       minWidth: 200,
       filterEditor: SelectFilter,
-      filterEditorProps: {
-        placeholder: 'All',
+      filterEditorProps: ({ filterValue }: { filterValue: TypeFilterValue }) => ({
+        placeholder: filterValue ? null : 'All',
+        multiple: true,
+        wrapMultiple: false,
         dataSource: DocumentTypes,
-      },
+      }),
       render: ({ value: document_type }: { value: string }) => {
         return <>{document_type}</>;
       },
@@ -149,6 +153,18 @@ export function useWorkQueueColumns(
         if (firstCollectedDate) {
           return prettyDateUTCFromISO(firstCollectedDate);
         }
+      },
+    },
+    {
+      header: 'Priority',
+      name: 'priority',
+      width: 130,
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        dataSource: priorityOptions,
+      },
+      render: ({ value: priority }: { value: number }) => {
+        return priorityStyle(priority);
       },
     },
     {

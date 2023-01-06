@@ -12,7 +12,7 @@ import { isErrorWithData } from '../../common/helpers';
 import { ButtonLink } from '../../components/ButtonLink';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './sitesApi';
-import { CollectionMethod, collectionMethodOptions, collectMethodDisplayName, Site } from './types';
+import { collectionMethodOptions, collectMethodDisplayName, Site } from './types';
 import { SiteStatus, siteStatusDisplayName, siteStatusStyledDisplay } from './siteStatus';
 import { ReactNode, useMemo } from 'react';
 import { User } from '../users/types';

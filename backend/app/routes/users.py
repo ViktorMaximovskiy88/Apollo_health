@@ -2,7 +2,6 @@ from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
 
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
-from backend.app.utils.security import get_password_hash
 from backend.app.utils.user import get_current_admin_user, get_current_user
 from backend.common.models.user import NewUser, User, UserPublic, UserUpdate
 
@@ -64,8 +63,8 @@ async def create_user(
         full_name=user.full_name,
         is_admin=user.is_admin or False,
         roles=user.roles or [],
-        hashed_password=get_password_hash(user.password),
     )
+
     await create_and_log(logger, current_user, new_user)
     return new_user
 

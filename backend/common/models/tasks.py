@@ -9,45 +9,59 @@ from backend.common.models.base_document import BaseDocument, BaseModel
 
 GenericTaskType = TypeVar(
     "GenericTaskType",
-    "LineageTask",
     "PDFDiffTask",
     "ContentTask",
     "DateTask",
     "DocTypeTask",
     "TagTask",
     "DocPipelineTask",
+    "SiteDocsPipelineTask",
+    "LineageTask",
 )
 T = TypeVar("T", bound="TaskLog")
 
 
-class DocPipelineTask(BaseModel):
+class DocTask(BaseModel):
     doc_doc_id: PydanticObjectId
+    reprocess: bool = False
 
 
-class ContentTask(BaseModel):
-    doc_doc_id: PydanticObjectId
+class DocPipelineTask(DocTask):
+    pass
 
 
-class DateTask(BaseModel):
-    doc_doc_id: PydanticObjectId
+class ContentTask(DocTask):
+    pass
 
 
-class DocTypeTask(BaseModel):
-    doc_doc_id: PydanticObjectId
+class DateTask(DocTask):
+    pass
 
 
-class TagTask(BaseModel):
-    doc_doc_id: PydanticObjectId
+class DocTypeTask(DocTask):
+    pass
+
+
+class TagTask(DocTask):
+    pass
+
+
+class SiteTask(BaseModel):
+    site_id: PydanticObjectId
+    reprocess: bool = False
+
+
+class SiteDocsPipelineTask(SiteTask):
+    pass
+
+
+class LineageTask(SiteTask):
+    pass
 
 
 class PDFDiffTask(BaseModel):
     current_checksum: str
     previous_checksum: str
-
-
-class LineageTask(BaseModel):
-    site_id: PydanticObjectId
-    reprocess: bool = False
 
 
 def get_group_id(payload: GenericTaskType):
@@ -65,13 +79,14 @@ class TaskLog(BaseDocument):
     created_at: datetime | None = None
     created_by: PydanticObjectId | None
 
-    status: TaskStatus = TaskStatus.PENDING
+    status: Indexed(str) = TaskStatus.PENDING
     status_at: datetime | None = None
 
     completed_at: datetime | None = None
     is_complete: bool = False
 
     error: str | None = None
+    worker_id: Indexed(str) | None = None
     group_id: Indexed(str)
     message_id: Indexed(str) | None
 
@@ -126,6 +141,9 @@ class TaskLog(BaseDocument):
     async def get_incomplete_for_user(cls: T, user_id: PydanticObjectId) -> T | None:
         return await cls.find_many({"created_by": user_id, "is_complete": False}).to_list()
 
+    def is_progressing(self) -> bool:
+        return not self.is_complete and self.status == TaskStatus.IN_PROGRESS
+
     def is_finished(self) -> bool:
         return self.is_complete and self.status == TaskStatus.FINISHED
 
@@ -146,10 +164,11 @@ class TaskLog(BaseDocument):
             < datetime.now(tz=timezone.utc).replace(tzinfo=None) - timedelta(seconds=seconds)
         )
 
-    def should_process(self, message_id: str, seconds: int) -> bool:
-        return (
-            self.is_queued() or self.has_failed() or self.is_stale(seconds) or self.is_canceled()
-        ) and self.message_id == message_id
+    def is_success(self, message_id: str) -> bool:
+        return self.is_finished() and self.message_id == message_id
+
+    def is_failure(self, message_id: str) -> bool:
+        return (self.has_failed() or self.is_canceled()) and self.message_id == message_id
 
     def can_be_queued(self) -> bool:
         queued = [log for log in self.log if log.status == TaskStatus.QUEUED]
@@ -158,12 +177,13 @@ class TaskLog(BaseDocument):
     async def update_queued(self, message_id: str) -> T:
         return await self._update_status(TaskStatus.QUEUED, message_id=message_id)
 
-    async def update_progress(self) -> T:
-        return await self._update_status(TaskStatus.IN_PROGRESS, is_complete=False)
+    async def update_progress(self, worker_id) -> T:
+        return await self._update_status(
+            TaskStatus.IN_PROGRESS, is_complete=False, worker_id=worker_id
+        )
 
     async def keep_alive(self) -> T:
-        self.status_at = datetime.now(tz=timezone.utc)
-        return await self.save()
+        return await self._update_status(task_status=self.status, append_log=False)
 
     async def update_finished(self, result: dict[str, any] | None) -> T:
         return await self._update_status(TaskStatus.FINISHED, is_complete=True, result=result)
@@ -181,6 +201,8 @@ class TaskLog(BaseDocument):
         is_complete=False,
         result: dict[str, any] | None = None,
         error: str | None = None,
+        append_log: bool = True,
+        worker_id: str | None = None,
     ) -> T:
         now = datetime.now(tz=timezone.utc)
 
@@ -202,14 +224,20 @@ class TaskLog(BaseDocument):
         if message_id:
             payload["message_id"] = message_id
 
-        log_entry = TaskLogEntry(
-            status=payload["status"],
-            status_at=payload["status_at"],
-        )
+        if worker_id:
+            payload["worker_id"] = worker_id
+
+        update_op = {"$set": payload}
+        if append_log:
+            log_entry = TaskLogEntry(
+                status=payload["status"],
+                status_at=payload["status_at"],
+            )
+            update_op["$push"] = {"log": log_entry.dict()}
 
         updated = await self.get_motor_collection().find_one_and_update(
             {"_id": self.id},
-            {"$set": payload, "$push": {"log": log_entry.dict()}},
+            update_op,
             return_document=ReturnDocument.AFTER,
         )
 

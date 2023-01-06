@@ -38,9 +38,7 @@ class SearchableCrawler:
             if search_codes:
                 search_codes_list += list(search_codes.codes)
 
-        if search_codes_list:
-            return search_codes_list
-        return set()
+        return search_codes_list
 
     async def replay_playbook(self, page: Page, playbook_context: PlaybookContext):
         playbook = ScrapePlaybook(playbook_str=None, playbook_context=playbook_context)
@@ -71,7 +69,7 @@ class SearchableCrawler:
         """
         try:
             select_locator = page.locator(":not(input)", has_text=code).last
-            await select_locator.click()
+            await select_locator.click(timeout=5000)
         except Exception:
             return
 

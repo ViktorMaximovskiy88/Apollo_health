@@ -3,6 +3,7 @@ from typing import List
 from beanie import PydanticObjectId
 
 from backend.app.utils.logger import Logger, create_and_log
+from backend.common.core.enums import ApprovalStatus
 from backend.common.models.doc_document import DocDocument, DocDocumentLocation, SiteDocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.lineage import LineageDoc
@@ -77,6 +78,7 @@ async def create_doc_document_service(
         name=retrieved_document.name,
         checksum=retrieved_document.checksum,
         text_checksum=retrieved_document.text_checksum,
+        content_checksum=retrieved_document.content_checksum,
         document_type=retrieved_document.document_type,
         doc_type_confidence=retrieved_document.doc_type_confidence,
         doc_type_match=retrieved_document.doc_type_match,
@@ -90,6 +92,7 @@ async def create_doc_document_service(
         lang_code=retrieved_document.lang_code,
         therapy_tags=retrieved_document.therapy_tags,
         indication_tags=retrieved_document.indication_tags,
+        priority=retrieved_document.priority,
         file_extension=retrieved_document.file_extension,
         identified_dates=retrieved_document.identified_dates,
         last_collected_date=retrieved_document.last_collected_date,
@@ -100,7 +103,13 @@ async def create_doc_document_service(
         doc_vectors=retrieved_document.doc_vectors,
         file_size=retrieved_document.file_size,
         token_count=retrieved_document.token_count,
+        is_searchable=retrieved_document.is_searchable,
     )
+    # Since user uploaded doc and manually set doc info,
+    # skip classification queue and set to approved.
+    if retrieved_document.uploader_id:
+        doc_document.classification_status = ApprovalStatus.APPROVED
+
     doc_document.set_final_effective_date()
     # Set doc doc specific fields which cannot be copied from retr doc.
     for doc_field_key, doc_field_value in doc_doc_fields.items():

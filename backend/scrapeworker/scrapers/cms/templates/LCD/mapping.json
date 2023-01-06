@@ -1,0 +1,385 @@
+{
+  "url_identifiers": ["LCDId", "ver"],
+  "data_set_identifiers": ["lcd_id", "lcd_version"],
+  "mapping": [
+    {
+      "type": "list",
+      "field": "associated_documents_list",
+      "items": [
+        {
+          "name": "Related Local Coverage Document(s)",
+          "source": "lcd_related_documents",
+          "fields": [
+            {
+              "display_name": "Article(s)",
+              "column": "r_article_id",
+              "transform": {
+                "shared_source": 3,
+                "source": "article",
+                "identifier": "article_id",
+                "fields": ["article_id", "title"]
+              }
+            },
+            {
+              "display_name": "LCD(s)",
+              "column": "r_lcd_id",
+              "transform": {
+                "source": "lcd",
+                "identifier": "lcd_id",
+                "fields": ["lcd_id", "title"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Related National Coverage Documents",
+          "source": "lcd_related_ncd_documents",
+          "fields": [
+            {
+              "display_name": "NCD(s)",
+              "column": "r_ncd_id",
+              "transform": {
+                "shared_source": 1,
+                "source": "ncd_trkg",
+                "identifier": "NCD_id",
+                "fields": ["NCD_mnl_sect", "NCD_mnl_sect_title"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "field": "keywords",
+      "type": "text",
+      "source": "lcd",
+      "split_by": "|"
+    },
+    {
+      "type": "single_table",
+      "field": "revision_history_table_rows",
+      "order_by_desc": "rev_hist_num",
+      "rows_source": {
+        "table": "lcd_x_revision_history",
+        "column": "lcd_id",
+        "exclude": "lcd_version"
+      },
+      "fields": [
+        {
+          "name": "Revision History Date",
+          "source": "revision_history_table_rows",
+          "field": "rev_hist_date",
+          "identifier": "lcd_id",
+          "format": "date"
+        },
+        {
+          "name": "Revision History Number",
+          "source": "revision_history_table_rows",
+          "prefix": "R",
+          "field": "rev_hist_num",
+          "identifier": "lcd_id"
+        },
+        {
+          "name": "Revision History Explanation",
+          "source": "revision_history_table_rows",
+          "field": "rev_hist_exp",
+          "identifier": "lcd_id"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "source": "lcd",
+      "field": "bibliography"
+    },
+    {
+      "type": "text",
+      "source": "lcd_x_sticky_note",
+      "field": "sticky_note",
+      "class": "boxed col-2"
+    },
+    {
+      "type": "text",
+      "source": "lcd",
+      "field": "add_icd10_info"
+    },
+    {
+      "type": "text",
+      "source": "lcd",
+      "field": "associated_info"
+    },
+    {
+      "type": "group",
+      "field": "icd_10_codes_not_covered_group",
+      "source": "lcd_x_icd10_dont_support_group",
+      "group_field": "icd10_dont_support_group",
+      "groups": [
+        {
+          "name": "Paragraph",
+          "type": "text",
+          "source": "lcd_x_icd10_dont_support_group",
+          "field": "paragraph"
+        },
+        {
+          "name": "Codes",
+          "type": "single_table",
+          "source": "lcd_x_icd10_dont_support",
+          "fields": [
+            {
+              "name": "Code",
+              "field": "icd10_code_id"
+            },
+            {
+              "name": "Description",
+              "field": "description"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "field": "icd_10_codes_covered_group",
+      "source": "lcd_x_icd10_support",
+      "group_field": "icd10_support_group",
+      "groups": [
+        {
+          "name": "Paragraph",
+          "type": "text",
+          "source": "lcd_x_icd10_support_group",
+          "field": "paragraph"
+        },
+        {
+          "name": "Codes",
+          "type": "single_table",
+          "source": "lcd_x_icd10_support",
+          "fields": [
+            {
+              "name": "Code",
+              "field": "icd10_code_id"
+            },
+            {
+              "name": "Description",
+              "field": "description"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "field": "cpt_hcps_code_group",
+      "source": "lcd_x_hcpc_code",
+      "group_field": "hcpc_code_group",
+      "groups": [
+        {
+          "name": "Paragraph",
+          "type": "text",
+          "source": "lcd_x_hcpc_code_group",
+          "field": "paragraph"
+        },
+        {
+          "name": "Codes",
+          "type": "single_table",
+          "source": "lcd_x_hcpc_code",
+          "fields": [
+            {
+              "name": "Code",
+              "field": "hcpc_code_id"
+            },
+            {
+              "name": "Description",
+              "field": "long_description"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "single_table",
+      "field": "revenue_code_table_rows",
+      "group_by": "CODE",
+      "rows_source": {
+        "table": "lcd_x_revenue_code",
+        "column": "lcd_id"
+      },
+      "fields": [
+        {
+          "name": "CODE",
+          "source": "lcd_x_revenue_code",
+          "field": "revenue_code_id",
+          "identifier": "lcd_id"
+        },
+        {
+          "name": "DESCRIPTION",
+          "source": "lcd_x_revenue_code",
+          "field": "description",
+          "identifier": "lcd_id"
+        }
+      ]
+    },
+    {
+      "type": "single_table",
+      "field": "bill_code_table_rows",
+      "group_by": "CODE",
+      "rows_source": {
+        "table": "lcd_x_bill_code",
+        "column": "lcd_id"
+      },
+      "fields": [
+        {
+          "name": "CODE",
+          "source": "lcd_x_bill_code",
+          "field": "bill_code_id",
+          "identifier": "lcd_id"
+        },
+        {
+          "name": "DESCRIPTION",
+          "source": "lcd_x_bill_code",
+          "field": "description",
+          "identifier": "lcd_id"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "field": "summary_of_evidence",
+      "source": "lcd"
+    },
+    {
+      "type": "text",
+      "field": "analysis_of_evidence",
+      "source": "lcd"
+    },
+    {
+      "type": "text",
+      "field": "indication",
+      "source": "lcd"
+    },
+    {
+      "type": "text",
+      "field": "source_info",
+      "source": "lcd"
+    },
+    {
+      "type": "text",
+      "field": "cms_cov_policy",
+      "source": "lcd"
+    },
+    {
+      "type": "date",
+      "field": "date_retired",
+      "source": "lcd"
+    },
+    {
+      "type": "date",
+      "source": "lcd",
+      "field": "notice_start_dt"
+    },
+    {
+      "type": "date",
+      "source": "lcd",
+      "field": "notice_end_dt"
+    },
+    {
+      "type": "date",
+      "source": "lcd",
+      "field": "rev_end_date"
+    },
+    {
+      "type": "date",
+      "source": "lcd",
+      "field": "orig_det_eff_date"
+    },
+    {
+      "type": "date",
+      "source": "lcd",
+      "field": "rev_eff_date"
+    },
+    {
+      "field": "source_lcd_id",
+      "type": "text",
+      "source": "lcd_related_source_icd9",
+      "prefix": "L"
+    },
+    {
+      "type": "text",
+      "source": "lcd",
+      "field": "title"
+    },
+    {
+      "type": "text",
+      "source": "lcd",
+      "field": "lcd_id"
+    },
+    {
+      "type": "table",
+      "field": "contractor_detail_table_rows",
+      "rows_source": {
+        "table": "lcd_x_contractor",
+        "columns": ["contractor_id", "contractor_version"]
+      },
+      "order_by": "Contract Number",
+      "fields": [
+        {
+          "name": "Contractor Name",
+          "source": "contractor",
+          "field": "contractor_bus_name",
+          "identifier": "contractor_id"
+        },
+        {
+          "name": "Contract Type",
+          "source": "contractor_type_lookup",
+          "field": "description",
+          "identifier": "contractor_type_id",
+          "parent_source": "contractor",
+          "parent_source_lookup": "contractor_id",
+          "parent_identifier": "contractor_type_id"
+        },
+        {
+          "name": "Contract Number",
+          "source": "contractor",
+          "field": "contractor_number",
+          "identifier": "contractor_id",
+          "min_length": 5,
+          "append": {
+            "name": "Subtype",
+            "source": "contractor_subtype_lookup",
+            "field": "description",
+            "identifier": "contractor_subtype_id",
+            "parent_source": "contractor",
+            "parent_source_lookup": "contractor_id",
+            "parent_identifier": "contractor_subtype_id",
+            "delimiter": " - "
+          }
+        },
+        {
+          "name": "Jurisdiction",
+          "source": "dmerc_region_lookup",
+          "field": "super_mac_description",
+          "identifier": "region_id",
+          "parent_source": "contractor",
+          "parent_source_lookup": "contractor_id",
+          "parent_identifier": "dmerc_rgn"
+        },
+        {
+          "name": "State(s)",
+          "source": "state_lookup",
+          "field": "description",
+          "identifier": "state_id",
+          "parent_source": "contractor_jurisdiction",
+          "parent_source_lookup": "contractor_id",
+          "parent_identifier": "state_id"
+        }
+      ]
+    }
+  ],
+  "documents_list_info": {
+    "target_source": "lcd",
+    "source": "lcd_x_contractor",
+    "target_fields": ["lcd_id", "lcd_version"],
+    "url_template": "https://www.cms.gov/medicare-coverage-database/details/lcd-details.aspx?LCDId=$lcd_id&ver=$lcd_version",
+    "url_identifiers": ["Cntrctr", "ContrVer"],
+    "data_set_identifiers": ["contractor_id", "contractor_version"]
+  }
+}

@@ -46,7 +46,7 @@ const buildInitialValues = (oldVersion?: SiteDocDocument, baseUrlOptions?: any[]
       base_url: '',
     };
     if (baseUrlOptions && baseUrlOptions.length > 0) {
-      values.base_url = baseUrlOptions[0];
+      values.base_url = baseUrlOptions[0].value;
     }
     return values;
   }
@@ -80,7 +80,7 @@ const setDatesToUtcStart = (newDocument: any) => {
     'published',
   ];
   for (const date of dates) {
-    if (!(date in newDocument)) {
+    if (!(`${date}_date` in newDocument) || !newDocument[`${date}_date`]) {
       continue;
     }
     newDocument[`${date}_date`].utc(true).startOf('day');
@@ -160,7 +160,7 @@ export function AddDocumentModal({
       }
       newDocument.exists_on_this_site = existsOnThisSite;
 
-      setDatesToUtcStart(newDocument);
+      newDocument = setDatesToUtcStart(newDocument);
 
       // For some reason, fileData never updates if browser auto fills.
       fileData.url = form.getFieldValue('url');

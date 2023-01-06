@@ -81,7 +81,7 @@ export function TableBasicInfoForm() {
   const documentOptions = useCallback(
     async (search: string) => {
       const { data } = await getDocs({
-        limit: 20,
+        limit: 150,
         skip: 0,
         sortInfo: { name: 'name', dir: 1 },
         filterValue: [

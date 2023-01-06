@@ -271,7 +271,7 @@ resource "aws_ecs_service" "app" {
   cluster          = data.aws_ecs_cluster.ecs-cluster.id
   task_definition  = aws_ecs_task_definition.app.arn
 
-  desired_count = 2
+  desired_count = 4
   deployment_circuit_breaker {
     enable   = true
     rollback = true

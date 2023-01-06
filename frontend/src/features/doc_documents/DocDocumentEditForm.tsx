@@ -1,18 +1,26 @@
 import { useMemo } from 'react';
 import { Form, FormInstance } from 'antd';
-import { DocDocument, DocumentTag, UIIndicationTag, UITherapyTag } from './types';
+import {
+  DocDocument,
+  DocumentTag,
+  IndicationTag,
+  TherapyTag,
+  UIIndicationTag,
+  UITherapyTag,
+} from './types';
 import { DocDocumentTagForm } from './DocDocumentTagForm';
 import { dateToMoment } from '../../common';
 import { useCallback, useEffect, useState } from 'react';
 import { isEqual } from 'lodash';
 import { DocDocumentInfoForm } from './DocDocumentInfoForm';
 import { DocDocumentLocations } from './locations/DocDocumentLocations';
-import { useGetDocDocumentQuery } from './docDocumentApi';
+import { useGetChangeLogQuery, useGetDocDocumentQuery } from './docDocumentApi';
 import { DocDocumentExtractionTab } from './DocDocumentExtractionTab';
 import { calculateFinalEffectiveFromValues } from './helpers';
 import { DocStatusModal } from './DocStatusModal';
 import { HashRoutedTabs } from '../../components/HashRoutedTabs';
 import { CommentWall } from '../comments/CommentWall';
+import { ChangeLogModal } from '../change-log/ChangeLogModal';
 
 const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   const calculateFinalEffectiveDate = useCallback(() => {
@@ -70,19 +78,19 @@ const useOnFinish = ({
     setIsSaving(true);
 
     try {
-      const indication_tags = [];
-      const therapy_tags = [];
-      for (const tag of tags) {
-        if (tag._type === 'indication') {
-          const { name, text, page, code, focus, update_status, text_area } =
-            tag as UIIndicationTag;
-          indication_tags.push({ name, text, page, code, focus, update_status, text_area });
+      const indication_tags: IndicationTag[] = [];
+      const therapy_tags: TherapyTag[] = [];
+      for (const uiTag of tags) {
+        const { id, _type, _normalized, ...tag } = uiTag;
+        if (_type === 'indication') {
+          indication_tags.push(tag as IndicationTag);
         } else {
-          const { name, text, page, score, code, focus, update_status, text_area } =
-            tag as UITherapyTag;
-          therapy_tags.push({ name, text, page, score, code, focus, update_status, text_area });
+          therapy_tags.push(tag as TherapyTag);
         }
       }
+
+      submittedDoc.previous_par_id = submittedDoc.previous_par_id || null;
+      submittedDoc.document_family_id = submittedDoc.document_family_id || null;
 
       await onSubmit({
         ...submittedDoc,
@@ -153,7 +161,7 @@ export function DocDocumentEditForm({
     if (index > -1) {
       if (updateTags) {
         update.forEach((tag) => {
-          if (tag.id !== newTag.id && tag.name === newTag.name) {
+          if (tag.id !== newTag.id && tag.text === newTag.text) {
             tag.focus = newTag.focus;
           }
         });
@@ -237,7 +245,12 @@ export function DocDocumentEditForm({
         onFinish={onFinish}
       >
         <HashRoutedTabs
-          tabBarExtraContent={<DocStatusModal doc={doc} />}
+          tabBarExtraContent={
+            <>
+              <ChangeLogModal target={doc} useChangeLogQuery={useGetChangeLogQuery} />
+              <DocStatusModal doc={doc} />
+            </>
+          }
           items={tabs}
           className="h-full ant-tabs-h-full"
         />

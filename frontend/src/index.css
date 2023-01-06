@@ -160,3 +160,11 @@ a {
 .ant-select-expandable .ant-select-selector {
   height: unset !important;
 }
+
+/* DocDocument Edit Form: break long payer family into multiple lines */
+.multi-line-select .ant-select-selection-item {
+  white-space: normal;
+}
+.multi-line-select .ant-select-selector {
+  height: unset !important;
+}

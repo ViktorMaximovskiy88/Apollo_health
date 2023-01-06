@@ -31,6 +31,7 @@ export function DocDate(props: {
   beforeDateLabel?: DateLabel;
   onFieldChange: () => void;
   disabled?: boolean;
+  setCollapseOpen: () => void;
 }) {
   const form = Form.useFormInstance();
   const docId = form.getFieldValue('docId');
@@ -47,6 +48,7 @@ export function DocDate(props: {
             if (!props.beforeDateName) return Promise.resolve();
             const afterDate = form.getFieldValue(props.beforeDateName);
             if (!value || !afterDate || afterDate < value) return Promise.resolve();
+            props.setCollapseOpen();
             return Promise.reject(`${props.label} must come after ${props.beforeDateLabel}`);
           },
         },

@@ -5,4 +5,5 @@ const proxy = createProxyMiddleware({
 });
 module.exports = function (app) {
   app.use('/api/v1', proxy);
+  app.use('/request-access', proxy);
 };

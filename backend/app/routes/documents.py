@@ -503,7 +503,6 @@ async def add_document(
     await current_task.save()
 
     # Start doc cycle workflow for add_doc and new_version.
-    # If the doc exists on another site, doc cycle has already started.
     if not uploaded_doc.prev_location_doc_id:
         await doc_document_save_hook(created_doc_doc)
 

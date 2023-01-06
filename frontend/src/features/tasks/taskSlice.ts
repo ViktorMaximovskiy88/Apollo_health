@@ -5,7 +5,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { makeActionDispatch } from '../../common/helpers';
 import { notification } from 'antd';
 import { uniqBy } from 'lodash';
-import { Task, useLazyGetTaskQuery, useEnqueueTaskMutation } from './taskApi';
+import { useLazyGetTaskQuery, useEnqueueTaskMutation } from './taskApi';
+import { Task } from './types';
 import { useInterval } from '../../common/hooks';
 
 interface TaskState {

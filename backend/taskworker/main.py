@@ -2,6 +2,7 @@ import os
 import signal
 import sys
 from pathlib import Path
+from uuid import uuid4
 
 import newrelic.agent
 
@@ -15,8 +16,12 @@ from backend.app.core.settings import settings
 from backend.common.db.init import init_db
 from backend.common.tasks.task_queue import TaskQueue
 
-logging.basicConfig()
-logger = logging.getLogger("task")
+worker_id = str(uuid4())
+logging.basicConfig(
+    format="%(asctime)s %(levelname)-8s %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger(worker_id)
 logger.setLevel(logging.INFO)
 
 
@@ -37,7 +42,7 @@ async def main():
     try:
         await init_db()
         logger.info("Starting the task queue worker")
-        await queue.listen()
+        await queue.listen(worker_id)
     except (KeyboardInterrupt, SystemExit):
         await queue.onshutdown()
         sys.exit(0)

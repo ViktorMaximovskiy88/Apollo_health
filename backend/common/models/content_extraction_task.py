@@ -14,6 +14,7 @@ class FormularyDatum(BaseModel):
     rxcui: str | None = None
     name: str | None = None
     tier: int = 0
+    priority: int = 0
 
     pa: bool = False
     pan: str | None = None

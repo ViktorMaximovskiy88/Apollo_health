@@ -17,14 +17,16 @@ from backend.common.models.document_family import DocumentFamily
 from backend.common.models.payer_family import PayerFamily
 from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleService
 from backend.common.services.extraction.extraction_delta import DeltaCreator
-from backend.common.services.lineage.update_prev_document import update_lineage
+from backend.common.services.lineage.start_new_lineage import start_new_lineage
+from backend.common.services.lineage.update_lineages import update_lineage
 from backend.common.services.tag_compare import TagCompare
 from backend.common.task_queues.unique_task_insert import try_queue_unique_task
 
 
 class ChangeInfo(BaseModel):
     translation_change: bool = False
-    lineage_change: PydanticObjectId | None = None
+    lineage_change: PydanticObjectId | bool | None = None
+    include_later_documents: bool = False
     old_payer_family_ids: list[PydanticObjectId | None] = []
     document_family_change: PydanticObjectId | bool = False
 
@@ -112,22 +114,33 @@ async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = Cha
         )
 
     if change_info.lineage_change:
+        if change_info.lineage_change is True:
+            change_info.lineage_change = None
+
         if doc.previous_doc_doc_id:
             prev_doc = await DocDocument.get(doc.previous_doc_doc_id)
             if prev_doc:
                 await recompare_tags(doc, prev_doc)
                 await recompare_extractions(doc, prev_doc)
 
-        next_doc = await DocDocument.find_one(DocDocument.previous_doc_doc_id == doc.id)
-        if next_doc:
-            await recompare_tags(next_doc, doc)
-            await recompare_extractions(next_doc, doc)
+            next_doc = await doc.next_doc_document
+            if next_doc:
+                await recompare_tags(next_doc, doc)
+                await recompare_extractions(next_doc, doc)
 
-        await update_lineage(
-            updating_doc_doc=doc,
-            old_prev_doc_doc_id=change_info.lineage_change,
-            new_prev_doc_doc_id=doc.previous_doc_doc_id,
-        )
+            await update_lineage(
+                updating_doc_doc=doc,
+                old_prev_doc_doc_id=change_info.lineage_change,
+                new_prev_doc_doc_id=doc.previous_doc_doc_id,
+                include_later_documents=change_info.include_later_documents,
+            )
+        else:
+            # No previous_doc_doc_id means previous version removed means new lineage
+            await start_new_lineage(
+                updating_doc_doc=doc,
+                old_prev_doc_doc_id=change_info.lineage_change,
+                include_later_documents=change_info.include_later_documents,
+            )
 
     await update_payer_family_counts(doc, change_info)
 
@@ -138,16 +151,18 @@ def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
     change_info = ChangeInfo()
     if (
         isinstance(updates, (UpdateDocDocument, TranslationUpdateDocDocument))
-        and updates.translation_id
+        and "translation_id" in updates.__fields_set__
     ):
         change_info.translation_change = updates.translation_id != doc.translation_id
 
     if (
         isinstance(updates, (UpdateDocDocument, ClassificationUpdateDocDocument))
-        and updates.previous_doc_doc_id
+        and "previous_doc_doc_id" in updates.__fields_set__
         and updates.previous_doc_doc_id != doc.previous_doc_doc_id
     ):
-        change_info.lineage_change = doc.previous_doc_doc_id
+        change_info.lineage_change = doc.previous_doc_doc_id or True
+        change_info.include_later_documents = updates.include_later_documents_in_lineage_update
+
     if (
         isinstance(updates, (UpdateDocDocument, FamilyUpdateDocDocument))
         and "document_family_id" in updates.__fields_set__

@@ -5,7 +5,7 @@ import BoolFilter from '@inovua/reactdatagrid-community/BoolFilter';
 import { LinkOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { prettyDateUTCFromISO } from '../../common';
 import { DocDocument, SiteDocDocument } from './types';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, Location, useParams } from 'react-router-dom';
 import { DocumentTypes } from '../retrieved_documents/types';
 import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
 import { ManualCollectionValidationButtons } from './manual_collection/ManualCollectionValidationButtons';
@@ -13,6 +13,7 @@ import { useDocumentFamilySelectOptions } from './document_family/documentFamily
 import { useGetSiteQuery } from '../sites/sitesApi';
 import { CollectionMethod } from '../sites/types';
 import { usePayerFamilySelectOptions } from '../payer-family/payerFamilyHooks';
+import { TypeFilterValue } from '@inovua/reactdatagrid-community/types';
 
 interface CreateColumnsType {
   handleNewVersion?: (data: SiteDocDocument) => void;
@@ -43,6 +44,7 @@ interface CreateColumnsType {
     [id: string]: string;
   };
   isManualCollection: boolean;
+  location: Location;
 }
 
 export enum TextAlignType {
@@ -58,6 +60,24 @@ const InternalDocs = [
   { id: false, value: false, label: 'false' },
 ];
 
+export const priorityOptions = [
+  { label: 'Low', id: 0, value: 0 },
+  { label: 'High', id: 2, value: 2 },
+];
+
+export function priorityStyle(priority: number): React.ReactElement {
+  switch (true) {
+    case priority == 0:
+      return <span className="text-blue-500">Low</span>;
+    case priority == 1:
+      return <span className="text-green-500">Medium</span>;
+    case priority >= 2:
+      return <span className="text-red-500">High</span>;
+    default:
+      return <span className="text-blue-500">Low</span>;
+  }
+}
+
 export const createColumns = ({
   handleNewVersion,
   documentFamilyOptions,
@@ -67,6 +87,7 @@ export const createColumns = ({
   documentFamilyNamesById,
   payerFamilyNamesById,
   isManualCollection,
+  location,
 }: CreateColumnsType) => [
   {
     header: 'Last Collected',
@@ -86,46 +107,38 @@ export const createColumns = ({
     },
   },
   {
-    header: 'Link Text',
-    name: 'link_text',
-    minWidth: 200,
-    render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
-  },
-  {
     header: 'Document Name',
     name: 'name',
     defaultFlex: 1,
     minWidth: 300,
     filterSearch: true,
     render: ({ data: doc }: { data: SiteDocDocument }) => {
-      return <Link to={`/documents/${doc._id}`}>{doc.name}</Link>;
+      return (
+        <Link to={`/documents/${doc._id}?prevLocation=${location.pathname + location.search}`}>
+          {doc.name}
+        </Link>
+      );
     },
+  },
+  {
+    header: 'Link Text',
+    name: 'link_text',
+    minWidth: 200,
+    render: ({ value: link_text }: { value: string }) => <>{link_text}</>,
   },
   {
     header: 'Document Type',
     name: 'document_type',
     minWidth: 200,
     filterEditor: SelectFilter,
-    filterEditorProps: {
-      placeholder: 'All',
+    filterEditorProps: ({ filterValue }: { filterValue: TypeFilterValue }) => ({
+      placeholder: filterValue ? null : 'All',
+      multiple: true,
+      wrapMultiple: false,
       dataSource: DocumentTypes,
-    },
+    }),
     render: ({ value: document_type }: { value: string }) => {
       return <>{document_type}</>;
-    },
-  },
-  {
-    header: 'Internal',
-    name: 'internal_document',
-    width: 100,
-    filterEditor: BoolFilter,
-    textAlign: TextAlignType.Center,
-    filterEditorProps: {
-      placeholder: 'All',
-      dataSource: InternalDocs,
-    },
-    render: ({ value: internal_document }: { value: boolean }) => {
-      return internal_document ? <CheckCircleFilled /> : null;
     },
   },
   {
@@ -175,6 +188,20 @@ export const createColumns = ({
     },
   },
   {
+    header: 'Internal',
+    name: 'internal_document',
+    width: 100,
+    filterEditor: BoolFilter,
+    textAlign: TextAlignType.Center,
+    filterEditorProps: {
+      placeholder: 'All',
+      dataSource: InternalDocs,
+    },
+    render: ({ value: internal_document }: { value: boolean }) => {
+      return internal_document ? <CheckCircleFilled /> : null;
+    },
+  },
+  {
     header: 'URL',
     name: 'url',
     width: 80,
@@ -187,6 +214,18 @@ export const createColumns = ({
           </a>
         </>
       );
+    },
+  },
+  {
+    header: 'Priority',
+    name: 'priority',
+    width: 130,
+    filterEditor: SelectFilter,
+    filterEditorProps: {
+      dataSource: priorityOptions,
+    },
+    render: ({ data: doc }: { data: SiteDocDocument }) => {
+      return priorityStyle(doc.priority);
     },
   },
   {
@@ -226,6 +265,7 @@ export const useSiteDocDocumentColumns = ({
     usePayerFamilySelectOptions('payer_family_id');
   const { siteId } = useParams();
   const { data: site } = useGetSiteQuery(siteId);
+  const location = useLocation();
   return useMemo(
     () =>
       createColumns({
@@ -237,6 +277,7 @@ export const useSiteDocDocumentColumns = ({
         documentFamilyNamesById,
         payerFamilyNamesById,
         isManualCollection: site?.collection_method === CollectionMethod.Manual,
+        location,
       }),
     [
       documentFamilyNamesById,
@@ -247,6 +288,7 @@ export const useSiteDocDocumentColumns = ({
       initialDocumentFamilyOptions,
       initialPayerFamilyOptions,
       site?.collection_method,
+      location,
     ]
   );
 };

@@ -19,7 +19,9 @@ class HtmlParser(FileParser):
         self.soup = bs4.BeautifulSoup(document_bytes, features="html.parser")
 
         title_element = self.soup.find("title")
-        self.title = title_element.string.strip() if title_element else None
+        self.title = (
+            title_element.string.strip() if title_element and title_element.string else None
+        )
 
         self._exclude_html()
         body_element = self.soup.find("body")

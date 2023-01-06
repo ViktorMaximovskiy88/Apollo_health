@@ -18,10 +18,11 @@ class TherapyTag(BaseModel):
     focus: bool = False
     key: bool = False
     rxcui: str | None = None
-    created_at: datetime | None
+    created_at: datetime | None = None
     update_status: TagUpdateStatus | None = None
-    updated_at: datetime | None
+    updated_at: datetime | None = None
     text_area: tuple[int, int] | None = None
+    priority: int = 0
 
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))
@@ -40,9 +41,9 @@ class IndicationTag(BaseModel):
     page: int = 0
     focus: bool = False
     key: bool = False
-    created_at: datetime | None
+    created_at: datetime | None = None
     update_status: TagUpdateStatus | None = None
-    updated_at: datetime | None
+    updated_at: datetime | None = None
     text_area: tuple[int, int] | None = None
 
     def __hash__(self):
@@ -127,7 +128,7 @@ class DocTypeMatch(BaseModel):
 
 def get_tag_diff(
     current_therapy_tags: list[TherapyTag],
-    current_indication_tags: list[TherapyTag],
+    current_indication_tags: list[IndicationTag],
     therapy_tags: list[TherapyTag],
     indication_tags: list[IndicationTag],
 ):
@@ -136,7 +137,7 @@ def get_tag_diff(
     # Checks tag code and tag page for equality, ignoring changes in other attributes
     ###
     therapy_tags_hash: dict[str, list[int]] = {}
-    indicate_tags_hash: dict[int, list[int]] = {}
+    indicate_tags_hash: dict[str, list[int]] = {}
     for tag in current_therapy_tags:
         if tag.code in therapy_tags_hash:
             therapy_tags_hash[tag.code].append(tag.page)

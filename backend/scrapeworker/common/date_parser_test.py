@@ -40,6 +40,14 @@ def test_get_date_and_label():
     assert parser.last_reviewed_date.date == datetime(2020, 3, 1)
     assert parser.end_date.date == datetime(2023, 12, 1)
 
+    text = """
+        Does not match subwords depends 1/1/2025
+    """
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 1
+    assert parser.end_date.date is None
+
 
 def test_all_date_formats():
     text = """
@@ -413,3 +421,16 @@ def test_quarter_dates():
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 1
     assert parser.effective_date.date == datetime(2021, 1, 1)
+
+
+def test_doc_name_dates():
+    text = "Not a date 01-22 ml"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text, ["2023-aetna-value-drug-list"])
+    assert len(parser.unclassified_dates) == 1
+    assert parser.effective_date.date == datetime(2023, 1, 1)
+
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text, ["aetna-value-drug-list"])
+    assert len(parser.unclassified_dates) == 0
+    assert parser.effective_date.date is None

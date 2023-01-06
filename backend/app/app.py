@@ -13,7 +13,6 @@ from fastapi.templating import Jinja2Templates
 from backend.app.core.settings import settings
 from backend.app.routes import (
     app_config,
-    auth,
     change_log,
     comments,
     content_extraction_tasks,
@@ -79,15 +78,14 @@ async def react_settings():
     return settings.frontend
 
 
-@app.get("/api/v1/auth/authorize", response_class=HTMLResponse, tags=["Auth"])
-async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+@app.get("/request-access", response_class=HTMLResponse, include_in_schema=False)
+async def request_access(request: Request):
+    return templates.TemplateResponse("request-access.html", {"request": request})
 
 
 app.add_middleware(GZipMiddleware)
 
 prefix = "/api/v1"
-app.include_router(auth.router, prefix=prefix)
 app.include_router(users.router, prefix=prefix)
 app.include_router(change_log.router, prefix=prefix)
 app.include_router(sites.router, prefix=prefix)
@@ -112,13 +110,11 @@ app.include_router(task.router, prefix=prefix)
 @app.middleware("http")
 async def frontend_routing(request: Request, call_next: Any):
     response = await call_next(request)
-
     if response.status_code == status.HTTP_404_NOT_FOUND and not request.url.path.startswith(
         "/api"
     ):
         with open(frontend_build_dir.joinpath("index.html")) as file:
             return HTMLResponse(file.read())
-
     return response
 
 
@@ -143,7 +139,6 @@ async def log_requests(request: Request, call_next):
 
     logger.info(f"request_start='{request.method}_{request.url.path}' user='{user}'")
     start_time = time()
-    # TODO sometimes we get exception for no response
     response = await call_next(request)
     process_time = (time() - start_time) * 1000
     format_time = "{0:.2f}".format(process_time)

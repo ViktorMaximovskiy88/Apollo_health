@@ -1,10 +1,10 @@
 import { Button, Drawer, Form, Input } from 'antd';
-import { useLazyGetPayerFamilyByNameQuery } from './payerFamilyApi';
+import { useLazyGetPayerFamiliesQuery, useLazyGetPayerFamilyByNameQuery } from './payerFamilyApi';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
 import { useAddPayerFamilyMutation, useLazyConvertPayerFamilyDataQuery } from './payerFamilyApi';
 import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
-import { useCallback, useState } from 'react';
+import { ReactNode, useCallback, useState } from 'react';
 import { PayerFamily } from './types';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
 import { CloseOutlined, WarningFilled } from '@ant-design/icons';
@@ -24,7 +24,7 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
 
   const [addPayerFamily, { isLoading }] = useAddPayerFamilyMutation();
   const [convertPayerFamily] = useLazyConvertPayerFamilyDataQuery();
-  const [payerInfoError, setPayerInfoError] = useState<string>();
+  const [payerInfoError, setPayerInfoError] = useState<ReactNode>();
 
   const handleClose = useCallback(() => {
     props.onClose();
@@ -41,6 +41,7 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
     [addPayerFamily, onSave, form]
   );
 
+  const [queryPf] = useLazyGetPayerFamiliesQuery();
   const onSubmit = useCallback(async () => {
     await form.validateFields();
     const { name, payer_type, payer_ids, channels, benefits, plan_types, regions } =
@@ -55,6 +56,38 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
       setPayerInfoError('At least one payer value is required');
       return;
     }
+    try {
+      const { data: existingPfs } = await queryPf({
+        limit: 1,
+        filterValue: [
+          { name: 'payer_type', value: payer_type, type: 'string', operator: 'eq' },
+          { name: 'payer_ids', value: payer_ids, type: 'string', operator: 'leq' },
+          { name: 'plan_types', value: plan_types, type: 'string', operator: 'leq' },
+          { name: 'regions', value: regions, type: 'string', operator: 'leq' },
+          { name: 'channels', value: channels, type: 'string', operator: 'leq' },
+          { name: 'benefits', value: benefits, type: 'string', operator: 'leq' },
+        ],
+      }).unwrap();
+      const existingPf = existingPfs[0];
+      if (existingPf) {
+        const onSwitchToExisting = async () => {
+          onSave(existingPf);
+          handleClose();
+        };
+        const message = (
+          <>
+            <div>Payer Family '{existingPf.name}' already matches this criteria.</div>
+            {location?.site_name ? (
+              <div>
+                Click <a onClick={onSwitchToExisting}>here</a> to select it instead.
+              </div>
+            ) : null}
+          </>
+        );
+        setPayerInfoError(message);
+        return;
+      }
+    } catch (err: any) {}
     try {
       await convertPayerFamily({
         payerType: 'plan',
@@ -122,12 +155,12 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
 
         <PayerFamilyInfoForm />
 
-        <div className="space-x-2 flex justify-end">
+        <div className="space-x-2 flex items-start justify-end">
           {payerInfoError ? (
-            <>
-              <WarningFilled className="text-red-600" />
+            <div className="flex space-x-2">
+              <WarningFilled className="text-red-600 mt-1" />
               <span className="text-red-600">{payerInfoError}</span>
-            </>
+            </div>
           ) : null}
 
           <Button onClick={handleClose}>Cancel</Button>

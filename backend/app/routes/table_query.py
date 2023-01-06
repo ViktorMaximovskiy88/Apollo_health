@@ -78,10 +78,10 @@ def _prepare_table_query(
 ) -> tuple[list[dict], list[tuple[str, int]]]:
     match = []
     for filter in filters:
-        if not filter.value and filter.operator not in ["empty", "notEmpty"]:
+        if not filter.value and filter.operator not in ["empty", "notEmpty", "leq"]:
             continue
 
-        if not filter.value:
+        if filter.value is None:
             filter.value = ""
 
         if isinstance(filter.value, list):
@@ -106,13 +106,13 @@ def _prepare_table_query(
             match.append({filter.name: {"$regex": f"^{value}", "$options": "i"}})
         if filter.operator == "endsWith":
             match.append({filter.name: {"$regex": f"{value}$", "$options": "i"}})
-        if filter.operator == "eq":
-            if isinstance(value, list):
+        if filter.operator == "eq" or filter.operator == "leq":
+            if filter.operator == "eq" and isinstance(value, list):
                 match.append({filter.name: {"$in": value}})
             else:
                 match.append({filter.name: value})
-        if filter.operator == "neq":
-            if isinstance(value, list):
+        if filter.operator == "neq" or filter.operator == "nleq":
+            if filter.operator == "neq" and isinstance(value, list):
                 match.append({filter.name: {"$nin": value}})
             else:
                 match.append({filter.name: {"$ne": value}})
@@ -143,6 +143,7 @@ def _prepare_table_query(
             )
 
     sort_by = [(s.name, s.dir) for s in sorts if s.dir]
+    [print(m) for m in match]
 
     return (match, sort_by)
 

@@ -6,6 +6,7 @@ from random import shuffle
 from typing import AsyncGenerator, Coroutine
 from urllib.parse import urlparse
 
+import aiofiles
 import fitz
 from async_lru import alru_cache
 from beanie.odm.operators.update.general import Inc
@@ -35,7 +36,7 @@ from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleServ
 from backend.common.services.doc_lifecycle.hooks import ChangeInfo, doc_document_save_hook
 from backend.common.services.lineage.core import LineageService
 from backend.common.storage.client import DocumentStorageClient
-from backend.common.storage.hash import hash_full_text
+from backend.common.storage.hash import hash_content, hash_full_text
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.aio_downloader import AioDownloader, default_headers
 from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocsCollectedException
@@ -46,11 +47,12 @@ from backend.scrapeworker.common.utils import get_extension_from_path_like, supp
 from backend.scrapeworker.file_parsers import get_tags, parse_by_type, pdf
 from backend.scrapeworker.playbook import PlaybookException, ScrapePlaybook
 from backend.scrapeworker.scrapers import ScrapeHandler
+from backend.scrapeworker.scrapers.cms.cms_scraper import CMSScrapeController
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
 from backend.scrapeworker.search_crawler import SearchableCrawler
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 
 
 class ScrapeWorker:
@@ -116,12 +118,25 @@ class ScrapeWorker:
     async def html_to_pdf(self, url: str, download: DownloadContext, checksum: str, temp_path: str):
         dest_path = f"{checksum}.{download.file_extension}.pdf"
         if download.direct_scrape:
-            html_doc = fitz.Document(temp_path)
-            pdf_bytes: bytes = html_doc.convert_to_pdf()
+            async with aiofiles.open(temp_path) as html_file:
+                html = await html_file.read()
+            story = fitz.Story(html=html)
+            page_bounds = fitz.paper_rect("letter")
+            content_bounds = page_bounds + (36, 54, -36, -54)  # borders of 0.5 and .75 inches
             with tempfile.NamedTemporaryFile() as pdf_temp:
-                pdf_temp.write(pdf_bytes)
+                writer = fitz.DocumentWriter(pdf_temp)
+                more_pages = 1
+                while more_pages:
+                    current_page = writer.begin_page(page_bounds)
+                    more_pages, _ = story.place(content_bounds)
+                    story.draw(current_page)
+                    writer.end_page()
+                writer.close()
                 yield pdf_temp.name
-            self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
+
+                pdf_doc = fitz.Document(pdf_temp)
+                pdf_bytes: bytes = pdf_doc.tobytes()  # type: ignore
+                self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
         else:
             async with self.playwright_context(url, download.request.cookies) as (
                 page,
@@ -136,7 +151,7 @@ class ScrapeWorker:
 
     def get_updated_tags(
         self,
-        existing_doc: RetrievedDocument,
+        existing_doc: DocDocument,
         therapy_tags: list[TherapyTag],
         indication_tags: list[IndicationTag],
     ):
@@ -170,6 +185,12 @@ class ScrapeWorker:
         ]
         return new_therapy_tags, new_indicate_tags
 
+    def is_unexpected_html(self, download: DownloadContext):
+        return download.file_extension == "html" and (
+            "html" not in self.site.scrape_method_configuration.document_extensions
+            and (self.site.scrape_method != "HtmlScrape" and self.site.scrape_method != "CMSScrape")
+        )
+
     async def attempt_download(self, download: DownloadContext):
         # TODO: This function keeps getting added to.
         # Maybe turn this into a class after our deadlines...
@@ -179,8 +200,9 @@ class ScrapeWorker:
         link_retrieved_task: LinkRetrievedTask = link_retrieved_task_from_download(
             download, self.scrape_task
         )
+
         scrape_method_config = self.site.scrape_method_configuration
-        # prob our fail
+
         async with self.downloader.try_download_to_tempfile(download, proxies) as (
             temp_path,
             checksum,
@@ -207,10 +229,7 @@ class ScrapeWorker:
 
             # TODO can we separate the concept of extensions to scrape on
             # and ext we expect to download? for now just html
-            if download.file_extension == "html" and (
-                "html" not in scrape_method_config.document_extensions
-                and self.site.scrape_method != "HtmlScrape"
-            ):
+            if self.is_unexpected_html(download):
                 message = f"Received an unexpected html response. mimetype={download.mimetype}"
                 self.log.error(message)
                 link_retrieved_task.error_message = message
@@ -248,6 +267,10 @@ class ScrapeWorker:
             document = None
 
             text_checksum = hash_full_text(parsed_content["text"])
+            parsed_content["content_checksum"] = await hash_content(
+                parsed_content["text"], parsed_content["images"]
+            )
+
             document = await RetrievedDocument.find_one(RetrievedDocument.checksum == checksum)
             if not document:
                 document = await RetrievedDocument.find_one(
@@ -260,12 +283,15 @@ class ScrapeWorker:
             if download.file_extension == "html" and (
                 "html" in scrape_method_config.document_extensions
                 or self.site.scrape_method == "HtmlScrape"
+                or self.site.scrape_method == "CMSScrape"
             ):
                 async for pdf_path in self.html_to_pdf(url, download, checksum, temp_path):
                     await pdf.PdfParse(
                         pdf_path,
                         url,
                         link_text=download.metadata.link_text,
+                        scrape_method_config=scrape_method_config,
+                        download=download,
                     ).update_parsed_content(parsed_content)
 
             if document:
@@ -273,6 +299,10 @@ class ScrapeWorker:
                 doc_doc = await DocDocument.find_one(
                     DocDocument.retrieved_document_id == document.id
                 )
+                if not doc_doc:
+                    self.log.error(f"DocDocument {document.id} not found")
+                    return
+
                 await get_tags(parsed_content, document=doc_doc)
                 # TODO this will get axed when the async tasks are ready to schedule
                 # Can be removed after text added to older docs
@@ -487,7 +517,7 @@ class ScrapeWorker:
                 if await self.search_crawler.is_searchable(page):
                     async for code in self.search_crawler.run_searchable(page, playbook_context):
                         await scrape_handler.run_scrapers(
-                            url, base_url, all_downloads, {"file_name": code}
+                            url, base_url, all_downloads, {"file_name": code, "is_searchable": True}
                         )
                 else:
                     await scrape_handler.run_scrapers(url, base_url, all_downloads)
@@ -531,6 +561,12 @@ class ScrapeWorker:
         extension = get_extension_from_path_like(url)
         return extension in ["docx", "pdf", "xlsx"]
 
+    def is_cms_url(self, url: str) -> bool:
+        return (
+            "https://www.cms.gov/medicare-coverage-database" in url
+            and self.site.scrape_method == "CMSScrape"
+        )
+
     # NOTE: this is the effective entryppoint from main.py
     async def run_scrape(self):
         all_downloads: list[DownloadContext] = []
@@ -544,6 +580,16 @@ class ScrapeWorker:
         for url in base_urls:
             # skip the parse step and download
             self.log.info(f"Run scrape for {url}")
+
+            if self.is_cms_url(url):
+                self.log.info(f"Skip scrape & process CMS url: {url}")
+                proxies = await self.get_proxy_settings()
+                cms_scraper = CMSScrapeController(
+                    url, self.downloader, self.doc_client, proxies, self.log
+                )
+                downloads = await cms_scraper.execute()
+                all_downloads += downloads
+                continue
 
             # NOTE if the base url ends in a handled file extension,
             # queue it up for the aiohttp downloader
@@ -582,13 +628,16 @@ class ScrapeWorker:
 
         doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
         async for doc in DocDocument.find({"_id": {"$in": doc_doc_ids}}):
-            document_family_change = doc.document_family_id if doc.document_family_id else False
             change_info = ChangeInfo(
-                translation_change=True,
-                lineage_change=doc.previous_doc_doc_id,
-                document_family_change=document_family_change,
+                translation_change=bool(doc.translation_id),
+                lineage_change=bool(doc.previous_doc_doc_id),
+                document_family_change=bool(doc.document_family_id),
             )
             await doc_document_save_hook(doc, change_info)
+        async for doc in DocDocument.find(
+            {"locations.site_id": site_id, "_id": {"$nin": doc_doc_ids}}
+        ):
+            await doc_document_save_hook(doc)
 
         self.site.last_run_documents = self.scrape_task.documents_found
         await self.site.save()

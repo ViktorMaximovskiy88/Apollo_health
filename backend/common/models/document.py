@@ -20,6 +20,7 @@ class BaseRetrievedDocument(BaseModel):
     # scrape_task_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     checksum: Indexed(str)  # type: ignore
     text_checksum: Indexed(str) | None = None
+    content_checksum: Indexed(str) | None = None
     disabled: bool = False
     name: str
     metadata: dict = {}
@@ -45,11 +46,14 @@ class BaseRetrievedDocument(BaseModel):
     indication_tags: list[IndicationTag] = []
     doc_vectors: list[list[float]] = []
     token_count: int = 0
+    priority: int = 0
+    is_searchable: bool = False
 
     # lineage
     lineage_id: PydanticObjectId | None = None
     previous_doc_id: PydanticObjectId | None = None
     is_current_version: bool = False
+    lineage_confidence: float = 0
 
 
 class SiteRetrievedDocument(BaseRetrievedDocument, RetrievedDocumentLocation):
@@ -95,6 +99,7 @@ class UpdateRetrievedDocument(BaseModel, DocumentMixins):
     last_collected_date: datetime | None = None
     checksum: str | None = None
     text_checksum: str | None = None
+    content_checksum: str | None = None
     disabled: bool | None = None
     name: str | None = None
     document_type: str | None = None
@@ -108,6 +113,7 @@ class UpdateRetrievedDocument(BaseModel, DocumentMixins):
 
     therapy_tags: list[TherapyTag] | None = None
     indication_tags: list[IndicationTag] | None = None
+    priority: int | None = None
 
     automated_content_extraction: bool | None = None
     automated_content_extraction_class: str | None = None
@@ -115,6 +121,8 @@ class UpdateRetrievedDocument(BaseModel, DocumentMixins):
     locations: list[RetrievedDocumentLocation] = []
     doc_vectors: list[list[float]] = []
     file_size: int = 0
+    token_count: int | None = None
+    is_searchable: bool = False
 
 
 class RetrievedDocumentLimitTags(RetrievedDocument):

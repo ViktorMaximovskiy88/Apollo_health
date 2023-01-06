@@ -4,7 +4,7 @@ import { RootState } from '../../app/store';
 
 export const initialState = {
   table: {
-    sort: undefined,
+    sort: { name: 'locations.link_text', dir: 1 as 1 | -1 | 0 },
     selection: undefined,
     filter: [
       { name: 'name', operator: 'contains', type: 'string', value: '' },
@@ -19,6 +19,7 @@ export const initialState = {
       { name: 'document_family_id', operator: 'eq', type: 'select', value: null },
       { name: 'first_collected_date', operator: 'before', type: 'date', value: '' },
       { name: 'last_collected_date', operator: 'before', type: 'date', value: '' },
+      { name: 'priority', operator: 'eq', type: 'number', value: null },
     ],
     pagination: { limit: 50, skip: 0 },
     forceUpdate: 0,

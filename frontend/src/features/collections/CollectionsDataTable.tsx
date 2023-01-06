@@ -20,6 +20,7 @@ import { TableInfoType } from '../../common/types';
 import { DateTime } from 'luxon';
 import { useEffect } from 'react';
 import { ErrorLogModal } from './ErrorLogModal';
+import { Site } from '../sites/types';
 
 function disableLoadingMask(data: {
   visible: boolean;
@@ -98,13 +99,14 @@ export const useSiteScrapeSort = () => {
 };
 
 interface DataTablePropTypes {
-  siteId: string;
+  site: Site;
   openNewDocumentModal: () => void;
 }
 
-export function CollectionsDataTable({ siteId, openNewDocumentModal }: DataTablePropTypes) {
+export function CollectionsDataTable({ site, openNewDocumentModal }: DataTablePropTypes) {
   const [getCollectionsFn] = useLazyGetScrapeTasksForSiteQuery();
   const { watermark } = useInterval(5000);
+  const siteId = site._id;
 
   const loadData = useCallback(
     async (tableInfo: TableInfoType) => {
@@ -131,7 +133,13 @@ export function CollectionsDataTable({ siteId, openNewDocumentModal }: DataTable
     setModalOpen(true);
   };
 
-  const columns = useColumns({ cancelScrape, isCanceling, openErrorModal, openNewDocumentModal });
+  const columns = useColumns({
+    cancelScrape,
+    isCanceling,
+    openErrorModal,
+    openNewDocumentModal,
+    site,
+  });
 
   const [modalOpen, setModalOpen] = useState(false);
   const [errorTraceback, setErrorTraceback] = useState('');

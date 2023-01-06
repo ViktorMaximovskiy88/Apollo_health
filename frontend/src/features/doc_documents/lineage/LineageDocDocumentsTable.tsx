@@ -22,13 +22,14 @@ const buildFilterValue = ({
   tableInfo: any;
   currentDocDocument?: DocDocument;
 }) => {
-  const filterBySites =
-    currentDocDocument?.locations.map(({ site_id }: { site_id: string }) => ({
+  const filterBySites = [
+    {
       name: 'locations.site_id',
       operator: 'eq',
       type: 'string',
-      value: site_id,
-    })) ?? [];
+      value: currentDocDocument?.locations.map((l) => l.site_id),
+    },
+  ];
 
   const filterOutCurrentDocDocument = {
     name: '_id',

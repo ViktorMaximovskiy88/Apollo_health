@@ -4,11 +4,11 @@ import { Tag } from 'antd';
 import { uniq } from 'lodash';
 import { useCallback } from 'react';
 import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { docDocumentTableState } from './docDocumentsSlice';
-import { prettyDateTimeFromISO, prettyDateUTCFromISO } from '../../common';
+import { prettyDateUTCFromISO } from '../../common';
 import { ButtonLink } from '../../components';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
-import { Site } from '../sites/types';
 import { useGetChangeLogQuery } from './docDocumentApi';
 import { DocDocument } from './types';
 import { DocumentTypes } from '../retrieved_documents/types';
@@ -21,6 +21,8 @@ import { RemoteColumnFilter } from '../../components/RemoteColumnFilter';
 import { useGetSiteQuery, useLazyGetSitesQuery } from '../sites/sitesApi';
 import { useDocumentFamilySelectOptions } from './document_family/documentFamilyHooks';
 import { usePayerFamilySelectOptions } from '../payer-family/payerFamilyHooks';
+import { priorityOptions, priorityStyle } from '../doc_documents/useSiteDocDocumentColumns';
+import { TypeFilterValue } from '@inovua/reactdatagrid-community/types';
 
 export function useSiteSelectOptions() {
   const [getSites] = useLazyGetSitesQuery();
@@ -57,6 +59,8 @@ export const useColumns = ({
   payerFamilyNamesById: { [id: string]: string };
   documentFamilyNamesById: { [id: string]: string };
 }) => {
+  const location = useLocation();
+  const prevLocation = location.pathname + location.search;
   const { siteOptions, initialSiteOptions } = useSiteSelectOptions();
   const { payerFamilyOptions, initialPayerFamilyOptions } = usePayerFamilySelectOptions(
     'locations.payer_family_id'
@@ -68,7 +72,7 @@ export const useColumns = ({
       header: 'Name',
       name: 'name',
       render: ({ data: doc }: { data: DocDocument }) => {
-        return <ButtonLink to={`${doc._id}`}>{doc.name}</ButtonLink>;
+        return <ButtonLink to={`${doc._id}?prevLocation=${prevLocation}`}>{doc.name}</ButtonLink>;
       },
       defaultFlex: 1,
       minWidth: 300,
@@ -121,10 +125,12 @@ export const useColumns = ({
       name: 'document_type',
       minWidth: 200,
       filterEditor: SelectFilter,
-      filterEditorProps: {
-        placeholder: 'All',
+      filterEditorProps: ({ filterValue }: { filterValue: TypeFilterValue }) => ({
+        placeholder: filterValue ? null : 'All',
+        multiple: true,
+        wrapMultiple: false,
         dataSource: DocumentTypes,
-      },
+      }),
       render: ({ value: document_type }: { value: string }) => {
         return <>{document_type}</>;
       },
@@ -238,7 +244,7 @@ export const useColumns = ({
       },
       render: ({ data: doc }: { data: DocDocument }) => {
         if (!doc.first_collected_date) return null;
-        return prettyDateTimeFromISO(doc.first_collected_date);
+        return prettyDateUTCFromISO(doc.first_collected_date);
       },
     },
     {
@@ -255,7 +261,7 @@ export const useColumns = ({
       },
       render: ({ data: doc }: { data: DocDocument }) => {
         if (!doc.last_collected_date) return null;
-        return prettyDateTimeFromISO(doc.last_collected_date);
+        return prettyDateUTCFromISO(doc.last_collected_date);
       },
     },
     {
@@ -300,13 +306,25 @@ export const useColumns = ({
       },
     },
     {
+      header: 'Priority',
+      name: 'priority',
+      width: 130,
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        dataSource: priorityOptions,
+      },
+      render: ({ data: doc }: { data: DocDocument }) => {
+        return priorityStyle(doc.priority);
+      },
+    },
+    {
       header: 'Actions',
       name: 'action',
       minWidth: 180,
-      render: ({ data: site }: { data: Site }) => {
+      render: ({ data: doc }: { data: DocDocument }) => {
         return (
           <>
-            <ChangeLogModal target={site} useChangeLogQuery={useGetChangeLogQuery} />
+            <ChangeLogModal target={doc} useChangeLogQuery={useGetChangeLogQuery} />
           </>
         );
       },

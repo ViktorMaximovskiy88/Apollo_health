@@ -1,4 +1,4 @@
-import { Button, Checkbox, Form, Input, notification, Popconfirm, Select } from 'antd';
+import { Button, Checkbox, Form, Input, notification, Popconfirm } from 'antd';
 import { FormInstance, useForm } from 'antd/lib/form/Form';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -6,7 +6,6 @@ import { useInterval } from '../../common/hooks';
 import { MainLayout } from '../../components';
 import { DocDocumentClassificationPage } from './DocDocumentClassificationPage';
 import { ContentExtractionApprovalPage } from '../extractions/ContentExtractionApprovalPage';
-import { useGetUsersQuery } from '../users/usersApi';
 import { SubmitAction, WorkQueue } from './types';
 import { useGetWorkQueueQuery } from './workQueuesApi';
 import { useSelector } from 'react-redux';
@@ -17,6 +16,7 @@ import {
   useTakeWorkItemMutation,
 } from '../doc_documents/docDocumentApi';
 import { CommentType } from '../comments/types';
+import { Assignee } from '../sites/form/AssigneeInput';
 
 function notifyFailedLock() {
   notification.open({
@@ -51,14 +51,21 @@ function WorkQueueActionButton(props: {
   setComment: (a: string) => void;
   setReassignment: (a: string) => void;
 }) {
-  const { data: users } = useGetUsersQuery();
+  const [loading, setLoading] = useState(false);
   const [form] = useForm();
   const label = props.action.label;
   const type = props.action.primary ? 'primary' : 'default';
 
   if (!props.action.require_comment) {
     return (
-      <Button onClick={() => props.setAction(props.action)} type={type}>
+      <Button
+        onClick={() => {
+          props.setAction(props.action);
+          setLoading(true);
+        }}
+        type={type}
+        loading={loading}
+      >
         {label}
       </Button>
     );
@@ -70,16 +77,12 @@ function WorkQueueActionButton(props: {
     props.setAction(props.action);
   }
 
-  const assignees = users?.map((u) => ({ value: u._id, label: u.full_name }));
-
   const commentForm = (
     <Form form={form} onFinish={onFinish}>
       <Form.Item name="comment" label="Comment">
         <Input.TextArea />
       </Form.Item>
-      <Form.Item name="assignee" label="Assignee">
-        <Select options={assignees} />
-      </Form.Item>
+      <Assignee />
     </Form>
   );
 

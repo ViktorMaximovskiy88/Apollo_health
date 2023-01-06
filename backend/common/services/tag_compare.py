@@ -1,3 +1,4 @@
+import typing
 from dataclasses import dataclass
 
 import typer
@@ -6,13 +7,12 @@ from backend.common.core.config import env_type
 from backend.common.core.enums import SectionType, TagUpdateStatus
 from backend.common.core.utils import now
 from backend.common.models.doc_document import DocDocument
-from backend.common.models.document import RetrievedDocument
 from backend.common.models.shared import IndicationTag, TherapyTag
 from backend.common.services.text_compare.diff_utilities import Dmp
 from backend.common.storage.client import TextStorageClient
 from backend.scrapeworker.document_tagging.tag_focusing import FocusArea, FocusChecker
 
-TagList = list[TherapyTag] | list[IndicationTag]
+TagList = list[TherapyTag | IndicationTag]
 
 
 @dataclass
@@ -208,7 +208,7 @@ class TagCompare:
             final_tags.update(tags)
         return final_tags
 
-    def _get_doc_text(self, doc: RetrievedDocument | DocDocument):
+    def _get_doc_text(self, doc: DocDocument):
         doc_text: str = ""
         if doc.text_checksum:
             doc_text = self.text_client.read_utf8_object(f"{doc.text_checksum}.txt")
@@ -264,7 +264,7 @@ class TagCompare:
         return paired_sections, unpaired_sections, unmatched_ref
 
     async def _get_focus_areas(
-        self, doc: RetrievedDocument | DocDocument, doc_text: str, tag_type: SectionType
+        self, doc: DocDocument, doc_text: str, tag_type: SectionType
     ) -> list[FocusArea]:
         doc_focus_checker = await FocusChecker.with_all_location_configs(
             doc=doc, tag_type=tag_type, full_text=doc_text, url="", link_text=None
@@ -273,14 +273,16 @@ class TagCompare:
 
     async def compare_tags(
         self,
-        doc: RetrievedDocument | DocDocument,
-        prev_doc: RetrievedDocument | DocDocument,
+        doc: DocDocument,
+        prev_doc: DocDocument,
         doc_text: str,
         prev_text: str,
         tag_type: SectionType,
     ) -> set[IndicationTag | TherapyTag]:
-        doc_tags = doc.therapy_tags if tag_type == self.THERAPY else doc.indication_tags
-        prev_tags = prev_doc.therapy_tags if tag_type == self.THERAPY else prev_doc.indication_tags
+        doc_tags = doc.therapy_tags if tag_type == SectionType.THERAPY else doc.indication_tags
+        prev_tags = (
+            prev_doc.therapy_tags if tag_type == SectionType.THERAPY else prev_doc.indication_tags
+        )
         doc_tags = [tag for tag in doc_tags if tag.update_status != TagUpdateStatus.REMOVED]
         prev_tags = [tag for tag in prev_tags if tag.update_status != TagUpdateStatus.REMOVED]
         doc_focus_areas = await self._get_focus_areas(doc, doc_text, tag_type)
@@ -312,17 +314,21 @@ class TagCompare:
         return final_tags
 
     async def execute(
-        self, doc: RetrievedDocument | DocDocument, prev_doc: RetrievedDocument | DocDocument
+        self, doc: DocDocument, prev_doc: DocDocument
     ) -> tuple[list[TherapyTag], list[IndicationTag]]:
         doc_text = self._get_doc_text(doc)
         prev_doc_text = self._get_doc_text(prev_doc)
         clean_doc_text, clean_prev_text = self.dmp.preprocess_text(doc_text, prev_doc_text)
-        final_therapy_tags: set[TherapyTag] = await self.compare_tags(
-            doc, prev_doc, clean_doc_text, clean_prev_text, tag_type=self.THERAPY
+
+        final_therapy_tags = await self.compare_tags(
+            doc, prev_doc, clean_doc_text, clean_prev_text, tag_type=SectionType.THERAPY
         )
-        final_indication_tags: set[IndicationTag] = await self.compare_tags(
-            doc, prev_doc, clean_doc_text, clean_prev_text, tag_type=self.INDICATION
+        final_therapy_tags = typing.cast(set[TherapyTag], final_therapy_tags)
+
+        final_indication_tags = await self.compare_tags(
+            doc, prev_doc, clean_doc_text, clean_prev_text, tag_type=SectionType.INDICATION
         )
+        final_indication_tags = typing.cast(set[IndicationTag], final_indication_tags)
 
         if env_type == "local":
             typer.secho(f"clean_doc_text[{clean_doc_text}]", fg=typer.colors.BRIGHT_GREEN)

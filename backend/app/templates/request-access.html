@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+  <head lang="en">
+    <meta charset="utf-8" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22256%22 height=%22256%22 viewBox=%220 0 100 100%22><path fill=%22%235b9bc9%22 d=%22M21.74 72.41L21.74 72.41Q27.77 72.41 30.88 69.67Q33.98 66.92 33.98 62.60L33.98 62.60Q33.98 58.82 31.59 56.48Q29.21 54.14 24.08 52.61L24.08 52.61L16.25 50.27Q10.49 48.56 7.20 45.23Q3.92 41.90 3.92 36.23L3.92 36.23Q3.92 32.81 5.22 30.06Q6.53 27.32 8.96 25.43Q11.39 23.54 14.77 22.51Q18.14 21.47 22.37 21.47L22.37 21.47Q25.97 21.47 29.07 22.05Q32.18 22.64 34.48 23.68Q36.77 24.71 38.03 25.97Q39.29 27.23 39.29 28.58L39.29 28.58Q39.29 29.84 38.66 30.74Q38.03 31.64 37.04 32.18L37.04 32.18Q34.70 30.38 30.96 29.03Q27.23 27.68 22.64 27.68L22.64 27.68Q17.33 27.68 14.31 29.93Q11.30 32.18 11.30 36.23L11.30 36.23Q11.30 39.38 13.46 41.36Q15.62 43.34 20.66 44.78L20.66 44.78L26.15 46.40Q33.26 48.47 37.35 52.20Q41.45 55.94 41.45 62.60L41.45 62.60Q41.45 69.71 36.32 74.12Q31.19 78.53 21.74 78.53L21.74 78.53Q17.60 78.53 14.22 77.81Q10.85 77.09 8.46 75.92Q6.08 74.75 4.77 73.36Q3.47 71.96 3.47 70.61L3.47 70.61Q3.47 69.08 4.41 68.05Q5.36 67.01 6.62 66.56L6.62 66.56Q7.61 67.55 9.05 68.58Q10.49 69.62 12.38 70.47Q14.27 71.33 16.61 71.87Q18.95 72.41 21.74 72.41ZM96.53 77.18L96.53 77.18Q95.99 77.36 95.09 77.58Q94.19 77.81 93.11 77.81L93.11 77.81Q89.15 77.81 89.15 74.48L89.15 74.48L89.15 52.70L61.07 52.70L61.07 77.18Q60.53 77.36 59.63 77.58Q58.73 77.81 57.65 77.81L57.65 77.81Q53.69 77.81 53.69 74.48L53.69 74.48L53.69 22.82Q54.14 22.64 55.09 22.41Q56.03 22.19 57.11 22.19L57.11 22.19Q61.07 22.19 61.07 25.52L61.07 25.52L61.07 46.58L89.15 46.58L89.15 22.82Q89.60 22.64 90.54 22.41Q91.49 22.19 92.57 22.19L92.57 22.19Q96.53 22.19 96.53 25.52L96.53 25.52L96.53 77.18Z%22></path></svg>"
+    />
+    <meta name="description" content="SourceHub" />
+    <title>SourceHub</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Reenie+Beanie&amp;subset=latin"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <style>
+      body {
+        font-family: "Open Sans", Calibri, Candara, Arial, sans-serif;
+        background-color: #5b9bc9;
+        font-size: 18px;
+        line-height: 20px;
+      }
+
+      ul {
+        list-style: none;
+      }
+
+      #notes li {
+        position: relative;
+        width: 480px;
+        min-height: 100px;
+        margin: 25px auto;
+        padding: 30px 15px 15px 15px;
+        background: #fff no-repeat 4px 8px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 1px 2px #000;
+        transform: rotate(-0.5deg);
+      }
+
+      #notes li:nth-child(even) {
+        transform: rotate(0.5deg);
+      }
+
+      #notes li p {
+        text-align: center;
+        font: normal normal normal 40px/48px "Reenie Beanie", Helvetica, Arial,
+          sans-serif;
+        color: #000;
+        text-shadow: white 1px 1px 0px;
+        overflow: hidden;
+      }
+
+      #notes li::before {
+        content: " ";
+        display: block;
+        position: absolute;
+        left: 205px;
+        top: -15px;
+        width: 75px;
+        height: 25px;
+        z-index: 2;
+        background-color: rgba(243, 245, 228, 0.5);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 0 5px #888;
+        box-shadow: 2px 2px 2px #000;
+        transform: rotate(-6deg);
+      }
+
+      #notes li:nth-child(even)::before {
+        transform: rotate(6deg);
+      }
+
+      a,
+      a:visited {
+        color: #0060b6;
+        text-decoration: none;
+      }
+
+      a:hover {
+        color: #00a0c6;
+        text-decoration: none;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div style="display: flex; justify-content: center; flex-direction: column">
+      <h1
+        style="
+          color: white;
+          display: flex;
+          justify-content: center;
+          padding: 32px;
+        "
+      >
+        SourceHub
+      </h1>
+      <ul id="notes">
+        <li>
+          <p>
+            To request access to SourceHub, please contact:<br />
+            <br />
+            Nordia White
+            <a href="mailto:nwhite@mmitnetwork.com?subject=SourceHub Access"
+              >nwhite@mmitnetwork.com</a
+            >
+
+            <br />or<br />
+            Bob Lombardi
+            <a href="mailto:blombardi@mmitnetwork.com?subject=SourceHub Access"
+              >blombardi@mmitnetwork.com</a
+            >
+            <br />
+          </p>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

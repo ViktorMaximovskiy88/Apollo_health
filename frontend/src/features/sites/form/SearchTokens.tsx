@@ -86,10 +86,9 @@ export function SearchTokens() {
             </Input.Group>
             <br />
           </Form.Item>
+          <SearchablePlaybook />
         </>
       ) : null}
-
-      <SearchablePlaybook />
     </div>
   );
 }

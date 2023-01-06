@@ -39,7 +39,7 @@ def compile_qtr_rgx():
         r"\b(1st|2nd|3rd|4th)\b",
         r"\b(first|second|third|fourth)\b",
     ]
-    year_num = r"(?<!\d|[\/\-\.])[0-9]{4}(?!\d|[\/\-\.])"
+    year_num = r"(?<!\d|[\/\-\.])[0-9]{4}(?!\d|-[\/\-\.])"
 
     return (
         [re.compile(fmt, flags=re.IGNORECASE) for fmt in quarter_formats],
@@ -50,34 +50,34 @@ def compile_qtr_rgx():
 
 def compile_label_rgx():
     label_hash = {
-        r"effective": "effective_date",
-        r"eff": "effective_date",
-        r"expire": "end_date",
-        r"end date": "end_date",
-        r"ends": "end_date",
-        r"through": "end_date",
-        r"updated": "last_updated_date",
-        r"updates": "last_updated_date",
-        r"revision": "last_updated_date",
-        r"revised": "last_updated_date",
-        r"revis": "last_updated_date",
-        r"rev\.": "last_updated_date",
-        r"current": "last_updated_date",
-        r"version": "last_updated_date",
-        r"last res\.": "last_updated_date",
-        r"reviewed": "last_reviewed_date",  # this may need to be narrowed back to 'reviewed on', etc
-        r"last review": "last_reviewed_date",
-        r"recent review": "last_reviewed_date",
-        r"next review": "next_review_date",
-        r"annual review": "next_review_date",
-        r"next update": "next_update_date",
-        r"publish": "published_date",
-        r"posted": "published_date",
-        r"print date": "published_date",
+        r"\beffective": "effective_date",
+        r"\beff": "effective_date",
+        r"\bexpire": "end_date",
+        r"\bend date": "end_date",
+        r"\bends\b": "end_date",
+        r"\bthrough": "end_date",
+        r"\bupdated": "last_updated_date",
+        r"\bupdates": "last_updated_date",
+        r"\brevision": "last_updated_date",
+        r"\brevised": "last_updated_date",
+        r"\brevis": "last_updated_date",
+        r"\brev\.": "last_updated_date",
+        r"\bcurrent": "last_updated_date",
+        r"\bversion": "last_updated_date",
+        r"\blast res\.": "last_updated_date",
+        r"\breviewed": "last_reviewed_date",  # this may need to be narrowed back to 'reviewed on', etc
+        r"\blast review": "last_reviewed_date",
+        r"\brecent review": "last_reviewed_date",
+        r"\bnext review": "next_review_date",
+        r"\bannual review": "next_review_date",
+        r"\bnext update": "next_update_date",
+        r"\bpublish": "published_date",
+        r"\bposted": "published_date",
+        r"\bprint date": "published_date",
         r"\bv\.": "published_date",
-        r"devised": "published_date",
-        r"issued": "published_date",
-        r"date of origin": "published_date",
+        r"\bdevised": "published_date",
+        r"\bissued": "published_date",
+        r"\bdate of origin": "published_date",
     }
     label_rgxs = [re.compile(fmt, flags=re.IGNORECASE) for fmt in label_hash.keys()]
     return label_rgxs, label_hash
@@ -143,26 +143,26 @@ def get_extension_from_file_mimetype(file_path: str | None) -> str | None:
     return mimetype_to_extension_map.get(mimetype)
 
 
-def unique_by_attr(items: list[any], attr: str) -> list[any]:
+def unique_by_attr(items: list, attr: str) -> list:
     return list(set([getattr(item, attr) for item in items]))
 
 
-def sort_by_attr(items: list[any], attr: str):
+def sort_by_attr(items: list, attr: str):
     return sorted(items, key=lambda x: getattr(x, attr))
 
 
-def sort_by_key(items: list[any], key: str):
+def sort_by_key(items: list, key: str):
     return sorted(items, key=lambda x: x[key])
 
 
 # so you have to sort first for groupby to work...
-def group_by_attr(items: list[any], attr: str):
+def group_by_attr(items: list, attr: str):
     sorted_items = sort_by_attr(items, attr)
     return groupby(sorted_items, lambda x: getattr(x, attr))
 
 
 # so you have to sort first for groupby to work...
-def group_by_key(items: list[any], key: str):
+def group_by_key(items: list, key: str):
     sorted_items = sort_by_key(items, key)
     return groupby(sorted_items, lambda x: x[key])
 
@@ -212,7 +212,7 @@ def scrub_string(input: str = "") -> str:
 
 
 # maybe too much but we can break it out without boolean gating too
-def normalize_string(input: str = "", html=False, url=True, lower=True, strip=True) -> str:
+def normalize_string(input: str | None = "", html=False, url=True, lower=True, strip=True) -> str:
     # so much for types...
     if input is None:
         return ""
@@ -237,5 +237,5 @@ def normalize_string(input: str = "", html=False, url=True, lower=True, strip=Tr
 # cases '../abc' '/abc' 'abc' 'https://a.com/abc' 'http://a.com/abc' '//a.com/abc'
 # anchor targets can change behavior
 def normalize_url(base_url: str, target_url: str, base_tag_href: str | None = None) -> str:
-    target_url = urljoin(base_tag_href, target_url)
+    target_url = urljoin(base_tag_href or "", target_url)
     return urljoin(base_url, target_url)

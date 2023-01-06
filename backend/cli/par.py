@@ -6,8 +6,12 @@ import asyncclick as click
 import pandas as pd
 
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
+from pymongo import UpdateOne
+
 from backend.common.db.init import init_db
 from backend.common.models.doc_document import DocDocument, PydanticObjectId
+from backend.common.models.site import ScrapeMethodConfiguration, Site
+from backend.common.models.user import User
 from backend.scrapeworker.doc_type_matcher import DocTypeMatcher
 
 log = logging.getLogger(__name__)
@@ -24,21 +28,47 @@ async def par(ctx, file: str):
 @click.pass_context
 async def prev_par_ids(ctx):
     file = ctx.parent.params["file"]
+    parsed_path = Path(file)
+    output_file = parsed_path.parent / f"{parsed_path.stem}-proposed.csv"
     df = pd.read_csv(file, skipinitialspace=True)
+    df["EffectiveDate"] = pd.to_datetime(df["EffectiveDate"])
 
-    for _index, row in df.iterrows():
-        doc = await DocDocument.find_one(
-            {
-                "locations.url": row["DocumentUrl"],
-            }
+    batch = []
+    for index, row in df.iterrows():
+        docs = (
+            await DocDocument.find_many({"locations.url": row["DocumentUrl"]})
+            .sort("-final_effective_date")
+            .to_list()
         )
 
-        if doc and row["Checksum"].lower() != doc.checksum:
-            update = await DocDocument.get_motor_collection().find_one_and_update(
-                {"_id": doc.id},
-                {"$set": {"previous_par_id": row["ParDocumentId"]}},
+        if len(docs) >= 1:
+            print(index)
+            doc = docs[0]
+            df.loc[index, "SH_EffectiveDate"] = doc.final_effective_date
+            df.loc[index, "DateMatch"] = (
+                "SH_GTE_PAR" if doc.final_effective_date >= row["EffectiveDate"] else "SH_LT_PAR"
             )
-            print(update["_id"], update.get("previous_par_id", None))
+            df.loc[index, "SH_Checksum"] = doc.checksum
+            df.loc[index, "SH_DocDocId"] = doc.id
+            df.loc[index, "ChecksumMatch"] = (
+                "Lastest" if row["Checksum"].lower() != doc.checksum else "Same"
+            )
+
+            if (
+                doc.final_effective_date >= row["EffectiveDate"]
+                and row["Checksum"].lower() != doc.checksum
+            ):
+                batch.append(
+                    UpdateOne({"_id": doc.id}, {"$set": {"previous_par_id": row["ParDocumentId"]}})
+                )
+
+    logging.info(f"items pending bulk write -> {len(batch)}")
+    result = await DocDocument.get_motor_collection().bulk_write(batch)
+    logging.info(
+        f"bulk_write -> acknowledged={result.acknowledged} matched_count={result.matched_count} modified_count={result.modified_count}"  # noqa
+    )
+
+    df.to_csv(output_file)
 
 
 @par.command()
@@ -76,3 +106,61 @@ async def doc_type_validation(ctx):
     df.insert(4, "LinkText", df.pop("LinkText"))
 
     df.to_csv(output_file)
+
+
+@par.command()
+@click.pass_context
+async def navigator_import(ctx):
+    file = ctx.parent.params["file"]
+    df = pd.read_csv(file)
+
+    user = await User.by_email("api@mmitnetwork.com")
+    default_config = {
+        "document_extensions": ["pdf"],
+        "url_keywords": [],
+        "proxy_exclusions": [],
+        "wait_for": [],
+        "wait_for_timeout_ms": 500,
+        "base_url_timeout_ms": 30000,
+        "search_in_frames": False,
+        "follow_links": False,
+        "follow_link_keywords": [],
+        "follow_link_url_keywords": [],
+        "searchable": False,
+        "searchable_playbook": None,
+        "searchable_type": [],
+        "searchable_input": None,
+        "searchable_submit": None,
+        "attr_selectors": [],
+        "html_attr_selectors": [],
+        "html_exclusion_selectors": [],
+        "focus_section_configs": [],
+        "allow_docdoc_updates": False,
+    }
+
+    sites = {}
+    for _index, row in df.iterrows():
+        name = row["HuntingGroup"]
+
+        if not sites.get(name, None):
+            sites[name] = []
+
+        sites[name].append(
+            {"url": row["WebsiteURL"], "name": row["SourceType"], "status": "ACTIVE"},
+        )
+
+    for name, base_urls in sites.items():
+        new_site = Site(
+            name=name,
+            creator_id=user.id,
+            base_urls=base_urls,
+            scrape_method="SimpleDocumentScrape",
+            collection_method="AUTOMATED",
+            scrape_method_configuration=ScrapeMethodConfiguration(**default_config),
+            tags=["Formulary Navigator"],
+            disabled=False,
+            cron="0 16 * * *",
+        )
+
+        site = await new_site.save()
+        log.info(f"site created id={site.id}")

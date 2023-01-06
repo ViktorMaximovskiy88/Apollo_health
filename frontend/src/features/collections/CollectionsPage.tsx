@@ -200,7 +200,7 @@ export function CollectionsPage() {
         }
       >
         <CollectionsDataTable
-          siteId={site._id}
+          site={site}
           openNewDocumentModal={() => setNewDocumentModalOpen(true)}
         />
       </MainLayout>

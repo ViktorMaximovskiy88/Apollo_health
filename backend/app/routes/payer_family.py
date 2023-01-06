@@ -56,12 +56,10 @@ async def read_payer_family_by_name(
     name: str,
 ):
     new_name = re.escape(name)
-    print("new_name", new_name)
     payer_family = await PayerFamily.find(
-        {"name": {"$regex": f"^{new_name}$", "$options": "i"}}
+        {"name": {"$regex": f"^{new_name}$", "$options": "i"}, "disabled": False}
     ).first_or_none()
 
-    print("payer_family", payer_family)
     return payer_family
 
 

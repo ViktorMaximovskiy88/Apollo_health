@@ -78,6 +78,7 @@ class DateParser:
 
     def as_dict(self):
         identified_dates = [date for date in self.unclassified_dates if date.date]
+        identified_dates.sort()
         return {
             "effective_date": self.effective_date.date,
             "end_date": self.end_date.date,
@@ -87,7 +88,7 @@ class DateParser:
             "next_update_date": self.next_update_date.date,
             "published_date": self.published_date.date,
             "unclassified_dates": identified_dates,
-            "identified_dates": identified_dates,
+            "identified_dates": identified_dates[20:],
         }
 
     def exclude_text(self, text: str) -> bool:
@@ -171,8 +172,8 @@ class DateParser:
     def get_doc_label_dates(self, label_texts: list[str]):
         best_match: DateMatch | None = None
         for text in label_texts:
+            year = self.get_year_num(text)
             for quarter, m in self.get_quarter_marker(text):
-                year = self.get_year_num(text)
                 if not quarter or not year:
                     continue
                 date = self.construct_quarter_date(year, quarter)
@@ -184,6 +185,13 @@ class DateParser:
                 self.unclassified_dates.add(m.date)
                 if self.is_best_effective(m, best_match):
                     best_match = m
+            # check doc names with only year num. 2023-aetna-value-drug-list
+            if not best_match and year:
+                date = self.construct_quarter_date(year, "1")
+                if date:
+                    self.unclassified_dates.add(date)
+                    best_match = DateMatch(date)
+
         return best_match
 
     def check_effective_date(self, label_texts: list[str]):
@@ -481,6 +489,8 @@ class DateParser:
                     ):  # if no match and previous line ends with comma, check label from the start
                         label = self.get_date_label(line, 0, m.last_date_index, "START")
                     if label:
+                        if ends_with_comma:
+                            label.priority = True
                         # custom logic for saving labels in adjacent cells ahca.myflorida.com
                         prev_label = label if prev_line and prev_line[-1] == ":" else None
                         self.update_label(m, label)

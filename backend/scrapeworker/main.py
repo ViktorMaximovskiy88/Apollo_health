@@ -101,7 +101,7 @@ async def worker_fn(
         )
 
         options = {"channel": "chrome"}
-        if config["DEBUG"]:
+        if config.get("DEBUG", None):
             options["headless"] = False
             options["slow_mo"] = 60
             options["devtools"] = True

@@ -17,10 +17,12 @@ class DocTypeMatcher:
         take_count: int = 50,
     ):
         self.matched_rule = None
+
         if raw_url:
             [*path_parts, filename] = tokenize_url(raw_url)
             self.filename_tokens = tokenize_filename(filename)
             self.filename_text = " ".join(self.filename_tokens).lower()
+            url_path = "/".join(path_parts + [filename])
         else:
             self.filename_text = ""
 
@@ -31,8 +33,7 @@ class DocTypeMatcher:
         else:
             self.doc_text = ""
 
-        url_path = "/".join(path_parts + [filename])
-        if raw_link_text and url_path != raw_link_text:
+        if raw_link_text and url_path and url_path != raw_link_text:
             self.link_tokens = simple_preprocess(raw_link_text)
             self.link_text = " ".join(self.link_tokens).lower()
         else:
@@ -374,7 +375,7 @@ class DocTypeMatcher:
     def exec(self) -> DocTypeMatch | None:
 
         if match := self.run_rules(self.link_text):
-            logging.info("link_text matched")
+            logging.debug("link_text matched")
             return DocTypeMatch(
                 match_source=MatchSource.LinkText,
                 confidence=0.8,
@@ -383,7 +384,7 @@ class DocTypeMatcher:
                 texts=self.texts,
             )
         elif match := self.run_rules(self.name_text):
-            logging.info("name_text matched")
+            logging.debug("name_text matched")
             return DocTypeMatch(
                 match_source=MatchSource.Name,
                 confidence=0.8,
@@ -392,7 +393,7 @@ class DocTypeMatcher:
                 texts=self.texts,
             )
         elif match := self.run_rules(self.filename_text):
-            logging.info("filename_text matched")
+            logging.debug("filename_text matched")
             return DocTypeMatch(
                 match_source=MatchSource.Filename,
                 confidence=0.8,
@@ -401,7 +402,7 @@ class DocTypeMatcher:
                 texts=self.texts,
             )
         elif match := self.run_rules(self.doc_text):
-            logging.info("doc_text matched")
+            logging.debug("doc_text matched")
             return DocTypeMatch(
                 match_source=MatchSource.DocText,
                 confidence=0.7,
@@ -410,7 +411,7 @@ class DocTypeMatcher:
                 texts=self.texts,
             )
         else:
-            logging.info("No match fallthrough to classifier")
+            logging.debug("No match fallthrough to classifier")
             return None
 
     def run_rules(self, text: str) -> DocumentType | None:

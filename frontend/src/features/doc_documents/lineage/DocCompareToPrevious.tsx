@@ -80,7 +80,7 @@ export function DocCompareToPrevious({
   }, [getDiffExists, currentChecksum, previousChecksum]);
 
   return (
-    <div className="flex space-x-8 items-center">
+    <div className="ml-auto flex space-x-8 items-center">
       {currentChecksum && previousChecksum ? (
         <Button
           loading={compareResult?.pending}

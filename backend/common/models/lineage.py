@@ -32,10 +32,12 @@ class DocumentAttrs(BaseModel):
 
 class DocumentAnalysis(BaseDocument):
     retrieved_document_id: Indexed(PydanticObjectId)  # type: ignore
-    doc_document_id: Indexed(PydanticObjectId) | None  # type: ignore
+    doc_document_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     site_id: Indexed(PydanticObjectId)  # type: ignore
     lineage_id: Indexed(PydanticObjectId) | None = None
+    confidence: float = 0.0
     is_current_version: bool = False
+    previous_doc_doc_id: PydanticObjectId | None = None
 
     name: str | None = None
     state_abbr: str | None = None
@@ -60,15 +62,15 @@ class DocumentAnalysis(BaseDocument):
     token_count: int = 0
 
     # tags
-    focus_therapy_tags: list[int] = []
-    ref_therapy_tags: list[int] = []
+    focus_therapy_tags: list[str | int] = []
+    ref_therapy_tags: list[str | int] = []
     focus_indication_tags: list[int] = []
     ref_indication_tags: list[int] = []
 
-    url_focus_therapy_tags: list[int] = []
+    url_focus_therapy_tags: list[str | int] = []
     url_focus_indication_tags: list[int] = []
 
-    link_focus_therapy_tags: list[int] = []
+    link_focus_therapy_tags: list[str | int] = []
     link_focus_indication_tags: list[int] = []
 
     # tokens

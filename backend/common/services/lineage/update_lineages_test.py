@@ -6,12 +6,13 @@ from beanie import PydanticObjectId
 
 from backend.common.db.init import init_db
 from backend.common.models.doc_document import DocDocument
-from backend.common.services.lineage.update_prev_document import update_lineage
+from backend.common.services.lineage.update_lineages import update_lineage
 
 
 class BasicDoc(DocDocument):
     retrieved_document_id: PydanticObjectId = PydanticObjectId()
     checksum: str = "d"
+    pipeline_stages: list = []
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -53,7 +54,7 @@ async def test_case_1():
         return
     old_prev = c.previous_doc_doc_id
     c.previous_doc_doc_id = f.id
-    await update_lineage(c, old_prev, f.id)
+    await update_lineage(c, old_prev, f.id, include_later_documents=True)
 
     b = await BasicDoc.find_one({"name": "B"})
     c = await BasicDoc.find_one({"name": "C"})
@@ -79,7 +80,7 @@ async def test_case_2():
         return
     old_prev = c.previous_doc_doc_id
     c.previous_doc_doc_id = e.id
-    await update_lineage(c, old_prev, e.id)
+    await update_lineage(c, old_prev, e.id, include_later_documents=False)
 
     b = await BasicDoc.find_one({"name": "B"})
     c = await BasicDoc.find_one({"name": "C"})
@@ -98,6 +99,7 @@ async def test_case_2():
 # L1: A -> B -> C
 # L2: D -> E -> F
 # B -> Previous Version F
+# include_later_documents: True
 @pytest.mark.asyncio
 async def test_case_3():
     b = await BasicDoc.find_one({"name": "B"})
@@ -106,7 +108,7 @@ async def test_case_3():
         return
     old_prev = b.previous_doc_doc_id
     b.previous_doc_doc_id = f.id
-    await update_lineage(b, old_prev, f.id)
+    await update_lineage(b, old_prev, f.id, include_later_documents=True)
 
     a = await BasicDoc.find_one({"name": "A"})
     b = await BasicDoc.find_one({"name": "B"})
@@ -130,6 +132,7 @@ async def test_case_3():
 # L1: A -> B -> C
 # L2: D -> E -> F
 # B -> Previous Version E
+# include_later_documents: True
 @pytest.mark.asyncio
 async def test_case_4():
     b = await BasicDoc.find_one({"name": "B"})
@@ -138,7 +141,7 @@ async def test_case_4():
         return
     old_prev = b.previous_doc_doc_id
     b.previous_doc_doc_id = e.id
-    await update_lineage(b, old_prev, e.id)
+    await update_lineage(b, old_prev, e.id, include_later_documents=True)
 
     a = await BasicDoc.find_one({"name": "A"})
     b = await BasicDoc.find_one({"name": "B"})
@@ -163,6 +166,7 @@ async def test_case_4():
 # L1: A -> B -> C
 # L2: D -> E -> F
 # A -> Previous Version F
+# include_later_documents: True
 @pytest.mark.asyncio
 async def test_case_5():
     a = await BasicDoc.find_one({"name": "A"})
@@ -171,7 +175,7 @@ async def test_case_5():
         return
     old_prev = a.previous_doc_doc_id
     a.previous_doc_doc_id = f.id
-    await update_lineage(a, old_prev, f.id)
+    await update_lineage(a, old_prev, f.id, include_later_documents=True)
 
     a = await BasicDoc.find_one({"name": "A"})
     b = await BasicDoc.find_one({"name": "B"})
@@ -191,3 +195,150 @@ async def test_case_5():
     assert a.previous_doc_doc_id == f.id
     assert b.previous_doc_doc_id == a.id
     assert c.previous_doc_doc_id == b.id
+
+
+# L1: A -> B -> C
+# L2: D -> E -> F
+# B -> Previous Version E
+# include_later_documents: False
+@pytest.mark.asyncio
+async def test_case_6():
+    b = await BasicDoc.find_one({"name": "B"})
+    e = await BasicDoc.find_one({"name": "E"})
+    if not b or not e:
+        return
+    old_prev = b.previous_doc_doc_id
+    b.previous_doc_doc_id = e.id
+
+    await update_lineage(
+        updating_doc_doc=b,
+        old_prev_doc_doc_id=old_prev,
+        new_prev_doc_doc_id=e.id,
+        include_later_documents=False,
+    )
+
+    a = await BasicDoc.find_one({"name": "A"})
+    b = await BasicDoc.find_one({"name": "B"})
+    c = await BasicDoc.find_one({"name": "C"})
+    d = await BasicDoc.find_one({"name": "D"})
+    e = await BasicDoc.find_one({"name": "E"})
+    f = await BasicDoc.find_one({"name": "F"})
+    if not (a and b and c and d and e and f):
+        return
+
+    assert not a.is_current_version
+    assert not b.is_current_version
+    assert c.is_current_version
+    assert not d.is_current_version
+    assert not e.is_current_version
+    assert f.is_current_version
+
+    assert a.lineage_id == c.lineage_id
+    assert d.lineage_id == e.lineage_id == f.lineage_id
+    assert d.lineage_id == b.lineage_id
+    assert a.lineage_id != b.lineage_id
+
+    assert a.previous_doc_doc_id is None
+    assert c.previous_doc_doc_id == a.id
+    assert d.previous_doc_doc_id is None
+    assert e.previous_doc_doc_id == d.id
+    assert b.previous_doc_doc_id == e.id
+    assert f.previous_doc_doc_id == b.id
+
+
+# L1: A -> B -> C
+# L2: D -> E -> F
+# B -> Previous Version F
+# include_later_documents: False
+@pytest.mark.asyncio
+async def test_case_7():
+    b = await BasicDoc.find_one({"name": "B"})
+    f = await BasicDoc.find_one({"name": "F"})
+    if not b or not f:
+        return
+    old_prev = b.previous_doc_doc_id
+    b.previous_doc_doc_id = f.id
+
+    await update_lineage(
+        updating_doc_doc=b,
+        old_prev_doc_doc_id=old_prev,
+        new_prev_doc_doc_id=f.id,
+        include_later_documents=False,
+    )
+
+    a = await BasicDoc.find_one({"name": "A"})
+    b = await BasicDoc.find_one({"name": "B"})
+    c = await BasicDoc.find_one({"name": "C"})
+    d = await BasicDoc.find_one({"name": "D"})
+    e = await BasicDoc.find_one({"name": "E"})
+    f = await BasicDoc.find_one({"name": "F"})
+    if not (a and b and c and d and e and f):
+        return
+
+    assert not a.is_current_version
+    assert b.is_current_version
+    assert c.is_current_version
+    assert not d.is_current_version
+    assert not e.is_current_version
+    assert not f.is_current_version
+
+    assert a.lineage_id == c.lineage_id
+    assert d.lineage_id == e.lineage_id == f.lineage_id
+    assert d.lineage_id == b.lineage_id
+    assert a.lineage_id != b.lineage_id
+
+    assert a.previous_doc_doc_id is None
+    assert c.previous_doc_doc_id == a.id
+    assert d.previous_doc_doc_id is None
+    assert e.previous_doc_doc_id == d.id
+    assert f.previous_doc_doc_id == e.id
+    assert b.previous_doc_doc_id == f.id
+
+
+# L1: A -> B -> C
+# L2: D -> E -> F
+# C -> Previous Version E
+# include_later_documents: False
+@pytest.mark.asyncio
+async def test_case_8():
+    c = await BasicDoc.find_one({"name": "C"})
+    e = await BasicDoc.find_one({"name": "E"})
+    if not c or not e:
+        return
+    old_prev = c.previous_doc_doc_id
+    c.previous_doc_doc_id = e.id
+
+    await update_lineage(
+        updating_doc_doc=c,
+        old_prev_doc_doc_id=old_prev,
+        new_prev_doc_doc_id=e.id,
+        include_later_documents=False,
+    )
+
+    a = await BasicDoc.find_one({"name": "A"})
+    b = await BasicDoc.find_one({"name": "B"})
+    c = await BasicDoc.find_one({"name": "C"})
+    d = await BasicDoc.find_one({"name": "D"})
+    e = await BasicDoc.find_one({"name": "E"})
+    f = await BasicDoc.find_one({"name": "F"})
+    if not (a and b and c and d and e and f):
+        return
+
+    assert not a.is_current_version
+    assert b.is_current_version
+    assert not c.is_current_version
+    assert not d.is_current_version
+    assert not e.is_current_version
+    assert f.is_current_version
+
+    assert a.lineage_id == b.lineage_id
+    assert d.lineage_id == e.lineage_id == f.lineage_id
+    assert d.lineage_id == c.lineage_id
+    assert a.lineage_id != c.lineage_id
+
+    assert a.previous_doc_doc_id is None
+    assert b.previous_doc_doc_id == a.id
+    assert d.previous_doc_doc_id is None
+    assert e.previous_doc_doc_id == d.id
+    assert c.previous_doc_doc_id == e.id
+    assert f.previous_doc_doc_id == c.id

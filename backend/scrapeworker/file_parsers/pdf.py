@@ -1,4 +1,5 @@
 import asyncio
+from pathlib import Path
 from typing import Any
 
 from backend.scrapeworker.file_parsers.base import FileParser
@@ -45,6 +46,21 @@ class PdfParse(FileParser):
         pdftext_out, _ = await process.communicate()
         return pdftext_out.decode("utf-8", "ignore").strip()
 
+    async def get_images(self):
+        root_dir = Path(self.file_path).parent
+        file_prefix = "image-tmp"
+        process = await asyncio.create_subprocess_exec(
+            "pdfimages",
+            "-raw",
+            "-q",
+            self.file_path,
+            root_dir / file_prefix,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
+        await process.communicate()
+        return [image for image in root_dir.glob(f"*{file_prefix}*")]
+
     async def update_parsed_content(self, prev_content: dict[str, Any]) -> None:
         """Supplement previous parse with PDF parsed content"""
 
@@ -59,5 +75,16 @@ class PdfParse(FileParser):
         prev_content["identified_dates"] = new_content["identified_dates"]
 
     def get_title(self, metadata):
-        title = metadata.get("Title") or metadata.get("Subject") or str(self.filename_no_ext)
+        cont_disp_filename = None
+        if self.download:
+            cont_disp_filename = self.download.response.content_disposition_filename or ""
+            if cont_disp_filename:
+                cont_disp_filename = str(Path(cont_disp_filename).with_suffix(""))
+
+        title = (
+            cont_disp_filename
+            or metadata.get("Title")
+            or metadata.get("Subject")
+            or str(self.filename_no_ext)
+        )
         return title

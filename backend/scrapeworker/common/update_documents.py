@@ -6,6 +6,7 @@ from async_lru import alru_cache
 from beanie.odm.operators.update.general import Set
 
 from backend.app.utils.logger import Logger, create_and_log
+from backend.common.core.enums import ApprovalStatus
 from backend.common.models.doc_document import DocDocument, IndicationTag, TherapyTag
 from backend.common.models.document import (
     RetrievedDocument,
@@ -24,7 +25,7 @@ from backend.scrapeworker.common.utils import tokenize_string
 
 class DocumentUpdater:
     def __init__(self, log: PyLogger, scrape_task: SiteScrapeTask, site: Site) -> None:
-        self.log: Logger = log
+        self.log: PyLogger = log
         self.logger: Logger = Logger()
         self.text_handler: TextHandler = TextHandler()
         self.scrape_task: SiteScrapeTask = scrape_task
@@ -59,10 +60,11 @@ class DocumentUpdater:
         now: datetime = datetime.now(tz=timezone.utc)
         name = self.set_doc_name(parsed_content, download)
 
-        location: RetrievedDocumentLocation = document.get_site_location(self.site.id)
+        location = document.get_site_location(self.site.id)
         context_metadata = download.metadata.dict()
         text_checksum = await self.text_handler.save_text(parsed_content["text"])
         tokens = tokenize_string(parsed_content["text"])
+        new_location = None
 
         if location:
             location.link_text = download.metadata.link_text
@@ -74,24 +76,22 @@ class DocumentUpdater:
             location.link_therapy_tags = parsed_content["link_therapy_tags"]
             location.link_indication_tags = parsed_content["link_indication_tags"]
         else:
-            document.locations.append(
-                RetrievedDocumentLocation(
-                    base_url=download.metadata.base_url,
-                    first_collected_date=now,
-                    last_collected_date=now,
-                    site_id=self.site.id,
-                    url=download.request.url,
-                    context_metadata=context_metadata,
-                    link_text=download.metadata.link_text,
-                    siblings_text=download.metadata.siblings_text,
-                    url_therapy_tags=parsed_content["url_therapy_tags"],
-                    url_indication_tags=parsed_content["url_indication_tags"],
-                    link_therapy_tags=parsed_content["link_therapy_tags"],
-                    link_indication_tags=parsed_content["link_indication_tags"],
-                )
+            new_location = RetrievedDocumentLocation(
+                base_url=download.metadata.base_url,
+                first_collected_date=now,
+                last_collected_date=now,
+                site_id=self.site.id,
+                url=download.request.url,
+                context_metadata=context_metadata,
+                link_text=download.metadata.link_text,
+                siblings_text=download.metadata.siblings_text,
+                url_therapy_tags=parsed_content["url_therapy_tags"],
+                url_indication_tags=parsed_content["url_indication_tags"],
+                link_therapy_tags=parsed_content["link_therapy_tags"],
+                link_indication_tags=parsed_content["link_indication_tags"],
             )
 
-        updated_doc: UpdateRetrievedDocument = UpdateRetrievedDocument(
+        updated_doc = UpdateRetrievedDocument(
             doc_type_confidence=parsed_content["confidence"],
             document_type=parsed_content["document_type"],
             effective_date=parsed_content["effective_date"],
@@ -105,16 +105,28 @@ class DocumentUpdater:
             lang_code=parsed_content["lang_code"],
             therapy_tags=parsed_content["therapy_tags"],
             indication_tags=parsed_content["indication_tags"],
+            priority=parsed_content["priority"],
             metadata=parsed_content["metadata"],
             name=name,
             text_checksum=text_checksum,
-            locations=document.locations,
             last_collected_date=now,
             doc_vectors=parsed_content["doc_vectors"],
             file_size=download.file_size,
             token_count=len(tokens),
             doc_type_match=parsed_content["doc_type_match"],
+            content_checksum=parsed_content["content_checksum"],
+            is_searchable=download.is_searchable,
         )
+
+        # Must handle locations separately to avoid overwriting concurrent updates
+        if new_location:
+            await RetrievedDocument.find({"_id": document.id}).update(
+                {"$push": {"locations": new_location}}
+            )
+        elif location:
+            await RetrievedDocument.find(
+                {"_id": document.id, "locations.site_id": self.site.id}
+            ).update({"$set": {"locations.$": location}})
 
         await document.update(Set(updated_doc.dict(exclude_unset=True)))
         return updated_doc
@@ -132,13 +144,13 @@ class DocumentUpdater:
         if doc_document:
             self.log.debug(f"doc doc update -> {doc_document.id}")
             rt_doc_location = retrieved_document.get_site_location(self.site.id)
-            location: DocDocumentLocation = doc_document.get_site_location(self.site.id)
+            location = doc_document.get_site_location(self.site.id)
 
-            if location:
+            if location and rt_doc_location:
                 location.link_text = rt_doc_location.link_text
                 location.siblings_text = rt_doc_location.siblings_text
                 location.last_collected_date = rt_doc_location.last_collected_date
-            else:
+            elif rt_doc_location:
                 doc_document.locations.append(DocDocumentLocation(**rt_doc_location.dict()))
 
             doc_document.identified_dates = retrieved_document.identified_dates
@@ -160,19 +172,30 @@ class DocumentUpdater:
                 "indication_tags",
             ]
 
-            for attr in check_frozen_attrs:
-                doc_document.set_unedited_attr(attr, getattr(retrieved_document, attr))
+            if doc_document.classification_status != ApprovalStatus.APPROVED:
+                for attr in check_frozen_attrs:
+                    doc_document.set_unedited_attr(attr, getattr(retrieved_document, attr))
 
             doc_document = doc_document.process_tag_changes(new_therapy_tags, new_indicate_tags)
+
+            # Always apply priority updates
+            doc_document.priority = retrieved_document.priority
+            priority_codes = {
+                tag.code: tag.priority for tag in retrieved_document.therapy_tags if tag.priority
+            }
+            for tag in retrieved_document.therapy_tags:
+                tag.priority = priority_codes.get(tag.code, 0)
 
             if not doc_document.has_user_edit("document_type"):
                 doc_document.doc_type_match = retrieved_document.doc_type_match
 
             # Can be removed after text added to older docs
             doc_document.text_checksum = retrieved_document.text_checksum
+            doc_document.content_checksum = retrieved_document.content_checksum
             doc_document.doc_vectors = retrieved_document.doc_vectors
             doc_document.file_size = retrieved_document.file_size
             doc_document.token_count = retrieved_document.token_count
+            doc_document.is_searchable = retrieved_document.is_searchable
             doc_document.set_final_effective_date()
             await doc_document.save()
         else:
@@ -192,6 +215,7 @@ class DocumentUpdater:
             file_size=download.file_size,
             checksum=checksum,
             text_checksum=text_checksum,
+            content_checksum=parsed_content["content_checksum"],
             doc_type_confidence=parsed_content["confidence"],
             document_type=parsed_content["document_type"],
             doc_vectors=parsed_content["doc_vectors"],
@@ -210,10 +234,12 @@ class DocumentUpdater:
             name=name,
             therapy_tags=parsed_content["therapy_tags"],
             indication_tags=parsed_content["indication_tags"],
+            priority=parsed_content["priority"],
             first_collected_date=now,
             last_collected_date=now,
             token_count=len(tokens),
             doc_type_match=parsed_content["doc_type_match"],
+            is_searchable=download.is_searchable,
             locations=[
                 RetrievedDocumentLocation(
                     base_url=download.metadata.base_url,

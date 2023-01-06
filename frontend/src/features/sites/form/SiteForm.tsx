@@ -38,7 +38,7 @@ const useMustBeUniqueNameRule = () => {
 const buildInitialValues = () => ({
   scrape_method: 'SimpleDocumentScrape',
   collection_method: CollectionMethod.Automated,
-  cron: '0 16 * * *',
+  cron: '0 8 * * *',
   tags: [],
   status: SiteStatus.New,
   base_urls: [{ url: '', name: '', status: 'ACTIVE' }],
@@ -113,6 +113,7 @@ export function SiteForm(props: {
       initialValues={initialValues}
       validateMessages={validateMessages}
       validateTrigger={['onBlur']}
+      disabled={props.form.getFieldValue('mode') === 'view'}
     >
       <Row gutter={16} className="flex pb-[20%]">
         <Col span={12} className="space-y-4">

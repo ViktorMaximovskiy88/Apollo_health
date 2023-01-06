@@ -3,6 +3,7 @@ from uuid import UUID
 
 import pymongo
 from beanie import Indexed, PydanticObjectId
+from beanie.odm.queries.find import FindOne
 from pydantic import Field
 
 from backend.common.core.enums import ApprovalStatus, LangCode
@@ -41,7 +42,9 @@ class BaseDocDocument(BaseModel):
     name: Indexed(str)  # type: ignore
     checksum: Indexed(str)  # type: ignore
     file_extension: str | None = None
-    text_checksum: str | None = None
+    text_checksum: Indexed(str) | None = None  # type: ignore
+    content_checksum: Indexed(str) | None = None  # type: ignore
+
     lang_code: LangCode | None = None
 
     # Document Type
@@ -63,8 +66,8 @@ class BaseDocDocument(BaseModel):
     first_created_date: datetime | None = None
     published_date: datetime | None = None
     identified_dates: list[datetime] | None = None
-    first_collected_date: Indexed(datetime, pymongo.DESCENDING) | None = None
-    last_collected_date: Indexed(datetime, pymongo.DESCENDING) | None = None
+    first_collected_date: Indexed(datetime, pymongo.DESCENDING) | None = None  # type: ignore
+    last_collected_date: Indexed(datetime, pymongo.DESCENDING) | None = None  # type: ignore
 
     # Manual/Calculated Dates
     final_effective_date: Indexed(datetime, pymongo.DESCENDING) | None = None  # type: ignore
@@ -74,6 +77,7 @@ class BaseDocDocument(BaseModel):
     lineage_id: PydanticObjectId | None = None
     previous_doc_doc_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     is_current_version: bool = False
+    lineage_confidence: float = 0
 
     therapy_tags: list[TherapyTag] = []
     indication_tags: list[IndicationTag] = []
@@ -84,7 +88,7 @@ class BaseDocDocument(BaseModel):
     compare_create_time: datetime | None = None
 
     tags: list[str] = []
-    pipeline_stages: DocPipelineStages | None
+    pipeline_stages: DocPipelineStages | None = None
 
     # from rt doc, lets just do these now...
     # TODO if we gen analysis doc earlier, this doesnt have to live here
@@ -93,10 +97,16 @@ class BaseDocDocument(BaseModel):
     token_count: int = 0
 
     user_edited_fields: list[str] = []
+    priority: Indexed(int, pymongo.DESCENDING) = 0  # type: ignore
+    is_searchable: bool = False
 
 
 class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixins):
     locations: list[DocDocumentLocation] = []
+
+    @property
+    def next_doc_document(self) -> FindOne["DocDocument"]:
+        return DocDocument.find_one({"previous_doc_doc_id": self.id})
 
     def for_site(self, site_id: PydanticObjectId):
         location = self.get_site_location(site_id)
@@ -136,6 +146,14 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
     def has_tag_user_edits(self):
         return self.has_user_edit("therapy_tags", "indication_tags")
 
+    def get_stage_version(self, stage_name):
+        if not self.pipeline_stages:
+            return 0
+        stage = getattr(self.pipeline_stages, stage_name)
+        if not stage:
+            return 0
+        return stage.version
+
     def process_tag_changes(self, new_therapy_tags, new_indication_tags):
         # if not edited for therapy_tags or indication_tags just wholesale assign
         # if edited for therapy_tags or indication_tags just append diff
@@ -158,9 +176,21 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
         indexes = [
             [
                 ("classification_status", pymongo.ASCENDING),
+                ("final_effective_date", pymongo.ASCENDING),
+                ("first_collected_date", pymongo.ASCENDING),
+                ("priority", pymongo.DESCENDING),
+            ],
+            [
                 ("family_status", pymongo.ASCENDING),
+                ("final_effective_date", pymongo.ASCENDING),
+                ("first_collected_date", pymongo.ASCENDING),
+                ("priority", pymongo.DESCENDING),
+            ],
+            [
                 ("content_extraction_status", pymongo.ASCENDING),
                 ("final_effective_date", pymongo.ASCENDING),
+                ("first_collected_date", pymongo.ASCENDING),
+                ("priority", pymongo.DESCENDING),
             ],
             [("locations.site_id", pymongo.ASCENDING)],
             [("locations.link_text", pymongo.ASCENDING)],
@@ -228,6 +258,7 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     locations: list[DocDocumentLocation] | None
 
     user_edited_fields: list[str] = []
+    include_later_documents_in_lineage_update: bool = False
 
 
 class ClassificationUpdateDocDocument(BaseModel):
@@ -256,6 +287,7 @@ class ClassificationUpdateDocDocument(BaseModel):
     first_created_date: datetime | None = None
     published_date: datetime | None = None
     end_date: datetime | None = None
+    include_later_documents_in_lineage_update: bool = False
 
 
 class FamilyUpdateDocDocument(BaseModel):

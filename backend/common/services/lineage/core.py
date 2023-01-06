@@ -4,7 +4,6 @@ from logging import Logger
 
 from beanie import BulkWriter, PydanticObjectId
 
-from backend.app.scripts.retag_document import ReTagger
 from backend.common.core.enums import ApprovalStatus
 from backend.common.models.doc_document import DocDocument, SiteDocDocument
 from backend.common.models.document import RetrievedDocument
@@ -13,7 +12,7 @@ from backend.common.models.lineage import DocumentAnalysis, DocumentAttrs
 from backend.common.models.shared import get_unique_focus_tags, get_unique_reference_tags
 from backend.common.models.site import Site
 from backend.common.services.document import get_site_docs, get_site_docs_for_ids
-from backend.common.services.lineage.lineage_matcher import LineageMatcher
+from backend.common.services.lineage.model.model import LineageModel
 from backend.common.services.tag_compare import TagCompare
 from backend.scrapeworker.common.lineage_parser import (
     guess_month_abbr,
@@ -23,12 +22,7 @@ from backend.scrapeworker.common.lineage_parser import (
     guess_state_name,
     guess_year_part,
 )
-from backend.scrapeworker.common.utils import (
-    compact,
-    group_by_attr,
-    tokenize_filename,
-    tokenize_url,
-)
+from backend.scrapeworker.common.utils import compact, tokenize_filename, tokenize_url
 
 
 class LineageService:
@@ -36,22 +30,12 @@ class LineageService:
         self.logger = logger
         self.pp = pprint.PrettyPrinter(depth=4)
         self.tag_compare = TagCompare()
+        self.model = LineageModel()
 
     async def get_comparision_docs(
         self, site_id: PydanticObjectId | None
     ) -> list[DocumentAnalysis]:
-        query = DocumentAnalysis.find(
-            {
-                "$or": [
-                    {"lineage_id": None},
-                    {"is_current_version": True},
-                ],
-            }
-        )
-
-        if site_id:
-            query = query.find({"site_id": site_id})
-
+        query = DocumentAnalysis.find({"site_id": site_id})
         docs = await query.to_list()
         return docs
 
@@ -107,25 +91,13 @@ class LineageService:
             DocumentAnalysis.get_motor_collection().delete_many({}),
         )
 
-    async def update_site_docs(self, site_id):
-        # Updates tags, doc vecs and whatever else we need for lineage
-        # using retagger for now
-        self.logger.info(f"before update_site_docs {site_id}")
-        retagger = ReTagger()
-        await retagger.indication.model()
-        site = await Site.get(site_id)
-        if not site:
-            raise Exception(f"Site Id {site_id} does not exists")
-        await retagger.retag_docs_on_site(site, 0)
-        self.logger.info(f"after update_site_docs {site_id}")
-
     async def process_all_sites(self):
         async for site in Site.find():
             await self.process_lineage_for_site(site.id)  # type: ignore
 
-    async def process_lineage_for_site(self, site_id: PydanticObjectId):
+    async def process_lineage_for_site(self, site_id: PydanticObjectId, overwrite=False):
         docs = await get_site_docs(site_id)
-        await self.process_lineage_for_docs(site_id, docs)
+        await self.process_lineage_for_docs(site_id, docs, overwrite)
 
     async def get_shared_lineage_sites(self, site_id: PydanticObjectId):
         docs = await DocDocument.find_many({"locations.site_id": site_id}).to_list()
@@ -142,11 +114,11 @@ class LineageService:
         for site_id in site_ids:
             self.logger.info(f"clear/update for site {site_id}")
             await self.clear_lineage_for_site(site_id)
-            await self.update_site_docs(site_id)
+            # TODO reconcile the 'up-to-date' bits
 
         for site_id in site_ids:
             self.logger.info(f"reprocessing for site {site_id}")
-            await self.process_lineage_for_site(site_id)
+            await self.process_lineage_for_site(site_id, True)
 
     async def process_lineage_for_doc_ids(
         self, site_id: PydanticObjectId, doc_ids: list[PydanticObjectId]
@@ -160,7 +132,8 @@ class LineageService:
         )
         doc_analyses: dict[PydanticObjectId, DocumentAnalysis] = {}
         async for analysis in existing_analyses_query:
-            doc_analyses[analysis.doc_document_id] = analysis
+            if analysis.doc_document_id:
+                doc_analyses[analysis.doc_document_id] = analysis
 
         async with BulkWriter() as bulk_writer:
             for doc in docs:
@@ -172,49 +145,54 @@ class LineageService:
                     await DocumentAnalysis.insert_one(doc_analysis, bulk_writer=bulk_writer)
 
     async def process_lineage_for_docs(
-        self, site_id: PydanticObjectId, docs: list[SiteDocDocument]
+        self, site_id: PydanticObjectId, docs: list[SiteDocDocument], overwrite=False
     ):
         # build the model and save it
-        self.logger.info(f"before doc analysis save len(docs)={len(docs)}")
+        self.logger.info(f"site {site_id} before doc analysis save len(docs)={len(docs)}")
         await self.refresh_doc_analyses(site_id, docs)
-        self.logger.info(f"after doc analysis save len(docs)={len(docs)}")
+        self.logger.info(f"site {site_id} after doc analysis save len(docs)={len(docs)}")
 
         # pick all from DB that are most recent OR no lineage...
         compare_docs = await self.get_comparision_docs(site_id)
-        await self.process_lineage(compare_docs)
+        await self.process_lineage(compare_docs, docs, overwrite)
 
-    async def process_lineage(self, items: list[DocumentAnalysis]):
+    async def apply_lineage_updates(self, lineage: list[DocumentAnalysis], overwrite=False):
+        updates = []
+        for analyses in lineage:
+            updates.append(version_doc(analyses))
+            updates.append(version_doc_doc(analyses, overwrite))
+            updates.append(analyses.save())
+        await asyncio.gather(*updates)
 
-        pending_items = [item for item in items if not item.lineage_id]
-        lineaged_items = [item for item in items if item.lineage_id]
+    def docs_to_preserve_lineage(self, docs: list[SiteDocDocument]):
+        """Returns a set of document ids whose lineage should not be altered.
+        This includes documents that are approved and have a lineage id
+        or are a previous version of such a document.
+        """
+        preserved_doc_ids = set()
+        docs_by_id = {d.id: d for d in docs}
+        docs_to_review = [
+            d for d in docs if d.classification_status == ApprovalStatus.APPROVED and d.lineage_id
+        ]
+        while docs_to_review:
+            doc = docs_to_review.pop()
+            preserved_doc_ids.add(doc.id)
+            if doc.previous_doc_doc_id and doc.previous_doc_doc_id in docs_by_id:
+                prev = docs_by_id[doc.previous_doc_doc_id]
+                docs_to_review.append(prev)
+        return preserved_doc_ids
 
-        self.logger.info(f"pending_items={len(pending_items)} lineaged_items={len(lineaged_items)}")
-
-        while len(pending_items) > 0:
-            pending_item: DocumentAnalysis = pending_items.pop()
-
-            matched_item = None
-            for lineaged_item in lineaged_items:
-                match = LineageMatcher(pending_item, lineaged_item, logger=self.logger).exec()
-                if match:
-                    matched_item = lineaged_item
-                    break
-
-            if matched_item:
-                self.logger.debug(f"'{pending_item.filename}' '{matched_item.filename}' -> MATCHED")
-                pending_item.lineage_id = matched_item.lineage_id
-                await pending_item.save()
-                lineaged_items.append(pending_item)
-            else:
-                self.logger.debug(f"'{pending_item.filename_text}' -> UNMATCHED")
-                pending_item = await create_lineage(pending_item)
-                lineaged_items.append(pending_item)
-
-        await self._version_matched(lineaged_items)
-
-    def sort_matched(self, items: list[DocumentAnalysis]):
-        items.sort(key=lambda x: x.final_effective_date or x.year_part or 0)
-        return items
+    async def process_lineage(
+        self, items: list[DocumentAnalysis], docs: list[SiteDocDocument], overwrite=False
+    ):
+        preserved_doc_ids = self.docs_to_preserve_lineage(docs)
+        preserved_items = [item for item in items if item.doc_document_id in preserved_doc_ids]
+        items_to_relineage = [
+            item for item in items if item.doc_document_id not in preserved_doc_ids
+        ]
+        lineages = self.model.add_documents_to_lineages(items_to_relineage, preserved_items)
+        for lineage in lineages:
+            await self.apply_lineage_updates(lineage, overwrite)
 
     async def compare_tags(
         self, doc: RetrievedDocument, doc_doc: DocDocument, prev_doc_doc: DocDocument
@@ -231,54 +209,26 @@ class LineageService:
         doc, doc_doc = await asyncio.gather(doc.save(), doc_doc.save())
         return doc, doc_doc
 
-    async def _version_matched(self, items: list[DocumentAnalysis]):
-        for _key, group in group_by_attr(items, "lineage_id"):
-            matches = self.sort_matched(list(group))
-            prev_doc = None
-            prev_doc_doc = None
-            for index, match in enumerate(matches):
-                is_last = index == len(matches) - 1
-                doc, doc_doc = await asyncio.gather(
-                    version_doc(match, is_last, prev_doc),
-                    version_doc_doc(match, is_last, prev_doc_doc),
-                )
 
-                if is_last and prev_doc_doc:
-                    doc, doc_doc = await self.compare_tags(doc, doc_doc, prev_doc_doc)
-
-                prev_doc = doc
-                prev_doc_doc = doc_doc
-
-
-async def create_lineage(item: DocumentAnalysis):
-    lineage_id = PydanticObjectId()
-    item.lineage_id = lineage_id
-    item = await item.save()
-    return item
-
-
-async def version_doc(
-    doc_analysis: DocumentAnalysis,
-    is_last: bool,
-    prev_doc: RetrievedDocument | None,
-):
+async def version_doc(doc_analysis: DocumentAnalysis):
     doc = await RetrievedDocument.get(doc_analysis.retrieved_document_id)
     if not doc:
         raise Exception(f"RetrievedDocument {doc_analysis.retrieved_document_id} does not exist")
 
     doc.lineage_id = doc_analysis.lineage_id
-    doc.is_current_version = is_last
-    # TODO do we need to respect the manually setting of `previous_doc_doc_id`
-    # if so... we have to do that further up?
-    doc.previous_doc_id = prev_doc.id if prev_doc else None
+    doc.is_current_version = doc_analysis.is_current_version
+    doc.lineage_confidence = doc_analysis.confidence
+    doc.previous_doc_id = doc_analysis.previous_doc_doc_id
     doc = await doc.save()
     return doc
 
 
-def inherit_prev_doc_fields(
-    doc: DocDocument, prev_doc: DocDocument | None, site_id: PydanticObjectId
-):
-    if not prev_doc:  # Nothing to inherit
+async def inherit_prev_doc_fields(doc: DocDocument, site_id: PydanticObjectId):
+    if not doc.previous_doc_doc_id:  # Nothing to inherit
+        return
+
+    prev_doc = await DocDocument.get(doc.previous_doc_doc_id)
+    if not prev_doc:
         return
 
     if prev_doc.translation_id:
@@ -297,21 +247,21 @@ def inherit_prev_doc_fields(
         loc.payer_family_id = prev_loc.payer_family_id
 
 
-async def version_doc_doc(
-    doc_analysis: DocumentAnalysis, is_last: bool, prev_doc: DocDocument | None
-):
-    doc = await DocDocument.get(doc_analysis.doc_document_id)
+async def version_doc_doc(doc_analysis: DocumentAnalysis, overwrite=False):
+    doc = await DocDocument.get(doc_analysis.doc_document_id)  # type: ignore
     if not doc:
         raise Exception(f"DocDocument {doc_analysis.doc_document_id} does not exists")
 
     # Don't modify DocDocument Lineage if Lineage is Already Approved
-    if doc.classification_status == ApprovalStatus.APPROVED and doc.lineage_id:
+    if not overwrite and doc.classification_status == ApprovalStatus.APPROVED and doc.lineage_id:
         return doc
 
     doc.lineage_id = doc_analysis.lineage_id
-    doc.is_current_version = is_last
-    doc.previous_doc_doc_id = prev_doc.id if prev_doc else None
-    inherit_prev_doc_fields(doc, prev_doc, doc_analysis.site_id)
+    doc.is_current_version = doc_analysis.is_current_version
+    doc.lineage_confidence = doc_analysis.confidence
+    doc.previous_doc_doc_id = doc_analysis.previous_doc_doc_id
+
+    await inherit_prev_doc_fields(doc, doc_analysis.site_id)
     doc = await doc.save()
     return doc
 
@@ -351,8 +301,18 @@ def build_doc_analysis(
         doc_analysis = DocumentAnalysis(
             doc_document_id=doc.id,
             retrieved_document_id=doc.retrieved_document_id,
+            previous_doc_doc_id=doc.previous_doc_doc_id,
+            lineage_id=doc.lineage_id,
+            confidence=doc.lineage_confidence,
             site_id=doc.site_id,
         )
+    doc_analysis.previous_doc_doc_id = doc.previous_doc_doc_id
+    doc_analysis.lineage_id = doc.lineage_id
+    doc_analysis.doc_document_id = doc.id
+
+    doc_analysis.file_size = doc.file_size
+    doc_analysis.doc_vectors = doc.doc_vectors
+    doc_analysis.token_count = doc.token_count
 
     doc_analysis.file_size = doc.file_size
     doc_analysis.doc_vectors = doc.doc_vectors

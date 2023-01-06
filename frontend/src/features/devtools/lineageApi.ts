@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { LineageDoc } from './types';
-import { Task } from '../tasks/taskApi';
+import { Task } from '../tasks/types';
 
 export const lineageApi = createApi({
   reducerPath: 'lineageApi',

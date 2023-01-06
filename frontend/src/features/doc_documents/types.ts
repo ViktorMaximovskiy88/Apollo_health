@@ -21,8 +21,10 @@ export interface TherapyTag {
   code: string;
   score: number;
   focus: boolean;
+  priority: number;
   update_status?: TagUpdateStatus;
   text_area?: [number, number];
+  created_at?: string;
 }
 
 export interface IndicationTag {
@@ -31,6 +33,7 @@ export interface IndicationTag {
   page: number;
   code: number;
   focus?: boolean; // migrate and update
+  priority: number;
   update_status?: TagUpdateStatus;
   text_area?: [number, number];
 }
@@ -74,7 +77,7 @@ export interface DocDocument extends BaseDocument {
   document_type: string;
   doc_type_confidence: number;
 
-  document_family_id?: string;
+  document_family_id?: string | null;
   document_family?: any;
 
   effective_date: string;
@@ -92,6 +95,7 @@ export interface DocDocument extends BaseDocument {
   last_collected_date: string;
 
   lineage_id: string;
+  is_current_version: boolean;
   version: string;
   internal_document: boolean;
   previous_doc_doc_id: string | null;
@@ -107,7 +111,12 @@ export interface DocDocument extends BaseDocument {
   content_extraction_task_id?: string;
 
   tags: string[];
+
   pipeline_stages: DocPipelineStages;
+
+  include_later_documents_in_lineage_update?: boolean;
+  priority: number;
+  previous_par_id: string | null;
 }
 
 export type SiteDocDocument = Omit<

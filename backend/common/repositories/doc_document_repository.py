@@ -16,11 +16,13 @@ class DocDocumentRepository:
         return updated
 
     async def pre_save(self, doc: DocDocument, updates: UpdateDocDocument):
-        updates = await self.update_user_edited_fields(doc, updates)
-        self.handle_document_type_change(doc, updates)
-        final_effective_date = calc_final_effective_date(updates)
-        if final_effective_date:
-            updates.final_effective_date = final_effective_date
+        if bool(updates.__dict__):  # if updates is not empty
+            updates = await self.update_user_edited_fields(doc, updates)
+            self.handle_document_type_change(doc, updates)
+            final_effective_date = calc_final_effective_date(updates)
+            if final_effective_date:
+                updates.final_effective_date = final_effective_date
+
         self.change_info = get_doc_change_info(updates, doc)
         return updates
 
@@ -54,13 +56,21 @@ class DocDocumentRepository:
             current_user_edited_fields.append("previous_doc_doc_id")
 
         for idx, tag in enumerate(doc.therapy_tags):
-            if updates.therapy_tags[idx] and tag.focus != updates.therapy_tags[idx].focus:
+            if (
+                updates.therapy_tags
+                and updates.therapy_tags[idx]
+                and tag.focus != updates.therapy_tags[idx].focus
+            ):
                 current_user_edited_fields.append("therapy_tag_focus")
                 current_user_edited_fields.append("therapy_tag")
                 break
 
         for idx, tag in enumerate(doc.indication_tags):
-            if updates.indication_tags[idx] and tag.focus != updates.indication_tags[idx].focus:
+            if (
+                updates.indication_tags
+                and updates.indication_tags[idx]
+                and tag.focus != updates.indication_tags[idx].focus
+            ):
                 current_user_edited_fields.append("indication_tag_focus")
                 current_user_edited_fields.append("indication_tag")
                 break

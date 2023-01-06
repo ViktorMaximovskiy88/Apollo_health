@@ -1,6 +1,6 @@
 import os
-import pathlib
 from abc import ABC
+from pathlib import Path
 from typing import Any
 
 import aiofiles
@@ -8,6 +8,7 @@ import aiofiles
 from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.date_parser import DateParser
 from backend.scrapeworker.common.detect_lang import detect_lang
+from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.common.utils import date_rgxs, label_rgxs, normalize_string
 from backend.scrapeworker.doc_type_classifier import guess_doc_type
 
@@ -23,13 +24,15 @@ class FileParser(ABC):
         file_path: str,
         url: str,
         link_text: str | None = None,
+        download: DownloadContext | None = None,
         scrape_method_config: ScrapeMethodConfiguration | None = None,
     ):
         self.file_path = file_path
+        self.download = download
         self.url = url
-        self.link_text = link_text
+        self.link_text = link_text or ""
         file_name = self.url.removesuffix("/")
-        self.filename_no_ext = str(pathlib.Path(os.path.basename(file_name)).with_suffix(""))
+        self.filename_no_ext = str(Path(os.path.basename(file_name)).with_suffix(""))
         self.scrape_method_config = scrape_method_config
 
     async def get_info(self) -> dict[str, str]:
@@ -37,6 +40,9 @@ class FileParser(ABC):
 
     async def get_text(self) -> str:
         raise NotImplementedError("get_text is required")
+
+    async def get_images(self) -> list[str]:
+        return []
 
     def get_title(self, _):
         raise NotImplementedError("get_title is required")
@@ -52,9 +58,12 @@ class FileParser(ABC):
     async def parse(self) -> dict[str, Any]:
         self.metadata = await self.get_info()
         self.text = await self.get_text()
+        self.images = await self.get_images()
         title = self.get_title(self.metadata)
+
+        is_searchable = self.download.is_searchable if self.download else False
         document_type, confidence, doc_vectors, doc_type_match = guess_doc_type(
-            self.text, self.link_text, self.url, title
+            self.text, self.link_text, self.url, title, is_searchable
         )
         lang_code = detect_lang(self.text)
 
@@ -70,7 +79,7 @@ class FileParser(ABC):
 
         self.result = {
             "metadata": self.metadata,
-            "identified_dates": identified_dates,
+            "identified_dates": identified_dates[20:],
             "effective_date": date_parser.effective_date.date,
             "end_date": date_parser.end_date.date,
             "last_updated_date": date_parser.last_updated_date.date,
@@ -80,6 +89,7 @@ class FileParser(ABC):
             "published_date": date_parser.published_date.date,
             "title": title,
             "text": self.text,
+            "images": self.images,
             "document_type": document_type,
             "confidence": confidence,
             "lang_code": lang_code,
