@@ -5,9 +5,8 @@ import {
   DocumentTypes,
   FieldGroupsOptions,
   getFieldGroupLabel,
-  getLegacyRelevanceLable,
-  LegacyRelevanceOptions,
 } from '../../retrieved_documents/types';
+import { LegacyRelevanceOptions, getLegacyRelevanceLable } from './documentFamilyLevels';
 import { ChangeLogModal } from '../../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './documentFamilyApi';
 import { TypeColumn, TypeFilterValue } from '@inovua/reactdatagrid-community/types';

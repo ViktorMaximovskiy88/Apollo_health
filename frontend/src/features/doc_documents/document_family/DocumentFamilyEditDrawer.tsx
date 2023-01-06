@@ -8,7 +8,7 @@ import {
 import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
 import { useEffect } from 'react';
-import { legacyRelevanceOptions } from './documentFamilyLevels';
+import { LegacyRelevanceOptions } from './documentFamilyLevels';
 import { FieldGroupsOptions } from '../../retrieved_documents/types';
 import { DocumentFamily } from './types';
 import { CloseOutlined } from '@ant-design/icons';
@@ -57,9 +57,9 @@ export const DocumentFamilyEditDrawer = (props: DocumentFamilyEditDrawerPropType
     { isLoading: isUpdateLoading, data: updateData, isSuccess: isUpdateSuccess },
   ] = useUpdateDocumentFamilyMutation();
   const nameValue: string[] = Form.useWatch('legacy_relevance', form);
-  let filteredlegacyRelevanceOptions = legacyRelevanceOptions;
+  let filteredlegacyRelevanceOptions = LegacyRelevanceOptions;
 
-  filteredlegacyRelevanceOptions = filterLegacyRelevanceOptions(legacyRelevanceOptions, nameValue);
+  filteredlegacyRelevanceOptions = filterLegacyRelevanceOptions(LegacyRelevanceOptions, nameValue);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -171,7 +171,7 @@ export function mustBeUniqueName(asyncValidator: Function, name: string = '') {
 }
 
 export function filterLegacyRelevanceOptions(
-  legacyRelevanceOptions: { label: string; value: string }[],
+  legacyRelevanceOptions: { label: string; value: string; id: string }[],
   nameValue: string[]
 ) {
   let filtered = legacyRelevanceOptions;
