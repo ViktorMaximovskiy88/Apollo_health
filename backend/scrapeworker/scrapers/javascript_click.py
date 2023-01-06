@@ -142,8 +142,7 @@ class JavascriptClick(PlaywrightBaseScraper):
             try:
                 link_handle = await xpath_locator.nth(index).element_handle(timeout=1000)
                 await link_handle.click(timeout=10000)
-                wait_seconds = self.config.wait_for_timeout_ms / 1000
-                await asyncio.sleep(wait_seconds)
+                await asyncio.sleep(0.25)
             except PlaywrightTimeout as ex:
                 # If Playwright Timeout, we likely haven't nav'd away
                 self.log.error(ex, exc_info=True)
