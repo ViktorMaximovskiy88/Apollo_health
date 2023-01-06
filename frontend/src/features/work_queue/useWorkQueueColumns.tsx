@@ -19,7 +19,7 @@ function useSiteSelectOptions() {
   const siteOptions = useCallback(
     async (search: string) => {
       const { data } = await getSites({
-        limit: 20,
+        limit: 150,
         skip: 0,
         sortInfo: { name: 'name', dir: 1 },
         filterValue: [{ name: 'name', operator: 'contains', type: 'string', value: search }],
