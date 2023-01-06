@@ -84,7 +84,9 @@ export function SiteDocDocumentsTable({
     const statusLabel = statusDisplayAndStyle(siteScrapeTask.status);
     return statusLabel.name;
   }
-  const dateLabel = prettyDateTimeFromISO(siteScrapeTask?.start_time);
+  const dateLabel = prettyDateTimeFromISO(
+    siteScrapeTask?.start_time || siteScrapeTask?.queued_time
+  );
   function elapsedLable(siteScrapeTask: SiteScrapeTask) {
     if (!siteScrapeTask || !siteScrapeTask.start_time) {
       return '0 seconds';
