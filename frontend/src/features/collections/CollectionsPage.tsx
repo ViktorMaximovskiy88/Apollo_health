@@ -98,7 +98,7 @@ export function ManualCollectionButton(props: any) {
           setIsLoading(false);
           notification.error({
             message: 'Please review and update the following documents',
-            description: response.error.data.detail,
+            description: response.data.errors.join(', '),
           });
         }
       } catch (err) {
