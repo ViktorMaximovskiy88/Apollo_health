@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from time import time
 from typing import Any
@@ -41,6 +40,7 @@ from backend.app.scripts.create_proxy_records import create_proxies
 from backend.app.scripts.create_work_queues import create_default_work_queues
 from backend.app.scripts.payer_backbone.load_payer_backbone import load_payer_backbone
 from backend.app.utils.cors import cors
+from backend.app.utils.logging import Logger, get_app_logger
 from backend.app.utils.user import get_provider_detail
 from backend.common.db.init import init_db
 from backend.common.db.migrations import confirm_migration_quality, run_migrations
@@ -48,7 +48,7 @@ from backend.common.models.proxy import Proxy
 
 app = FastAPI()
 cors(app)  # local only
-logger = logging.getLogger("wrapper")
+logger: Logger = get_app_logger()
 
 
 @app.on_event("startup")
@@ -70,6 +70,32 @@ templates = Jinja2Templates(directory=template_dir)
 frontend_build_dir = Path(__file__).parent.joinpath("../../frontend/build").resolve()
 
 
+# must be first, reverse order...
+@app.exception_handler(Exception)
+async def last_chance_exception_handle(request, exc):
+    message = str(exc)
+    status_code = 500
+
+    logger.exception(message)
+    newrelic.agent.notice_error()
+
+    result = await http_exception_handler(
+        request, HTTPException(detail=message, status_code=status_code)
+    )
+    return result
+
+
+@app.middleware("http")
+async def frontend_routing(request: Request, call_next: Any):
+    response = await call_next(request)
+    if response.status_code == status.HTTP_404_NOT_FOUND and not request.url.path.startswith(
+        "/api"
+    ):
+        with open(frontend_build_dir.joinpath("index.html")) as file:
+            return HTMLResponse(file.read())
+    return response
+
+
 # liveness
 @app.get("/ping", include_in_schema=False)
 async def ping():
@@ -85,8 +111,6 @@ async def react_settings():
 async def request_access(request: Request):
     return templates.TemplateResponse("request-access.html", {"request": request})
 
-
-app.add_middleware(GZipMiddleware)
 
 prefix = "/api/v1"
 app.include_router(users.router, prefix=prefix)
@@ -109,21 +133,12 @@ app.include_router(comments.router, prefix=prefix)
 app.include_router(therapy_master.router, prefix=prefix)
 app.include_router(task.router, prefix=prefix)
 
-
-@app.middleware("http")
-async def frontend_routing(request: Request, call_next: Any):
-    response = await call_next(request)
-    if response.status_code == status.HTTP_404_NOT_FOUND and not request.url.path.startswith(
-        "/api"
-    ):
-        with open(frontend_build_dir.joinpath("index.html")) as file:
-            return HTMLResponse(file.read())
-    return response
-
-
 app.mount("/", StaticFiles(directory=frontend_build_dir, html=True), name="static")
 
+app.add_middleware(GZipMiddleware)
 
+
+# TODO when/if we auth on backend, we can make user a global dep and re-use...
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     # TODO if this stays, lets move it...
@@ -149,18 +164,3 @@ async def log_requests(request: Request, call_next):
         f"request_stop='{request.method}_{request.url.path}' user='{user}' duration='{format_time}ms'"  # noqa
     )
     return response
-
-
-@app.exception_handler(Exception)
-async def last_chance_exception_handle(request, exc):
-    # TODO speak with Natalya about the integration
-    message = str(exc)
-    status_code = 500
-
-    logger.exception(message)
-    newrelic.agent.notice_error()
-
-    result = await http_exception_handler(
-        request, HTTPException(detail=message, status_code=status_code)
-    )
-    return result
