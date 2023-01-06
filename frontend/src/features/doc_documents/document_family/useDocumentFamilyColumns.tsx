@@ -1,13 +1,13 @@
 import { DocumentFamily } from './types';
 
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
+import { DocumentTypes } from '../../retrieved_documents/types';
 import {
-  DocumentTypes,
+  LegacyRelevanceOptions,
+  getLegacyRelevanceLable,
   FieldGroupsOptions,
   getFieldGroupLabel,
-  getLegacyRelevanceLable,
-  LegacyRelevanceOptions,
-} from '../../retrieved_documents/types';
+} from './documentFamilyLevels';
 import { ChangeLogModal } from '../../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './documentFamilyApi';
 import { TypeColumn, TypeFilterValue } from '@inovua/reactdatagrid-community/types';
