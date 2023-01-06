@@ -4,11 +4,14 @@ from time import time
 from typing import Any
 
 import jwt
+import newrelic.agent
 from fastapi import FastAPI, Request, status
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException
 
 from backend.app.core.settings import settings
 from backend.app.routes import (
@@ -146,3 +149,18 @@ async def log_requests(request: Request, call_next):
         f"request_stop='{request.method}_{request.url.path}' user='{user}' duration='{format_time}ms'"  # noqa
     )
     return response
+
+
+@app.exception_handler(Exception)
+async def last_chance_exception_handle(request, exc):
+    # TODO speak with Natalya about the integration
+    message = str(exc)
+    status_code = 500
+
+    logger.exception(message)
+    newrelic.agent.notice_error()
+
+    result = await http_exception_handler(
+        request, HTTPException(detail=message, status_code=status_code)
+    )
+    return result
