@@ -144,6 +144,7 @@ async def log_requests(request: Request, call_next):
     # TODO if this stays, lets move it...
     auth_header = request.headers.get("authorization", None)
     user = "anon"
+    user_id = None
     if auth_header:
         [_, token] = auth_header.split(" ")
         [signing_key, algorithm] = get_provider_detail(token)
@@ -163,4 +164,8 @@ async def log_requests(request: Request, call_next):
     logger.info(
         f"request_stop='{request.method}_{request.url.path}' user='{user}' duration='{format_time}ms'"  # noqa
     )
+
+    newrelic.agent.add_custom_attribute("user_id", user_id)
+    newrelic.agent.add_custom_attribute("user", user)
+
     return response
