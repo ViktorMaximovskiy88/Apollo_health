@@ -126,6 +126,7 @@ export function SiteDocDocumentsTable({
           }
           type="success"
           className="mb-1"
+          closable
         />
       )}
 
