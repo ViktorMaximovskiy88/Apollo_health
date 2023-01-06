@@ -108,7 +108,7 @@ export function SiteDocDocumentsTable({
         <Alert
           message={
             <div>
-              <span className={classNames('mx-2')}>
+              <span className={classNames('mr-2')}>
                 {siteScrapeTaskStatusLabel(siteScrapeTask)} on {dateLabel}
               </span>
               |
