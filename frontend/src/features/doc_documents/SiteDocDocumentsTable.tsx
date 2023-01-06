@@ -26,6 +26,7 @@ import { statusDisplayAndStyle, TaskStatus } from '../../common/scrapeTaskStatus
 import { SiteScrapeTask } from '../collections/types';
 import { prettyDateDistanceSingle, prettyDateTimeFromISO } from '../../common';
 import { collectMethodDisplayName } from '../sites/types';
+import classNames from 'classnames';
 
 interface DataTablePropTypes {
   handleNewVersion: (data: SiteDocDocument) => void;
@@ -44,20 +45,6 @@ export function SiteDocDocumentsTable({
   const scrapeTaskId = siteScrapeTask?._id || null;
   const { setDocumentFamilyIds, documentFamilyNamesById } = useGetDocumentFamilyNamesById();
   const { setPayerFamilyIds, payerFamilyNamesById } = useGetPayerFamilyNamesById();
-  const infoHeaderStyle = {
-    fontSize: '14px',
-    lineHeight: '1.35',
-    marginLeft: '5px',
-    marginRight: '5px',
-    fontFamily: "'Open Sans', Calibri, Candara, Arial, sans-serif",
-    fontWeight: '900',
-    color: '#2b2b2b',
-  };
-  const infoSubHeaderStyle = {
-    opacity: '80%',
-    marginLeft: '5px',
-    marginRight: '5px',
-  };
 
   const { forceUpdate } = useSelector(siteDocDocumentTableState);
   const loadData = useCallback(
@@ -119,14 +106,14 @@ export function SiteDocDocumentsTable({
         <Alert
           message={
             <div>
-              <span style={infoHeaderStyle}>
+              <span className={classNames('mx-2')}>
                 {siteScrapeTaskStatusLabel(siteScrapeTask)} on {dateLabel}
               </span>
               |
-              <span style={infoSubHeaderStyle}>
+              <span className={classNames('mx-2 opacity-80')}>
                 {collectMethodDisplayName(siteScrapeTask?.collection_method)}
               </span>
-              |<span style={infoSubHeaderStyle}>{elapsedLable(siteScrapeTask)}</span>
+              |<span className={classNames('mx-2 opacity-80')}>{elapsedLable(siteScrapeTask)}</span>
             </div>
           }
           type="success"
