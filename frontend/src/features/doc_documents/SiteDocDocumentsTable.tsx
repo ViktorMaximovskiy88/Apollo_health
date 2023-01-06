@@ -44,6 +44,20 @@ export function SiteDocDocumentsTable({
   const scrapeTaskId = siteScrapeTask?._id || null;
   const { setDocumentFamilyIds, documentFamilyNamesById } = useGetDocumentFamilyNamesById();
   const { setPayerFamilyIds, payerFamilyNamesById } = useGetPayerFamilyNamesById();
+  const infoHeaderStyle = {
+    fontSize: '14px',
+    lineHeight: '1.35',
+    marginLeft: '5px',
+    marginRight: '5px',
+    fontFamily: "'Open Sans', Calibri, Candara, Arial, sans-serif",
+    fontWeight: '900',
+    color: '#2b2b2b',
+  };
+  const infoSubHeaderStyle = {
+    opacity: '80%',
+    marginLeft: '5px',
+    marginRight: '5px',
+  };
 
   const { forceUpdate } = useSelector(siteDocDocumentTableState);
   const loadData = useCallback(
@@ -98,14 +112,6 @@ export function SiteDocDocumentsTable({
 
     return formattedDate;
   }
-  const collectionCount = siteScrapeTask?.retrieved_document_ids.length || 0;
-  function collectionCountLabel(siteScrapeTask: SiteScrapeTask) {
-    if (siteScrapeTask && siteScrapeTask.status === TaskStatus.InProgress) {
-      return `Collecting ${collectionCount} Documents`;
-    } else {
-      return `${collectionCount} Documents Collected`;
-    }
-  }
 
   return (
     <>
@@ -113,15 +119,14 @@ export function SiteDocDocumentsTable({
         <Alert
           message={
             <div>
-              <span className="datagrid-info">{siteScrapeTaskStatusLabel(siteScrapeTask)}</span>|
-              <span className="datagrid-info">
-                {collectionCountLabel(siteScrapeTask)} on {dateLabel}
+              <span style={infoHeaderStyle}>
+                {siteScrapeTaskStatusLabel(siteScrapeTask)} on {dateLabel}
               </span>
               |
-              <span className="datagrid-info-subheader">
+              <span style={infoSubHeaderStyle}>
                 {collectMethodDisplayName(siteScrapeTask?.collection_method)}
               </span>
-              |<span className="datagrid-info-subheader">{elapsedLable(siteScrapeTask)}</span>
+              |<span style={infoSubHeaderStyle}>{elapsedLable(siteScrapeTask)}</span>
             </div>
           }
           type="success"

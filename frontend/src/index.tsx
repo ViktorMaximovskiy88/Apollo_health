@@ -2,7 +2,6 @@ import React from 'react';
 import { Worker } from '@react-pdf-viewer/core';
 import { createRoot } from 'react-dom/client';
 import './index.css';
-import './data-grid.css';
 import '@inovua/reactdatagrid-community/index.css';
 import App from './App';
 import { store, history } from './app/store';
