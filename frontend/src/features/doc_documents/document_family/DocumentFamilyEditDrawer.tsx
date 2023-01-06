@@ -9,7 +9,7 @@ import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
 import { useEffect } from 'react';
 import { LegacyRelevanceOptions } from './documentFamilyLevels';
-import { FieldGroupsOptions } from '../../retrieved_documents/types';
+import { FieldGroupsOptions } from './documentFamilyLevels';
 import { DocumentFamily } from './types';
 import { CloseOutlined } from '@ant-design/icons';
 import { DocumentTypes } from '../../retrieved_documents/types';
