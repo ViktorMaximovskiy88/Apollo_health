@@ -9,6 +9,6 @@ export interface Comment extends BaseDocument {
 
 export enum CommentType {
   ClassificationHold = 'Classification Hold',
-  DocPayerHold = 'Document and Payer Family Hold',
+  DocPayerHold = 'Document & Payer Family Hold',
   TranslationConfigHold = 'Translation Config Hold',
 }

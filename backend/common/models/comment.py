@@ -8,7 +8,7 @@ from backend.common.models.base_document import BaseDocument, BaseModel
 
 class HoldType(str, Enum):
     ClassificationHold = "Classification Hold"
-    DocPayerHold = "Document and Payer Family Hold"
+    DocPayerHold = "Document & Payer Family Hold"
     TranslationConfigHold = "Translation Config Hold"
 
 

@@ -148,7 +148,7 @@ export function WorkQueueWorkItem(props: {
   function checkType() {
     if (props.wq.name.includes('Classification')) {
       return CommentType.ClassificationHold;
-    } else if (props.wq.name.includes('Document and Payer Family')) {
+    } else if (props.wq.name.includes('Document & Payer Family')) {
       return CommentType.DocPayerHold;
     } else if (props.wq.name.includes('Translation Config')) {
       return CommentType.TranslationConfigHold;

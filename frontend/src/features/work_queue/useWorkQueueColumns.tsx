@@ -1,7 +1,7 @@
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { useCallback } from 'react';
 import { BaseDocument } from '../../common';
-import { dateDuration, prettyDateUTCFromISO } from '../../common/date';
+import { dateDuration, prettyDateTimeFromISO, prettyDateUTCFromISO } from '../../common/date';
 import { ButtonLink } from '../../components/ButtonLink';
 import { TaskLock } from '../doc_documents/types';
 import { useGetUsersQuery } from '../users/usersApi';
@@ -43,7 +43,7 @@ export function useWorkQueueColumns(
   const siteFilter = res.filter?.find((f) => f.name === 'locations.site_id');
   const { data: site } = useGetSiteQuery(siteFilter?.value, { skip: !siteFilter?.value });
   const initialOptions = site ? [{ value: site._id, label: site.name }] : [];
-  const columns = [
+  let columns = [
     {
       name: 'name',
       header: 'Name',
@@ -151,42 +151,42 @@ export function useWorkQueueColumns(
         }
       },
     },
-  ];
-
-  if (wq?.name.includes('Hold')) {
-    columns.push({
+    {
       name: 'hold_comment',
       header: 'Hold Comment',
       defaultFlex: 0,
       minWidth: 200,
-      render: () => {
-        return <p>commessnt</p>;
+      render: ({ data: item }: { data: { hold_comment: string } }) => {
+        return <>{item.hold_comment}</>;
       },
-    });
-    columns.push({
+    },
+    {
       name: 'hold_time',
       header: 'Hold Time',
-      render: ({ data: item }: { data: BaseDocument }) => {
-        return <p>time</p>;
+      render: ({ value: holdComment }: { value: string }) => {
+        return prettyDateTimeFromISO(holdComment);
       },
       defaultFlex: 0,
       minWidth: 200,
-    });
-  }
-
-  columns.push({
-    name: 'action',
-    header: 'Actions',
-    render: ({ data: item }: { data: BaseDocument }) => {
-      return (
-        <ButtonLink type="default" to={`${item._id}/process`}>
-          Take
-        </ButtonLink>
-      );
     },
-    defaultFlex: 0,
-    minWidth: 200,
-  });
+    {
+      name: 'action',
+      header: 'Actions',
+      render: ({ data: item }: { data: BaseDocument }) => {
+        return (
+          <ButtonLink type="default" to={`${item._id}/process`}>
+            Take
+          </ButtonLink>
+        );
+      },
+      defaultFlex: 0,
+      minWidth: 200,
+    },
+  ];
 
+  //remove the comment and time columns if not a hold queue
+  if (!wq?.name.includes('Hold')) {
+    columns = columns.filter((col) => !col.name.includes('hold'));
+  }
   return { columns };
 }
