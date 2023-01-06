@@ -114,7 +114,7 @@ async def start_scrape_task(
             response.add_error("Cannot Find Last Queued Task.")
         else:
             response.add_error(f"Task[{last_queued_task.id}] is already queued or in progress.")
-        response.raise_error()
+        return response
 
     return await site_collection.start_collecting()
 

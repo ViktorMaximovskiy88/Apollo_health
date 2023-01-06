@@ -159,7 +159,7 @@ export function CollectionsPage() {
         } else {
           notification.error({
             message: 'Error Running Collection',
-            description: response.error.data.detail,
+            description: response.errors.join(', '),
           });
         }
       } catch (err) {
