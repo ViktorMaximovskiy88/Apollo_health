@@ -9,15 +9,15 @@ import {
 } from '@ant-design/icons';
 import { MainLayout, ExtractedTextLoader } from '../../components';
 import { useParams } from 'react-router-dom';
-import { useGetSiteLineageQuery } from './lineageApi';
-import { useLineageSlice } from './lineage-slice';
+import { useGetSiteLineageQuery } from './devtoolsApi';
+import { useLineageSlice } from './devtools-slice';
 import { useTaskWorker } from '../tasks/taskSlice';
 import { SiteMenu } from '../sites/SiteMenu';
 import { FileTypeViewer } from '../retrieved_documents/RetrievedDocumentViewer';
 import { debounce } from 'lodash';
-import { LineageDocRow } from './LineageDocRow';
+import { DevToolsDocRow } from './DevToolsDocRow';
 import classNames from 'classnames';
-import { LineageDoc } from './types';
+import { DevToolsDoc } from './types';
 import { useGetDocDocumentQuery } from '../doc_documents/docDocumentApi';
 import { EditorView } from '@codemirror/view';
 import { langs } from '@uiw/codemirror-extensions-langs';
@@ -25,7 +25,7 @@ import { prettyDateTimeFromISO } from '../../common';
 import { PipelineStage } from '../../common/types';
 import { CompareModal } from '../doc_documents/lineage/DocCompareToPrevious';
 
-function DocActionMenu({ doc }: { doc: LineageDoc }) {
+function DocActionMenu({ doc }: { doc: DevToolsDoc }) {
   const enqueueDocTask = useTaskWorker();
   return (
     <Menu
@@ -41,7 +41,7 @@ function DocActionMenu({ doc }: { doc: LineageDoc }) {
   );
 }
 
-export function LineagePage() {
+export function DevToolsPage() {
   const { siteId } = useParams();
   const { refetch } = useGetSiteLineageQuery(siteId);
   const { state, actions } = useLineageSlice();
@@ -114,7 +114,7 @@ export function LineagePage() {
                 </div>
                 {!group.collapsed &&
                   group.items.map((item) => (
-                    <LineageDocRow
+                    <DevToolsDocRow
                       key={item._id}
                       doc={item}
                       isSelected={false}
@@ -198,7 +198,7 @@ export function LineagePage() {
   );
 }
 
-export function DocDocumentViewer({ item, viewKey }: { item: LineageDoc; viewKey: string }) {
+export function DocDocumentViewer({ item, viewKey }: { item: DevToolsDoc; viewKey: string }) {
   return (
     <div className="h-full overflow-auto">
       {viewKey === 'json' && <DocumentJsonView docId={item._id} />}

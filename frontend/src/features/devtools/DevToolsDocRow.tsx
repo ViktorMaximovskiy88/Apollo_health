@@ -3,17 +3,17 @@ import { Button } from 'antd';
 import { SplitCellsOutlined } from '@ant-design/icons';
 import { TextEllipsis } from '../../components';
 import { prettyDateUTCFromISO } from '../../common/date';
-import { LineageDoc } from './types';
+import { DevToolsDoc } from './types';
 
 interface PropTypes {
-  doc: LineageDoc;
+  doc: DevToolsDoc;
   isSelected: boolean;
   enableSplitView: boolean;
-  setViewItem(doc: LineageDoc): void;
-  setSplitItem(doc: LineageDoc): void;
+  setViewItem(doc: DevToolsDoc): void;
+  setSplitItem(doc: DevToolsDoc): void;
 }
 
-export function LineageDocRow({
+export function DevToolsDocRow({
   isSelected,
   doc,
   enableSplitView,

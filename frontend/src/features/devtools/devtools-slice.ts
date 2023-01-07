@@ -2,8 +2,8 @@ import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../app/store';
 import { makeActionDispatch } from '../../common/helpers';
-import { LineageGroup, LineageDoc } from './types';
-import { lineageApi } from './lineageApi';
+import { DevToolsGroup, DevToolsDoc } from './types';
+import { devtoolsApi } from './devtoolsApi';
 import _ from 'lodash';
 
 interface FilterSettings {
@@ -18,7 +18,7 @@ interface ChangeDisplayView {
 }
 
 interface ViewItem {
-  item: LineageDoc;
+  item: DevToolsDoc;
   currentView: string;
 }
 
@@ -32,19 +32,20 @@ interface CompareDocs {
   fileKeys: string[];
 }
 
-interface LineageState {
+interface DevToolsState {
   searchTerm: string;
-  groupBy: string;
+  groupBy: string | undefined;
   viewItems: ViewItem[];
-  displayItems: LineageGroup[];
-  domainItems: LineageDoc[];
+  displayItems: DevToolsGroup[];
+  domainItems: DevToolsDoc[];
   filters: FilterSettings;
   compareDocs: CompareDocs;
 }
 
-export const lineageSlice = createSlice({
-  name: 'lineage',
+export const devtoolsSlice = createSlice({
+  name: 'devtools',
   initialState: {
+    defaultView: 'file',
     viewItems: [],
     searchTerm: '',
     domainItems: [],
@@ -53,18 +54,18 @@ export const lineageSlice = createSlice({
       showModal: false,
       fileKeys: [],
     },
-    groupBy: 'lineage_id',
+    groupBy: undefined,
     filters: {
       singularLineage: false,
       multipleLineage: false,
       missingLineage: false,
     },
-  } as LineageState,
+  } as DevToolsState,
   reducers: {
-    setViewItem: (state, action: PayloadAction<LineageDoc>) => {
+    setViewItem: (state, action: PayloadAction<DevToolsDoc>) => {
       state.viewItems = [{ item: action.payload, currentView: 'file' }];
     },
-    setSplitItem: (state, action: PayloadAction<LineageDoc>) => {
+    setSplitItem: (state, action: PayloadAction<DevToolsDoc>) => {
       const viewItem = { item: action.payload, currentView: 'file' };
       state.viewItems = [...state.viewItems, viewItem];
     },
@@ -85,7 +86,7 @@ export const lineageSlice = createSlice({
         state.compareDocs.showModal = !state.compareDocs.showModal;
       }
     },
-    toggleCollapsed: (state, action: PayloadAction<LineageGroup>) => {
+    toggleCollapsed: (state, action: PayloadAction<DevToolsGroup>) => {
       const lineageGroup = state.displayItems.find(
         (item) => item.lineageId === action.payload.lineageId
       );
@@ -116,14 +117,17 @@ export const lineageSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addMatcher(lineageApi.endpoints.getSiteLineage.matchFulfilled, (state, { payload }) => {
-      state.domainItems = payload;
-      state.displayItems = groupItems(state.domainItems);
-    });
+    builder.addMatcher(
+      devtoolsApi.endpoints.getSiteLineage.matchFulfilled,
+      (state, { payload }) => {
+        state.domainItems = payload;
+        state.displayItems = groupItems(state.domainItems);
+      }
+    );
   },
 });
 
-function groupItems(items: LineageDoc[]): LineageGroup[] {
+function groupItems(items: DevToolsDoc[]): DevToolsGroup[] {
   return _(items)
     .groupBy('lineage_id')
     .map((items, lineageId) => {
@@ -141,28 +145,28 @@ function groupItems(items: LineageDoc[]): LineageGroup[] {
         lineageId,
         items: ordered,
         collapsed: false,
-      } as LineageGroup;
+      } as DevToolsGroup;
     })
     .value();
 }
 
 export const lineageListSelector = createSelector(
-  (state: RootState) => state.lineage.displayItems,
-  (lineageState) => lineageState
+  (state: RootState) => state.devtools.displayItems,
+  (devtoolsState) => devtoolsState
 );
 
-export const lineageSelector = createSelector(
-  (state: RootState) => state.lineage,
-  (lineageState) => lineageState
+export const devtoolsSelector = createSelector(
+  (state: RootState) => state.devtools,
+  (devtoolsState) => devtoolsState
 );
 
 export function useLineageSlice() {
-  const state = useSelector(lineageSelector);
+  const state = useSelector(devtoolsSelector);
   const dispatch = useDispatch();
   return {
-    state: state as LineageState,
-    actions: makeActionDispatch(lineageSlice.actions, dispatch),
+    state: state as DevToolsState,
+    actions: makeActionDispatch(devtoolsSlice.actions, dispatch),
   };
 }
 
-export default lineageSlice.reducer;
+export default devtoolsSlice.reducer;

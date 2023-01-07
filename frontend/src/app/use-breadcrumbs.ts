@@ -30,7 +30,7 @@ const routes = [
   '/sites/:siteId/extraction/document/:docDocId/edit',
   '/sites/:siteId/scrapes',
   '/sites/:siteId/view',
-  '/sites/:siteId/devtools',
+  '/devtools',
   '/sites/new',
   '/translations',
   '/translations/:translationId',

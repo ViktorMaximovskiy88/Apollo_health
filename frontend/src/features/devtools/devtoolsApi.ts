@@ -1,11 +1,11 @@
 import { createApi, fetchBaseQuery } from '../../app/base-api';
-import { LineageDoc } from './types';
+import { DevToolsDoc } from './types';
 import { Task } from '../tasks/types';
 
-export const lineageApi = createApi({
-  reducerPath: 'lineageApi',
+export const devtoolsApi = createApi({
+  reducerPath: 'devtoolsApi',
   baseQuery: fetchBaseQuery(),
-  tagTypes: ['LineageDoc'],
+  tagTypes: ['DevToolsDoc'],
   endpoints: (builder) => ({
     processSiteLineage: builder.mutation<Task, string | undefined>({
       query: (siteId) => ({
@@ -13,15 +13,15 @@ export const lineageApi = createApi({
         method: 'POST',
       }),
     }),
-    getSiteLineage: builder.query<LineageDoc[], string | undefined>({
+    getSiteLineage: builder.query<DevToolsDoc[], string | undefined>({
       query: (siteId) => `/lineage/${siteId}`,
       providesTags: (results) => {
-        const tags = [{ type: 'LineageDoc' as const, id: 'LIST' }];
-        results?.forEach(({ _id: id }) => tags.push({ type: 'LineageDoc', id }));
+        const tags = [{ type: 'DevToolsDoc' as const, id: 'LIST' }];
+        results?.forEach(({ _id: id }) => tags.push({ type: 'DevToolsDoc', id }));
         return tags;
       },
     }),
   }),
 });
 
-export const { useProcessSiteLineageMutation, useGetSiteLineageQuery } = lineageApi;
+export const { useProcessSiteLineageMutation, useGetSiteLineageQuery } = devtoolsApi;
