@@ -1,4 +1,6 @@
-import { Dropdown, Radio, Menu, Button, Input } from 'antd';
+import { Select, Dropdown, Radio, Menu, Button, Input } from 'antd';
+import { Divider, Space } from 'antd';
+
 import CodeMirror from '@uiw/react-codemirror';
 import {
   CloseCircleOutlined,
@@ -7,12 +9,11 @@ import {
   FileSearchOutlined,
   CodeOutlined,
 } from '@ant-design/icons';
-import { MainLayout, ExtractedTextLoader } from '../../components';
+import { DevToolsLayout, ExtractedTextLoader } from '../../components';
 import { useParams } from 'react-router-dom';
-import { useGetSiteLineageQuery } from './devtoolsApi';
+import { useGetSiteLineageQuery, useLazySearchSitesQuery } from './devtoolsApi';
 import { useLineageSlice } from './devtools-slice';
 import { useTaskWorker } from '../tasks/taskSlice';
-import { SiteMenu } from '../sites/SiteMenu';
 import { FileTypeViewer } from '../retrieved_documents/RetrievedDocumentViewer';
 import { debounce } from 'lodash';
 import { DevToolsDocRow } from './DevToolsDocRow';
@@ -46,6 +47,8 @@ export function DevToolsPage() {
   const { refetch } = useGetSiteLineageQuery(siteId);
   const { state, actions } = useLineageSlice();
   const { displayItems, domainItems } = state;
+
+  const [searchSites] = useLazySearchSitesQuery();
   const enqueueLineageTask = useTaskWorker(() => refetch());
   const enqueueDocTask = useTaskWorker();
   const enqueueDiffTask = useTaskWorker((task: any) => {
@@ -54,12 +57,11 @@ export function DevToolsPage() {
   });
 
   return (
-    <MainLayout
-      sidebar={<SiteMenu />}
+    <DevToolsLayout
       sectionToolbar={
         <>
           <Button
-            disabled={state.viewItems.length != 2}
+            disabled={state.viewItems.length !== 2}
             onClick={async () => {
               enqueueDiffTask('PDFDiffTask', {
                 previous_checksum: state.viewItems[0]?.item?.checksum,
@@ -92,9 +94,23 @@ export function DevToolsPage() {
       <div className="flex flex-row h-full">
         <div className="flex flex-col w-64 mr-2">
           <div className="bg-white h-8 mb-2">
+            <Select
+              style={{ width: '100%' }}
+              showSearch
+              placeholder={'All Sites'}
+              defaultActiveFirstOption={false}
+              showArrow={false}
+              filterOption={false}
+              notFoundContent={null}
+              onSearch={(query: string) => {
+                searchSites(query);
+              }}
+            ></Select>
+          </div>
+          <div className="bg-white h-8 mb-2">
             <Input.Search
               allowClear={true}
-              placeholder="Search"
+              placeholder="Search documents"
               onChange={debounce((e) => {
                 actions.onSearch(e.target.value);
               }, 250)}
@@ -194,7 +210,7 @@ export function DevToolsPage() {
         modalOpen={state.compareDocs.showModal}
         handleCloseModal={() => actions.toggleCompareModal(false)}
       />
-    </MainLayout>
+    </DevToolsLayout>
   );
 }
 

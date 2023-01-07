@@ -25,3 +25,11 @@ export function MainLayout({ sectionToolbar, sidebar, breadcrumbs = true, childr
     <Layout>{children}</Layout>
   );
 }
+
+export function DevToolsLayout({ sectionToolbar, sidebar, children }: PropTypes) {
+  return (
+    <Layout sidebar={sidebar} gap={false} border={true}>
+      <Layout>{children}</Layout>
+    </Layout>
+  );
+}

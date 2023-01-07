@@ -121,7 +121,6 @@ export const useBreadcrumbs = async () => {
         'doc-documents': 'Documents',
         extraction: 'Extracted Content',
         results: 'Results',
-        devtools: 'Devtools',
         ...asyncResolvers,
       },
       '/documents': {

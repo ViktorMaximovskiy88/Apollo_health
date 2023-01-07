@@ -4,6 +4,7 @@ import { RootState } from '../../app/store';
 import { makeActionDispatch } from '../../common/helpers';
 import { DevToolsGroup, DevToolsDoc } from './types';
 import { devtoolsApi } from './devtoolsApi';
+import { sitesApi } from '../../features/sites/sitesApi';
 import _ from 'lodash';
 
 interface FilterSettings {
