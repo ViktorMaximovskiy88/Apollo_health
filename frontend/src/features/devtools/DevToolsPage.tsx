@@ -9,7 +9,7 @@ import {
   CodeOutlined,
 } from '@ant-design/icons';
 import { DevToolsLayout, ExtractedTextLoader } from '../../components';
-import { useGetDocumentsQuery, useLazySearchSitesQuery } from './devtoolsApi';
+import { useLazyGetDocumentsQuery, useLazySearchSitesQuery } from './devtoolsApi';
 import { useDevToolsSlice } from './devtools-slice';
 import { useTaskWorker } from '../tasks/taskSlice';
 import { FileTypeViewer } from '../retrieved_documents/RetrievedDocumentViewer';
@@ -75,14 +75,15 @@ export function DevToolsPage() {
   const { state, actions } = useDevToolsSlice();
   const { displayItems, domainItems } = state;
 
-  const siteId = state.selectedSite?._id;
-  const { refetch } = useGetDocumentsQuery(siteId);
+  const [getDocuments, { isFetching }] = useLazyGetDocumentsQuery();
   const [searchSites] = useLazySearchSitesQuery();
 
+  const siteId = state.selectedSite?._id;
+
   useEffect(() => {
-    console.log(siteId);
-    refetch();
-  }, [siteId, refetch]);
+    getDocuments({ site_id: siteId, search_query: state.docSearchQuery });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [siteId, state.docSearchQuery]);
 
   const enqueueSiteTask = useTaskWorker();
   const enqueueDocTask = useTaskWorker();
@@ -151,7 +152,6 @@ export function DevToolsPage() {
               }}
               onSelect={(value: any, option: any) => {
                 actions.selectSite(option);
-                refetch();
               }}
               onSearch={debounce((query) => {
                 if (query) {
@@ -164,10 +164,11 @@ export function DevToolsPage() {
           </div>
           <div className="bg-white h-8 mb-2">
             <Input.Search
+              loading={isFetching}
               allowClear={true}
               placeholder="Search documents"
               onChange={debounce((e) => {
-                actions.onDocSearch(e.target.value);
+                actions.setDocSearchQuery(e.target.value);
               }, 250)}
             />
           </div>

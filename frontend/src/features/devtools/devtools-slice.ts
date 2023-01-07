@@ -34,6 +34,7 @@ interface CompareDocs {
 }
 
 interface DevToolsState {
+  docSearchQuery: string;
   searchTerm: string;
   groupByKey: string;
   viewItems: ViewItem[];
@@ -49,6 +50,7 @@ interface DevToolsState {
 export const devtoolsSlice = createSlice({
   name: 'devtools',
   initialState: {
+    docSearchQuery: '',
     defaultView: 'file',
     selectedSite: undefined,
     siteOptions: [],
@@ -71,6 +73,11 @@ export const devtoolsSlice = createSlice({
     setDefaultView: (state, action: PayloadAction<string>) => {
       state.defaultView = action.payload;
     },
+
+    setDocSearchQuery: (state, action: PayloadAction<string>) => {
+      state.docSearchQuery = action.payload;
+    },
+
     setViewItem: (state, action: PayloadAction<DevToolsDoc>) => {
       state.viewItems = [{ item: action.payload, currentView: state.defaultView }];
     },

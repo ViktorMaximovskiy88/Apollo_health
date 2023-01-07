@@ -32,6 +32,16 @@ async def reprocess_lineage_for_site(
     return {"task": task}
 
 
+def maybe_object_id(query: str):
+    if len(query) != 24:
+        return None
+
+    try:
+        return PydanticObjectId(query)
+    except Exception:
+        return None
+
+
 @router.get(
     "/documents",
     dependencies=[Security(get_current_user)],
@@ -40,6 +50,7 @@ async def reprocess_lineage_for_site(
     ],
 )
 async def get_documents(
+    search_query: str = "",
     site_id: PydanticObjectId | None = None,
     page: int = 0,
     limit: int = 50,
@@ -47,11 +58,29 @@ async def get_documents(
 ):
     max_limit = 50
     limit = max_limit if not limit or limit > max_limit else limit
-    query = {"locations.site_id": site_id} if site_id else {}
 
-    docs = await DocDocument.find(
-        query, skip=page * limit, limit=limit, sort=sort, projection_model=LineageDoc
-    ).to_list()
+    query = DocDocument.find()
+
+    if site_id:
+        query = query.find({"locations.site_id": site_id})
+
+    if search_query:
+        if search_query.startswith("http"):
+            query = query.find({"locations.url": unquote(search_query)})
+        elif id := maybe_object_id(search_query):
+            query = query.find({"_id": id})
+        else:
+            escaped = search_query.replace("|", "\\|")
+            query = query.find(
+                {
+                    "$or": [
+                        {"name": {"$regex": f"{escaped}", "$options": "i"}},
+                        {"locations.link_text": {"$regex": f"{escaped}", "$options": "i"}},
+                    ]
+                }
+            )
+
+    docs = await query.skip(page * limit).limit(limit).sort(sort).project(LineageDoc).to_list()
 
     return docs
 
@@ -69,11 +98,8 @@ async def search_sites(search_query: str, limit: int = 20):
     query = None
     if search_query.startswith("http"):
         query = {"base_urls.url": unquote(search_query)}
-    elif len(search_query) == 24:
-        try:
-            query = {"_id": PydanticObjectId(search_query)}
-        except Exception:
-            pass
+    elif id := maybe_object_id(search_query):
+        query = {"_id": id}
 
     if not search_query:
         query = {}

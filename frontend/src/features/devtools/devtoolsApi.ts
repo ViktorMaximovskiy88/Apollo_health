@@ -4,6 +4,11 @@ import { DevToolsDoc } from './types';
 import { Task } from '../tasks/types';
 import { Site } from '../sites/types';
 
+interface DocumentSearch {
+  site_id: string | undefined;
+  search_query: string | undefined;
+}
+
 export const devtoolsApi = createApi({
   reducerPath: 'devtoolsApi',
   baseQuery: fetchBaseQuery(),
@@ -15,8 +20,8 @@ export const devtoolsApi = createApi({
         method: 'POST',
       }),
     }),
-    getDocuments: builder.query<DevToolsDoc[], string | undefined>({
-      query: (site_id) => ({ url: `/devtools/documents`, params: { site_id: site_id } }),
+    getDocuments: builder.query<DevToolsDoc[], DocumentSearch>({
+      query: (params: DocumentSearch) => ({ url: `/devtools/documents`, params }),
       providesTags: (results) => {
         const tags = [{ type: 'DevToolsDoc' as const, id: 'LIST' }];
         results?.forEach(({ _id: id }) => tags.push({ type: 'DevToolsDoc', id }));
