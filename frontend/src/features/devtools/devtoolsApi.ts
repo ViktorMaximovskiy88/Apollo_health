@@ -15,8 +15,8 @@ export const devtoolsApi = createApi({
         method: 'POST',
       }),
     }),
-    getSiteLineage: builder.query<DevToolsDoc[], string | undefined>({
-      query: (siteId) => `/devtools/lineage/${siteId}`,
+    getDocuments: builder.query<DevToolsDoc[], string | undefined>({
+      query: (site_id) => ({ url: `/devtools/documents`, params: { site_id: site_id } }),
       providesTags: (results) => {
         const tags = [{ type: 'DevToolsDoc' as const, id: 'LIST' }];
         results?.forEach(({ _id: id }) => tags.push({ type: 'DevToolsDoc', id }));
@@ -25,10 +25,7 @@ export const devtoolsApi = createApi({
     }),
     searchSites: builder.query<Site[], string | undefined>({
       async queryFn(search_query, queryApi, extraOptions, fetchWithBQ) {
-        console.log(search_query, queryApi, extraOptions, fetchWithBQ);
-        const params = {
-          search_query,
-        };
+        const params = { search_query };
         const result = await fetchWithBQ({ url: `/devtools/sites/search`, params });
         return result.data
           ? { data: result.data as Site[] }
@@ -38,5 +35,9 @@ export const devtoolsApi = createApi({
   }),
 });
 
-export const { useProcessSiteLineageMutation, useGetSiteLineageQuery, useLazySearchSitesQuery } =
-  devtoolsApi;
+export const {
+  useProcessSiteLineageMutation,
+  useGetDocumentsQuery,
+  useLazyGetDocumentsQuery,
+  useLazySearchSitesQuery,
+} = devtoolsApi;

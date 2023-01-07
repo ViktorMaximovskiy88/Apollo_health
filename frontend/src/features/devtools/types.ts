@@ -13,7 +13,7 @@ export interface DevToolsDoc extends BaseDocument {
 }
 
 export interface DevToolsGroup {
-  lineageId: string;
+  groupByKey: string;
   items: DevToolsDoc[];
   collapsed: boolean;
 }

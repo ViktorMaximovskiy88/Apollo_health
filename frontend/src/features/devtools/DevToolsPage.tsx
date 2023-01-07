@@ -1,5 +1,4 @@
-import { Select, Dropdown, Radio, Menu, Button, Input } from 'antd';
-import { Divider, Space } from 'antd';
+import { AutoComplete, Dropdown, Radio, Menu, Button, Input } from 'antd';
 
 import CodeMirror from '@uiw/react-codemirror';
 import {
@@ -10,9 +9,8 @@ import {
   CodeOutlined,
 } from '@ant-design/icons';
 import { DevToolsLayout, ExtractedTextLoader } from '../../components';
-import { useParams } from 'react-router-dom';
-import { useGetSiteLineageQuery, useLazySearchSitesQuery } from './devtoolsApi';
-import { useLineageSlice } from './devtools-slice';
+import { useGetDocumentsQuery, useLazySearchSitesQuery } from './devtoolsApi';
+import { useDevToolsSlice } from './devtools-slice';
 import { useTaskWorker } from '../tasks/taskSlice';
 import { FileTypeViewer } from '../retrieved_documents/RetrievedDocumentViewer';
 import { debounce } from 'lodash';
@@ -25,6 +23,7 @@ import { langs } from '@uiw/codemirror-extensions-langs';
 import { prettyDateTimeFromISO } from '../../common';
 import { PipelineStage } from '../../common/types';
 import { CompareModal } from '../doc_documents/lineage/DocCompareToPrevious';
+import { useEffect } from 'react';
 
 function DocActionMenu({ doc }: { doc: DevToolsDoc }) {
   const enqueueDocTask = useTaskWorker();
@@ -42,14 +41,50 @@ function DocActionMenu({ doc }: { doc: DevToolsDoc }) {
   );
 }
 
+export function ViewTypeSelect({
+  currentView,
+  onChange,
+}: {
+  currentView: string;
+  onChange: Function;
+}) {
+  return (
+    <Radio.Group
+      onChange={(e: any) => {
+        onChange(e);
+      }}
+      defaultValue={currentView}
+    >
+      <Radio.Button value="info">
+        <InfoCircleOutlined />
+      </Radio.Button>
+      <Radio.Button value="file">
+        <FileSearchOutlined />
+      </Radio.Button>
+      <Radio.Button value="text">
+        <FileTextOutlined />
+      </Radio.Button>
+      <Radio.Button value="json">
+        <CodeOutlined />
+      </Radio.Button>
+    </Radio.Group>
+  );
+}
+
 export function DevToolsPage() {
-  const { siteId } = useParams();
-  const { refetch } = useGetSiteLineageQuery(siteId);
-  const { state, actions } = useLineageSlice();
+  const { state, actions } = useDevToolsSlice();
   const { displayItems, domainItems } = state;
 
+  const siteId = state.selectedSite?._id;
+  const { refetch } = useGetDocumentsQuery(siteId);
   const [searchSites] = useLazySearchSitesQuery();
-  const enqueueLineageTask = useTaskWorker(() => refetch());
+
+  useEffect(() => {
+    console.log(siteId);
+    refetch();
+  }, [siteId, refetch]);
+
+  const enqueueSiteTask = useTaskWorker();
   const enqueueDocTask = useTaskWorker();
   const enqueueDiffTask = useTaskWorker((task: any) => {
     actions.setCompareResult(task.result);
@@ -74,7 +109,7 @@ export function DevToolsPage() {
           </Button>
           <Button
             onClick={async () => {
-              enqueueLineageTask('SiteDocsPipelineTask', { site_id: siteId, reprocess: true });
+              enqueueSiteTask('SiteDocsPipelineTask', { site_id: siteId, reprocess: true });
             }}
             className="ml-auto"
           >
@@ -82,7 +117,7 @@ export function DevToolsPage() {
           </Button>
           <Button
             onClick={async () => {
-              enqueueLineageTask('LineageTask', { site_id: siteId, reprocess: true });
+              enqueueSiteTask('LineageTask', { site_id: siteId, reprocess: true });
             }}
             className="ml-auto"
           >
@@ -92,41 +127,69 @@ export function DevToolsPage() {
       }
     >
       <div className="flex flex-row h-full">
-        <div className="flex flex-col w-64 mr-2">
+        <div className="flex flex-col w-96 mr-2">
           <div className="bg-white h-8 mb-2">
-            <Select
+            <AutoComplete
               style={{ width: '100%' }}
               showSearch
               placeholder={'All Sites'}
               defaultActiveFirstOption={false}
+              value={state.selectedSite?.name}
               showArrow={false}
               filterOption={false}
-              notFoundContent={null}
-              onSearch={(query: string) => {
-                searchSites(query);
+              notFoundContent={<div>No sites found</div>}
+              fieldNames={{
+                label: 'name',
+                value: '_id',
               }}
-            ></Select>
+              allowClear={true}
+              options={state.siteOptions}
+              dropdownMatchSelectWidth={false}
+              onClear={() => {
+                actions.clearSiteSearch();
+                actions.selectSite();
+              }}
+              onSelect={(value: any, option: any) => {
+                actions.selectSite(option);
+                refetch();
+              }}
+              onSearch={debounce((query) => {
+                if (query) {
+                  searchSites(query);
+                } else {
+                  actions.clearSiteSearch();
+                }
+              }, 250)}
+            ></AutoComplete>
           </div>
           <div className="bg-white h-8 mb-2">
             <Input.Search
               allowClear={true}
               placeholder="Search documents"
               onChange={debounce((e) => {
-                actions.onSearch(e.target.value);
+                actions.onDocSearch(e.target.value);
               }, 250)}
             />
           </div>
 
+          <div className="h-8 mb-2">
+            <ViewTypeSelect
+              currentView={state.defaultView}
+              onChange={(e: any) => {
+                actions.setDefaultView(e.target.value);
+              }}
+            />
+          </div>
           <div className="overflow-auto h-full bg-white border-slate-200 border-solid border">
             {displayItems.map((group) => (
-              <div key={group.lineageId} className="p-2 mb-1 border">
+              <div key={group.groupByKey} className="p-2 mb-1 border">
                 <div
                   className={classNames('text-slate-500 uppercase mb-1 cursor-pointer')}
                   onClick={() => {
                     actions.toggleCollapsed(group);
                   }}
                 >
-                  {group.lineageId} ({group.items.length})
+                  {group.groupByKey} ({group.items.length})
                 </div>
                 {!group.collapsed &&
                   group.items.map((item) => (
@@ -167,25 +230,12 @@ export function DevToolsPage() {
               </div>
               <div className={classNames('m-2 flex justify-between')}>
                 <div>
-                  <Radio.Group
+                  <ViewTypeSelect
+                    currentView={state.defaultView}
                     onChange={(e: any) => {
                       actions.setViewItemDisplay({ index: i, viewKey: e.target.value });
                     }}
-                    defaultValue={currentView}
-                  >
-                    <Radio.Button value="info">
-                      <InfoCircleOutlined />
-                    </Radio.Button>
-                    <Radio.Button value="file">
-                      <FileSearchOutlined />
-                    </Radio.Button>
-                    <Radio.Button value="text">
-                      <FileTextOutlined />
-                    </Radio.Button>
-                    <Radio.Button value="json">
-                      <CodeOutlined />
-                    </Radio.Button>
-                  </Radio.Group>
+                  />
                 </div>
                 <div>
                   <Dropdown.Button

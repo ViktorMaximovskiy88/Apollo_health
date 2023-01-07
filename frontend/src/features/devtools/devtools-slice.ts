@@ -4,7 +4,7 @@ import { RootState } from '../../app/store';
 import { makeActionDispatch } from '../../common/helpers';
 import { DevToolsGroup, DevToolsDoc } from './types';
 import { devtoolsApi } from './devtoolsApi';
-import { sitesApi } from '../../features/sites/sitesApi';
+import { Site } from '../../features/sites/types';
 import _ from 'lodash';
 
 interface FilterSettings {
@@ -35,18 +35,23 @@ interface CompareDocs {
 
 interface DevToolsState {
   searchTerm: string;
-  groupBy: string | undefined;
+  groupByKey: string;
   viewItems: ViewItem[];
   displayItems: DevToolsGroup[];
   domainItems: DevToolsDoc[];
   filters: FilterSettings;
   compareDocs: CompareDocs;
+  defaultView: string;
+  selectedSite: Site | undefined;
+  siteOptions: Site[];
 }
 
 export const devtoolsSlice = createSlice({
   name: 'devtools',
   initialState: {
     defaultView: 'file',
+    selectedSite: undefined,
+    siteOptions: [],
     viewItems: [],
     searchTerm: '',
     domainItems: [],
@@ -55,7 +60,7 @@ export const devtoolsSlice = createSlice({
       showModal: false,
       fileKeys: [],
     },
-    groupBy: undefined,
+    groupByKey: 'document_type',
     filters: {
       singularLineage: false,
       multipleLineage: false,
@@ -63,11 +68,14 @@ export const devtoolsSlice = createSlice({
     },
   } as DevToolsState,
   reducers: {
+    setDefaultView: (state, action: PayloadAction<string>) => {
+      state.defaultView = action.payload;
+    },
     setViewItem: (state, action: PayloadAction<DevToolsDoc>) => {
-      state.viewItems = [{ item: action.payload, currentView: 'file' }];
+      state.viewItems = [{ item: action.payload, currentView: state.defaultView }];
     },
     setSplitItem: (state, action: PayloadAction<DevToolsDoc>) => {
-      const viewItem = { item: action.payload, currentView: 'file' };
+      const viewItem = { item: action.payload, currentView: state.defaultView };
       state.viewItems = [...state.viewItems, viewItem];
     },
     removeViewItemByIndex: (state, action: PayloadAction<number>) => {
@@ -88,11 +96,11 @@ export const devtoolsSlice = createSlice({
       }
     },
     toggleCollapsed: (state, action: PayloadAction<DevToolsGroup>) => {
-      const lineageGroup = state.displayItems.find(
-        (item) => item.lineageId === action.payload.lineageId
+      const itemGroup = state.displayItems.find(
+        (item) => item.groupByKey === action.payload.groupByKey
       );
-      if (lineageGroup) {
-        lineageGroup.collapsed = !lineageGroup.collapsed;
+      if (itemGroup) {
+        itemGroup.collapsed = !itemGroup.collapsed;
       }
     },
     setCollapsed: (state, action: PayloadAction<boolean>) => {
@@ -110,41 +118,53 @@ export const devtoolsSlice = createSlice({
     toggleMissingLineage: (state) => {
       state.filters.missingLineage = !state.filters.missingLineage;
     },
-    onSearch: (state, action: PayloadAction<string>) => {
+    clearSiteSearch: (state) => {
+      state.siteOptions = [];
+    },
+    selectSite: (state, action: PayloadAction<Site | undefined>) => {
+      state.selectedSite = action.payload;
+    },
+    onDocSearch: (state, action: PayloadAction<string>) => {
       state.searchTerm = action.payload;
       const regex = new RegExp(state.searchTerm, 'i');
       const filtered = state.domainItems.filter((doc: any) => doc.name?.match(regex));
-      state.displayItems = groupItems(filtered);
+      state.displayItems = groupItems(state.groupByKey, filtered);
     },
   },
   extraReducers: (builder) => {
-    builder.addMatcher(
-      devtoolsApi.endpoints.getSiteLineage.matchFulfilled,
-      (state, { payload }) => {
-        state.domainItems = payload;
-        state.displayItems = groupItems(state.domainItems);
+    builder.addMatcher(devtoolsApi.endpoints.getDocuments.matchFulfilled, (state, { payload }) => {
+      state.domainItems = payload;
+      state.displayItems = groupItems(state.groupByKey, state.domainItems);
+    });
+
+    builder.addMatcher(devtoolsApi.endpoints.searchSites.matchFulfilled, (state, { payload }) => {
+      state.siteOptions = payload;
+      if (state.siteOptions.length === 1) {
+        state.selectedSite = state.siteOptions[0];
       }
-    );
+    });
   },
 });
 
-function groupItems(items: DevToolsDoc[]): DevToolsGroup[] {
+function groupItems(groupByKey: string, items: DevToolsDoc[]): DevToolsGroup[] {
   return _(items)
-    .groupBy('lineage_id')
-    .map((items, lineageId) => {
-      const currentIndex = items.findIndex((item) => item.is_current_version);
-      const ordered = items.splice(currentIndex, 1);
+    .groupBy(groupByKey)
+    .map((items, groupByKey) => {
+      let groupedItems = items;
+      if (groupByKey === 'lineage_id') {
+        const currentIndex = items.findIndex((item) => item.is_current_version);
+        const groupedItems = items.splice(currentIndex, 1);
 
-      while (items.length > 0) {
-        const child = ordered[0];
-        const parentIndex = items.findIndex((item) => item._id === child.previous_doc_doc_id);
-        const [parent] = items.splice(parentIndex, 1);
-        ordered.unshift(parent);
+        while (items.length > 0) {
+          const child = groupedItems[0];
+          const parentIndex = items.findIndex((item) => item._id === child.previous_doc_doc_id);
+          const [parent] = items.splice(parentIndex, 1);
+          groupedItems.unshift(parent);
+        }
       }
-
       return {
-        lineageId,
-        items: ordered,
+        groupByKey,
+        items: groupedItems,
         collapsed: false,
       } as DevToolsGroup;
     })
@@ -161,7 +181,7 @@ export const devtoolsSelector = createSelector(
   (devtoolsState) => devtoolsState
 );
 
-export function useLineageSlice() {
+export function useDevToolsSlice() {
   const state = useSelector(devtoolsSelector);
   const dispatch = useDispatch();
   return {

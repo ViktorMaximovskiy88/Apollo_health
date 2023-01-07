@@ -9,8 +9,9 @@ interface PropTypes {
   doc: DevToolsDoc;
   isSelected: boolean;
   enableSplitView: boolean;
-  setViewItem(doc: DevToolsDoc): void;
-  setSplitItem(doc: DevToolsDoc): void;
+  defaultViewType?: string;
+  setViewItem(doc: DevToolsDoc, viewType: string): void;
+  setSplitItem(doc: DevToolsDoc, viewType: string): void;
 }
 
 export function DevToolsDocRow({
@@ -19,6 +20,7 @@ export function DevToolsDocRow({
   enableSplitView,
   setViewItem,
   setSplitItem,
+  defaultViewType = 'json',
 }: PropTypes) {
   return (
     <div
@@ -31,7 +33,7 @@ export function DevToolsDocRow({
       <div
         className={classNames('cursor-pointer')}
         onClick={() => {
-          setViewItem(doc);
+          setViewItem(doc, defaultViewType);
         }}
       >
         <TextEllipsis text={doc.name} />
@@ -42,7 +44,7 @@ export function DevToolsDocRow({
         {enableSplitView && (
           <Button
             onClick={() => {
-              setSplitItem(doc);
+              setSplitItem(doc, defaultViewType);
             }}
           >
             <SplitCellsOutlined />
