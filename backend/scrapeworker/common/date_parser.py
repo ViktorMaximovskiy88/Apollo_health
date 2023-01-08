@@ -255,7 +255,7 @@ class DateParser:
         return None
 
     def valid_range(self, year: int, month: int, day: int | None = None) -> bool:
-        lookahead_year = datetime.now(tz=timezone.utc).year + 2
+        lookahead_year = datetime.now(tz=timezone.utc).year + 5
         return (
             (month >= 1 and month <= 12)
             and (year > 1980 and year <= lookahead_year)
