@@ -2,6 +2,7 @@ import { AppBreadcrumbs } from '../app/AppLayout';
 import { Layout } from './Layout';
 
 interface PropTypes {
+  title?: any;
   children?: any;
   breadcrumbs?: boolean;
   sectionToolbar?: any;
@@ -26,9 +27,9 @@ export function MainLayout({ sectionToolbar, sidebar, breadcrumbs = true, childr
   );
 }
 
-export function DevToolsLayout({ sectionToolbar, sidebar, children }: PropTypes) {
+export function DevToolsLayout({ title, sectionToolbar, sidebar, children }: PropTypes) {
   return (
-    <Layout sidebar={sidebar} gap={false} border={true}>
+    <Layout title={title} sidebar={sidebar} gap={false} border={true} toolbar={sectionToolbar}>
       <Layout>{children}</Layout>
     </Layout>
   );

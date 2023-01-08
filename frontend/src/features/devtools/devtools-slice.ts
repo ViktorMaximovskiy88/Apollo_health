@@ -45,6 +45,7 @@ interface DevToolsState {
   defaultView: string;
   selectedSite: Site | undefined;
   siteOptions: Site[];
+  groupByOptions: any[];
 }
 
 export const devtoolsSlice = createSlice({
@@ -63,6 +64,11 @@ export const devtoolsSlice = createSlice({
       fileKeys: [],
     },
     groupByKey: 'document_type',
+    groupByOptions: [
+      { label: 'Doc Type', value: 'document_type' },
+      { label: 'Lineage', value: 'lineage_id' },
+      { label: 'Status', value: 'classification_status' },
+    ],
     filters: {
       singularLineage: false,
       multipleLineage: false,
@@ -73,11 +79,13 @@ export const devtoolsSlice = createSlice({
     setDefaultView: (state, action: PayloadAction<string>) => {
       state.defaultView = action.payload;
     },
-
     setDocSearchQuery: (state, action: PayloadAction<string>) => {
       state.docSearchQuery = action.payload;
     },
-
+    setGroupByKey: (state, action: PayloadAction<string>) => {
+      state.groupByKey = action.payload;
+      state.displayItems = groupItems(state.groupByKey, state.domainItems);
+    },
     setViewItem: (state, action: PayloadAction<DevToolsDoc>) => {
       state.viewItems = [{ item: action.payload, currentView: state.defaultView }];
     },
@@ -178,7 +186,7 @@ function groupItems(groupByKey: string, items: DevToolsDoc[]): DevToolsGroup[] {
     .value();
 }
 
-export const lineageListSelector = createSelector(
+export const devtoolsListSelector = createSelector(
   (state: RootState) => state.devtools.displayItems,
   (devtoolsState) => devtoolsState
 );

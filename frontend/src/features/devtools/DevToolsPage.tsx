@@ -1,4 +1,4 @@
-import { AutoComplete, Dropdown, Radio, Menu, Button, Input } from 'antd';
+import { AutoComplete, Select, Dropdown, Radio, Menu, Button, Input } from 'antd';
 
 import CodeMirror from '@uiw/react-codemirror';
 import {
@@ -8,6 +8,7 @@ import {
   FileSearchOutlined,
   CodeOutlined,
 } from '@ant-design/icons';
+import { AppBreadcrumbs } from '../../app/AppLayout';
 import { DevToolsLayout, ExtractedTextLoader } from '../../components';
 import { useLazyGetDocumentsQuery, useLazySearchSitesQuery } from './devtoolsApi';
 import { useDevToolsSlice } from './devtools-slice';
@@ -24,13 +25,14 @@ import { prettyDateTimeFromISO } from '../../common';
 import { PipelineStage } from '../../common/types';
 import { CompareModal } from '../doc_documents/lineage/DocCompareToPrevious';
 import { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 
 function DocActionMenu({ doc }: { doc: DevToolsDoc }) {
-  const enqueueDocTask = useTaskWorker();
+  const enqueueTask = useTaskWorker();
   return (
     <Menu
       onClick={(e: any) => {
-        enqueueDocTask(e.key, { doc_doc_id: doc._id });
+        enqueueTask(e.key, { doc_doc_id: doc._id });
       }}
     >
       <Menu.Item key="ContentTask">Content Extraction</Menu.Item>
@@ -71,22 +73,22 @@ export function ViewTypeSelect({
   );
 }
 
-export function DevToolsPage() {
+export function DevToolsPage({ showSiteFilter = false }: { showSiteFilter?: boolean }) {
   const { state, actions } = useDevToolsSlice();
   const { displayItems, domainItems } = state;
 
+  const params = useParams();
+  const siteId = params.siteId ? params.siteId : state.selectedSite?._id;
+
   const [getDocuments, { isFetching }] = useLazyGetDocumentsQuery();
   const [searchSites] = useLazySearchSitesQuery();
-
-  const siteId = state.selectedSite?._id;
 
   useEffect(() => {
     getDocuments({ site_id: siteId, search_query: state.docSearchQuery });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [siteId, state.docSearchQuery]);
 
-  const enqueueSiteTask = useTaskWorker();
-  const enqueueDocTask = useTaskWorker();
+  const enqueueTask = useTaskWorker();
   const enqueueDiffTask = useTaskWorker((task: any) => {
     actions.setCompareResult(task.result);
     actions.toggleCompareModal(true);
@@ -94,74 +96,82 @@ export function DevToolsPage() {
 
   return (
     <DevToolsLayout
+      title={!showSiteFilter && <AppBreadcrumbs />}
       sectionToolbar={
-        <>
-          <Button
-            disabled={state.viewItems.length !== 2}
-            onClick={async () => {
-              enqueueDiffTask('PDFDiffTask', {
-                previous_checksum: state.viewItems[0]?.item?.checksum,
-                current_checksum: state.viewItems[1]?.item?.checksum,
-              });
-            }}
-            className="ml-auto"
-          >
-            Compare Docs
-          </Button>
-          <Button
-            onClick={async () => {
-              enqueueSiteTask('SiteDocsPipelineTask', { site_id: siteId, reprocess: true });
-            }}
-            className="ml-auto"
-          >
-            Reprocess Site Docs
-          </Button>
-          <Button
-            onClick={async () => {
-              enqueueSiteTask('LineageTask', { site_id: siteId, reprocess: true });
-            }}
-            className="ml-auto"
-          >
-            Reprocess Lineage
-          </Button>
-        </>
+        !showSiteFilter && (
+          <>
+            <Button
+              disabled={state.viewItems.length !== 2}
+              onClick={async () => {
+                enqueueDiffTask('PDFDiffTask', {
+                  previous_checksum: state.viewItems[0]?.item?.checksum,
+                  current_checksum: state.viewItems[1]?.item?.checksum,
+                });
+              }}
+              className="ml-auto"
+            >
+              Compare Docs
+            </Button>
+            <Button
+              onClick={async () => {
+                enqueueTask('SiteDocsPipelineTask', { site_id: siteId, reprocess: true });
+              }}
+              className="ml-auto"
+            >
+              Reprocess Site Docs
+            </Button>
+            <Button
+              onClick={async () => {
+                enqueueTask('LineageTask', { site_id: siteId, reprocess: true });
+              }}
+              className="ml-auto"
+            >
+              Reprocess Lineage
+            </Button>
+          </>
+        )
       }
     >
       <div className="flex flex-row h-full">
         <div className="flex flex-col w-96 mr-2">
-          <div className="bg-white h-8 mb-2">
-            <AutoComplete
-              style={{ width: '100%' }}
-              showSearch
-              placeholder={'All Sites'}
-              defaultActiveFirstOption={false}
-              value={state.selectedSite?.name}
-              showArrow={false}
-              filterOption={false}
-              notFoundContent={<div>No sites found</div>}
-              fieldNames={{
-                label: 'name',
-                value: '_id',
-              }}
-              allowClear={true}
-              options={state.siteOptions}
-              dropdownMatchSelectWidth={false}
-              onClear={() => {
-                actions.clearSiteSearch();
-                actions.selectSite();
-              }}
-              onSelect={(value: any, option: any) => {
-                actions.selectSite(option);
-              }}
-              onSearch={debounce((query) => {
-                if (query) {
-                  searchSites(query);
-                } else {
+          {showSiteFilter && (
+            <div className="bg-white h-8 mb-2 flex">
+              <AutoComplete
+                style={{ flex: '1' }}
+                showSearch
+                placeholder={'All Sites'}
+                defaultActiveFirstOption={false}
+                value={state.selectedSite?.name}
+                showArrow={false}
+                filterOption={false}
+                notFoundContent={<div>No sites found</div>}
+                fieldNames={{
+                  label: 'name',
+                  value: '_id',
+                }}
+                allowClear={true}
+                options={state.siteOptions}
+                dropdownMatchSelectWidth={false}
+                onClear={() => {
                   actions.clearSiteSearch();
-                }
-              }, 250)}
-            ></AutoComplete>
-          </div>
+                  actions.selectSite();
+                }}
+                onSelect={(value: any, option: any) => {
+                  actions.selectSite(option);
+                }}
+                onSearch={debounce((query) => {
+                  if (query) {
+                    searchSites(query);
+                  } else {
+                    actions.clearSiteSearch();
+                  }
+                }, 250)}
+              >
+                <Input />
+              </AutoComplete>
+              {state.selectedSite && <Button>Action</Button>}
+            </div>
+          )}
           <div className="bg-white h-8 mb-2">
             <Input.Search
               loading={isFetching}
@@ -173,13 +183,26 @@ export function DevToolsPage() {
             />
           </div>
 
-          <div className="h-8 mb-2">
-            <ViewTypeSelect
-              currentView={state.defaultView}
-              onChange={(e: any) => {
-                actions.setDefaultView(e.target.value);
-              }}
-            />
+          <div className="h-12 mb-2 flex justify-between">
+            <div>
+              <div className="text-xs">Default Viewer</div>
+
+              <ViewTypeSelect
+                currentView={state.defaultView}
+                onChange={(e: any) => {
+                  actions.setDefaultView(e.target.value);
+                }}
+              />
+            </div>
+            <div>
+              <div className="text-xs">Group by</div>
+              <Select
+                defaultValue={state.groupByKey}
+                style={{ width: 120 }}
+                options={state.groupByOptions}
+                onSelect={(key: string, option: any) => actions.setGroupByKey(key)}
+              />
+            </div>
           </div>
           <div className="overflow-auto h-full bg-white border-slate-200 border-solid border">
             {displayItems.map((group) => (
@@ -241,7 +264,7 @@ export function DevToolsPage() {
                 <div>
                   <Dropdown.Button
                     onClick={() => {
-                      enqueueDocTask('DocPipelineTask', { doc_doc_id: item._id });
+                      enqueueTask('DocPipelineTask', { doc_doc_id: item._id });
                     }}
                     overlay={<DocActionMenu doc={item} />}
                   >

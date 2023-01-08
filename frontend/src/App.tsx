@@ -108,7 +108,7 @@ function App() {
             </Route>
           </Route>
         </Route>
-        <Route path="devtools" element={<DevToolsPage />} />
+        <Route path="/devtools" element={<DevToolsPage showSiteFilter={true} />} />
         <Route path="/sites">
           <Route index element={<SitesHomePage />} />
           <Route path="new" element={<SiteCreatePage />} />
@@ -124,6 +124,7 @@ function App() {
                 <Route path="edit" element={<DocumentEditPage />} />
               </Route>
             </Route>
+            <Route path="devtools" element={<DevToolsPage showSiteFilter={false} />} />
             <Route path="extraction">
               <Route index element={<ExtractionsPage />} />
               <Route path="document/:docId">
