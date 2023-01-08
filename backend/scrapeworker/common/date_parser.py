@@ -70,7 +70,7 @@ class DateParser:
         self.published_date = DateMatch()
         self.unclassified_dates: set[datetime] = set()
         self.heading_dates: list[DateMatch] = []
-        self.identified_dates_limit = 36
+        self.identified_dates_limit = 25
 
     NON_LABEL_RGX = [0, 2, 3, 14, 15]
     CONTEXT_CHARS = re.compile(
@@ -251,7 +251,7 @@ class DateParser:
         return None
 
     def valid_range(self, year: int, month: int, day: int | None = None) -> bool:
-        lookahead_year = datetime.now(tz=timezone.utc).year + 5
+        lookahead_year = datetime.now(tz=timezone.utc).year + 2
         return (
             (month >= 1 and month <= 12)
             and (year > 1980 and year <= lookahead_year)
