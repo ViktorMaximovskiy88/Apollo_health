@@ -1,8 +1,6 @@
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { createApi, fetchBaseQuery } from '../../app/base-api';
-import { DevToolsDoc } from './types';
 import { Task } from '../tasks/types';
-import { Site } from '../sites/types';
 
 interface DocumentSearch {
   site_id: string | undefined;
