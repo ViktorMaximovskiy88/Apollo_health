@@ -148,14 +148,17 @@ class PlaywrightBaseScraper(ABC):
             element.get_attribute("target"),
         )
 
+        if isinstance(siblings_text, str):
+            siblings_text = siblings_text.strip() or None
+
         # Use first response for inner_text() text_content() for link_text.
         # If an element has no text (<p></p>), use url path.
         if element_content and element_content.strip():
             link_text = element_content.strip()
         elif element_text and element_text.strip():
             link_text = element_text.strip()
-        elif siblings_text and siblings_text.strip():
-            link_text = siblings_text.strip()
+        elif siblings_text:
+            link_text = siblings_text
         elif resource_value and resource_value.strip():
             parsed_url = urlsplit(resource_value)
             link_text = parsed_url.path
