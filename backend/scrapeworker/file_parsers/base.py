@@ -79,7 +79,7 @@ class FileParser(ABC):
 
         self.result = {
             "metadata": self.metadata,
-            "identified_dates": identified_dates[20:],
+            "identified_dates": identified_dates[: date_parser.identified_dates_limit],
             "effective_date": date_parser.effective_date.date,
             "end_date": date_parser.end_date.date,
             "last_updated_date": date_parser.last_updated_date.date,

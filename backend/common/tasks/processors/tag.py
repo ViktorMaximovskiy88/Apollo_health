@@ -25,15 +25,15 @@ class TagTaskProcessor(TaskProcessor):
 
     def __init__(
         self,
+        indication_tagger: IndicationTagger | None = None,
+        therapy_tagger: TherapyTagger | None = None,
+        text_client: TextStorageClient | None = None,
         logger=logging,
-        indication_tagger: IndicationTagger = taggers.indication,
-        therapy_tagger: TherapyTagger = taggers.therapy,
-        text_client: TextStorageClient = TextStorageClient(),
     ) -> None:
         self.logger = logger
-        self.text_client = text_client
-        self.indication_tagger = indication_tagger
-        self.therapy_tagger = therapy_tagger
+        self.text_client = text_client or TextStorageClient()
+        self.indication_tagger = indication_tagger or taggers.indication
+        self.therapy_tagger = therapy_tagger or taggers.therapy
 
     async def exec(self, task: tasks.TagTask):
         stage_versions = await PipelineRegistry.fetch()
