@@ -7,6 +7,13 @@ import { Site } from '../sites/types';
 interface DocumentSearch {
   site_id: string | undefined;
   search_query: string | undefined;
+  page: number;
+  limit: number;
+}
+
+interface PagedResuts {
+  items: any[];
+  total_count: number;
 }
 
 export const devtoolsApi = createApi({
@@ -20,20 +27,20 @@ export const devtoolsApi = createApi({
         method: 'POST',
       }),
     }),
-    getDocuments: builder.query<DevToolsDoc[], DocumentSearch>({
+    getDocuments: builder.query<PagedResuts, DocumentSearch>({
       query: (params: DocumentSearch) => ({ url: `/devtools/documents`, params }),
       providesTags: (results) => {
         const tags = [{ type: 'DevToolsDoc' as const, id: 'LIST' }];
-        results?.forEach(({ _id: id }) => tags.push({ type: 'DevToolsDoc', id }));
+        results?.items.forEach(({ _id: id }) => tags.push({ type: 'DevToolsDoc', id }));
         return tags;
       },
     }),
-    searchSites: builder.query<Site[], string | undefined>({
+    searchSites: builder.query<PagedResuts, string | undefined>({
       async queryFn(search_query, queryApi, extraOptions, fetchWithBQ) {
         const params = { search_query };
         const result = await fetchWithBQ({ url: `/devtools/sites/search`, params });
         return result.data
-          ? { data: result.data as Site[] }
+          ? { data: result.data as PagedResuts }
           : { error: result.error as FetchBaseQueryError };
       },
     }),

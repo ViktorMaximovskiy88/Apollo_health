@@ -1,3 +1,4 @@
+import re
 from urllib.parse import unquote
 
 from beanie import PydanticObjectId
@@ -45,9 +46,6 @@ def maybe_object_id(query: str):
 @router.get(
     "/documents",
     dependencies=[Security(get_current_user)],
-    response_model=list[
-        LineageDoc,
-    ],
 )
 async def get_documents(
     search_query: str = "",
@@ -59,59 +57,55 @@ async def get_documents(
     max_limit = 50
     limit = max_limit if not limit or limit > max_limit else limit
 
-    query = DocDocument.find()
+    query = {}
 
     if site_id:
-        query = query.find({"locations.site_id": site_id})
+        query["locations.site_id"] = site_id
 
     if search_query:
         if search_query.startswith("http"):
-            query = query.find({"locations.url": unquote(search_query)})
+            query["locations.url"] = unquote(search_query)
         elif id := maybe_object_id(search_query):
-            query = query.find({"_id": id})
+            query["_id.url"] = id
         else:
-            escaped = search_query.replace("|", "\\|")
-            query = query.find(
-                {
-                    "$or": [
-                        {"name": {"$regex": f"{escaped}", "$options": "i"}},
-                        {"locations.link_text": {"$regex": f"{escaped}", "$options": "i"}},
-                    ]
-                }
-            )
+            query["$text"] = {"$search": search_query}
 
-    docs = await query.skip(page * limit).limit(limit).sort(sort).project(LineageDoc).to_list()
+    if len(query.keys()):
+        total_count = await DocDocument.find(query).count()
+    else:
+        total_count = await DocDocument.get_motor_collection().estimated_document_count()
 
-    return docs
+    docs = await DocDocument.find(
+        query, skip=page * limit, limit=limit, sort=sort, projection_model=LineageDoc
+    ).to_list()
+
+    return {"items": docs, "total_count": total_count}
 
 
 @router.get(
     "/sites/search",
     dependencies=[Security(get_current_user)],
-    response_model=list[Site],
 )
 async def search_sites(search_query: str, limit: int = 20):
     # clamp
     max_limit = 50
     limit = max_limit if not limit or limit > max_limit else limit
 
-    query = None
+    query = {"disabled": False}
     if search_query.startswith("http"):
-        query = {"base_urls.url": unquote(search_query)}
+        query["base_urls.url"] = unquote(search_query)
     elif id := maybe_object_id(search_query):
-        query = {"_id": id}
+        query["_id"] = id
 
-    if not search_query:
-        query = {}
+    if search_query:
+        escaped = re.escape(search_query)
+        query["name"] = {"$regex": f"^{escaped}", "$options": "i"}
 
-    if not query:
-        escaped = search_query.replace("|", "\\|")
-        query = {"name": {"$regex": f"^{escaped}", "$options": "i"}}
-
+    total_count = await Site.find(query).count()
     sites = await Site.find(
-        {"disabled": False, **query},
+        query,
         limit=limit,
         sort="-last_run_time",
     ).to_list()
 
-    return sites
+    return {"items": sites, "total_count": total_count}

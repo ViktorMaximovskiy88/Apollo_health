@@ -33,6 +33,12 @@ interface CompareDocs {
   fileKeys: string[];
 }
 
+interface PagedList {
+  totalCount?: number;
+  currentPage: number;
+  perPage: number;
+}
+
 interface DevToolsState {
   docSearchQuery: string;
   searchTerm: string;
@@ -46,36 +52,56 @@ interface DevToolsState {
   selectedSite: Site | undefined;
   siteOptions: Site[];
   groupByOptions: any[];
+  viewTypeOptions: any[];
+  pager: PagedList;
 }
+
+const initialState: DevToolsState = {
+  docSearchQuery: '',
+  defaultView: 'file',
+  viewTypeOptions: [
+    { label: 'Info', value: 'info' },
+    { label: 'Document', value: 'file' },
+    { label: 'Text', value: 'text' },
+    { label: 'JSON', value: 'json' },
+  ],
+  selectedSite: undefined,
+  siteOptions: [],
+  viewItems: [],
+  searchTerm: '',
+  domainItems: [],
+  displayItems: [],
+  compareDocs: {
+    showModal: false,
+    fileKeys: [],
+  },
+  groupByKey: 'document_type',
+  groupByOptions: [
+    { label: 'Doc Type', value: 'document_type' },
+    { label: 'Lineage', value: 'lineage_id' },
+    { label: 'Status', value: 'classification_status' },
+  ],
+  filters: {
+    singularLineage: false,
+    multipleLineage: false,
+    missingLineage: false,
+  },
+  pager: {
+    totalCount: 0,
+    currentPage: 0,
+    perPage: 50,
+  },
+};
 
 export const devtoolsSlice = createSlice({
   name: 'devtools',
-  initialState: {
-    docSearchQuery: '',
-    defaultView: 'file',
-    selectedSite: undefined,
-    siteOptions: [],
-    viewItems: [],
-    searchTerm: '',
-    domainItems: [],
-    displayItems: [],
-    compareDocs: {
-      showModal: false,
-      fileKeys: [],
-    },
-    groupByKey: 'document_type',
-    groupByOptions: [
-      { label: 'Doc Type', value: 'document_type' },
-      { label: 'Lineage', value: 'lineage_id' },
-      { label: 'Status', value: 'classification_status' },
-    ],
-    filters: {
-      singularLineage: false,
-      multipleLineage: false,
-      missingLineage: false,
-    },
-  } as DevToolsState,
+  initialState,
   reducers: {
+    updatePager: (state, action: PayloadAction<PagedList>) => {
+      state.pager.currentPage = action.payload.currentPage;
+      state.pager.perPage = action.payload.perPage;
+    },
+
     setDefaultView: (state, action: PayloadAction<string>) => {
       state.defaultView = action.payload;
     },
@@ -88,6 +114,9 @@ export const devtoolsSlice = createSlice({
     },
     setViewItem: (state, action: PayloadAction<DevToolsDoc>) => {
       state.viewItems = [{ item: action.payload, currentView: state.defaultView }];
+    },
+    clearViewItem: (state) => {
+      state.viewItems = [];
     },
     setSplitItem: (state, action: PayloadAction<DevToolsDoc>) => {
       const viewItem = { item: action.payload, currentView: state.defaultView };
@@ -148,12 +177,13 @@ export const devtoolsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder.addMatcher(devtoolsApi.endpoints.getDocuments.matchFulfilled, (state, { payload }) => {
-      state.domainItems = payload;
+      state.domainItems = payload.items;
+      state.pager.totalCount = payload.total_count;
       state.displayItems = groupItems(state.groupByKey, state.domainItems);
     });
 
     builder.addMatcher(devtoolsApi.endpoints.searchSites.matchFulfilled, (state, { payload }) => {
-      state.siteOptions = payload;
+      state.siteOptions = payload.items;
       if (state.siteOptions.length === 1) {
         state.selectedSite = state.siteOptions[0];
       }

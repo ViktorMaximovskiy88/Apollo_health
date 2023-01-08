@@ -1,4 +1,4 @@
-import { AutoComplete, Select, Dropdown, Radio, Menu, Button, Input } from 'antd';
+import { AutoComplete, Select, Dropdown, Radio, Menu, Button, Input, Pagination } from 'antd';
 
 import CodeMirror from '@uiw/react-codemirror';
 import {
@@ -75,18 +75,28 @@ export function ViewTypeSelect({
 
 export function DevToolsPage({ showSiteFilter = false }: { showSiteFilter?: boolean }) {
   const { state, actions } = useDevToolsSlice();
-  const { displayItems, domainItems } = state;
+  const { displayItems } = state;
 
   const params = useParams();
   const siteId = params.siteId ? params.siteId : state.selectedSite?._id;
 
-  const [getDocuments, { isFetching }] = useLazyGetDocumentsQuery();
+  const [getDocuments] = useLazyGetDocumentsQuery();
   const [searchSites] = useLazySearchSitesQuery();
 
   useEffect(() => {
-    getDocuments({ site_id: siteId, search_query: state.docSearchQuery });
+    getDocuments({
+      site_id: siteId,
+      search_query: state.docSearchQuery,
+      page: state.pager.currentPage,
+      limit: state.pager.perPage,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [siteId, state.docSearchQuery]);
+  }, [siteId, state.docSearchQuery, state.pager]);
+
+  useEffect(() => {
+    actions.clearViewItem();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
 
   const enqueueTask = useTaskWorker();
   const enqueueDiffTask = useTaskWorker((task: any) => {
@@ -169,12 +179,10 @@ export function DevToolsPage({ showSiteFilter = false }: { showSiteFilter?: bool
               >
                 <Input />
               </AutoComplete>
-              {state.selectedSite && <Button>Action</Button>}
             </div>
           )}
           <div className="bg-white h-8 mb-2">
             <Input.Search
-              loading={isFetching}
               allowClear={true}
               placeholder="Search documents"
               onChange={debounce((e) => {
@@ -185,13 +193,12 @@ export function DevToolsPage({ showSiteFilter = false }: { showSiteFilter?: bool
 
           <div className="h-12 mb-2 flex justify-between">
             <div>
-              <div className="text-xs">Default Viewer</div>
-
-              <ViewTypeSelect
-                currentView={state.defaultView}
-                onChange={(e: any) => {
-                  actions.setDefaultView(e.target.value);
-                }}
+              <div className="text-xs">View as</div>
+              <Select
+                defaultValue={state.defaultView}
+                style={{ width: 120 }}
+                options={state.viewTypeOptions}
+                onSelect={(key: string, option: any) => actions.setDefaultView(key)}
               />
             </div>
             <div>
@@ -230,8 +237,16 @@ export function DevToolsPage({ showSiteFilter = false }: { showSiteFilter?: bool
             ))}
           </div>
 
-          <div className="p-1">
-            {displayItems.length} groups, {domainItems.length} docs
+          <div className="h-8 p-2">
+            <Pagination
+              total={state.pager.totalCount}
+              current={state.pager.currentPage}
+              pageSize={state.pager.perPage}
+              simple={true}
+              onChange={(currentPage: number, perPage: number) =>
+                actions.updatePager({ currentPage, perPage })
+              }
+            />
           </div>
         </div>
 
