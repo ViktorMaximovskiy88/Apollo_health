@@ -71,15 +71,12 @@ class FileParser(ABC):
         label_texts: list[str] = [text for text in [title, self.link_text] if text is not None]
         date_parser.extract_dates(self.text, label_texts)
 
-        identified_dates = list(date_parser.unclassified_dates)
-        identified_dates.sort()
-
         scrubbed_link_text = normalize_string(self.link_text)
         scrubbed_url = normalize_string(self.url)
 
         self.result = {
             "metadata": self.metadata,
-            "identified_dates": identified_dates[: date_parser.identified_dates_limit],
+            "identified_dates": date_parser.get_identified_dates(),
             "effective_date": date_parser.effective_date.date,
             "end_date": date_parser.end_date.date,
             "last_updated_date": date_parser.last_updated_date.date,
