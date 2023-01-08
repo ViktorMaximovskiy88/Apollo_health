@@ -89,7 +89,7 @@ class DateParser:
             "identified_dates": self.get_identified_dates(),
         }
 
-    def get_identified_dates(self, limit: int | None) -> list[datetime]:
+    def get_identified_dates(self, limit: int | None = None) -> list[datetime]:
         identified_dates = list(self.unclassified_dates)
         identified_dates.sort()
         limit = (limit or self.identified_dates_limit) * -1
