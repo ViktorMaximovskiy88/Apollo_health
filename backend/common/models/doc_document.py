@@ -70,7 +70,7 @@ class BaseDocDocument(BaseModel):
     last_collected_date: Indexed(datetime, pymongo.DESCENDING) | None = None  # type: ignore
 
     # Manual/Calculated Dates
-    final_effective_date: Indexed(datetime, pymongo.DESCENDING) | None = None  # type: ignore
+    final_effective_date: datetime | None = None
     end_date: datetime | None = None
 
     # Lineage
@@ -175,22 +175,22 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
     class Settings:
         indexes = [
             [
+                ("final_effective_date", pymongo.ASCENDING),
+                ("first_collected_date", pymongo.ASCENDING),
+                ("priority", pymongo.DESCENDING),
                 ("classification_status", pymongo.ASCENDING),
+            ],
+            [
                 ("final_effective_date", pymongo.ASCENDING),
                 ("first_collected_date", pymongo.ASCENDING),
                 ("priority", pymongo.DESCENDING),
-            ],
-            [
                 ("family_status", pymongo.ASCENDING),
-                ("final_effective_date", pymongo.ASCENDING),
-                ("first_collected_date", pymongo.ASCENDING),
-                ("priority", pymongo.DESCENDING),
             ],
             [
-                ("content_extraction_status", pymongo.ASCENDING),
                 ("final_effective_date", pymongo.ASCENDING),
                 ("first_collected_date", pymongo.ASCENDING),
                 ("priority", pymongo.DESCENDING),
+                ("content_extraction_status", pymongo.ASCENDING),
             ],
             [("locations.site_id", pymongo.ASCENDING)],
             [("locations.link_text", pymongo.ASCENDING)],

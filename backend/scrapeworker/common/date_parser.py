@@ -70,6 +70,7 @@ class DateParser:
         self.published_date = DateMatch()
         self.unclassified_dates: set[datetime] = set()
         self.heading_dates: list[DateMatch] = []
+        self.identified_dates_limit = 25
 
     NON_LABEL_RGX = [0, 2, 3, 14, 15]
     CONTEXT_CHARS = re.compile(
@@ -77,8 +78,6 @@ class DateParser:
     )  # measurement prefix/suffixes
 
     def as_dict(self):
-        identified_dates = [date for date in self.unclassified_dates if date.date]
-        identified_dates.sort()
         return {
             "effective_date": self.effective_date.date,
             "end_date": self.end_date.date,
@@ -87,9 +86,14 @@ class DateParser:
             "next_review_date": self.next_review_date.date,
             "next_update_date": self.next_update_date.date,
             "published_date": self.published_date.date,
-            "unclassified_dates": identified_dates,
-            "identified_dates": identified_dates[20:],
+            "identified_dates": self.get_identified_dates(),
         }
+
+    def get_identified_dates(self, limit: int | None = None) -> list[datetime]:
+        identified_dates = list(self.unclassified_dates)
+        identified_dates.sort()
+        limit = (limit or self.identified_dates_limit) * -1
+        return identified_dates[limit:]
 
     def exclude_text(self, text: str) -> bool:
         exclusions = ["omb approval"]

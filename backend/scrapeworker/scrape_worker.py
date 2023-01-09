@@ -82,6 +82,7 @@ class ScrapeWorker:
         self.doc_lifecycle_service = DocLifecycleService(logger=_log)
         self.new_document_pairs: list[tuple[RetrievedDocument, DocDocument]] = []
         self.log = _log
+        self.cookies: list[Cookie] = []
 
     @alru_cache
     async def get_proxy_settings(
@@ -197,6 +198,7 @@ class ScrapeWorker:
         # This is kinda your 'do thing' or controller; i dunno about _it_ being a class
         url = download.request.url
         proxies = await self.get_proxy_settings()
+        download.request.cookies = self.cookies
         link_retrieved_task: LinkRetrievedTask = link_retrieved_task_from_download(
             download, self.scrape_task
         )
@@ -521,6 +523,7 @@ class ScrapeWorker:
                         )
                 else:
                     await scrape_handler.run_scrapers(url, base_url, all_downloads)
+            self.cookies = await context.cookies()
 
         return all_downloads
 

@@ -61,6 +61,7 @@ export const navSlice = createSlice({
           adminRoleRequired: true,
         },
         { url: '/users', label: 'Users', shortLabel: 'Users', adminRoleRequired: false },
+        { url: '/devtools', label: 'Devtools', shortLabel: 'Devtools', adminRoleRequired: false },
       ] as MenuItem[],
       currentItem: {} as MenuItem,
     },

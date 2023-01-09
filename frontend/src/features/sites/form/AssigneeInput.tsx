@@ -15,7 +15,8 @@ const useOptions = (): OptionType[] => {
     const options: OptionType[] =
       users
         ?.map((user: User) => ({ label: user.full_name, value: user._id }))
-        .filter(({ label }) => !['Admin', 'Scheduler', 'Api'].includes(label)) ?? [];
+        .filter(({ label }) => !['Admin', 'Scheduler', 'Api'].includes(label))
+        .sort((a, b) => a.label.localeCompare(b.label)) ?? [];
     options.unshift({ label: 'Unassigned', value: null });
     return options;
   }, [users]);

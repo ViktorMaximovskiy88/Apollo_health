@@ -1,6 +1,6 @@
 import { BaseDocument } from '../../common';
 
-export interface LineageDoc extends BaseDocument {
+export interface DevToolsDoc extends BaseDocument {
   name: string;
   lineage_id: string;
   previous_doc_doc_id: string;
@@ -12,8 +12,8 @@ export interface LineageDoc extends BaseDocument {
   final_effective_date: string;
 }
 
-export interface LineageGroup {
-  lineageId: string;
-  items: LineageDoc[];
+export interface DevToolsGroup {
+  groupByKey: string;
+  items: DevToolsDoc[];
   collapsed: boolean;
 }
