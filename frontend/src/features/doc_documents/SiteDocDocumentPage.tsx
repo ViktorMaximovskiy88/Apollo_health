@@ -56,6 +56,11 @@ export function SiteDocDocumentsPage() {
   const { data: initialSiteScrapeTask } = useGetScrapeTaskQuery(scrapeTaskId);
   const [getScrapeTaskQuery] = useLazyGetScrapeTaskQuery();
   const [siteScrapeTask, setSiteScrapeTask] = useState(initialSiteScrapeTask || undefined);
+  // Fixes bug where when first starting collection, sometimes does not initially setScrapeTask
+  // which causes work_items to not appear.
+  if (siteScrapeTask === undefined && initialSiteScrapeTask && scrapeTaskIdParam) {
+    setSiteScrapeTask(initialSiteScrapeTask);
+  }
   if (!site) return null;
 
   function handleNewVersion(data: SiteDocDocument) {
