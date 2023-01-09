@@ -74,34 +74,32 @@ export function ManualCollectionButton(props: any) {
   }
 
   async function handleCancelManualScrape() {
-    if (site?._id) {
-      try {
-        setIsLoading(true);
-        let response: any = await cancelAllScrapes(site!._id);
-        if (response.data?.success) {
-          refreshDocs();
-          setIsLoading(false);
-        } else {
-          setIsLoading(false);
-          notification.error({
-            message: 'Please review and update the following documents',
-            description: response.error.data.detail,
-          });
-        }
-      } catch (err) {
-        if (isErrorWithData(err)) {
-          setIsLoading(false);
-          notification.error({
-            message: 'Error Cancelling Collection',
-            description: `${err.data.detail}`,
-          });
-        } else {
-          setIsLoading(false);
-          notification.error({
-            message: 'Error Cancelling Collection',
-            description: 'Unknown error.',
-          });
-        }
+    try {
+      setIsLoading(true);
+      let response: any = await cancelAllScrapes(site!._id);
+      if (response.data?.success) {
+        refreshDocs();
+        setIsLoading(false);
+      } else {
+        setIsLoading(false);
+        notification.error({
+          message: 'Please review and update the following documents',
+          description: response.error.data.detail,
+        });
+      }
+    } catch (err) {
+      if (isErrorWithData(err)) {
+        setIsLoading(false);
+        notification.error({
+          message: 'Error Cancelling Collection',
+          description: `${err.data.detail}`,
+        });
+      } else {
+        setIsLoading(false);
+        notification.error({
+          message: 'Error Cancelling Collection',
+          description: 'Unknown error.',
+        });
       }
     }
   }
