@@ -34,7 +34,8 @@ interface CompareDocs {
 }
 
 interface PagedList {
-  totalCount?: number;
+  totalPages: number;
+  totalCount: number;
   currentPage: number;
   perPage: number;
 }
@@ -104,6 +105,7 @@ const initialState: DevToolsState = {
     totalCount: 0,
     currentPage: 0,
     perPage: 50,
+    totalPages: 0,
   },
 };
 
@@ -114,6 +116,8 @@ export const devtoolsSlice = createSlice({
     updatePager: (state, action: PayloadAction<PagedList>) => {
       state.pager.currentPage = action.payload.currentPage;
       state.pager.perPage = action.payload.perPage;
+      state.pager.totalPages = Math.ceil(state.pager.totalCount / state.pager.perPage);
+      console.log(state.pager);
     },
 
     selectDefaultViewType: (state, action: PayloadAction<any>) => {

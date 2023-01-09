@@ -240,16 +240,17 @@ export function DevToolsPage({ showSiteFilter = false }: { showSiteFilter?: bool
             ))}
           </div>
 
-          <div className="h-8 p-2">
+          <div className="h-8 p-2 flex justify-between">
             <Pagination
               total={state.pager.totalCount}
-              current={state.pager.currentPage}
+              current={state.pager.currentPage + 1}
               pageSize={state.pager.perPage}
               simple={true}
               onChange={(currentPage: number, perPage: number) =>
-                actions.updatePager({ currentPage, perPage })
+                actions.updatePager({ currentPage: currentPage - 1, perPage })
               }
             />
+            <div>{state.pager.totalCount.toLocaleString()} total</div>
           </div>
         </div>
 
