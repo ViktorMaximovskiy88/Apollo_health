@@ -1,5 +1,4 @@
-import { AutoComplete, Select, Dropdown, Radio, Menu, Button, Input, Pagination } from 'antd';
-
+import { AutoComplete, Dropdown, Radio, Menu, Button, Input, Pagination } from 'antd';
 import CodeMirror from '@uiw/react-codemirror';
 import {
   CloseCircleOutlined,
@@ -9,7 +8,7 @@ import {
   CodeOutlined,
 } from '@ant-design/icons';
 import { AppBreadcrumbs } from '../../app/AppLayout';
-import { DevToolsLayout, ExtractedTextLoader } from '../../components';
+import { DevToolsLayout, ExtractedTextLoader, LinkDropDown } from '../../components';
 import { useLazyGetDocumentsQuery, useLazySearchSitesQuery } from './devtoolsApi';
 import { useDevToolsSlice } from './devtools-slice';
 import { useTaskWorker } from '../tasks/taskSlice';
@@ -43,13 +42,7 @@ function DocActionMenu({ doc }: { doc: DevToolsDoc }) {
   );
 }
 
-export function ViewTypeSelect({
-  currentView,
-  onChange,
-}: {
-  currentView: string;
-  onChange: Function;
-}) {
+function ViewTypeSelect({ currentView, onChange }: { currentView: string; onChange: Function }) {
   return (
     <Radio.Group
       onChange={(e: any) => {
@@ -89,9 +82,10 @@ export function DevToolsPage({ showSiteFilter = false }: { showSiteFilter?: bool
       search_query: state.docSearchQuery,
       page: state.pager.currentPage,
       limit: state.pager.perPage,
+      sort: state.selectedSortBy.value,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [siteId, state.docSearchQuery, state.pager]);
+  }, [siteId, state.docSearchQuery, state.pager, state.selectedSortBy]);
 
   useEffect(() => {
     actions.clearViewItem();
@@ -194,20 +188,29 @@ export function DevToolsPage({ showSiteFilter = false }: { showSiteFilter?: bool
           <div className="h-12 mb-2 flex justify-between">
             <div>
               <div className="text-xs">View as</div>
-              <Select
-                defaultValue={state.defaultView}
-                style={{ width: 120 }}
+              <LinkDropDown
+                width={'w-24'}
+                selectedOption={state.selectedDefaultViewType}
                 options={state.viewTypeOptions}
-                onSelect={(key: string, option: any) => actions.setDefaultView(key)}
+                onSelect={(option: any, index: number) => actions.selectDefaultViewType(option)}
+              />
+            </div>
+            <div>
+              <div className="text-xs">Sort by</div>
+              <LinkDropDown
+                width={'w-32'}
+                selectedOption={state.selectedSortBy}
+                options={state.sortByOptions}
+                onSelect={(option: any, index: number) => actions.selectSortBy(option)}
               />
             </div>
             <div>
               <div className="text-xs">Group by</div>
-              <Select
-                defaultValue={state.groupByKey}
-                style={{ width: 120 }}
+              <LinkDropDown
+                width={'w-24'}
+                selectedOption={state.selectedGroupBy}
                 options={state.groupByOptions}
-                onSelect={(key: string, option: any) => actions.setGroupByKey(key)}
+                onSelect={(option: any, index: number) => actions.selectGroupBy(option)}
               />
             </div>
           </div>
@@ -240,7 +243,7 @@ export function DevToolsPage({ showSiteFilter = false }: { showSiteFilter?: bool
           <div className="h-8 p-2">
             <Pagination
               total={state.pager.totalCount}
-              current={state.pager.currentPage + 1}
+              current={state.pager.currentPage}
               pageSize={state.pager.perPage}
               simple={true}
               onChange={(currentPage: number, perPage: number) =>
@@ -270,7 +273,7 @@ export function DevToolsPage({ showSiteFilter = false }: { showSiteFilter?: bool
               <div className={classNames('m-2 flex justify-between')}>
                 <div>
                   <ViewTypeSelect
-                    currentView={state.defaultView}
+                    currentView={state.selectedDefaultViewType.value}
                     onChange={(e: any) => {
                       actions.setViewItemDisplay({ index: i, viewKey: e.target.value });
                     }}

@@ -42,29 +42,45 @@ interface PagedList {
 interface DevToolsState {
   docSearchQuery: string;
   searchTerm: string;
-  groupByKey: string;
+  selectedGroupBy: any;
   viewItems: ViewItem[];
   displayItems: DevToolsGroup[];
   domainItems: DevToolsDoc[];
   filters: FilterSettings;
   compareDocs: CompareDocs;
-  defaultView: string;
+  selectedDefaultViewType: any;
   selectedSite: Site | undefined;
   siteOptions: Site[];
+  selectedSortBy: any;
+  sortByOptions: any[];
   groupByOptions: any[];
   viewTypeOptions: any[];
   pager: PagedList;
 }
 
+const viewTypeOptions = [
+  { label: 'Info', value: 'info' },
+  { label: 'Document', value: 'file' },
+  { label: 'Text', value: 'text' },
+  { label: 'JSON', value: 'json' },
+];
+
+const sortByOptions = [
+  { label: 'Last Collected', value: '-last_collected_date' },
+  { label: 'Doc Type', value: 'document_type' },
+  { label: 'Status', value: 'classification_status' },
+];
+
+const groupByOptions = [
+  { label: 'Doc Type', value: 'document_type' },
+  { label: 'Lineage', value: 'lineage_id' },
+  { label: 'Status', value: 'classification_status' },
+];
+
 const initialState: DevToolsState = {
   docSearchQuery: '',
-  defaultView: 'file',
-  viewTypeOptions: [
-    { label: 'Info', value: 'info' },
-    { label: 'Document', value: 'file' },
-    { label: 'Text', value: 'text' },
-    { label: 'JSON', value: 'json' },
-  ],
+  selectedDefaultViewType: viewTypeOptions[0],
+  viewTypeOptions,
   selectedSite: undefined,
   siteOptions: [],
   viewItems: [],
@@ -75,12 +91,10 @@ const initialState: DevToolsState = {
     showModal: false,
     fileKeys: [],
   },
-  groupByKey: 'document_type',
-  groupByOptions: [
-    { label: 'Doc Type', value: 'document_type' },
-    { label: 'Lineage', value: 'lineage_id' },
-    { label: 'Status', value: 'classification_status' },
-  ],
+  selectedGroupBy: groupByOptions[0],
+  groupByOptions,
+  selectedSortBy: sortByOptions[0],
+  sortByOptions,
   filters: {
     singularLineage: false,
     multipleLineage: false,
@@ -102,24 +116,29 @@ export const devtoolsSlice = createSlice({
       state.pager.perPage = action.payload.perPage;
     },
 
-    setDefaultView: (state, action: PayloadAction<string>) => {
-      state.defaultView = action.payload;
+    selectDefaultViewType: (state, action: PayloadAction<any>) => {
+      state.selectedDefaultViewType = action.payload;
     },
     setDocSearchQuery: (state, action: PayloadAction<string>) => {
       state.docSearchQuery = action.payload;
     },
-    setGroupByKey: (state, action: PayloadAction<string>) => {
-      state.groupByKey = action.payload;
-      state.displayItems = groupItems(state.groupByKey, state.domainItems);
+    selectSortBy: (state, action: PayloadAction<any>) => {
+      state.selectedSortBy = action.payload;
+    },
+    selectGroupBy: (state, action: PayloadAction<any>) => {
+      state.selectedGroupBy = action.payload;
+      state.displayItems = groupItems(state.selectedGroupBy.value, state.domainItems);
     },
     setViewItem: (state, action: PayloadAction<DevToolsDoc>) => {
-      state.viewItems = [{ item: action.payload, currentView: state.defaultView }];
+      const currentView = state.selectedDefaultViewType.value;
+      state.viewItems = [{ item: action.payload, currentView }];
     },
     clearViewItem: (state) => {
       state.viewItems = [];
     },
     setSplitItem: (state, action: PayloadAction<DevToolsDoc>) => {
-      const viewItem = { item: action.payload, currentView: state.defaultView };
+      const currentView = state.selectedDefaultViewType.value;
+      const viewItem = { item: action.payload, currentView };
       state.viewItems = [...state.viewItems, viewItem];
     },
     removeViewItemByIndex: (state, action: PayloadAction<number>) => {
@@ -172,14 +191,16 @@ export const devtoolsSlice = createSlice({
       state.searchTerm = action.payload;
       const regex = new RegExp(state.searchTerm, 'i');
       const filtered = state.domainItems.filter((doc: any) => doc.name?.match(regex));
-      state.displayItems = groupItems(state.groupByKey, filtered);
+      const groupByKey = state.selectedGroupBy.value;
+      state.displayItems = groupItems(groupByKey, filtered);
     },
   },
   extraReducers: (builder) => {
     builder.addMatcher(devtoolsApi.endpoints.getDocuments.matchFulfilled, (state, { payload }) => {
       state.domainItems = payload.items;
       state.pager.totalCount = payload.total_count;
-      state.displayItems = groupItems(state.groupByKey, state.domainItems);
+      const groupByKey = state.selectedGroupBy.value;
+      state.displayItems = groupItems(groupByKey, state.domainItems);
     });
 
     builder.addMatcher(devtoolsApi.endpoints.searchSites.matchFulfilled, (state, { payload }) => {

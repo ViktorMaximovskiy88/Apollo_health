@@ -7,6 +7,7 @@ interface DocumentSearch {
   search_query: string | undefined;
   page: number;
   limit: number;
+  sort: string;
 }
 
 interface PagedResuts {
