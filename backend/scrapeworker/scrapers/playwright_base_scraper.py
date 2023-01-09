@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from functools import cached_property
 from urllib.parse import urlparse, urlsplit
 
-from playwright.async_api import BrowserContext, Cookie, ElementHandle, Page, ProxySettings
+from playwright.async_api import BrowserContext, ElementHandle, Page, ProxySettings
 
 from backend.common.core.config import config
 from backend.common.models.proxy import Proxy
@@ -56,7 +56,6 @@ class PlaywrightBaseScraper(ABC):
         log: logging.Logger = logging.getLogger(__name__),
         playbook_context: PlaybookContext = [],
         metadata: dict = {},
-        cookies: list[Cookie] = [],
     ):
         self.context = context
         self.page = page
@@ -67,7 +66,6 @@ class PlaywrightBaseScraper(ABC):
         self.selectors = []
         self.log = log
         self.metadata = metadata
-        self.cookies = cookies
 
     @cached_property
     def css_selector(self) -> str | None:
