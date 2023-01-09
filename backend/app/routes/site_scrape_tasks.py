@@ -83,6 +83,9 @@ async def read_scrape_task(
 ) -> SiteScrapeTask | Response:
     if search_query:
         return await get_target(search_query)
+    # If scrape_task_id not given, return 200. This happens when
+    # site_scrape_task was avaliable, but removed by clicking on
+    # site docs table info bar X. Otherwise, this will spam new_relic.
     return Response(status_code=status.HTTP_200_OK)
 
 
