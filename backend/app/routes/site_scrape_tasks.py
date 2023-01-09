@@ -79,9 +79,9 @@ async def read_scrape_tasks_for_site(
     dependencies=[Security(get_current_user)],
 )
 async def read_scrape_task(
-    search_query: str,
+    search_query: str | None,
 ) -> SiteScrapeTask | Response:
-    if search_query:
+    if search_query and search_query != "null":
         return await get_target(search_query)
     # If scrape_task_id not given, return 200. This happens when
     # site_scrape_task was avaliable, but removed by clicking on
