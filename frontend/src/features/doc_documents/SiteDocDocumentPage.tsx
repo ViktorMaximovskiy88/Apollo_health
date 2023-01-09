@@ -53,8 +53,8 @@ export function SiteDocDocumentsPage() {
   const dispatch = useAppDispatch();
   const [runScrape] = useRunSiteScrapeTaskMutation();
   const { data: site, refetch } = useGetSiteQuery(siteId);
-  const { data: initialSiteScrapeTask } = useGetScrapeTaskQuery(scrapeTaskId);
   const [getScrapeTaskQuery] = useLazyGetScrapeTaskQuery();
+  const { data: initialSiteScrapeTask } = useGetScrapeTaskQuery(scrapeTaskId);
   const [siteScrapeTask, setSiteScrapeTask] = useState(initialSiteScrapeTask || undefined);
   // Fixes bug where when first starting collection, sometimes does not initially setScrapeTask
   // which causes work_items to not appear.

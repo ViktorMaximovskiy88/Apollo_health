@@ -4,7 +4,7 @@ import typer
 from beanie import PydanticObjectId
 from beanie.odm.operators.update.general import Set
 from beanie.odm.queries.find import FindMany
-from fastapi import APIRouter, Depends, HTTPException, Security, status
+from fastapi import APIRouter, Depends, HTTPException, Response, Security, status
 from pymongo import ReturnDocument
 
 from backend.app.routes.table_query import (
@@ -41,13 +41,13 @@ class BulkRunResponse(BaseModel):
 
 
 async def get_target(id: PydanticObjectId) -> SiteScrapeTask:
-    user: SiteScrapeTask | None = await SiteScrapeTask.get(id)
-    if not user:
+    site_scrape_task: SiteScrapeTask | None = await SiteScrapeTask.get(id)
+    if not site_scrape_task:
         raise HTTPException(
             detail=f"Site Scrape Task {id} Not Found",
             status_code=status.HTTP_404_NOT_FOUND,
         )
-    return user
+    return site_scrape_task
 
 
 @router.get(
@@ -74,14 +74,16 @@ async def read_scrape_tasks_for_site(
 
 
 @router.get(
-    "/{id}",
+    "/search",
     response_model=SiteScrapeTask,
     dependencies=[Security(get_current_user)],
 )
 async def read_scrape_task(
-    target: User = Depends(get_target),
-):
-    return target
+    search_query: str,
+) -> SiteScrapeTask | Response:
+    if search_query:
+        return await get_target(search_query)
+    return Response(status_code=status.HTTP_200_OK)
 
 
 @router.put(
