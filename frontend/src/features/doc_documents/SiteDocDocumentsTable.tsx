@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { useLazyGetSiteDocDocumentsQuery, TableQueryInfo } from '../sites/sitesApi';
@@ -32,20 +32,22 @@ import classNames from 'classnames';
 interface DataTablePropTypes {
   handleNewVersion: (data: SiteDocDocument) => void;
   siteScrapeTask: SiteScrapeTask | undefined;
-  setSiteScrapeTask: (value: SiteScrapeTask) => void;
+  setSiteScrapeTask: (value: SiteScrapeTask | undefined) => void;
+  scrapeTaskId: string | null;
+  setScrapeTaskId: (value: string) => void;
 }
 
 export function SiteDocDocumentsTable({
   handleNewVersion,
   siteScrapeTask,
   setSiteScrapeTask,
+  scrapeTaskId,
+  setScrapeTaskId,
 }: DataTablePropTypes) {
   const { siteId } = useParams();
   const { watermark } = useInterval(10000);
   const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
   const [searchParams, setSearchParams] = useSearchParams();
-  const scrapeTaskIdParam = searchParams.get('scrape_task_id');
-  const [scrapeTaskId, setScrapeTaskId] = useState(scrapeTaskIdParam || null);
   const { setDocumentFamilyIds, documentFamilyNamesById } = useGetDocumentFamilyNamesById();
   const { setPayerFamilyIds, payerFamilyNamesById } = useGetPayerFamilyNamesById();
   const dispatch = useDispatch();
@@ -111,6 +113,7 @@ export function SiteDocDocumentsTable({
       searchParams.delete('scrape_task_id');
       setSearchParams(searchParams);
       setScrapeTaskId('');
+      setSiteScrapeTask(undefined);
       dispatch(setSiteDocDocumentTableForceUpdate());
     }
   }

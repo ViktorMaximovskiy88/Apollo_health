@@ -48,16 +48,14 @@ export function SiteDocDocumentsPage() {
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
   const { siteId } = useParams();
   const [searchParams] = useSearchParams();
-  const scrapeTaskId = searchParams.get('scrape_task_id');
+  const scrapeTaskIdParam = searchParams.get('scrape_task_id');
+  const [scrapeTaskId, setScrapeTaskId] = useState(scrapeTaskIdParam || null);
   const dispatch = useAppDispatch();
   const [runScrape] = useRunSiteScrapeTaskMutation();
   const { data: site, refetch } = useGetSiteQuery(siteId);
   const { data: initialSiteScrapeTask } = useGetScrapeTaskQuery(scrapeTaskId);
   const [getScrapeTaskQuery] = useLazyGetScrapeTaskQuery();
   const [siteScrapeTask, setSiteScrapeTask] = useState(initialSiteScrapeTask || undefined);
-  if (siteScrapeTask === undefined && initialSiteScrapeTask) {
-    setSiteScrapeTask(initialSiteScrapeTask);
-  }
   if (!site) return null;
 
   function handleNewVersion(data: SiteDocDocument) {
@@ -117,6 +115,8 @@ export function SiteDocDocumentsPage() {
         handleNewVersion={handleNewVersion}
         siteScrapeTask={siteScrapeTask}
         setSiteScrapeTask={setSiteScrapeTask}
+        scrapeTaskId={scrapeTaskId}
+        setScrapeTaskId={setScrapeTaskId}
       />
     </MainLayout>
   );
