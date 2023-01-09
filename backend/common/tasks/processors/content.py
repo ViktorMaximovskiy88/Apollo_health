@@ -19,13 +19,13 @@ class ContentTaskProcessor(TaskProcessor):
 
     def __init__(
         self,
+        doc_client: DocumentStorageClient | None = None,
+        text_client: TextStorageClient | None = None,
         logger=logging,
-        doc_client: DocumentStorageClient = DocumentStorageClient(),
-        text_client: TextStorageClient = TextStorageClient(),
     ) -> None:
         self.logger = logger
-        self.doc_client = doc_client
-        self.text_client = text_client
+        self.doc_client = doc_client or DocumentStorageClient()
+        self.text_client = text_client or TextStorageClient()
 
     async def exec(self, task: tasks.ContentTask):
         stage_versions = await PipelineRegistry.fetch()

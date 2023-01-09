@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from functools import cached_property
 from urllib.parse import urlparse, urlsplit
 
-from playwright.async_api import BrowserContext, Cookie, ElementHandle, Page, ProxySettings
+from playwright.async_api import BrowserContext, ElementHandle, Page, ProxySettings
 
 from backend.common.core.config import config
 from backend.common.models.proxy import Proxy
@@ -56,7 +56,6 @@ class PlaywrightBaseScraper(ABC):
         log: logging.Logger = logging.getLogger(__name__),
         playbook_context: PlaybookContext = [],
         metadata: dict = {},
-        cookies: list[Cookie] = [],
     ):
         self.context = context
         self.page = page
@@ -67,7 +66,6 @@ class PlaywrightBaseScraper(ABC):
         self.selectors = []
         self.log = log
         self.metadata = metadata
-        self.cookies = cookies
 
     @cached_property
     def css_selector(self) -> str | None:
@@ -148,14 +146,17 @@ class PlaywrightBaseScraper(ABC):
             element.get_attribute("target"),
         )
 
+        if isinstance(siblings_text, str):
+            siblings_text = siblings_text.strip() or None
+
         # Use first response for inner_text() text_content() for link_text.
         # If an element has no text (<p></p>), use url path.
         if element_content and element_content.strip():
             link_text = element_content.strip()
         elif element_text and element_text.strip():
             link_text = element_text.strip()
-        elif siblings_text and siblings_text.strip():
-            link_text = siblings_text.strip()
+        elif siblings_text:
+            link_text = siblings_text
         elif resource_value and resource_value.strip():
             parsed_url = urlsplit(resource_value)
             link_text = parsed_url.path
