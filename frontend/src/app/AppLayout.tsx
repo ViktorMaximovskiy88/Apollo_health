@@ -33,7 +33,7 @@ export function AppBreadcrumbs() {
   const breadcrumbs: any = useSelector(breadcrumbState);
   useBreadcrumbs();
   return (
-    <div className="flex">
+    <div className="flex w-full min-w-0 truncate justify-between items-center">
       {breadcrumbs.map((crumb: any, i: number) => (
         <div
           className={classNames(
@@ -43,7 +43,9 @@ export function AppBreadcrumbs() {
           key={`${crumb.label}`}
         >
           {i > 0 && <span className={classNames('mx-2')}>/</span>}
-          <Link to={crumb.url}>{crumb.label}</Link>
+          <Link className="" to={crumb.url}>
+            {crumb.label}
+          </Link>
         </div>
       ))}
     </div>
