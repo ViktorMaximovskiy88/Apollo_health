@@ -54,7 +54,7 @@ export function SiteDocDocumentsPage() {
   const { data: site, refetch } = useGetSiteQuery(siteId);
   const { data: initialSiteScrapeTask } = useGetScrapeTaskQuery(scrapeTaskId);
   const [getScrapeTaskQuery] = useLazyGetScrapeTaskQuery();
-  const [siteScrapeTask, setSiteScrapeTask] = useState(initialSiteScrapeTask);
+  const [siteScrapeTask, setSiteScrapeTask] = useState(initialSiteScrapeTask || undefined);
   if (siteScrapeTask === undefined && initialSiteScrapeTask) {
     setSiteScrapeTask(initialSiteScrapeTask);
   }

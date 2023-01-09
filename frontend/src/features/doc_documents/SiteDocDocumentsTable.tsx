@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useCallback, useState } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { useLazyGetSiteDocDocumentsQuery, TableQueryInfo } from '../sites/sitesApi';
 import { useDataTableSelection } from '../../common/hooks/use-data-table-select';
@@ -10,19 +10,20 @@ import {
   setSiteDocDocumentTableSkip,
   setSiteDocDocumentTableSort,
   setSiteDocDocumentTableSelect,
+  setSiteDocDocumentTableForceUpdate,
 } from './siteDocDocumentsSlice';
 import { useDataTableSort, useDataTableFilter, useDataTablePagination } from '../../common/hooks';
 import { useSiteDocDocumentColumns } from './useSiteDocDocumentColumns';
 import { SiteDocDocument } from './types';
 import { useInterval } from '../../common/hooks';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   uniqueDocumentFamilyIds,
   useGetDocumentFamilyNamesById,
 } from './document_family/documentFamilyHooks';
 import { uniquePayerFamilyIds, useGetPayerFamilyNamesById } from '../payer-family/payerFamilyHooks';
 import { Alert } from 'antd';
-import { statusDisplayAndStyle, TaskStatus } from '../../common/scrapeTaskStatus';
+import { statusDisplayAndStyle } from '../../common/scrapeTaskStatus';
 import { SiteScrapeTask } from '../collections/types';
 import { prettyDateDistanceSingle, prettyDateTimeFromISO } from '../../common';
 import { collectMethodDisplayName } from '../sites/types';
@@ -42,9 +43,12 @@ export function SiteDocDocumentsTable({
   const { siteId } = useParams();
   const { watermark } = useInterval(10000);
   const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
-  const scrapeTaskId = siteScrapeTask?._id || null;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const scrapeTaskIdParam = searchParams.get('scrape_task_id');
+  const [scrapeTaskId, setScrapeTaskId] = useState(scrapeTaskIdParam || null);
   const { setDocumentFamilyIds, documentFamilyNamesById } = useGetDocumentFamilyNamesById();
   const { setPayerFamilyIds, payerFamilyNamesById } = useGetPayerFamilyNamesById();
+  const dispatch = useDispatch();
 
   const { forceUpdate } = useSelector(siteDocDocumentTableState);
   const loadData = useCallback(
@@ -102,6 +106,15 @@ export function SiteDocDocumentsTable({
     return formattedDate;
   }
 
+  async function handleOnClose() {
+    if (searchParams.has('scrape_task_id')) {
+      searchParams.delete('scrape_task_id');
+      setSearchParams(searchParams);
+      setScrapeTaskId('');
+      dispatch(setSiteDocDocumentTableForceUpdate());
+    }
+  }
+
   return (
     <>
       {siteScrapeTask && (
@@ -121,6 +134,7 @@ export function SiteDocDocumentsTable({
           type="success"
           className="mb-1"
           closable
+          onClose={handleOnClose}
         />
       )}
 
