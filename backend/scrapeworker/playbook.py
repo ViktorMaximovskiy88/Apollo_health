@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Any, AsyncGenerator, Callable, Coroutine
 
-from playwright.async_api import Page, TimeoutError
+from playwright.async_api import Error, Page, TimeoutError
 
 from backend.common.models.base_document import BaseModel
 
@@ -182,7 +182,11 @@ class ScrapePlaybook:
             page, step, remaining_steps, new_context, page.wait_for_load_state
         ):
             yield page, context
-        await page.go_back()
+        try:
+            await page.go_back()
+        except Error:
+            # if playwright error, we can't go back. Ignore and try next steps anyway
+            return
 
     async def playbook_step(
         self, page: Page, steps: list[PlaybookStep], context: PlaybookContext

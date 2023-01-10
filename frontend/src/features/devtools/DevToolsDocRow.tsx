@@ -3,22 +3,24 @@ import { Button } from 'antd';
 import { SplitCellsOutlined } from '@ant-design/icons';
 import { TextEllipsis } from '../../components';
 import { prettyDateUTCFromISO } from '../../common/date';
-import { LineageDoc } from './types';
+import { DevToolsDoc } from './types';
 
 interface PropTypes {
-  doc: LineageDoc;
+  doc: DevToolsDoc;
   isSelected: boolean;
   enableSplitView: boolean;
-  setViewItem(doc: LineageDoc): void;
-  setSplitItem(doc: LineageDoc): void;
+  defaultViewType?: string;
+  setViewItem(doc: DevToolsDoc, viewType: string): void;
+  setSplitItem(doc: DevToolsDoc, viewType: string): void;
 }
 
-export function LineageDocRow({
+export function DevToolsDocRow({
   isSelected,
   doc,
   enableSplitView,
   setViewItem,
   setSplitItem,
+  defaultViewType = 'json',
 }: PropTypes) {
   return (
     <div
@@ -31,7 +33,7 @@ export function LineageDocRow({
       <div
         className={classNames('cursor-pointer')}
         onClick={() => {
-          setViewItem(doc);
+          setViewItem(doc, defaultViewType);
         }}
       >
         <TextEllipsis text={doc.name} />
@@ -42,7 +44,7 @@ export function LineageDocRow({
         {enableSplitView && (
           <Button
             onClick={() => {
-              setSplitItem(doc);
+              setSplitItem(doc, defaultViewType);
             }}
           >
             <SplitCellsOutlined />

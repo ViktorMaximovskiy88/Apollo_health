@@ -20,13 +20,13 @@ class DateTaskProcessor(TaskProcessor):
 
     def __init__(
         self,
+        text_client: TextStorageClient | None = None,
+        date_parser: DateParser | None = None,
         logger=logging,
-        text_client: TextStorageClient = TextStorageClient(),
-        date_parser: DateParser = DateParser(date_rgxs, label_rgxs),
     ) -> None:
         self.logger = logger
-        self.text_client = text_client
-        self.date_parser = date_parser
+        self.text_client = text_client or TextStorageClient()
+        self.date_parser = date_parser or DateParser(date_rgxs, label_rgxs)
 
     async def exec(self, task: tasks.DateTask):
         stage_versions = await PipelineRegistry.fetch()

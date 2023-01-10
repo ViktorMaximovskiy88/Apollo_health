@@ -175,9 +175,7 @@ async def unassign_multiple_sites(
     logger: Logger = Depends(get_logger),
 ):
     site_ids: list[PydanticObjectId] = [update.id for update in updates]
-    targets: list[Site] = await Site.find_many(
-        {"_id": {"$in": site_ids}, "assignee": current_user.id}
-    ).to_list()
+    targets: list[Site] = await Site.find_many({"_id": {"$in": site_ids}}).to_list()
     result = []
 
     for target in targets:
