@@ -64,21 +64,24 @@ const InternalDocs = [
 ];
 
 export const priorityOptions = [
-  { label: 'Low', id: 0, value: 0 },
-  { label: 'Medium', id: 1, value: 1 },
+  { label: 'None', id: 0, value: 0 },
+  { label: 'Low', id: 1, value: 1 },
   { label: 'High', id: 2, value: 2 },
+  { label: 'Critical', id: 3, value: 3 },
 ];
 
 export function priorityStyle(priority: number): React.ReactElement {
   switch (true) {
     case priority === 0:
-      return <span className="text-blue-500">Low</span>;
+      return <span></span>;
     case priority === 1:
-      return <span className="text-green-500">Medium</span>;
-    case priority >= 2:
-      return <span className="text-red-500">High</span>;
-    default:
       return <span className="text-blue-500">Low</span>;
+    case priority === 2:
+      return <span className="text-orange-500">High</span>;
+    case priority >= 3:
+      return <span className="text-red-500">Critical</span>;
+    default:
+      return <span></span>;
   }
 }
 
