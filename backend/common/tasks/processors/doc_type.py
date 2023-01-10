@@ -19,11 +19,11 @@ class DocTypeTaskProcessor(TaskProcessor):
 
     def __init__(
         self,
+        text_client: TextStorageClient | None = None,
         logger=logging,
-        text_client: TextStorageClient = TextStorageClient(),
     ) -> None:
         self.logger = logger
-        self.text_client = text_client
+        self.text_client = text_client or TextStorageClient()
 
     async def exec(self, task: tasks.DocTypeTask):
         stage_versions = await PipelineRegistry.fetch()

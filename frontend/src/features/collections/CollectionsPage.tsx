@@ -4,7 +4,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   useRunSiteScrapeTaskMutation,
   useCancelAllSiteScrapeTasksMutation,
-  useLazyGetScrapeTasksForSiteQuery,
+  useLazyGetScrapeTaskQuery,
 } from './siteScrapeTasksApi';
 import { useGetSiteQuery, useLazyGetSiteDocDocumentsQuery } from '../sites/sitesApi';
 import { CollectionsDataTable } from './CollectionsDataTable';
@@ -15,43 +15,30 @@ import { SiteMenu } from '../sites/SiteMenu';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
 import { MainLayout } from '../../components';
 import { isErrorWithData } from '../../common/helpers';
-import { initialState } from './collectionsSlice';
 import { useAppDispatch } from '../../app/store';
 import { setSiteDocDocumentTableForceUpdate } from '../doc_documents/siteDocDocumentsSlice';
 
 export function ManualCollectionButton(props: any) {
-  const { site, refetch, runScrape } = props;
+  const { site, refetch, runScrape, setSiteScrapeTask } = props;
   const navigate = useNavigate();
   const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
   const [isLoading, setIsLoading] = useState(false);
   const [searchParams] = useSearchParams();
   const scrapeTaskId = searchParams.get('scrape_task_id');
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
-  const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
   const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
+  const [getScrapeTaskQuery] = useLazyGetScrapeTaskQuery();
   const dispatch = useAppDispatch();
-
-  // Refresh site docs when starting / stopping collection.
-  const mostRecentTask = {
-    limit: 1,
-    skip: 0,
-    sortInfo: initialState.table.sort,
-    filterValue: initialState.table.filter,
-  };
 
   const refreshDocs = async () => {
     if (!site) return;
     const siteId = site._id;
     refetch();
-    const scrapeTasks = await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
-    if (scrapeTasks) {
-      const scrapeTaskId = scrapeTasks.data?.data[0]._id;
-      if (scrapeTaskId) {
-        await getDocDocumentsQuery({ siteId, scrapeTaskId });
-        dispatch(setSiteDocDocumentTableForceUpdate());
-      } else {
-        console.error('refreshDocs unable to get id of most recent scrape task.');
-      }
+    await getDocDocumentsQuery({ siteId, scrapeTaskId });
+    dispatch(setSiteDocDocumentTableForceUpdate());
+    const { data: refreshedSiteScrapeTask } = await getScrapeTaskQuery(scrapeTaskId);
+    if (refreshedSiteScrapeTask && setSiteScrapeTask) {
+      setSiteScrapeTask(refreshedSiteScrapeTask);
     }
   };
 
@@ -130,7 +117,7 @@ export function ManualCollectionButton(props: any) {
       </Button>
     );
   } else {
-    if (!activeStatuses.includes(site.last_run_status)) {
+    if (site.collection_method === 'MANUAL' && !activeStatuses.includes(site.last_run_status)) {
       return (
         <Button className="ml-auto" disabled={isLoading} onClick={handleRunManualScrape}>
           Start Manual Collection
