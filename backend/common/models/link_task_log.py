@@ -31,7 +31,7 @@ class LinkTask(BaseDocument):
 
     created_at: Indexed(
         datetime,
-        expireAfterSeconds=86400 * 7,  # 7 days
+        expireAfterSeconds=86400 * 28,  # 28 days
         background=True,
     ) | None = None
     updated_at: datetime | None = None
