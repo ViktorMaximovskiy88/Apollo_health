@@ -30,6 +30,7 @@ export interface SiteScrapeTask extends BaseDocument {
   new_documents_found: number;
   collection_method: string;
   work_list: WorkItem[];
+  retrieved_document_ids: string[];
 }
 
 export enum BulkActionTypes {

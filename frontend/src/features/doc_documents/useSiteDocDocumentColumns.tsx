@@ -14,6 +14,7 @@ import { useGetSiteQuery } from '../sites/sitesApi';
 import { CollectionMethod } from '../sites/types';
 import { usePayerFamilySelectOptions } from '../payer-family/payerFamilyHooks';
 import { TypeFilterValue } from '@inovua/reactdatagrid-community/types';
+import { SiteScrapeTask } from '../collections/types';
 
 interface CreateColumnsType {
   handleNewVersion?: (data: SiteDocDocument) => void;
@@ -45,6 +46,8 @@ interface CreateColumnsType {
   };
   isManualCollection: boolean;
   location: Location;
+  siteScrapeTask: SiteScrapeTask | undefined;
+  setSiteScrapeTask: (value: SiteScrapeTask) => void;
 }
 
 export enum TextAlignType {
@@ -62,14 +65,15 @@ const InternalDocs = [
 
 export const priorityOptions = [
   { label: 'Low', id: 0, value: 0 },
+  { label: 'Medium', id: 1, value: 1 },
   { label: 'High', id: 2, value: 2 },
 ];
 
 export function priorityStyle(priority: number): React.ReactElement {
   switch (true) {
-    case priority == 0:
+    case priority === 0:
       return <span className="text-blue-500">Low</span>;
-    case priority == 1:
+    case priority === 1:
       return <span className="text-green-500">Medium</span>;
     case priority >= 2:
       return <span className="text-red-500">High</span>;
@@ -88,6 +92,8 @@ export const createColumns = ({
   payerFamilyNamesById,
   isManualCollection,
   location,
+  siteScrapeTask,
+  setSiteScrapeTask,
 }: CreateColumnsType) => [
   {
     header: 'Last Collected',
@@ -237,7 +243,12 @@ export const createColumns = ({
       return (
         <>
           {handleNewVersion ? (
-            <ManualCollectionValidationButtons doc={doc} handleNewVersion={handleNewVersion} />
+            <ManualCollectionValidationButtons
+              doc={doc}
+              handleNewVersion={handleNewVersion}
+              siteScrapeTask={siteScrapeTask}
+              setSiteScrapeTask={setSiteScrapeTask}
+            />
           ) : null}
         </>
       );
@@ -253,12 +264,16 @@ interface UseColumnsType {
   payerFamilyNamesById: {
     [id: string]: string;
   };
+  siteScrapeTask: SiteScrapeTask | undefined;
+  setSiteScrapeTask: (value: SiteScrapeTask) => void;
 }
 
 export const useSiteDocDocumentColumns = ({
   handleNewVersion,
   documentFamilyNamesById,
   payerFamilyNamesById,
+  siteScrapeTask,
+  setSiteScrapeTask,
 }: UseColumnsType) => {
   const { documentFamilyOptions, initialDocumentFamilyOptions } = useDocumentFamilySelectOptions();
   const { payerFamilyOptions, initialPayerFamilyOptions } =
@@ -278,6 +293,8 @@ export const useSiteDocDocumentColumns = ({
         payerFamilyNamesById,
         isManualCollection: site?.collection_method === CollectionMethod.Manual,
         location,
+        siteScrapeTask,
+        setSiteScrapeTask,
       }),
     [
       documentFamilyNamesById,
@@ -289,6 +306,7 @@ export const useSiteDocDocumentColumns = ({
       initialPayerFamilyOptions,
       site?.collection_method,
       location,
+      siteScrapeTask,
     ]
   );
 };

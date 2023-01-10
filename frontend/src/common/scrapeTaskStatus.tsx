@@ -39,7 +39,7 @@ interface StatusDisplay {
   style?: string;
 }
 
-function statusDisplayAndStyle(status: TaskStatus): StatusDisplay {
+export function statusDisplayAndStyle(status: TaskStatus): StatusDisplay {
   switch (status) {
     case TaskStatus.Failed:
       return { name: 'Failed', style: 'text-red-500' };
