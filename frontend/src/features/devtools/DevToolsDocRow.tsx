@@ -38,7 +38,7 @@ export function DevToolsDocRow({
       >
         <TextEllipsis text={doc.name} />
         <TextEllipsis text={doc.document_type} />
-        <div>{prettyDateUTCFromISO(doc.final_effective_date)}</div>
+        <div>Effective {prettyDateUTCFromISO(doc.final_effective_date)}</div>
       </div>
       <div className="hidden group-hover:block absolute bottom-2 right-2 z-50">
         {enableSplitView && (

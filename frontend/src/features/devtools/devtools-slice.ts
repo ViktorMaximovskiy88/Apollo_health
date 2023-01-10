@@ -68,11 +68,15 @@ const viewTypeOptions = [
 
 const sortByOptions = [
   { label: 'Last Collected', value: '-last_collected_date' },
+  { label: 'First Collected', value: '-first_collected_date' },
+  { label: 'Effective Date', value: '-final_effective_date' },
+  { label: 'Priority', value: '-priority' },
   { label: 'Doc Type', value: 'document_type' },
   { label: 'Status', value: 'classification_status' },
 ];
 
 const groupByOptions = [
+  { label: 'None' },
   { label: 'Doc Type', value: 'document_type' },
   { label: 'Lineage', value: 'lineage_id' },
   { label: 'Status', value: 'classification_status' },
@@ -216,7 +220,7 @@ export const devtoolsSlice = createSlice({
   },
 });
 
-function groupItems(groupByKey: string, items: DevToolsDoc[]): DevToolsGroup[] {
+function groupItems(groupByKey: string | undefined, items: DevToolsDoc[]): DevToolsGroup[] {
   return _(items)
     .groupBy(groupByKey)
     .map((items, groupByKey) => {
