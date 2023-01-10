@@ -10,6 +10,9 @@ export interface DevToolsDoc extends BaseDocument {
   checksum: string;
   document_type: string;
   final_effective_date: string;
+  first_collected_date: string;
+  last_collected_date: string;
+  priority: number;
 }
 
 export interface DevToolsGroup {

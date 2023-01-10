@@ -217,14 +217,17 @@ export function DevToolsPage({ showSiteFilter = false }: { showSiteFilter?: bool
           <div className="overflow-auto h-full bg-white border-slate-200 border-solid border">
             {displayItems.map((group) => (
               <div key={group.groupByKey} className="p-2 mb-1 border">
-                <div
-                  className={classNames('text-slate-500 uppercase mb-1 cursor-pointer')}
-                  onClick={() => {
-                    actions.toggleCollapsed(group);
-                  }}
-                >
-                  {group.groupByKey} ({group.items.length})
-                </div>
+                {state.selectedGroupBy?.value && (
+                  <div
+                    className={classNames('text-slate-500 uppercase mb-1 cursor-pointer')}
+                    onClick={() => {
+                      actions.toggleCollapsed(group);
+                    }}
+                  >
+                    {group.groupByKey} ({group.items.length})
+                  </div>
+                )}
+
                 {!group.collapsed &&
                   group.items.map((item) => (
                     <DevToolsDocRow
