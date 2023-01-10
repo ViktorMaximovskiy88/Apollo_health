@@ -19,7 +19,6 @@ import {
   GroupOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
-import { TextEllipsis } from '../components';
 
 export function AppLayout() {
   return (
@@ -39,7 +38,7 @@ export function AppBreadcrumbs() {
         <div
           className={classNames(
             'text-[16px]',
-            'inline-flex',
+            'flex',
             'max-w-2xl',
             i === breadcrumbs.length - 1 ? 'text-gray-900' : 'text-gray-500'
           )}
