@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from beanie import Insert, PydanticObjectId, Replace, UnionDoc, before_event
+from beanie import Indexed, Insert, PydanticObjectId, Replace, UnionDoc, before_event
 
 from backend.common.models.base_document import BaseDocument, BaseModel
 from backend.common.models.shared import FileMetadata, Location
@@ -29,7 +29,11 @@ class LinkTask(BaseDocument):
     site_id: PydanticObjectId
     scrape_task_id: PydanticObjectId
 
-    created_at: datetime | None = None
+    created_at: Indexed(
+        datetime,
+        expireAfterSeconds=86400 * 7,  # 7 days
+        background=True,
+    ) | None = None
     updated_at: datetime | None = None
 
     @before_event(Insert)
