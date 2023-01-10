@@ -62,13 +62,12 @@ async def get_documents(
     if site_id:
         query["locations.site_id"] = site_id
 
-    if search_query:
-        if search_query.startswith("http"):
-            query["locations.url"] = unquote(search_query)
-        elif id := maybe_object_id(search_query):
-            query["_id.url"] = id
-        else:
-            query["$text"] = {"$search": search_query}
+    if search_query.startswith("http"):
+        query["locations.url"] = unquote(search_query)
+    elif id := maybe_object_id(search_query):
+        query["_id"] = id
+    elif search_query:
+        query["$text"] = {"$search": search_query}
 
     if len(query.keys()):
         total_count = await DocDocument.find(query).count()
@@ -96,8 +95,7 @@ async def search_sites(search_query: str, limit: int = 20):
         query["base_urls.url"] = unquote(search_query)
     elif id := maybe_object_id(search_query):
         query["_id"] = id
-
-    if search_query:
+    elif search_query:
         escaped = re.escape(search_query)
         query["name"] = {"$regex": f"^{escaped}", "$options": "i"}
 
