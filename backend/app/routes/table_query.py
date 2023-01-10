@@ -78,7 +78,13 @@ def _prepare_table_query(
 ) -> tuple[list[dict], list[tuple[str, int]]]:
     match = []
     for filter in filters:
-        if not filter.value and filter.operator not in ["empty", "notEmpty", "leq"]:
+        if not filter.value and filter.operator not in [
+            "empty",
+            "notEmpty",
+            "leq",
+            "notinlist",
+            "neq",
+        ]:
             continue
 
         if filter.value is None:
@@ -115,7 +121,10 @@ def _prepare_table_query(
             if filter.operator == "neq" and isinstance(value, list):
                 match.append({filter.name: {"$nin": value}})
             else:
-                match.append({filter.name: {"$ne": value}})
+                match.append({filter.name: {"$ne": value if value else None}})
+
+        if filter.operator == "notinlist":
+            match.append({filter.name: {"$nin": value if value else []}})
         if filter.operator == "empty":
             match.append({filter.name: {"$in": [None, ""]}})
         if filter.operator == "notEmpty":
