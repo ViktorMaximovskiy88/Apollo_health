@@ -18,7 +18,7 @@ from backend.app.routes.table_query import (
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
 from backend.common.models.base_document import BaseDocument, BaseModel
-from backend.common.models.comment import Comment
+from backend.common.models.comment import Comment, HoldType
 from backend.common.models.doc_document import (
     DocDocument,
     LockableDocument,
@@ -126,6 +126,8 @@ class IdNameLockOnlyDocument(IdOnlyDocument):
     locations: list[LocationSubDocument] = []
     locks: list[TaskLock] = []
     priority: int = 0
+    hold_time: datetime | None = None
+    hold_comment: str | None = None
 
 
 def combine_queue_query_with_user_query(
@@ -147,6 +149,17 @@ def combine_queue_query_with_user_query(
     return construct_table_query(query, sorts, filters)
 
 
+async def get_hold_comment(id: PydanticObjectId, type: str):
+    return await (
+        Comment.find(
+            Comment.target_id == id,
+            Comment.type == type,
+        )
+        .sort("-time")
+        .limit(1)
+    ).first_or_none()
+
+
 @router.get(
     "/{id}/items",
     response_model=TableQueryResponse,
@@ -160,7 +173,14 @@ async def get_work_queue_items(
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
     query = combine_queue_query_with_user_query(work_queue, sorts, filters)
-    return await query_table(query, limit, skip)
+    res = await query_table(query, limit, skip)
+    if "Hold" in work_queue.name:
+        for doc in res.data:
+            comment = await get_hold_comment(doc.id, work_queue.name)
+            if comment:
+                doc.hold_comment = comment.text
+                doc.hold_time = comment.time
+    return res
 
 
 class TakeLockResponse(BaseModel):
@@ -302,6 +322,7 @@ class SubmitWorkItemRequest(BaseModel):
     updates: dict[str, Any]
     reassignment: PydanticObjectId | None
     comment: str | None
+    type: HoldType | None
 
 
 @router.post("/{id}/items/{item_id}/submit", response_model=SubmitWorkItemResponse)
@@ -336,7 +357,11 @@ async def submit_work_item(
     if body.comment:
         now = datetime.now(tz=timezone.utc)
         comment = Comment(
-            target_id=item_id, user_id=current_user.id, time=now, text=body.comment  # type: ignore
+            target_id=item_id,
+            user_id=current_user.id,  # type: ignore
+            time=now,
+            text=body.comment,
+            type=body.type,
         )
         await comment.save()
 
