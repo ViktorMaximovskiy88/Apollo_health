@@ -93,6 +93,7 @@ export function SiteDocDocumentsPage() {
               site={site}
               refetch={refetch}
               runScrape={runScrape}
+              siteScrapeTask={siteScrapeTask}
               setSiteScrapeTask={setSiteScrapeTask}
             />
           ) : null}
