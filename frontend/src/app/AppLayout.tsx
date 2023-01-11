@@ -39,12 +39,16 @@ export function AppBreadcrumbs() {
         <div
           className={classNames(
             'text-[16px]',
+            'flex',
+            'max-w-2xl',
             i === breadcrumbs.length - 1 ? 'text-gray-900' : 'text-gray-500'
           )}
           key={`${crumb.label}`}
         >
           {i > 0 && <span className={classNames('mx-2')}>/</span>}
-          <Link to={crumb.url}>{crumb.label}</Link>
+          <Link className="truncate" to={crumb.url}>
+            {crumb.label}
+          </Link>
         </div>
       ))}
     </div>
