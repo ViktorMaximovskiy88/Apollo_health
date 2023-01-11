@@ -18,7 +18,7 @@ import { isErrorWithData } from '../../common/helpers';
 import { useAppDispatch } from '../../app/store';
 import { setSiteDocDocumentTableForceUpdate } from '../doc_documents/siteDocDocumentsSlice';
 import { SiteDocDocument } from '../doc_documents/types';
-import { WorkItem } from './types';
+import { WorkItem, WorkItemOption } from './types';
 
 export function ManualCollectionButton(props: any) {
   const { site, refetch, runScrape, siteScrapeTask, setSiteScrapeTask } = props;
@@ -87,7 +87,7 @@ export function ManualCollectionButton(props: any) {
     if (siteScrapeTask && siteScrapeTask.work_list) {
       // Check if any unhandled work_items before submitting to backend..
       const unhandled = siteScrapeTask.work_list.filter(
-        (work_item: any) => work_item.selected === 'UNHANDLED'
+        (work_item: any) => work_item.selected === WorkItemOption.Unhandled
       );
       const unhandledDocNames: (string | undefined)[] = [];
       unhandled?.map((unhandledDoc: WorkItem) =>
@@ -98,7 +98,6 @@ export function ManualCollectionButton(props: any) {
         )
       );
       if (unhandledDocNames.length > 0) {
-        console.log('unhandledDocNames ', unhandledDocNames);
         notification.error({
           message: 'Please review and update the following documents ',
           description: unhandledDocNames.join(', '),
