@@ -59,13 +59,29 @@ class AioDownloader:
     async def close(self):
         await self.session.close()
 
+    def valid_cookie(self, cookie):
+        excluded_cookie_keys = ["samesite"]
+        if (
+            "name" in cookie
+            and "value" in cookie
+            and not cookie["name"].lower() in excluded_cookie_keys
+        ):
+            return cookie
+
     async def send_request(self, download: DownloadContext, proxy: AioProxy | None):
         headers = default_headers | download.request.headers
+
+        cookies = {}
+        for cookie in download.request.cookies:
+            if self.valid_cookie(cookie):
+                cookies[cookie["name"]] = cookie["value"]
+
         if proxy:
             response = await self.session.request(
                 url=download.request.url,
                 method=download.request.method,
                 headers=headers,
+                cookies=cookies,
                 data=download.request.data,
                 proxy=proxy.proxy,
                 proxy_auth=proxy.proxy_auth,
@@ -75,6 +91,7 @@ class AioDownloader:
                 url=download.request.url,
                 method=download.request.method,
                 headers=headers,
+                cookies=cookies,
                 data=download.request.data,
             )
 

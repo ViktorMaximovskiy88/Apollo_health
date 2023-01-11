@@ -14,7 +14,7 @@ import { translationsApi } from '../features/translations/translationApi';
 import { payerBackboneApi } from '../features/payer-backbone/payerBackboneApi';
 import { documentFamilyApi } from '../features/doc_documents/document_family/documentFamilyApi';
 import { payerFamilyApi } from '../features/payer-family/payerFamilyApi';
-import { lineageApi } from '../features/devtools/lineageApi';
+import { devtoolsApi } from '../features/devtools/devtoolsApi';
 import { statsApi } from '../features/stats/statsApi';
 import { taskApi } from '../features/tasks/taskApi';
 import { commentsApi } from '../features/comments/commentsApi';
@@ -34,7 +34,7 @@ import extractionsReducer from '../features/extractions/extractionsSlice';
 import translationsReducer from '../features/translations/translationSlice';
 import payerBackboneReducer from '../features/payer-backbone/payerBackboneSlice';
 import workQueueReducer from '../features/work_queue/workQueueSlice';
-import lineageReducer from '../features/devtools/lineage-slice';
+import devtools from '../features/devtools/devtools-slice';
 import statsReducer from '../features/stats/stats-slice';
 import taskSlice from '../features/tasks/taskSlice';
 
@@ -55,7 +55,7 @@ export const store = configureStore({
     [translationsApi.reducerPath]: translationsApi.reducer,
     [documentFamilyApi.reducerPath]: documentFamilyApi.reducer,
     [payerBackboneApi.reducerPath]: payerBackboneApi.reducer,
-    [lineageApi.reducerPath]: lineageApi.reducer,
+    [devtoolsApi.reducerPath]: devtoolsApi.reducer,
     [statsApi.reducerPath]: statsApi.reducer,
     [taskApi.reducerPath]: taskApi.reducer,
     [payerFamilyApi.reducerPath]: payerFamilyApi.reducer,
@@ -75,7 +75,7 @@ export const store = configureStore({
     workQueues: workQueueReducer,
     payerBackbone: payerBackboneReducer,
     router: routerReducer,
-    lineage: lineageReducer,
+    devtools: devtools,
     stats: statsReducer,
     task: taskSlice.reducer,
   },

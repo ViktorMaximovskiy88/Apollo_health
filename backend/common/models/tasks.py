@@ -76,7 +76,11 @@ class TaskLogEntry(BaseModel):
 
 
 class TaskLog(BaseDocument):
-    created_at: datetime | None = None
+    created_at: Indexed(
+        datetime,
+        expireAfterSeconds=86400 * 7,  # 7 days
+        background=True,
+    ) | None = None
     created_by: PydanticObjectId | None
 
     status: Indexed(str) = TaskStatus.PENDING

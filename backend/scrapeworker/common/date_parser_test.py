@@ -351,6 +351,24 @@ def test_default_effective_date():
     assert len(parser.unclassified_dates) == 1
     assert parser.effective_date.date == datetime(2021, 3, 3)
 
+    text = "Publication Date: 11/01/2022"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 1
+    assert parser.published_date.date == datetime(2022, 11, 1)
+
+    text = "Implementation: 1//1/22"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 1
+    assert parser.published_date.date == datetime(2022, 1, 1)
+
+    text = "Latest Review Date: August 2022"
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 1
+    assert parser.last_reviewed_date.date == datetime(2022, 8, 1)
+
 
 def test_pick_valid_date_range():
     text = "Contains invalid date 01-1678"

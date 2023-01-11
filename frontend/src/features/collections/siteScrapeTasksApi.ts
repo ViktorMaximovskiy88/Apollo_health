@@ -3,6 +3,7 @@ import { ChangeLog } from '../change-log/types';
 import { BulkActionTypes, SiteScrapeTask, CollectionConfig, WorkItem } from './types';
 import { TableInfoType } from '../../common/types';
 import { makeTableQueryParams } from '../../common/helpers';
+import { FetchBaseQueryError } from '@reduxjs/toolkit/dist/query';
 
 interface BulkRunResponse {
   type: BulkActionTypes;
@@ -29,7 +30,15 @@ export const siteScrapeTasksApi = createApi({
         return tags;
       },
     }),
-
+    getScrapeTask: builder.query<SiteScrapeTask, string | null | undefined>({
+      async queryFn(search_query, queryApi, extraOptions, fetchWithBQ) {
+        const params = { search_query };
+        const result = await fetchWithBQ({ url: `/site-scrape-tasks/search`, params });
+        return result.data
+          ? { data: result.data as SiteScrapeTask }
+          : { error: result.error as FetchBaseQueryError };
+      },
+    }),
     runSiteScrapeTask: builder.mutation<SiteScrapeTask, string>({
       query: (siteId) => ({
         url: `/site-scrape-tasks/?site_id=${siteId}`,
@@ -117,4 +126,6 @@ export const {
   useGetChangeLogQuery,
   useRunBulkMutation,
   useGetCollectionConfigQuery,
+  useGetScrapeTaskQuery,
+  useLazyGetScrapeTaskQuery,
 } = siteScrapeTasksApi;

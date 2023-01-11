@@ -16,10 +16,10 @@ from backend.app.routes import (
     change_log,
     comments,
     content_extraction_tasks,
+    devtools,
     doc_documents,
     document_family,
     documents,
-    lineage,
     payer_backbone,
     payer_family,
     proxies,
@@ -99,7 +99,7 @@ app.include_router(translations.router, prefix=prefix)
 app.include_router(document_family.router, prefix=prefix)
 app.include_router(payer_backbone.router, prefix=prefix)
 app.include_router(app_config.router, prefix=prefix)
-app.include_router(lineage.router, prefix=prefix)
+app.include_router(devtools.router, prefix=prefix)
 app.include_router(payer_family.router, prefix=prefix)
 app.include_router(stats.router, prefix=prefix)
 app.include_router(comments.router, prefix=prefix)

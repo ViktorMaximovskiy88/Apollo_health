@@ -26,7 +26,7 @@ class WorkQueue(BaseDocument):
     description: str | None = None
     collection_name: str
     update_model_name: str
-    grace_period: int = 15
+    grace_period: int = 30
     frontend_component: str
     document_query: dict[Any, Any]
     user_query: dict[Any, Any]

@@ -18,6 +18,10 @@ class LineageDoc(BaseModel):
     lineage_id: PydanticObjectId | None
     file_extension: str | None
     checksum: str | None
+    classification_status: str | None
+    first_collected_date: datetime | None
+    last_collected_date: datetime | None
+    priority: int | None
 
 
 class DocumentAttrs(BaseModel):
