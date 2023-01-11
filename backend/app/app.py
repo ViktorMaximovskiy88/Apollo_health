@@ -1,14 +1,17 @@
-import logging
 from pathlib import Path
 from time import time
 from typing import Any
 
+import aiofiles
 import jwt
+import newrelic.agent
 from fastapi import FastAPI, Request, status
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException
 
 from backend.app.core.settings import settings
 from backend.app.routes import (
@@ -38,6 +41,7 @@ from backend.app.scripts.create_proxy_records import create_proxies
 from backend.app.scripts.create_work_queues import create_default_work_queues
 from backend.app.scripts.payer_backbone.load_payer_backbone import load_payer_backbone
 from backend.app.utils.cors import cors
+from backend.app.utils.logging import Logger, get_app_logger
 from backend.app.utils.user import get_provider_detail
 from backend.common.db.init import init_db
 from backend.common.db.migrations import confirm_migration_quality, run_migrations
@@ -45,12 +49,23 @@ from backend.common.models.proxy import Proxy
 
 app = FastAPI()
 cors(app)  # local only
-logger = logging.getLogger("wrapper")
+logger: Logger = get_app_logger()
+
+frontend_html = None
+template_dir = Path(__file__).parent.joinpath("templates")
+templates = Jinja2Templates(directory=template_dir)
+frontend_build_dir = Path(__file__).parent.joinpath("../../frontend/build").resolve()
 
 
 @app.on_event("startup")
 async def app_init():
     await init_db()
+
+    # poor mans caching, do it up front on startup
+    global frontend_html
+    async with aiofiles.open(frontend_build_dir.joinpath("index.html")) as file:
+        frontend_html = await file.read()
+
     if settings.is_local:
         if await confirm_migration_quality():
             await run_migrations()
@@ -62,9 +77,29 @@ async def app_init():
     await create_pipeline_registry()
 
 
-template_dir = Path(__file__).parent.joinpath("templates")
-templates = Jinja2Templates(directory=template_dir)
-frontend_build_dir = Path(__file__).parent.joinpath("../../frontend/build").resolve()
+# must be first, reverse order...
+@app.exception_handler(Exception)
+async def last_chance_exception_handle(request, exc):
+    message = str(exc)
+    status_code = 500
+
+    logger.exception(message)
+    newrelic.agent.notice_error()
+
+    result = await http_exception_handler(
+        request, HTTPException(detail=message, status_code=status_code)
+    )
+    return result
+
+
+@app.middleware("http")
+async def frontend_routing(request: Request, call_next: Any):
+    response = await call_next(request)
+    if response.status_code == status.HTTP_404_NOT_FOUND and not request.url.path.startswith(
+        "/api"
+    ):
+        return HTMLResponse(frontend_html)
+    return response
 
 
 # liveness
@@ -82,8 +117,6 @@ async def react_settings():
 async def request_access(request: Request):
     return templates.TemplateResponse("request-access.html", {"request": request})
 
-
-app.add_middleware(GZipMiddleware)
 
 prefix = "/api/v1"
 app.include_router(users.router, prefix=prefix)
@@ -106,26 +139,18 @@ app.include_router(comments.router, prefix=prefix)
 app.include_router(therapy_master.router, prefix=prefix)
 app.include_router(task.router, prefix=prefix)
 
-
-@app.middleware("http")
-async def frontend_routing(request: Request, call_next: Any):
-    response = await call_next(request)
-    if response.status_code == status.HTTP_404_NOT_FOUND and not request.url.path.startswith(
-        "/api"
-    ):
-        with open(frontend_build_dir.joinpath("index.html")) as file:
-            return HTMLResponse(file.read())
-    return response
-
-
 app.mount("/", StaticFiles(directory=frontend_build_dir, html=True), name="static")
 
+app.add_middleware(GZipMiddleware)
 
+
+# TODO when/if we auth on backend, we can make user a global dep and re-use...
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     # TODO if this stays, lets move it...
     auth_header = request.headers.get("authorization", None)
     user = "anon"
+    user_id = None
     if auth_header:
         [_, token] = auth_header.split(" ")
         [signing_key, algorithm] = get_provider_detail(token)
@@ -145,4 +170,8 @@ async def log_requests(request: Request, call_next):
     logger.info(
         f"request_stop='{request.method}_{request.url.path}' user='{user}' duration='{format_time}ms'"  # noqa
     )
+
+    newrelic.agent.add_custom_attribute("user_id", user_id)
+    newrelic.agent.add_custom_attribute("user", user)
+
     return response

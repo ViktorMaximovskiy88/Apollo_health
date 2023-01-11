@@ -1,10 +1,12 @@
 import asyncio
-import logging
 from datetime import datetime, timezone
 
+from backend.app.utils.logging import get_app_logger
 from backend.common.db.init import init_db
 from backend.common.models.pipeline import PipelineRegistry, PipelineRegistryStage
 from backend.common.models.user import User
+
+logger = get_app_logger()
 
 
 async def get_user() -> User:
@@ -24,9 +26,9 @@ async def create_pipeline_registry():
             content=stage, date=stage, doc_type=stage, tag=stage, lineage=stage
         )
         result = await pending.save()
-        logging.info(f"created pipeline registry with _id={result.id}")
+        logger.info(f"created pipeline registry with _id={result.id}")
     else:
-        logging.info(f"existing pipeline registry with _id={exists.id}")
+        logger.info(f"existing pipeline registry with _id={exists.id}")
 
 
 async def execute():
