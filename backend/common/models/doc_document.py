@@ -74,7 +74,7 @@ class BaseDocDocument(BaseModel):
     end_date: datetime | None = None
 
     # Lineage
-    lineage_id: PydanticObjectId | None = None
+    lineage_id: Indexed(PydanticObjectId) | None = None
     previous_doc_doc_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     is_current_version: bool = False
     lineage_confidence: float = 0
