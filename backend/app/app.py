@@ -2,6 +2,7 @@ from pathlib import Path
 from time import time
 from typing import Any
 
+import aiofiles
 import jwt
 import newrelic.agent
 from fastapi import FastAPI, Request, status
@@ -50,10 +51,21 @@ app = FastAPI()
 cors(app)  # local only
 logger: Logger = get_app_logger()
 
+frontend_html = None
+template_dir = Path(__file__).parent.joinpath("templates")
+templates = Jinja2Templates(directory=template_dir)
+frontend_build_dir = Path(__file__).parent.joinpath("../../frontend/build").resolve()
+
 
 @app.on_event("startup")
 async def app_init():
     await init_db()
+
+    # poor mans caching, do it up front on startup
+    global frontend_html
+    async with aiofiles.open(frontend_build_dir.joinpath("index.html")) as file:
+        frontend_html = await file.read()
+
     if settings.is_local:
         if await confirm_migration_quality():
             await run_migrations()
@@ -63,11 +75,6 @@ async def app_init():
     await create_default_work_queues()
     await load_payer_backbone()
     await create_pipeline_registry()
-
-
-template_dir = Path(__file__).parent.joinpath("templates")
-templates = Jinja2Templates(directory=template_dir)
-frontend_build_dir = Path(__file__).parent.joinpath("../../frontend/build").resolve()
 
 
 # must be first, reverse order...
@@ -91,8 +98,7 @@ async def frontend_routing(request: Request, call_next: Any):
     if response.status_code == status.HTTP_404_NOT_FOUND and not request.url.path.startswith(
         "/api"
     ):
-        with open(frontend_build_dir.joinpath("index.html")) as file:
-            return HTMLResponse(file.read())
+        return HTMLResponse(frontend_html)
     return response
 
 
