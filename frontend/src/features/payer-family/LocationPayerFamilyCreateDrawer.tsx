@@ -104,6 +104,7 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
         return;
       }
       form.submit();
+      setPopupOpen(false);
     },
     [form]
   );
