@@ -40,8 +40,8 @@ class TableContentExtractor:
         if not self.client.object_exists(sample_key):
             with self.client.read_object_to_tempfile(f"{self.doc.checksum}.pdf") as path:
                 with open(path, "rb") as file:
-                    sample = sample_creator.sample_file(file)
-                    self.client.write_object_mem(sample_key, sample.read())
+                    sample_bytes = sample_creator.sample_file(file)
+                    self.client.write_object_mem(sample_key, sample_bytes)
 
         return sample_key
 
