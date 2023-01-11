@@ -1,4 +1,4 @@
-import { Button, Drawer, Form, Input } from 'antd';
+import { Button, Drawer, Form, Input, Popconfirm } from 'antd';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
 import {
   useUpdatePayerFamilyMutation,
@@ -33,6 +33,7 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => 
   const [updatePayerFamily, { isLoading }] = useUpdatePayerFamilyMutation();
   const [convertPayerFamily] = useLazyConvertPayerFamilyDataQuery();
   const [queryPf] = useLazyGetPayerFamiliesQuery();
+  const [popupOpen, setPopupOpen] = useState(false);
 
   const onClose = useCallback(() => {
     props.onClose();
@@ -40,52 +41,59 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => 
     form.resetFields();
   }, [props.onClose]);
 
-  const onSubmit = useCallback(async () => {
-    form.validateFields();
-    let { name, payer_type, payer_ids, channels, benefits, plan_types, regions } =
-      form.getFieldsValue(true);
-    if (
-      !payer_ids?.length &&
-      !channels?.length &&
-      !benefits?.length &&
-      !plan_types?.length &&
-      !regions?.length
-    ) {
-      setPayerInfoError('At least one payer value is required');
-      return;
-    }
-    try {
-      const { data: existingPfs } = await queryPf({
-        limit: 1,
-        filterValue: [
-          { name: '_id', value: payer_family_id, type: 'string', operator: 'neq' },
-          { name: 'payer_type', value: payer_type, type: 'string', operator: 'eq' },
-          { name: 'payer_ids', value: payer_ids, type: 'string', operator: 'leq' },
-          { name: 'plan_types', value: plan_types, type: 'string', operator: 'leq' },
-          { name: 'regions', value: regions, type: 'string', operator: 'leq' },
-          { name: 'channels', value: channels, type: 'string', operator: 'leq' },
-          { name: 'benefits', value: benefits, type: 'string', operator: 'leq' },
-        ],
-      }).unwrap();
-      const existingPf = existingPfs[0];
-      if (existingPf) {
-        const message = `Payer Family '${existingPf.name}' already matches this criteria.`;
-        setPayerInfoError(message);
+  const onSubmit = useCallback(
+    async (e: any, confirmed: boolean = false) => {
+      form.validateFields();
+      let { name, payer_type, payer_ids, channels, benefits, plan_types, regions } =
+        form.getFieldsValue(true);
+      if (
+        !payer_ids?.length &&
+        !channels?.length &&
+        !benefits?.length &&
+        !plan_types?.length &&
+        !regions?.length
+      ) {
+        setPayerInfoError('At least one payer value is required');
         return;
       }
-    } catch (err: any) {}
-    try {
-      await convertPayerFamily({
-        payerType: 'plan',
-        body: { name, payer_type, payer_ids, channels, benefits, plan_types, regions },
-      }).unwrap();
-    } catch (err: any) {
-      setPayerInfoError(err.data.detail);
-      return;
-    }
+      if (!payer_ids.length && !confirmed) {
+        setPopupOpen(true);
+        return;
+      }
+      try {
+        const { data: existingPfs } = await queryPf({
+          limit: 1,
+          filterValue: [
+            { name: '_id', value: payer_family_id, type: 'string', operator: 'neq' },
+            { name: 'payer_type', value: payer_type, type: 'string', operator: 'eq' },
+            { name: 'payer_ids', value: payer_ids, type: 'string', operator: 'leq' },
+            { name: 'plan_types', value: plan_types, type: 'string', operator: 'leq' },
+            { name: 'regions', value: regions, type: 'string', operator: 'leq' },
+            { name: 'channels', value: channels, type: 'string', operator: 'leq' },
+            { name: 'benefits', value: benefits, type: 'string', operator: 'leq' },
+          ],
+        }).unwrap();
+        const existingPf = existingPfs[0];
+        if (existingPf) {
+          const message = `Payer Family '${existingPf.name}' already matches this criteria.`;
+          setPayerInfoError(message);
+          return;
+        }
+      } catch (err: any) {}
+      try {
+        await convertPayerFamily({
+          payerType: 'plan',
+          body: { name, payer_type, payer_ids, channels, benefits, plan_types, regions },
+        }).unwrap();
+      } catch (err: any) {
+        setPayerInfoError(err.data.detail);
+        return;
+      }
 
-    form.submit();
-  }, [form]);
+      form.submit();
+    },
+    [form]
+  );
 
   useEffect(() => {
     form.setFieldsValue(payerFamily);
@@ -167,9 +175,18 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => 
             </div>
           ) : null}
           <Button onClick={onClose}>Cancel</Button>
-          <Button type="primary" onClick={onSubmit} loading={isLoading}>
-            Submit
-          </Button>
+          <Popconfirm
+            title="No backbone value selected"
+            open={popupOpen}
+            okText="Save"
+            cancelText="Cancel"
+            onConfirm={(e) => onSubmit(e, true)}
+            onCancel={() => setPopupOpen(false)}
+          >
+            <Button type="primary" onClick={onSubmit} loading={isLoading}>
+              Submit
+            </Button>
+          </Popconfirm>
         </div>
       </Form>
     </Drawer>

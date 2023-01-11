@@ -18,6 +18,7 @@ import {
   WalletOutlined,
   GroupOutlined,
   TeamOutlined,
+  CompassOutlined,
 } from '@ant-design/icons';
 
 export function AppLayout() {
@@ -102,6 +103,7 @@ function AppMenu() {
     '/translations': <MergeCellsOutlined />,
     '/payer-backbone': <WalletOutlined />,
     '/users': <IdcardOutlined />,
+    '/devtools': <CompassOutlined />,
   };
 
   return (

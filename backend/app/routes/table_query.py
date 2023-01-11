@@ -1,5 +1,6 @@
 import asyncio
 import json
+import re
 from typing import Generic, TypeVar
 
 from beanie import PydanticObjectId
@@ -99,13 +100,13 @@ def _prepare_table_query(
         if filter.operator == "textnotContains":
             match.append({"$text": {"$search": f'-"{value}"'}})
         if filter.operator == "contains":
-            match.append({filter.name: {"$regex": value, "$options": "i"}})
+            match.append({filter.name: {"$regex": re.escape(value), "$options": "i"}})
         if filter.operator == "notContains":
-            match.append({filter.name: {"$not": {"$regex": value, "$options": "i"}}})
+            match.append({filter.name: {"$not": {"$regex": re.escape(value), "$options": "i"}}})
         if filter.operator == "startsWith":
-            match.append({filter.name: {"$regex": f"^{value}", "$options": "i"}})
+            match.append({filter.name: {"$regex": f"^{re.escape(value)}", "$options": "i"}})
         if filter.operator == "endsWith":
-            match.append({filter.name: {"$regex": f"{value}$", "$options": "i"}})
+            match.append({filter.name: {"$regex": f"{re.escape(value)}$", "$options": "i"}})
         if filter.operator == "eq" or filter.operator == "leq":
             if filter.operator == "eq" and isinstance(value, list):
                 match.append({filter.name: {"$in": value}})

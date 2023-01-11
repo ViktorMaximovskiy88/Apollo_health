@@ -29,22 +29,33 @@ export function DocDocumentTagForm(props: {
   const { tags, onEditTag, onDeleteTag, currentPage } = props;
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredList, setFilteredList] = useState(tags);
-  const [tagTypeFilter, setTagTypeFilter] = useState<('focus' | 'indication' | 'therapy')[]>([
-    'focus',
-    'indication',
-    'therapy',
-  ]);
+  const [tagTypeFilter, setTagTypeFilter] = useState<
+    ('focus' | 'indication' | 'therapy' | 'priority')[]
+  >(['focus', 'indication', 'therapy']);
   const [editTags, setEditTags] = useState<{ [index: string]: DocumentTag }>({});
   const [pageFilter, setPageFilter] = useState('page');
+
+  const tagFilterOptions = [
+    { label: 'Focus', value: 'focus' },
+    { label: 'Indication', value: 'indication' },
+    { label: 'Therapy', value: 'therapy' },
+  ];
+  if (tags.some((tag) => tag.priority)) {
+    tagFilterOptions.push({ label: 'Priority', value: 'priority' });
+  }
 
   const applyFilter = useCallback(
     (tag: DocumentTag) => {
       const validPage = pageFilter === 'doc' ? true : currentPage === tag.page;
       console.debug(currentPage === tag.page, 'currentPage', currentPage, 'tag.page', tag.page);
+      let filter: boolean = tagTypeFilter.includes(tag._type) && validPage;
       if (tagTypeFilter.includes('focus')) {
-        return tag.focus && tagTypeFilter.includes(tag._type) && validPage;
+        filter = filter && tag.focus ? tag.focus : false;
       }
-      return tagTypeFilter.includes(tag._type) && validPage;
+      if (tagTypeFilter.includes('priority')) {
+        filter = filter && tag._type === 'therapy' && tag.priority > 0;
+      }
+      return filter;
     },
     [pageFilter, currentPage, tagTypeFilter]
   );
@@ -140,11 +151,7 @@ export function DocDocumentTagForm(props: {
             ]}
           />
           <Checkbox.Group
-            options={[
-              { label: 'Focus', value: 'focus' },
-              { label: 'Indication', value: 'indication' },
-              { label: 'Therapy', value: 'therapy' },
-            ]}
+            options={tagFilterOptions}
             value={tagTypeFilter}
             onChange={(values: any) => {
               setTagTypeFilter(values);
