@@ -31,7 +31,7 @@ from backend.common.models.site import (
 )
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
-from backend.common.services.collection import CollectionService
+from backend.common.services.collection import CollectionResponse, CollectionService
 from backend.common.services.doc_document import get_site_doc_doc_table
 
 router = APIRouter(
@@ -202,7 +202,9 @@ async def update_site(
             current_user=current_user,
             logger=logger,
         )
-        await site_collection.stop_collecting()
+        response: CollectionResponse = await site_collection.stop_collecting()
+        if response.errors:
+            return response
 
     return updated
 
