@@ -45,6 +45,7 @@ class IndicationTag(BaseModel):
     update_status: TagUpdateStatus | None = None
     updated_at: datetime | None = None
     text_area: tuple[int, int] | None = None
+    name: str | None = None
 
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))
