@@ -1,4 +1,5 @@
 import asyncio
+import os
 from pathlib import Path
 from typing import Any
 
@@ -54,6 +55,9 @@ class PdfParse(FileParser):
         return text
 
     def attempt_ocr(self):
+        if not os.path.exists(self.file_path) or os.path.getsize(self.file_path) == 0:
+            return ""
+
         data_dir = Path(__file__).parent.joinpath("tessdata")
         config = f"--tessdata-dir {data_dir}"
         matrix = fitz.Matrix(2, 2)
