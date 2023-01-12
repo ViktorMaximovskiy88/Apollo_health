@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta, timezone
-from typing import Any, Type
+from typing import Any, List, Type
 
 from beanie import PydanticObjectId
+from beanie.odm.utils.projection import get_projection
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
 from pydantic import Field
 from pymongo import ReturnDocument
@@ -13,7 +14,6 @@ from backend.app.routes.table_query import (
     TableSortInfo,
     construct_table_query,
     get_query_json_list,
-    query_table,
 )
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
@@ -23,6 +23,7 @@ from backend.common.models.doc_document import (
     DocDocument,
     LockableDocument,
     PartialDocDocumentUpdate,
+    SiteDocDocument,
     TaskLock,
 )
 from backend.common.models.user import User
@@ -173,10 +174,23 @@ async def get_work_queue_items(
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
     query = combine_queue_query_with_user_query(work_queue, sorts, filters)
-    res = await query_table(query, limit, skip)
+
+    docs: List[SiteDocDocument] = await DocDocument.aggregate(
+        [
+            {"$match": query.get_filter_query()},
+            {"$project": get_projection(query.projection_model)},
+            {"$sort": {key: dir for key, dir in query.sort_expressions}},
+            {"$skip": skip or 0},
+            {"$limit": limit or 50},
+        ]
+    ).to_list()
+    docs = [query.projection_model(**doc) for doc in docs]
+    count = await query.count()
+    res = TableQueryResponse(data=docs, total=count)
+
     if "Hold" in work_queue.name:
-        for doc in res.data:
-            comment = await get_hold_comment(doc.id, work_queue.name)
+        for doc in docs:
+            comment: Comment | None = await get_hold_comment(doc.id, work_queue.name)
             if comment:
                 doc.hold_comment = comment.text
                 doc.hold_time = comment.time
