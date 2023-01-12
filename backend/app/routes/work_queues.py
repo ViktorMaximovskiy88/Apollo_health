@@ -26,7 +26,7 @@ from backend.common.models.doc_document import (
     TaskLock,
 )
 from backend.common.models.user import User
-from backend.common.models.work_queue import WorkQueue, WorkQueueUpdate
+from backend.common.models.work_queue import WorkQueue, WorkQueueLog, WorkQueueUpdate
 from backend.common.services.doc_lifecycle.hooks import (
     ChangeInfo,
     doc_document_save_hook,
@@ -354,8 +354,8 @@ async def submit_work_item(
             expires = datetime.now(tz=timezone.utc) + timedelta(days=365)
             await attempt_lock_acquire(dest_queue, item_id, dest_user, expires)
 
+    now = datetime.now(tz=timezone.utc)
     if body.comment:
-        now = datetime.now(tz=timezone.utc)
         comment = Comment(
             target_id=item_id,
             user_id=current_user.id,  # type: ignore
@@ -379,5 +379,14 @@ async def submit_work_item(
     await Collection.find_one({"_id": item_id}).update(
         {"$pull": {"locks": {"work_queue_id": work_queue.id}}}
     )
+
+    await WorkQueueLog(
+        queue_id=work_queue.id,  # type: ignore
+        queue_name=work_queue.name,
+        item_id=item_id,
+        action=body.action_label,
+        user_id=current_user.id,  # type: ignore
+        submitted_at=now,
+    ).save()
 
     return SubmitWorkItemResponse(success=True)

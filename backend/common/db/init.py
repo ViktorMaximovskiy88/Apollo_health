@@ -38,7 +38,7 @@ from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.tasks import TaskLog
 from backend.common.models.translation_config import TranslationConfig
 from backend.common.models.user import User
-from backend.common.models.work_queue import WorkQueue
+from backend.common.models.work_queue import WorkQueue, WorkQueueLog, WorkQueueMetric
 
 
 @cache
@@ -69,6 +69,8 @@ document_models = [
     Proxy,
     Comment,
     WorkQueue,
+    WorkQueueLog,
+    WorkQueueMetric,
     ChangeLog,
     Indication,
     DocDocument,
