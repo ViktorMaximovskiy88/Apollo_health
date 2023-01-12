@@ -14,7 +14,7 @@ from backend.common.models.site import FocusSectionConfig
 from backend.common.storage.client import ModelStorageClient
 from backend.scrapeworker.document_tagging.tag_focusing import FocusChecker
 
-TRADEMARK_SYMBOLS = ["\u00AE", "\u2122", "\24C7"]
+SPECIAL_CHARACTERS = ["\u00AE", "\u2122", "\24C7", "\u2020", "\u271D"]
 
 
 class TherapyTagger:
@@ -36,7 +36,7 @@ class TherapyTagger:
             print("RxNorm Span Ruler Model not found and therefore not loaded")
 
     def clean_page(self, page: str):
-        for symbol in TRADEMARK_SYMBOLS:
+        for symbol in SPECIAL_CHARACTERS:
             page = page.replace(symbol, " ")
         return page
 

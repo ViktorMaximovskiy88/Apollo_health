@@ -47,4 +47,5 @@ export interface SubmitWorkItemRequest {
   action_label?: string;
   reassignment?: string;
   comment?: string;
+  type?: string;
 }

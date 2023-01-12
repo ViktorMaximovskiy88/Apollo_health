@@ -15,6 +15,7 @@ import {
   useTakeNextWorkItemMutation,
   useTakeWorkItemMutation,
 } from '../doc_documents/docDocumentApi';
+import { CommentType } from '../comments/types';
 import { Assignee } from '../sites/form/AssigneeInput';
 
 function notifyFailedLock() {
@@ -49,8 +50,8 @@ function WorkQueueActionButton(props: {
   setAction: (a: SubmitAction) => void;
   setComment: (a: string) => void;
   setReassignment: (a: string) => void;
+  loading: boolean;
 }) {
-  const [loading, setLoading] = useState(false);
   const [form] = useForm();
   const label = props.action.label;
   const type = props.action.primary ? 'primary' : 'default';
@@ -60,10 +61,9 @@ function WorkQueueActionButton(props: {
       <Button
         onClick={() => {
           props.setAction(props.action);
-          setLoading(true);
         }}
         type={type}
-        loading={loading}
+        loading={props.loading}
       >
         {label}
       </Button>
@@ -101,6 +101,7 @@ function WorkItemSubmitBar(props: {
   setAction: (a: SubmitAction) => void;
   setReassignment: (a: string) => void;
   setComment: (a: string) => void;
+  loading: boolean;
 }) {
   const navigate = useNavigate();
 
@@ -117,6 +118,7 @@ function WorkItemSubmitBar(props: {
           setAction={props.setAction}
           setComment={props.setComment}
           setReassignment={props.setReassignment}
+          loading={props.loading}
         />
       ))}
       <span>Auto Take</span>
@@ -125,13 +127,34 @@ function WorkItemSubmitBar(props: {
   );
 }
 
+const useOnActionChangeSubmitForm = (form: FormInstance) => {
+  const [action, setAction] = useState<SubmitAction>();
+
+  useEffect(() => {
+    if (action) {
+      form
+        .validateFields()
+        .then(() => {
+          form.submit();
+        })
+        .catch((e) => {
+          console.log(`Validation failed. Validation errors: ${e}`);
+        });
+      setAction(undefined);
+    }
+  }, [action, form, setAction]);
+
+  return { action, setAction };
+};
+
 export function WorkQueueWorkItem(props: {
   wq: WorkQueue;
   docDocumentId: string;
   readonly: boolean;
 }) {
   const [form] = useForm();
-  const [action, setAction] = useState<SubmitAction>();
+  const { action, setAction } = useOnActionChangeSubmitForm(form);
+
   const [takeNext, setTakeNext] = useState(true);
   const [reassignment, setReassignment] = useState<string>();
   const [comment, setComment] = useState<string>();
@@ -139,16 +162,21 @@ export function WorkQueueWorkItem(props: {
   const [submitWorkItem] = useSubmitWorkItemMutation();
   const [takeNextWorkItem] = useTakeNextWorkItemMutation();
   const tableState = useSelector(workQueueTableState);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (action) {
-      form.submit();
-      setAction(undefined);
+  function checkType() {
+    if (props.wq.name.includes('Classification')) {
+      return CommentType.ClassificationHold;
+    } else if (props.wq.name.includes('Document & Payer Family')) {
+      return CommentType.DocPayerHold;
+    } else if (props.wq.name.includes('Translation Config')) {
+      return CommentType.TranslationConfigHold;
     }
-  }, [action, form]);
+  }
 
   const onSubmit = useCallback(
     async (item: any) => {
+      setLoading(true);
       const defaultAction = props.wq.submit_actions.find((a) => a.primary);
       const chosenAction = action ? action : defaultAction;
       const updates = {
@@ -157,6 +185,7 @@ export function WorkQueueWorkItem(props: {
       };
       const body = {
         action_label: chosenAction?.label,
+        type: comment && checkType(),
         comment,
         reassignment,
         updates,
@@ -175,6 +204,7 @@ export function WorkQueueWorkItem(props: {
             navigate(`../../${response.data.item_id}/process`);
           }
         }
+        setLoading(false);
       } else {
         navigate('../../..');
       }
@@ -204,6 +234,7 @@ export function WorkQueueWorkItem(props: {
           setTakeNext={setTakeNext}
           setComment={setComment}
           setReassignment={setReassignment}
+          loading={loading}
         />
       }
     >

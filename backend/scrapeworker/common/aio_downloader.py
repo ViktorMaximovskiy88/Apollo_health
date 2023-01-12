@@ -3,6 +3,7 @@ import ssl
 import tempfile
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from http.cookies import CookieError, Morsel
 from random import shuffle
 from ssl import SSLContext
 from typing import AsyncGenerator
@@ -59,12 +60,30 @@ class AioDownloader:
     async def close(self):
         await self.session.close()
 
+    def valid_cookie(self, cookie):
+        """
+        Check if cookie is valid for Morsel. This is the same check used by aiohttp,
+        we repeat it here so we can catch the exception and exclude the key.
+        """
+
+        if "name" not in cookie or "value" not in cookie:
+            return False
+
+        try:
+            Morsel().set(cookie["name"], cookie["value"], None)
+        except CookieError:
+            return False
+
+        return True
+
     async def send_request(self, download: DownloadContext, proxy: AioProxy | None):
         headers = default_headers | download.request.headers
+
         cookies = {}
         for cookie in download.request.cookies:
-            if "name" in cookie and "value" in cookie:
-                cookies[cookie["name"]] = cookie["value"]
+            if self.valid_cookie(cookie):
+                cookies[cookie["name"]] = cookie["value"]  # type: ignore
+
         if proxy:
             response = await self.session.request(
                 url=download.request.url,
@@ -114,11 +133,9 @@ class AioDownloader:
     ) -> list[tuple[Proxy | None, AioProxy | None]]:
         _proxies = []
         for (proxy, _proxy_settings) in proxies:
-            if proxy is not None:
+            if proxy:
                 aio_proxies = self.convert_proxy(proxy)
                 [_proxies.append((proxy, aio_proxy)) for aio_proxy in aio_proxies]
-            else:
-                [(None, None)]
 
         shuffle(_proxies)
         return _proxies

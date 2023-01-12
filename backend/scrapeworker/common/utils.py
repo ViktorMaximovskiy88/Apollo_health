@@ -17,7 +17,7 @@ def compile_date_rgx():
         r"(?<!\d)[0-9]{6}(?!\d)",  # mmYYYY or YYYYmm
         r"(?<!\d)[0-9]{8}(?!\d)",  # mmddyyyy yyyymmdd
         r"(?<!\d|\/)[0-9]{4}[\/\-\.\|][0-9][0-9]?[\/\-\.\|][0-9][0-9]?(?!\d|\/)",  # yyyy-MM-dd with -, /, . or | # noqa
-        r"(?<!\d|\/)[0-9][0-9]?[\/\-\.\|][0-9][0-9]?[\/\-\.\|](?:\d{4}|\d{2})(?!\d|\/)",  # dd-MM-yyyy, dd-mm-yy. With -, /, . or | # noqa
+        r"(?<!\d|\/)[0-9][0-9]?[\/\-\.\|]+[0-9][0-9]?[\/\-\.\|](?:\d{4}|\d{2})(?!\d|\/)",  # dd-MM-yyyy, dd-mm-yy. With -, /, . or | # noqa
         r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).? [0-9][0-9]?(?:st|nd|rd|th)?,? [0-9][0-9][0-9][0-9]",  # M d, yyyy # noqa
         r"(?<! \d|\w{2})[0-9][0-9]? (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec).? [0-9][0-9][0-9][0-9]",  # d M yyyy # noqa
         r"(?<! \d|\w{2})[0-9][0-9]? (January|February|March|April|May|June|July|August|September|October|November|December),? [0-9][0-9][0-9][0-9]",  # d M yyyy # noqa
@@ -68,6 +68,7 @@ def compile_label_rgx():
         r"\breviewed": "last_reviewed_date",  # this may need to be narrowed back to 'reviewed on', etc
         r"\blast review": "last_reviewed_date",
         r"\brecent review": "last_reviewed_date",
+        r"\blatest review": "last_reviewed_date",
         r"\bnext review": "next_review_date",
         r"\bannual review": "next_review_date",
         r"\bnext update": "next_update_date",
@@ -78,6 +79,8 @@ def compile_label_rgx():
         r"\bdevised": "published_date",
         r"\bissued": "published_date",
         r"\bdate of origin": "published_date",
+        r"\bimplementation": "published_date",
+        r"\bpublication date": "published_date",
     }
     label_rgxs = [re.compile(fmt, flags=re.IGNORECASE) for fmt in label_hash.keys()]
     return label_rgxs, label_hash
