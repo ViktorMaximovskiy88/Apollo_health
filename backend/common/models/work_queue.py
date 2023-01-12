@@ -13,6 +13,7 @@ class SubmitAction(BaseModel):
     reassignable: bool = False
     require_comment: bool = False
     dest_queue: str | None = None
+    hold_types: list[str] = []
 
 
 class SubmitActionUpdate(BaseModel):
@@ -22,6 +23,7 @@ class SubmitActionUpdate(BaseModel):
     reassignable: bool | None = None
     require_comment: bool | None = None
     dest_queue: str | None = None
+    hold_types: list[str] | None
 
 
 class WorkQueueMetric(BaseDocument):

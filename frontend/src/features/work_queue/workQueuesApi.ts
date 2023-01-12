@@ -19,6 +19,10 @@ export const workQueuesApi = createApi({
       query: (id) => `/work-queues/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'WorkQueue' as const, id }],
     }),
+    getWorkQueueByName: builder.query<WorkQueue, { name: string }>({
+      query: ({ name }) => `/work-queues/search?name=${encodeURIComponent(name)}`,
+      providesTags: (_r, _e, name) => [{ type: 'WorkQueue' as const, name }],
+    }),
     getWorkQueueCounts: builder.query<WorkQueueCount[], void>({
       query: (id) => `/work-queues/counts`,
       providesTags: () => [{ type: 'WorkQueueSize', id: 'LIST' }],
@@ -53,6 +57,7 @@ export const workQueuesApi = createApi({
 export const {
   useGetWorkQueueQuery,
   useLazyGetWorkQueueCountsQuery,
+  useGetWorkQueueByNameQuery,
   useGetWorkQueuesQuery,
   useAddWorkQueueMutation,
   useUpdateWorkQueueMutation,

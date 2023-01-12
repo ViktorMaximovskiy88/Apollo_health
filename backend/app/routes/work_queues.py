@@ -71,6 +71,18 @@ async def read_work_queue_counts(
     return response
 
 
+@router.get(
+    "/search",
+    dependencies=[Security(get_current_user)],
+    response_model=WorkQueue,
+)
+async def read_work_queue_by_name(
+    name: str,
+):
+    work_queue = await WorkQueue.find_one({"name": name})
+    return work_queue
+
+
 @router.get("/{id}", response_model=WorkQueue)
 async def read_work_queue(
     target: WorkQueue = Depends(get_target),
@@ -126,6 +138,7 @@ class IdNameLockOnlyDocument(IdOnlyDocument):
     locations: list[LocationSubDocument] = []
     locks: list[TaskLock] = []
     priority: int = 0
+    hold_type: str | None = None
     hold_time: datetime | None = None
     hold_comment: str | None = None
 
@@ -193,7 +206,7 @@ class TakeNextWorkQueueResponse(BaseModel):
     item_id: PydanticObjectId | None = None
 
 
-def get_valid_lock(locks: list[Any], work_queued_id: PydanticObjectId, now: datetime):
+def get_valid_lock(locks: list[Any], work_queued_id: PydanticObjectId | None, now: datetime):
     return next(
         filter(
             lambda l: l.work_queue_id == work_queued_id and l.expires.now(tz=timezone.utc) > now,
@@ -322,6 +335,7 @@ class SubmitWorkItemRequest(BaseModel):
     updates: dict[str, Any]
     reassignment: PydanticObjectId | None
     comment: str | None
+    hold_type: str | None
     type: HoldType | None
 
 

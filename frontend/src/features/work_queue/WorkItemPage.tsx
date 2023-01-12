@@ -1,4 +1,4 @@
-import { Button, Checkbox, Form, Input, notification, Popconfirm } from 'antd';
+import { Button, Checkbox, Form, Input, notification, Popconfirm, Select } from 'antd';
 import { FormInstance, useForm } from 'antd/lib/form/Form';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -50,6 +50,7 @@ function WorkQueueActionButton(props: {
   setAction: (a: SubmitAction) => void;
   setComment: (a: string) => void;
   setReassignment: (a: string) => void;
+  setHoldType: (a: string) => void;
   loading: boolean;
 }) {
   const [form] = useForm();
@@ -70,11 +71,17 @@ function WorkQueueActionButton(props: {
     );
   }
 
-  function onFinish(res: { assignee: string; comment: string }) {
+  function onFinish(res: { assignee: string; comment: string; holdType: string }) {
     props.setReassignment(res.assignee);
     props.setComment(res.comment);
+    props.setHoldType(res.holdType);
     props.setAction(props.action);
   }
+
+  const holdTypeOptions = props.action.hold_types?.map((holdType) => ({
+    value: holdType,
+    label: holdType,
+  }));
 
   const commentForm = (
     <Form form={form} onFinish={onFinish}>
@@ -82,6 +89,11 @@ function WorkQueueActionButton(props: {
         <Input.TextArea />
       </Form.Item>
       <Assignee />
+      {!!holdTypeOptions?.length ? (
+        <Form.Item name="holdType" label="Hold Type">
+          <Select options={holdTypeOptions} />
+        </Form.Item>
+      ) : null}
     </Form>
   );
 
@@ -101,6 +113,7 @@ function WorkItemSubmitBar(props: {
   setAction: (a: SubmitAction) => void;
   setReassignment: (a: string) => void;
   setComment: (a: string) => void;
+  setHoldType: (a: string) => void;
   loading: boolean;
 }) {
   const navigate = useNavigate();
@@ -118,6 +131,7 @@ function WorkItemSubmitBar(props: {
           setAction={props.setAction}
           setComment={props.setComment}
           setReassignment={props.setReassignment}
+          setHoldType={props.setHoldType}
           loading={props.loading}
         />
       ))}
@@ -158,6 +172,7 @@ export function WorkQueueWorkItem(props: {
   const [takeNext, setTakeNext] = useState(true);
   const [reassignment, setReassignment] = useState<string>();
   const [comment, setComment] = useState<string>();
+  const [holdType, setHoldType] = useState<string>();
   const navigate = useNavigate();
   const [submitWorkItem] = useSubmitWorkItemMutation();
   const [takeNextWorkItem] = useTakeNextWorkItemMutation();
@@ -179,10 +194,13 @@ export function WorkQueueWorkItem(props: {
       setLoading(true);
       const defaultAction = props.wq.submit_actions.find((a) => a.primary);
       const chosenAction = action ? action : defaultAction;
+
       const updates = {
         ...item,
         ...chosenAction?.submit_action,
+        hold_type: holdType || null,
       };
+
       const body = {
         action_label: chosenAction?.label,
         type: comment && checkType(),
@@ -217,6 +235,7 @@ export function WorkQueueWorkItem(props: {
       tableState,
       reassignment,
       comment,
+      holdType,
       submitWorkItem,
       takeNextWorkItem,
     ]
@@ -234,6 +253,7 @@ export function WorkQueueWorkItem(props: {
           setTakeNext={setTakeNext}
           setComment={setComment}
           setReassignment={setReassignment}
+          setHoldType={setHoldType}
           loading={loading}
         />
       }

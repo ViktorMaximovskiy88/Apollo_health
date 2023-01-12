@@ -100,6 +100,8 @@ class BaseDocDocument(BaseModel):
     priority: Indexed(int, pymongo.DESCENDING) = 0  # type: ignore
     is_searchable: bool = False
 
+    hold_type: str | None = None
+
 
 class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixins):
     locations: list[DocDocumentLocation] = []
@@ -175,22 +177,25 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
     class Settings:
         indexes = [
             [
-                ("final_effective_date", pymongo.ASCENDING),
-                ("first_collected_date", pymongo.ASCENDING),
                 ("priority", pymongo.DESCENDING),
                 ("classification_status", pymongo.ASCENDING),
-            ],
-            [
                 ("final_effective_date", pymongo.ASCENDING),
                 ("first_collected_date", pymongo.ASCENDING),
+                ("hold_type", pymongo.ASCENDING),
+            ],
+            [
                 ("priority", pymongo.DESCENDING),
                 ("family_status", pymongo.ASCENDING),
-            ],
-            [
                 ("final_effective_date", pymongo.ASCENDING),
                 ("first_collected_date", pymongo.ASCENDING),
+                ("hold_type", pymongo.ASCENDING),
+            ],
+            [
                 ("priority", pymongo.DESCENDING),
                 ("content_extraction_status", pymongo.ASCENDING),
+                ("final_effective_date", pymongo.ASCENDING),
+                ("first_collected_date", pymongo.ASCENDING),
+                ("hold_type", pymongo.ASCENDING),
             ],
             [("locations.site_id", pymongo.ASCENDING)],
             [("locations.link_text", pymongo.ASCENDING)],
@@ -292,6 +297,7 @@ class ClassificationUpdateDocDocument(BaseModel):
     published_date: datetime | None = None
     end_date: datetime | None = None
     include_later_documents_in_lineage_update: bool = False
+    hold_type: str | None = None
 
 
 class FamilyUpdateDocDocument(BaseModel):
@@ -299,6 +305,7 @@ class FamilyUpdateDocDocument(BaseModel):
     family_hold_info: list[str] | None = None
     document_family_id: PydanticObjectId | None = None
     locations: list[DocDocumentLocation] | None = None
+    hold_type: str | None = None
 
 
 class TranslationUpdateDocDocument(BaseModel):

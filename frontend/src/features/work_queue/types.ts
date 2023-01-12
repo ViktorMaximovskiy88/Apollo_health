@@ -8,10 +8,15 @@ export interface WorkItemLock {
 
 export interface SubmitAction {
   label: string;
-  submit_action: any;
+  submit_action: {
+    classification_status?: string;
+    family_status?: string;
+    content_extraction_status?: string;
+  };
   primary: boolean;
   reassignable: boolean;
   require_comment: boolean;
+  hold_types?: string[];
 }
 
 export interface WorkQueue extends BaseDocument {

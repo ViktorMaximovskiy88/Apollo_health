@@ -26,6 +26,12 @@ async def classification_queues():
                 require_comment=True,
                 dest_queue="Classification Hold",
                 submit_action={"classification_status": "HOLD"},
+                hold_types=[
+                    "Source Hub Issue",
+                    "Focus Tagging",
+                    "Medical Codes (J/CPT)",
+                    "Spanish / Other Language",
+                ],
             ),
             SubmitAction(
                 label="Submit",
@@ -106,6 +112,7 @@ async def family_queues():
                 require_comment=True,
                 dest_queue="Document & Payer Family Hold",
                 submit_action={"family_status": "HOLD"},
+                hold_types=["Source Hub Issue", "Backbone Issue"],
             ),
             SubmitAction(
                 label="Submit",
