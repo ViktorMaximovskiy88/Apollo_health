@@ -105,6 +105,8 @@ class TagTaskProcessor(TaskProcessor):
         priority_codes = {tag.code: tag.priority for tag in therapy_tags if tag.priority}
         for tag in doc.therapy_tags:
             tag.priority = priority_codes.get(tag.code, 0)
+        if priority == 0 and indication_tags:
+            priority = 1
 
         # TODO will be location and overall doc update..
         # we have location specific stuff...

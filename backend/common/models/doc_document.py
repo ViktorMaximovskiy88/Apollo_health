@@ -215,7 +215,11 @@ class DocDocumentLimitTags(DocDocument):
         name = "DocDocument"
 
     class Settings:
-        projection = {"therapy_tags": {"$slice": 10}, "indication_tags": {"$slice": 10}}
+        projection = {
+            "therapy_tags": {"$slice": 10},
+            "indication_tags": {"$slice": 10},
+            "doc_vectors": 0,
+        }
 
 
 class UpdateDocDocument(BaseModel, DocumentMixins):
