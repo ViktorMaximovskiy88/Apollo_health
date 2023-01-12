@@ -23,7 +23,6 @@ from backend.common.models.doc_document import (
     DocDocument,
     LockableDocument,
     PartialDocDocumentUpdate,
-    SiteDocDocument,
     TaskLock,
 )
 from backend.common.models.user import User
@@ -175,7 +174,7 @@ async def get_work_queue_items(
 ):
     query = combine_queue_query_with_user_query(work_queue, sorts, filters)
 
-    docs: List[SiteDocDocument] = await DocDocument.aggregate(
+    docs: List[DocDocument] = await DocDocument.aggregate(
         [
             {"$match": query.get_filter_query()},
             {"$project": get_projection(query.projection_model)},
