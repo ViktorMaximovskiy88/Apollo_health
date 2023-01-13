@@ -31,9 +31,14 @@ class CollectionResponse(BaseModel):
         self.success = False
         self.errors.append(error)
 
+    def format_errors(self):
+        jsonable_encoder("\n".join(self.errors))
+
     # Send http status code and object that matches isErrorWithData.
+    # Note that this will trigger a new relic alert, so we don't want to
+    # do that when stopping a collection with unhandled items.
     def raise_error(self, status: status = status.HTTP_409_CONFLICT):
-        raise HTTPException(status, jsonable_encoder("\n".join(self.errors)))
+        raise HTTPException(status, self.format_errors())
 
 
 class CollectionService:
@@ -231,12 +236,12 @@ class CollectionService:
                 response.success = False
                 response.add_error(f"{retr_doc.name}")
         if not response.success:
-            response.raise_error()
+            return response
 
         # Process all work actions from current manual collection task.
         response = await self.process_work_lists()
         if not response.success:
-            response.raise_error()
+            return response
         await self.stop_all_tasks()
 
         return response

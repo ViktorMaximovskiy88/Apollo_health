@@ -1,4 +1,4 @@
-import { Button, Drawer, Form, Input } from 'antd';
+import { Button, Drawer, Form, Input, Popconfirm } from 'antd';
 import { useLazyGetPayerFamiliesQuery, useLazyGetPayerFamilyByNameQuery } from './payerFamilyApi';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
 import { useAddPayerFamilyMutation, useLazyConvertPayerFamilyDataQuery } from './payerFamilyApi';
@@ -25,6 +25,7 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
   const [addPayerFamily, { isLoading }] = useAddPayerFamilyMutation();
   const [convertPayerFamily] = useLazyConvertPayerFamilyDataQuery();
   const [payerInfoError, setPayerInfoError] = useState<ReactNode>();
+  const [popupOpen, setPopupOpen] = useState(false);
 
   const handleClose = useCallback(() => {
     props.onClose();
@@ -42,63 +43,71 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
   );
 
   const [queryPf] = useLazyGetPayerFamiliesQuery();
-  const onSubmit = useCallback(async () => {
-    await form.validateFields();
-    const { name, payer_type, payer_ids, channels, benefits, plan_types, regions } =
-      form.getFieldsValue(true);
-    if (
-      !payer_ids.length &&
-      !channels.length &&
-      !benefits.length &&
-      !plan_types.length &&
-      !regions.length
-    ) {
-      setPayerInfoError('At least one payer value is required');
-      return;
-    }
-    try {
-      const { data: existingPfs } = await queryPf({
-        limit: 1,
-        filterValue: [
-          { name: 'payer_type', value: payer_type, type: 'string', operator: 'eq' },
-          { name: 'payer_ids', value: payer_ids, type: 'string', operator: 'leq' },
-          { name: 'plan_types', value: plan_types, type: 'string', operator: 'leq' },
-          { name: 'regions', value: regions, type: 'string', operator: 'leq' },
-          { name: 'channels', value: channels, type: 'string', operator: 'leq' },
-          { name: 'benefits', value: benefits, type: 'string', operator: 'leq' },
-        ],
-      }).unwrap();
-      const existingPf = existingPfs[0];
-      if (existingPf) {
-        const onSwitchToExisting = async () => {
-          onSave(existingPf);
-          handleClose();
-        };
-        const message = (
-          <>
-            <div>Payer Family '{existingPf.name}' already matches this criteria.</div>
-            {location?.site_name ? (
-              <div>
-                Click <a onClick={onSwitchToExisting}>here</a> to select it instead.
-              </div>
-            ) : null}
-          </>
-        );
-        setPayerInfoError(message);
+  const onSubmit = useCallback(
+    async (e: any, confirmed: boolean = false) => {
+      await form.validateFields();
+      const { name, payer_type, payer_ids, channels, benefits, plan_types, regions } =
+        form.getFieldsValue(true);
+      if (
+        !payer_ids.length &&
+        !channels.length &&
+        !benefits.length &&
+        !plan_types.length &&
+        !regions.length
+      ) {
+        setPayerInfoError('At least one payer value is required');
         return;
       }
-    } catch (err: any) {}
-    try {
-      await convertPayerFamily({
-        payerType: 'plan',
-        body: { name, payer_type, payer_ids, channels, benefits, plan_types, regions },
-      }).unwrap();
-    } catch (err: any) {
-      setPayerInfoError(err.data.detail);
-      return;
-    }
-    form.submit();
-  }, [form]);
+      if (!payer_ids.length && !confirmed) {
+        setPopupOpen(true);
+        return;
+      }
+      try {
+        const { data: existingPfs } = await queryPf({
+          limit: 1,
+          filterValue: [
+            { name: 'payer_type', value: payer_type, type: 'string', operator: 'eq' },
+            { name: 'payer_ids', value: payer_ids, type: 'string', operator: 'leq' },
+            { name: 'plan_types', value: plan_types, type: 'string', operator: 'leq' },
+            { name: 'regions', value: regions, type: 'string', operator: 'leq' },
+            { name: 'channels', value: channels, type: 'string', operator: 'leq' },
+            { name: 'benefits', value: benefits, type: 'string', operator: 'leq' },
+          ],
+        }).unwrap();
+        const existingPf = existingPfs[0];
+        if (existingPf) {
+          const onSwitchToExisting = async () => {
+            onSave(existingPf);
+            handleClose();
+          };
+          const message = (
+            <>
+              <div>Payer Family '{existingPf.name}' already matches this criteria.</div>
+              {location?.site_name ? (
+                <div>
+                  Click <a onClick={onSwitchToExisting}>here</a> to select it instead.
+                </div>
+              ) : null}
+            </>
+          );
+          setPayerInfoError(message);
+          return;
+        }
+      } catch (err: any) {}
+      try {
+        await convertPayerFamily({
+          payerType: 'plan',
+          body: { name, payer_type, payer_ids, channels, benefits, plan_types, regions },
+        }).unwrap();
+      } catch (err: any) {
+        setPayerInfoError(err.data.detail);
+        return;
+      }
+      form.submit();
+      setPopupOpen(false);
+    },
+    [form]
+  );
 
   return (
     <Drawer
@@ -164,9 +173,18 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
           ) : null}
 
           <Button onClick={handleClose}>Cancel</Button>
-          <Button type="primary" onClick={onSubmit} loading={isLoading}>
-            Submit
-          </Button>
+          <Popconfirm
+            title="No backbone value selected"
+            open={popupOpen}
+            okText="Save"
+            cancelText="Cancel"
+            onConfirm={(e) => onSubmit(e, true)}
+            onCancel={() => setPopupOpen(false)}
+          >
+            <Button type="primary" onClick={onSubmit} loading={isLoading}>
+              Submit
+            </Button>
+          </Popconfirm>
         </div>
       </Form>
     </Drawer>

@@ -18,6 +18,7 @@ import {
   WalletOutlined,
   GroupOutlined,
   TeamOutlined,
+  CompassOutlined,
 } from '@ant-design/icons';
 
 export function AppLayout() {
@@ -33,17 +34,19 @@ export function AppBreadcrumbs() {
   const breadcrumbs: any = useSelector(breadcrumbState);
   useBreadcrumbs();
   return (
-    <div className="flex w-full min-w-0 truncate justify-between items-center">
+    <div className="flex">
       {breadcrumbs.map((crumb: any, i: number) => (
         <div
           className={classNames(
             'text-[16px]',
+            'flex',
+            'max-w-2xl',
             i === breadcrumbs.length - 1 ? 'text-gray-900' : 'text-gray-500'
           )}
           key={`${crumb.label}`}
         >
           {i > 0 && <span className={classNames('mx-2')}>/</span>}
-          <Link className="" to={crumb.url}>
+          <Link className="truncate" to={crumb.url}>
             {crumb.label}
           </Link>
         </div>
@@ -104,6 +107,7 @@ function AppMenu() {
     '/translations': <MergeCellsOutlined />,
     '/payer-backbone': <WalletOutlined />,
     '/users': <IdcardOutlined />,
+    '/devtools': <CompassOutlined />,
   };
 
   return (

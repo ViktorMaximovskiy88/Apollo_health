@@ -4,7 +4,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   useRunSiteScrapeTaskMutation,
   useCancelAllSiteScrapeTasksMutation,
-  useLazyGetScrapeTasksForSiteQuery,
+  useLazyGetScrapeTaskQuery,
 } from './siteScrapeTasksApi';
 import { useGetSiteQuery, useLazyGetSiteDocDocumentsQuery } from '../sites/sitesApi';
 import { CollectionsDataTable } from './CollectionsDataTable';
@@ -15,45 +15,42 @@ import { SiteMenu } from '../sites/SiteMenu';
 import { TaskStatus } from '../../common/scrapeTaskStatus';
 import { MainLayout } from '../../components';
 import { isErrorWithData } from '../../common/helpers';
-import { initialState } from './collectionsSlice';
 import { useAppDispatch } from '../../app/store';
 import { setSiteDocDocumentTableForceUpdate } from '../doc_documents/siteDocDocumentsSlice';
+import { SiteDocDocument } from '../doc_documents/types';
+import { WorkItem, WorkItemOption } from './types';
 
 export function ManualCollectionButton(props: any) {
-  const { site, refetch, runScrape } = props;
+  const { site, refetch, runScrape, siteScrapeTask, setSiteScrapeTask } = props;
   const navigate = useNavigate();
   const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
   const [isLoading, setIsLoading] = useState(false);
   const [searchParams] = useSearchParams();
   const scrapeTaskId = searchParams.get('scrape_task_id');
   const activeStatuses = [TaskStatus.Queued, TaskStatus.Pending, TaskStatus.InProgress];
-  const [getScrapeTasksForSiteQuery] = useLazyGetScrapeTasksForSiteQuery();
   const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
+  const [getScrapeTaskQuery] = useLazyGetScrapeTaskQuery();
   const dispatch = useAppDispatch();
-
-  // Refresh site docs when starting / stopping collection.
-  const mostRecentTask = {
-    limit: 1,
-    skip: 0,
-    sortInfo: initialState.table.sort,
-    filterValue: initialState.table.filter,
-  };
+  const [currentDocs, setCurrentDocs] = useState<Array<SiteDocDocument | undefined>>();
+  const [initialRefreshDocs, setInitialRefreshDocs] = useState(false);
 
   const refreshDocs = async () => {
     if (!site) return;
     const siteId = site._id;
     refetch();
-    const scrapeTasks = await getScrapeTasksForSiteQuery({ ...mostRecentTask, siteId });
-    if (scrapeTasks) {
-      const scrapeTaskId = scrapeTasks.data?.data[0]._id;
-      if (scrapeTaskId) {
-        await getDocDocumentsQuery({ siteId, scrapeTaskId });
-        dispatch(setSiteDocDocumentTableForceUpdate());
-      } else {
-        console.error('refreshDocs unable to get id of most recent scrape task.');
-      }
+    const refreshedDocs = await getDocDocumentsQuery({ siteId, scrapeTaskId });
+    setCurrentDocs(refreshedDocs.data?.data);
+    dispatch(setSiteDocDocumentTableForceUpdate());
+    const { data: refreshedSiteScrapeTask } = await getScrapeTaskQuery(scrapeTaskId);
+    if (refreshedSiteScrapeTask && setSiteScrapeTask) {
+      setSiteScrapeTask(refreshedSiteScrapeTask);
     }
   };
+
+  if ((!siteScrapeTask && scrapeTaskId) || !initialRefreshDocs) {
+    setInitialRefreshDocs(true);
+    refreshDocs();
+  }
 
   async function handleRunManualScrape() {
     try {
@@ -87,33 +84,56 @@ export function ManualCollectionButton(props: any) {
   }
 
   async function handleCancelManualScrape() {
-    if (site?._id) {
-      try {
-        setIsLoading(true);
-        let response: any = await cancelAllScrapes(site!._id);
-        if (response.data?.success) {
-          refreshDocs();
-          setIsLoading(false);
-        } else {
-          setIsLoading(false);
-          notification.error({
-            message: 'Please review and update the following documents',
-            description: response.error.data.detail,
-          });
-        }
-      } catch (err) {
-        if (isErrorWithData(err)) {
-          setIsLoading(false);
-          notification.error({
-            message: 'Error Cancelling Collection',
-            description: `${err.data.detail}`,
-          });
-        } else {
-          setIsLoading(false);
-          notification.error({
-            message: 'Error Cancelling Collection',
-            description: 'Unknown error.',
-          });
+    if (siteScrapeTask && siteScrapeTask.work_list) {
+      // Check if any unhandled work_items before submitting to backend..
+      const unhandled = siteScrapeTask.work_list.filter(
+        (work_item: any) => work_item.selected === WorkItemOption.Unhandled
+      );
+      const unhandledDocNames: (string | undefined)[] = [];
+      unhandled?.map((unhandledDoc: WorkItem) =>
+        unhandledDocNames.push(
+          currentDocs?.filter(
+            (doc: SiteDocDocument | undefined) => doc?._id === unhandledDoc.document_id
+          )[0]?.name
+        )
+      );
+      if (unhandledDocNames.length > 0) {
+        notification.error({
+          message: 'Please review and update the following documents ',
+          description: unhandledDocNames.join(', '),
+        });
+        return;
+      }
+
+      // Stop the collection and refresh docs table.
+      if (site?._id) {
+        try {
+          setIsLoading(true);
+          let response: any = await cancelAllScrapes(site!._id);
+          if (response.data?.success) {
+            refreshDocs();
+            setIsLoading(false);
+          } else {
+            setIsLoading(false);
+            notification.error({
+              message: 'Please review and update the following documents',
+              description: response.data.errors.join(', '),
+            });
+          }
+        } catch (err) {
+          if (isErrorWithData(err)) {
+            setIsLoading(false);
+            notification.error({
+              message: 'Error Cancelling Collection',
+              description: `${err.data.detail}`,
+            });
+          } else {
+            setIsLoading(false);
+            notification.error({
+              message: 'Error Cancelling Collection',
+              description: 'Unknown error.',
+            });
+          }
         }
       }
     }
@@ -130,7 +150,7 @@ export function ManualCollectionButton(props: any) {
       </Button>
     );
   } else {
-    if (!activeStatuses.includes(site.last_run_status)) {
+    if (site.collection_method === 'MANUAL' && !activeStatuses.includes(site.last_run_status)) {
       return (
         <Button className="ml-auto" disabled={isLoading} onClick={handleRunManualScrape}>
           Start Manual Collection
@@ -159,7 +179,7 @@ export function CollectionsPage() {
         } else {
           notification.error({
             message: 'Error Running Collection',
-            description: response.error.data.detail,
+            description: response.errors.join(', '),
           });
         }
       } catch (err) {

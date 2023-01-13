@@ -74,7 +74,7 @@ class BaseDocDocument(BaseModel):
     end_date: datetime | None = None
 
     # Lineage
-    lineage_id: PydanticObjectId | None = None
+    lineage_id: Indexed(PydanticObjectId) | None = None
     previous_doc_doc_id: Indexed(PydanticObjectId) | None = None  # type: ignore
     is_current_version: bool = False
     lineage_confidence: float = 0
@@ -99,6 +99,8 @@ class BaseDocDocument(BaseModel):
     user_edited_fields: list[str] = []
     priority: Indexed(int, pymongo.DESCENDING) = 0  # type: ignore
     is_searchable: bool = False
+
+    hold_type: str | None = None
 
 
 class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixins):
@@ -175,22 +177,25 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
     class Settings:
         indexes = [
             [
-                ("final_effective_date", pymongo.ASCENDING),
-                ("first_collected_date", pymongo.ASCENDING),
                 ("priority", pymongo.DESCENDING),
                 ("classification_status", pymongo.ASCENDING),
-            ],
-            [
                 ("final_effective_date", pymongo.ASCENDING),
                 ("first_collected_date", pymongo.ASCENDING),
+                ("hold_type", pymongo.ASCENDING),
+            ],
+            [
                 ("priority", pymongo.DESCENDING),
                 ("family_status", pymongo.ASCENDING),
-            ],
-            [
                 ("final_effective_date", pymongo.ASCENDING),
                 ("first_collected_date", pymongo.ASCENDING),
+                ("hold_type", pymongo.ASCENDING),
+            ],
+            [
                 ("priority", pymongo.DESCENDING),
                 ("content_extraction_status", pymongo.ASCENDING),
+                ("final_effective_date", pymongo.ASCENDING),
+                ("first_collected_date", pymongo.ASCENDING),
+                ("hold_type", pymongo.ASCENDING),
             ],
             [("locations.site_id", pymongo.ASCENDING)],
             [("locations.link_text", pymongo.ASCENDING)],
@@ -215,7 +220,11 @@ class DocDocumentLimitTags(DocDocument):
         name = "DocDocument"
 
     class Settings:
-        projection = {"therapy_tags": {"$slice": 10}, "indication_tags": {"$slice": 10}}
+        projection = {
+            "therapy_tags": {"$slice": 10},
+            "indication_tags": {"$slice": 10},
+            "doc_vectors": 0,
+        }
 
 
 class UpdateDocDocument(BaseModel, DocumentMixins):
@@ -288,6 +297,7 @@ class ClassificationUpdateDocDocument(BaseModel):
     published_date: datetime | None = None
     end_date: datetime | None = None
     include_later_documents_in_lineage_update: bool = False
+    hold_type: str | None = None
 
 
 class FamilyUpdateDocDocument(BaseModel):
@@ -295,6 +305,7 @@ class FamilyUpdateDocDocument(BaseModel):
     family_hold_info: list[str] | None = None
     document_family_id: PydanticObjectId | None = None
     locations: list[DocDocumentLocation] | None = None
+    hold_type: str | None = None
 
 
 class TranslationUpdateDocDocument(BaseModel):

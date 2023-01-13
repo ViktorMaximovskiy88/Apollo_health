@@ -9,7 +9,7 @@ fixture_path = os.path.join(current_path, "__fixtures__")
 
 
 @pytest.mark.asyncio
-async def test_docx():
+async def test_trademark_symbol():
     file_path = os.path.join(fixture_path, "test_tm.pdf")
 
     parser = pdf.PdfParse(file_path, url=file_path)
@@ -19,3 +19,11 @@ async def test_docx():
     assert "™" in parser.result["text"]
     assert "®" in parser.result["metadata"]["Keywords"]
     assert "™" in parser.result["metadata"]["Keywords"]
+
+
+@pytest.mark.asyncio
+async def test_ocr():
+    file_path = os.path.join(fixture_path, "ocr_pdf.pdf")
+    parser = pdf.PdfParse(file_path, url=file_path)
+    await parser.parse()
+    assert "PREFERRED BRAND NAME DRUG LIST" in parser.result["text"]

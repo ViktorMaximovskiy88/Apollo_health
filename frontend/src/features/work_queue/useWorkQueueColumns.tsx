@@ -1,7 +1,7 @@
 import SelectFilter from '@inovua/reactdatagrid-community/SelectFilter';
 import { useCallback } from 'react';
 import { BaseDocument } from '../../common';
-import { dateDuration, prettyDateUTCFromISO } from '../../common/date';
+import { dateDuration, prettyDateTimeFromISO, prettyDateUTCFromISO } from '../../common/date';
 import { ButtonLink } from '../../components/ButtonLink';
 import { TaskLock } from '../doc_documents/types';
 import { useGetUsersQuery } from '../users/usersApi';
@@ -13,6 +13,8 @@ import { useSelector } from 'react-redux';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import { priorityOptions, priorityStyle } from '../doc_documents/useSiteDocDocumentColumns';
 import { TypeFilterValue } from '@inovua/reactdatagrid-community/types';
+import { useGetWorkQueueByNameQuery, useGetWorkQueueQuery } from './workQueuesApi';
+import { WorkQueue } from './types';
 
 function useSiteSelectOptions() {
   const [getSites] = useLazyGetSitesQuery();
@@ -32,9 +34,21 @@ function useSiteSelectOptions() {
   return { siteOptions };
 }
 
+const useHoldTypes = (queueId?: string) => {
+  const { data: holdWorkQueue } = useGetWorkQueueQuery(queueId);
+  const name = holdWorkQueue?.name.slice(0, holdWorkQueue.name.length - 5) ?? ''; // remove "Hold" from name
+  const { data: workQueue } = useGetWorkQueueByNameQuery({ name });
+  const holdTypes = workQueue?.submit_actions[0].hold_types?.map((holdType) => ({
+    id: holdType,
+    label: holdType,
+  }));
+  return holdTypes ?? null;
+};
+
 export function useWorkQueueColumns(
   queueId: string | undefined,
-  siteNamesById: { [key: string]: string }
+  siteNamesById: { [key: string]: string },
+  wq: WorkQueue | undefined
 ) {
   const { data: users } = useGetUsersQuery();
   const { siteOptions } = useSiteSelectOptions();
@@ -43,7 +57,8 @@ export function useWorkQueueColumns(
   const siteFilter = res.filter?.find((f) => f.name === 'locations.site_id');
   const { data: site } = useGetSiteQuery(siteFilter?.value, { skip: !siteFilter?.value });
   const initialOptions = site ? [{ value: site._id, label: site.name }] : [];
-  const columns = [
+  const holdTypes = useHoldTypes(queueId);
+  let columns = [
     {
       name: 'name',
       header: 'Name',
@@ -166,6 +181,35 @@ export function useWorkQueueColumns(
       },
     },
     {
+      header: 'Hold Type',
+      name: 'hold_type',
+      minWidth: 200,
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        dataSource: holdTypes,
+      },
+      visible: !!holdTypes,
+      render: ({ value: holdType }: { value: string }) => <>{holdType}</>,
+    },
+    {
+      name: 'hold_comment',
+      header: 'Hold Comment',
+      defaultFlex: 0,
+      minWidth: 200,
+      render: ({ data: item }: { data: { hold_comment: string } }) => {
+        return <>{item.hold_comment}</>;
+      },
+    },
+    {
+      name: 'hold_time',
+      header: 'Hold Time',
+      render: ({ value: holdComment }: { value: string }) => {
+        return prettyDateTimeFromISO(holdComment);
+      },
+      defaultFlex: 0,
+      minWidth: 200,
+    },
+    {
       name: 'action',
       header: 'Actions',
       render: ({ data: item }: { data: BaseDocument }) => {
@@ -175,7 +219,14 @@ export function useWorkQueueColumns(
           </ButtonLink>
         );
       },
+      defaultFlex: 0,
+      minWidth: 200,
     },
   ];
+
+  //remove the comment and time columns if not a hold queue
+  if (!wq?.name.includes('Hold')) {
+    columns = columns.filter((col) => !col.name.includes('hold'));
+  }
   return { columns };
 }

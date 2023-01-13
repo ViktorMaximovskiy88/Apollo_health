@@ -74,7 +74,7 @@ export function WorkQueuePage() {
 
   const { isActive, setActive, watermark } = useInterval(10000);
   const { setSiteIds, siteNamesById } = useGetSiteNamesById();
-  const { columns } = useWorkQueueColumns(queueId, siteNamesById);
+  const { columns } = useWorkQueueColumns(queueId, siteNamesById, wq);
 
   const loadData = useCallback(
     async (tableInfo: any) => {
@@ -98,7 +98,6 @@ export function WorkQueuePage() {
   );
 
   if (!wq) return null;
-
   return (
     <MainLayout
       sectionToolbar={

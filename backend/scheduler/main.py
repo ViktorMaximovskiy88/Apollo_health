@@ -2,6 +2,10 @@ from pathlib import Path
 
 import newrelic.agent
 
+import backend.common.models as collection_classes
+from backend.common.models.base_document import BaseDocument
+from backend.common.models.work_queue import WorkQueue, WorkQueueMetric
+
 newrelic.agent.initialize(Path(__file__).parent / "newrelic.ini")
 
 import asyncio
@@ -275,6 +279,33 @@ async def start_hung_task_checker():
         await asyncio.sleep(60)
 
 
+async def start_work_queue_metrics():
+    while True:
+        if datetime.now(tz=timezone.utc).minute != 0:
+            await asyncio.sleep(60)
+            continue
+
+        queues = WorkQueue.find_many({})
+        async for work_queue in queues:
+            Collection: BaseDocument = getattr(collection_classes, work_queue.collection_name)
+            count, l_count, h_count, c_count = await asyncio.gather(
+                Collection.find(work_queue.document_query).count(),
+                Collection.find(work_queue.document_query | {"priority": {"$eq": 1}}).count(),
+                Collection.find(work_queue.document_query | {"priority": {"$eq": 2}}).count(),
+                Collection.find(work_queue.document_query | {"priority": {"$eq": 3}}).count(),
+            )
+            await WorkQueueMetric(
+                queue_name=work_queue.name,
+                total_count=count,
+                low_priority_count=l_count,
+                high_priority_count=h_count,
+                critical_priority_count=c_count,
+                time=datetime.now(tz=timezone.utc),
+            ).save()
+
+        await asyncio.sleep(60)
+
+
 async def start_inactive_task_checker():
     """
     Cancel tasks where last document was scraped more than 1 hour ago
@@ -316,6 +347,7 @@ async def start_scheduler_and_scaler():
     background_tasks.append(asyncio.create_task(start_scheduler()))
     background_tasks.append(asyncio.create_task(start_hung_task_checker()))
     background_tasks.append(asyncio.create_task(start_inactive_task_checker()))
+    background_tasks.append(asyncio.create_task(start_work_queue_metrics()))
     await asyncio.gather(*background_tasks)
 
 

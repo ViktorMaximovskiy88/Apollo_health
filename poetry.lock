@@ -1118,10 +1118,10 @@ files = [
 cffi = ">=1.12"
 
 [package.extras]
-docs = ["sphinx (>=1.6.5,!=1.8.0,!=3.1.0,!=3.1.1)", "sphinx-rtd-theme"]
+docs = ["sphinx (>=1.6.5,!=1.8.0,!=3.1.0,!=3.1.1)", "sphinx_rtd_theme"]
 docstest = ["pyenchant (>=1.6.11)", "sphinxcontrib-spelling (>=4.0.1)", "twine (>=1.12.0)"]
 pep8test = ["black", "flake8", "flake8-import-order", "pep8-naming"]
-sdist = ["setuptools-rust (>=0.11.4)"]
+sdist = ["setuptools_rust (>=0.11.4)"]
 ssh = ["bcrypt (>=3.1.5)"]
 test = ["hypothesis (>=1.11.4,!=3.79.2)", "iso8601", "pretend", "pytest (>=6.2.0)", "pytest-benchmark", "pytest-cov", "pytest-subtests", "pytest-xdist", "pytz"]
 
@@ -2438,29 +2438,31 @@ files = [
 
 [[package]]
 name = "newrelic"
-version = "8.1.0.180"
+version = "8.5.0"
 description = "New Relic Python Agent"
 category = "main"
 optional = false
 python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*"
 files = [
-    {file = "newrelic-8.1.0.180-cp27-cp27m-manylinux1_x86_64.whl", hash = "sha256:3bfbd635770e91891e540c235a084cd168f3bf25720ed1e02308fa0341b2d759"},
-    {file = "newrelic-8.1.0.180-cp27-cp27m-manylinux2010_x86_64.whl", hash = "sha256:558bdd7f43befc811798546979ee67305cfd09283eac08d9664e2b52135a18f1"},
-    {file = "newrelic-8.1.0.180-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:eaf953806904b43086272b0d016ea13bd29620fc1daa93e7f1d8882357b3d944"},
-    {file = "newrelic-8.1.0.180-cp27-cp27mu-manylinux2010_x86_64.whl", hash = "sha256:d29da83a9fbae6e637e5af35b27d1299c253f96d0dff46f9732bd237790c05f4"},
-    {file = "newrelic-8.1.0.180-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c3898c3c5cb92b7766a69d1107f63087c98e3f045fcd7f94fde6232acd9d0bd9"},
-    {file = "newrelic-8.1.0.180-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:0085386254498bb491d34563f7035eeeb5ff53e0b940cd965581d541100d8411"},
-    {file = "newrelic-8.1.0.180-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c3ccc7d1dc0bdbf36da4eafc5cd57f9209032b68d16521579ba4f67e28487109"},
-    {file = "newrelic-8.1.0.180-cp37-cp37m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:3741356cbc027d7e300a290d3b96ab6c5e16c68d092b26241e799f335f8be821"},
-    {file = "newrelic-8.1.0.180-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:92b4bfc6d67ffab69065b0f892af0ce7f6532a06b66d23fed2445cf2ddc2c828"},
-    {file = "newrelic-8.1.0.180-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:65ec29529d044102e40a4f19816c193ea3f3a99233fa2cb4dca961d767aebcb9"},
-    {file = "newrelic-8.1.0.180-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ebf12c19e474b35dfe58311f9a946bc96101347e68f9eeafe893b9bbb93a5aa3"},
-    {file = "newrelic-8.1.0.180-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:b2f97d836e2a725e43bae7e9ff7548405529bcbb18380e0f2364ff1f0f6793e7"},
-    {file = "newrelic-8.1.0.180.tar.gz", hash = "sha256:c769e82afcc80062c5274dabe1fa139ef89b0fb1b4dfa422c47296c952e2e766"},
+    {file = "newrelic-8.5.0-cp27-cp27m-manylinux1_x86_64.whl", hash = "sha256:d79df5fb486ca2a0997f4f9cda9a7e8de39ae07df8161b5ab2742f22bcf50974"},
+    {file = "newrelic-8.5.0-cp27-cp27m-manylinux2010_x86_64.whl", hash = "sha256:37821d6d47288605ed9de138b8ec5498bd597dd91bc296af7733e5b864c40cc1"},
+    {file = "newrelic-8.5.0-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:05ceedb760a2f76fc8477f969520426656f6949d5b5bb5634a430a9d9d5c18fb"},
+    {file = "newrelic-8.5.0-cp27-cp27mu-manylinux2010_x86_64.whl", hash = "sha256:a5650024071525256df7d74a9bc887840889c35d1e7ade51eda8eedb25d85e95"},
+    {file = "newrelic-8.5.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a8aeae34a518ac961e6c972f9d9479a008925faa585c9a89a9307c79927d92e4"},
+    {file = "newrelic-8.5.0-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2d12c4c96187c7a51958d3145dcbfebcbb6fe48d9d3219804e558da3769992a3"},
+    {file = "newrelic-8.5.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:720929793f4e17838b354fa997caa0d6474710149ac68c3aea23c29ba9123d1c"},
+    {file = "newrelic-8.5.0-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b425ec7653bc7e6e73f2a7f55e707cd9341ac90696c0f3dcafc3ac6776aec959"},
+    {file = "newrelic-8.5.0-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f3f66de81c4cce20474017397f372ef11cb52a629c97c2e1fe5c445e31c2bf07"},
+    {file = "newrelic-8.5.0-cp37-cp37m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fd33ec7e227701ceafb8e3894dcc3dafae5dbffc4a43814ad9e7976fdb418696"},
+    {file = "newrelic-8.5.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d529e272cb433cee50bab89e2f01ec57ac1b8511845f9b777dfadd3eab3842dd"},
+    {file = "newrelic-8.5.0-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c006ff70fbc87fe1f201cec0d22b5d209a58bbe31a2530fefe457f051ce44b86"},
+    {file = "newrelic-8.5.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8810ea27ae22c7621caf61971f3b3ab1356d237317c2cffe80f605b73f5bcb37"},
+    {file = "newrelic-8.5.0-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9571efebcc330c157cab9a8d0c6d55f6d7ec146370c59423716534e9989d880d"},
+    {file = "newrelic-8.5.0.tar.gz", hash = "sha256:6a13e6956042eeb8cf013a219f936c88293b8d6460234c5d772fd53640264d3a"},
 ]
 
 [package.extras]
-infinite-tracing = ["grpcio", "protobuf (<4)"]
+infinite-tracing = ["grpcio", "protobuf"]
 
 [[package]]
 name = "nmslib"
@@ -3469,6 +3471,22 @@ python-versions = ">=3"
 files = [
     {file = "pysbd-0.3.4-py3-none-any.whl", hash = "sha256:cd838939b7b0b185fcf86b0baf6636667dfb6e474743beeff878e9f42e022953"},
 ]
+
+[[package]]
+name = "pytesseract"
+version = "0.3.10"
+description = "Python-tesseract is a python wrapper for Google's Tesseract-OCR"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pytesseract-0.3.10-py3-none-any.whl", hash = "sha256:8f22cc98f765bf13517ead0c70effedb46c153540d25783e04014f28b55a5fc6"},
+    {file = "pytesseract-0.3.10.tar.gz", hash = "sha256:f1c3a8b0f07fd01a1085d451f5b8315be6eec1d5577a6796d46dc7a62bd4120f"},
+]
+
+[package.dependencies]
+packaging = ">=21.3"
+Pillow = ">=8.0.0"
 
 [[package]]
 name = "pytest"
@@ -4919,4 +4937,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "3.10.3"
-content-hash = "52ba42cc85dc4e31e59894947c22ddd44d3b107ec1f16e363802b8519d7e67a1"
+content-hash = "90bcb07c475c530269b8746b466fdda46580bc2174fef535cad3b0931c36a0e8"

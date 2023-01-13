@@ -1,7 +1,16 @@
-export const TextEllipsis = ({ text, rtl = false }: { text: string; rtl?: boolean }) => {
+import classNames from 'classnames';
+export const TextEllipsis = ({
+  className = '',
+  text,
+  rtl = false,
+}: {
+  className?: string;
+  text: string | JSX.Element;
+  rtl?: boolean;
+}) => {
   return (
     <div
-      className="flex-inline"
+      className={classNames('flex-inline', className)}
       style={{
         textAlign: 'left',
         direction: rtl ? 'rtl' : 'initial',
