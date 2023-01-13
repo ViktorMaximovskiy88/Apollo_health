@@ -205,6 +205,34 @@ If everything has gone well, go to <http://localhost:3000> and you should be red
 
 If that succeeds, try creating a site. I recommend Molina HealthCare OH Drug at <https://www.molinahealthcare.com/providers/oh/duals/drug/formulary.aspx>. Once created, go into it and click the 'Run Collection' button and hope for the best, watching the logs for activity/errors.
 
+## Common Issues
+
+### Local Redirect on Startup
+
+**Problem:** When starting the frontend project your browser redirects to `https://undefined/authorize?redirect_uri=xxxx`.
+
+To address this, ensure the backend is running. If it is and this still occurs, you may need to remove a line from your `~/etc/hosts` file. Open the file and comment out the line `::1 localhost`.
+
+Your file should look something like this after doing so.
+
+```
+##
+# Host Database
+#
+# localhost is used to configure the loopback interface
+# when the system is booting.  Do not change this entry.
+##
+127.0.0.1    localhost
+255.255.255.255    broadcasthost
+#::1             localhost
+# Added by Docker Desktop
+# To allow the same kube context to work on the host and the container:
+127.0.0.1 kubernetes.docker.internal
+# End of section
+```
+
+After saving the file and restarting the app, this should fix this issue.
+
 ### Access to Local Mongo and Minio
 
 Connect to your local mongo using the following info:

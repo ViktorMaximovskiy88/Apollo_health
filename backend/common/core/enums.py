@@ -90,3 +90,9 @@ class TagUpdateStatus(str, Enum):
     CHANGED = "CHANGED"
     ADDED = "ADDED"
     REMOVED = "REMOVED"
+
+
+class CmsDocType(Enum):
+    NCD = 1
+    LCD = 2
+    LCA = 3

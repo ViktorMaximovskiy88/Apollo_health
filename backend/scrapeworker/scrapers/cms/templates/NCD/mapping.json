@@ -1,4 +1,5 @@
 {
+  "core_file": "ncd_trkg",
   "url_identifiers": ["NCDId", "ncdver"],
   "data_set_identifiers": ["NCD_id", "NCD_vrsn_num"],
   "mapping": [

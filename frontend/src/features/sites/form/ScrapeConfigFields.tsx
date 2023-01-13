@@ -2,6 +2,31 @@ import { Input, Form, Select, Tooltip, Switch, Checkbox } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 
 import { useGetProxiesQuery } from '../../proxies/proxiesApi';
+import { ScrapeMethod } from '../types';
+
+export function CmsDocTypes() {
+  const scrapeMethod: ScrapeMethod = Form.useWatch(['scrape_method']);
+  const docTypes = [
+    { value: 1, label: 'NCD' },
+    { value: 2, label: 'LCD' },
+    { value: 3, label: 'LCA' },
+  ];
+
+  return (
+    <>
+      {scrapeMethod === ScrapeMethod.CMS ? (
+        <Form.Item
+          name={['scrape_method_configuration', 'cms_doc_types']}
+          label="CMS Document Types"
+        >
+          <Checkbox.Group options={docTypes} className="flex" />
+        </Form.Item>
+      ) : (
+        <></>
+      )}
+    </>
+  );
+}
 
 export function DocumentExtensions() {
   const extensions = [

@@ -564,12 +564,6 @@ class ScrapeWorker:
         extension = get_extension_from_path_like(url)
         return extension in ["docx", "pdf", "xlsx"]
 
-    def is_cms_url(self, url: str) -> bool:
-        return (
-            "https://www.cms.gov/medicare-coverage-database" in url
-            and self.site.scrape_method == "CMSScrape"
-        )
-
     # NOTE: this is the effective entryppoint from main.py
     async def run_scrape(self):
         all_downloads: list[DownloadContext] = []
@@ -583,12 +577,15 @@ class ScrapeWorker:
         for url in base_urls:
             # skip the parse step and download
             self.log.info(f"Run scrape for {url}")
-
-            if self.is_cms_url(url):
-                self.log.info(f"Skip scrape & process CMS url: {url}")
+            if self.site.scrape_method == "CMSScrape":
+                self.log.info("Skip scrape & process CMS")
                 proxies = await self.get_proxy_settings()
                 cms_scraper = CMSScrapeController(
-                    url, self.downloader, self.doc_client, proxies, self.log
+                    doc_types=self.site.scrape_method_configuration.cms_doc_types,
+                    downloader=self.downloader,
+                    doc_client=self.doc_client,
+                    proxies=proxies,
+                    log=self.log,
                 )
                 downloads = await cms_scraper.execute()
                 all_downloads += downloads
