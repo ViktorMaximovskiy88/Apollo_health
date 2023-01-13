@@ -123,5 +123,5 @@ def aws_get_motor(
     return (client, client[database])
 
 
-async def aws_init_db_(database: AsyncIOMotorDatabase):
+async def aws_init_db(database: AsyncIOMotorDatabase):
     await init_beanie(database=database, document_models=document_models)
