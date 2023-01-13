@@ -8,7 +8,7 @@ import pandas as pd
 sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 from pymongo import UpdateOne
 
-from backend.common.db.init import init_db
+from backend.common.db.init import aws_get_motor, aws_init_db, init_db
 from backend.common.models.doc_document import DocDocument, PydanticObjectId
 from backend.common.models.site import ScrapeMethodConfiguration, Site
 from backend.common.models.user import User
@@ -16,12 +16,24 @@ from backend.scrapeworker.doc_type_matcher import DocTypeMatcher
 
 log = logging.getLogger(__name__)
 
+aws_mongo = {
+    "host": "apollo-dev-use1-mmit-01.3qm7h.mongodb.net",
+    "database": "source-hub",
+    "user": "access_key",
+    "password": "secret_key",
+    "session": "session_id",
+}
+
 
 @click.group()
 @click.pass_context
 @click.option("--file", help="File to parse", required=True, type=str)
 async def par(ctx, file: str):
-    await init_db()
+    if aws_mongo:
+        client, database = aws_get_motor(**aws_mongo)
+        await aws_init_db(database=database)
+    else:
+        await init_db()
 
 
 @par.command()
@@ -153,6 +165,7 @@ async def navigator_import(ctx):
 
     for name, base_urls in sites.items():
         if len(base_urls) == 0:
+            log.info(f"skipping name={name}")
             continue
 
         new_site = Site(
