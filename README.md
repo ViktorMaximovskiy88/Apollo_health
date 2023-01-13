@@ -49,7 +49,7 @@ Hi developer. See the [development](/docs/DEVELOPMENT.md) readme.
 
 **A:** Currently the frontend app queries the backend for its env config. If the backend isnt running you will get redirected to the above.
 
-> **FIX** Ensure your backend is running on the expected host:port (usually `localhost:8000`) and navigate to the frontend at `localhost:3000`
+> **FIX** Ensure your backend is running on the expected host:port (usually `localhost:8000`) and navigate to the frontend at `localhost:3000`. If the backend is running and you still get redirected, refer to the "Common Issues" section of `DEVELOPMENT.md` for instructions on updating your `etc/hosts` file.
 
 **Q:** I run `poetry install` on my Mac M1 and get errors. Whats the deal?
 
