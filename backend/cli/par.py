@@ -145,11 +145,16 @@ async def navigator_import(ctx):
         if not sites.get(name, None):
             sites[name] = []
 
-        sites[name].append(
-            {"url": row["WebsiteURL"], "name": row["SourceType"], "status": "ACTIVE"},
-        )
+        exists = await Site.find_one({"base_urls.url": row["WebsiteURL"]})
+        if not exists:
+            sites[name].append(
+                {"url": row["WebsiteURL"], "name": row["SourceType"], "status": "ACTIVE"},
+            )
 
     for name, base_urls in sites.items():
+        if len(base_urls) == 0:
+            continue
+
         new_site = Site(
             name=name,
             creator_id=user.id,
