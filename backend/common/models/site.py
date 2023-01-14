@@ -6,6 +6,7 @@ from pydantic import Field, HttpUrl
 from backend.common.core.enums import (
     CmsDocType,
     CollectionMethod,
+    ScrapeMethod,
     SearchableType,
     SectionType,
     SiteStatus,
@@ -93,7 +94,7 @@ class NewSite(BaseModel):
     name: str
     base_urls: list[BaseUrl] = []
     collection_method: str | None = CollectionMethod.Automated
-    scrape_method: str | None = ""
+    scrape_method: ScrapeMethod | None = ScrapeMethod.Simple
     scrape_method_configuration: ScrapeMethodConfiguration = ScrapeMethodConfiguration()
     tags: list[str] = []
     playbook: str | None = None
@@ -108,7 +109,7 @@ class NewSite(BaseModel):
 class UpdateSite(BaseModel):
     name: str | None = None
     base_urls: list[BaseUrl] | None = None
-    scrape_method: str | None = None
+    scrape_method: ScrapeMethod | None = None
     collection_method: str | None = None
     collection_hold: datetime | None = None
     tags: list[str] | None = None

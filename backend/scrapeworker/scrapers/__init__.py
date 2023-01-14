@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 
 from playwright.async_api import BrowserContext, Page
 
+from backend.common.core.enums import ScrapeMethod
 from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.playbook import PlaybookContext
@@ -36,12 +37,14 @@ class ScrapeHandler:
         playbook_context: PlaybookContext,
         log: Logger,
         config: ScrapeMethodConfiguration,
+        scrape_method: ScrapeMethod | None = None,
     ) -> None:
         self.context = context
         self.page = page
         self.playbook_context = playbook_context
         self.log = log
         self.config = config
+        self.scrape_method = scrape_method
 
     def __is_google(self, url: str) -> bool:
         parsed = urlparse(url)
@@ -75,6 +78,7 @@ class ScrapeHandler:
                 url=url,
                 log=self.log,
                 metadata=metadata,
+                scrape_method=self.scrape_method,
             )
 
             if not await scraper.is_applicable():

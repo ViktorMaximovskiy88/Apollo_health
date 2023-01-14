@@ -17,7 +17,7 @@ from tenacity._asyncio import AsyncRetrying
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_random_exponential
 
-from backend.common.core.enums import TaskStatus
+from backend.common.core.enums import ScrapeMethod, TaskStatus
 from backend.common.core.log import logging
 from backend.common.models.doc_document import DocDocument, IndicationTag, TherapyTag
 from backend.common.models.document import RetrievedDocument
@@ -189,7 +189,10 @@ class ScrapeWorker:
     def is_unexpected_html(self, download: DownloadContext):
         return download.file_extension == "html" and (
             "html" not in self.site.scrape_method_configuration.document_extensions
-            and (self.site.scrape_method != "HtmlScrape" and self.site.scrape_method != "CMSScrape")
+            and (
+                self.site.scrape_method != ScrapeMethod.Html
+                and self.site.scrape_method != ScrapeMethod.CMS
+            )
         )
 
     async def attempt_download(self, download: DownloadContext):
@@ -284,8 +287,8 @@ class ScrapeWorker:
 
             if download.file_extension == "html" and (
                 "html" in scrape_method_config.document_extensions
-                or self.site.scrape_method == "HtmlScrape"
-                or self.site.scrape_method == "CMSScrape"
+                or self.site.scrape_method == ScrapeMethod.Html
+                or self.site.scrape_method == ScrapeMethod.CMS
             ):
                 async for pdf_path in self.html_to_pdf(url, download, checksum, temp_path):
                     await pdf.PdfParse(
@@ -484,6 +487,8 @@ class ScrapeWorker:
         # this may move further down depending on the level of fail we record;
 
         await link_base_task.save()
+
+        # TODO wait_for_desired_content is for text; lets do custom selectors
         await self.wait_for_desired_content(page)
 
         try:
@@ -508,13 +513,13 @@ class ScrapeWorker:
             async for (page, playbook_context) in self.playbook.run_playbook(
                 base_page, skip_playbook=skip_playbook
             ):
-
                 scrape_handler = ScrapeHandler(
                     context=context,
                     page=page,
                     playbook_context=playbook_context,
                     log=self.log,
                     config=self.site.scrape_method_configuration,
+                    scrape_method=self.site.scrape_method,
                 )
                 if await self.search_crawler.is_searchable(page):
                     async for code in self.search_crawler.run_searchable(page, playbook_context):
@@ -577,7 +582,7 @@ class ScrapeWorker:
         for url in base_urls:
             # skip the parse step and download
             self.log.info(f"Run scrape for {url}")
-            if self.site.scrape_method == "CMSScrape":
+            if self.site.scrape_method == ScrapeMethod.CMS:
                 self.log.info("Skip scrape & process CMS")
                 proxies = await self.get_proxy_settings()
                 cms_scraper = CMSScrapeController(

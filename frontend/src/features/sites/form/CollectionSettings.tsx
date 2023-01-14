@@ -37,6 +37,7 @@ function ScrapeMethodSelect() {
     { value: ScrapeMethod.Simple, label: 'Simple Document Scrape' },
     { value: ScrapeMethod.Html, label: 'Direct HTML Scrape' },
     { value: ScrapeMethod.CMS, label: 'CMS Scrape' },
+    { value: ScrapeMethod.Tricare, label: 'Tricare Scrape' },
   ];
 
   return (
