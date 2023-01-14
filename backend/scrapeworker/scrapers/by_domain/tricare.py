@@ -31,6 +31,7 @@ class TricareScraper(PlaywrightBaseScraper):
         # # step 1: get search term data from typeahead
         search_results = await self._search_for_terms(search_terms)
 
+        unique_urls = set()
         # step 2: get search results from price API
         for search_params in search_results:
             pricing_result = await self._get_search_term_pricing(search_params)
@@ -57,17 +58,19 @@ class TricareScraper(PlaywrightBaseScraper):
 
                     url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/forms/content"  # noqa
                     url += f"?repository={document['repository']}&documentId={document['documentId']}"  # noqa
-                    # TODO look at liams changes for cookies
-                    cookies = await self.context.cookies(self.page.url)
-                    downloads.append(
-                        DownloadContext(
-                            metadata=metadata,
-                            request=Request(
-                                url=url,
-                                cookies=cookies,
-                            ),
+                    if not url in unique_urls:
+                        unique_urls.add(url)
+                        # TODO look at liams changes for cookies
+                        cookies = await self.context.cookies(self.page.url)
+                        downloads.append(
+                            DownloadContext(
+                                metadata=metadata,
+                                request=Request(
+                                    url=url,
+                                    cookies=cookies,
+                                ),
+                            )
                         )
-                    )
 
         return downloads
 
