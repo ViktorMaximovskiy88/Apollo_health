@@ -118,6 +118,7 @@ class TricareScraper(PlaywrightBaseScraper):
 
                     url = "https://www.express-scripts.com/frontendservice/drugpricing/2/fst/drug/forms/content"  # noqa
                     url += f"?repository={document['repository']}&documentId={document['documentId']}"  # noqa
+                    # TODO look at liams changes for cookies
                     cookies = await self.page.cookies()
                     downloads.append(
                         DownloadContext(
