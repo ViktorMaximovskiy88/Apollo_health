@@ -82,7 +82,7 @@ class ScrapeHandler:
                 metadata=metadata,
                 scrape_method=self.scrape_method,
             )
-            print(url, self.scrape_method, "JAL 1")
+
             if not await scraper.is_applicable():
                 continue
 

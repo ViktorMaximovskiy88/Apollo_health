@@ -23,7 +23,7 @@ class TricareScraper(PlaywrightBaseScraper):
         timeout = self.config.wait_for_timeout_ms
         tricare_url = "https://www.express-scripts.com/frontend/open-enrollment/tricare/fst/#/"
         # TODO need to get these terms added to somewhere....
-        search_terms = ["adipex"]
+        search_terms = ["adipex", "simvastatin", "zocor"]
 
         await self.page.goto(tricare_url)
         await self.page.locator("#formularySearchDefault").wait_for(timeout=timeout)
@@ -131,7 +131,7 @@ class TricareScraper(PlaywrightBaseScraper):
         if self._has_valid_document(result):
             return result["drugForms"]
         else:
-            self.log.info("no document data")
+            self.log.info(f"no document data for {params['drug']}")
             return []
 
     def _map_seach_result(self, med_entry: dict):
