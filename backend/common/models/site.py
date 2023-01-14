@@ -3,7 +3,13 @@ from datetime import datetime
 from beanie import PydanticObjectId
 from pydantic import Field, HttpUrl
 
-from backend.common.core.enums import CollectionMethod, SearchableType, SectionType, SiteStatus
+from backend.common.core.enums import (
+    CmsDocType,
+    CollectionMethod,
+    SearchableType,
+    SectionType,
+    SiteStatus,
+)
 from backend.common.models.base_document import BaseDocument, BaseModel
 from backend.common.models.pipeline import SitePipelineStages
 
@@ -50,6 +56,7 @@ class ScrapeMethodConfiguration(BaseModel):
     html_exclusion_selectors: list[AttrSelector] = []
     focus_section_configs: list[FocusSectionConfig] = []
     allow_docdoc_updates: bool = False
+    cms_doc_types: list[CmsDocType] = []
 
 
 class UpdateScrapeMethodConfiguration(BaseModel):
@@ -72,6 +79,7 @@ class UpdateScrapeMethodConfiguration(BaseModel):
     html_exclusion_selectors: list[AttrSelector] = []
     focus_section_configs: list[FocusSectionConfig] | None = None
     allow_docdoc_updates: bool | None = None
+    cms_doc_types: list[CmsDocType] = []
 
 
 class BaseUrl(BaseModel):

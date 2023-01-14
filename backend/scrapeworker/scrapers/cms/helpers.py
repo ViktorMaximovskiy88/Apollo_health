@@ -81,6 +81,20 @@ def search_data_frame(
         return []
 
 
+def get_data_source_item(
+    name: str, data_source: list[dict[str, str | DataFrame]]
+) -> DataFrame | None:
+    """
+    Retrieve a DataFrame by csv file name.
+    :param name: csv file name (without extension)
+    :return: Target DataFrame
+    """
+    found_items = [item for item in data_source if item["file"] == name]
+    if len(found_items) > 0:
+        return found_items[0]["content"]
+    return None
+
+
 def greater_than_today(string_date: str) -> bool:
     """
     Check if the provided date is greater than today

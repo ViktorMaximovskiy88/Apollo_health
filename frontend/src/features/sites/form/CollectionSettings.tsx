@@ -2,6 +2,7 @@ import { Input, Form, Select, Radio, Typography } from 'antd';
 
 import { CollectionMethod, ScrapeMethod, Site } from '../types';
 import {
+  CmsDocTypes,
   DocumentExtensions,
   UrlKeywords,
   ProxyExclusions,
@@ -119,6 +120,7 @@ export function CollectionSettings({ initialValues }: CollectionSettingsPropType
           getFieldValue('collection_method') === CollectionMethod.Automated ? (
             <>
               <ScrapeMethodSelect />
+              <CmsDocTypes />
               <DocumentExtensions />
               <UrlKeywords />
               <HtmlScrapeConfig scrapeMethod={currentScrapeMethod} />

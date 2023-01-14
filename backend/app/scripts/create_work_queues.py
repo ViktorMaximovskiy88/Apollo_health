@@ -119,6 +119,14 @@ async def family_queues():
                 submit_action={"family_status": "APPROVED", "family_hold_info": []},
                 primary=True,
             ),
+            SubmitAction(
+                label="Reject Classification",
+                submit_action={
+                    "classification_status": "HOLD",
+                    "family_status": "PENDING",
+                },
+                primary=True,
+            ),
         ],
     ).save()
     await WorkQueue(
@@ -139,6 +147,14 @@ async def family_queues():
             SubmitAction(
                 label="Approve",
                 submit_action={"family_status": "APPROVED", "family_hold_info": []},
+                primary=True,
+            ),
+            SubmitAction(
+                label="Reject Classification",
+                submit_action={
+                    "classification_status": "HOLD",
+                    "family_status": "PENDING",
+                },
                 primary=True,
             ),
         ],
@@ -173,6 +189,22 @@ async def translation_config_queues():
                 submit_action={"content_extraction_status": "APPROVED", "extraction_hold_info": []},
                 primary=True,
             ),
+            SubmitAction(
+                label="Reject Classification",
+                submit_action={
+                    "classification_status": "HOLD",
+                    "family_status": "PENDING",
+                },
+                primary=True,
+            ),
+            SubmitAction(
+                label="Reject Family",
+                submit_action={
+                    "family_status": "HOLD",
+                    "content_extraction_status": "PENDING",
+                },
+                primary=True,
+            ),
         ],
     ).save()
     await WorkQueue(
@@ -194,6 +226,22 @@ async def translation_config_queues():
             SubmitAction(
                 label="Approve",
                 submit_action={"content_extraction_status": "APPROVED", "extraction_hold_info": []},
+                primary=True,
+            ),
+            SubmitAction(
+                label="Reject Classification",
+                submit_action={
+                    "classification_status": "HOLD",
+                    "family_status": "PENDING",
+                },
+                primary=True,
+            ),
+            SubmitAction(
+                label="Reject Family",
+                submit_action={
+                    "family_status": "HOLD",
+                    "content_extraction_status": "PENDING",
+                },
                 primary=True,
             ),
         ],

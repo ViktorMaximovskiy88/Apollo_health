@@ -44,6 +44,7 @@ export interface Site extends BaseDocument {
     html_attr_selectors: AttrSelector[];
     html_exclusion_selectors: AttrSelector[];
     focus_section_configs: FocusSectionConfig[];
+    cms_doc_types: CmsDocType[];
   };
   tags: string[];
   disabled: boolean;
@@ -97,4 +98,10 @@ export enum SectionType {
   Therapy = 'THERAPY',
   Indication = 'INDICATION',
   Key = 'KEY',
+}
+
+export enum CmsDocType {
+  NCD = 1,
+  LCD = 2,
+  LCA = 3,
 }
