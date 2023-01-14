@@ -8,6 +8,9 @@ class TricareScraper(PlaywrightBaseScraper):
     type: str = "Tricare"
     downloads: list[DownloadContext] = []
 
+    def css_selector(self) -> str:
+        return ""
+
     async def is_applicable(self) -> bool:
         self.log.debug(f"self.parsed_url.netloc={self.parsed_url.netloc}")
         result = self.scrape_method == ScrapeMethod.Tricare
@@ -25,19 +28,26 @@ class TricareScraper(PlaywrightBaseScraper):
         await self.page.goto(tricare_url)
         await self.page.locator("#formularySearchDefault").wait_for(timeout=timeout)
 
-        # step 1: get search term data from typeahead
+        # # step 1: get search term data from typeahead
         search_results = await self._search_for_terms(search_terms)
 
         # step 2: get search results from price API
         for search_params in search_results:
             pricing_result = await self._get_search_term_pricing(search_params)
             if pricing_result:
+                pricing_result["ndc"] = search_params["ndc"]
+                pricing_result["hicl"] = search_params["hicl"]
+                pricing_result["gcn"] = search_params["gcn"]
+                pricing_result["specificTherapeuticClassCode"] = search_params[
+                    "specificTherapeuticClassCode"
+                ]
+
                 # TODO refactor...
                 # step 3: get content aka docs
                 documents = await self._get_document_list(pricing_result)
                 for document in documents:
                     name: str = (
-                        f"{search_params['search_term']} {document['type']}"  # we have type too
+                        f"{search_params['search_token']} {document['type']}"  # we have type too
                     )
 
                     metadata: Metadata = Metadata(
@@ -45,10 +55,10 @@ class TricareScraper(PlaywrightBaseScraper):
                         base_url=self.page.url,  # self.base_url # 'real one' or tricare?
                     )
 
-                    url = "https://www.express-scripts.com/frontendservice/drugpricing/2/fst/drug/forms/content"  # noqa
+                    url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/forms/content"  # noqa
                     url += f"?repository={document['repository']}&documentId={document['documentId']}"  # noqa
                     # TODO look at liams changes for cookies
-                    cookies = await self.page.cookies()
+                    cookies = await self.context.cookies(self.page.url)
                     downloads.append(
                         DownloadContext(
                             metadata=metadata,
@@ -64,12 +74,11 @@ class TricareScraper(PlaywrightBaseScraper):
     async def _search_for_terms(self, search_terms: list[str]) -> list[dict]:
         results = []
         for search_term in search_terms:
-            search_url = (
-                f"frontendservice/drugpricing/2/fst/drug/search?name={search_term}&context=fst"
-            )
-            search_result = await self.page.request.get(search_url)
+            search_url = f"https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/search?name={search_term}&context=fst"
+            response = await self.page.request.get(search_url)
+            search_result = await response.json()
 
-            if not len(search_result):
+            if isinstance(search_result, list) and not len(search_result):
                 continue
 
             for result in search_result:
@@ -93,8 +102,9 @@ class TricareScraper(PlaywrightBaseScraper):
             "patientGender": "female",
             "includeMailPricing": True,
         }
-        url = "frontendservice/drugpricing/2/fst/drug/pricing"
-        result = await self.page.request.post(url, data=request_data)
+        url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/pricing"
+        response = await self.page.request.post(url, data=request_data)
+        result = await response.json()
 
         if self._has_valid_pricing(result):
             return self._map_pricing_result(result["mailPricing"], result["retailPricings"][0])
@@ -114,14 +124,12 @@ class TricareScraper(PlaywrightBaseScraper):
             "drug": params["drug"],
             "stepTherapyRequired": params["stepTherapyRequired"],
         }
-        url = "frontendservice/drugpricing/2/fst/drug/forms"
-        result = await self.page.request.post(url, data=request_data)
+        url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/forms"
+        response = await self.page.request.post(url, data=request_data)
+        result = await response.json()
 
         if self._has_valid_document(result):
-            return [
-                {"docId": document["documentId"], "repository": document["repository"]}
-                for document in result["drugForms"]
-            ]
+            return result["drugForms"]
         else:
             self.log.info("no document data")
             return []

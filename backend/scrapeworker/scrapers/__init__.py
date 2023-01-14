@@ -12,6 +12,7 @@ from backend.scrapeworker.playbook import PlaybookContext
 from backend.scrapeworker.scrapers.aspnet_webform import AspNetWebFormScraper
 from backend.scrapeworker.scrapers.by_domain.formulary_navigator import FormularyNavigatorScraper
 from backend.scrapeworker.scrapers.by_domain.humana import HumanaScraper
+from backend.scrapeworker.scrapers.by_domain.tricare import TricareScraper
 from backend.scrapeworker.scrapers.direct_download import (
     DirectDownloadScraper,
     PlaywrightBaseScraper,
@@ -20,12 +21,13 @@ from backend.scrapeworker.scrapers.javascript_click import JavascriptClick
 from backend.scrapeworker.scrapers.targeted_html import TargetedHtmlScraper
 
 scrapers: list[Type[PlaywrightBaseScraper]] = [
-    AspNetWebFormScraper,
-    DirectDownloadScraper,
-    JavascriptClick,
-    TargetedHtmlScraper,
-    HumanaScraper,
-    FormularyNavigatorScraper,
+    # AspNetWebFormScraper,
+    # DirectDownloadScraper,
+    # JavascriptClick,
+    # TargetedHtmlScraper,
+    # HumanaScraper,
+    # FormularyNavigatorScraper,
+    TricareScraper,
 ]
 
 
@@ -80,7 +82,7 @@ class ScrapeHandler:
                 metadata=metadata,
                 scrape_method=self.scrape_method,
             )
-
+            print(url, self.scrape_method, "JAL 1")
             if not await scraper.is_applicable():
                 continue
 

@@ -496,7 +496,7 @@ class ScrapeWorker:
         except PlaybookException as ex:
             raise ex
         except Exception as ex:
-            self.log.error(ex, stack_info=True)
+            self.log.error(ex, exc_info=ex)
         finally:
             if context:
                 await context.close()
@@ -605,7 +605,7 @@ class ScrapeWorker:
                 )
                 all_downloads.append(download)
                 continue
-
+            print(url, url)
             all_downloads += await self.queue_downloads(url, url)
             if self.site.scrape_method_configuration.follow_links:
                 self.log.debug(f"Follow links for {url}")
