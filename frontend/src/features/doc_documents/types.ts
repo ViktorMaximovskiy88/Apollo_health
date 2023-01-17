@@ -38,6 +38,25 @@ export interface IndicationTag {
   text_area?: [number, number];
 }
 
+export interface DocumentSection {
+  key_text: string;
+  section_status?: TagUpdateStatus;
+  current_page?: number | null;
+  prev_page?: number | null;
+}
+
+export interface TagComparison {
+  current_doc_id: string;
+  prev_doc_id: string;
+  therapy_tag_sections: DocumentSection[];
+  indication_tag_sections: DocumentSection[];
+}
+
+export enum TagType {
+  Indication = 'indication',
+  Therapy = 'therapy',
+}
+
 export interface UIIndicationTag extends IndicationTag, BaseDocTag {}
 export interface UITherapyTag extends TherapyTag, BaseDocTag {}
 export type DocumentTag = UIIndicationTag | UITherapyTag;
@@ -49,15 +68,16 @@ export interface TaskLock {
 }
 
 export interface CompareRequest {
-  current_checksum: string | undefined;
-  previous_checksum: string | undefined;
+  current_id?: string;
+  prev_id?: string;
 }
 
 export interface CompareResponse extends BaseDocument {
   exists: boolean;
   pending: boolean;
-  new_key: string | undefined;
-  prev_key: string | undefined;
+  new_key?: string;
+  prev_key?: string;
+  tag_comparison?: TagComparison;
 }
 
 export interface DocDocument extends BaseDocument {

@@ -71,6 +71,13 @@ class UpdateIndicationTag(BaseModel):
     text_area: tuple[int, int] | None = None
 
 
+class DocumentSection(BaseModel):
+    key_text: str
+    section_status: TagUpdateStatus | None = None
+    current_page: int | None = None
+    prev_page: int | None = None
+
+
 class TaskLock(BaseModel):
     work_queue_id: PydanticObjectId
     user_id: PydanticObjectId

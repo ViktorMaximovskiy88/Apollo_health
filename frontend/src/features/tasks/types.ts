@@ -21,4 +21,5 @@ export interface Task extends BaseDocument {
   status_at: string;
   is_complete: boolean;
   completed_at: string;
+  result?: { [key: string]: any };
 }
