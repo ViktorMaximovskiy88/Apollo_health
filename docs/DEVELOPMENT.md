@@ -29,7 +29,7 @@ apt-get install -y locales make build-essential libssl-dev zlib1g-dev \
     libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev git \
     neovim htop lsof sudo software-properties-common poppler-utils gcc \
     gfortran libblas-dev liblapack-dev \
-    g++ protobuf-compiler libprotobuf-dev libmagic1 antiword
+    g++ protobuf-compiler libprotobuf-dev libmagic1 antiword tesseract-ocr
 
 # Install Docker
 curl -fsSL https://get.docker.com | sudo sh
@@ -62,7 +62,7 @@ xcode-select --install
 # brew is apt more or less
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-brew install gnupg coreutils awscli protobuf libmagic swig xpdf imagemagick@6 antiword
+brew install gnupg coreutils awscli protobuf libmagic swig xpdf imagemagick@6 antiword tesseract
 
 # Install Docker
 brew install docker
@@ -204,6 +204,34 @@ yarn start
 If everything has gone well, go to <http://localhost:3000> and you should be redirected to our Auth0 SSO login page. Upon login you should see the Sourcehub app.
 
 If that succeeds, try creating a site. I recommend Molina HealthCare OH Drug at <https://www.molinahealthcare.com/providers/oh/duals/drug/formulary.aspx>. Once created, go into it and click the 'Run Collection' button and hope for the best, watching the logs for activity/errors.
+
+## Common Issues
+
+### Local Redirect on Startup
+
+**Problem:** When starting the frontend project your browser redirects to `https://undefined/authorize?redirect_uri=xxxx`.
+
+To address this, ensure the backend is running. If it is and this still occurs, you may need to remove a line from your `~/etc/hosts` file. Open the file and comment out the line `::1 localhost`.
+
+Your file should look something like this after doing so.
+
+```
+##
+# Host Database
+#
+# localhost is used to configure the loopback interface
+# when the system is booting.  Do not change this entry.
+##
+127.0.0.1    localhost
+255.255.255.255    broadcasthost
+#::1             localhost
+# Added by Docker Desktop
+# To allow the same kube context to work on the host and the container:
+127.0.0.1 kubernetes.docker.internal
+# End of section
+```
+
+After saving the file and restarting the app, this should fix this issue.
 
 ### Access to Local Mongo and Minio
 

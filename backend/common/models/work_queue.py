@@ -1,4 +1,7 @@
+from datetime import datetime
 from typing import Any
+
+from beanie import Indexed, PydanticObjectId
 
 from backend.common.models.base_document import BaseDocument, BaseModel
 
@@ -10,6 +13,7 @@ class SubmitAction(BaseModel):
     reassignable: bool = False
     require_comment: bool = False
     dest_queue: str | None = None
+    hold_types: list[str] = []
 
 
 class SubmitActionUpdate(BaseModel):
@@ -19,6 +23,24 @@ class SubmitActionUpdate(BaseModel):
     reassignable: bool | None = None
     require_comment: bool | None = None
     dest_queue: str | None = None
+    hold_types: list[str] | None
+
+
+class WorkQueueMetric(BaseDocument):
+    queue_name: str
+    total_count: int
+    low_priority_count: int
+    high_priority_count: int
+    critical_priority_count: int
+    time: Indexed(datetime)  # type: ignore
+
+
+class WorkQueueLog(BaseDocument):
+    queue_name: str
+    item_id: PydanticObjectId
+    action: str
+    user_id: PydanticObjectId
+    submitted_at: datetime
 
 
 class WorkQueue(BaseDocument):

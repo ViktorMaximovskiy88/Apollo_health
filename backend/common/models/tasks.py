@@ -60,8 +60,8 @@ class LineageTask(SiteTask):
 
 
 class PDFDiffTask(BaseModel):
-    current_checksum: str
-    previous_checksum: str
+    current_doc_id: PydanticObjectId
+    prev_doc_id: PydanticObjectId
 
 
 def get_group_id(payload: GenericTaskType):

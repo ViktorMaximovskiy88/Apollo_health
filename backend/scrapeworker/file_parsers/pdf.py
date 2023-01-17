@@ -1,6 +1,11 @@
 import asyncio
+import os
 from pathlib import Path
 from typing import Any
+
+import fitz
+import pytesseract
+from PIL import Image, ImageOps
 
 from backend.scrapeworker.file_parsers.base import FileParser
 
@@ -44,7 +49,28 @@ class PdfParse(FileParser):
             stderr=asyncio.subprocess.STDOUT,
         )
         pdftext_out, _ = await process.communicate()
-        return pdftext_out.decode("utf-8", "ignore").strip()
+        text = pdftext_out.decode("utf-8", "ignore").strip()
+        if not text:
+            text = self.attempt_ocr()
+        return text
+
+    def attempt_ocr(self):
+        if not os.path.exists(self.file_path) or os.path.getsize(self.file_path) == 0:
+            return ""
+
+        data_dir = Path(__file__).parent.joinpath("tessdata")
+        config = f"--tessdata-dir {data_dir}"
+        matrix = fitz.Matrix(2, 2)
+
+        pages = []
+        doc = fitz.open(self.file_path)  # type: ignore
+        for page in doc:
+            pix = page.get_pixmap(matrix=matrix)
+            im = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+            im = ImageOps.grayscale(im)
+            text = pytesseract.image_to_string(im, config=config)
+            pages.append(text)
+        return "\f".join(pages).strip()
 
     async def get_images(self):
         root_dir = Path(self.file_path).parent

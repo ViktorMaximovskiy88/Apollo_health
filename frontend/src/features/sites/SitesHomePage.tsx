@@ -22,6 +22,7 @@ import {
 import { setSiteTableForceUpdate, siteTableState } from './sitesSlice';
 import { Site } from './types';
 import { useAppDispatch } from '../../app/store';
+import { useCurrentUser } from '../../common/hooks/use-current-user';
 
 function CreateSite() {
   return (
@@ -264,6 +265,8 @@ function BulkDownload() {
 
 export function SitesHomePage() {
   const [isLoading, setLoading] = useState(false);
+  const currentUser = useCurrentUser();
+  const isAdmin = currentUser?.is_admin;
   return (
     <MainLayout
       sectionToolbar={
@@ -272,7 +275,7 @@ export function SitesHomePage() {
           <Assign />
           <Unassign />
           <CreateSite />
-          <BulkActions />
+          {isAdmin ? <BulkActions /> : null}
           <BulkUpload />
           <BulkDownload />
         </>

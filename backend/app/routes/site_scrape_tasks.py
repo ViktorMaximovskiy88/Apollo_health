@@ -119,7 +119,7 @@ async def start_scrape_task(
             response.add_error("Cannot Find Last Queued Task.")
         else:
             response.add_error(f"Task[{last_queued_task.id}] is already queued or in progress.")
-        response.raise_error()
+        return response
 
     return await site_collection.start_collecting()
 
@@ -141,7 +141,8 @@ async def cancel_all_site_scrape_task(
         current_user=current_user,
         logger=logger,
     )
-    return await site_collection.stop_collecting()
+    response: CollectionResponse = await site_collection.stop_collecting()
+    return response
 
 
 def build_bulk_sites_query(bulk_type: str):

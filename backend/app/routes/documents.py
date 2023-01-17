@@ -19,7 +19,7 @@ from backend.common.models.document import (
     UploadedDocument,
 )
 from backend.common.models.document_mixins import find_site_index
-from backend.common.models.shared import DocDocumentLocation, IndicationTag, TherapyTag
+from backend.common.models.shared import DocDocumentLocation
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import ManualWorkItem, SiteScrapeTask, WorkItemOption
 from backend.common.models.user import User
@@ -440,12 +440,7 @@ async def add_document(
             loc.payer_family_id = prev_loc.payer_family_id
         # Generate delta tags for new version from old version.
         tag_compare: TagCompare = TagCompare()
-        tag_compare_response: tuple[
-            list[TherapyTag], list[IndicationTag]
-        ] = await tag_compare.execute(doc=created_doc_doc, prev_doc=original_doc_doc)
-        created_doc_doc.therapy_tags = tag_compare_response[0]
-        created_doc_doc.indication_tags = tag_compare_response[1]
-        await created_doc_doc.save()
+        await tag_compare.execute_and_save(doc=created_doc_doc, prev_doc=original_doc_doc)
 
     # Update current task work list and doc counts.
     current_task: SiteScrapeTask = await site_last_started_task(site.id)

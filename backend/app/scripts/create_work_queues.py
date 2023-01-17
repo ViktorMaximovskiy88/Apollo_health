@@ -14,6 +14,7 @@ async def classification_queues():
         document_query={
             "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "final_effective_date": {"$gte": datetime(2023, 1, 1, tzinfo=timezone.utc)},
+            "priority": {"$gt": 0},
             "classification_status": "QUEUED",
         },
         sort_query=["-priority", "final_effective_date"],
@@ -25,6 +26,12 @@ async def classification_queues():
                 require_comment=True,
                 dest_queue="Classification Hold",
                 submit_action={"classification_status": "HOLD"},
+                hold_types=[
+                    "Source Hub Issue",
+                    "Focus Tagging",
+                    "Medical Codes (J/CPT)",
+                    "Spanish / Other Language",
+                ],
             ),
             SubmitAction(
                 label="Submit",
@@ -42,6 +49,7 @@ async def classification_queues():
             "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "final_effective_date": {"$lt": datetime(2023, 1, 1, tzinfo=timezone.utc)},
             "classification_status": "QUEUED",
+            "priority": {"$gt": 0},
         },
         sort_query=["-priority", "final_effective_date"],
         user_query={"roles": {"$in": ["admin", "classification"]}},
@@ -68,6 +76,7 @@ async def classification_queues():
         document_query={
             "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "classification_status": "HOLD",
+            "priority": {"$gt": 0},
         },
         sort_query=["-priority", "final_effective_date"],
         user_query={"roles": {"$in": ["admin", "classification"]}},
@@ -92,6 +101,7 @@ async def family_queues():
             "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "classification_status": "APPROVED",
             "family_status": "QUEUED",
+            "priority": {"$gt": 0},
         },
         sort_query=["-priority", "final_effective_date"],
         user_query={"roles": {"$in": ["admin", "family"]}},
@@ -102,10 +112,19 @@ async def family_queues():
                 require_comment=True,
                 dest_queue="Document & Payer Family Hold",
                 submit_action={"family_status": "HOLD"},
+                hold_types=["Source Hub Issue", "Backbone Issue"],
             ),
             SubmitAction(
                 label="Submit",
                 submit_action={"family_status": "APPROVED", "family_hold_info": []},
+                primary=True,
+            ),
+            SubmitAction(
+                label="Reject Classification",
+                submit_action={
+                    "classification_status": "HOLD",
+                    "family_status": "PENDING",
+                },
                 primary=True,
             ),
         ],
@@ -119,6 +138,7 @@ async def family_queues():
             "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "classification_status": "APPROVED",
             "family_status": "HOLD",
+            "priority": {"$gt": 0},
         },
         sort_query=["-priority", "final_effective_date"],
         user_query={"roles": {"$in": ["admin", "family"]}},
@@ -127,6 +147,14 @@ async def family_queues():
             SubmitAction(
                 label="Approve",
                 submit_action={"family_status": "APPROVED", "family_hold_info": []},
+                primary=True,
+            ),
+            SubmitAction(
+                label="Reject Classification",
+                submit_action={
+                    "classification_status": "HOLD",
+                    "family_status": "PENDING",
+                },
                 primary=True,
             ),
         ],
@@ -145,6 +173,7 @@ async def translation_config_queues():
             "classification_status": "APPROVED",
             "family_status": "APPROVED",
             "content_extraction_status": "QUEUED",
+            "priority": {"$gt": 0},
         },
         user_query={"roles": {"$in": ["admin", "translation"]}},
         submit_actions=[
@@ -160,6 +189,22 @@ async def translation_config_queues():
                 submit_action={"content_extraction_status": "APPROVED", "extraction_hold_info": []},
                 primary=True,
             ),
+            SubmitAction(
+                label="Reject Classification",
+                submit_action={
+                    "classification_status": "HOLD",
+                    "family_status": "PENDING",
+                },
+                primary=True,
+            ),
+            SubmitAction(
+                label="Reject Family",
+                submit_action={
+                    "family_status": "HOLD",
+                    "content_extraction_status": "PENDING",
+                },
+                primary=True,
+            ),
         ],
     ).save()
     await WorkQueue(
@@ -171,6 +216,7 @@ async def translation_config_queues():
         document_query={
             "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "content_extraction_status": "HOLD",
+            "priority": {"$gt": 0},
         },
         user_query={"roles": {"$in": ["admin", "translation"]}},
         submit_actions=[
@@ -180,6 +226,22 @@ async def translation_config_queues():
             SubmitAction(
                 label="Approve",
                 submit_action={"content_extraction_status": "APPROVED", "extraction_hold_info": []},
+                primary=True,
+            ),
+            SubmitAction(
+                label="Reject Classification",
+                submit_action={
+                    "classification_status": "HOLD",
+                    "family_status": "PENDING",
+                },
+                primary=True,
+            ),
+            SubmitAction(
+                label="Reject Family",
+                submit_action={
+                    "family_status": "HOLD",
+                    "content_extraction_status": "PENDING",
+                },
                 primary=True,
             ),
         ],

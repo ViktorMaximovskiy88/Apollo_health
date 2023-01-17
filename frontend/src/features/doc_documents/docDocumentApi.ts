@@ -66,7 +66,7 @@ export const docDocumentsApi = createApi({
         params,
       }),
       providesTags: (_r, _e, params) => [
-        { type: 'CompareResponse', id: `${params.current_checksum}-${params.previous_checksum}` },
+        { type: 'CompareResponse', id: `${params.current_id}-${params.prev_id}` },
       ],
     }),
     getChangeLog: builder.query<ChangeLog[], string>({

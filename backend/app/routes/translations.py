@@ -23,6 +23,7 @@ from backend.common.models.doc_document import DocDocument
 from backend.common.models.translation_config import TranslationConfig, UpdateTranslationConfig
 from backend.common.models.user import User
 from backend.parseworker.extractor import TableContentExtractor
+from backend.parseworker.rxnorm_entity_linker_model import rxnorm_linker
 
 router = APIRouter(
     prefix="/translations",
@@ -140,6 +141,7 @@ async def create_doc_sample_table_translation(
 ):
     translations = []
     extractor = TableContentExtractor(doc, config)
+    await rxnorm_linker.confirm_model_version()
     with extractor.sample_doc_page() as page:
         tables = extractor.extract_clean_tables(page)
         for (_, _, _, _, t) in extractor.translate_tables(tables):

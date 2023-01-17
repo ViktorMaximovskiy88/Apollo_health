@@ -37,6 +37,7 @@ from backend.common.models.payer_backbone import PlanBenefit
 from backend.common.models.payer_family import PayerFamily
 from backend.common.models.shared import DocDocumentLocationView
 from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.models.tag_comparison import TagComparison
 from backend.common.models.user import User
 from backend.common.repositories.doc_document_repository import DocDocumentRepository
 from backend.common.storage.client import DocumentStorageClient
@@ -105,6 +106,7 @@ async def read_doc_documents(
 class CompareResponse(BaseModel):
     new_key: str | None = None
     prev_key: str | None = None
+    tag_comparison: TagComparison | None = None
     exists: bool
 
 
@@ -113,15 +115,23 @@ class CompareResponse(BaseModel):
     dependencies=[Security(get_current_user)],
     response_model=CompareResponse,
 )
-async def get_diff(
-    current_checksum: str,
-    previous_checksum: str,
-):
+async def get_diff(current_id: PydanticObjectId, prev_id: PydanticObjectId):
     doc_client = DocumentStorageClient()
-    new_key = f"{current_checksum}-{previous_checksum}-new.pdf"
-    prev_key = f"{current_checksum}-{previous_checksum}-prev.pdf"
-    exists = doc_client.object_exists(new_key) and doc_client.object_exists(prev_key)
-    return CompareResponse(new_key=new_key, prev_key=prev_key, exists=exists)
+    current_doc = await get_target(current_id)
+    prev_doc = await get_target(prev_id)
+    new_key = f"{current_doc.checksum}-{prev_doc.checksum}-new.pdf"
+    prev_key = f"{current_doc.checksum}-{prev_doc.checksum}-prev.pdf"
+    tag_comparison = await TagComparison.find_one(
+        {"current_doc_id": current_doc.id, "prev_doc_id": prev_doc.id}
+    )
+    exists = (
+        doc_client.object_exists(new_key)
+        and doc_client.object_exists(prev_key)
+        and tag_comparison is not None
+    )
+    return CompareResponse(
+        new_key=new_key, prev_key=prev_key, exists=exists, tag_comparison=tag_comparison
+    )
 
 
 @router.get("/diff/{key}.pdf", dependencies=[Security(get_current_user)])

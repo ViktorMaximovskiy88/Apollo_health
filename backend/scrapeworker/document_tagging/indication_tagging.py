@@ -1,51 +1,19 @@
 import asyncio
 
-import spacy
 from spacy.tokens import Span
 
 from backend.common.core.enums import SectionType
 from backend.common.core.utils import now
 from backend.common.models.doc_document import DocDocument, IndicationTag
 from backend.common.models.document import RetrievedDocument
-from backend.common.models.indication import Indication
 from backend.common.models.site import FocusSectionConfig
+from backend.scrapeworker.document_tagging.base_tagger import BaseTagger
 from backend.scrapeworker.document_tagging.tag_focusing import FocusChecker
 
 
-class IndicationTagger:
-    def __init__(self) -> None:
-        self.terms: dict[str, list[Indication]] = {}
-        self.nlp = None
-        self.lock = asyncio.Lock()
-
-    async def model(self):
-        if not self.nlp:
-            async with self.lock:
-                self.nlp = spacy.blank("en")
-                # saw a value of 20074378... bumping more
-                self.nlp.max_length = 300000000
-                ruler = self.nlp.add_pipe(
-                    "span_ruler", config={"spans_key": "sc", "phrase_matcher_attr": "LOWER"}
-                )
-                async for indication in Indication.find():
-                    for term in indication.terms:
-                        ruler.add_patterns(  # type: ignore
-                            [
-                                {
-                                    "label": f"{term}|{indication.indication_number}",
-                                    "pattern": term,
-                                }
-                            ]
-                        )
-        return self.nlp
-
-    def _filter_focus_configs(self, configs: list[FocusSectionConfig], doc_type: str):
-        filtered = [
-            config
-            for config in configs
-            if config.doc_type == doc_type and (SectionType.INDICATION in config.section_type)
-        ]
-        return filtered
+class IndicationTagger(BaseTagger):
+    model_key = "indication"
+    section_type = SectionType.INDICATION
 
     async def tag_document(
         self,
@@ -83,11 +51,12 @@ class IndicationTagger:
                 focus_state = focus_checker.check_focus(span, offset=char_offset)
                 text = span.text
                 lexeme = span.vocab[span.label]
-                term, indication_number = lexeme.text.split("|")
+                term, name, indication_number = lexeme.text.split("|")
 
                 if focus_state.is_in_link_text or focus_state.is_in_url:
                     context_tag = IndicationTag(
-                        text=term.lower(),
+                        name=name,
+                        text=term,
                         page=-1,
                         code=int(indication_number),
                         focus=focus_state.focus,
@@ -99,6 +68,7 @@ class IndicationTagger:
                         url_tags.add(context_tag)
 
                 tag = IndicationTag(
+                    name=name,
                     text=term,
                     page=i,
                     code=int(indication_number),

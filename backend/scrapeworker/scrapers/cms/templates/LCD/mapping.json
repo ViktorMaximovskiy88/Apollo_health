@@ -1,4 +1,5 @@
 {
+  "core_file": "lcd",
   "url_identifiers": ["LCDId", "ver"],
   "data_set_identifiers": ["lcd_id", "lcd_version"],
   "mapping": [

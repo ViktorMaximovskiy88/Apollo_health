@@ -1,14 +1,9 @@
 import json
 import os
 import tempfile
-from enum import Enum
 from typing import Any
 
-
-class CmsDocType(Enum):
-    NCD = 1
-    LCD = 2
-    LCA = 3
+from backend.common.core.enums import CmsDocType
 
 
 class CmsDoc:
@@ -44,6 +39,7 @@ class CmsDoc:
             return f"{base_url}current_lcd.zip"
         elif self.type == CmsDocType.NCD:
             return f"{base_url}ncd.zip"
+        return ""
 
     def inner_archive_name(self):
         inner_archive_names = {

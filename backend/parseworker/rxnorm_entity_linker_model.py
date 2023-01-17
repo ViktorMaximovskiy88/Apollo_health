@@ -1,3 +1,4 @@
+import asyncio
 import re
 import tempfile
 
@@ -10,19 +11,46 @@ from scispacy.candidate_generation import (
 )
 from scispacy.linking_utils import KnowledgeBase
 
-from backend.common.core.config import config
+from backend.common.models.app_config import AppConfig
 from backend.common.models.translation_config import TranslationRule
 from backend.common.storage.client import ModelStorageClient
 
 
 class RxNormEntityLinkerModel:
-    def __init__(self, version="latest"):
+    def __init__(self):
         self.linker = None
+        self.version = None
+        self.tempdir = None
+        self.attempted_model_load = False
+
+    async def get_version(self):
+        config = await AppConfig.find_one({"key": "model_versions"})
+        if config:
+            return config.data["rxnorm"]
+        return "latest"
+
+    async def confirm_model_version(self):
+        """
+        Load or update the model if the version has changed.
+
+        This should be run once every time the model is used
+        to ensure that the model is up to date.
+
+        This is not done automatically because we don't want to excessively
+        query the database for the model version.
+        """
+
+        self.attempted_model_load = True
+        version = await self.get_version()
+        if version == self.version and self.linker:
+            return self.linker
+
+        self.cleanup()
         try:
             self.client = ModelStorageClient()
             self.tempdir = tempfile.TemporaryDirectory()
             dirname = self.tempdir.name
-            self.client.download_directory(f"{version}/rxnorm", dirname)
+            self.client.download_directory(f"{version}/rxnorm/", dirname)
             DEFAULT_PATHS[f"RxNorm_{version}"] = LinkerPaths(
                 ann_index=f"{dirname}/nmslib_index.bin",
                 tfidf_vectorizer=f"{dirname}/tfidf_vectorizer.joblib",
@@ -36,10 +64,16 @@ class RxNormEntityLinkerModel:
 
             DEFAULT_KNOWLEDGE_BASES[f"RxNorm_{version}"] = RxNormKnowledgeBase
             self.linker = CandidateGenerator(name=f"RxNorm_{version}")  # type: ignore
-
+            self.version = version
         except Exception:
+            self.cleanup()
             print("RxNorm Entity Linker Model Not Found")
-            return
+
+        return self.linker
+
+    def cleanup(self):
+        if self.tempdir:
+            self.tempdir.cleanup()
 
     form_abbr = [
         (r"\btabs?\b", "tablet"),
@@ -225,6 +259,8 @@ class RxNormEntityLinkerModel:
         texts: list[str | None],
         rule: TranslationRule,
     ) -> list[tuple[str, MentionCandidate | None, str, float]]:
+        if not self.attempted_model_load:
+            asyncio.run(self.confirm_model_version())
         if not self.linker:
             return []
 
@@ -262,4 +298,4 @@ class RxNormEntityLinkerModel:
         return best_candidates
 
 
-rxnorm_linker = RxNormEntityLinkerModel(version=config["MODEL_VERSION"])
+rxnorm_linker = RxNormEntityLinkerModel()
