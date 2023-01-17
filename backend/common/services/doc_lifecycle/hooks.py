@@ -32,18 +32,7 @@ class ChangeInfo(BaseModel):
 
 
 async def recompare_tags(doc: DocDocument, prev_doc: DocDocument):
-    ther_tags, indi_tags = await TagCompare().execute(doc, prev_doc)
-    doc.therapy_tags = ther_tags
-    doc.indication_tags = indi_tags
-    await DocDocument.get_motor_collection().update_one(
-        {"_id": doc.id},
-        {
-            "$set": {
-                "therapy_tags": list(map(lambda t: t.dict(), ther_tags)),
-                "indication_tags": list(map(lambda t: t.dict(), indi_tags)),
-            }
-        },
-    )
+    await TagCompare().execute_and_save(doc, prev_doc)
 
 
 async def enqueue_translation_task(doc: DocDocument):

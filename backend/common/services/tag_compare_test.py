@@ -7,14 +7,15 @@ import pytest_asyncio
 from beanie import PydanticObjectId
 
 from backend.common.core.enums import TagUpdateStatus
-from backend.common.db.init import init_db
+from backend.common.db.init import get_motor_client, init_db
 from backend.common.models.doc_document import DocDocument, DocDocumentLocation
 from backend.common.models.document import RetrievedDocument, RetrievedDocumentLocation
 from backend.common.models.shared import IndicationTag, TherapyTag
 from backend.common.models.site import ScrapeMethodConfiguration, Site
-from backend.common.services.tag_compare import DocumentSection, SectionLineage, TagCompare
+from backend.common.services.tag_compare import SectionLineage, TagCompare, TagSection
 from backend.common.storage.client import BaseS3Client
 from backend.common.test.test_utils import mock_s3_client  # noqa
+from backend.scrapeworker.document_tagging.tag_focusing import FocusArea
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -45,6 +46,10 @@ async def site():
         cron="0 * * * *",
     ).save()
     return site
+
+
+def mock_motor_client():
+    return get_motor_client(mock=True)
 
 
 def simple_ret_doc(
@@ -137,6 +142,10 @@ def simple_indication_tag(
     )
 
 
+async def simple_focus_area(self, _doc, _doc_text, _tag_type):
+    return [FocusArea(0, 1, 2, 0, "test_text")]
+
+
 def group_by_status(tags: list[TherapyTag] | list[IndicationTag]):
     added = [tag for tag in tags if tag.update_status == TagUpdateStatus.ADDED]
     removed = [tag for tag in tags if tag.update_status == TagUpdateStatus.REMOVED]
@@ -188,12 +197,12 @@ class TestTagChange:
             site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
 
-        final_ther, final_indi = await tag_compare.execute(doc, prev_doc)
-        assert len(final_ther) == 2
-        assert len(final_indi) == 2
-        changed_ther = group_by_status(final_ther)[TagUpdateStatus.CHANGED]
+        tag_lineage = await tag_compare.execute(doc, prev_doc)
+        assert len(tag_lineage.therapy_tags) == 2
+        assert len(tag_lineage.indication_tags) == 2
+        changed_ther = group_by_status(tag_lineage.therapy_tags)[TagUpdateStatus.CHANGED]
         assert len(changed_ther) == 2
-        changed_indi = group_by_status(final_indi)[TagUpdateStatus.CHANGED]
+        changed_indi = group_by_status(tag_lineage.indication_tags)[TagUpdateStatus.CHANGED]
         assert len(changed_indi) == 2
 
     @pytest.mark.asyncio
@@ -221,13 +230,13 @@ class TestTagChange:
             site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
 
-        final_ther, final_indi = await tag_compare.execute(doc_1, doc_2)
-        assert len(final_ther) == 1
-        assert len(final_indi) == 1
-        ther_no_change = group_by_status(final_ther)["None"]
+        tag_lineage = await tag_compare.execute(doc_1, doc_2)
+        assert len(tag_lineage.therapy_tags) == 1
+        assert len(tag_lineage.indication_tags) == 1
+        ther_no_change = group_by_status(tag_lineage.therapy_tags)["None"]
         assert len(ther_no_change) == 1
         assert ther_no_change[0].code == ther_tags[0].code
-        indi_no_change = group_by_status(final_indi)["None"]
+        indi_no_change = group_by_status(tag_lineage.indication_tags)["None"]
         assert len(indi_no_change) == 1
         assert indi_no_change[0].code == indi_tags[0].code
 
@@ -256,13 +265,13 @@ class TestTagChange:
             site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
 
-        final_ther, final_indi = await tag_compare.execute(doc, prev_doc)
-        assert len(final_ther) == 1
-        assert len(final_indi) == 1
-        ther_no_change = group_by_status(final_ther)["None"]
+        tag_lineage = await tag_compare.execute(doc, prev_doc)
+        assert len(tag_lineage.therapy_tags) == 1
+        assert len(tag_lineage.indication_tags) == 1
+        ther_no_change = group_by_status(tag_lineage.therapy_tags)["None"]
         assert len(ther_no_change) == 1
         assert ther_no_change[0].code == ther_tags[0].code
-        indi_no_change = group_by_status(final_indi)["None"]
+        indi_no_change = group_by_status(tag_lineage.indication_tags)["None"]
         assert len(indi_no_change) == 1
         assert indi_no_change[0].code == indi_tags[0].code
 
@@ -294,13 +303,13 @@ class TestTagChange:
             site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
 
-        final_ther, final_indi = await tag_compare.execute(doc, prev_doc)
-        assert len(final_ther) == 1
-        assert len(final_indi) == 1
-        ther_no_change = group_by_status(final_ther)["None"]
+        tag_lineage = await tag_compare.execute(doc, prev_doc)
+        assert len(tag_lineage.therapy_tags) == 1
+        assert len(tag_lineage.indication_tags) == 1
+        ther_no_change = group_by_status(tag_lineage.therapy_tags)["None"]
         assert len(ther_no_change) == 1
         assert ther_no_change[0].code == ther_tags[0].code
-        indi_no_change = group_by_status(final_indi)["None"]
+        indi_no_change = group_by_status(tag_lineage.indication_tags)["None"]
         assert len(indi_no_change) == 1
         assert indi_no_change[0].code == indi_tags[0].code
 
@@ -332,13 +341,13 @@ class TestTagChange:
             site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
 
-        final_ther, final_indi = await tag_compare.execute(doc, prev_doc)
-        assert len(final_ther) == 1
-        assert len(final_indi) == 1
-        ther_no_change = group_by_status(final_ther)["None"]
+        tag_lineage = await tag_compare.execute(doc, prev_doc)
+        assert len(tag_lineage.therapy_tags) == 1
+        assert len(tag_lineage.indication_tags) == 1
+        ther_no_change = group_by_status(tag_lineage.therapy_tags)["None"]
         assert len(ther_no_change) == 1
         assert ther_no_change[0].code == ther_tags[0].code
-        indi_no_change = group_by_status(final_indi)["None"]
+        indi_no_change = group_by_status(tag_lineage.indication_tags)["None"]
         assert len(indi_no_change) == 1
         assert indi_no_change[0].code == indi_tags[0].code
 
@@ -369,12 +378,12 @@ class TestTagChange:
             site=site, therapy_tags=ther_tags, indication_tags=indi_tags
         ).save()
 
-        final_ther, final_indi = await tag_compare.execute(doc, prev_doc)
-        assert len(final_ther) == 2
-        assert len(final_indi) == 2
-        for tag in final_ther:
+        tag_lineage = await tag_compare.execute(doc, prev_doc)
+        assert len(tag_lineage.therapy_tags) == 2
+        assert len(tag_lineage.indication_tags) == 2
+        for tag in tag_lineage.therapy_tags:
             assert tag.update_status is None
-        for tag in final_indi:
+        for tag in tag_lineage.indication_tags:
             assert tag.update_status is None
 
 
@@ -406,13 +415,13 @@ class TestTagAddRemove:
             indication_tags=[indi_tag_one],
         ).save()
 
-        therapy_tags, indication_tags = await tag_compare.execute(doc, prev_doc)
-        assert len(therapy_tags) == 2
-        assert len(indication_tags) == 2
-        added_tags = group_by_status(therapy_tags)[TagUpdateStatus.ADDED]
+        tag_lineage = await tag_compare.execute(doc, prev_doc)
+        assert len(tag_lineage.therapy_tags) == 2
+        assert len(tag_lineage.indication_tags) == 2
+        added_tags = group_by_status(tag_lineage.therapy_tags)[TagUpdateStatus.ADDED]
         assert len(added_tags) == 1
         assert added_tags[0].code == ther_tag_two.code
-        added_tags = group_by_status(indication_tags)[TagUpdateStatus.ADDED]
+        added_tags = group_by_status(tag_lineage.indication_tags)[TagUpdateStatus.ADDED]
         assert len(added_tags) == 1
         assert added_tags[0].code == indi_tag_two.code
 
@@ -443,16 +452,16 @@ class TestTagAddRemove:
             indication_tags=[indi_tag, focus_indi_tag, lost_indi_tag],
         ).save()
 
-        therapy_tags, indication_tags = await tag_compare.execute(doc, prev_doc)
-        assert len(therapy_tags) == 4
-        assert len(indication_tags) == 4
+        tag_lineage = await tag_compare.execute(doc, prev_doc)
+        assert len(tag_lineage.therapy_tags) == 4
+        assert len(tag_lineage.indication_tags) == 4
 
-        group_tags = group_by_status(therapy_tags)
+        group_tags = group_by_status(tag_lineage.therapy_tags)
         assert len(group_tags[TagUpdateStatus.REMOVED]) == 3
         assert len(group_tags["None"]) == 1
         assert group_tags["None"][0].code == ther_tag.code
 
-        group_tags = group_by_status(indication_tags)
+        group_tags = group_by_status(tag_lineage.indication_tags)
         assert len(group_tags[TagUpdateStatus.REMOVED]) == 3
         assert len(group_tags["None"]) == 1
         assert group_tags["None"][0].code == indi_tag.code
@@ -473,14 +482,14 @@ class TestTagAddRemove:
         removed_tag = simple_therapy_tag(text_area=(0, 20))
         prev_doc = await simple_doc_doc(site=site, therapy_tags=[focus_tag, removed_tag]).save()
         doc = await simple_doc_doc(site=site, therapy_tags=[focus_tag]).save()
-        therapy_tags, _ = await tag_compare.execute(doc, prev_doc)
+        tag_lineage = await tag_compare.execute(doc, prev_doc)
 
-        assert len(therapy_tags) == 2
-        removed_tags = group_by_status(therapy_tags)[TagUpdateStatus.REMOVED]
+        assert len(tag_lineage.therapy_tags) == 2
+        removed_tags = group_by_status(tag_lineage.therapy_tags)[TagUpdateStatus.REMOVED]
         assert len(removed_tags) == 1
         assert removed_tags[0].code == removed_tag.code
 
-        added_tags = group_by_status(therapy_tags)[TagUpdateStatus.ADDED]
+        added_tags = group_by_status(tag_lineage.therapy_tags)[TagUpdateStatus.ADDED]
         assert len(added_tags) == 0
 
     def test_id_tag_compare(self):
@@ -489,11 +498,19 @@ class TestTagAddRemove:
         ther_tag1 = simple_therapy_tag()
         ther_tag2 = simple_therapy_tag()
         ther_tag3 = simple_therapy_tag()
-        a_section = DocumentSection(
-            text_area=(0, 20), key_text="Key Text", id_tags=[ther_tag1, ther_tag3], ref_tags=[]
+        a_section = TagSection(
+            text_area=(0, 20),
+            current_page=0,
+            key_text="Key Text",
+            id_tags=[ther_tag1, ther_tag3],
+            ref_tags=[],
         )
-        b_section = DocumentSection(
-            text_area=(0, 20), key_text="Key Text", id_tags=[ther_tag1, ther_tag2], ref_tags=[]
+        b_section = TagSection(
+            text_area=(0, 20),
+            current_page=0,
+            key_text="Key Text",
+            id_tags=[ther_tag1, ther_tag2],
+            ref_tags=[],
         )
 
         section = SectionLineage(a_section, b_section)
@@ -532,16 +549,16 @@ class TestTagAddRemove:
             indication_tags=[indi_one, indi_ref_changed],
         ).save()
 
-        therapy_tags, indication_tags = await tag_compare.execute(doc, prev_doc)
+        tag_lineage = await tag_compare.execute(doc, prev_doc)
 
-        assert len(therapy_tags) == 3
-        group_tags = group_by_status(therapy_tags)
+        assert len(tag_lineage.therapy_tags) == 3
+        group_tags = group_by_status(tag_lineage.therapy_tags)
         assert len(group_tags[TagUpdateStatus.ADDED]) == 1
         assert group_tags[TagUpdateStatus.ADDED][0].code == ther_ref_added.code
         assert len(group_tags[TagUpdateStatus.CHANGED]) == 2
 
-        assert len(indication_tags) == 3
-        group_tags = group_by_status(indication_tags)
+        assert len(tag_lineage.indication_tags) == 3
+        group_tags = group_by_status(tag_lineage.indication_tags)
         assert len(group_tags[TagUpdateStatus.ADDED]) == 1
         assert group_tags[TagUpdateStatus.ADDED][0].code == indi_ref_added.code
         assert len(group_tags[TagUpdateStatus.CHANGED]) == 2
@@ -568,10 +585,10 @@ class TestTagAddRemove:
             therapy_tags=[focus_ther],
         ).save()
 
-        therapy_tags, indication_tags = await tag_compare.execute(doc, prev_doc)
+        tag_lineage = await tag_compare.execute(doc, prev_doc)
 
-        assert len(therapy_tags) == 2
-        group_tags = group_by_status(therapy_tags)
+        assert len(tag_lineage.therapy_tags) == 2
+        group_tags = group_by_status(tag_lineage.therapy_tags)
         assert len(group_tags[TagUpdateStatus.ADDED]) == 2
 
 
@@ -579,9 +596,11 @@ class TestRefTags:
     def test_remove_ref_tag(self):
         ther_tag1 = simple_therapy_tag()
         ther_tag2 = simple_therapy_tag()
-        a_section = DocumentSection(text_area=(0, 20), id_tags=[ther_tag1], ref_tags=[ther_tag1])
-        b_section = DocumentSection(
-            text_area=(0, 20), id_tags=[ther_tag1], ref_tags=[ther_tag1, ther_tag2]
+        a_section = TagSection(
+            text_area=(0, 20), current_page=0, id_tags=[ther_tag1], ref_tags=[ther_tag1]
+        )
+        b_section = TagSection(
+            text_area=(0, 20), current_page=0, id_tags=[ther_tag1], ref_tags=[ther_tag1, ther_tag2]
         )
 
         section = SectionLineage(a_section, b_section)
@@ -595,11 +614,11 @@ class TestRefTags:
     def test_no_remove_ref_tags(self):
         ther_tag1 = simple_therapy_tag()
         ther_tag2 = simple_therapy_tag()
-        a_section = DocumentSection(
-            text_area=(0, 20), id_tags=[ther_tag1], ref_tags=[ther_tag1, ther_tag2]
+        a_section = TagSection(
+            text_area=(0, 20), current_page=0, id_tags=[ther_tag1], ref_tags=[ther_tag1, ther_tag2]
         )
-        b_section = DocumentSection(
-            text_area=(0, 20), id_tags=[ther_tag1], ref_tags=[ther_tag1, ther_tag2]
+        b_section = TagSection(
+            text_area=(0, 20), current_page=0, id_tags=[ther_tag1], ref_tags=[ther_tag1, ther_tag2]
         )
 
         section = SectionLineage(a_section, b_section)
@@ -634,6 +653,6 @@ class TestRefTags:
             therapy_tags=[ther_one],
         ).save()
 
-        therapy_tags, _ = await tag_compare.execute(doc, prev_doc)
-        group_tags = group_by_status(therapy_tags)
+        tag_lineage = await tag_compare.execute(doc, prev_doc)
+        group_tags = group_by_status(tag_lineage.therapy_tags)
         assert len(group_tags[TagUpdateStatus.REMOVED]) == 1

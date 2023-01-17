@@ -171,10 +171,7 @@ export function DocumentClassification({ onFieldChange }: { onFieldChange: () =>
       <div className="flex space-x-8">
         <Lineage onFieldChange={onFieldChange} />
         {previousDocDocId ? (
-          <DocCompareToPrevious
-            previousChecksum={prevDoc?.checksum}
-            currentChecksum={docDocument?.checksum}
-          />
+          <DocCompareToPrevious prev_doc_id={prevDoc?._id} current_doc_id={docDocument?._id} />
         ) : null}
       </div>
     </>

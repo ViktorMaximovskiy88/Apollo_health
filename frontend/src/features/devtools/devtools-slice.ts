@@ -6,6 +6,7 @@ import { DevToolsGroup, DevToolsDoc } from './types';
 import { devtoolsApi } from './devtoolsApi';
 import { Site } from '../../features/sites/types';
 import _ from 'lodash';
+import { TagComparison } from '../doc_documents/types';
 
 interface FilterSettings {
   singularLineage: boolean;
@@ -26,11 +27,13 @@ interface ViewItem {
 interface CompareResult {
   new_key: string;
   prev_key: string;
+  tag_comparison?: TagComparison;
 }
 
 interface CompareDocs {
   showModal: boolean;
   fileKeys: string[];
+  tagComparison?: TagComparison;
 }
 
 interface PagedList {
@@ -121,7 +124,6 @@ export const devtoolsSlice = createSlice({
       state.pager.currentPage = action.payload.currentPage;
       state.pager.perPage = action.payload.perPage;
       state.pager.totalPages = Math.ceil(state.pager.totalCount / state.pager.perPage);
-      console.log(state.pager);
     },
 
     selectDefaultViewType: (state, action: PayloadAction<any>) => {
@@ -158,6 +160,7 @@ export const devtoolsSlice = createSlice({
     },
     setCompareResult: (state, action: PayloadAction<CompareResult>) => {
       state.compareDocs.fileKeys = [action.payload.new_key, action.payload.prev_key];
+      state.compareDocs.tagComparison = action.payload.tag_comparison;
     },
     toggleCompareModal: (state, action: PayloadAction<boolean | undefined>) => {
       if (action.payload !== undefined) {

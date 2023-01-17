@@ -14,6 +14,7 @@ class FocusArea:
     start: int
     end: int
     section_end: int
+    page: int
     key_text: str | None = None
 
     def get_text_area(self):
@@ -45,7 +46,17 @@ class FocusChecker:
         self.all_focus = self._check_all_focus(doc_type)
         self.focus_areas: list[FocusArea] = []
         self.key_areas: list[FocusArea] = []
+        self.page_starts = self.get_page_starts()
         self.set_section_areas()
+
+    def get_page_starts(self):
+        pages = self.full_text.split("\f")
+        char_offsets: list[int] = []
+        current_char_count = 0
+        for page in pages:
+            char_offsets.append(current_char_count)
+            current_char_count += len(page) + 1
+        return char_offsets
 
     def _check_all_focus(self, doc_type: str | None):
         all_focus_doc_types = [
@@ -124,10 +135,9 @@ class FocusChecker:
                     if config.end_separator:
                         end_match = text_lower.find(config.end_separator.lower(), start)
                         end = end_match if end_match > -1 else end
+                    current_page = bisect(self.page_starts, start) - 1
                     focus_area = FocusArea(
-                        start=start,
-                        end=end,
-                        section_end=doc_end,
+                        start=start, end=end, section_end=doc_end, page=current_page
                     )
                     if is_key_area:
                         focus_area.key_text = self.full_text[start:end]

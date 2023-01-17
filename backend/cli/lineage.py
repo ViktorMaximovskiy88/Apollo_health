@@ -60,8 +60,5 @@ async def compare_tags(ctx, current_doc_id: PydanticObjectId, previous_doc_id: P
         raise Exception("Document(s) not found")
 
     tag_compare = TagCompare()
-    final_ther_tags, final_indi_tags = await tag_compare.execute(current_doc, prev_doc)
-    current_doc.therapy_tags = final_ther_tags
-    current_doc.indication_tags = final_indi_tags
-    await current_doc.save()
+    await tag_compare.execute_and_save(current_doc, prev_doc)
     log.info("Tag compare complete")
