@@ -232,6 +232,18 @@ def test_extract_date_span():
     assert parser.end_date.date is None
 
     text = """
+        date span 12/10/2026-1/5/2027 and
+        other dates published 2010-10-23 effective
+        between 12/10/2026 and 1/6/2027
+    """
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 1
+    assert parser.effective_date.date == datetime(2010, 10, 23)
+    assert parser.end_date.date is None
+    assert parser.published_date.date == datetime(2010, 10, 23)
+
+    text = """
         date span 12/10/2023-1/5/2024 and
         other dates published 2010-10-23 effective
         between 12/10/2023 and 1/6/2024
