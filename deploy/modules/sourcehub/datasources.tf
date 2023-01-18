@@ -24,14 +24,14 @@ data "aws_iam_role" "ecs-execution" {
   #   project = local.app_name
   #   role = "ecs-execution"
   # }
-  
+
 }
 
 data "aws_security_group" "alb-public" {
   vpc_id = data.aws_subnet.first-app-subnet.vpc_id
   tags = {
-    environment = var.environment
-    project = local.app_name
+    environment         = var.environment
+    project             = local.app_name
     security_group_role = "public"
   }
 }
@@ -46,35 +46,35 @@ data "aws_ecs_cluster" "ecs-cluster" {
 }
 
 data "aws_ecr_repository" "sourcehub-app" {
-  name = "sourcehub-app"  
+  name = "sourcehub-app"
 }
 
-data "aws_lb" "alb" {  
+data "aws_lb" "alb" {
   tags = {
     environment = var.environment
-    project = local.app_name
+    project     = local.app_name
   }
 }
 
 data "aws_lb_listener" "http" {
-  
-  port = 80
+
+  port              = 80
   load_balancer_arn = data.aws_lb.alb.arn
 
   tags = {
     environment = var.environment
-    project = local.app_name
+    project     = local.app_name
   }
 }
 
 data "aws_lb_listener" "https" {
-  
-  port = 443
+
+  port              = 443
   load_balancer_arn = data.aws_lb.alb.arn
 
   tags = {
     environment = var.environment
-    project = local.app_name
+    project     = local.app_name
   }
 }
 
