@@ -266,6 +266,7 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
 
     user_edited_fields: list[str] = []
     include_later_documents_in_lineage_update: bool = False
+    hold_type: str | None = None
 
 
 class ClassificationUpdateDocDocument(BaseModel):
