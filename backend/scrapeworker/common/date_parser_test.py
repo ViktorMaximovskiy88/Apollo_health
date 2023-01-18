@@ -41,7 +41,7 @@ def test_get_date_and_label():
     assert parser.end_date.date == datetime(2023, 12, 1)
 
     text = """
-        Does not match subwords depends 1/1/2025
+        Does not match subwords depends 1/1/2024
     """
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
@@ -190,14 +190,14 @@ def test_select_best_match():
     assert parser.effective_date.date == datetime(2021, 10, 31)
 
     text = """
-        End date label is out of range of this date ............. 12/15/2026
-        This label takes precedence end date 1/1/2026
+        End date label is out of range of this date ............. 12/15/2023
+        This label takes precedence end date 1/1/2023
     """
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
 
     assert len(parser.unclassified_dates) == 2
-    assert parser.end_date.date == datetime(2026, 1, 1)
+    assert parser.end_date.date == datetime(2023, 1, 1)
 
 
 def test_extract_date_span():
@@ -232,15 +232,15 @@ def test_extract_date_span():
     assert parser.end_date.date is None
 
     text = """
-        date span 12/10/2026-1/5/2027 and
+        date span 12/10/2023-1/5/2024 and
         other dates published 2010-10-23 effective
-        between 12/10/2026 and 1/6/2027
+        between 12/10/2023 and 1/6/2024
     """
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 4
-    assert parser.effective_date.date == datetime(2026, 12, 10)
-    assert parser.end_date.date == datetime(2027, 1, 5)
+    assert parser.effective_date.date == datetime(2023, 12, 10)
+    assert parser.end_date.date == datetime(2024, 1, 5)
     assert parser.published_date.date == datetime(2010, 10, 23)
 
     text = "date span with only 1 year and unicode separator January 1 – December 31, 2023"
@@ -287,7 +287,7 @@ def test_does_not_exclude_references():
 
 def test_dates_must_be_past():
     text = """
-        last review must be in the past 12/1/2026
+        last review must be in the past 12/1/2023
     """
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
