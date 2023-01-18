@@ -52,7 +52,6 @@ def test_prepare_table_query():
         ),
         TableFilterInfo(name="document_type", operator="neq", type="select", value=""),
         TableFilterInfo(name="document_type", operator="neq", type="select", value=None),
-        TableFilterInfo(name="document_type", operator="neq", type="select", value=None),
     ]
     sorts = [TableSortInfo(name="name", dir=-1)]
     docFamilies = _prepare_table_query(sorts, filters)
@@ -60,7 +59,6 @@ def test_prepare_table_query():
         [
             {"document_type": {"$nin": []}},
             {"document_type": {"$nin": ["term1", "term2"]}},
-            {"document_type": {"$ne": None}},
             {"document_type": {"$ne": None}},
             {"document_type": {"$ne": None}},
         ],
