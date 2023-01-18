@@ -250,9 +250,9 @@ def test_extract_date_span():
     """
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
-    assert len(parser.unclassified_dates) == 1
-    assert parser.effective_date.date == datetime(2010, 10, 23)
-    assert parser.end_date.date is None
+    assert len(parser.unclassified_dates) == 4
+    assert parser.effective_date.date == datetime(2023, 12, 10)
+    assert parser.end_date.date == datetime(2024, 1, 5, 0, 0)
     assert parser.published_date.date == datetime(2010, 10, 23)
 
     text = """
