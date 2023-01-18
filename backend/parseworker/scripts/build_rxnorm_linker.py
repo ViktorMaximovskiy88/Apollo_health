@@ -54,7 +54,10 @@ def process_indication_search_terms(zip, ind_patterns):
         ind_patterns.append({"label": f"{name}|{term}|{id}", "pattern": term})
 
 
+# Using product search terms results in too many tags
+# so we don't use them for now.
 def process_product_search_terms(zip, search_terms):
+    return
     for row in zip_csv(zip, "ProductSearchTerms.csv"):
         term = row["Term"]
         id = row["DrugId"]
@@ -130,7 +133,7 @@ def create_therapy_span_ruler(output_folder, therapy_patterns):
 
 
 def create_indication_span_ruler(output_folder, ind_patterns):
-    config = {"spans_key": "sc", "phrase_matcher_attr": "LOWER"}
+    config = {"spans_key": "sc", "phrase_matcher_attr": "NORM"}
     ind_base_path = output_folder.joinpath("indication")
     ind_base_path.mkdir(exist_ok=True, parents=True)
     indication = spacy.blank("en")
@@ -165,23 +168,6 @@ def main(output_folder: pathlib.Path = typer.Argument(None)):
     therapy_patterns = create_tfidf(output_folder, data)
     create_therapy_span_ruler(output_folder, therapy_patterns)
     create_indication_span_ruler(output_folder, ind_patterns)
-
-    # Span Ruler
-    config = {"spans_key": "sc", "phrase_matcher_attr": "LOWER"}
-    rxnorm_span_base_path = output_folder / "rxnorm-span"
-    rxnorm_span_base_path.mkdir(exist_ok=True, parents=True)
-    ther_span = spacy.blank("en")
-    ther_span.add_pipe("span_ruler", config=config).add_patterns(therapy_patterns)  # type: ignore
-    ther_span.to_disk(rxnorm_span_base_path)
-
-    # Indications
-    indication = spacy.blank("en")
-    indication.max_length = 300_000_000
-    indication.add_pipe("span_ruler", config=config).add_patterns(ind_patterns)  # type: ignore
-
-    ind_base_path = output_folder.joinpath("indications")
-    ind_base_path.mkdir(exist_ok=True, parents=True)
-    indication.to_disk(ind_base_path)
 
 
 if __name__ == "__main__":
