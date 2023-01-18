@@ -19,8 +19,6 @@ from backend.common.models.shared import (
     LockableDocument,
     TaskLock,
     TherapyTag,
-    UpdateIndicationTag,
-    UpdateTherapyTag,
 )
 
 
@@ -257,8 +255,8 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     previous_doc_doc_id: PydanticObjectId | None = None
     is_current_version: bool | None = None
 
-    therapy_tags: list[UpdateTherapyTag] | None = None
-    indication_tags: list[UpdateIndicationTag] | None = None
+    therapy_tags: list[TherapyTag] | None = None
+    indication_tags: list[IndicationTag] | None = None
     tags: list[str] | None = None
     internal_document: bool | None = None
     translation_id: PydanticObjectId | None = None
