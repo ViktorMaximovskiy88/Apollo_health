@@ -135,6 +135,9 @@ a {
   width: 100%;
 }
 
+.ant-select-item-option-content {
+  white-space: initial;
+}
 .ant-modal-full-screen .ant-modal-content {
   display: flex;
   height: 100%;
