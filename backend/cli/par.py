@@ -9,13 +9,13 @@ sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 from pymongo import UpdateOne
 
 from backend.common.db.init import aws_get_motor, aws_init_db, init_db
+from backend.common.models.app_config import AppConfig
 from backend.common.models.doc_document import DocDocument, PydanticObjectId
-from backend.common.models.site import ScrapeMethodConfiguration, Site
-from backend.common.models.user import User
 from backend.scrapeworker.doc_type_matcher import DocTypeMatcher
 
 log = logging.getLogger(__name__)
 
+# aws_mongo = None
 aws_mongo = {
     "host": "apollo-dev-use1-mmit-01.3qm7h.mongodb.net",
     "database": "source-hub",
@@ -122,63 +122,17 @@ async def doc_type_validation(ctx):
 
 @par.command()
 @click.pass_context
-async def navigator_import(ctx):
+async def tricare_token_import(ctx):
     file = ctx.parent.params["file"]
-    df = pd.read_csv(file)
+    df = pd.read_csv(file, encoding="latin1")
 
-    user = await User.by_email("api@mmitnetwork.com")
-    default_config = {
-        "document_extensions": ["pdf"],
-        "url_keywords": [],
-        "proxy_exclusions": [],
-        "wait_for": [],
-        "wait_for_timeout_ms": 500,
-        "base_url_timeout_ms": 30000,
-        "search_in_frames": False,
-        "follow_links": False,
-        "follow_link_keywords": [],
-        "follow_link_url_keywords": [],
-        "searchable": False,
-        "searchable_playbook": None,
-        "searchable_type": [],
-        "searchable_input": None,
-        "searchable_submit": None,
-        "attr_selectors": [],
-        "html_attr_selectors": [],
-        "html_exclusion_selectors": [],
-        "focus_section_configs": [],
-        "allow_docdoc_updates": False,
-    }
+    app_config_settings = await AppConfig.find({"key": "tricare_tokens"}).to_list()
+    if not app_config_settings:
+        app_config_settings = AppConfig(key="tricare_tokens", data=[])
+    data_top = df.head()
+    data_top
 
-    sites = {}
-    for _index, row in df.iterrows():
-        name = row["HuntingGroup"]
+    app_config_settings.data = df["Token"].tolist()
+    await app_config_settings.save()
 
-        if not sites.get(name, None):
-            sites[name] = []
-
-        exists = await Site.find_one({"base_urls.url": row["WebsiteURL"]})
-        if not exists:
-            sites[name].append(
-                {"url": row["WebsiteURL"], "name": row["SourceType"], "status": "ACTIVE"},
-            )
-
-    for name, base_urls in sites.items():
-        if len(base_urls) == 0:
-            log.info(f"skipping name={name}")
-            continue
-
-        new_site = Site(
-            name=name,
-            creator_id=user.id,
-            base_urls=base_urls,
-            scrape_method="SimpleDocumentScrape",
-            collection_method="AUTOMATED",
-            scrape_method_configuration=ScrapeMethodConfiguration(**default_config),
-            tags=["Formulary Navigator"],
-            disabled=False,
-            cron="0 16 * * *",
-        )
-
-        site = await new_site.save()
-        log.info(f"site created id={site.id}")
+    log.info(f"tokens updated len={len(app_config_settings.data)}")

@@ -1,4 +1,5 @@
 from backend.common.core.enums import ScrapeMethod
+from backend.common.models.app_config import AppConfig
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 
@@ -22,14 +23,20 @@ class TricareScraper(PlaywrightBaseScraper):
 
         timeout = self.config.wait_for_timeout_ms
         tricare_url = "https://www.express-scripts.com/frontend/open-enrollment/tricare/fst/#/"
-        # TODO need to get these terms added to somewhere....
-        search_terms = ["adipex", "simvastatin", "zocor"]
+
+        search_terms = await AppConfig.get_tricare_tokens()
+        prefix_terms = set()
+        for term in search_terms:
+            prefix_term = term[:3]
+            if prefix_term in prefix_terms:
+                continue
+            prefix_terms.add(prefix_term)
 
         await self.page.goto(tricare_url)
         await self.page.locator("#formularySearchDefault").wait_for(timeout=timeout)
 
         # # step 1: get search term data from typeahead
-        search_results = await self._search_for_terms(search_terms)
+        search_results = await self._search_for_terms(prefix_terms)
 
         unique_urls = set()
         # step 2: get search results from price API
@@ -58,7 +65,7 @@ class TricareScraper(PlaywrightBaseScraper):
 
                     url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/forms/content"  # noqa
                     url += f"?repository={document['repository']}&documentId={document['documentId']}"  # noqa
-                    if not url in unique_urls:
+                    if url not in unique_urls:
                         unique_urls.add(url)
                         # TODO look at liams changes for cookies
                         cookies = await self.context.cookies(self.page.url)
@@ -77,7 +84,7 @@ class TricareScraper(PlaywrightBaseScraper):
     async def _search_for_terms(self, search_terms: list[str]) -> list[dict]:
         results = []
         for search_term in search_terms:
-            search_url = f"https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/search?name={search_term}&context=fst"
+            search_url = f"https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/search?name={search_term}&context=fst"  # noqa
             response = await self.page.request.get(search_url)
             search_result = await response.json()
 
@@ -105,7 +112,7 @@ class TricareScraper(PlaywrightBaseScraper):
             "patientGender": "female",
             "includeMailPricing": True,
         }
-        url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/pricing"
+        url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/pricing"  # noqa
         response = await self.page.request.post(url, data=request_data)
         result = await response.json()
 
@@ -127,7 +134,7 @@ class TricareScraper(PlaywrightBaseScraper):
             "drug": params["drug"],
             "stepTherapyRequired": params["stepTherapyRequired"],
         }
-        url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/forms"
+        url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/forms"  # noqa
         response = await self.page.request.post(url, data=request_data)
         result = await response.json()
 
