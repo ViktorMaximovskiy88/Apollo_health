@@ -49,7 +49,7 @@ function PayerIdsSelector() {
 
   return (
     <Form.Item
-      rules={[{ required: false }, backboneValueValidator(payerType)]}
+      rules={[{ validator: (_rule, value) => backboneValueValidator(value, payerType) }]}
       label="Backbone Values"
       name="payer_ids"
       className="w-80"
@@ -183,13 +183,9 @@ export const PayerFamilyInfoForm = () => {
   );
 };
 
-export function backboneValueValidator(payerType: string) {
-  return {
-    async validator(_rule: Rule, payerType: string) {
-      if (payerType !== 'Not Selected') {
-        return Promise.reject(`Backbone value is required`);
-      }
-      return Promise.resolve();
-    },
-  };
+function backboneValueValidator(payerValue: string[], payerType: string | null) {
+  if (payerValue.length === 0 && payerType !== 'Not Selected') {
+    return Promise.reject('Backbone value is required');
+  }
+  return Promise.resolve();
 }
