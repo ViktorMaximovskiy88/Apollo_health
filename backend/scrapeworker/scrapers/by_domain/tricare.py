@@ -36,61 +36,56 @@ class TricareScraper(PlaywrightBaseScraper):
         prefix_terms = list(prefix_terms)
         prefix_terms.sort()
 
-        try:
-            await self.page.goto(tricare_url)
-            await self.page.locator("#formularySearchDefault").wait_for(timeout=timeout)
+        await self.page.goto(tricare_url)
+        await self.page.locator("#formularySearchDefault").wait_for(timeout=timeout)
 
-            # # step 1: get search term data from typeahead
-            search_results = await self._search_for_terms(prefix_terms)
-            self.log.debug(f"search_results={len(search_results)} found")
+        # # step 1: get search term data from typeahead
+        search_results = await self._search_for_terms(prefix_terms)
+        self.log.debug(f"search_results={len(search_results)} found")
 
-            unique_urls = set()
-            # step 2: get search results from price API
-            for search_params in search_results:
-                pricing_result = await self._get_search_term_pricing(search_params)
-                self.log.debug(
-                    f"found pricing_result={pricing_result} search_params={search_params}",
-                )
+        unique_urls = set()
+        # step 2: get search results from price API
+        for search_params in search_results:
+            pricing_result = await self._get_search_term_pricing(search_params)
+            self.log.debug(
+                f"found pricing_result={pricing_result} search_params={search_params}",
+            )
 
-                is_covered = pricing_result and pricing_result.get("drugCovered", False)
-                if not is_covered:
-                    continue
+            is_covered = pricing_result and pricing_result.get("drugCovered", False)
+            if not is_covered:
+                continue
 
-                pricing_result["ndc"] = search_params["ndc"]
-                pricing_result["hicl"] = search_params["hicl"]
-                pricing_result["gcn"] = search_params["gcn"]
-                pricing_result["specificTherapeuticClassCode"] = search_params[
-                    "specificTherapeuticClassCode"
-                ]
+            pricing_result["ndc"] = search_params["ndc"]
+            pricing_result["hicl"] = search_params["hicl"]
+            pricing_result["gcn"] = search_params["gcn"]
+            pricing_result["specificTherapeuticClassCode"] = search_params[
+                "specificTherapeuticClassCode"
+            ]
 
-                # step 3: get content aka docs
-                documents = await self._get_document_list(pricing_result)
-                self.log.debug(f"documents={len(documents)} found")
+            # step 3: get content aka docs
+            documents = await self._get_document_list(pricing_result)
+            self.log.debug(f"documents={len(documents)} found")
 
-                for document in documents:
-                    url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/forms/content"  # noqa
-                    url += f"?repository={document['repository']}&documentId={document['documentId']}"  # noqa
-                    if url not in unique_urls:
+            for document in documents:
+                url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/forms/content"  # noqa
+                url += f"?repository={document['repository']}&documentId={document['documentId']}"  # noqa
+                if url not in unique_urls:
 
-                        unique_urls.add(url)
-                        cookies = await self.context.cookies(self.page.url)
+                    unique_urls.add(url)
+                    cookies = await self.context.cookies(self.page.url)
 
-                        downloads.append(
-                            DownloadContext(
-                                metadata=Metadata(
-                                    link_text=f"{search_params['drug_name']} {document['type']}",
-                                    base_url=self.page.url,
-                                ),
-                                request=Request(
-                                    url=url,
-                                    cookies=cookies,
-                                ),
-                            )
+                    downloads.append(
+                        DownloadContext(
+                            metadata=Metadata(
+                                link_text=f"{search_params['drug_name']} {document['type']}",
+                                base_url=self.page.url,
+                            ),
+                            request=Request(
+                                url=url,
+                                cookies=cookies,
+                            ),
                         )
-        except TimeoutError as ex:
-            self.log.error("tricare", exc_info=ex)
-        except Error as ex:
-            self.log.error("tricare", exc_info=ex)
+                    )
 
         return downloads
 
