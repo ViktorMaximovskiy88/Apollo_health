@@ -1,7 +1,7 @@
 from playwright.async_api import Error, TimeoutError
 
 from backend.common.core.enums import ScrapeMethod
-from backend.common.models.app_config import AppConfig
+from backend.common.models.search_codes import SearchCodeSet
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 
@@ -9,9 +9,6 @@ from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBase
 class TricareScraper(PlaywrightBaseScraper):
 
     type: str = "Tricare"
-
-    def css_selector(self) -> str:
-        return ""
 
     async def is_applicable(self) -> bool:
         self.log.debug(f"self.parsed_url.netloc={self.parsed_url.netloc}")
@@ -25,7 +22,7 @@ class TricareScraper(PlaywrightBaseScraper):
         timeout = self.config.wait_for_timeout_ms
         tricare_url = "https://www.express-scripts.com/frontend/open-enrollment/tricare/fst/#/"
 
-        search_terms = await AppConfig.get_tricare_tokens()
+        search_terms = await SearchCodeSet.get_tricare_tokens()
         prefix_terms = set()
 
         prefix_length = 4
@@ -101,9 +98,7 @@ class TricareScraper(PlaywrightBaseScraper):
         results = {}
         for search_term in search_terms:
             search_url = f"https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/search?name={search_term}&context=fst"  # noqa
-            response = await self.page.request.get(search_url)
-            search_results = await response.json()
-            await self.page.wait_for_timeout(900)
+            search_results = await self._fetch(search_url, delay_ms=900)
 
             if not isinstance(search_results, list) or len(search_results) == 0:
                 self.log.debug(f"no results for search_term={search_term}")
@@ -135,9 +130,7 @@ class TricareScraper(PlaywrightBaseScraper):
         }
 
         url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/pricing"  # noqa
-        response = await self.page.request.post(url, data=request_data)
-        result = await response.json()
-        await self.page.wait_for_timeout(900)
+        result = await self._fetch(url, method="post", data=request_data, delay_ms=900)
 
         if self._has_valid_pricing(result):
             return self._map_pricing_result(result["mailPricing"], result["retailPricings"][0])
@@ -158,9 +151,7 @@ class TricareScraper(PlaywrightBaseScraper):
         }
 
         url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/forms"  # noqa
-        response = await self.page.request.post(url, data=request_data)
-        result = await response.json()
-        await self.page.wait_for_timeout(900)
+        result = await self._fetch(url, method="post", data=request_data, delay_ms=900)
 
         if self._has_valid_document(result):
             return result["drugForms"]
@@ -249,6 +240,27 @@ class TricareScraper(PlaywrightBaseScraper):
         )
 
         return result
+
+    async def _fetch(
+        self,
+        url,
+        method="get",
+        data: dict | None = None,
+        delay_ms: int | None = None,
+        params: dict | None = None,
+    ):
+        try:
+            response = await self.page.request.fetch(url, method=method, data=data, params=params)
+            result = await response.json()
+
+            if delay_ms is not None:
+                await self.page.wait_for_timeout(delay_ms)
+
+            return result
+        except TimeoutError as ex:
+            self.log.error("tricare", exc_info=ex)
+        except Error as ex:
+            self.log.error("tricare", exc_info=ex)
 
     def _has_valid_pricing(self, result: dict):
         return (

@@ -47,6 +47,7 @@ class SiteStatus(str, Enum):
 class SearchableType(str, Enum):
     CPTCODES = "CPTCODES"
     JCODES = "JCODES"
+    TRICARE = "TRICARE"
 
 
 class DocumentType(str, Enum):

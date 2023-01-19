@@ -9,20 +9,20 @@ sys.path.append(str(Path(__file__).parent.joinpath("../..").resolve()))
 from pymongo import UpdateOne
 
 from backend.common.db.init import aws_get_motor, aws_init_db, init_db
-from backend.common.models.app_config import AppConfig
 from backend.common.models.doc_document import DocDocument, PydanticObjectId
+from backend.common.models.search_codes import SearchableType, SearchCodeSet
 from backend.scrapeworker.doc_type_matcher import DocTypeMatcher
 
 log = logging.getLogger(__name__)
 
-# aws_mongo = None
-aws_mongo = {
-    "host": "apollo-dev-use1-mmit-01.3qm7h.mongodb.net",
-    "database": "source-hub",
-    "user": "access_key",
-    "password": "secret_key",
-    "session": "session_id",
-}
+aws_mongo = None
+# aws_mongo = {
+#     "host": "apollo-dev-use1-mmit-01.3qm7h.mongodb.net",
+#     "database": "source-hub",
+#     "user": "access_key",
+#     "password": "secret_key",
+#     "session": "session_id",
+# }
 
 
 @click.group()
@@ -126,13 +126,11 @@ async def tricare_token_import(ctx):
     file = ctx.parent.params["file"]
     df = pd.read_csv(file, encoding="latin1")
 
-    app_config_settings = await AppConfig.find({"key": "tricare_tokens"}).to_list()
+    app_config_settings = await SearchCodeSet.find_one({"type": SearchableType.TRICARE})
     if not app_config_settings:
-        app_config_settings = AppConfig(key="tricare_tokens", data=[])
-    data_top = df.head()
-    data_top
+        app_config_settings = SearchCodeSet(type=SearchableType.TRICARE, codes=[])
 
-    app_config_settings.data = df["Token"].tolist()
+    app_config_settings.codes = df["Token"].tolist()
     await app_config_settings.save()
 
-    log.info(f"tokens updated len={len(app_config_settings.data)}")
+    log.info(f"tokens updated len={len(app_config_settings.codes)}")
