@@ -54,6 +54,7 @@ class WorkQueue(BaseDocument):
     user_query: dict[Any, Any]
     sort_query: list[str] = []
     submit_actions: list[SubmitAction]
+    hold_types: list[str] = []
 
 
 class WorkQueueUpdate(BaseDocument):

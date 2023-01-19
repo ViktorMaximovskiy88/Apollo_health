@@ -198,15 +198,12 @@ class LineageService:
         self, doc: RetrievedDocument, doc_doc: DocDocument, prev_doc_doc: DocDocument
     ) -> tuple[RetrievedDocument, DocDocument]:
 
-        therapy_tags, indication_tags = await self.tag_compare.execute(doc_doc, prev_doc_doc)
+        tag_lineage = await self.tag_compare.execute_and_save(doc_doc, prev_doc_doc)
         self.logger.info(f"'after compare tags {doc_doc.id}")
         # TODO will be removed with rtdoc banishment
-        doc.therapy_tags = therapy_tags
-        doc.indication_tags = indication_tags
-        # NOTE the result here are TagUpdate Status changes,  _not_ new tags...
-        doc_doc.therapy_tags = therapy_tags
-        doc_doc.indication_tags = indication_tags
-        doc, doc_doc = await asyncio.gather(doc.save(), doc_doc.save())
+        doc.therapy_tags = tag_lineage.therapy_tags
+        doc.indication_tags = tag_lineage.indication_tags
+        doc = await doc.save()
         return doc, doc_doc
 
 

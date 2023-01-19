@@ -24,6 +24,7 @@ export interface WorkQueue extends BaseDocument {
   document_query: any;
   user_query: any;
   submit_actions: SubmitAction[];
+  hold_types: string[];
   frontend_component: string;
   disabled: boolean;
 }
