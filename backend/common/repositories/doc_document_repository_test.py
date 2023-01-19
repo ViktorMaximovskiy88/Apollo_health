@@ -4,7 +4,7 @@ from random import random
 import pytest_asyncio
 from beanie import PydanticObjectId
 
-from backend.common.core.enums import ApprovalStatus
+from backend.common.core.enums import ApprovalStatus, ScrapeMethod
 from backend.common.db.init import init_db
 from backend.common.models import User
 from backend.common.models.doc_document import DocDocument, DocDocumentLocation, UpdateDocDocument
@@ -24,7 +24,7 @@ async def before_each_test():
 async def site():
     site = await Site(
         name="Test",
-        scrape_method="",
+        scrape_method=ScrapeMethod.Simple,
         scrape_method_configuration=ScrapeMethodConfiguration(
             document_extensions=[],
             url_keywords=[],

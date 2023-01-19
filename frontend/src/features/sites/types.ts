@@ -87,6 +87,7 @@ export enum ScrapeMethod {
   Simple = 'SimpleDocumentScrape',
   Html = 'HtmlScrape',
   CMS = 'CMSScrape',
+  Tricare = 'TricareScrape',
 }
 
 export enum SearchableType {
