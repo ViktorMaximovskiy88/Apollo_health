@@ -1,4 +1,4 @@
-from playwright.async_api import TimeoutError
+from playwright.async_api import Error, TimeoutError
 
 from backend.common.core.enums import ScrapeMethod
 from backend.common.models.app_config import AppConfig
@@ -9,7 +9,6 @@ from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBase
 class TricareScraper(PlaywrightBaseScraper):
 
     type: str = "Tricare"
-    downloads: list[DownloadContext] = []
 
     def css_selector(self) -> str:
         return ""
@@ -92,6 +91,8 @@ class TricareScraper(PlaywrightBaseScraper):
                             )
                         )
         except TimeoutError as ex:
+            self.log.error("tricare", exc_info=ex)
+        except Error as ex:
             self.log.error("tricare", exc_info=ex)
 
         return downloads
