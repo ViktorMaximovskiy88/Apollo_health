@@ -1,8 +1,9 @@
+import asyncio
 import re
 
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
-from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
+from backend.scrapeworker.common.models import DownloadContext, Request
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 
 
@@ -28,9 +29,9 @@ class BcbsflScraper(PlaywrightBaseScraper):
         return result
 
     async def click_welcome_menu_elements(self):
-        first_menu_path = self.page.locator(self.first_menu_xpath)
+        first_menu_path = await self.page.wait_for_selector(self.first_menu_xpath)
         await first_menu_path.click()
-        second_menu_xpath = self.page.locator(self.second_menu_xpath)
+        second_menu_xpath = await self.page.wait_for_selector(self.second_menu_xpath)
         await second_menu_xpath.click()
 
     @staticmethod
@@ -42,7 +43,7 @@ class BcbsflScraper(PlaywrightBaseScraper):
 
     async def execute(self) -> list[DownloadContext]:
         downloads: list[DownloadContext] = []
-        pdf_paths = []
+        found_pdfs = []
 
         await self.page.route("**/*", self.intercept)
         await self.click_welcome_menu_elements()
@@ -50,6 +51,7 @@ class BcbsflScraper(PlaywrightBaseScraper):
         all_texts = await xpath_locator.all_inner_texts()
         for text in all_texts:
             try:
+                await self.click_welcome_menu_elements()
                 await self.click_welcome_menu_elements()
                 pdf_el = self.page.locator(self.iframe_xpath)
                 pdf_raw_src = await pdf_el.get_attribute("src")
@@ -60,28 +62,39 @@ class BcbsflScraper(PlaywrightBaseScraper):
                     f"/a[@class='rpLink ']"
                     f"/span/span[text()='{text}']"
                 )
+                metadata = await self.extract_metadata(link_handle)
+                metadata.base_url = self.base_url
                 await link_handle.click()
+                await asyncio.sleep(0.25)
 
                 await self.page.wait_for_selector(
                     f'//div[@id="divLiteralContainer"]'
                     f"/iframe[not(contains(@src,"
-                    f'"{welcome_pdf_src}"))]'
+                    f'"{welcome_pdf_src}"))]',
                 )
                 await self.page.wait_for_selector(self.iframe_xpath)
                 result_pdf_locator = self.page.locator(self.iframe_xpath)
-                pdf_paths.append(await result_pdf_locator.get_attribute("src"))
+                found_pdfs.append(
+                    {
+                        "path": await result_pdf_locator.get_attribute("src"),
+                        "metadata": metadata,
+                    }
+                )
             except PlaywrightTimeoutError as e:
                 self.log.error(
                     f"TimeoutException in {self.__class__.__name__} class for"
                     f" execute method: {e}"
                 )
-                continue
+                await asyncio.sleep(10)
 
-        for pdf_path in pdf_paths:
+        self.log.info(f"found {len(found_pdfs)} pdfs")
+
+        for pdf in found_pdfs:
+            src = pdf["path"]
             downloads.append(
                 DownloadContext(
-                    request=Request(url=f"{self.base_url}/{pdf_path}"),
-                    metadata=Metadata(base_url=self.base_url),
+                    request=Request(url=f"{self.base_url}/{src}"),
+                    metadata=pdf["metadata"],
                 )
             )
 
