@@ -605,7 +605,7 @@ class ScrapeWorker:
                 )
                 all_downloads.append(download)
                 continue
-            print(url, url)
+
             all_downloads += await self.queue_downloads(url, url)
             if self.site.scrape_method_configuration.follow_links:
                 self.log.debug(f"Follow links for {url}")

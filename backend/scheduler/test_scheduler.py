@@ -6,7 +6,7 @@ import pytest_asyncio
 from beanie import PydanticObjectId
 from pydantic import HttpUrl
 
-from backend.common.core.enums import CollectionMethod, SiteStatus, TaskStatus
+from backend.common.core.enums import CollectionMethod, ScrapeMethod, SiteStatus, TaskStatus
 from backend.common.db.init import init_db
 from backend.common.models.site import BaseUrl, ScrapeMethodConfiguration, Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
@@ -26,7 +26,7 @@ async def before_each_test():
 def simple_site(cron="0 * * * *", collection_hold=None):
     site = Site(
         name="Test",
-        scrape_method="",
+        scrape_method=ScrapeMethod.Simple,
         scrape_method_configuration=ScrapeMethodConfiguration(
             document_extensions=[],
             url_keywords=[],

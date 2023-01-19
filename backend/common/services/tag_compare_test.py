@@ -6,7 +6,7 @@ import pytest
 import pytest_asyncio
 from beanie import PydanticObjectId
 
-from backend.common.core.enums import TagUpdateStatus
+from backend.common.core.enums import ScrapeMethod, TagUpdateStatus
 from backend.common.db.init import init_db
 from backend.common.models.doc_document import DocDocument, DocDocumentLocation
 from backend.common.models.document import RetrievedDocument, RetrievedDocumentLocation
@@ -32,7 +32,7 @@ def tag_compare():
 async def site():
     site = await Site(
         name="Test",
-        scrape_method="",
+        scrape_method=ScrapeMethod.Simple,
         scrape_method_configuration=ScrapeMethodConfiguration(
             document_extensions=[],
             url_keywords=[],

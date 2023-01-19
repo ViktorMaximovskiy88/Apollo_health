@@ -14,7 +14,13 @@ from backend.app.routes.site_scrape_tasks import (
     start_scrape_task,
 )
 from backend.app.routes.table_query import TableFilterInfo, TableQueryResponse, TableSortInfo
-from backend.common.core.enums import BulkScrapeActions, CollectionMethod, SiteStatus, TaskStatus
+from backend.common.core.enums import (
+    BulkScrapeActions,
+    CollectionMethod,
+    ScrapeMethod,
+    SiteStatus,
+    TaskStatus,
+)
 from backend.common.db.init import init_db
 from backend.common.models.site import BaseUrl, HttpUrl, ScrapeMethodConfiguration, Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
@@ -68,7 +74,7 @@ def simple_site(
         name="Test",
         collection_method=collection_method,
         collection_hold=collection_hold,
-        scrape_method="",
+        scrape_method=ScrapeMethod.Simple,
         scrape_method_configuration=ScrapeMethodConfiguration(
             document_extensions=[],
             url_keywords=[],

@@ -6,7 +6,7 @@ from beanie import PydanticObjectId
 
 from backend.app.routes.document_family import read_document_families
 from backend.app.routes.table_query import TableFilterInfo, TableSortInfo
-from backend.common.core.enums import CollectionMethod, DocumentType, SiteStatus
+from backend.common.core.enums import CollectionMethod, DocumentType, ScrapeMethod, SiteStatus
 from backend.common.db.init import init_db
 from backend.common.models.document_family import DocumentFamily
 from backend.common.models.site import BaseUrl, HttpUrl, ScrapeMethodConfiguration, Site
@@ -59,7 +59,7 @@ def simple_site(
         name="Test",
         collection_method=collection_method,
         collection_hold=collection_hold,
-        scrape_method="",
+        scrape_method=ScrapeMethod.Simple,
         scrape_method_configuration=ScrapeMethodConfiguration(
             document_extensions=[],
             url_keywords=[],

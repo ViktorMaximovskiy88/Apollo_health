@@ -5,6 +5,7 @@ from random import random
 import pytest_asyncio
 from fitz import Document as fitzDocument
 
+from backend.common.core.enums import ScrapeMethod
 from backend.common.db.init import init_db
 from backend.common.models.doc_document import DocDocument, DocDocumentLocation
 from backend.common.models.document import RetrievedDocument, RetrievedDocumentLocation
@@ -28,7 +29,7 @@ async def before_each_test():
 async def site():
     site = await Site(
         name="Test",
-        scrape_method="",
+        scrape_method=ScrapeMethod.Simple,
         scrape_method_configuration=ScrapeMethodConfiguration(
             document_extensions=[],
             url_keywords=[],
