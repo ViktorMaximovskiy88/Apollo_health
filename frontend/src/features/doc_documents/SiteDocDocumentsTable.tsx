@@ -124,7 +124,8 @@ export function SiteDocDocumentsTable({
         <Alert
           message={
             <div>
-              <span className={classNames('mr-2')}>
+              <span className={classNames('mr-2 opacity-80')}>Filtered by Site Scrape Task</span>|
+              <span className={classNames('mx-2')}>
                 {siteScrapeTaskStatusLabel(siteScrapeTask)} on {dateLabel}
               </span>
               |
