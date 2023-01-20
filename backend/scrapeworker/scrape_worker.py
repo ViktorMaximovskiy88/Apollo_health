@@ -3,7 +3,7 @@ import tempfile
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from random import shuffle
-from typing import AsyncGenerator, Coroutine
+from typing import AsyncGenerator
 from urllib.parse import urlparse
 
 import aiofiles
@@ -367,28 +367,6 @@ class ScrapeWorker:
                 link_retrieved_task.save(),
             )
 
-    async def watch_for_cancel(self, tasks: list[asyncio.Task[None]]):
-        while True:
-            if all(t.done() for t in tasks):
-                break
-            canceling = await SiteScrapeTask.find_one(
-                SiteScrapeTask.id == self.scrape_task.id,
-                SiteScrapeTask.status == TaskStatus.CANCELING,
-            )
-            if canceling:
-                for t in tasks:
-                    t.cancel()
-                raise CanceledTaskException("Task was canceled.")
-            await asyncio.sleep(5)
-
-    async def wait_for_completion_or_cancel(self, downloads: list[Coroutine[None, None, None]]):
-        tasks = [asyncio.create_task(download) for download in downloads]
-
-        try:
-            await asyncio.gather(self.watch_for_cancel(tasks), *tasks)
-        except asyncio.exceptions.CancelledError:
-            pass
-
     async def try_each_proxy(self):
         """
         Try each proxy in turn, if it fails, try the next one. Repeat a few times for good measure.
@@ -647,39 +625,61 @@ class ScrapeWorker:
                         nested_url, base_url=url, cookies=cookies, skip_playbook=True
                     )
 
-        tasks = []
-        for download in all_downloads:
-            if self.should_process_download(download):
-                await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
-                tasks.append(self.attempt_download(download))
-            else:
-                self.log.info(f"Skip download {download.request.url}")
+        download_queue = [
+            download for download in all_downloads if self.should_process_download(download)
+        ]
 
-        await self.wait_for_completion_or_cancel(tasks)
+        await self.batch_downloads(download_queue)
 
-        # doc_ids = [doc.id for (doc, _) in self.new_document_pairs]
-        site_id = self.site.id
-        # TEMPORARY: lets see how the scrapeworker fares at this (vs our webapp...)
-        self.log.info(f"before lineage_service.process_lineage_for_site site_id={site_id}")
-        await self.lineage_service.process_lineage_for_site(site_id)  # type: ignore
+        try:
+            # doc_ids = [doc.id for (doc, _) in self.new_document_pairs]
+            site_id = self.site.id
+            # TEMPORARY: lets see how the scrapeworker fares at this (vs our webapp...)
+            self.log.info(f"before lineage_service.process_lineage_for_site site_id={site_id}")
+            await self.lineage_service.process_lineage_for_site(site_id)  # type: ignore
 
-        doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
-        async for doc in DocDocument.find({"_id": {"$in": doc_doc_ids}}):
-            change_info = ChangeInfo(
-                translation_change=bool(doc.translation_id),
-                lineage_change=bool(doc.previous_doc_doc_id),
-                document_family_change=bool(doc.document_family_id),
-            )
-            await doc_document_save_hook(doc, change_info)
-        async for doc in DocDocument.find(
-            {"locations.site_id": site_id, "_id": {"$nin": doc_doc_ids}}
-        ):
-            await doc_document_save_hook(doc)
+            doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
+            async for doc in DocDocument.find({"_id": {"$in": doc_doc_ids}}):
+                change_info = ChangeInfo(
+                    translation_change=bool(doc.translation_id),
+                    lineage_change=bool(doc.previous_doc_doc_id),
+                    document_family_change=bool(doc.document_family_id),
+                )
+                await doc_document_save_hook(doc, change_info)
+            async for doc in DocDocument.find(
+                {"locations.site_id": site_id, "_id": {"$nin": doc_doc_ids}}
+            ):
+                await doc_document_save_hook(doc)
+        except Exception as ex:
+            self.log.error("Lineage error", exc_info=ex)
 
         self.site.last_run_documents = self.scrape_task.documents_found
-        await self.site.save()
 
+        await self.site.save()
         await self.downloader.close()
 
         if not self.scrape_task.documents_found:
             raise NoDocsCollectedException("No documents collected.")
+
+    async def is_canceled(self):
+        return await SiteScrapeTask.find_one(
+            SiteScrapeTask.id == self.scrape_task.id,
+            SiteScrapeTask.status == TaskStatus.CANCELING,
+        )
+
+    async def batch_downloads(self, all_downloads: list, batch_size: int = 100):
+
+        # dont double count for tricare
+        if self.site.scrape_method != ScrapeMethod.Tricare:
+            await self.scrape_task.update(Inc({SiteScrapeTask.links_found: len(all_downloads)}))
+
+        while len(all_downloads) > 0:
+            downloads = all_downloads[:batch_size]
+            del all_downloads[:batch_size]
+
+            tasks = [self.attempt_download(download) for download in downloads]
+            await asyncio.gather(*tasks)
+
+            canceled = await self.is_canceled()
+            if canceled:
+                raise CanceledTaskException("Task was canceled.")
