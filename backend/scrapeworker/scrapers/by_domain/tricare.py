@@ -1,3 +1,5 @@
+from itertools import groupby
+
 from playwright.async_api import Error, TimeoutError
 
 from backend.common.core.enums import ScrapeMethod
@@ -9,6 +11,19 @@ from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBase
 class TricareScraper(PlaywrightBaseScraper):
 
     type: str = "Tricare"
+    base_url = "https://www.express-scripts.com/frontend/open-enrollment/tricare/fst/#/"
+    prefix_length = 4
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.unique_urls = set()
+
+    @staticmethod
+    async def get_search_term_buckets():
+        terms = await SearchCodeSet.get_tricare_tokens()
+        terms = [term.lower() for term in terms if len(term) >= TricareScraper.prefix_length]
+        terms.sort()
+        return [list(value) for key, value in groupby(terms, key=lambda x: x[0])]
 
     async def is_applicable(self) -> bool:
         self.log.debug(f"self.parsed_url.netloc={self.parsed_url.netloc}")
@@ -16,44 +31,39 @@ class TricareScraper(PlaywrightBaseScraper):
         self.log.debug(f"{self.__class__.__name__} is_applicable -> {result}")
         return result
 
-    async def execute(self) -> list[DownloadContext]:
+    async def execute(
+        self,
+        search_terms,
+    ) -> list[DownloadContext]:
         downloads: list[DownloadContext] = []
-
         timeout = self.config.wait_for_timeout_ms
-        tricare_url = "https://www.express-scripts.com/frontend/open-enrollment/tricare/fst/#/"
 
-        search_terms = await SearchCodeSet.get_tricare_tokens()
         prefix_terms = set()
-
-        prefix_length = 4
+        prefix_length = TricareScraper.prefix_length
         for term in search_terms:
             prefix_term = term[:prefix_length].lower()
             if prefix_term in prefix_terms or len(prefix_term) < prefix_length:
                 continue
-
             prefix_terms.add(prefix_term)
+        prefix_terms = list(prefix_terms)[:1]
 
-        prefix_terms = list(prefix_terms)
-        prefix_terms.sort()
-
-        await self.page.goto(tricare_url)
         await self.page.locator("#formularySearchDefault").wait_for(timeout=timeout)
 
         # # step 1: get search term data from typeahead
+        self.log.info("begin search for terms")
         search_results = await self._search_for_terms(prefix_terms)
-        self.log.debug(f"search_results={len(search_results)} found")
+        self.log.info(f"search_results={len(search_results)} found")
 
-        unique_urls = set()
         # step 2: get search results from price API
         for search_params in search_results:
             pricing_result = await self._get_search_term_pricing(search_params)
-            self.log.debug(
-                f"found pricing_result={pricing_result} search_params={search_params}",
-            )
-
             is_covered = pricing_result and pricing_result.get("drugCovered", False)
             if not is_covered:
                 continue
+
+            self.log.debug(
+                f"found pricing_result={pricing_result} search_params={search_params}",
+            )
 
             pricing_result["ndc"] = search_params["ndc"]
             pricing_result["hicl"] = search_params["hicl"]
@@ -64,14 +74,15 @@ class TricareScraper(PlaywrightBaseScraper):
 
             # step 3: get content aka docs
             documents = await self._get_document_list(pricing_result)
-            self.log.debug(f"documents={len(documents)} found")
+            self.log.info(
+                f"search_term={search_params['search_token']} drug_name={search_params['drug_name']} ndc={search_params['ndc']}  documents={len(documents)} found"  # noqa
+            )
 
             for document in documents:
                 url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/forms/content"  # noqa
                 url += f"?repository={document['repository']}&documentId={document['documentId']}"  # noqa
-                if url not in unique_urls:
-
-                    unique_urls.add(url)
+                if url not in self.unique_urls:
+                    self.unique_urls.add(url)
                     cookies = await self.context.cookies(self.page.url)
 
                     downloads.append(
@@ -93,13 +104,13 @@ class TricareScraper(PlaywrightBaseScraper):
         results = {}
         for search_term in search_terms:
             search_url = f"https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/search?name={search_term}&context=fst"  # noqa
-            search_results = await self._fetch(search_url, delay_ms=900)
+            search_results = await self._fetch(search_url, delay_ms=250)
 
             if not isinstance(search_results, list) or len(search_results) == 0:
                 self.log.debug(f"no results for search_term={search_term}")
                 continue
 
-            self.log.debug(f"search_term={search_term} result={len(search_results)}")
+            self.log.info(f"search_term={search_term} result={len(search_results)}")
 
             for search_result in search_results:
                 ndc = search_result["ndc"]
@@ -125,7 +136,7 @@ class TricareScraper(PlaywrightBaseScraper):
         }
 
         url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/pricing"  # noqa
-        result = await self._fetch(url, method="post", data=request_data, delay_ms=900)
+        result = await self._fetch(url, method="post", data=request_data)
 
         if self._has_valid_pricing(result):
             return self._map_pricing_result(result["mailPricing"], result["retailPricings"][0])
@@ -146,7 +157,7 @@ class TricareScraper(PlaywrightBaseScraper):
         }
 
         url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/forms"  # noqa
-        result = await self._fetch(url, method="post", data=request_data, delay_ms=900)
+        result = await self._fetch(url, method="post", data=request_data)
 
         if self._has_valid_document(result):
             return result["drugForms"]

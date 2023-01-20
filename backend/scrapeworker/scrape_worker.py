@@ -47,6 +47,7 @@ from backend.scrapeworker.common.utils import get_extension_from_path_like, supp
 from backend.scrapeworker.file_parsers import get_tags, parse_by_type, pdf
 from backend.scrapeworker.playbook import PlaybookException, ScrapePlaybook
 from backend.scrapeworker.scrapers import ScrapeHandler
+from backend.scrapeworker.scrapers.by_domain.tricare import TricareScraper
 from backend.scrapeworker.scrapers.cms.cms_scraper import CMSScrapeController
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
 from backend.scrapeworker.search_crawler import SearchableCrawler
@@ -553,6 +554,23 @@ class ScrapeWorker:
 
         return urls, cookies
 
+    async def tricare_batch(self, search_terms):
+        page: Page
+        context: BrowserContext
+        downloads = []
+        async with self.playwright_context(TricareScraper.base_url) as (page, context):
+            scraper = TricareScraper(
+                page=page,
+                context=context,
+                config=self.site.scrape_method_configuration,
+                url=TricareScraper.base_url,
+                scrape_method=self.site.scrape_method,
+                log=self.log,
+            )
+            downloads += await scraper.execute(search_terms)
+
+        return downloads
+
     def should_process_download(self, download: DownloadContext):
         url = download.request.url
         filename = (
@@ -578,6 +596,19 @@ class ScrapeWorker:
         await self.scrape_task.update(
             {"$set": {"scrape_method_configuration": self.site.scrape_method_configuration}}
         )
+
+        # temp batch by letter...
+        if self.site.scrape_method == ScrapeMethod.Tricare:
+            search_term_buckets = await TricareScraper.get_search_term_buckets()
+            for search_terms in search_term_buckets:
+                letter = search_terms[0][0]
+                self.log.info(f"letter={letter}")
+                downloads = await self.tricare_batch(search_terms)
+                await self.scrape_task.update(Inc({SiteScrapeTask.links_found: len(downloads)}))
+                self.log.info(
+                    f"terms={len(search_terms)} letter={letter} downloads={len(downloads)}"
+                )
+                all_downloads += downloads
 
         for url in base_urls:
             # skip the parse step and download
