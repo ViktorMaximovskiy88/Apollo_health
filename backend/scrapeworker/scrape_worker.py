@@ -660,6 +660,7 @@ class ScrapeWorker:
         # doc_ids = [doc.id for (doc, _) in self.new_document_pairs]
         site_id = self.site.id
         # TEMPORARY: lets see how the scrapeworker fares at this (vs our webapp...)
+        self.log.info(f"before lineage_service.process_lineage_for_site site_id={site_id}")
         await self.lineage_service.process_lineage_for_site(site_id)  # type: ignore
 
         doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
