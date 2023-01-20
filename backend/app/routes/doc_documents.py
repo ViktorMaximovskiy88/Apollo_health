@@ -88,7 +88,7 @@ async def read_doc_documents(
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
-):
+) -> TableQueryResponse[DocDocument]:
     query = {}
     if scrape_task_id:
         task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
