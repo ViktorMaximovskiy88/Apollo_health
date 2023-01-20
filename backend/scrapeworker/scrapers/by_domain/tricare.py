@@ -31,26 +31,32 @@ class TricareScraper(PlaywrightBaseScraper):
         self.log.debug(f"{self.__class__.__name__} is_applicable -> {result}")
         return result
 
-    async def execute(
-        self,
-        search_terms,
-    ) -> list[DownloadContext]:
-        downloads: list[DownloadContext] = []
-        timeout = self.config.wait_for_timeout_ms
-
+    def get_prefix_terms(self, search_terms, prefix_length):
         prefix_terms = set()
-        prefix_length = TricareScraper.prefix_length
         for term in search_terms:
             prefix_term = term[:prefix_length].lower()
             if prefix_term in prefix_terms or len(prefix_term) < prefix_length:
                 continue
             prefix_terms.add(prefix_term)
-        prefix_terms = list(prefix_terms)[:1]
+        prefix_terms = list(prefix_terms)
+        prefix_terms.sort()
+        return prefix_terms
 
-        await self.page.locator("#formularySearchDefault").wait_for(timeout=timeout)
+    async def execute(
+        self,
+        search_terms,
+    ) -> list[DownloadContext]:
+        downloads: list[DownloadContext] = []
+
+        prefix_terms = self.get_prefix_terms(
+            search_terms,
+            TricareScraper.prefix_length,
+        )
+
+        await self.page.locator("#formularySearchDefault").wait_for(timeout=5000)
 
         # # step 1: get search term data from typeahead
-        self.log.info("begin search for terms")
+        self.log.info(f"begin search for prefix terms prefix_terms={len(prefix_terms)}")
         search_results = await self._search_for_terms(prefix_terms)
         self.log.info(f"search_results={len(search_results)} found")
 
