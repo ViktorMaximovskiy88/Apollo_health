@@ -678,5 +678,5 @@ class CMSScrapeController:
         await self.create_all_scrapers()
         downloads = []
         scrapes = [scraper.scrape_and_create(downloads) for scraper in self.scraper_queue]
-        await asyncio.gather(*scrapes)
+        await asyncio.gather(*scrapes[:50])
         return downloads
