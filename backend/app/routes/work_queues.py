@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta, timezone
-from typing import Any, List, Type
+from typing import Any, Type
 
 from beanie import PydanticObjectId
-from beanie.odm.utils.projection import get_projection
+from beanie.odm.queries.find import FindMany
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
 from pydantic import Field
 from pymongo import ReturnDocument
@@ -14,6 +14,7 @@ from backend.app.routes.table_query import (
     TableSortInfo,
     construct_table_query,
     get_query_json_list,
+    query_table,
 )
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
@@ -25,6 +26,7 @@ from backend.common.models.doc_document import (
     PartialDocDocumentUpdate,
     TaskLock,
 )
+from backend.common.models.shared import IndicationTag, TherapyTag
 from backend.common.models.user import User
 from backend.common.models.work_queue import WorkQueue, WorkQueueUpdate
 from backend.common.services.doc_lifecycle.hooks import (
@@ -128,6 +130,8 @@ class IdNameLockOnlyDocument(IdOnlyDocument):
     priority: int = 0
     hold_time: datetime | None = None
     hold_comment: str | None = None
+    therapy_tags: list[TherapyTag] = []
+    indication_tags: list[IndicationTag] = []
 
 
 def combine_queue_query_with_user_query(
@@ -171,21 +175,14 @@ async def get_work_queue_items(
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
-):
-    query = combine_queue_query_with_user_query(work_queue, sorts, filters)
-
-    docs: List[DocDocument] = await DocDocument.aggregate(
-        [
-            {"$match": query.get_filter_query()},
-            {"$project": get_projection(query.projection_model)},
-            {"$sort": {key: dir for key, dir in query.sort_expressions}},
-            {"$skip": skip or 0},
-            {"$limit": limit or 50},
-        ]
-    ).to_list()
-    docs = [query.projection_model(**doc) for doc in docs]
-    count = await query.count()
-    res = TableQueryResponse(data=docs, total=count)
+) -> TableQueryResponse[DocDocument]:
+    query: FindMany[IdNameLockOnlyDocument] = combine_queue_query_with_user_query(
+        work_queue, sorts, filters
+    )
+    docs: TableQueryResponse[IdNameLockOnlyDocument] = await query_table(
+        query, limit, skip, as_aggregation=True
+    )
+    docs.data = [query.projection_model(**doc) for doc in docs.data]
 
     if "Hold" in work_queue.name:
         for doc in docs:
@@ -193,7 +190,7 @@ async def get_work_queue_items(
             if comment:
                 doc.hold_comment = comment.text
                 doc.hold_time = comment.time
-    return res
+    return docs
 
 
 class TakeLockResponse(BaseModel):
@@ -209,7 +206,8 @@ class TakeNextWorkQueueResponse(BaseModel):
 def get_valid_lock(locks: list[Any], work_queued_id: PydanticObjectId, now: datetime):
     return next(
         filter(
-            lambda l: l.work_queue_id == work_queued_id and l.expires.now(tz=timezone.utc) > now,
+            lambda lock: lock.work_queue_id == work_queued_id
+            and lock.expires.now(tz=timezone.utc) > now,
             locks,
         ),
         None,

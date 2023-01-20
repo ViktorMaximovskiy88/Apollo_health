@@ -5,10 +5,12 @@ from typing import Generic, TypeVar
 
 from beanie import PydanticObjectId
 from beanie.odm.queries.find import FindMany
+from beanie.odm.utils.projection import get_projection
 from dateutil import parser
 from fastapi import Request
 
 from backend.common.models.base_document import BaseModel
+from backend.common.models.doc_document import DocDocument
 
 # Ideally this would be bound to BaseDocument, but beanie type inference
 # chokes when attempting to identify collection
@@ -162,12 +164,33 @@ def construct_table_query(
     return query
 
 
+async def query_as_agg(
+    query: FindMany[T],
+    limit: int | None = None,
+    skip: int | None = None,
+):
+    agg_query: list = [
+        {"$match": query.get_filter_query()},
+        {"$skip": skip or 0},
+        {"$limit": limit or 50},
+    ]
+    if hasattr(query, "projection_model") and query.projection_model:
+        agg_query.append({"$project": get_projection(query.projection_model)})
+    if hasattr(query, "sort_expressions") and query.sort_expressions:
+        agg_query.append({"$sort": {key: dir for key, dir in query.sort_expressions}})
+
+    data = await DocDocument.aggregate(agg_query).to_list()
+
+    return data
+
+
 async def query_table(
     query: FindMany[T],  # type: ignore
     limit: int | None = None,
     skip: int | None = None,
     sorts: list[TableSortInfo] = [],
     filters: list[TableFilterInfo] = [],
+    as_aggregation: bool = False,
 ) -> TableQueryResponse[T]:
     query = construct_table_query(query, sorts, filters)
 
@@ -176,12 +199,16 @@ async def query_table(
     if skip:
         query = query.skip(skip)
 
-    data_q = query.to_list()
-    if query.find_expressions == [{}]:
-        total_q = query.document_model.get_motor_collection().estimated_document_count()
-    else:
-        total_q = query.count()
+    data_q = query_as_agg(query) if as_aggregation else query.to_list()
 
-    (data, total) = await asyncio.gather(data_q, total_q)
+    if as_aggregation:
+        data = await data_q
+        total = len(data)
+    else:
+        if query.find_expressions == [{}]:
+            total_q = query.document_model.get_motor_collection().estimated_document_count()
+        else:
+            total_q = query.count()
+        (data, total) = await asyncio.gather(data_q, total_q)
 
     return TableQueryResponse(data=data, total=total)

@@ -27,7 +27,6 @@ from backend.common.models.doc_document import (
     BulkUpdateRequest,
     BulkUpdateResponse,
     DocDocument,
-    DocDocumentLimitTags,
     DocDocumentView,
     IdOnlyDocument,
     UpdateDocDocument,
@@ -89,17 +88,24 @@ async def read_doc_documents(
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
-) -> TableQueryResponse[DocDocumentLimitTags]:
+):
     query = {}
     if scrape_task_id:
         task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
         if not task:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve tasks.")
         query["retrieved_document_id"] = {"$in": task.retrieved_document_ids}
-    document_query: FindMany[DocDocumentLimitTags] = DocDocument.find(query).project(
-        DocDocumentLimitTags
-    )
-    return await query_table(document_query, limit, skip, sorts, filters)
+
+    # query or none does not work.
+    if query:
+        document_query = DocDocument.find(query)
+    else:
+        document_query = DocDocument.find()
+
+    docs = await query_table(document_query, limit, skip, as_aggregation=True)
+    docs.data = [document_query.projection_model(**doc) for doc in docs.data]
+
+    return docs
 
 
 class CompareResponse(BaseModel):

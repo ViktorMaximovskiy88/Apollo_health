@@ -213,6 +213,8 @@ class SiteDocDocument(BaseDocDocument, DocDocumentLocation):
 class DocDocumentLimitTags(DocDocument):
     class Collection:
         name = "DocDocument"
+        therapy_tags: list[TherapyTag] | None
+        indication_tags: list[IndicationTag] | None
 
     class Settings:
         projection = {"therapy_tags": {"$slice": 10}, "indication_tags": {"$slice": 10}}
