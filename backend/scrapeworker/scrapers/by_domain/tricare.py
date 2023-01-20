@@ -56,7 +56,7 @@ class TricareScraper(PlaywrightBaseScraper):
         await self.page.locator("#formularySearchDefault").wait_for(timeout=5000)
 
         # # step 1: get search term data from typeahead
-        self.log.info(f"begin search for prefoix terms prefix_terms={len(prefix_terms)}")
+        self.log.info(f"begin search for prefix terms prefix_terms={len(prefix_terms)}")
         search_results = await self._search_for_terms(prefix_terms)
         self.log.info(f"search_results={len(search_results)} found")
 
