@@ -209,7 +209,7 @@ If that succeeds, try creating a site. I recommend Molina HealthCare OH Drug at 
 
 ### Issues with python version
 
-**Problem:** If your running into errors about your python version not matching the expected and `pyenv global VERSON` is not correcting it
+**Problem:** If you're running into errors about your python version not matching the expected and `pyenv global VERSON` is not correcting it
 
 Check which version of python you are using `python --version` and where it's pulling that version from `which python` from there you might need to update the symlink to `python` (remove the old link and create a new one).
 
@@ -242,6 +242,28 @@ Your file should look something like this after doing so.
 After saving the file and restarting the app, this should fix this issue.
 
 If you are on mac and can't see `~/etc/hosts` run the following commands `defaults write com.apple.Finder AppleShowAllFiles true` [Press Return] `killall Finder`
+
+### Issues with request access
+
+**Problem:** If you keep getting redirected to http://localhost:3000/request-access
+
+Add yourself to your local mongodb instance.
+
+Go to source-hub.Users then add data and insert document:
+
+```
+{
+    "\_id": {
+    "$oid": "AUTO GENERATE"
+    },
+    "email": "USERMANE@mmitnetwork.com",
+    "full_name": "FULL NAME",
+    "roles": [],
+    "is_admin": true,
+    "disabled": false,
+    "hashed_password": ""
+}
+```
 
 ### Access to Local Mongo and Minio
 
