@@ -188,11 +188,8 @@ class ScrapeWorker:
 
     def is_expected_html(self, download: DownloadContext):
         return download.file_extension == "html" and (
-            "html" not in self.site.scrape_method_configuration.document_extensions
-            and (
-                self.site.scrape_method != ScrapeMethod.Html
-                and self.site.scrape_method != ScrapeMethod.CMS
-            )
+            "html" in self.site.scrape_method_configuration.document_extensions
+            or self.site.scrape_method in [ScrapeMethod.Html, ScrapeMethod.CMS]
         )
 
     async def attempt_download(self, download: DownloadContext, index=0):
@@ -577,7 +574,8 @@ class ScrapeWorker:
                 self.log.info(
                     f"terms={len(search_terms)} letter={letter} downloads={len(downloads)}"
                 )
-                all_downloads += downloads
+                await self.scrape_task.update(Inc({SiteScrapeTask.links_found: len(downloads)}))
+                await self.batch_downloads(downloads)
 
         for url in base_urls:
             # skip the parse step and download
@@ -620,7 +618,9 @@ class ScrapeWorker:
             download for download in all_downloads if self.should_process_download(download)
         ]
 
-        await self.batch_downloads(download_queue)
+        # dont double dip for tricare; TODO will replace this with yield for all
+        if self.site.scrape_method != ScrapeMethod.Tricare:
+            await self.batch_downloads(download_queue)
 
         try:
             # doc_ids = [doc.id for (doc, _) in self.new_document_pairs]
@@ -659,11 +659,6 @@ class ScrapeWorker:
         )
 
     async def batch_downloads(self, all_downloads: list, batch_size: int = 10):
-
-        # dont double count for tricare
-        if self.site.scrape_method != ScrapeMethod.Tricare:
-            await self.scrape_task.update(Inc({SiteScrapeTask.links_found: len(all_downloads)}))
-
         batch_index = 0
         while len(all_downloads) > 0:
             downloads = all_downloads[:batch_size]
