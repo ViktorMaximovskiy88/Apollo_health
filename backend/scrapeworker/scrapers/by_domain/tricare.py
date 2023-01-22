@@ -1,4 +1,5 @@
 from itertools import groupby
+from json.decoder import JSONDecodeError
 
 from playwright.async_api import Error, TimeoutError
 
@@ -23,7 +24,7 @@ class TricareScraper(PlaywrightBaseScraper):
         terms = await SearchCodeSet.get_tricare_tokens()
         terms = [term.lower() for term in terms if len(term) >= TricareScraper.prefix_length]
         terms.sort()
-        return [list(value) for key, value in groupby(terms, key=lambda x: x[0])]
+        return [list(value) for key, value in groupby(terms, key=lambda x: x[0:2])]
 
     async def is_applicable(self) -> bool:
         self.log.debug(f"self.parsed_url.netloc={self.parsed_url.netloc}")
@@ -142,7 +143,7 @@ class TricareScraper(PlaywrightBaseScraper):
         }
 
         url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/pricing"  # noqa
-        result = await self._fetch(url, method="post", data=request_data)
+        result = await self._fetch(url, method="post", data=request_data, delay_ms=100)
 
         if self._has_valid_pricing(result):
             return self._map_pricing_result(result["mailPricing"], result["retailPricings"][0])
@@ -163,7 +164,7 @@ class TricareScraper(PlaywrightBaseScraper):
         }
 
         url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/forms"  # noqa
-        result = await self._fetch(url, method="post", data=request_data)
+        result = await self._fetch(url, method="post", data=request_data, delay_ms=100)
 
         if self._has_valid_document(result):
             return result["drugForms"]
@@ -263,16 +264,24 @@ class TricareScraper(PlaywrightBaseScraper):
     ):
         try:
             response = await self.page.request.fetch(url, method=method, data=data, params=params)
-            result = await response.json()
+            if not response.ok:
+                self.log.error(
+                    f"unexpected response url={url} method={method} data={data} params={params} response={response.status}",  # noqa
+                )
+                return None
 
             if delay_ms is not None:
                 await self.page.wait_for_timeout(delay_ms)
 
+            result = await response.json()
+
             return result
         except TimeoutError as ex:
-            self.log.error("tricare", exc_info=ex)
+            self.log.error("tricare data={data}", exc_info=ex)
         except Error as ex:
-            self.log.error("tricare", exc_info=ex)
+            self.log.error("tricare data={data}", exc_info=ex)
+        except JSONDecodeError as ex:
+            self.log.error(f"url={url} method={method} data={data} params={params}", exc_info=ex)
 
     def _has_valid_pricing(self, result: dict):
         return (
