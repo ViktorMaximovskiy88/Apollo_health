@@ -277,11 +277,13 @@ class TricareScraper(PlaywrightBaseScraper):
 
             return result
         except TimeoutError as ex:
-            self.log.error("tricare data={data}", exc_info=ex)
+            self.log.error(f"tricare data={data}", exc_info=ex)
         except Error as ex:
-            self.log.error("tricare data={data}", exc_info=ex)
+            self.log.error(f"tricare data={data}", exc_info=ex)
         except JSONDecodeError as ex:
-            self.log.error(f"url={url} method={method} data={data} params={params}", exc_info=ex)
+            self.log.error(
+                f"tricare url={url} method={method} data={data} params={params}", exc_info=ex
+            )
 
     def _has_valid_pricing(self, result: dict):
         return (

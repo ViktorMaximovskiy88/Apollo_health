@@ -186,10 +186,13 @@ class ScrapeWorker:
         ]
         return new_therapy_tags, new_indicate_tags
 
-    def is_expected_html(self, download: DownloadContext):
+    def is_unexpected_html(self, download: DownloadContext):
         return download.file_extension == "html" and (
-            "html" in self.site.scrape_method_configuration.document_extensions
-            or self.site.scrape_method in [ScrapeMethod.Html, ScrapeMethod.CMS]
+            "html" not in self.site.scrape_method_configuration.document_extensions
+            and (
+                self.site.scrape_method != ScrapeMethod.Html
+                and self.site.scrape_method != ScrapeMethod.CMS
+            )
         )
 
     async def attempt_download(self, download: DownloadContext, index=0):
@@ -227,7 +230,7 @@ class ScrapeWorker:
                 await link_retrieved_task.save()
                 return
 
-            if not self.is_expected_html(download):
+            if self.is_unexpected_html(download):
                 message = f"Received an unexpected html response. mimetype={download.mimetype}"
                 self.log.error(message)
                 link_retrieved_task.error_message = message
@@ -279,7 +282,11 @@ class ScrapeWorker:
             if not document and not self.doc_client.object_exists(dest_path):
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
 
-            if self.is_expected_html(download):
+            if download.file_extension == "html" and (
+                "html" in scrape_method_config.document_extensions
+                or self.site.scrape_method == ScrapeMethod.Html
+                or self.site.scrape_method == ScrapeMethod.CMS
+            ):
                 async for pdf_path in self.html_to_pdf(url, download, checksum, temp_path):
                     await pdf.PdfParse(
                         pdf_path,
@@ -575,7 +582,7 @@ class ScrapeWorker:
             )
 
             for batch_page, search_terms in enumerate(search_term_buckets):
-                batch_key = search_terms[0][0]
+                batch_key = search_terms[0][0:2]
                 self.log.info(
                     f"batch_key={batch_key} batch_page={batch_page} batch_page={batch_pages}"
                 )
