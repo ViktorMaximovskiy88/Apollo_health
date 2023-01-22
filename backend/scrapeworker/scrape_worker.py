@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 import aiofiles
 import fitz
 from async_lru import alru_cache
-from beanie.odm.operators.update.general import Inc
+from beanie.odm.operators.update.general import Inc, Set
 from playwright.async_api import Browser, BrowserContext, Cookie, Dialog, Page, ProxySettings
 from playwright.async_api import Response as PlaywrightResponse
 from playwright_stealth import stealth_async
@@ -345,15 +345,17 @@ class ScrapeWorker:
 
             link_retrieved_task.retrieved_document_id = document.id
 
-            await asyncio.gather(
-                self.scrape_task.update(
-                    {
-                        "$set": {"last_doc_collected": datetime.now(tz=timezone.utc)},
-                        "$inc": {"documents_found": 1},
-                        "$push": {"retrieved_document_ids": document.id},
-                    }
-                ),
-                link_retrieved_task.save(),
+            await asyncio.wait(
+                fs=[
+                    self.scrape_task.update(
+                        {
+                            "$set": {"last_doc_collected": datetime.now(tz=timezone.utc)},
+                            "$inc": {"documents_found": 1},
+                            "$push": {"retrieved_document_ids": document.id},
+                        }
+                    ),
+                    link_retrieved_task.save(),
+                ]
             )
 
     async def try_each_proxy(self):
@@ -566,14 +568,26 @@ class ScrapeWorker:
         # temp batch by letter...
         if self.site.scrape_method == ScrapeMethod.Tricare:
             search_term_buckets = await TricareScraper.get_search_term_buckets()
-            for search_terms in search_term_buckets:
-                letter = search_terms[0][0]
-                self.log.info(f"letter={letter}")
-                downloads = await self.tricare_batch(search_terms)
-                await self.scrape_task.update(Inc({SiteScrapeTask.links_found: len(downloads)}))
+            batch_pages = len(search_term_buckets)
+
+            await self.scrape_task.update(
+                Set({SiteScrapeTask.batch_status.total_pages: batch_pages})
+            )
+
+            for batch_page, search_terms in enumerate(search_term_buckets):
+                batch_key = search_terms[0][0]
                 self.log.info(
-                    f"terms={len(search_terms)} letter={letter} downloads={len(downloads)}"
+                    f"batch_key={batch_key} batch_page={batch_page} batch_page={batch_pages}"
                 )
+                await self.scrape_task.update(
+                    Inc({SiteScrapeTask.batch_status.current_page: batch_page})
+                )
+                downloads = await self.tricare_batch(search_terms)
+                self.log.info(
+                    f"terms={len(search_terms)} batch_key={batch_key} downloads={len(downloads)}"
+                )
+                await self.stop_if_canceled()
+
                 await self.scrape_task.update(Inc({SiteScrapeTask.links_found: len(downloads)}))
                 await self.batch_downloads(downloads)
 
@@ -652,11 +666,13 @@ class ScrapeWorker:
         if not self.scrape_task.documents_found:
             raise NoDocsCollectedException("No documents collected.")
 
-    async def is_canceled(self):
-        return await SiteScrapeTask.find_one(
+    async def stop_if_canceled(self):
+        result = await SiteScrapeTask.find_one(
             SiteScrapeTask.id == self.scrape_task.id,
             SiteScrapeTask.status == TaskStatus.CANCELING,
         )
+        if result:
+            raise CanceledTaskException("Task was canceled.")
 
     async def batch_downloads(self, all_downloads: list, batch_size: int = 10):
         batch_index = 0
@@ -667,9 +683,7 @@ class ScrapeWorker:
             tasks = [self.attempt_download(download, index=batch_index) for download in downloads]
 
             done, pending = await asyncio.wait(fs=tasks)
-            self.log.info(f"after gather done={len(done)} pending={len(pending)}")
+            self.log.info(f"after wait done={len(done)} pending={len(pending)}")
             batch_index += 1
 
-            canceled = await self.is_canceled()
-            if canceled:
-                raise CanceledTaskException("Task was canceled.")
+            await self.stop_if_canceled()

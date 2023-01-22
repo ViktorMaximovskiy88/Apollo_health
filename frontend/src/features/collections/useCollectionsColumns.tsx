@@ -103,10 +103,13 @@ export const createColumns = ({
         const linksFound = `(${task.links_found} Links)`;
         const showLinksFounds = task.links_found > 0;
         const docsCount = `${task.documents_found} Documents ${showLinksFounds ? linksFound : ''}`;
+        const batchProgress = task.batch_status?.total_pages
+          ? ` | ${task.batch_status.current_page + 1} of ${task.batch_status.total_pages}`
+          : null;
 
         return (
           <ButtonLink to={`/sites/${task.site_id}/doc-documents?scrape_task_id=${task._id}`}>
-            {docsCount}
+            {docsCount} {batchProgress}
           </ButtonLink>
         );
       },
