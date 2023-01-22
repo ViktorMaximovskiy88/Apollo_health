@@ -186,7 +186,7 @@ class ScrapeWorker:
         ]
         return new_therapy_tags, new_indicate_tags
 
-    def is_unexpected_html(self, download: DownloadContext):
+    def is_expected_html(self, download: DownloadContext):
         return download.file_extension == "html" and (
             "html" not in self.site.scrape_method_configuration.document_extensions
             and (
@@ -195,7 +195,7 @@ class ScrapeWorker:
             )
         )
 
-    async def attempt_download(self, download: DownloadContext):
+    async def attempt_download(self, download: DownloadContext, index=0):
         # TODO: This function keeps getting added to.
         # Maybe turn this into a class after our deadlines...
         # This is kinda your 'do thing' or controller; i dunno about _it_ being a class
@@ -206,7 +206,6 @@ class ScrapeWorker:
         )
 
         scrape_method_config = self.site.scrape_method_configuration
-
         async with self.downloader.try_download_to_tempfile(download, proxies) as (
             temp_path,
             checksum,
@@ -231,9 +230,7 @@ class ScrapeWorker:
                 await link_retrieved_task.save()
                 return
 
-            # TODO can we separate the concept of extensions to scrape on
-            # and ext we expect to download? for now just html
-            if self.is_unexpected_html(download):
+            if not self.is_expected_html(download):
                 message = f"Received an unexpected html response. mimetype={download.mimetype}"
                 self.log.error(message)
                 link_retrieved_task.error_message = message
@@ -257,6 +254,7 @@ class ScrapeWorker:
 
             dest_path = f"{checksum}.{download.file_extension}"
 
+            # TODO speak to matt about ocr and this...
             if (
                 not parsed_content["text"]
                 or len(parsed_content["text"]) == 0
@@ -284,11 +282,7 @@ class ScrapeWorker:
             if not document and not self.doc_client.object_exists(dest_path):
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
 
-            if download.file_extension == "html" and (
-                "html" in scrape_method_config.document_extensions
-                or self.site.scrape_method == ScrapeMethod.Html
-                or self.site.scrape_method == ScrapeMethod.CMS
-            ):
+            if self.is_expected_html(download):
                 async for pdf_path in self.html_to_pdf(url, download, checksum, temp_path):
                     await pdf.PdfParse(
                         pdf_path,
@@ -664,18 +658,22 @@ class ScrapeWorker:
             SiteScrapeTask.status == TaskStatus.CANCELING,
         )
 
-    async def batch_downloads(self, all_downloads: list, batch_size: int = 100):
+    async def batch_downloads(self, all_downloads: list, batch_size: int = 10):
 
         # dont double count for tricare
         if self.site.scrape_method != ScrapeMethod.Tricare:
             await self.scrape_task.update(Inc({SiteScrapeTask.links_found: len(all_downloads)}))
 
+        batch_index = 0
         while len(all_downloads) > 0:
             downloads = all_downloads[:batch_size]
             del all_downloads[:batch_size]
 
-            tasks = [self.attempt_download(download) for download in downloads]
-            await asyncio.gather(*tasks)
+            tasks = [self.attempt_download(download, index=batch_index) for download in downloads]
+
+            done, pending = await asyncio.wait(fs=tasks)
+            self.log.info(f"after gather done={len(done)} pending={len(pending)}")
+            batch_index += 1
 
             canceled = await self.is_canceled()
             if canceled:
