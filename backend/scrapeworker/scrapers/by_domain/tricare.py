@@ -24,7 +24,8 @@ class TricareScraper(PlaywrightBaseScraper):
         terms = await SearchCodeSet.get_tricare_tokens()
         terms = [term.lower() for term in terms if len(term) >= TricareScraper.prefix_length]
         terms.sort()
-        return [list(value) for key, value in groupby(terms, key=lambda x: x[0:2])]
+        buckets = [list(value) for key, value in groupby(terms, key=lambda x: x[0:2])]
+        return buckets, terms
 
     async def is_applicable(self) -> bool:
         self.log.debug(f"self.parsed_url.netloc={self.parsed_url.netloc}")
@@ -143,7 +144,7 @@ class TricareScraper(PlaywrightBaseScraper):
         }
 
         url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/pricing"  # noqa
-        result = await self._fetch(url, method="post", data=request_data, delay_ms=100)
+        result = await self._fetch(url, method="post", data=request_data, delay_ms=60)
 
         if self._has_valid_pricing(result):
             return self._map_pricing_result(result["mailPricing"], result["retailPricings"][0])
@@ -164,7 +165,7 @@ class TricareScraper(PlaywrightBaseScraper):
         }
 
         url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/forms"  # noqa
-        result = await self._fetch(url, method="post", data=request_data, delay_ms=100)
+        result = await self._fetch(url, method="post", data=request_data, delay_ms=60)
 
         if self._has_valid_document(result):
             return result["drugForms"]

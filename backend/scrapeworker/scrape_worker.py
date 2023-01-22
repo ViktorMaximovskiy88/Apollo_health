@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 import aiofiles
 import fitz
 from async_lru import alru_cache
-from beanie.odm.operators.update.general import Inc, Set
+from beanie.odm.operators.update.general import Inc
 from playwright.async_api import Browser, BrowserContext, Cookie, Dialog, Page, ProxySettings
 from playwright.async_api import Response as PlaywrightResponse
 from playwright_stealth import stealth_async
@@ -574,17 +574,16 @@ class ScrapeWorker:
 
         # temp batch by letter...
         if self.site.scrape_method == ScrapeMethod.Tricare:
-            search_term_buckets = await TricareScraper.get_search_term_buckets()
-            batch_pages = len(search_term_buckets)
+            search_term_buckets, terms = await TricareScraper.get_search_term_buckets()
 
             await self.scrape_task.update(
-                Set({SiteScrapeTask.batch_status.total_pages: batch_pages})
+                Inc({SiteScrapeTask.batch_status.total_pages: len(terms)})
             )
 
             for batch_page, search_terms in enumerate(search_term_buckets):
                 batch_key = search_terms[0][0:2]
                 self.log.info(
-                    f"batch_key={batch_key} batch_page={batch_page} batch_page={batch_pages}"
+                    f"batch_key={batch_key} batch_page={batch_page} batch_page={len(search_terms)}"
                 )
                 await self.scrape_task.update(
                     Inc({SiteScrapeTask.batch_status.current_page: batch_page})
