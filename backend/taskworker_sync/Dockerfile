@@ -1,13 +1,22 @@
-FROM public.ecr.aws/bitnami/python:3.10.3
+FROM python:3.10.3-bullseye as builder
 
-WORKDIR ${LAMBDA_TASK_ROOT}
+ENV APP_DIR=/app
+WORKDIR ${APP_DIR}
 
 RUN curl -LO https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie && chmod +x aws-lambda-rie
-ENTRYPOINT [ "./aws-lambda-rie", "python", "-m", "awslambdaric" ]
+RUN  pip install --target ${APP_DIR} awslambdaric
 
-COPY requirements.txt .
-RUN  pip3 install -r requirements.txt --target "${LAMBDA_TASK_ROOT}" awslambdaric
+COPY requirements.txt ${APP_DIR}
+RUN  pip install -r requirements.txt --target "${APP_DIR}"
 
-COPY main.py .
+COPY main.py ${APP_DIR}
 
+FROM python:3.10.3-slim-bullseye as release
+
+ENV APP_DIR=/app
+WORKDIR ${APP_DIR}
+
+COPY --from=builder /app /app
+
+ENTRYPOINT [ "/app/aws-lambda-rie", "python", "-m", "awslambdaric" ]
 CMD [ "main.handler" ]
