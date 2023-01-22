@@ -45,6 +45,19 @@ stages:
               repositoryName: "sourcehub-base"
               pushTag: "latest"
 
+          - template: .azure-pipelines/sourcehub-taskworker-sync.build.yml
+
+          - task: ECRPushImage@1
+            displayName: Push SourceHub Base Image to ECR
+            inputs:
+              awsCredentials: "Apollo-AWS-Dev-Apollo"
+              regionName: "us-east-1"
+              imageSource: "imagename"
+              sourceImageName: "sourcehub-taskworker-sync"
+              sourceImageTag: "latest"
+              repositoryName: "sourcehub-taskworker-sync"
+              pushTag: "latest"
+
           - template: .azure-pipelines/sourcehub-app.build.yml
 
           - script: |
