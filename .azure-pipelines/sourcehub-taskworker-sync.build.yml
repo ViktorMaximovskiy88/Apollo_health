@@ -17,7 +17,7 @@ steps:
     inputs:
       command: build
       repository: sourcehub-taskworker-sync
-      Dockerfile: backend/Dockerfile
+      Dockerfile: backend/taskworker_sync/Dockerfile
       arguments: "--cache-from 307744843177.dkr.ecr.us-east-1.amazonaws.com/sourcehub-taskworker-sync:latest --build-arg BUILDKIT_INLINE_CACHE=1"
       tags: |
         latest
