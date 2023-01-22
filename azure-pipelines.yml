@@ -100,6 +100,17 @@ stages:
               pushTag: latest
 
           - task: ECRPushImage@1
+            displayName: Push SourceHub App Image to ECR as SourceVersion
+            inputs:
+              awsCredentials: "Apollo-AWS-Dev-Apollo"
+              regionName: "us-east-1"
+              imageSource: "imagename"
+              sourceImageName: "sourcehub-taskworker-sync"
+              sourceImageTag: "$(Build.SourceVersion)"
+              repositoryName: "sourcehub-taskworker-sync"
+              pushTag: "$(Build.SourceVersion)"
+
+          - task: ECRPushImage@1
             displayName: Push SourceHub Taskworker Sync Image to ECR as latest
             inputs:
               awsCredentials: "Apollo-AWS-Dev-Apollo"
@@ -208,6 +219,32 @@ stages:
                     pushTag: "$(Build.SourceVersion)"
 
                 ##
+                # Pull SourceHub Taskworker Sync Image from Dev ECR
+                ##
+                - task: ECRPullImage@1
+                  displayName: Pull SourceHub Taskworker Sync Image
+                  inputs:
+                    awsCredentials: "Apollo-AWS-Dev-Apollo"
+                    regionName: "us-east-1"
+                    repository: "sourcehub-taskworker-sync"
+                    imageSource: "imagetag"
+                    imageTag: "$(Build.SourceVersion)"
+                    outputVariable: "DevImageId"
+
+                ##
+                # Push SourceHub Taskworker Sync Image to Test ECR
+                ##
+                - task: ECRPushImage@1
+                  displayName: Push SourceHub Taskworker Sync Image to ECR as SourceVersion
+                  inputs:
+                    awsCredentials: "Apollo-AWS-Test-Apollo"
+                    regionName: "us-east-1"
+                    imageSource: "imageid"
+                    sourceImageId: $(DevImageId)
+                    repositoryName: "sourcehub-taskworker-sync"
+                    pushTag: "$(Build.SourceVersion)"
+
+                ##
                 # Deploy SourceHub to Test environment
                 ##
                 - template: .azure-pipelines/source-hub.deploy.yml
@@ -260,6 +297,32 @@ stages:
                     imageSource: "imageid"
                     sourceImageId: $(DevImageId)
                     repositoryName: "sourcehub-app"
+                    pushTag: "$(Build.SourceVersion)"
+
+                ##
+                # Pull SourceHub Taskworker Sync from Dev ECR
+                ##
+                - task: ECRPullImage@1
+                  displayName: Pull SourceHub Taskworker Sync
+                  inputs:
+                    awsCredentials: "Apollo-AWS-Dev-Apollo"
+                    regionName: "us-east-1"
+                    repository: "sourcehub-taskworker-sync"
+                    imageSource: "imagetag"
+                    imageTag: "$(Build.SourceVersion)"
+                    outputVariable: "DevImageId"
+
+                ##
+                # Push SourceHub Taskworker Sync to Prod ECR
+                ##
+                - task: ECRPushImage@1
+                  displayName: Push SourceHub Taskworker Sync to ECR as SourceVersion
+                  inputs:
+                    awsCredentials: "Apollo-AWS-Prod-Apollo"
+                    regionName: "us-east-1"
+                    imageSource: "imageid"
+                    sourceImageId: $(DevImageId)
+                    repositoryName: "sourcehub-taskworker-sync"
                     pushTag: "$(Build.SourceVersion)"
 
                 ##
