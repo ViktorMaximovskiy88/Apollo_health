@@ -26,6 +26,10 @@ resource "aws_lambda_function" "sourcehub-taskworker-sync" {
       MONGO_URL             = local.mongodb_url
       MONGO_DB              = local.mongodb_db
       TASK_WORKER_QUEUE_URL = aws_sqs_queue.taskworker.url
+      REDIS_URL             = data.aws_ssm_parameter.redis-url.value
+      S3_ENDPOINT_URL       = data.aws_service.s3.dns_name
+      S3_DOCUMENT_BUCKET    = data.aws_ssm_parameter.docrepo-bucket-name.value
+      SMARTPROXY_USERNAME   = data.aws_ssm_parameter.smartproxy-username.value
     }
   }
 
