@@ -99,6 +99,17 @@ stages:
               repositoryName: "sourcehub-app"
               pushTag: latest
 
+          - task: ECRPushImage@1
+            displayName: Push SourceHub Taskworker Sync Image to ECR as latest
+            inputs:
+              awsCredentials: "Apollo-AWS-Dev-Apollo"
+              regionName: "us-east-1"
+              imageSource: "imagename"
+              sourceImageName: "sourcehub-taskworker-sync"
+              sourceImageTag: "$(Build.SourceVersion)"
+              repositoryName: "sourcehub-taskworker-sync"
+              pushTag: latest
+
       - job: validateDevDeploy
         displayName: Validate and Plan Dev Deployment
         steps:
