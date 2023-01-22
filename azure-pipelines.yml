@@ -77,6 +77,8 @@ stages:
               testResultsFiles: "**/RESULTS*.xml"
               testRunTitle: "Test Results for SourceHub-$(Build.BuildNumber)"
 
+          ##############################################################################################
+          # SourceHub App Image
           - task: ECRPushImage@1
             displayName: Push SourceHub App Image to ECR as SourceVersion
             inputs:
@@ -97,28 +99,6 @@ stages:
               sourceImageName: "sourcehub-app"
               sourceImageTag: "$(Build.SourceVersion)"
               repositoryName: "sourcehub-app"
-              pushTag: latest
-
-          - task: ECRPushImage@1
-            displayName: Push SourceHub App Image to ECR as SourceVersion
-            inputs:
-              awsCredentials: "Apollo-AWS-Dev-Apollo"
-              regionName: "us-east-1"
-              imageSource: "imagename"
-              sourceImageName: "sourcehub-taskworker-sync"
-              sourceImageTag: "$(Build.SourceVersion)"
-              repositoryName: "sourcehub-taskworker-sync"
-              pushTag: "$(Build.SourceVersion)"
-
-          - task: ECRPushImage@1
-            displayName: Push SourceHub Taskworker Sync Image to ECR as latest
-            inputs:
-              awsCredentials: "Apollo-AWS-Dev-Apollo"
-              regionName: "us-east-1"
-              imageSource: "imagename"
-              sourceImageName: "sourcehub-taskworker-sync"
-              sourceImageTag: "$(Build.SourceVersion)"
-              repositoryName: "sourcehub-taskworker-sync"
               pushTag: latest
 
       - job: validateDevDeploy
