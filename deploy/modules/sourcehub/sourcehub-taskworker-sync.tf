@@ -1,21 +1,4 @@
 locals {
-  app_name     = "apollo"
-  service_name = "sourcehub-taskworker-sync"
-
-  short_regions = {
-    "us-west-2" : "usw2",
-    "us-east-1" : "use1",
-    "us-east-2" : "use2",
-    "us-west-1" : "usw1"
-  }
-
-  short_region = local.short_regions[var.region]
-
-  effective_tags = merge(var.tags, {
-    environment = var.environment
-    service     = local.service_name
-  })
-
   function_name = format("%s-%s-%s-%s-mmit-func-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
 }
 
@@ -32,7 +15,7 @@ resource "aws_ecr_repository" "sourcehub-taskworker-sync" {
 resource "aws_lambda_function" "sourcehub-taskworker-sync" {
   function_name = local.function_name
   role          = aws_iam_role.sourcehub-taskworker-sync-function.arn
-  image_uri     = "${aws_ecr_repository.sourcehub-taskworker-sync.repository_url}:${var.sourcehub-taskworker-sync-version}"
+  image_uri     = "${data.aws_ecr_repository.sourcehub-taskworker-sync.repository_url}:${var.sourcehub-taskworker-sync-version}"
 
   package_type = "Image"
   timeout      = 60 # seconds
@@ -70,6 +53,8 @@ resource "aws_iam_role" "sourcehub-taskworker-sync-function" {
   })
 
   managed_policy_arns = [
+    data.aws_iam_policy.secrets-reader.arn,
+    data.aws_iam_policy.params-reader.arn,
     aws_iam_policy.sourcehub-taskworker-sync-function-basic.arn
   ]
 

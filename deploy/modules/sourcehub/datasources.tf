@@ -115,3 +115,16 @@ data "aws_ssm_parameter" "smartproxy-username" {
 data "aws_cloudwatch_event_bus" "sourcehub" {
   name = format("%s-%s-%s-%s-mmit-bus-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
 }
+
+data "aws_iam_policy" "secrets-reader" {
+  name = format("%s-%s-secrets-reader-mmit-policy-%02d", local.app_name, var.environment, var.revision)
+}
+
+data "aws_iam_policy" "params-reader" {
+  name = format("%s-%s-secrets-reader-mmit-policy-%02d", local.app_name, var.environment, var.revision)
+}
+
+# needs to be env specfic...
+data "aws_ecr_repository" "sourcehub-taskworker-sync" {
+  name = "sourcehub-taskworker-sync"
+}
