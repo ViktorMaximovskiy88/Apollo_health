@@ -42,7 +42,7 @@ function PayerIdsSelector() {
       type: payerType,
       filterValue: [{ name: 'l_id', operator: 'eq', type: 'number', value: initialPayerIds }],
     },
-    { skip: !payerType || !initialPayerIds }
+    { skip: !payerType || !initialPayerIds || payerType === 'Not Selected' }
   );
   const initialPayerOptions =
     payers?.data.map((p) => ({ label: p.name, value: p.l_id.toString() })) || [];
