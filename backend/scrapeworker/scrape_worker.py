@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 import aiofiles
 import fitz
 from async_lru import alru_cache
-from beanie.odm.operators.update.general import Inc
+from beanie.odm.operators.update.general import Inc, Set
 from playwright.async_api import Browser, BrowserContext, Cookie, Dialog, Page, ProxySettings
 from playwright.async_api import Response as PlaywrightResponse
 from playwright_stealth import stealth_async
@@ -577,16 +577,16 @@ class ScrapeWorker:
             search_term_buckets, terms = await TricareScraper.get_search_term_buckets()
 
             await self.scrape_task.update(
-                Inc({SiteScrapeTask.batch_status.total_pages: len(terms)})
+                Set({SiteScrapeTask.batch_status.total_pages: len(search_term_buckets)})
             )
 
             for batch_page, search_terms in enumerate(search_term_buckets):
-                batch_key = search_terms[0][0:2]
+                batch_key = search_terms[0]
                 self.log.info(
-                    f"batch_key={batch_key} batch_page={batch_page} batch_page={len(search_terms)}"
+                    f"batch_key={batch_key} batch_page={batch_page} search_terms={len(search_terms)}"  # noqa
                 )
                 await self.scrape_task.update(
-                    Inc({SiteScrapeTask.batch_status.current_page: batch_page})
+                    Set({SiteScrapeTask.batch_status.current_page: batch_page})
                 )
                 downloads = await self.tricare_batch(search_terms)
                 self.log.info(
@@ -595,7 +595,7 @@ class ScrapeWorker:
                 await self.stop_if_canceled()
 
                 await self.scrape_task.update(Inc({SiteScrapeTask.links_found: len(downloads)}))
-                await self.batch_downloads(downloads)
+                await self.batch_downloads(downloads, 15)
 
         for url in base_urls:
             # skip the parse step and download
@@ -680,7 +680,7 @@ class ScrapeWorker:
         if result:
             raise CanceledTaskException("Task was canceled.")
 
-    async def batch_downloads(self, all_downloads: list, batch_size: int = 10):
+    async def batch_downloads(self, all_downloads: list, batch_size: int = 20):
         batch_index = 0
         while len(all_downloads) > 0:
             downloads = all_downloads[:batch_size]

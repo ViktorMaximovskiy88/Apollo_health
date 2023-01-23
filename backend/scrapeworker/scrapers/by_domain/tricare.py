@@ -21,10 +21,11 @@ class TricareScraper(PlaywrightBaseScraper):
 
     @staticmethod
     async def get_search_term_buckets():
+        prefix_length = TricareScraper.prefix_length
         terms = await SearchCodeSet.get_tricare_tokens()
-        terms = [term.lower() for term in terms if len(term) >= TricareScraper.prefix_length]
+        terms = [term.lower()[:prefix_length] for term in terms if len(term) >= prefix_length]
         terms.sort()
-        buckets = [list(value) for key, value in groupby(terms, key=lambda x: x[0:2])]
+        buckets = [list(value) for key, value in groupby(terms, key=lambda x: x)]
         return buckets, terms
 
     async def is_applicable(self) -> bool:
