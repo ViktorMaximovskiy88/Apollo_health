@@ -117,7 +117,7 @@ resource "aws_iam_policy" "sourcehub-taskworker-sync-function-basic" {
           "ecr:GetDownloadUrlForLayer"
         ],
         Resource = [
-          aws_ecr_repository.sourcehub-taskworker-sync.arn
+          data.aws_ecr_repository.sourcehub-taskworker-sync.arn
         ]
       },
     ]
