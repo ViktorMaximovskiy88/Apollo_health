@@ -2,16 +2,6 @@ locals {
   function_name = format("%s-%s-%s-%s-mmit-func-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
 }
 
-# TODO should this be made elsewhere (similar to others) and just user data directive to fetch?
-resource "aws_ecr_repository" "sourcehub-taskworker-sync" {
-  name                 = local.service_name
-  image_tag_mutability = "MUTABLE"
-
-  tags = merge(local.effective_tags, {
-    Name = format("%s-%s-%s-%s-mmit-ecr-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
-  })
-}
-
 resource "aws_lambda_function" "sourcehub-taskworker-sync" {
   function_name = local.function_name
   role          = aws_iam_role.sourcehub-taskworker-sync-function.arn
