@@ -1,21 +1,30 @@
 from datetime import datetime
 
+from date_parser import timezone
+
 from backend.scrapeworker.common.date_parser import DateParser
 from backend.scrapeworker.common.utils import date_rgxs, label_rgxs
 
 
 def test_get_date_and_label():
+    lookahead_year = datetime.now(tz=timezone.utc).year + 1
+    current_year = datetime.now(tz=timezone.utc).year
     text = "This contains one date, updated 2/9/2022"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 1
     assert parser.last_updated_date.date == datetime(2022, 2, 9)
 
-    text = """
-        Multiple Formats, left and right, 05/23 expire, Published 02/21,
-        updated 10/9/11, next review March 8, 2023, next update 10 January 2023 \n
-        Last Review 6.30.22.
-    """
+    text = (
+        "Multiple Formats, left and right, 05/23 expire, Published 02/21,"
+        "updated 10/9/11, next review March 8, "
+        + str(current_year)
+        + ", next update 10 January "
+        + str(current_year)
+        + " \n"
+        "Last Review 6.30.22."
+    )
+
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
 
@@ -23,26 +32,24 @@ def test_get_date_and_label():
     assert parser.end_date.date == datetime(2023, 5, 1)
     assert parser.published_date.date == datetime(2021, 2, 1)
     assert parser.last_updated_date.date == datetime(2011, 10, 9)
-    assert parser.next_review_date.date == datetime(2023, 3, 8)
-    assert parser.next_update_date.date == datetime(2023, 1, 10)
+    assert parser.next_review_date.date == datetime(current_year, 3, 8)
+    assert parser.next_update_date.date == datetime(current_year, 1, 10)
     assert parser.last_reviewed_date.date == datetime(2022, 6, 30)
 
-    text = """
-        Different formats, rev. 1/10/20 and v. 12/12 4/20\n
-        with no label match here harv.2/27/2021 \n
-        and more labels - reviewed as of 03/2020 through Dec 2023
-    """
+    text = (
+        "Different formats, rev. 1/10/20 and v. 12/12 4/20\n"
+        "with no label match here harv.2/27/2021 \n"
+        "and more labels - reviewed as of 03/2020 through Dec " + str(current_year)
+    )
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 6
     assert parser.published_date.date == datetime(2012, 12, 1)
     assert parser.last_updated_date.date == datetime(2020, 1, 10)
     assert parser.last_reviewed_date.date == datetime(2020, 3, 1)
-    assert parser.end_date.date == datetime(2023, 12, 1)
+    assert parser.end_date.date == datetime(current_year, 12, 1)
 
-    text = """
-        Does not match subwords depends 1/1/2024
-    """
+    text = "Does not match subwords depends 1/1/" + str(lookahead_year)
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 1
@@ -201,6 +208,8 @@ def test_select_best_match():
 
 
 def test_extract_date_span():
+    lookahead_year = datetime.now(tz=timezone.utc).year + 1
+    current_year = datetime.now(tz=timezone.utc).year
     text = "12/1/2020 - 10/15/23"
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
@@ -208,14 +217,22 @@ def test_extract_date_span():
     assert parser.effective_date.date == datetime(2020, 12, 1)
     assert parser.end_date.date == datetime(2023, 10, 15)
 
-    text = "This will also get a date May 2021     -      July 2023 with text around"
+    text = (
+        "This will also get a date May 2021     -      July "
+        + str(current_year)
+        + " with text around"
+    )
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
     assert parser.effective_date.date == datetime(2021, 5, 1)
     assert parser.end_date.date == datetime(2023, 7, 1)
 
-    text = "This will not grab a date span 10-10-2021 because - July 2023 of the text left of dash"
+    text = (
+        "This will not grab a date span 10-10-2021 because - July "
+        + str(current_year)
+        + " of the text left of dash"
+    )
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
@@ -223,7 +240,11 @@ def test_extract_date_span():
     assert parser.effective_date.date == datetime(2023, 7, 1)
     assert parser.end_date.date is None
 
-    text = "This will not grab a date span 12-10-2021 - because July 2023 of the text right of dash"
+    text = (
+        "This will not grab a date span 12-10-2021 - because July "
+        + str(current_year)
+        + " of the text right of dash"
+    )
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
@@ -231,11 +252,18 @@ def test_extract_date_span():
     assert parser.effective_date.date == datetime(2023, 7, 1)
     assert parser.end_date.date is None
 
-    text = """
-        date span 12/10/2026-1/5/2027 and
-        other dates published 2010-10-23 effective
-        between 12/10/2026 and 1/6/2027
-    """
+    three_lookahead_year = current_year + 3
+    four_lookahead_year = current_year + 4
+    text = (
+        "date span 12/10/"
+        + str(three_lookahead_year)
+        + "-1/5/"
+        + str(four_lookahead_year)
+        + " and\n"
+        "other dates published 2010-10-23 effective\n"
+        "between 12/10/" + str(three_lookahead_year) + " and 1/6/" + str(four_lookahead_year)
+    )
+
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 1
@@ -243,31 +271,34 @@ def test_extract_date_span():
     assert parser.end_date.date is None
     assert parser.published_date.date == datetime(2010, 10, 23)
 
-    text = """
-        date span 12/10/2023-1/5/2024 and
-        other dates published 2010-10-23 effective
-        between 12/10/2023 and 1/6/2024
-    """
+    text = (
+        "date span 12/10/" + str(current_year) + "-1/5/" + str(lookahead_year) + " and\n"
+        "other dates published 2010-10-23 effective\n"
+        "between 12/10/" + str(current_year) + " and 1/6/" + str(lookahead_year)
+    )
+
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 4
-    assert parser.effective_date.date == datetime(2023, 12, 10)
-    assert parser.end_date.date == datetime(2024, 1, 5, 0, 0)
+    assert parser.effective_date.date == datetime(current_year, 12, 10)
+    assert parser.end_date.date == datetime(lookahead_year, 1, 5, 0, 0)
     assert parser.published_date.date == datetime(2010, 10, 23)
 
-    text = "date span with only 1 year and unicode separator January 1 – December 31, 2023"
+    text = "date span with only 1 year and unicode separator January 1 – December 31, " + str(
+        current_year
+    )
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
-    assert parser.effective_date.date == datetime(2023, 1, 1)
-    assert parser.end_date.date == datetime(2023, 12, 31)
+    assert parser.effective_date.date == datetime(current_year, 1, 1)
+    assert parser.end_date.date == datetime(current_year, 12, 31)
 
-    text = "different unicode separator January 1 ­ December 31, 2023"
+    text = "different unicode separator January 1 ­ December 31, " + str(current_year)
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
-    assert parser.effective_date.date == datetime(2023, 1, 1)
-    assert parser.end_date.date == datetime(2023, 12, 31)
+    assert parser.effective_date.date == datetime(current_year, 1, 1)
+    assert parser.end_date.date == datetime(current_year, 12, 31)
 
 
 def test_exclusions():
@@ -298,9 +329,8 @@ def test_does_not_exclude_references():
 
 
 def test_dates_must_be_past():
-    text = """
-        last review must be in the past 12/1/2023
-    """
+    lookahead_year = datetime.now(tz=timezone.utc).year + 1
+    text = "last review must be in the past 12/1/" + str(lookahead_year)
     parser = DateParser(date_rgxs, label_rgxs)
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 1
