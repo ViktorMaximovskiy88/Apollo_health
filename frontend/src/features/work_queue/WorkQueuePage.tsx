@@ -1,5 +1,5 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
-import { Button, notification } from 'antd';
+import { Button, notification, Spin } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -53,7 +53,7 @@ function uniqueSiteIds(items: DocDocument[]) {
 export function WorkQueuePage() {
   const queueId = useParams().queueId;
   const navigate = useNavigate();
-  const [getWorkItemFn] = useLazyGetWorkQueueItemsQuery();
+  const [getWorkItemFn, { isFetching }] = useLazyGetWorkQueueItemsQuery();
   const { data: wq } = useGetWorkQueueQuery(queueId);
   const [takeNextWorkItem] = useTakeNextWorkItemMutation();
 
@@ -102,6 +102,7 @@ export function WorkQueuePage() {
     <MainLayout
       sectionToolbar={
         <>
+          <Spin spinning={isFetching} />
           <Button onClick={takeNext}>Take Next</Button>
         </>
       }
