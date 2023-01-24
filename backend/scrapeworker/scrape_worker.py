@@ -593,8 +593,6 @@ class ScrapeWorker:
                     f"terms={len(search_terms)} batch_key={batch_key} downloads={len(downloads)}"
                 )
                 await self.stop_if_canceled()
-
-                await self.scrape_task.update(Inc({SiteScrapeTask.links_found: len(downloads)}))
                 await self.batch_downloads(downloads, 15)
 
         for url in base_urls:
@@ -681,6 +679,8 @@ class ScrapeWorker:
             raise CanceledTaskException("Task was canceled.")
 
     async def batch_downloads(self, all_downloads: list, batch_size: int = 20):
+        await self.scrape_task.update(Inc({SiteScrapeTask.links_found: len(all_downloads)}))
+
         batch_index = 0
         while len(all_downloads) > 0:
             downloads = all_downloads[:batch_size]
