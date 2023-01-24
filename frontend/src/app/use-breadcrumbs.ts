@@ -60,6 +60,9 @@ export const useBreadcrumbs = async () => {
     // async resolvers that get cached and more or less act like prefetch
     const asyncResolvers = {
       ':siteId': async (siteId: string, url: string) => {
+        if (siteId === 'new') {
+          return { url, label: 'New' };
+        }
         const result: any = await dispatch(sitesApi.endpoints.getSite.initiate(siteId));
         return { url, label: result.data.name };
       },
