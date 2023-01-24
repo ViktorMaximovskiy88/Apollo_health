@@ -608,8 +608,8 @@ class ScrapeWorker:
                     proxies=proxies,
                     log=self.log,
                 )
-                downloads = await cms_scraper.execute()
-                all_downloads += downloads
+                async for downloads in cms_scraper.batch_execute():
+                    all_downloads += downloads
                 continue
 
             # NOTE if the base url ends in a handled file extension,
