@@ -226,7 +226,7 @@ def test_extract_date_span():
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
     assert parser.effective_date.date == datetime(2021, 5, 1)
-    assert parser.end_date.date == datetime(2023, 7, 1)
+    assert parser.end_date.date == datetime(current_year, 7, 1)
 
     text = (
         "This will not grab a date span 10-10-2021 because - July "
@@ -237,7 +237,7 @@ def test_extract_date_span():
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
     # gets eff date because of heading date
-    assert parser.effective_date.date == datetime(2023, 7, 1)
+    assert parser.effective_date.date == datetime(current_year, 7, 1)
     assert parser.end_date.date is None
 
     text = (
@@ -249,7 +249,7 @@ def test_extract_date_span():
     parser.extract_dates(text)
     assert len(parser.unclassified_dates) == 2
     # gets eff date because of heading date
-    assert parser.effective_date.date == datetime(2023, 7, 1)
+    assert parser.effective_date.date == datetime(current_year, 7, 1)
     assert parser.end_date.date is None
 
     three_lookahead_year = current_year + 3
