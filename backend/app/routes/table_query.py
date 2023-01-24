@@ -220,5 +220,6 @@ async def query_table(
         else:
             total_q = query.count()
         (data, total) = await asyncio.gather(data_q, total_q)
+    data = [query.projection_model(**doc) for doc in data]
 
     return TableQueryResponse(data=data, total=total)

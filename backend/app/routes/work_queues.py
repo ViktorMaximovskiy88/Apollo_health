@@ -192,7 +192,6 @@ async def get_work_queue_items(
     docs: TableQueryResponse[IdNameLockOnlyDocument] = await query_table(
         query, limit, skip, as_aggregation=True
     )
-    docs.data = [query.projection_model(**doc) for doc in docs.data]
 
     if "Hold" in work_queue.name:
         for doc in docs:
