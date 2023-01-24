@@ -1,52 +1,33 @@
 import asyncio
-import tempfile
+from functools import cached_property
 from pathlib import Path
 
-import spacy
 from spacy.tokens.span import Span
 
-from backend.common.core.config import config
 from backend.common.core.enums import SectionType
 from backend.common.core.utils import now
 from backend.common.models.doc_document import DocDocument, TherapyTag
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.site import FocusSectionConfig
-from backend.common.storage.client import ModelStorageClient
+from backend.scrapeworker.document_tagging.base_tagger import BaseTagger
 from backend.scrapeworker.document_tagging.tag_focusing import FocusChecker
 
-TRADEMARK_SYMBOLS = ["\u00AE", "\u2122", "\24C7"]
+SPECIAL_CHARACTERS = ["\u00AE", "\u2122", "\24C7", "\u2020", "\u271D"]
 
 
-class TherapyTagger:
-    def __init__(self, version="latest") -> None:
-        self.nlp = None
+class TherapyTagger(BaseTagger):
+    section_type = SectionType.THERAPY
+    model_key = "rxnorm-span"
+
+    @cached_property
+    def common_words(self):
         common_words_path = Path(__file__).parent.joinpath("common_words.txt")
-        self.common_words = {line.strip() for line in open(common_words_path)}
-        try:
-            self.client = ModelStorageClient()
-            self.tempdir = tempfile.TemporaryDirectory()
-            dirname = self.tempdir.name
-            self.client.download_directory(f"{version}/rxnorm-span", dirname)
-            self.nlp = spacy.load(dirname)
-            # This limit assumes the default large NER model is being used
-            # We are not using this model so safe to bump limit
-            # saw a value of 20074378... bumping more
-            self.nlp.max_length = 300000000
-        except Exception:
-            print("RxNorm Span Ruler Model not found and therefore not loaded")
+        return {line.strip() for line in open(common_words_path)}
 
     def clean_page(self, page: str):
-        for symbol in TRADEMARK_SYMBOLS:
+        for symbol in SPECIAL_CHARACTERS:
             page = page.replace(symbol, " ")
         return page
-
-    def _filter_focus_configs(self, configs: list[FocusSectionConfig], doc_type: str):
-        filtered = [
-            config
-            for config in configs
-            if config.doc_type == doc_type and (SectionType.THERAPY in config.section_type)
-        ]
-        return filtered
 
     async def tag_document(
         self,
@@ -57,7 +38,8 @@ class TherapyTagger:
         focus_configs: list[FocusSectionConfig] | None = None,
         document: RetrievedDocument | DocDocument | None = None,
     ) -> tuple[list[TherapyTag], list[TherapyTag], list[TherapyTag]]:
-        if not self.nlp:
+        nlp = await self.model()
+        if not nlp:
             return ([], [], [])
         if focus_configs is not None:
             focus_configs = self._filter_focus_configs(focus_configs, doc_type)
@@ -77,7 +59,7 @@ class TherapyTagger:
         char_offset = 0
         for i, page in enumerate(pages):
             page = self.clean_page(page)
-            doc = await loop.run_in_executor(None, self.nlp, page)
+            doc = await loop.run_in_executor(None, nlp, page)
             span: Span
             for span in doc.spans.get("sc", []):
                 text = span.text
@@ -133,4 +115,4 @@ class TherapyTagger:
         return list(tags), list(url_tags), list(link_tags)
 
 
-therapy_tagger = TherapyTagger(version=config["MODEL_VERSION"])
+therapy_tagger = TherapyTagger()

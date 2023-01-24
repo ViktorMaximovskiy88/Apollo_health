@@ -1,4 +1,5 @@
 {
+  "core_file": "article",
   "url_identifiers": ["articleId", "ver"],
   "data_set_identifiers": ["article_id", "article_version"],
   "mapping": [

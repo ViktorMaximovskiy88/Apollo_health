@@ -7,6 +7,7 @@ from urllib.parse import urlparse, urlsplit
 from playwright.async_api import BrowserContext, ElementHandle, Page, ProxySettings
 
 from backend.common.core.config import config
+from backend.common.core.enums import ScrapeMethod
 from backend.common.models.proxy import Proxy
 from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.models import DownloadContext, Metadata
@@ -53,6 +54,7 @@ class PlaywrightBaseScraper(ABC):
         page: Page,
         url: str,
         config: ScrapeMethodConfiguration,
+        scrape_method: ScrapeMethod | None = None,
         log: logging.Logger = logging.getLogger(__name__),
         playbook_context: PlaybookContext = [],
         metadata: dict = {},
@@ -66,6 +68,7 @@ class PlaywrightBaseScraper(ABC):
         self.selectors = []
         self.log = log
         self.metadata = metadata
+        self.scrape_method = scrape_method
 
     @cached_property
     def css_selector(self) -> str | None:

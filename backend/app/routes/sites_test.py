@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import pytest
 from pydantic import HttpUrl
 
+from backend.common.core.enums import ScrapeMethod
 from backend.common.db.init import init_db
 from backend.common.models.site import BaseUrl, ScrapeMethodConfiguration, Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
@@ -13,7 +14,7 @@ class TestDeleteSite:
     def simple_site(self):
         site = Site(
             name="Test",
-            scrape_method="",
+            scrape_method=ScrapeMethod.Simple,
             scrape_method_configuration=ScrapeMethodConfiguration(
                 document_extensions=[],
                 url_keywords=[],

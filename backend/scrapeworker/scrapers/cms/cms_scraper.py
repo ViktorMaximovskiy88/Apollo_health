@@ -5,20 +5,20 @@ import zipfile
 from datetime import datetime, timedelta
 from logging import Logger
 from typing import Any, Hashable
-from urllib.parse import parse_qs, urlparse
 
 import pandas as pd
 from pandas import DataFrame
 from playwright.async_api import ProxySettings
 
+from backend.common.core.enums import CmsDocType
 from backend.common.models.proxy import Proxy
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_full_text
 from backend.scrapeworker.common.aio_downloader import AioDownloader
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
-from backend.scrapeworker.scrapers.cms.cms_doc import CmsDoc, CmsDocType
+from backend.scrapeworker.scrapers.cms.cms_doc import CmsDoc
 from backend.scrapeworker.scrapers.cms.helpers import (
-    greater_than_today,
+    get_data_source_item,
     group_table_by,
     search_data_frame,
     to_date_string,
@@ -26,6 +26,9 @@ from backend.scrapeworker.scrapers.cms.helpers import (
 
 
 class CMSDownloader:
+    cms_cache: dict[CmsDocType, "CMSDownloader"] = {}
+    cms_cache_times: dict[CmsDocType, datetime] = {}
+
     def __init__(
         self,
         downloader: AioDownloader,
@@ -37,6 +40,25 @@ class CMSDownloader:
         self.downloader = downloader
         self.cms_doc = cms_doc
         self.proxies = proxies
+
+    @classmethod
+    def from_cache(
+        cls,
+        cms_doc: CmsDoc,
+        downloader: AioDownloader,
+        proxies: list[tuple[Proxy | None, ProxySettings | None]],
+    ):
+        now = datetime.now()
+
+        cms_downloader = cls.cms_cache.get(cms_doc.type)
+        time_diff = now - cls.cms_cache_times.get(cms_doc.type, now)
+        if not cms_downloader or time_diff > timedelta(hours=1):
+            cms_downloader = cls(downloader, cms_doc, proxies)
+            print(f"Creating new CMSDownloader for {cms_doc.type}")
+            cls.cms_cache[cms_doc.type] = cms_downloader
+            cls.cms_cache_times[cms_doc.type] = now
+
+        return cms_downloader
 
     def _parse_documents_data(self, temp_path: str) -> list[dict[str, str | DataFrame]]:
         """
@@ -106,61 +128,29 @@ class CMSDownloader:
 
 
 class CMSScraper:
-    cms_cache: dict[CmsDocType, CMSDownloader] = {}
-    cms_cache_times: dict[CmsDocType, datetime] = {}
-
     def __init__(
         self,
-        url: str,
+        cms_doc: CmsDoc,
+        target_ids: list[int],
         downloader: AioDownloader,
         doc_client: DocumentStorageClient,
         proxies: list[tuple[Proxy | None, ProxySettings | None]],
         log: Logger,
-        base_url: str | None = None,
     ) -> None:
-        self.url = url
-        self.base_url = base_url or url
+        self.cms_doc = cms_doc
         self.downloader = downloader
         self.doc_client = doc_client
         self.proxies = proxies
-        self.cms_doc = CmsDoc.from_url(url)
+        self.target_ids = target_ids
         self.data_source: list[dict[str, str | DataFrame]] = []
-        self._set_target_url_parameters()
         self.log = log
-
-    def _set_target_url_parameters(self):
-        """
-        Parse URL parameters from from target URL of current scraping task
-        """
-        parsed = urlparse(self.url)
-        self.target_url_params = parse_qs(parsed.query)
-
-    def cms_downloader(self, cms_doc: CmsDoc):
-        now = datetime.now()
-
-        cms = CMSScraper.cms_cache.get(cms_doc.type)
-        time_diff = now - CMSScraper.cms_cache_times.get(cms_doc.type, now)
-        if not cms or time_diff > timedelta(hours=1):
-            cms = CMSDownloader(self.downloader, cms_doc, self.proxies)
-            print(f"Creating new CMSDownloader for {cms_doc.type}")
-            CMSScraper.cms_cache[cms_doc.type] = cms
-            CMSScraper.cms_cache_times[cms_doc.type] = now
-
-        return cms
 
     async def _set_data_source(self, overwrite: bool = False):
         if self.data_source and not overwrite:
             return
-        self.data_source = await self.cms_downloader(self.cms_doc).download_and_parse()
-
-    def is_list(self):
-        if (
-            "article-list" in self.url
-            or "lcd-list" in self.url
-            or "ncd-alphabetical-index" in self.url
-        ):
-            return True
-        return False
+        self.data_source = await CMSDownloader.from_cache(
+            self.cms_doc, self.downloader, self.proxies
+        ).download_and_parse()
 
     def _get_data_source_item(self, name: str) -> DataFrame | None:
         """
@@ -172,80 +162,6 @@ class CMSScraper:
         if len(found_items) > 0:
             return found_items[0]["content"]
         return None
-
-    async def get_documents_list_urls(self) -> list[str]:
-        """
-        Build a list of urls based on target url from scraping task
-        :return: URLs as string array
-        """
-        list_of_urls: list[str] = []
-        if not self.is_list():
-            return list_of_urls
-        await self._set_data_source()
-        documents_list_info = self.cms_doc.document_mapping()["documents_list_info"]
-        target_dataset = self._get_data_source_item(documents_list_info["source"])
-        data_set_identifiers = documents_list_info["data_set_identifiers"]
-        target_fields = documents_list_info["target_fields"]
-        list_of_identifiers: list[dict[Hashable, Any]] = []
-        if self.cms_doc.type == CmsDocType.NCD:
-            if target_dataset is not None:
-                list_of_identifiers = target_dataset.to_dict("records")
-        else:
-            if target_dataset is not None:
-                url_identifiers = [
-                    int(self.target_url_params[param][0])
-                    for param in documents_list_info["url_identifiers"]
-                ]
-                list_of_identifiers = search_data_frame(
-                    target_dataset, data_set_identifiers, url_identifiers, self.log
-                )
-        if self.cms_doc.type == CmsDocType.LCD or self.cms_doc.type == CmsDocType.LCA:
-            status_source = self._get_data_source_item(documents_list_info["target_source"])
-            for identifier in list_of_identifiers:
-                target_identifiers = []
-                for field in target_fields:
-                    target_identifiers.append(identifier[field])
-                found_items: list[dict[Hashable, Any]] = search_data_frame(
-                    status_source, target_fields, target_identifiers, self.log
-                )
-                if len(found_items) > 0:
-                    found_item = found_items[0]
-                    identifier["status"] = found_item["status"]
-                    if "article_pub_date" in found_item:
-                        identifier["article_pub_date"] = (
-                            None
-                            if found_item["article_pub_date"] != found_item["article_pub_date"]
-                            else found_item["article_pub_date"]
-                        )
-            if self.cms_doc.type == CmsDocType.LCD:
-                list_of_identifiers = [
-                    identifier for identifier in list_of_identifiers if identifier["status"] == "A"
-                ]
-            elif self.target_url_params["DocType"][0] == "SAD":
-                list_of_identifiers = [
-                    identifier
-                    for identifier in list_of_identifiers
-                    if identifier["article_type"] == 3
-                ]
-            elif self.target_url_params["DocType"][0] == "Active":
-                # retain only documents with dates which None and not greater than today
-                list_of_identifiers = [
-                    identifier
-                    for identifier in list_of_identifiers
-                    if identifier["status"] == "A"
-                    and not greater_than_today(identifier["article_pub_date"])
-                    and identifier["article_type"] != 3
-                ]
-            else:
-                list_of_identifiers = [
-                    identifier for identifier in list_of_identifiers if identifier["status"] == "A"
-                ]
-        for url in list_of_identifiers:
-            url_template: str = documents_list_info["url_template"]
-            for identifier in target_fields:
-                url_template = url_template.replace(f"${identifier}", str(url[identifier]))
-            list_of_urls.append(url_template)
-        return list_of_urls
 
     def _extract_data_for_table(self, field, row_id) -> str:
         """
@@ -472,19 +388,22 @@ class CMSScraper:
                         if "shared_source" in field["transform"]:
                             transform_item = field["transform"]
                             shared_doc = CmsDoc(CmsDocType(transform_item["shared_source"]))
-                            cms_downloader = self.cms_downloader(shared_doc)
+                            cms_downloader = CMSDownloader.from_cache(
+                                shared_doc, self.downloader, self.proxies
+                            )
                             target_data_frame = await cms_downloader.download_and_get_values(
                                 transform_item["source"]
                             )
                             if target_data_frame is None:
                                 transform_results = []
-                            transform_results = search_data_frame(
-                                target_data_frame,
-                                [transform_item["identifier"]],
-                                results,
-                                self.log,
-                                operator="|",
-                            )  # type: ignore
+                            else:
+                                transform_results = search_data_frame(
+                                    target_data_frame,
+                                    [transform_item["identifier"]],
+                                    results,
+                                    self.log,
+                                    operator="|",
+                                )  # type: ignore
                         else:
                             transform_data_source = self._get_data_source_item(
                                 field["transform"]["source"]
@@ -576,7 +495,7 @@ class CMSScraper:
         return table_template
 
     def _build_table(
-        self, data_set_identifiers: list, mapping_item: dict, url_identifiers: list
+        self, data_set_identifiers: list, mapping_item: dict, url_identifiers: list[int]
     ) -> str:
         """
         Generate a HTML string for table mapping element
@@ -640,9 +559,6 @@ class CMSScraper:
         html_template = self.cms_doc.html_template()
         mapping = self.cms_doc.document_mapping()
         data_set_identifiers: list[str] = mapping["data_set_identifiers"]
-        url_identifiers = [
-            int(self.target_url_params[param][0]) for param in mapping["url_identifiers"]
-        ]
 
         mapping_item: dict[str, Any]
         for mapping_item in mapping["mapping"]:
@@ -652,13 +568,13 @@ class CMSScraper:
                 if data_source_item is None:
                     continue
                 available_groups: list[dict[Hashable, Any]] = search_data_frame(
-                    data_source_item, data_set_identifiers, url_identifiers, self.log
+                    data_source_item, data_set_identifiers, self.target_ids, self.log
                 )  # type: ignore
                 if len(available_groups) == 0:
                     html_template = html_template.replace(f'${mapping_item["field"]}', "N/A")
                     continue
                 groups_html_template = self._build_group(
-                    available_groups, data_set_identifiers, mapping_item, url_identifiers
+                    available_groups, data_set_identifiers, mapping_item, self.target_ids
                 )
                 html_template = html_template.replace(
                     f'${mapping_item["field"]}', groups_html_template
@@ -666,26 +582,26 @@ class CMSScraper:
 
             if mapping_item_type == "text" or mapping_item_type == "date":
                 replace_item = self._build_text(
-                    data_set_identifiers, mapping_item, mapping_item_type, url_identifiers
+                    data_set_identifiers, mapping_item, mapping_item_type, self.target_ids
                 )
 
                 html_template = html_template.replace(f'${mapping_item["field"]}', replace_item)
 
             if mapping_item_type == "single_table":
                 table_template = self._build_single_table(
-                    data_set_identifiers, mapping_item, url_identifiers
+                    data_set_identifiers, mapping_item, self.target_ids
                 )
                 html_template = html_template.replace(f'${mapping_item["field"]}', table_template)
 
             if mapping_item_type == "list":
                 table_template = await self._build_list(
-                    data_set_identifiers, mapping_item, url_identifiers
+                    data_set_identifiers, mapping_item, self.target_ids
                 )
                 html_template = html_template.replace(f'${mapping_item["field"]}', table_template)
 
             if mapping_item_type == "table":
                 table_template = self._build_table(
-                    data_set_identifiers, mapping_item, url_identifiers
+                    data_set_identifiers, mapping_item, self.target_ids
                 )
                 html_template = html_template.replace(f'${mapping_item["field"]}', table_template)
         checksum = self._save_html(html_template)
@@ -694,9 +610,11 @@ class CMSScraper:
                 direct_scrape=True,
                 file_extension="html",
                 file_hash=checksum,
-                file_name=self.url,
-                metadata=Metadata(base_url=self.base_url),
-                request=Request(url=self.url, filename=self.url),
+                file_name=self.cms_doc.download_url(),
+                metadata=Metadata(base_url=self.cms_doc.download_url()),
+                request=Request(
+                    url=self.cms_doc.download_url(), filename=self.cms_doc.download_url()
+                ),
             )
         )
 
@@ -704,46 +622,61 @@ class CMSScraper:
 class CMSScrapeController:
     def __init__(
         self,
-        initial_url: str,
+        doc_types: list[CmsDocType],
         downloader: AioDownloader,
         doc_client: DocumentStorageClient,
         proxies: list[tuple[Proxy | None, ProxySettings | None]],
         log: Logger,
     ) -> None:
-        self.initial_url = initial_url
+        self.doc_types = doc_types
         self.downloader = downloader
         self.doc_client = doc_client
         self.proxies = proxies
         self.scraper_queue: list[CMSScraper] = []
         self.log = log
 
-    async def create_all_scrapers(self):
-        base_scraper = CMSScraper(
-            self.initial_url, self.downloader, self.doc_client, self.proxies, self.log
+    async def get_data_ids(self, doc: CmsDoc) -> list[list[int]]:
+        downloader = CMSDownloader.from_cache(
+            downloader=self.downloader, cms_doc=doc, proxies=self.proxies
         )
-        unchecked_scrapers: list[CMSScraper] = [base_scraper]
-        while unchecked_scrapers:
-            scraper = unchecked_scrapers.pop()
-            if scraper.is_list():
-                url_list = await scraper.get_documents_list_urls()
-                new_scrapers = [
-                    CMSScraper(
-                        url,
-                        self.downloader,
-                        self.doc_client,
-                        self.proxies,
-                        self.log,
-                        self.initial_url,
-                    )
-                    for url in url_list
-                ]
-                unchecked_scrapers += new_scrapers
-            else:
+        data_source = await downloader.download_and_parse()
+        mapping = doc.document_mapping()
+        # Get file containing complete list of identifiers
+        data_source = get_data_source_item(mapping["core_file"], data_source)
+        if data_source is None:
+            return []
+
+        [column_id_1, column_id_2] = mapping["data_set_identifiers"]
+        id_list_1: list[str] = data_source[column_id_1].to_list()
+        id_list_2: list[str] = data_source[column_id_2].to_list()
+
+        # each nested list is one pair of identifiers, or one document to create
+        final_ids: list[list[int]] = []
+        for i, id in enumerate(id_list_1):
+            id_2 = id_list_2[i]
+            id_pair = [int(id), int(id_2)]
+            final_ids.append(id_pair)
+
+        return final_ids
+
+    async def create_all_scrapers(self):
+        for doc_type in self.doc_types:
+            doc = CmsDoc(doc_type)
+            target_identifiers = await self.get_data_ids(doc)
+            for id_pair in target_identifiers:
+                scraper = CMSScraper(
+                    cms_doc=doc,
+                    target_ids=id_pair,
+                    downloader=self.downloader,
+                    doc_client=self.doc_client,
+                    proxies=self.proxies,
+                    log=self.log,
+                )
                 self.scraper_queue.append(scraper)
 
     async def execute(self):
         await self.create_all_scrapers()
         downloads = []
         scrapes = [scraper.scrape_and_create(downloads) for scraper in self.scraper_queue]
-        await asyncio.gather(*scrapes)
+        await asyncio.gather(*scrapes[:50])
         return downloads

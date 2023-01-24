@@ -37,7 +37,13 @@ function isActiveFilter(filter: TypeSingleFilterValue) {
   if (filter.operator.includes('range')) {
     return valueExists(filter.value.start) && valueExists(filter.value.end);
   }
-  if (filter.operator === 'empty' || filter.operator === 'notEmpty') return true;
+  if (
+    filter.operator === 'empty' ||
+    filter.operator === 'notEmpty' ||
+    filter.operator === 'notinlist' ||
+    filter.operator === 'neq'
+  )
+    return true;
 
   return valueExists(filter.value);
 }

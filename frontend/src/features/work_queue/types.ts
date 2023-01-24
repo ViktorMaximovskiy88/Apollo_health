@@ -8,10 +8,15 @@ export interface WorkItemLock {
 
 export interface SubmitAction {
   label: string;
-  submit_action: any;
+  submit_action: {
+    classification_status?: string;
+    family_status?: string;
+    content_extraction_status?: string;
+  };
   primary: boolean;
   reassignable: boolean;
   require_comment: boolean;
+  hold_types?: string[];
 }
 
 export interface WorkQueue extends BaseDocument {
@@ -19,6 +24,7 @@ export interface WorkQueue extends BaseDocument {
   document_query: any;
   user_query: any;
   submit_actions: SubmitAction[];
+  hold_types: string[];
   frontend_component: string;
   disabled: boolean;
 }

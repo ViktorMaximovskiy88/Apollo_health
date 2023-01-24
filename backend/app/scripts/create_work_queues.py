@@ -6,7 +6,7 @@ from backend.common.models.work_queue import SubmitAction, WorkQueue
 
 
 async def classification_queues():
-    await WorkQueue(
+    wq = WorkQueue(
         name="Classification 2023",
         collection_name="DocDocument",
         update_model_name="UpdateDocDocument",
@@ -14,6 +14,7 @@ async def classification_queues():
         document_query={
             "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "final_effective_date": {"$gte": datetime(2023, 1, 1, tzinfo=timezone.utc)},
+            "priority": {"$gt": 0},
             "classification_status": "QUEUED",
         },
         sort_query=["-priority", "final_effective_date"],
@@ -25,6 +26,12 @@ async def classification_queues():
                 require_comment=True,
                 dest_queue="Classification Hold",
                 submit_action={"classification_status": "HOLD"},
+                hold_types=[
+                    "Source Hub Issue",
+                    "Focus Tagging",
+                    "Medical Codes (J/CPT)",
+                    "Spanish / Other Language",
+                ],
             ),
             SubmitAction(
                 label="Submit",
@@ -32,8 +39,9 @@ async def classification_queues():
                 primary=True,
             ),
         ],
-    ).save()
-    await WorkQueue(
+    )
+    await WorkQueue.find({"name": wq.name}).upsert({"$set": wq.dict()}, on_insert=wq)
+    wq = WorkQueue(
         name="Classification",
         collection_name="DocDocument",
         update_model_name="UpdateDocDocument",
@@ -42,6 +50,7 @@ async def classification_queues():
             "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "final_effective_date": {"$lt": datetime(2023, 1, 1, tzinfo=timezone.utc)},
             "classification_status": "QUEUED",
+            "priority": {"$gt": 0},
         },
         sort_query=["-priority", "final_effective_date"],
         user_query={"roles": {"$in": ["admin", "classification"]}},
@@ -52,6 +61,12 @@ async def classification_queues():
                 require_comment=True,
                 dest_queue="Classification Hold",
                 submit_action={"classification_status": "HOLD"},
+                hold_types=[
+                    "Source Hub Issue",
+                    "Focus Tagging",
+                    "Medical Codes (J/CPT)",
+                    "Spanish / Other Language",
+                ],
             ),
             SubmitAction(
                 label="Submit",
@@ -59,8 +74,10 @@ async def classification_queues():
                 primary=True,
             ),
         ],
-    ).save()
-    await WorkQueue(
+    )
+    await WorkQueue.find({"name": wq.name}).upsert({"$set": wq.dict()}, on_insert=wq)
+
+    wq = WorkQueue(
         name="Classification Hold",
         collection_name="DocDocument",
         update_model_name="UpdateDocDocument",
@@ -68,7 +85,14 @@ async def classification_queues():
         document_query={
             "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "classification_status": "HOLD",
+            "priority": {"$gt": 0},
         },
+        hold_types=[
+            "Source Hub Issue",
+            "Focus Tagging",
+            "Medical Codes (J/CPT)",
+            "Spanish / Other Language",
+        ],
         sort_query=["-priority", "final_effective_date"],
         user_query={"roles": {"$in": ["admin", "classification"]}},
         submit_actions=[
@@ -79,11 +103,12 @@ async def classification_queues():
                 primary=True,
             ),
         ],
-    ).save()
+    )
+    await WorkQueue.find({"name": wq.name}).upsert({"$set": wq.dict()}, on_insert=wq)
 
 
 async def family_queues():
-    await WorkQueue(
+    wq = WorkQueue(
         name="Document & Payer Family",
         collection_name="DocDocument",
         update_model_name="UpdateDocDocument",
@@ -92,16 +117,25 @@ async def family_queues():
             "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "classification_status": "APPROVED",
             "family_status": "QUEUED",
+            "priority": {"$gt": 0},
         },
         sort_query=["-priority", "final_effective_date"],
         user_query={"roles": {"$in": ["admin", "family"]}},
         submit_actions=[
+            SubmitAction(
+                label="Reject Classification",
+                submit_action={
+                    "classification_status": "HOLD",
+                    "family_status": "PENDING",
+                },
+            ),
             SubmitAction(
                 label="Hold",
                 reassignable=True,
                 require_comment=True,
                 dest_queue="Document & Payer Family Hold",
                 submit_action={"family_status": "HOLD"},
+                hold_types=["Source Hub Issue", "Backbone Issue"],
             ),
             SubmitAction(
                 label="Submit",
@@ -109,20 +143,31 @@ async def family_queues():
                 primary=True,
             ),
         ],
-    ).save()
-    await WorkQueue(
+    )
+    await WorkQueue.find({"name": wq.name}).upsert({"$set": wq.dict()}, on_insert=wq)
+
+    wq = WorkQueue(
         name="Document & Payer Family Hold",
         collection_name="DocDocument",
         update_model_name="UpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
+        hold_types=["Source Hub Issue", "Backbone Issue"],
         document_query={
             "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "classification_status": "APPROVED",
             "family_status": "HOLD",
+            "priority": {"$gt": 0},
         },
         sort_query=["-priority", "final_effective_date"],
         user_query={"roles": {"$in": ["admin", "family"]}},
         submit_actions=[
+            SubmitAction(
+                label="Reject Classification",
+                submit_action={
+                    "classification_status": "HOLD",
+                    "family_status": "PENDING",
+                },
+            ),
             SubmitAction(label="Back To Queue", submit_action={"family_status": "QUEUED"}),
             SubmitAction(
                 label="Approve",
@@ -130,11 +175,12 @@ async def family_queues():
                 primary=True,
             ),
         ],
-    ).save()
+    )
+    await WorkQueue.find({"name": wq.name}).upsert({"$set": wq.dict()}, on_insert=wq)
 
 
 async def translation_config_queues():
-    await WorkQueue(
+    wq = WorkQueue(
         name="Translation Config",
         collection_name="DocDocument",
         update_model_name="UpdateDocDocument",
@@ -145,9 +191,24 @@ async def translation_config_queues():
             "classification_status": "APPROVED",
             "family_status": "APPROVED",
             "content_extraction_status": "QUEUED",
+            "priority": {"$gt": 0},
         },
         user_query={"roles": {"$in": ["admin", "translation"]}},
         submit_actions=[
+            SubmitAction(
+                label="Reject Classification",
+                submit_action={
+                    "classification_status": "HOLD",
+                    "family_status": "PENDING",
+                },
+            ),
+            SubmitAction(
+                label="Reject Family",
+                submit_action={
+                    "family_status": "HOLD",
+                    "content_extraction_status": "PENDING",
+                },
+            ),
             SubmitAction(
                 label="Hold",
                 reassignable=True,
@@ -161,8 +222,10 @@ async def translation_config_queues():
                 primary=True,
             ),
         ],
-    ).save()
-    await WorkQueue(
+    )
+    await WorkQueue.find({"name": wq.name}).upsert({"$set": wq.dict()}, on_insert=wq)
+
+    wq = WorkQueue(
         name="Translation Config Hold",
         collection_name="DocDocument",
         update_model_name="UpdateDocDocument",
@@ -171,9 +234,24 @@ async def translation_config_queues():
         document_query={
             "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "content_extraction_status": "HOLD",
+            "priority": {"$gt": 0},
         },
         user_query={"roles": {"$in": ["admin", "translation"]}},
         submit_actions=[
+            SubmitAction(
+                label="Reject Classification",
+                submit_action={
+                    "classification_status": "HOLD",
+                    "family_status": "PENDING",
+                },
+            ),
+            SubmitAction(
+                label="Reject Family",
+                submit_action={
+                    "family_status": "HOLD",
+                    "content_extraction_status": "PENDING",
+                },
+            ),
             SubmitAction(
                 label="Back To Queue", submit_action={"content_extraction_status": "QUEUED"}
             ),
@@ -183,7 +261,8 @@ async def translation_config_queues():
                 primary=True,
             ),
         ],
-    ).save()
+    )
+    await WorkQueue.find({"name": wq.name}).upsert({"$set": wq.dict()}, on_insert=wq)
 
 
 async def create_default_work_queues():
@@ -197,7 +276,10 @@ async def create_default_work_queues():
 
 async def execute():
     await init_db()
-    await create_default_work_queues()
+
+    await classification_queues()
+    await family_queues()
+    await translation_config_queues()
 
 
 if __name__ == "__main__":

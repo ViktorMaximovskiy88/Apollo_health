@@ -13,6 +13,7 @@ import { useSelector } from 'react-redux';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import { priorityOptions, priorityStyle } from '../doc_documents/useSiteDocDocumentColumns';
 import { TypeFilterValue } from '@inovua/reactdatagrid-community/types';
+import { useGetWorkQueueByNameQuery, useGetWorkQueueQuery } from './workQueuesApi';
 import { WorkQueue } from './types';
 
 function useSiteSelectOptions() {
@@ -33,6 +34,15 @@ function useSiteSelectOptions() {
   return { siteOptions };
 }
 
+const useHoldTypes = (queueId?: string) => {
+  const { data: holdWorkQueue } = useGetWorkQueueQuery(queueId);
+  const holdTypes = holdWorkQueue?.hold_types?.map((holdType) => ({
+    id: holdType,
+    label: holdType,
+  }));
+  return holdTypes ?? null;
+};
+
 export function useWorkQueueColumns(
   queueId: string | undefined,
   siteNamesById: { [key: string]: string },
@@ -45,6 +55,7 @@ export function useWorkQueueColumns(
   const siteFilter = res.filter?.find((f) => f.name === 'locations.site_id');
   const { data: site } = useGetSiteQuery(siteFilter?.value, { skip: !siteFilter?.value });
   const initialOptions = site ? [{ value: site._id, label: site.name }] : [];
+  const holdTypes = useHoldTypes(queueId);
   let columns = [
     {
       name: 'name',
@@ -166,6 +177,17 @@ export function useWorkQueueColumns(
       render: ({ value: priority }: { value: number }) => {
         return priorityStyle(priority);
       },
+    },
+    {
+      header: 'Hold Type',
+      name: 'hold_type',
+      minWidth: 200,
+      filterEditor: SelectFilter,
+      filterEditorProps: {
+        dataSource: holdTypes,
+      },
+      visible: !!holdTypes,
+      render: ({ value: holdType }: { value: string }) => <>{holdType}</>,
     },
     {
       name: 'hold_comment',

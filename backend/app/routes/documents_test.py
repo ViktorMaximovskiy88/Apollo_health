@@ -9,7 +9,13 @@ from fastapi import UploadFile
 from pydantic import HttpUrl
 
 from backend.app.routes.documents import add_document, get_documents, upload_document
-from backend.common.core.enums import CollectionMethod, LangCode, SiteStatus, TaskStatus
+from backend.common.core.enums import (
+    CollectionMethod,
+    LangCode,
+    ScrapeMethod,
+    SiteStatus,
+    TaskStatus,
+)
 from backend.common.db.init import init_db
 from backend.common.models.document import (
     RetrievedDocument,
@@ -79,7 +85,7 @@ def simple_site(
     return Site(
         name="Test",
         collection_method=collection_method,
-        scrape_method="",
+        scrape_method=ScrapeMethod.Simple,
         scrape_method_configuration=ScrapeMethodConfiguration(
             document_extensions=[],
             url_keywords=[],

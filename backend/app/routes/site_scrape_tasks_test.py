@@ -14,11 +14,18 @@ from backend.app.routes.site_scrape_tasks import (
     start_scrape_task,
 )
 from backend.app.routes.table_query import TableFilterInfo, TableQueryResponse, TableSortInfo
-from backend.common.core.enums import BulkScrapeActions, CollectionMethod, SiteStatus, TaskStatus
+from backend.common.core.enums import (
+    BulkScrapeActions,
+    CollectionMethod,
+    ScrapeMethod,
+    SiteStatus,
+    TaskStatus,
+)
 from backend.common.db.init import init_db
 from backend.common.models.site import BaseUrl, HttpUrl, ScrapeMethodConfiguration, Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
+from backend.common.services.collection import CollectionResponse
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -67,7 +74,7 @@ def simple_site(
         name="Test",
         collection_method=collection_method,
         collection_hold=collection_hold,
-        scrape_method="",
+        scrape_method=ScrapeMethod.Simple,
         scrape_method_configuration=ScrapeMethodConfiguration(
             document_extensions=[],
             url_keywords=[],
@@ -187,19 +194,15 @@ class TestStartScrapeTask:
         site_two = await simple_site().save()
         scrape_two = await simple_scrape(site_two, TaskStatus.IN_PROGRESS).save()
 
-        with pytest.raises(HTTPException) as e:
-            await start_scrape_task(site_one.id, user, logger)
-        assert isinstance(e.value, HTTPException)
-        assert e.value.status_code == 409
-        assert e.value.detail == f"Task[{scrape_one.id}] is already queued or in progress."
+        response: CollectionResponse = await start_scrape_task(site_one.id, user, logger)
+        assert response.success is False
+        assert response.errors[0] == f"Task[{scrape_one.id}] is already queued or in progress."
         scrapes = await SiteScrapeTask.find({}).to_list()
         assert len(scrapes) == 2
 
-        with pytest.raises(HTTPException) as e:
-            await start_scrape_task(site_two.id, user, logger)
-        assert isinstance(e.value, HTTPException)
-        assert e.value.status_code == 409
-        assert e.value.detail == f"Task[{scrape_two.id}] is already queued or in progress."
+        response: CollectionResponse = await start_scrape_task(site_two.id, user, logger)
+        assert response.success is False
+        assert response.errors[0] == f"Task[{scrape_two.id}] is already queued or in progress."
         scrapes = await SiteScrapeTask.find({}).to_list()
         assert len(scrapes) == 2
 

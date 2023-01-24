@@ -2,6 +2,7 @@ import { Input, Form, Select, Radio, Typography } from 'antd';
 
 import { CollectionMethod, ScrapeMethod, Site } from '../types';
 import {
+  CmsDocTypes,
   DocumentExtensions,
   UrlKeywords,
   ProxyExclusions,
@@ -36,6 +37,7 @@ function ScrapeMethodSelect() {
     { value: ScrapeMethod.Simple, label: 'Simple Document Scrape' },
     { value: ScrapeMethod.Html, label: 'Direct HTML Scrape' },
     { value: ScrapeMethod.CMS, label: 'CMS Scrape' },
+    { value: ScrapeMethod.Tricare, label: 'Tricare Scrape' },
   ];
 
   return (
@@ -119,6 +121,7 @@ export function CollectionSettings({ initialValues }: CollectionSettingsPropType
           getFieldValue('collection_method') === CollectionMethod.Automated ? (
             <>
               <ScrapeMethodSelect />
+              <CmsDocTypes />
               <DocumentExtensions />
               <UrlKeywords />
               <HtmlScrapeConfig scrapeMethod={currentScrapeMethod} />

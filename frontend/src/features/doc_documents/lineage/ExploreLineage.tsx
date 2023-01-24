@@ -14,7 +14,7 @@ const LineageDocViewer = ({ doc, label }: { doc?: DocDocument; label: string }) 
   return (
     <div className="mr-2 flex-grow flex flex-col">
       <h3>{label}</h3>
-      <div className="overflow-auto">
+      <div className="h-full overflow-auto">
         <FileTypeViewer doc={doc} docId={doc?.retrieved_document_id} />
       </div>
     </div>

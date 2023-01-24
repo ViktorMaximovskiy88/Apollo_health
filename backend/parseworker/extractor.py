@@ -403,6 +403,7 @@ class TableContentExtractor:
 
     async def run_extraction(self, extraction_task: ContentExtractionTask):
         filename = f"{self.doc.checksum}.pdf"
+        await rxnorm_linker.confirm_model_version()
         with self.client.read_object_to_tempfile(filename) as file_path:
             for page in self.relevant_pages(file_path):
                 await self.process_page(page, extraction_task)

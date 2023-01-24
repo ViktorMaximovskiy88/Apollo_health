@@ -19,8 +19,6 @@ from backend.common.models.shared import (
     LockableDocument,
     TaskLock,
     TherapyTag,
-    UpdateIndicationTag,
-    UpdateTherapyTag,
 )
 
 
@@ -100,6 +98,8 @@ class BaseDocDocument(BaseModel):
     priority: Indexed(int, pymongo.DESCENDING) = 0  # type: ignore
     is_searchable: bool = False
 
+    hold_type: str | None = None
+
 
 class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixins):
     locations: list[DocDocumentLocation] = []
@@ -175,22 +175,25 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
     class Settings:
         indexes = [
             [
-                ("final_effective_date", pymongo.ASCENDING),
-                ("first_collected_date", pymongo.ASCENDING),
                 ("priority", pymongo.DESCENDING),
                 ("classification_status", pymongo.ASCENDING),
-            ],
-            [
                 ("final_effective_date", pymongo.ASCENDING),
                 ("first_collected_date", pymongo.ASCENDING),
+                ("hold_type", pymongo.ASCENDING),
+            ],
+            [
                 ("priority", pymongo.DESCENDING),
                 ("family_status", pymongo.ASCENDING),
-            ],
-            [
                 ("final_effective_date", pymongo.ASCENDING),
                 ("first_collected_date", pymongo.ASCENDING),
+                ("hold_type", pymongo.ASCENDING),
+            ],
+            [
                 ("priority", pymongo.DESCENDING),
                 ("content_extraction_status", pymongo.ASCENDING),
+                ("final_effective_date", pymongo.ASCENDING),
+                ("first_collected_date", pymongo.ASCENDING),
+                ("hold_type", pymongo.ASCENDING),
             ],
             [("locations.site_id", pymongo.ASCENDING)],
             [("locations.link_text", pymongo.ASCENDING)],
@@ -217,7 +220,11 @@ class DocDocumentLimitTags(DocDocument):
         indication_tags: list[IndicationTag] | None
 
     class Settings:
-        projection = {"therapy_tags": {"$slice": 10}, "indication_tags": {"$slice": 10}}
+        projection = {
+            "therapy_tags": {"$slice": 10},
+            "indication_tags": {"$slice": 10},
+            "doc_vectors": 0,
+        }
 
 
 class UpdateDocDocument(BaseModel, DocumentMixins):
@@ -250,8 +257,8 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     previous_doc_doc_id: PydanticObjectId | None = None
     is_current_version: bool | None = None
 
-    therapy_tags: list[UpdateTherapyTag] | None = None
-    indication_tags: list[UpdateIndicationTag] | None = None
+    therapy_tags: list[TherapyTag] | None = None
+    indication_tags: list[IndicationTag] | None = None
     tags: list[str] | None = None
     internal_document: bool | None = None
     translation_id: PydanticObjectId | None = None
@@ -261,6 +268,7 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
 
     user_edited_fields: list[str] = []
     include_later_documents_in_lineage_update: bool = False
+    hold_type: str | None = None
 
 
 class ClassificationUpdateDocDocument(BaseModel):
@@ -290,6 +298,7 @@ class ClassificationUpdateDocDocument(BaseModel):
     published_date: datetime | None = None
     end_date: datetime | None = None
     include_later_documents_in_lineage_update: bool = False
+    hold_type: str | None = None
 
 
 class FamilyUpdateDocDocument(BaseModel):
@@ -297,6 +306,7 @@ class FamilyUpdateDocDocument(BaseModel):
     family_hold_info: list[str] | None = None
     document_family_id: PydanticObjectId | None = None
     locations: list[DocDocumentLocation] | None = None
+    hold_type: str | None = None
 
 
 class TranslationUpdateDocDocument(BaseModel):

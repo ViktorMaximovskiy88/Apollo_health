@@ -22,7 +22,7 @@ import { EditorView } from '@codemirror/view';
 import { langs } from '@uiw/codemirror-extensions-langs';
 import { prettyDateTimeFromISO } from '../../common';
 import { PipelineStage } from '../../common/types';
-import { CompareModal } from '../doc_documents/lineage/DocCompareToPrevious';
+import { CompareModal } from '../doc_documents/lineage/CompareModal';
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -305,6 +305,7 @@ export function DevToolsPage({ showSiteFilter = false }: { showSiteFilter?: bool
         prevFileKey={state.compareDocs.fileKeys[1]}
         modalOpen={state.compareDocs.showModal}
         handleCloseModal={() => actions.toggleCompareModal(false)}
+        tagComparison={state.compareDocs.tagComparison}
       />
     </DevToolsLayout>
   );

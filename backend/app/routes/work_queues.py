@@ -28,7 +28,7 @@ from backend.common.models.doc_document import (
 )
 from backend.common.models.shared import IndicationTag, TherapyTag
 from backend.common.models.user import User
-from backend.common.models.work_queue import WorkQueue, WorkQueueUpdate
+from backend.common.models.work_queue import WorkQueue, WorkQueueLog, WorkQueueUpdate
 from backend.common.services.doc_lifecycle.hooks import (
     ChangeInfo,
     doc_document_save_hook,
@@ -71,6 +71,18 @@ async def read_work_queue_counts(
         response.append({"work_queue_id": work_queue.id, "count": count})
 
     return response
+
+
+@router.get(
+    "/search",
+    dependencies=[Security(get_current_user)],
+    response_model=WorkQueue,
+)
+async def read_work_queue_by_name(
+    name: str,
+):
+    work_queue = await WorkQueue.find_one({"name": name})
+    return work_queue
 
 
 @router.get("/{id}", response_model=WorkQueue)
@@ -128,6 +140,7 @@ class IdNameLockOnlyDocument(IdOnlyDocument):
     locations: list[LocationSubDocument] = []
     locks: list[TaskLock] = []
     priority: int = 0
+    hold_type: str | None = None
     hold_time: datetime | None = None
     hold_comment: str | None = None
     therapy_tags: list[TherapyTag] = []
@@ -203,7 +216,7 @@ class TakeNextWorkQueueResponse(BaseModel):
     item_id: PydanticObjectId | None = None
 
 
-def get_valid_lock(locks: list[Any], work_queued_id: PydanticObjectId, now: datetime):
+def get_valid_lock(locks: list[Any], work_queued_id: PydanticObjectId | None, now: datetime):
     return next(
         filter(
             lambda lock: lock.work_queue_id == work_queued_id
@@ -333,6 +346,7 @@ class SubmitWorkItemRequest(BaseModel):
     updates: dict[str, Any]
     reassignment: PydanticObjectId | None
     comment: str | None
+    hold_type: str | None
     type: HoldType | None
 
 
@@ -365,8 +379,8 @@ async def submit_work_item(
             expires = datetime.now(tz=timezone.utc) + timedelta(days=365)
             await attempt_lock_acquire(dest_queue, item_id, dest_user, expires)
 
+    now = datetime.now(tz=timezone.utc)
     if body.comment:
-        now = datetime.now(tz=timezone.utc)
         comment = Comment(
             target_id=item_id,
             user_id=current_user.id,  # type: ignore
@@ -390,5 +404,14 @@ async def submit_work_item(
     await Collection.find_one({"_id": item_id}).update(
         {"$pull": {"locks": {"work_queue_id": work_queue.id}}}
     )
+
+    await WorkQueueLog(
+        queue_id=work_queue.id,  # type: ignore
+        queue_name=work_queue.name,
+        item_id=item_id,
+        action=body.action_label,
+        user_id=current_user.id,  # type: ignore
+        submitted_at=now,
+    ).save()
 
     return SubmitWorkItemResponse(success=True)

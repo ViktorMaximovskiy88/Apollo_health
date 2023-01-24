@@ -3,13 +3,13 @@ import tempfile
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from random import shuffle
-from typing import AsyncGenerator, Coroutine
+from typing import AsyncGenerator
 from urllib.parse import urlparse
 
 import aiofiles
 import fitz
 from async_lru import alru_cache
-from beanie.odm.operators.update.general import Inc
+from beanie.odm.operators.update.general import Inc, Set
 from playwright.async_api import Browser, BrowserContext, Cookie, Dialog, Page, ProxySettings
 from playwright.async_api import Response as PlaywrightResponse
 from playwright_stealth import stealth_async
@@ -17,7 +17,7 @@ from tenacity._asyncio import AsyncRetrying
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_random_exponential
 
-from backend.common.core.enums import TaskStatus
+from backend.common.core.enums import ScrapeMethod, TaskStatus
 from backend.common.core.log import logging
 from backend.common.models.doc_document import DocDocument, IndicationTag, TherapyTag
 from backend.common.models.document import RetrievedDocument
@@ -47,6 +47,7 @@ from backend.scrapeworker.common.utils import get_extension_from_path_like, supp
 from backend.scrapeworker.file_parsers import get_tags, parse_by_type, pdf
 from backend.scrapeworker.playbook import PlaybookException, ScrapePlaybook
 from backend.scrapeworker.scrapers import ScrapeHandler
+from backend.scrapeworker.scrapers.by_domain.tricare import TricareScraper
 from backend.scrapeworker.scrapers.cms.cms_scraper import CMSScrapeController
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
 from backend.scrapeworker.search_crawler import SearchableCrawler
@@ -82,7 +83,6 @@ class ScrapeWorker:
         self.doc_lifecycle_service = DocLifecycleService(logger=_log)
         self.new_document_pairs: list[tuple[RetrievedDocument, DocDocument]] = []
         self.log = _log
-        self.cookies: list[Cookie] = []
 
     @alru_cache
     async def get_proxy_settings(
@@ -189,22 +189,23 @@ class ScrapeWorker:
     def is_unexpected_html(self, download: DownloadContext):
         return download.file_extension == "html" and (
             "html" not in self.site.scrape_method_configuration.document_extensions
-            and (self.site.scrape_method != "HtmlScrape" and self.site.scrape_method != "CMSScrape")
+            and (
+                self.site.scrape_method != ScrapeMethod.Html
+                and self.site.scrape_method != ScrapeMethod.CMS
+            )
         )
 
-    async def attempt_download(self, download: DownloadContext):
+    async def attempt_download(self, download: DownloadContext, index=0):
         # TODO: This function keeps getting added to.
         # Maybe turn this into a class after our deadlines...
         # This is kinda your 'do thing' or controller; i dunno about _it_ being a class
         url = download.request.url
         proxies = await self.get_proxy_settings()
-        download.request.cookies = self.cookies
         link_retrieved_task: LinkRetrievedTask = link_retrieved_task_from_download(
             download, self.scrape_task
         )
 
         scrape_method_config = self.site.scrape_method_configuration
-
         async with self.downloader.try_download_to_tempfile(download, proxies) as (
             temp_path,
             checksum,
@@ -229,8 +230,6 @@ class ScrapeWorker:
                 await link_retrieved_task.save()
                 return
 
-            # TODO can we separate the concept of extensions to scrape on
-            # and ext we expect to download? for now just html
             if self.is_unexpected_html(download):
                 message = f"Received an unexpected html response. mimetype={download.mimetype}"
                 self.log.error(message)
@@ -255,6 +254,7 @@ class ScrapeWorker:
 
             dest_path = f"{checksum}.{download.file_extension}"
 
+            # TODO speak to matt about ocr and this...
             if (
                 not parsed_content["text"]
                 or len(parsed_content["text"]) == 0
@@ -284,8 +284,8 @@ class ScrapeWorker:
 
             if download.file_extension == "html" and (
                 "html" in scrape_method_config.document_extensions
-                or self.site.scrape_method == "HtmlScrape"
-                or self.site.scrape_method == "CMSScrape"
+                or self.site.scrape_method == ScrapeMethod.Html
+                or self.site.scrape_method == ScrapeMethod.CMS
             ):
                 async for pdf_path in self.html_to_pdf(url, download, checksum, temp_path):
                     await pdf.PdfParse(
@@ -352,38 +352,18 @@ class ScrapeWorker:
 
             link_retrieved_task.retrieved_document_id = document.id
 
-            await asyncio.gather(
-                self.scrape_task.update(
-                    {
-                        "$set": {"last_doc_collected": datetime.now(tz=timezone.utc)},
-                        "$inc": {"documents_found": 1},
-                        "$push": {"retrieved_document_ids": document.id},
-                    }
-                ),
-                link_retrieved_task.save(),
+            await asyncio.wait(
+                fs=[
+                    self.scrape_task.update(
+                        {
+                            "$set": {"last_doc_collected": datetime.now(tz=timezone.utc)},
+                            "$inc": {"documents_found": 1},
+                            "$push": {"retrieved_document_ids": document.id},
+                        }
+                    ),
+                    link_retrieved_task.save(),
+                ]
             )
-
-    async def watch_for_cancel(self, tasks: list[asyncio.Task[None]]):
-        while True:
-            if all(t.done() for t in tasks):
-                break
-            canceling = await SiteScrapeTask.find_one(
-                SiteScrapeTask.id == self.scrape_task.id,
-                SiteScrapeTask.status == TaskStatus.CANCELING,
-            )
-            if canceling:
-                for t in tasks:
-                    t.cancel()
-                raise CanceledTaskException("Task was canceled.")
-            await asyncio.sleep(5)
-
-    async def wait_for_completion_or_cancel(self, downloads: list[Coroutine[None, None, None]]):
-        tasks = [asyncio.create_task(download) for download in downloads]
-
-        try:
-            await asyncio.gather(self.watch_for_cancel(tasks), *tasks)
-        except asyncio.exceptions.CancelledError:
-            pass
 
     async def try_each_proxy(self):
         """
@@ -484,6 +464,8 @@ class ScrapeWorker:
         # this may move further down depending on the level of fail we record;
 
         await link_base_task.save()
+
+        # TODO wait_for_desired_content is for text; lets do custom selectors
         await self.wait_for_desired_content(page)
 
         try:
@@ -491,7 +473,7 @@ class ScrapeWorker:
         except PlaybookException as ex:
             raise ex
         except Exception as ex:
-            self.log.error(ex, stack_info=True)
+            self.log.error(ex, exc_info=ex)
         finally:
             if context:
                 await context.close()
@@ -508,13 +490,13 @@ class ScrapeWorker:
             async for (page, playbook_context) in self.playbook.run_playbook(
                 base_page, skip_playbook=skip_playbook
             ):
-
                 scrape_handler = ScrapeHandler(
                     context=context,
                     page=page,
                     playbook_context=playbook_context,
                     log=self.log,
                     config=self.site.scrape_method_configuration,
+                    scrape_method=self.site.scrape_method,
                 )
                 if await self.search_crawler.is_searchable(page):
                     async for code in self.search_crawler.run_searchable(page, playbook_context):
@@ -523,7 +505,6 @@ class ScrapeWorker:
                         )
                 else:
                     await scrape_handler.run_scrapers(url, base_url, all_downloads)
-            self.cookies = await context.cookies()
 
         return all_downloads
 
@@ -548,6 +529,23 @@ class ScrapeWorker:
 
         return urls, cookies
 
+    async def tricare_batch(self, search_terms):
+        page: Page
+        context: BrowserContext
+        downloads = []
+        async with self.playwright_context(TricareScraper.base_url) as (page, context):
+            scraper = TricareScraper(
+                page=page,
+                context=context,
+                config=self.site.scrape_method_configuration,
+                url=TricareScraper.base_url,
+                scrape_method=self.site.scrape_method,
+                log=self.log,
+            )
+            downloads += await scraper.execute(search_terms)
+
+        return downloads
+
     def should_process_download(self, download: DownloadContext):
         url = download.request.url
         filename = (
@@ -564,12 +562,6 @@ class ScrapeWorker:
         extension = get_extension_from_path_like(url)
         return extension in ["docx", "pdf", "xlsx"]
 
-    def is_cms_url(self, url: str) -> bool:
-        return (
-            "https://www.cms.gov/medicare-coverage-database" in url
-            and self.site.scrape_method == "CMSScrape"
-        )
-
     # NOTE: this is the effective entryppoint from main.py
     async def run_scrape(self):
         all_downloads: list[DownloadContext] = []
@@ -580,15 +572,41 @@ class ScrapeWorker:
             {"$set": {"scrape_method_configuration": self.site.scrape_method_configuration}}
         )
 
+        # temp batch by letter...
+        if self.site.scrape_method == ScrapeMethod.Tricare:
+            search_term_buckets, terms = await TricareScraper.get_search_term_buckets()
+
+            await self.scrape_task.update(
+                Set({SiteScrapeTask.batch_status.total_pages: len(search_term_buckets)})
+            )
+
+            for batch_page, search_terms in enumerate(search_term_buckets):
+                batch_key = search_terms[0]
+                self.log.info(
+                    f"batch_key={batch_key} batch_page={batch_page} search_terms={len(search_terms)}"  # noqa
+                )
+                await self.scrape_task.update(
+                    Set({SiteScrapeTask.batch_status.current_page: batch_page})
+                )
+                downloads = await self.tricare_batch(search_terms)
+                self.log.info(
+                    f"terms={len(search_terms)} batch_key={batch_key} downloads={len(downloads)}"
+                )
+                await self.stop_if_canceled()
+                await self.batch_downloads(downloads, 15)
+
         for url in base_urls:
             # skip the parse step and download
             self.log.info(f"Run scrape for {url}")
-
-            if self.is_cms_url(url):
-                self.log.info(f"Skip scrape & process CMS url: {url}")
+            if self.site.scrape_method == ScrapeMethod.CMS:
+                self.log.info("Skip scrape & process CMS")
                 proxies = await self.get_proxy_settings()
                 cms_scraper = CMSScrapeController(
-                    url, self.downloader, self.doc_client, proxies, self.log
+                    doc_types=self.site.scrape_method_configuration.cms_doc_types,
+                    downloader=self.downloader,
+                    doc_client=self.doc_client,
+                    proxies=proxies,
+                    log=self.log,
                 )
                 downloads = await cms_scraper.execute()
                 all_downloads += downloads
@@ -614,38 +632,64 @@ class ScrapeWorker:
                         nested_url, base_url=url, cookies=cookies, skip_playbook=True
                     )
 
-        tasks = []
-        for download in all_downloads:
-            if self.should_process_download(download):
-                await self.scrape_task.update(Inc({SiteScrapeTask.links_found: 1}))
-                tasks.append(self.attempt_download(download))
-            else:
-                self.log.info(f"Skip download {download.request.url}")
+        download_queue = [
+            download for download in all_downloads if self.should_process_download(download)
+        ]
 
-        await self.wait_for_completion_or_cancel(tasks)
+        # dont double dip for tricare; TODO will replace this with yield for all
+        if self.site.scrape_method != ScrapeMethod.Tricare:
+            await self.batch_downloads(download_queue)
 
-        # doc_ids = [doc.id for (doc, _) in self.new_document_pairs]
-        site_id = self.site.id
-        # TEMPORARY: lets see how the scrapeworker fares at this (vs our webapp...)
-        await self.lineage_service.process_lineage_for_site(site_id)  # type: ignore
+        try:
+            # doc_ids = [doc.id for (doc, _) in self.new_document_pairs]
+            site_id = self.site.id
+            # TEMPORARY: lets see how the scrapeworker fares at this (vs our webapp...)
+            self.log.info(f"before lineage_service.process_lineage_for_site site_id={site_id}")
+            await self.lineage_service.process_lineage_for_site(site_id)  # type: ignore
 
-        doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
-        async for doc in DocDocument.find({"_id": {"$in": doc_doc_ids}}):
-            change_info = ChangeInfo(
-                translation_change=bool(doc.translation_id),
-                lineage_change=bool(doc.previous_doc_doc_id),
-                document_family_change=bool(doc.document_family_id),
-            )
-            await doc_document_save_hook(doc, change_info)
-        async for doc in DocDocument.find(
-            {"locations.site_id": site_id, "_id": {"$nin": doc_doc_ids}}
-        ):
-            await doc_document_save_hook(doc)
+            doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
+            async for doc in DocDocument.find({"_id": {"$in": doc_doc_ids}}):
+                change_info = ChangeInfo(
+                    translation_change=bool(doc.translation_id),
+                    lineage_change=bool(doc.previous_doc_doc_id),
+                    document_family_change=bool(doc.document_family_id),
+                )
+                await doc_document_save_hook(doc, change_info)
+            async for doc in DocDocument.find(
+                {"locations.site_id": site_id, "_id": {"$nin": doc_doc_ids}}
+            ):
+                await doc_document_save_hook(doc)
+        except Exception as ex:
+            self.log.error("Lineage error", exc_info=ex)
 
         self.site.last_run_documents = self.scrape_task.documents_found
-        await self.site.save()
 
+        await self.site.save()
         await self.downloader.close()
 
         if not self.scrape_task.documents_found:
             raise NoDocsCollectedException("No documents collected.")
+
+    async def stop_if_canceled(self):
+        result = await SiteScrapeTask.find_one(
+            SiteScrapeTask.id == self.scrape_task.id,
+            SiteScrapeTask.status == TaskStatus.CANCELING,
+        )
+        if result:
+            raise CanceledTaskException("Task was canceled.")
+
+    async def batch_downloads(self, all_downloads: list, batch_size: int = 20):
+        await self.scrape_task.update(Inc({SiteScrapeTask.links_found: len(all_downloads)}))
+
+        batch_index = 0
+        while len(all_downloads) > 0:
+            downloads = all_downloads[:batch_size]
+            del all_downloads[:batch_size]
+
+            tasks = [self.attempt_download(download, index=batch_index) for download in downloads]
+
+            done, pending = await asyncio.wait(fs=tasks)
+            self.log.info(f"after wait done={len(done)} pending={len(pending)}")
+            batch_index += 1
+
+            await self.stop_if_canceled()

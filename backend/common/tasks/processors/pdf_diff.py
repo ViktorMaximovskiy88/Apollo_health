@@ -3,6 +3,8 @@ import logging
 
 import backend.common.models.tasks as tasks
 from backend.common.models.doc_document import DocDocument
+from backend.common.models.tag_comparison import TagComparison
+from backend.common.services.tag_compare import TagCompare
 from backend.common.services.text_compare.doc_text_compare import DocTextCompare
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.tasks.task_processor import TaskProcessor
@@ -19,15 +21,29 @@ class PDFDiffTaskProcessor(TaskProcessor):
         doc_client = DocumentStorageClient()
         dtc = DocTextCompare(doc_client)
 
-        (current_doc, prev_doc) = await asyncio.gather(
-            DocDocument.find_one({"checksum": task.current_checksum}),
-            DocDocument.find_one({"checksum": task.previous_checksum}),
+        (current_doc, prev_doc, tag_comparison) = await asyncio.gather(
+            DocDocument.get(task.current_doc_id),
+            DocDocument.get(task.prev_doc_id),
+            TagComparison.find_one(
+                {"current_doc_id": task.current_doc_id, "prev_doc_id": task.prev_doc_id}
+            ),
         )
+
+        if tag_comparison is None:
+            tag_lineage = await TagCompare().execute(current_doc, prev_doc)
+            tag_comparison = await TagComparison(
+                current_doc_id=current_doc.id,
+                prev_doc_id=prev_doc.id,
+                therapy_tag_sections=tag_lineage.therapy_tag_sections,
+                indication_tag_sections=tag_lineage.indication_tag_sections,
+            ).save()
+
         dtc.compare(doc=current_doc, prev_doc=prev_doc)
 
         return {
-            "new_key": f"{task.current_checksum}-{task.previous_checksum}-new.pdf",
-            "prev_key": f"{task.current_checksum}-{task.previous_checksum}-prev.pdf",
+            "new_key": f"{current_doc.checksum}-{prev_doc.checksum}-new.pdf",
+            "prev_key": f"{current_doc.checksum}-{prev_doc.checksum}-prev.pdf",
+            "tag_comparison": tag_comparison.dict(),
         }
 
     async def get_progress(self) -> float:

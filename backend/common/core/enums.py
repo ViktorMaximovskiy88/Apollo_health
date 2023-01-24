@@ -47,6 +47,7 @@ class SiteStatus(str, Enum):
 class SearchableType(str, Enum):
     CPTCODES = "CPTCODES"
     JCODES = "JCODES"
+    TRICARE = "TRICARE"
 
 
 class DocumentType(str, Enum):
@@ -90,3 +91,16 @@ class TagUpdateStatus(str, Enum):
     CHANGED = "CHANGED"
     ADDED = "ADDED"
     REMOVED = "REMOVED"
+
+
+class CmsDocType(Enum):
+    NCD = 1
+    LCD = 2
+    LCA = 3
+
+
+class ScrapeMethod(str, Enum):
+    Simple = "SimpleDocumentScrape"
+    Html = "HtmlScrape"
+    CMS = "CMSScrape"
+    Tricare = "TricareScrape"

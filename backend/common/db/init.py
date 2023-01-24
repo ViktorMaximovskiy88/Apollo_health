@@ -35,10 +35,11 @@ from backend.common.models.proxy import Proxy
 from backend.common.models.search_codes import SearchCodeSet
 from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
+from backend.common.models.tag_comparison import TagComparison
 from backend.common.models.tasks import TaskLog
 from backend.common.models.translation_config import TranslationConfig
 from backend.common.models.user import User
-from backend.common.models.work_queue import WorkQueue
+from backend.common.models.work_queue import WorkQueue, WorkQueueLog, WorkQueueMetric
 
 
 @cache
@@ -69,6 +70,8 @@ document_models = [
     Proxy,
     Comment,
     WorkQueue,
+    WorkQueueLog,
+    WorkQueueMetric,
     ChangeLog,
     Indication,
     DocDocument,
@@ -94,6 +97,7 @@ document_models = [
     SearchCodeSet,
     TaskLog,
     PipelineRegistry,
+    TagComparison,
 ]
 
 
@@ -121,5 +125,5 @@ def aws_get_motor(
     return (client, client[database])
 
 
-async def aws_init_db_(database: AsyncIOMotorDatabase):
+async def aws_init_db(database: AsyncIOMotorDatabase):
     await init_beanie(database=database, document_models=document_models)

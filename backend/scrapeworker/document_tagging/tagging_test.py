@@ -4,7 +4,7 @@ from random import random
 import pytest
 import pytest_asyncio
 
-from backend.common.core.enums import DocumentType, SectionType
+from backend.common.core.enums import DocumentType, ScrapeMethod, SectionType
 from backend.common.db.init import init_db
 from backend.common.models.document import RetrievedDocument, RetrievedDocumentLocation
 from backend.common.models.site import FocusSectionConfig, ScrapeMethodConfiguration, Site
@@ -71,7 +71,7 @@ def simple_ret_doc(site1: Site, site2: Site) -> RetrievedDocument:
 async def simple_site(focus_configs: list[FocusSectionConfig] = []):
     site = await Site(
         name="Test",
-        scrape_method="",
+        scrape_method=ScrapeMethod.Simple,
         scrape_method_configuration=ScrapeMethodConfiguration(
             document_extensions=[],
             url_keywords=[],
@@ -106,8 +106,8 @@ class TestFocusAreas:
         config = simple_focus_config()
         focus_checker = FocusChecker(test_text, [config], url, link_text)
         assert focus_checker.focus_areas == [
-            FocusArea(start=24, end=70, section_end=204),
-            FocusArea(start=204, end=260, section_end=342),
+            FocusArea(start=24, end=70, page=0, section_end=204),
+            FocusArea(start=204, end=260, page=0, section_end=342),
         ]
         assert focus_checker.key_areas == []
 
@@ -121,12 +121,14 @@ class TestFocusAreas:
             FocusArea(
                 start=24,
                 end=70,
+                page=0,
                 section_end=204,
                 key_text=" Group ACITRETIN\n    Drug Names ACITRETIN\n    ",
             ),
             FocusArea(
                 start=204,
                 end=260,
+                page=0,
                 section_end=342,
                 key_text=" Group ADAPALENE\n    Drug Names ADAPALENE, DIFFERIN\n    ",
             ),
@@ -147,12 +149,14 @@ class TestFocusAreas:
                 key_text=" Group ACITRETIN\n    Drug Names ACITRETIN\n    ",
                 start=24,
                 end=70,
+                page=0,
                 section_end=204,
             ),
             FocusArea(
                 key_text=" Group ADAPALENE\n    Drug Names ADAPALENE, DIFFERIN\n    ",
                 start=204,
                 end=260,
+                page=0,
                 section_end=342,
             ),
         ]

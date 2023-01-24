@@ -45,6 +45,7 @@ class IndicationTag(BaseModel):
     update_status: TagUpdateStatus | None = None
     updated_at: datetime | None = None
     text_area: tuple[int, int] | None = None
+    name: str | None = None
 
     def __hash__(self):
         return hash(tuple(self.__dict__.values()))
@@ -68,6 +69,13 @@ class UpdateIndicationTag(BaseModel):
     focus: bool | None = None
     update_status: TagUpdateStatus | None = None
     text_area: tuple[int, int] | None = None
+
+
+class DocumentSection(BaseModel):
+    key_text: str
+    section_status: TagUpdateStatus | None = None
+    current_page: int | None = None
+    prev_page: int | None = None
 
 
 class TaskLock(BaseModel):

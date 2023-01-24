@@ -17,9 +17,11 @@ import { MainLayout } from '../../components';
 import { isErrorWithData } from '../../common/helpers';
 import { useAppDispatch } from '../../app/store';
 import { setSiteDocDocumentTableForceUpdate } from '../doc_documents/siteDocDocumentsSlice';
+import { SiteDocDocument } from '../doc_documents/types';
+import { WorkItem, WorkItemOption } from './types';
 
 export function ManualCollectionButton(props: any) {
-  const { site, refetch, runScrape, setSiteScrapeTask } = props;
+  const { site, refetch, runScrape, siteScrapeTask, setSiteScrapeTask } = props;
   const navigate = useNavigate();
   const [cancelAllScrapes] = useCancelAllSiteScrapeTasksMutation();
   const [isLoading, setIsLoading] = useState(false);
@@ -29,18 +31,26 @@ export function ManualCollectionButton(props: any) {
   const [getDocDocumentsQuery] = useLazyGetSiteDocDocumentsQuery();
   const [getScrapeTaskQuery] = useLazyGetScrapeTaskQuery();
   const dispatch = useAppDispatch();
+  const [currentDocs, setCurrentDocs] = useState<Array<SiteDocDocument | undefined>>();
+  const [initialRefreshDocs, setInitialRefreshDocs] = useState(false);
 
   const refreshDocs = async () => {
     if (!site) return;
     const siteId = site._id;
     refetch();
-    await getDocDocumentsQuery({ siteId, scrapeTaskId });
+    const refreshedDocs = await getDocDocumentsQuery({ siteId, scrapeTaskId });
+    setCurrentDocs(refreshedDocs.data?.data);
     dispatch(setSiteDocDocumentTableForceUpdate());
     const { data: refreshedSiteScrapeTask } = await getScrapeTaskQuery(scrapeTaskId);
     if (refreshedSiteScrapeTask && setSiteScrapeTask) {
       setSiteScrapeTask(refreshedSiteScrapeTask);
     }
   };
+
+  if ((!siteScrapeTask && scrapeTaskId) || !initialRefreshDocs) {
+    setInitialRefreshDocs(true);
+    refreshDocs();
+  }
 
   async function handleRunManualScrape() {
     try {
@@ -74,33 +84,56 @@ export function ManualCollectionButton(props: any) {
   }
 
   async function handleCancelManualScrape() {
-    if (site?._id) {
-      try {
-        setIsLoading(true);
-        let response: any = await cancelAllScrapes(site!._id);
-        if (response.data?.success) {
-          refreshDocs();
-          setIsLoading(false);
-        } else {
-          setIsLoading(false);
-          notification.error({
-            message: 'Please review and update the following documents',
-            description: response.error.data.detail,
-          });
-        }
-      } catch (err) {
-        if (isErrorWithData(err)) {
-          setIsLoading(false);
-          notification.error({
-            message: 'Error Cancelling Collection',
-            description: `${err.data.detail}`,
-          });
-        } else {
-          setIsLoading(false);
-          notification.error({
-            message: 'Error Cancelling Collection',
-            description: 'Unknown error.',
-          });
+    if (siteScrapeTask && siteScrapeTask.work_list) {
+      // Check if any unhandled work_items before submitting to backend..
+      const unhandled = siteScrapeTask.work_list.filter(
+        (work_item: any) => work_item.selected === WorkItemOption.Unhandled
+      );
+      const unhandledDocNames: (string | undefined)[] = [];
+      unhandled?.map((unhandledDoc: WorkItem) =>
+        unhandledDocNames.push(
+          currentDocs?.filter(
+            (doc: SiteDocDocument | undefined) => doc?._id === unhandledDoc.document_id
+          )[0]?.name
+        )
+      );
+      if (unhandledDocNames.length > 0) {
+        notification.error({
+          message: 'Please review and update the following documents ',
+          description: unhandledDocNames.join(', '),
+        });
+        return;
+      }
+
+      // Stop the collection and refresh docs table.
+      if (site?._id) {
+        try {
+          setIsLoading(true);
+          let response: any = await cancelAllScrapes(site!._id);
+          if (response.data?.success) {
+            refreshDocs();
+            setIsLoading(false);
+          } else {
+            setIsLoading(false);
+            notification.error({
+              message: 'Please review and update the following documents',
+              description: response.data.errors.join(', '),
+            });
+          }
+        } catch (err) {
+          if (isErrorWithData(err)) {
+            setIsLoading(false);
+            notification.error({
+              message: 'Error Cancelling Collection',
+              description: `${err.data.detail}`,
+            });
+          } else {
+            setIsLoading(false);
+            notification.error({
+              message: 'Error Cancelling Collection',
+              description: 'Unknown error.',
+            });
+          }
         }
       }
     }
@@ -146,7 +179,7 @@ export function CollectionsPage() {
         } else {
           notification.error({
             message: 'Error Running Collection',
-            description: response.error.data.detail,
+            description: response.errors.join(', '),
           });
         }
       } catch (err) {

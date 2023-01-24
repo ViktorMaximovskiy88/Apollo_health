@@ -88,17 +88,19 @@ class JavascriptClick(PlaywrightBaseScraper):
                 if "content-type" in response.headers:
                     content_type = response.headers["content-type"]
                 download = await self.handle_json(response)
+                cookies = await self.context.cookies(response.url)
                 if (
                     isinstance(download, DownloadContext)
                     and download.content_type in accepted_types
                 ):
+                    download.request.cookies = cookies
                     download.metadata = await self.extract_metadata(link_handle)
                     downloads.append(download)
                 elif content_type in accepted_types:
                     logging.info(f"Direct Download result: {content_type} - {response.url}")
                     download = DownloadContext(
                         response=Response(content_type=content_type, status=response.status),
-                        request=Request(url=response.url),
+                        request=Request(url=response.url, cookies=cookies),
                     )
                     download.metadata = await self.extract_metadata(link_handle)
                     downloads.append(download)
@@ -119,9 +121,10 @@ class JavascriptClick(PlaywrightBaseScraper):
                     self.log.debug(
                         f"javascript click -> direct download: {filename}.{file_extension}"
                     )
+                    cookies = await self.context.cookies(download.url)
                     download_context = DownloadContext(
                         response=Response(content_type=None),
-                        request=Request(url=download.url),
+                        request=Request(url=download.url, cookies=cookies),
                     )
                     download_context.metadata = await self.extract_metadata(link_handle)
                     downloads.append(download_context)

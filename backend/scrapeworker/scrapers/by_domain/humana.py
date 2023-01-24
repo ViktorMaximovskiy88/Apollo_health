@@ -7,7 +7,7 @@ from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBase
 
 class HumanaScraper(PlaywrightBaseScraper):
 
-    type: str = "HumanaCom"
+    type: str = "Humana"
     downloads: list[DownloadContext] = []
 
     @cached_property

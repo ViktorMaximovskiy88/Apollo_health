@@ -53,7 +53,7 @@ h1.ant-typography {
 
 .ant-input,
 .ant-picker,
-.ant-btn:not(.ant-input-search-button):not(.ant-btn-link):not(.ant-btn-dashed) {
+.ant-btn:not(.ant-input-search-button):not(.ant-btn-link):not(.ant-btn-dashed):not(.ant-btn-text) {
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
   border: 1px solid #d9d9d9;
@@ -135,6 +135,9 @@ a {
   width: 100%;
 }
 
+.ant-select-item-option-content {
+  white-space: initial;
+}
 .ant-modal-full-screen .ant-modal-content {
   display: flex;
   height: 100%;
