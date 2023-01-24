@@ -609,6 +609,7 @@ class ScrapeWorker:
                     log=self.log,
                 )
                 async for downloads in cms_scraper.batch_execute():
+                    self.log.info(f"Queueing {len(downloads)} CMS downloads")
                     all_downloads += downloads
                 continue
 
@@ -659,6 +660,7 @@ class ScrapeWorker:
                 {"locations.site_id": site_id, "_id": {"$nin": doc_doc_ids}}
             ):
                 await doc_document_save_hook(doc)
+            self.log.info(f"after lineage_service.process_lineage_for_site site_id={site_id}")
         except Exception as ex:
             self.log.error("Lineage error", exc_info=ex)
 

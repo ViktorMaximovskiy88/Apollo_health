@@ -58,7 +58,9 @@ class AioDownloader:
         return context
 
     async def close(self):
+        self.log.info("Before attempting downloader close")
         await self.session.close()
+        self.log.info("After attempting downloader close")
 
     def valid_cookie(self, cookie):
         """
