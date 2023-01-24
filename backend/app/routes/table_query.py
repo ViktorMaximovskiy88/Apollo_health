@@ -188,6 +188,7 @@ async def query_as_agg(
     if hasattr(query, "sort_expressions") and query.sort_expressions:
         agg_query.append({"$sort": {key: dir for key, dir in query.sort_expressions}})
 
+    # TODO: Generic collection select.x
     data = await DocDocument.aggregate(agg_query).to_list()
 
     return data
@@ -212,7 +213,7 @@ async def query_table(
 
     if as_aggregation:
         data = await data_q
-        total = len(data)
+        total = len(data)  # TODO: should be count from query.
     else:
         if query.find_expressions == [{}]:
             total_q = query.document_model.get_motor_collection().estimated_document_count()

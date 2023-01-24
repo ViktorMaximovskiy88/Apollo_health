@@ -26,7 +26,6 @@ from backend.common.models.doc_document import (
     PartialDocDocumentUpdate,
     TaskLock,
 )
-from backend.common.models.shared import IndicationTag, TherapyTag
 from backend.common.models.user import User
 from backend.common.models.work_queue import WorkQueue, WorkQueueLog, WorkQueueUpdate
 from backend.common.services.doc_lifecycle.hooks import (
@@ -143,8 +142,6 @@ class IdNameLockOnlyDocument(IdOnlyDocument):
     hold_type: str | None = None
     hold_time: datetime | None = None
     hold_comment: str | None = None
-    therapy_tags: list[TherapyTag] = []
-    indication_tags: list[IndicationTag] = []
 
 
 def combine_queue_query_with_user_query(

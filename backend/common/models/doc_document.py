@@ -216,8 +216,6 @@ class SiteDocDocument(BaseDocDocument, DocDocumentLocation):
 class DocDocumentLimitTags(DocDocument):
     class Collection:
         name = "DocDocument"
-        therapy_tags: list[TherapyTag] | None
-        indication_tags: list[IndicationTag] | None
 
     class Settings:
         projection = {
