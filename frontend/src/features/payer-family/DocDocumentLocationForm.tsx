@@ -1,4 +1,4 @@
-import { Form, Button, Input, Row, Col } from 'antd';
+import { Form, Button, Input, Row, Col, Checkbox } from 'antd';
 import { Link } from 'react-router-dom';
 import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
@@ -94,6 +94,9 @@ const PayerFamily = ({
           <PlusOutlined />
           New
         </Button>
+        <Form.Item name={['locations', index, 'pending_payer_update']}>
+          <Checkbox>Pending Update</Checkbox>
+        </Form.Item>
       </div>
     </Form.Item>
   );
