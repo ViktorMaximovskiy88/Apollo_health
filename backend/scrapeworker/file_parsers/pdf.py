@@ -100,6 +100,8 @@ class PdfParse(FileParser):
         prev_content["published_date"] = new_content["published_date"]
         prev_content["identified_dates"] = new_content["identified_dates"]
 
+    # TODO this doesnt belong here...
+    # how to get metadata from within a file; nothing ot do with download or filesystem
     def get_title(self, metadata):
         cont_disp_filename = None
         if self.download:

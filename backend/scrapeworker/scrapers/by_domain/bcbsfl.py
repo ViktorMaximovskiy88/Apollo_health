@@ -1,26 +1,23 @@
-import asyncio
-import re
+from aiofiles import tempfile
+from playwright.async_api import Error
+from playwright.async_api import Request as RouteRequest
+from playwright.async_api import Route, TimeoutError
 
-from playwright.async_api import TimeoutError as PlaywrightTimeoutError
-
-from backend.scrapeworker.common.models import DownloadContext, Request
+from backend.common.storage.hash import hash_bytes
+from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 
 
 class BcbsflScraper(PlaywrightBaseScraper):
 
     type: str = "Bcbsfl"
-    downloads: list[DownloadContext] = []
-    base_url = "https://mcgs.bcbsfl.com"
-
-    pdf_src_pattern = re.compile(r"\.aspx?.+")
-    first_menu_xpath = '//span[contains(text(), "Current Guidelines")]'
-    second_menu_xpath = '//span[contains(text(), "Alphabetical")]'
-    doc_options_xpath = (
-        '//ul[@class="rpGroup rpLevel2 "]/li[@class="rpItem"]/'
-        'a[@class="rpLink "]/span/span[@class="rpText"]'
+    first_menu = '.rpRootGroup > .rpItem span.rpText:has-text("Current Guidelines")'
+    second_menu = (
+        '.rpRootGroup .rpGroup.rpLevel1 > .rpItem.rpLast span.rpText:has-text("Alphabetical")'
     )
-    iframe_xpath = '//div[@id="divLiteralContainer"]/iframe'
+    target_items = (
+        ".rpRootGroup .rpGroup.rpLevel1 > .rpItem.rpLast .rpGroup.rpLevel2 > .rpItem span.rpText"
+    )
 
     async def is_applicable(self) -> bool:
         self.log.debug(f"self.parsed_url.netloc={self.parsed_url.netloc}")
@@ -29,13 +26,21 @@ class BcbsflScraper(PlaywrightBaseScraper):
         return result
 
     async def click_welcome_menu_elements(self):
-        first_menu_path = await self.page.wait_for_selector(self.first_menu_xpath)
-        await first_menu_path.click()
-        second_menu_xpath = await self.page.wait_for_selector(self.second_menu_xpath)
-        await second_menu_xpath.click()
+        first_menu_el = await self.page.wait_for_selector(self.first_menu)
+        await first_menu_el.click()
+        second_menu_el = await self.page.wait_for_selector(self.second_menu)
+        await second_menu_el.click()
 
     @staticmethod
-    async def intercept(route, request):
+    def is_postback(request):
+        return "https://mcgs.bcbsfl.com/" == request.url and request.method == "POST"
+
+    @staticmethod
+    def is_frameload(request):
+        return "https://mcgs.bcbsfl.com/mcg.aspx?FilePath=" in request.url
+
+    @staticmethod
+    async def intercept(route: Route, request: RouteRequest):
         if "FilePath" in request.url:
             await route.abort()
         else:
@@ -43,60 +48,78 @@ class BcbsflScraper(PlaywrightBaseScraper):
 
     async def execute(self) -> list[DownloadContext]:
         downloads: list[DownloadContext] = []
-        found_pdfs = []
 
         await self.page.route("**/*", self.intercept)
         await self.click_welcome_menu_elements()
-        xpath_locator = self.page.locator(self.doc_options_xpath)
-        all_texts = await xpath_locator.all_inner_texts()
-        for text in all_texts:
-            try:
-                await self.click_welcome_menu_elements()
-                await self.click_welcome_menu_elements()
-                pdf_el = self.page.locator(self.iframe_xpath)
-                pdf_raw_src = await pdf_el.get_attribute("src")
-                welcome_pdf_src = self.pdf_src_pattern.findall(str(pdf_raw_src))[0][5:]
-                link_handle = await self.page.wait_for_selector(
-                    f"//ul[@class='rpGroup rpLevel2 ']"
-                    f"/li[@class='rpItem']"
-                    f"/a[@class='rpLink ']"
-                    f"/span/span[text()='{text}']"
-                )
-                metadata = await self.extract_metadata(link_handle)
-                metadata.base_url = self.base_url
-                await link_handle.click()
-                await asyncio.sleep(0.25)
 
-                await self.page.wait_for_selector(
-                    f'//div[@id="divLiteralContainer"]'
-                    f"/iframe[not(contains(@src,"
-                    f'"{welcome_pdf_src}"))]',
-                )
-                await self.page.wait_for_selector(self.iframe_xpath)
-                result_pdf_locator = self.page.locator(self.iframe_xpath)
-                found_pdfs.append(
-                    {
-                        "path": await result_pdf_locator.get_attribute("src"),
-                        "metadata": metadata,
-                    }
-                )
-            except PlaywrightTimeoutError as e:
-                self.log.error(
-                    f"TimeoutException in {self.__class__.__name__} class for"
-                    f" execute method: {e}"
-                )
-                await asyncio.sleep(10)
-
-        self.log.info(f"found {len(found_pdfs)} pdfs")
-
-        for pdf in found_pdfs:
-            src = pdf["path"]
-            downloads.append(
-                DownloadContext(
-                    request=Request(url=f"{self.base_url}/{src}"),
-                    metadata=pdf["metadata"],
-                )
+        text_locator = self.page.locator(self.target_items)
+        link_texts = await text_locator.all_text_contents()
+        for link_text in link_texts:
+            link_locator = self.page.locator(
+                f'.rpItem.rpLast .rpGroup.rpLevel2 > .rpItem .rpText:text-is("{link_text}")'
             )
+            link_handle = await link_locator.element_handle()
+            async with self.page.expect_request(self.is_postback):
+                await link_handle.click()
+                async with self.page.expect_request(self.is_frameload) as frame_load:
+                    request = await frame_load.value
+                    headers = await request.all_headers()
+                    pdf_bytes = await self._fetch(request.url, headers=headers)
+
+                    if not pdf_bytes:
+                        continue
+
+                    file_hash = hash_bytes(pdf_bytes)
+                    async with tempfile.NamedTemporaryFile(delete=False) as file:
+                        await file.write(pdf_bytes)
+                        temp_path = file.name
+
+                    downloads.append(
+                        DownloadContext(
+                            file_path=temp_path,
+                            file_name=link_text,
+                            playwright_download=True,
+                            file_hash=file_hash,
+                            metadata=Metadata(
+                                link_text=link_text,
+                                base_url=self.page.url,
+                            ),
+                            request=Request(
+                                url=f"file://{temp_path}",
+                                filename=link_text,
+                            ),
+                        ),
+                    )
 
         await self.page.unroute("**/*", self.intercept)
+
         return downloads
+
+    async def _fetch(
+        self,
+        url,
+        method="get",
+        headers: dict | None = None,
+        data: dict | None = None,
+        params: dict | None = None,
+    ):
+        try:
+            response = await self.page.request.fetch(
+                url,
+                method=method,
+                data=data,
+                params=params,
+                headers=headers,
+                fail_on_status_code=True,
+            )
+
+            result = await response.body()
+            await response.dispose()
+            return result
+
+        except TimeoutError as ex:
+            self.log.error(f"data={data}", exc_info=ex)
+        except Error as ex:
+            self.log.error(f"data={data}", exc_info=ex)
+        except Exception as ex:
+            self.log.error(f"data={data}", exc_info=ex)

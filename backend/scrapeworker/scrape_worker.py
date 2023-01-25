@@ -195,10 +195,7 @@ class ScrapeWorker:
             )
         )
 
-    async def attempt_download(self, download: DownloadContext, index=0):
-        # TODO: This function keeps getting added to.
-        # Maybe turn this into a class after our deadlines...
-        # This is kinda your 'do thing' or controller; i dunno about _it_ being a class
+    async def attempt_download(self, download: DownloadContext):
         url = download.request.url
         proxies = await self.get_proxy_settings()
         link_retrieved_task: LinkRetrievedTask = link_retrieved_task_from_download(
@@ -210,7 +207,6 @@ class ScrapeWorker:
             temp_path,
             checksum,
         ):
-
             # TODO temp until we undo download context
             link_retrieved_task.valid_response = download.valid_response
             link_retrieved_task.invalid_responses = download.invalid_responses
@@ -351,6 +347,9 @@ class ScrapeWorker:
                 self.new_document_pairs.append((document, doc_document))
 
             link_retrieved_task.retrieved_document_id = document.id
+
+            if download.playwright_download:
+                await aiofiles.os.remove(download.file_path)
 
             await asyncio.wait(
                 fs=[
@@ -688,7 +687,7 @@ class ScrapeWorker:
             downloads = all_downloads[:batch_size]
             del all_downloads[:batch_size]
 
-            tasks = [self.attempt_download(download, index=batch_index) for download in downloads]
+            tasks = [self.attempt_download(download) for download in downloads]
 
             done, pending = await asyncio.wait(fs=tasks)
             self.log.info(f"after wait done={len(done)} pending={len(pending)}")
