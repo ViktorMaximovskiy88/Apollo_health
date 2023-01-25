@@ -105,7 +105,12 @@ export function SiteDocDocumentsPage() {
               Create Document
             </Button>
           ) : null}
-          <DocTypeUpdateModalToolbar />
+
+          {site.collection_method === 'MANUAL' &&
+          siteScrapeTask?.collection_method === 'MANUAL' &&
+          activeStatuses.includes(siteScrapeTask.status) ? null : (
+            <DocTypeUpdateModalToolbar />
+          )}
         </>
       }
     >
