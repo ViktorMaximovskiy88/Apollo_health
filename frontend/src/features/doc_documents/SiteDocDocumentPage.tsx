@@ -105,7 +105,7 @@ export function SiteDocDocumentsPage() {
               Create Document
             </Button>
           ) : null}
-          {site.collection_method !== 'MANUAL' ? <DocTypeUpdateModalToolbar /> : null}
+          <DocTypeUpdateModalToolbar />
         </>
       }
     >
