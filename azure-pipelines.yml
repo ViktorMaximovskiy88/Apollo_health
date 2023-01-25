@@ -45,19 +45,6 @@ stages:
               repositoryName: "sourcehub-base"
               pushTag: "latest"
 
-          - template: .azure-pipelines/sourcehub-taskworker-sync.build.yml
-
-          - task: ECRPushImage@1
-            displayName: Push SourceHub Base Image to ECR
-            inputs:
-              awsCredentials: "Apollo-AWS-Dev-Apollo"
-              regionName: "us-east-1"
-              imageSource: "imagename"
-              sourceImageName: "sourcehub-taskworker-sync"
-              sourceImageTag: "latest"
-              repositoryName: "sourcehub-taskworker-sync"
-              pushTag: "latest"
-
           - template: .azure-pipelines/sourcehub-app.build.yml
 
           - script: |
@@ -100,6 +87,32 @@ stages:
               sourceImageTag: "$(Build.SourceVersion)"
               repositoryName: "sourcehub-app"
               pushTag: latest
+
+          ##############################################################################################
+          # SourceHub Taskworker Sync
+          - template: .azure-pipelines/sourcehub-taskworker-sync.build.yml
+
+          - task: ECRPushImage@1
+            displayName: Push SourceHub App Image to ECR as SourceVersion
+            inputs:
+              awsCredentials: "Apollo-AWS-Dev-Apollo"
+              regionName: "us-east-1"
+              imageSource: "imagename"
+              sourceImageName: "sourcehub-app"
+              sourceImageTag: "$(Build.SourceVersion)"
+              repositoryName: "sourcehub-app"
+              pushTag: "$(Build.SourceVersion)"
+
+          - task: ECRPushImage@1
+            displayName: Push SourceHub Taskworker Sync Image to ECR
+            inputs:
+              awsCredentials: "Apollo-AWS-Dev-Apollo"
+              regionName: "us-east-1"
+              imageSource: "imagename"
+              sourceImageName: "sourcehub-taskworker-sync"
+              sourceImageTag: "latest"
+              repositoryName: "sourcehub-taskworker-sync"
+              pushTag: "latest"
 
       - job: validateDevDeploy
         displayName: Validate and Plan Dev Deployment
