@@ -85,6 +85,8 @@ export const DocDocumentDocumentFamilyField = ({
 
   const fetchDocFamilyOptions = useFetchDocFamilyOptions();
 
+  const additionalOptions = currentOption ? [currentOption] : [];
+
   useEffect(() => {
     if (document_family_id) {
       setSkip(false);
@@ -111,6 +113,7 @@ export const DocDocumentDocumentFamilyField = ({
               form.setFieldsValue({ document_family_id });
               onFieldChange();
             }}
+            additionalOptions={additionalOptions}
           />
         </Form.Item>
         {document_family_id && (
