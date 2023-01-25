@@ -206,9 +206,6 @@ class DocLifecycleService:
         self,
         doc: DocDocument,
     ):
-        # initial_family_status: str | None = doc.family_status
-        # initial_content_extraction_status: str | None = doc.content_extraction_status
-        # original = doc.dict()
         fully_approved, edit = await self.assess_intermediate_statuses(doc)
         if fully_approved:
             if doc.status != ApprovalStatus.APPROVED:
@@ -224,8 +221,6 @@ class DocLifecycleService:
                 edit = True
 
         if edit:
-            # await update_and_log_diff(self.logger, current_user, original, doc)
-
             await DocDocument.get_motor_collection().update_one(
                 {
                     "_id": doc.id,
@@ -242,9 +237,6 @@ class DocLifecycleService:
                     }
                 },
             )
-            # patch = get_diff_patch(original, doc.dict())
-            # if patch:
-            #     await self.logger.log_change(current_user, doc, "UPDATE", patch)
         return doc
 
     async def exec(self, doc_doc_ids: list[PydanticObjectId], site: Site):
