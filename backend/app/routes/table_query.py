@@ -184,6 +184,8 @@ def query_as_agg(
         {"$limit": limit or 50},
     ]
     # Convert projection from find syntax to aggregation syntax.
+    # 'find' projection slice operator, n is the only input.
+    # 'aggregation' projection slice operator, ['$array', n] is the input.
     if hasattr(query, "projection_model") and query.projection_model:
         projection = get_projection(query.projection_model)
         for projection_key in projection:
