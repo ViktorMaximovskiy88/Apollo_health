@@ -1,16 +1,16 @@
 import asyncio
 import json
 import re
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 from beanie import PydanticObjectId
+from beanie.odm.queries.aggregation import AggregationQuery
 from beanie.odm.queries.find import FindMany
 from beanie.odm.utils.projection import get_projection
 from dateutil import parser
 from fastapi import Request
 
 from backend.common.models.base_document import BaseModel
-from backend.common.models.doc_document import DocDocument
 
 # Ideally this would be bound to BaseDocument, but beanie type inference
 # chokes when attempting to identify collection
@@ -173,23 +173,28 @@ def construct_table_query(
     return query
 
 
-async def query_as_agg(
+def query_as_agg(
     query: FindMany[T],
     limit: int | None = None,
     skip: int | None = None,
-):
+) -> AggregationQuery[dict[str, Any]]:
     agg_query: list = [
         {"$match": query.get_filter_query()},
         {"$skip": skip or 0},
         {"$limit": limit or 50},
     ]
+    # Convert projection from find syntax to aggregation syntax.
     if hasattr(query, "projection_model") and query.projection_model:
-        agg_query.append({"$project": get_projection(query.projection_model)})
+        projection = get_projection(query.projection_model)
+        for projection_key in projection:
+            projection_value = projection[projection_key]
+            if isinstance(projection_value, dict):
+                if "$slice" in projection_value:
+                    projection_value["$slice"] = [f"${projection_key}", projection_value["$slice"]]
     if hasattr(query, "sort_expressions") and query.sort_expressions:
         agg_query.append({"$sort": {key: dir for key, dir in query.sort_expressions}})
 
-    # TODO: Generic collection select.x
-    data = await DocDocument.aggregate(agg_query).to_list()
+    data = query.document_model.aggregate(agg_query)
 
     return data
 
@@ -209,17 +214,16 @@ async def query_table(
     if skip:
         query = query.skip(skip)
 
-    data_q = query_as_agg(query) if as_aggregation else query.to_list()
+    data_q: AggregationQuery[dict[str, Any]] | FindMany[T] = (
+        query_as_agg(query) if as_aggregation else query
+    ).to_list()
 
-    if as_aggregation:
-        data = await data_q
-        total = len(data)  # TODO: should be count from query.
+    if query.find_expressions == [{}]:
+        total_q = query.document_model.get_motor_collection().estimated_document_count()
     else:
-        if query.find_expressions == [{}]:
-            total_q = query.document_model.get_motor_collection().estimated_document_count()
-        else:
-            total_q = query.count()
-        (data, total) = await asyncio.gather(data_q, total_q)
-    data = [query.projection_model(**doc) for doc in data]
+        total_q = query.count()
+    (data, total) = await asyncio.gather(data_q, total_q)
+    if as_aggregation:
+        data = [query.projection_model(**doc) for doc in data]
 
     return TableQueryResponse(data=data, total=total)
