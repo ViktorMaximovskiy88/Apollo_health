@@ -33,7 +33,7 @@ resource "aws_lambda_function" "sourcehub-taskworker-sync" {
 }
 
 resource "aws_iam_role" "sourcehub-taskworker-sync-function" {
-  name = format("%s-%s-%s-%s-mmit-role-%02d", local.app_name, var.environment, local.service_name, local.short_region, local.function_name, var.revision)
+  name = format("%s-%s-%s-%s-%s-mmit-role-%02d", local.app_name, var.environment, local.service_name, local.short_region, "taskworker-sync", var.revision)
 
   assume_role_policy = jsonencode({
     Version = "2008-10-17"
