@@ -60,11 +60,19 @@ class BcbsflScraper(PlaywrightBaseScraper):
             )
             link_handle = await link_locator.element_handle()
             async with self.page.expect_request(self.is_postback):
+                self.log.info(f"before target clicked link_text={link_text}")
                 await link_handle.click()
+                self.log.info(f"after target clicked link_text={link_text}")
+
                 async with self.page.expect_request(self.is_frameload) as frame_load:
+                    self.log.info(f"before frame_load link_text={link_text}")
                     request = await frame_load.value
+                    self.log.info(f"after frame_load link_text={link_text}")
+
                     headers = await request.all_headers()
+                    self.log.info(f"before fetch request.url={request.url}")
                     pdf_bytes = await self._fetch(request.url, headers=headers)
+                    self.log.info(f"after fetch request.url={request.url} {len(pdf_bytes)}")
 
                     if not pdf_bytes:
                         continue
@@ -98,7 +106,7 @@ class BcbsflScraper(PlaywrightBaseScraper):
     async def _fetch(
         self,
         url,
-        method="get",
+        method: str = "GET",
         headers: dict | None = None,
         data: dict | None = None,
         params: dict | None = None,
