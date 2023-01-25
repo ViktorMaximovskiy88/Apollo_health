@@ -94,8 +94,8 @@ const PayerFamily = ({
           <PlusOutlined />
           New
         </Button>
-        <Form.Item name={['locations', index, 'pending_payer_update']}>
-          <Checkbox>Pending Update</Checkbox>
+        <Form.Item valuePropName="checked" name={['locations', index, 'pending_payer_update']}>
+          <Checkbox>Pending Payer Update</Checkbox>
         </Form.Item>
       </div>
     </Form.Item>
