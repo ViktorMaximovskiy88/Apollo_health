@@ -92,6 +92,7 @@ class Location(BaseModel):
     base_url: str
     url: str
     link_text: str | None = None
+    pending_payer_update: bool | None = None
     closest_heading: str | None = None
     siblings_text: str | None = None
     url_therapy_tags: list[TherapyTag] = []
