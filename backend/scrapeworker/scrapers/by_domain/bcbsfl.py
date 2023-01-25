@@ -59,45 +59,53 @@ class BcbsflScraper(PlaywrightBaseScraper):
                 f'.rpItem.rpLast .rpGroup.rpLevel2 > .rpItem .rpText:text-is("{link_text}")'
             )
             link_handle = await link_locator.element_handle()
-            async with self.page.expect_request(self.is_postback):
-                self.log.info(f"before target clicked link_text={link_text}")
-                await link_handle.click()
-                self.log.info(f"after target clicked link_text={link_text}")
+            try:
+                async with self.page.expect_request(self.is_postback):
+                    self.log.info(f"before target clicked link_text={link_text}")
+                    await link_handle.click()
+                    self.log.info(f"after target clicked link_text={link_text}")
 
-                async with self.page.expect_request(self.is_frameload) as frame_load:
-                    self.log.info(f"before frame_load link_text={link_text}")
-                    request = await frame_load.value
-                    self.log.info(f"after frame_load link_text={link_text}")
+                    async with self.page.expect_request(self.is_frameload) as frame_load:
+                        self.log.info(f"before frame_load link_text={link_text}")
+                        request = await frame_load.value
+                        self.log.info(f"after frame_load link_text={link_text}")
 
-                    headers = await request.all_headers()
-                    self.log.info(f"before fetch request.url={request.url}")
-                    pdf_bytes = await self._fetch(request.url, headers=headers)
-                    self.log.info(f"after fetch request.url={request.url} {len(pdf_bytes)}")
+                        headers = await request.all_headers()
+                        self.log.info(f"before fetch request.url={request.url}")
+                        pdf_bytes = await self._fetch(request.url, headers=headers)
+                        self.log.info(f"after fetch request.url={request.url} {len(pdf_bytes)}")
 
-                    if not pdf_bytes:
-                        continue
+                        if not pdf_bytes:
+                            continue
 
-                    file_hash = hash_bytes(pdf_bytes)
-                    async with tempfile.NamedTemporaryFile(delete=False) as file:
-                        await file.write(pdf_bytes)
-                        temp_path = file.name
+                        file_hash = hash_bytes(pdf_bytes)
+                        async with tempfile.NamedTemporaryFile(delete=False) as file:
+                            await file.write(pdf_bytes)
+                            temp_path = file.name
 
-                    downloads.append(
-                        DownloadContext(
-                            file_path=temp_path,
-                            file_name=link_text,
-                            playwright_download=True,
-                            file_hash=file_hash,
-                            metadata=Metadata(
-                                link_text=link_text,
-                                base_url=self.page.url,
-                            ),
-                            request=Request(
-                                url=f"file://{temp_path}",
-                                filename=link_text,
-                            ),
-                        ),
-                    )
+                        downloads.append(
+                            DownloadContext(
+                                file_path=temp_path,
+                                file_name=link_text,
+                                playwright_download=True,
+                                file_hash=file_hash,
+                                metadata=Metadata(
+                                    link_text=link_text,
+                                    base_url=self.page.url,
+                                ),
+                                request=Request(
+                                    url=f"file://{temp_path}",
+                                    filename=link_text,
+                                ),
+                            )
+                        )
+
+            except TimeoutError as ex:
+                self.log.error(f"link_text={link_text}", exc_info=ex)
+            except Error as ex:
+                self.log.error(f"link_text={link_text}", exc_info=ex)
+            except Exception as ex:
+                self.log.error(f"link_text={link_text}", exc_info=ex)
 
         await self.page.unroute("**/*", self.intercept)
 
