@@ -103,7 +103,7 @@ resource "aws_iam_role" "sourcehub" {
 }
 
 resource "aws_iam_role" "scheduler" {
-  name        = format("%s-%s-%s-scheduler-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
+  name        = format("%s-%s-%s-ebscheduler-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
   description = "Role assumed by the EventBridge Scheduler service to invoke targets"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -142,6 +142,6 @@ resource "aws_iam_role" "scheduler" {
   }
 
   tags = merge(local.effective_tags, {
-    Name = format("%s-%s-%s-scheduler-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
+    Name = format("%s-%s-%s-ebscheduler-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
   })
 }
