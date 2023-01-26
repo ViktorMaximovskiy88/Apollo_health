@@ -171,3 +171,7 @@ a {
 .multi-line-select .ant-select-selector {
   height: unset !important;
 }
+
+#rpv-core__modal-body-properties {
+  margin-left: 22rem;
+}
