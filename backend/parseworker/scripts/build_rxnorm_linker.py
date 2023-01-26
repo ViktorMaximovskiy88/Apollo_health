@@ -142,6 +142,7 @@ def create_indication_span_ruler(output_folder, ind_patterns):
     indication.to_disk(ind_base_path)
 
 
+# return output path; either from input or genned from the upload
 def main(output_folder: pathlib.Path = typer.Argument(None)):
     client = ModelStorageClient()
     xref_path = "models/upload"
@@ -168,6 +169,7 @@ def main(output_folder: pathlib.Path = typer.Argument(None)):
     therapy_patterns = create_tfidf(output_folder, data)
     create_therapy_span_ruler(output_folder, therapy_patterns)
     create_indication_span_ruler(output_folder, ind_patterns)
+    return output_folder
 
 
 if __name__ == "__main__":

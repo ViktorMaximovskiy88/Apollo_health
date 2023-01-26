@@ -30,7 +30,7 @@ async def enqueue_site_docs_task():
 
 
 async def async_main(output_folder):
-    build_rxnorm_linker(output_folder)
+    output_folder = build_rxnorm_linker(output_folder)
     upload_tagging_models(output_folder)
     await set_tagging_model_version(output_folder)
     print("enqueuing site doc tasks")
