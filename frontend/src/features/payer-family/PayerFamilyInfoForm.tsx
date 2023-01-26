@@ -180,7 +180,6 @@ export const PayerFamilyInfoForm = () => {
 };
 
 function backboneValueValidator(payerValue: string[], payerType: string | null) {
-  console.log(payerValue, payerType);
   if (payerValue.length === 0 && payerType !== 'Not Selected') {
     return Promise.reject('Backbone value is required');
   }
