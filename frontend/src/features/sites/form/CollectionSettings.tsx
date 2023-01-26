@@ -1,4 +1,4 @@
-import { Input, Form, Select, Radio, Typography } from 'antd';
+import { Input, Form, Select, Radio, Checkbox, Typography } from 'antd';
 
 import { CollectionMethod, ScrapeMethod, Site } from '../types';
 import {
@@ -135,6 +135,13 @@ export function CollectionSettings({ initialValues }: CollectionSettingsPropType
               <SearchInFrames />
               <ProxyExclusions />
               <FocusTagConfig initialValues={initialValues} />
+              <Form.Item
+                name={['scrape_method_configuration', 'debug']}
+                label={'Debug scrape'}
+                valuePropName="checked"
+              >
+                <Checkbox />
+              </Form.Item>
               <DocumentTypeThreshold />
               <LineageThreshold />
             </>

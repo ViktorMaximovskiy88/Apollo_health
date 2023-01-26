@@ -58,6 +58,7 @@ class ScrapeMethodConfiguration(BaseModel):
     focus_section_configs: list[FocusSectionConfig] = []
     allow_docdoc_updates: bool = False
     cms_doc_types: list[CmsDocType] = []
+    debug: bool = False
 
 
 class UpdateScrapeMethodConfiguration(BaseModel):
@@ -81,6 +82,7 @@ class UpdateScrapeMethodConfiguration(BaseModel):
     focus_section_configs: list[FocusSectionConfig] | None = None
     allow_docdoc_updates: bool | None = None
     cms_doc_types: list[CmsDocType] = []
+    debug: bool = False
 
 
 class BaseUrl(BaseModel):

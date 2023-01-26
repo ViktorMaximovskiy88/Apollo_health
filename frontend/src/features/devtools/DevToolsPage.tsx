@@ -118,11 +118,11 @@ export function DevToolsPage({ showSiteFilter = false }: { showSiteFilter?: bool
             </Button>
             <Button
               onClick={async () => {
-                enqueueTask('SiteDocsPipelineTask', { site_id: siteId, reprocess: true });
+                enqueueTask('SiteDocsPipelineTask', { site_id: siteId, reprocess: false });
               }}
               className="ml-auto"
             >
-              Reprocess Site Docs
+              Process Site Docs
             </Button>
             <Button
               onClick={async () => {

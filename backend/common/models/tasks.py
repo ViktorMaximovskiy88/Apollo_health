@@ -23,6 +23,7 @@ T = TypeVar("T", bound="TaskLog")
 
 class DocTask(BaseModel):
     doc_doc_id: PydanticObjectId
+    site_id: PydanticObjectId | None
     reprocess: bool = False
 
 

@@ -113,7 +113,7 @@ async def worker_fn(
 
         try:
             await worker.run_scrape()
-            log.info(f"After scrape run. site_id={site.id}")
+            log.info(f"After scrape run. site_id={site.id} scrape_task_id={scrape_task.id}")
             await log_success(scrape_task, site)
         except CanceledTaskException as ex:
             await log_cancellation(scrape_task, site, ex)
@@ -122,7 +122,7 @@ async def worker_fn(
         except Exception as ex:
             await log_failure(scrape_task, site, ex)
         finally:
-            log.info(f"Finishing scrape run. site_id={site.id}")
+            log.info(f"Finishing scrape run. site_id={site.id} scrape_task_id={scrape_task.id}")
             del active_tasks[scrape_task.id]
             await browser.close()
             task.cancel()
