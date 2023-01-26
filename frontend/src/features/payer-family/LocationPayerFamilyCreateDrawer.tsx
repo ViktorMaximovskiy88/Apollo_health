@@ -4,7 +4,7 @@ import { DocDocumentLocation } from '../doc_documents/locations/types';
 import { useAddPayerFamilyMutation, useLazyConvertPayerFamilyDataQuery } from './payerFamilyApi';
 import { useForm } from 'antd/lib/form/Form';
 import { Rule } from 'antd/lib/form';
-import { ReactNode, useCallback, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { PayerFamily } from './types';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
 import { CloseOutlined, WarningFilled } from '@ant-design/icons';
@@ -108,6 +108,10 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
     },
     [form]
   );
+
+  useEffect(() => {
+    form.setFieldValue('payer_type', 'Not Selected');
+  }, [form]);
 
   return (
     <Drawer
