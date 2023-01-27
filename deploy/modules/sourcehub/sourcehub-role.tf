@@ -129,7 +129,7 @@ resource "aws_iam_role" "scheduler" {
             "ecs:RunTask"
           ]
           Resource = [
-            "${aws_ecs_task_definition.modelbuild.arn}:*"
+            "${aws_ecs_task_definition.modelbuild.arn}"
           ]
           Condition = {
             ArnEquals = {
