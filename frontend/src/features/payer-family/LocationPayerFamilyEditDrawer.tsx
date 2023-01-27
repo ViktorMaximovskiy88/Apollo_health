@@ -197,6 +197,9 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => 
 export function mustBeUniqueName(asyncValidator: Function, name: string = '') {
   return {
     async validator(_rule: Rule, value: string) {
+      if (!value) {
+        return Promise.reject();
+      }
       if (value === name) {
         return Promise.resolve();
       }
