@@ -3,7 +3,7 @@ import logging
 import os
 from functools import cached_property
 
-from playwright.async_api import Download, ElementHandle
+from playwright.async_api import Download, ElementHandle, Page
 from playwright.async_api import Response as PageResponse
 from playwright.async_api import TimeoutError as PlaywrightTimeout
 
@@ -35,6 +35,10 @@ class JavascriptClick(PlaywrightBaseScraper):
         selector_string = "|".join(selectors)
         self.log.info(selector_string)
         return selector_string
+
+    async def cleanup_page(self, page: Page):
+        await asyncio.sleep(10)  # allow processes to complete
+        await page.close()
 
     # Handle special json responses which contain links to downloadable media.
     async def handle_json(self, response: PageResponse) -> DownloadContext | None:
@@ -134,6 +138,7 @@ class JavascriptClick(PlaywrightBaseScraper):
             except Exception:
                 logging.error("exception", exc_info=True)
 
+        self.context.on("page", self.cleanup_page)
         # Handle onclick json response where the json has link to pdf.
         self.context.on("response", postprocess_response)
         # Handle onclick download directly to pdf rather than response.
@@ -144,7 +149,7 @@ class JavascriptClick(PlaywrightBaseScraper):
         for index in range(0, xpath_locator_count):
             try:
                 link_handle = await xpath_locator.nth(index).element_handle(timeout=1000)
-                await link_handle.click(timeout=10000)
+                await link_handle.click(timeout=10000, button="middle")
                 await asyncio.sleep(0.25)
             except PlaywrightTimeout as ex:
                 # If Playwright Timeout, we likely haven't nav'd away
