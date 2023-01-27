@@ -109,10 +109,6 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
     [form]
   );
 
-  useEffect(() => {
-    form.setFieldValue('payer_type', 'Not Selected');
-  }, [form]);
-
   return (
     <Drawer
       open={open}
@@ -137,6 +133,7 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
         validateTrigger={['onBlur']}
         onFinish={onFinish}
         initialValues={{
+          payer_type: 'Not Selected',
           payer_ids: [],
           channels: [],
           benefits: [],
