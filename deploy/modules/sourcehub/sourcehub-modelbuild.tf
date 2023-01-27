@@ -150,7 +150,7 @@ resource "aws_scheduler_schedule" "modelbuild" {
     mode = "OFF"
   }
 
-  schedule_expression          = "cron(0 2 * * ? *)"
+  schedule_expression          = "cron(30 2 * * ? *)"
   schedule_expression_timezone = "UTC"
 
   target {
