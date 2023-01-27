@@ -174,4 +174,7 @@ a {
 
 #rpv-core__modal-body-properties {
   margin-left: 22rem;
+  margin-top: 8rem;
+  max-width: 23rem;
+  overflow-wrap: anywhere;
 }
