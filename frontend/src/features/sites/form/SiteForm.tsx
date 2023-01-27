@@ -14,7 +14,7 @@ import { useCallback } from 'react';
 
 const useMustBeUniqueNameRule = () => {
   const { siteId } = useParams();
-  const { data: currentSite } = useGetSiteQuery(siteId);
+  const { data: currentSite } = useGetSiteQuery(siteId, { skip: !siteId });
   const [getSiteByName] = useLazyGetSiteByNameQuery();
 
   const mustBeUniqueName = useCallback(
@@ -61,6 +61,7 @@ const buildInitialValues = () => ({
     html_exclusion_selectors: [],
     focus_section_configs: [],
     cms_doc_types: [],
+    debug: false,
   },
   doc_type_threshold_override: false,
   doc_type_threshold: 0.75,

@@ -26,7 +26,7 @@ class TricareScraper(PlaywrightBaseScraper):
         terms = [term.lower()[:prefix_length] for term in terms if len(term) >= prefix_length]
         terms.sort()
         buckets = [list(value) for key, value in groupby(terms, key=lambda x: x)]
-        return buckets, terms
+        return buckets
 
     async def is_applicable(self) -> bool:
         self.log.debug(f"self.parsed_url.netloc={self.parsed_url.netloc}")
@@ -59,9 +59,9 @@ class TricareScraper(PlaywrightBaseScraper):
         await self.page.locator("#formularySearchDefault").wait_for(timeout=5000)
 
         # # step 1: get search term data from typeahead
-        self.log.info(f"begin search for prefix terms prefix_terms={len(prefix_terms)}")
+        self.log.debug(f"begin search for prefix terms prefix_terms={len(prefix_terms)}")
         search_results = await self._search_for_terms(prefix_terms)
-        self.log.info(f"search_results={len(search_results)} found")
+        self.log.debug(f"search_results={len(search_results)} found")
 
         # step 2: get search results from price API
         for search_params in search_results:
@@ -83,7 +83,7 @@ class TricareScraper(PlaywrightBaseScraper):
 
             # step 3: get content aka docs
             documents = await self._get_document_list(pricing_result)
-            self.log.info(
+            self.log.debug(
                 f"search_term={search_params['search_token']} drug_name={search_params['drug_name']} ndc={search_params['ndc']}  documents={len(documents)} found"  # noqa
             )
 
@@ -91,6 +91,7 @@ class TricareScraper(PlaywrightBaseScraper):
                 url = "https://www.express-scripts.com/frontendservice/proxinator/1/member/v1/drugpricing/prelogin/fst/drug/forms/content"  # noqa
                 url += f"?repository={document['repository']}&documentId={document['documentId']}"  # noqa
                 if url not in self.unique_urls:
+                    self.log.debug(f"url={url} found")
                     self.unique_urls.add(url)
                     cookies = await self.context.cookies(self.page.url)
 
@@ -119,7 +120,7 @@ class TricareScraper(PlaywrightBaseScraper):
                 self.log.debug(f"no results for search_term={search_term}")
                 continue
 
-            self.log.info(f"search_term={search_term} result={len(search_results)}")
+            self.log.debug(f"search_term={search_term} result={len(search_results)}")
 
             for search_result in search_results:
                 ndc = search_result["ndc"]

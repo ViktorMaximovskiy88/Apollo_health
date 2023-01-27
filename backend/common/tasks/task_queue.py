@@ -67,7 +67,7 @@ class TaskQueue(SQSBase):
         task: TaskLog = await TaskLog.upsert(payload=payload, created_by=created_by)
 
         if task.can_be_queued():
-            self.logger.info(f"queueing new message group_id={task.group_id}")
+            self.logger.debug(f"queueing new message group_id={task.group_id}")
             response = self.send(task.dict(), task.group_id)
             task = await task.update_queued(message_id=response["MessageId"])
 

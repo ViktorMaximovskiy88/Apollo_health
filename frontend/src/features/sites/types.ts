@@ -45,6 +45,7 @@ export interface Site extends BaseDocument {
     html_exclusion_selectors: AttrSelector[];
     focus_section_configs: FocusSectionConfig[];
     cms_doc_types: CmsDocType[];
+    debug: boolean;
   };
   tags: string[];
   disabled: boolean;

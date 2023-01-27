@@ -29,6 +29,7 @@ class ManualWorkItem(BaseModel):
 
 
 class BatchStatus(BaseModel):
+    batch_key: str | None = None
     current_page: int = 0
     total_pages: int = 0
 

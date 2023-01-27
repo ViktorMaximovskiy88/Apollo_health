@@ -103,6 +103,10 @@ resource "aws_ecs_task_definition" "scrapeworker" {
         }
       ])
 
+      ephemeral_storage = {
+        size_in_gib = 100
+      }
+
       ulimits = [
         {
           name      = "nofile"

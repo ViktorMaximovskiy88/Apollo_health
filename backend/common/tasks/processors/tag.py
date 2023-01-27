@@ -4,7 +4,8 @@ import backend.common.models.tasks as tasks
 from backend.common.core.utils import now
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.pipeline import DocPipelineStages, PipelineRegistry, PipelineStage
-from backend.common.models.shared import get_tag_diff
+from backend.common.models.shared import DocDocumentLocation, get_tag_diff
+from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleService
 from backend.common.storage.client import TextStorageClient
 from backend.common.tasks.task_processor import TaskProcessor
 from backend.scrapeworker.common.utils import normalize_string, tokenize_string
@@ -48,8 +49,11 @@ class TagTaskProcessor(TaskProcessor):
         if doc.get_stage_version("tag") == stage_versions.tag.version and not task.reprocess:
             return
 
-        # TODO location vs locations
-        location = doc.locations[0]
+        # general doc tag, default to first
+        if not task.site_id:
+            task.site_id = doc.locations[0].site_id
+
+        location: DocDocumentLocation = doc.get_site_location(task.site_id)
         s3_key = doc.s3_text_key()
         raw_text = self.text_client.read_utf8_object(s3_key)
 
@@ -85,46 +89,95 @@ class TagTaskProcessor(TaskProcessor):
         else:
             doc.pipeline_stages = DocPipelineStages(tag=current_stage)
 
-        if not doc.has_user_edit("therapy_tags"):
-            doc.therapy_tags = therapy_tags
-
-        if not doc.has_user_edit("indication_tags"):
-            doc.indication_tags = indication_tags
-
+        # doc tags
         new_therapy_tags, new_indication_tags = get_tag_diff(
-            current_indication_tags=doc.indication_tags,
             current_therapy_tags=doc.therapy_tags,
-            indication_tags=indication_tags,
+            current_indication_tags=doc.indication_tags,
             therapy_tags=therapy_tags,
+            indication_tags=indication_tags,
         )
 
-        doc = doc.process_tag_changes(new_therapy_tags, new_indication_tags)
+        # url tags
+        new_url_therapy_tags, new_url_indication_tags = get_tag_diff(
+            current_therapy_tags=location.url_therapy_tags,
+            current_indication_tags=location.url_indication_tags,
+            therapy_tags=url_therapy_tags,
+            indication_tags=url_indication_tags,
+        )
+
+        # link tags
+        new_link_therapy_tags, new_link_indication_tags = get_tag_diff(
+            current_therapy_tags=location.link_therapy_tags,
+            current_indication_tags=location.link_indication_tags,
+            therapy_tags=link_therapy_tags,
+            indication_tags=link_indication_tags,
+        )
+
+        has_therapy_tag_updates, has_indication_tag_updates = doc.process_tag_changes(
+            new_therapy_tags=new_therapy_tags,
+            new_indication_tags=new_indication_tags,
+            pending_therapy_tags=therapy_tags,
+            pending_indication_tags=indication_tags,
+        )
+
+        run_assess_document_status = False
 
         # Always apply priority updates
+        has_tag_priority_update = False
         priority = max(tag.priority for tag in therapy_tags) if therapy_tags else 0
         priority_codes = {tag.code: tag.priority for tag in therapy_tags if tag.priority}
         for tag in doc.therapy_tags:
-            tag.priority = priority_codes.get(tag.code, 0)
+            new_priority = priority_codes.get(tag.code, 0)
+            if tag.priority != new_priority:
+                tag.priority = new_priority
+                has_tag_priority_update = True
+
         if priority == 0 and indication_tags:
             priority = 1
 
-        # TODO will be location and overall doc update..
-        # we have location specific stuff...
         updates = {
-            "therapy_tags": [t.dict() for t in doc.therapy_tags],
-            "indication_tags": [i.dict() for i in doc.indication_tags],
-            "locations.$.url_therapy_tags": [t.dict() for t in url_therapy_tags],
-            "locations.$.link_therapy_tags": [t.dict() for t in link_therapy_tags],
-            "locations.$.url_indication_tags": [i.dict() for i in url_indication_tags],
-            "locations.$.link_indication_tags": [i.dict() for i in link_indication_tags],
-            "token_count": len(tokens),
-            "priority": priority,
             "pipeline_stages": doc.pipeline_stages.dict(),
         }
+
+        if has_therapy_tag_updates or has_tag_priority_update:
+            updates["therapy_tags"] = [t.dict() for t in doc.therapy_tags]
+            run_assess_document_status = True
+
+        if has_indication_tag_updates:
+            updates["indication_tags"] = [t.dict() for t in doc.indication_tags]
+            run_assess_document_status = True
+
+        if priority != doc.priority:
+            updates["priority"] = priority
+            run_assess_document_status = True
+
+        if len(tokens) != doc.token_count:
+            updates["token_count"] = len(tokens)
+
+        if len(new_link_therapy_tags):
+            location.link_therapy_tags += new_link_therapy_tags
+            updates["locations.$.link_therapy_tags"] = [t.dict() for t in link_therapy_tags]
+
+        if len(new_url_therapy_tags):
+            location.url_therapy_tags += new_url_therapy_tags
+            updates["locations.$.url_therapy_tags"] = [t.dict() for t in url_therapy_tags]
+
+        if len(new_link_indication_tags):
+            location.link_indication_tags += new_link_indication_tags
+            updates["locations.$.link_indication_tags"] = [t.dict() for t in link_indication_tags]
+
+        if len(new_url_indication_tags):
+            location.url_indication_tags += new_url_indication_tags
+            updates["locations.$.url_indication_tags"] = [t.dict() for t in url_indication_tags]
 
         await DocDocument.get_motor_collection().find_one_and_update(
             {"_id": doc.id, "locations.site_id": location.site_id}, {"$set": updates}
         )
+
+        # actual meaningful change, assess_document_status
+        if run_assess_document_status:
+            await DocLifecycleService().assess_document_status(doc)
+
         self.logger.debug(
             f"{doc.id} indication_tags={len(indication_tags)} therapy_tags={len(therapy_tags)}"
         )
@@ -133,7 +186,9 @@ class TagTaskProcessor(TaskProcessor):
             "therapy_tag_count": len(therapy_tags),
             "indication_tag_count": len(indication_tags),
             "token_count": len(tokens),
+            "priority": priority,
             "pipeline_stages": doc.pipeline_stages.dict(),
+            "run_assess_document_status": run_assess_document_status,
         }
 
     async def get_progress(self) -> float:

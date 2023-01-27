@@ -678,5 +678,15 @@ class CMSScrapeController:
         await self.create_all_scrapers()
         downloads = []
         scrapes = [scraper.scrape_and_create(downloads) for scraper in self.scraper_queue]
-        await asyncio.gather(*scrapes[:50])
+        await asyncio.gather(*scrapes)
         return downloads
+
+    async def batch_execute(self, batch_size: int = 20):
+        await self.create_all_scrapers()
+        while self.scraper_queue:
+            current_scrapers = self.scraper_queue[:batch_size]
+            downloads: list[DownloadContext] = []
+            scrapes = [scraper.scrape_and_create(downloads) for scraper in current_scrapers]
+            await asyncio.gather(*scrapes)
+            yield downloads
+            self.scraper_queue = self.scraper_queue[batch_size:]

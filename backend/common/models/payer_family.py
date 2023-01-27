@@ -4,7 +4,7 @@ from backend.common.models.base_document import BaseDocument, BaseModel
 
 
 class PayerFamily(BaseDocument):
-    name: Indexed(str, unique=True)  # type: ignore
+    name: Indexed(str)  # type: ignore
     site_id: PydanticObjectId | None = None
     payer_type: str | None = None
     payer_ids: list[str] = []
