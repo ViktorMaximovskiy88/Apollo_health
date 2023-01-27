@@ -106,11 +106,7 @@ export function SiteDocDocumentsPage() {
             </Button>
           ) : null}
 
-          {site.collection_method === 'MANUAL' &&
-          siteScrapeTask?.collection_method === 'MANUAL' &&
-          activeStatuses.includes(siteScrapeTask.status) ? null : (
-            <DocTypeUpdateModalToolbar />
-          )}
+          <DocTypeUpdateModalToolbar />
         </>
       }
     >
