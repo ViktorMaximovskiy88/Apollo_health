@@ -12,13 +12,14 @@ from backend.common.models.document import (
     UpdateRetrievedDocument,
 )
 from backend.common.models.shared import DocDocumentLocation
-from backend.common.models.site import Site
+from backend.common.models.site import FocusSectionConfig, Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.services.document import create_doc_document_service
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.common.utils import tokenize_string
+from backend.scrapeworker.file_parsers import get_tags
 
 
 class DocumentUpdater:
@@ -53,6 +54,7 @@ class DocumentUpdater:
         document: RetrievedDocument,
         download: DownloadContext,
         parsed_content: dict,
+        focus_configs: list[FocusSectionConfig] | None = None,
     ) -> UpdateRetrievedDocument:
         now: datetime = datetime.now(tz=timezone.utc)
         location = document.get_site_location(self.site.id)
@@ -65,6 +67,7 @@ class DocumentUpdater:
             location.context_metadata = context_metadata
             location.last_collected_date = now
         else:
+            await get_tags(parsed_content, focus_configs=focus_configs)
             new_location = RetrievedDocumentLocation(
                 base_url=download.metadata.base_url,
                 first_collected_date=now,

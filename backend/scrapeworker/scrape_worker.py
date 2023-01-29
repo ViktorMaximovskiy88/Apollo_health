@@ -308,6 +308,7 @@ class ScrapeWorker:
                     document=document,
                     download=download,
                     parsed_content=parsed_content,
+                    focus_configs=scrape_method_config.focus_section_configs,
                 )
 
                 await self.doc_updater.update_doc_document(
