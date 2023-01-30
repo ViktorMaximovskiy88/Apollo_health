@@ -49,6 +49,7 @@ const PayerFamily = ({
 
   const fetchPayerFamilyOptions = useFetchPayerFamilyOptions();
 
+  const additionalOptions = currentOption ? [currentOption] : [];
   return (
     <Form.Item label="Payer Family">
       <div className="flex space-x-2 pt-1 multi-line-select">
@@ -71,6 +72,7 @@ const PayerFamily = ({
               setCurrentOption(option);
               form.setFieldsValue({ locations });
             }}
+            additionalOptions={additionalOptions}
           />
         </Form.Item>
         {updatedLocation?.payer_family_id ? (
