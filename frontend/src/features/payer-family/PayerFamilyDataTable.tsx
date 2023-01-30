@@ -19,23 +19,7 @@ import {
 } from './payerFamilySlice';
 import { TableInfoType } from '../../common/types';
 import { useDeletePayerFamilyMutation, useLazyGetPayerFamiliesQuery } from './payerFamilyApi';
-
-// prevents excessive rerenders
-const useNotificationArgs = () => {
-  const successArgs = useMemo(
-    () => ({
-      description: 'Payer Family Deleted Successfully.',
-    }),
-    []
-  );
-  const errorArgs = useMemo(
-    () => ({
-      description: 'An error occurred while updating the payer family.',
-    }),
-    []
-  );
-  return { successArgs, errorArgs };
-};
+import notification from 'antd/lib/notification';
 
 const useDeletePayerFamily = () => {
   const [deletedFamily, setDeletedFamily] = useState('');
@@ -43,13 +27,23 @@ const useDeletePayerFamily = () => {
   const [deletePayerFamily, deleteResult] = useDeletePayerFamilyMutation();
 
   useEffect(() => {
+    const data = deleteResult.data;
     if (deleteResult.isSuccess && deleteResult.originalArgs) {
       setDeletedFamily(deleteResult.originalArgs._id);
+      if (deleteResult.data) {
+        notification.success({
+          message: 'Success!',
+          description: `${data?.count_success} Doc Document Updates, ${data?.count_error} Errors ${
+            data?.errors ? data.errors : ''
+          }`,
+        });
+      }
+    } else {
+      if (deleteResult.data) {
+        notification.error({ message: 'Error!', description: data?.errors[0] });
+      }
     }
   }, [deleteResult, setDeletedFamily]);
-
-  const { successArgs, errorArgs } = useNotificationArgs();
-  useNotifyMutation(deleteResult, successArgs, errorArgs);
 
   return { deletedFamily, deletePayerFamily };
 };
