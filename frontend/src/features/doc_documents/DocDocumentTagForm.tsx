@@ -1,10 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Radio, Checkbox, Input } from 'antd';
+import { Radio, Checkbox, Input, Button } from 'antd';
 import { debounce, orderBy } from 'lodash';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { DocumentTag, UITherapyTag } from './types';
 
 import { EditTag, ReadTag } from './TagRow';
+import { priorityOptions } from './useSiteDocDocumentColumns';
+import { FilterTwoTone } from '@ant-design/icons';
 
 function sortOrder(tags: any[], pageFilter: string) {
   if (pageFilter === 'page') {
@@ -29,20 +31,27 @@ export function DocDocumentTagForm(props: {
   const { tags, onEditTag, onDeleteTag, currentPage } = props;
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredList, setFilteredList] = useState(tags);
-  const [tagTypeFilter, setTagTypeFilter] = useState<
-    ('focus' | 'indication' | 'therapy' | 'priority')[]
-  >(['focus', 'indication', 'therapy']);
+  const [tagTypeFilter, setTagTypeFilter] = useState<('focus' | 'indication' | 'therapy')[]>([
+    'focus',
+    'indication',
+    'therapy',
+  ]);
+  const [priorityFilter, setPriorityFilter] = useState<('Critical' | 'High' | 'Low' | 'None')[]>([
+    'Critical',
+    'High',
+    'Low',
+  ]);
   const [editTags, setEditTags] = useState<{ [index: string]: DocumentTag }>({});
   const [pageFilter, setPageFilter] = useState('page');
+  const [priorityFilterOpen, setPriorityFilterOpen] = useState(false);
 
   const tagFilterOptions = [
     { label: 'Focus', value: 'focus' },
     { label: 'Indication', value: 'indication' },
     { label: 'Therapy', value: 'therapy' },
   ];
-  if (tags.some((tag) => tag.priority)) {
-    tagFilterOptions.push({ label: 'Priority', value: 'priority' });
-  }
+
+  const priorityFilterOptions = priorityOptions.map((x) => ({ label: x.label, value: x.label }));
 
   const applyFilter = useCallback(
     (tag: DocumentTag) => {
@@ -52,12 +61,17 @@ export function DocDocumentTagForm(props: {
       if (tagTypeFilter.includes('focus')) {
         filter = filter && tag.focus ? tag.focus : false;
       }
-      if (tagTypeFilter.includes('priority')) {
-        filter = filter && tag._type === 'therapy' && tag.priority > 0;
+      let priorFilter: boolean = true;
+      for (const priority of priorityOptions) {
+        if ((priorityFilter as any).includes(priority.label)) {
+          priorFilter = tag._type === 'therapy' && tag.priority === priority.value;
+          if (priorFilter) break;
+        }
       }
-      return filter;
+      return filter && priorFilter;
     },
-    [pageFilter, currentPage, tagTypeFilter]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pageFilter, currentPage, tagTypeFilter, priorityFilter]
   );
 
   const applyFilters = useCallback(() => {
@@ -156,6 +170,21 @@ export function DocDocumentTagForm(props: {
             onChange={(values: any) => {
               setTagTypeFilter(values);
             }}
+          />
+          {priorityFilterOpen ? (
+            <Checkbox.Group
+              options={priorityFilterOptions}
+              value={priorityFilter}
+              onChange={(values: any) => {
+                setPriorityFilter(values);
+              }}
+            />
+          ) : (
+            <span>Priority Filters ({priorityFilter.length} Applied)</span>
+          )}
+          <Button
+            onClick={() => setPriorityFilterOpen(!priorityFilterOpen)}
+            icon={<FilterTwoTone />}
           />
         </div>
       </div>
