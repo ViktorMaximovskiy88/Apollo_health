@@ -202,10 +202,7 @@ class DocLifecycleService:
 
         return True, class_edit or fam_edit or extract_edit
 
-    async def assess_document_status(
-        self,
-        doc: DocDocument,
-    ):
+    async def assess_document_status(self, doc: DocDocument):
         fully_approved, edit = await self.assess_intermediate_statuses(doc)
         if fully_approved:
             if doc.status != ApprovalStatus.APPROVED:
