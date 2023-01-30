@@ -14,6 +14,10 @@ class DocumentMixins:
         location_index = find_site_index(self, site_id)
         return self.locations[location_index] if location_index > -1 else None
 
+    def get_site_location_by_url(self, url):
+        location_index = find_site_index(self, url)
+        return self.locations[location_index] if location_index > -1 else None
+
 
 # TODO maybe remove these... they had need maybe now they dont...
 def get_first_collected(doc):
@@ -81,6 +85,10 @@ def calc_final_effective_date(doc) -> datetime | None:
 
 def find_site_index(document, site_id: PydanticObjectId) -> int:
     return next((i for i, item in enumerate(document.locations) if item.site_id == site_id), -1)
+
+
+def find_site_index_by_url(document, url: str) -> int:
+    return next((i for i, item in enumerate(document.locations) if item.url == url), -1)
 
 
 def get_site_location(document, site_id: PydanticObjectId):

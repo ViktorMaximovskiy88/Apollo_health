@@ -143,6 +143,10 @@ class Site(BaseDocument, NewSite):
     last_run_documents: int | None = None
     pipeline_stages: SitePipelineStages | None = None
 
+    @classmethod
+    async def get_active_sites(cls):
+        return await Site.find({"disabled": False})
+
 
 # Deprecated
 class FocusTherapyConfig(BaseModel):

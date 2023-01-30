@@ -16,6 +16,7 @@ from backend.common.models.site import FocusSectionConfig, Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.common.models.user import User
 from backend.common.services.document import create_doc_document_service
+from backend.common.services.document_analysis import upsert_for_location
 from backend.common.storage.text_handler import TextHandler
 from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.common.utils import tokenize_string
@@ -32,9 +33,9 @@ class DocumentUpdater:
 
     @alru_cache
     async def get_user(self) -> User:
-        user: User | None = await User.by_email("admin@mmitnetwork.com")
+        user: User | None = await User.get_admin_user()
         if not user:
-            raise Exception("No user found")
+            raise Exception("No admin user found")
         return user
 
     def set_doc_name(self, parsed_content: dict, download: DownloadContext):
@@ -57,7 +58,8 @@ class DocumentUpdater:
         focus_configs: list[FocusSectionConfig] | None = None,
     ) -> UpdateRetrievedDocument:
         now: datetime = datetime.now(tz=timezone.utc)
-        location = document.get_site_location(self.site.id)
+
+        location: RetrievedDocumentLocation = document.get_site_location(self.site.id)
         context_metadata = download.metadata.dict()
         new_location = None
 
@@ -109,8 +111,10 @@ class DocumentUpdater:
             raise Exception(f"DocDocument retrieved_document_id={retrieved_document.id} not found")
 
         self.log.debug(f"doc doc update -> {doc_document.id}")
-        rt_doc_location = retrieved_document.get_site_location(self.site.id)
-        location = doc_document.get_site_location(self.site.id)
+        rt_doc_location: RetrievedDocumentLocation = retrieved_document.get_site_location(
+            self.site.id
+        )
+        location: DocDocumentLocation = doc_document.get_site_location(self.site.id)
         new_location = False
 
         if location and rt_doc_location:
@@ -136,6 +140,8 @@ class DocumentUpdater:
         await doc_document.update(
             {"$set": {"last_collected_date": retrieved_document.last_collected_date}}
         )
+
+        await upsert_for_location(doc_document, rt_doc_location.site_id)
 
         return new_location
 
@@ -200,4 +206,7 @@ class DocumentUpdater:
         return document
 
     async def create_doc_document(self, retrieved_document: RetrievedDocument) -> DocDocument:
-        return await create_doc_document_service(retrieved_document, await self.get_user())
+        doc_document = await create_doc_document_service(retrieved_document, await self.get_user())
+        location: DocDocumentLocation = doc_document.locations[0]
+        await upsert_for_location(doc_document, location.site_id)
+        return doc_document

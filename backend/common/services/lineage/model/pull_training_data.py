@@ -1,5 +1,7 @@
 import os
 
+from backend.common.models.document_analysis import DocumentAnalysisLineage
+
 
 class Lineager:
     def base(self, doc):
@@ -38,20 +40,20 @@ class LineageDataFetcher:
     def __init__(self):
         self.lineager = Lineager()
 
-    def prebuild_doc_analyses(self, doc_docs):
+    def prebuild_doc_analyses(self, doc_docs: list[DocumentAnalysisLineage]):
         import igraph as ig
         from beanie import PydanticObjectId
 
-        from backend.common.models.lineage import DocumentAnalysis
-        from backend.common.services.lineage.core import build_doc_analysis
+        from backend.common.models.document_analysis import DocumentAnalysis
+        from backend.common.services.document_analysis import build_doc_analysis
 
         doc_lookup: dict[PydanticObjectId | None, int] = {
-            doc.id: i for i, doc in enumerate(doc_docs)
+            doc.doc_document_id: i for i, doc in enumerate(doc_docs)
         }
         prevs = []
         for doc in doc_docs:
             if doc.previous_doc_doc_id in doc_lookup:
-                prevs.append((doc_lookup[doc.id], doc_lookup[doc.previous_doc_doc_id]))
+                prevs.append((doc_lookup[doc.doc_document_id], doc_lookup[doc.previous_doc_doc_id]))
 
         graph = ig.Graph(len(doc_docs))
         ig.Graph.add_edges(graph, prevs)
@@ -60,9 +62,9 @@ class LineageDataFetcher:
         for ids in graph.connected_components():
             lineage_id = PydanticObjectId()
             for id in ids:
-                doc = doc_docs[id]
+                doc: DocumentAnalysisLineage = doc_docs[id]
                 doc_analysis = DocumentAnalysis(
-                    doc_document_id=doc.id,
+                    doc_document_id=doc.doc_document_id,
                     retrieved_document_id=doc.retrieved_document_id,
                     site_id=doc.site_id,
                     lineage_id=lineage_id,
@@ -89,7 +91,7 @@ class LineageDataFetcher:
         from beanie import PydanticObjectId
 
         from backend.common.db.init import init_db
-        from backend.common.models.lineage import DocumentAnalysis
+        from backend.common.models.document_analysis import DocumentAnalysis
         from backend.common.services.document import get_site_docs
 
         await init_db()

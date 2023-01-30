@@ -40,3 +40,7 @@ class User(BaseDocument, UserPublic):
     @classmethod
     async def get_api_user(cls) -> Optional["User"]:
         return await cls.find_one({"email": "api@mmitnetwork.com"})
+
+    @classmethod
+    async def get_admin_user(cls) -> Optional["User"]:
+        return await cls.find_one({"email": "admin@mmitnetwork.com"})

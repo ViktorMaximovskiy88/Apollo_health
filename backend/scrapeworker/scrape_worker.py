@@ -63,6 +63,7 @@ class ScrapeWorker:
         browser: Browser,
         scrape_task: SiteScrapeTask,
         site: Site,
+        har_path: str | None = "",
     ) -> None:
         _log = logging.getLogger(str(scrape_task.id))
         if site.scrape_method_configuration.debug:
@@ -86,6 +87,7 @@ class ScrapeWorker:
         self.doc_lifecycle_service = DocLifecycleService(logger=_log)
         self.new_document_pairs: list[tuple[RetrievedDocument, DocDocument]] = []
         self.log = _log
+        self.har_path = har_path / f"{site.id}.json" if har_path else None
 
     @alru_cache
     async def get_proxy_settings(
@@ -405,6 +407,7 @@ class ScrapeWorker:
                     extra_http_headers=default_headers,
                     proxy=proxy,  # type: ignore
                     ignore_https_errors=True,
+                    record_har_path=self.har_path,
                 )
                 await context.add_cookies(cookies)  # type: ignore
 
@@ -629,11 +632,10 @@ class ScrapeWorker:
         await self.batch_downloads(download_queue)
 
         try:
-            # doc_ids = [doc.id for (doc, _) in self.new_document_pairs]
-            site_id = self.site.id
-            # TEMPORARY: lets see how the scrapeworker fares at this (vs our webapp...)
-            self.log.debug(f"before lineage_service.process_lineage_for_site site_id={site_id}")
-            await self.lineage_service.process_lineage_for_site(site_id)  # type: ignore
+            self.log.debug(
+                f"before lineage_service.process_lineage_for_site site_id={self.site.id}"
+            )
+            await self.lineage_service.process_lineage_for_site(self.site.id)  # type: ignore
 
             doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
             async for doc in DocDocument.find({"_id": {"$in": doc_doc_ids}}):
@@ -644,7 +646,7 @@ class ScrapeWorker:
                 )
                 await doc_document_save_hook(doc, change_info)
 
-            self.log.debug(f"after lineage_service.process_lineage_for_site site_id={site_id}")
+            self.log.debug(f"after lineage_service.process_lineage_for_site site_id={self.site.id}")
         except Exception as ex:
             self.log.error("Lineage error", exc_info=ex)
 

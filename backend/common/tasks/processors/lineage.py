@@ -25,20 +25,10 @@ class LineageTaskProcessor(TaskProcessor):
         stage_versions = await PipelineRegistry.fetch()
         site = await Site.get(task_payload.site_id)
 
-        all_sites_ids = [site.id]
-
-        if task_payload.reprocess:
-            site_ids = await self.lineage_service.get_shared_lineage_sites(site.id)
-            all_sites_ids += site_ids
-
-        for site_id in all_sites_ids:
-            await self.lineage_service.clear_lineage_for_site(site_id)
-
         doc_doc_ids = []
+
         # make sure up-to-date
-        async for doc_doc in DocDocument.find(
-            {"locations.site_id": {"$in": all_sites_ids}},
-        ):
+        async for doc_doc in DocDocument.find({"locations.site_id": site.id}):
             task = TaskLog(
                 payload=tasks.DocPipelineTask(
                     doc_doc_id=doc_doc.id,
@@ -55,8 +45,7 @@ class LineageTaskProcessor(TaskProcessor):
             )
             doc_doc_ids.append(doc_doc.id)
 
-        for site.id in all_sites_ids:
-            await self.lineage_service.process_lineage_for_doc_ids(site.id, doc_ids=doc_doc_ids)
+        await self.lineage_service.process_lineage_for_doc_ids(site.id, doc_ids=doc_doc_ids)
 
         self.logger.info(f"lineage processed for site_id={site.id}")
         return len(doc_doc_ids)

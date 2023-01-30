@@ -24,15 +24,6 @@ async def lineage(ctx):
 @lineage.command()
 @click.pass_context
 @click.option("--site-id", help="Site ID to reprocess", required=True, type=PydanticObjectId)
-async def reprocess(ctx, site_id: PydanticObjectId):
-    lineage_service: LineageService = ctx.obj["lineage_service"]
-    log.info(f"Reprocessing lineage for site id {site_id}")
-    await lineage_service.reprocess_lineage_for_site(site_id)
-
-
-@lineage.command()
-@click.pass_context
-@click.option("--site-id", help="Site ID to reprocess", required=True, type=PydanticObjectId)
 async def clear(ctx, site_id: PydanticObjectId):
     lineage_service: LineageService = ctx.obj["lineage_service"]
     log.info(f"Clearing lineage for site id {site_id}")

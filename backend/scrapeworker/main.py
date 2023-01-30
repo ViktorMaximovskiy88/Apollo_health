@@ -34,6 +34,7 @@ log = logging.getLogger(__name__)
 
 accepting_tasks = True
 active_tasks: dict[PydanticObjectId | None, SiteScrapeTask] = {}
+project_root = Path(__file__).parent.parent.parent
 
 
 async def signal_handler():
@@ -101,13 +102,18 @@ async def worker_fn(
         )
 
         options = {"channel": "chrome"}
+        har_path = None
         if config.get("DEBUG", None):
-            options["headless"] = False
-            options["slow_mo"] = 60
-            options["devtools"] = True
+            har_path = project_root / "tmp" / "har"
+            options = {
+                **options,
+                "headless": False,
+                "slow_mo": 60,
+                "devtools": True,
+            }
 
         browser = await playwright.chromium.launch(**options)
-        worker = ScrapeWorker(playwright, browser, scrape_task, site)
+        worker = ScrapeWorker(playwright, browser, scrape_task, site, har_path=har_path)
         task = asyncio.create_task(heartbeat_task(scrape_task))
         active_tasks[scrape_task.id] = scrape_task
 

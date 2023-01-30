@@ -6,40 +6,60 @@ from backend.app.utils.logger import Logger, create_and_log
 from backend.common.core.enums import ApprovalStatus
 from backend.common.models.doc_document import DocDocument, DocDocumentLocation, SiteDocDocument
 from backend.common.models.document import RetrievedDocument
+from backend.common.models.document_analysis import DocumentAnalysisLineage
 from backend.common.models.lineage import LineageDoc
 from backend.common.models.shared import RetrievedDocumentLocation
 from backend.common.models.user import User
 
 
-async def get_site_docs(site_id: PydanticObjectId) -> list[SiteDocDocument]:
-    docs: List[SiteDocDocument] = await DocDocument.aggregate(
-        aggregation_pipeline=[
-            {"$match": {"locations.site_id": site_id}},
-            {"$unwind": {"path": "$locations"}},
-            {"$replaceRoot": {"newRoot": {"$mergeObjects": ["$$ROOT", "$locations"]}}},
-            {"$match": {"site_id": site_id}},
-            {"$unset": ["locations"]},
-        ],
-        projection_model=SiteDocDocument,
-    ).to_list()
+def projection(site_id: PydanticObjectId):
+    return [
+        {"$set": {"site_id": site_id, "doc_document_id": "$_id"}},
+        {
+            "$project": {
+                "retrieved_document_id": 1,
+                "doc_document_id": 1,
+                "site_id": 1,
+                "classification_status": 1,
+                "lineage_id": 1,
+                "previous_doc_doc_id": 1,
+                "is_current_version": 1,
+            }
+        },
+    ]
 
+
+# https://motor.readthedocs.io/en/stable/api-asyncio/asyncio_motor_collection.html?highlight=aggregate#motor.motor_asyncio.AsyncIOMotorCollection.aggregate
+# https://www.mongodb.com/docs/manual/reference/method/db.collection.aggregate/#db.collection.aggregate--
+async def get_site_docs(site_id: PydanticObjectId) -> list[DocumentAnalysisLineage]:
+    cursor = DocDocument.get_motor_collection().aggregate(
+        [
+            {"$match": {"locations.site_id": site_id}},
+            *projection(site_id),
+        ],
+        batchSize=25,
+    )
+
+    docs: List[DocumentAnalysisLineage] = []
+    async for doc in cursor:
+        docs.append(DocumentAnalysisLineage(**doc))
     return docs
 
 
 async def get_site_docs_for_ids(
     site_id: PydanticObjectId, doc_ids: list[PydanticObjectId]
 ) -> list[SiteDocDocument]:
-    docs: List[SiteDocDocument] = await DocDocument.aggregate(
-        aggregation_pipeline=[
+    cursor = DocDocument.get_motor_collection().aggregate(
+        [
             {"$match": {"_id": {"$in": doc_ids}}},
-            {"$unwind": {"path": "$locations"}},
-            {"$replaceRoot": {"newRoot": {"$mergeObjects": ["$$ROOT", "$locations"]}}},
-            {"$match": {"site_id": site_id}},
-            {"$unset": ["locations"]},
+            *projection(site_id),
         ],
-        projection_model=SiteDocDocument,
-    ).to_list()
+        batchSize=25,
+    )
 
+    docs: List[DocumentAnalysisLineage] = []
+    async for doc in cursor:
+        docs.append(DocumentAnalysisLineage(**doc))
     return docs
 
 
