@@ -1,0 +1,2038 @@
+903	State AL ADAP
+904	State AK ADAP
+905	ADAP Arizona
+906	State AR ADAP
+907	State CA ADAP
+908	State CO ADAP
+909	State CT ADAP
+910	State DE ADAP
+911	State FL ADAP
+912	ADAP Georgia
+913	ADAP Hawaii
+914	State ID ADAP
+915	ADAP Illinois
+916	State IN ADAP
+917	State IA ADAP
+918	State KS ADAP
+919	ADAP Kentucky
+920	ADAP Louisiana
+921	State ME ADAP
+922	ADAP Maryland
+923	State MI ADAP
+924	ADAP Minnesota
+925	State MS ADAP
+926	State MO ADAP
+927	State MT ADAP
+928	State NE ADAP
+929	State NV ADAP
+930	ADAP New Hampshire
+931	ADAP New Mexico
+932	State NY ADAP
+933	State NC ADAP
+934	State ND ADAP
+935	ADAP Ohio
+936	State OK ADAP
+937	ADAP Oregon
+938	State PA ADAP
+939	State PR ADAP
+940	ADAP Rhode Island
+941	State SC ADAP
+942	State SD ADAP
+943	State TN ADAP
+944	State TX ADAP
+945	ADAP Utah
+946	State VT ADAP
+947	ADAP Virginia
+948	ADAP Washington DC
+949	ADAP Washington State (with other coverage)
+950	State WV ADAP
+951	State WI ADAP
+952	State WY ADAP
+1523	Advantage U
+1377	Advantage U
+5	MedImpact Commercial
+1192	Aetna Medicare Allina
+1162	State CA Medicaid
+1224	State FL Medicaid
+9	Aetna Medicare MMP
+10	Aetna Medicaid KY
+11	Aetna Medicaid LA
+1163	Aetna Medicaid MD
+1250	Aetna Medicaid MI
+13	Aetna Medicare MMP
+14	Aetna Medicare MMP
+15	Aetna Medicaid NJ
+1416	Aetna Medicaid IL
+1145	Aetna Medicare Essential
+1368	Aetna BetterHealth Medicaid TX
+17	Aetna Medicaid VA
+1121	State WV Medicaid
+19	Aetna Commercial HIX
+1226	Aetna Commercial Standard
+22	Aetna Commercial Value
+1460	Aetna Commercial HIX
+33	Aetna Medicare Essential
+1524	Aetna Medicare Essential
+35	Aetna Medicare Prime
+1306	Aetna Medicare B4 Plus
+1272	Aetna Medicare B5 Plus
+1363	Aetna Medicare Essential
+1355	Molina Affinity HIX Essential
+39	Affinity Medicaid
+1059	AgeRight Advantage Health Plan HMO-SNP
+1461	Marquis AgeRight Medicare
+42	AgeWell NY Medicare
+43	AgeWell NY Medicare Livewell
+44	HMSA Medicare
+45	AlamedaAlliance Commercial
+46	State CA Medicaid
+1274	Align Connect
+1525	Align Freedom
+1526	Align Kidney Care
+1275	Align Thrive
+47	Alignment Health Medicare
+48	AllCare Medicaid
+49	AllCare Advantage
+52	Alliant Health Plans 3 Tier Formulary
+1338	Alluma Commercial
+586	Neighborhood Commercial HIX
+587	Neighborhood Medicaid
+53	AlohaCare Medicaid
+54	AlohaCare AdvantagePlus
+1462	AlterwoodAdvantage Medicare
+1164	Centene HIX Corporation
+1165	Centene HIX Corporation
+1166	Centene HIX Corporation
+57	American Health Care
+59	American Health Care Pinnacle
+61	Anthem Medicaid GA NJ NV KY SC DC
+62	State LA Medicaid
+63	Anthem Medicaid MD
+64	Anthem Medicaid GA NJ NV KY SC DC
+67	Anthem Medicaid NY
+68	Anthem Corporate Medicare STARPLUS
+1369	Amerigroup Medicaid TX
+69	Anthem Medicaid WA
+70	AmeriHealth Medicaid DC
+1527	AmeriHealth Medicaid DE
+1168	AmeriHealth Medicaid DE
+1463	Amerihealth Medicare FirstChoiceVIP Standard
+71	AmeriHealth Medicare FirstChoiceVIP
+1528	AmeriHealth Caritas FL HIX
+72	AmeriHealth Medicare Keystone
+73	AmeriHealth Medicaid LA
+1512	Ameriealth HIX NC
+1441	State NC Medicaid
+1367	AmeriHealth Medicaid NH
+74	AmeriHealth Medicaid PA
+1529	AmeriHealth Medicare CaritasVIP Delaware
+1530	AmeriHealth Medicare CaritasVIP Florida
+75	AmeriHealth Medicare CaritasVIP Standard
+76	AmeriHealth Medicare CaritasVIP
+77	AmeriHealth Medicaid First ChoiceSelect Health SC
+78	AmeriHealth Medicaid Northeast
+80	Amida Care
+83	State CA Medicaid
+1138	Anthem Commercial HIX
+989	Anthem Commercial HIX
+1136	Anthem Commercial HIX
+1417	Anthem Commercial HIX
+1429	Anthem Commercial HIX
+87	Anthem Medicaid VA
+1442	State NC Medicaid
+1418	Anthem Medicaid NE
+89	Anthem Medicaid IN
+990	Anthem Commercial HIX
+991	Anthem Commercial HIX
+992	Anthem Commercial HIX
+993	Anthem Commercial HIX
+1141	Anthem Commercial HIX
+90	Anthem Medicaid IN
+91	Anthem Medicaid GA NJ NV KY SC DC
+65	Anthem Medicaid GA NJ NV KY SC DC
+1193	Anthem Corporate Medicare Amerivantage
+93	Anthem Corporate Medicare BASIC
+94	Anthem Corporate Medicare CORE
+1307	Anthem Corporate Medicare ESRD
+95	Anthem Corporate Medicare PLUS
+66	Anthem Medicaid FL
+1464	ApexHealth Medicare
+1358	Araya Commercial
+98	Archcare Advantage
+1443	Medimpact Commercial
+100	Arkansas State and Public School Employees
+101	Aspire Health Plan Advantage and Advantage Plus
+1424	Aspirius Commercial HIX
+1378	Aspirius Medicare
+1379	Astiva Medicare
+102	ATRIO Medicare
+104	ATRIO Medicare Special Needs
+105	AultCare Commercial
+1264	AultCare HIX
+106	Avera Commercial HIX
+1027	AvMed Commercial
+107	AvMed Medicare Choice
+1380	BannerHealth Medicare Advantage
+1465	BannerHealth Medicare
+1466	BannerHealth Medicare
+1194	BayCarePlus Medicare Advantage
+110	BC ID Commercial HIX
+111	BC ID Medicare
+112	BC ID Medicare
+113	BCBS AZ Medicare Value
+1381	BCBS NC COMPLETE Medicare
+1382	BCBS Essential Medicare
+1187	BCBS FL Medicare
+1421	BCBS Association FEP
+116	BCBS Association FEP
+1053	BCBS Association Medicare Ideal
+117	BCBS KC Medicare HMO
+118	BCBS Kansas City Commercial Preferred
+1459	BCBS Kansas City Commercial Premium
+1491	BCBS Kansas City HIX
+1308	BCBS Medicare MedicareRxPremier
+119	BCBS Association Medicare MedicareRx
+972	BCBS MI Medicaid
+120	BCBS MI Medicare BCN Advantage
+1383	BCBS MI Medicare BCN CommunityValue
+970	BCBS MI Commercial-HIX BCN
+974	BCBS MI Commercial-HIX BCN
+1117	BCBS MI BlueCare Commercial HIX
+988	BCBS MI BlueCare Preferred Commercial
+980	BCBS MI BlueCare Commercial HIX
+1309	BCBS Medicare MI SelectCore
+122	BCBS MI Medicare Preferred Standard
+121	BCBS MI Medicare
+1531	BCBS MN Medicare
+1532	BCBS NE Medicare
+1045	BCBS Association Medicare Ideal
+1037	BCBS AL Commercial HIX Medicaid
+1034	BCBS AR Commercial HIX
+126	BCBS AZ Commercial HIX
+1036	BCBS FL Commercial-HIX
+1029	BCBS FL Commercial-HIX
+135	BCBS KS Commercial HIX
+136	BCBS LA Commercial HIX
+137	BCBS LA Medicare
+138	BCBS MA Commercial HIX
+139	BCBS MA Medicare
+1533	BCBS MA Medicare
+140	BCBS MN Commercial HIX
+141	BCBS MN Medicaid
+143	BCBS MN Commercial HIX
+145	BCBS MS Commercial
+147	BCBS NC Commercial HIX
+1088	BCBS NC Commercial HIX
+1098	BCBS NC Commercial HIX
+1091	BCBS NC Commercial HIX
+150	Noridian Commercial HIX
+151	BCBS NE Commercial HIX
+152	BCBS RI Commercial Traditional
+1366	BCBS RI Commerical HIX Results
+154	BCBS SC Commercial HIX
+1130	BCBS SC Commercial HIX
+1072	BCBS TN Commercial
+1071	BCBS TN HIX
+1048	BCBS TN Medicare
+158	BCBS VT Commercial HIX
+160	BCBS WY Commercial HIX
+1370	BCBS Medicaid TX
+1055	BCBS Association Medicare Value
+1269	BCBS Association Medicare Value
+166	BeneCard PBF
+168	BCBS RI Medicare
+169	BCBS SC Medicaid
+1050	BCBS SC Medicare
+1316	BCBS SC Medicare Secure Total
+1384	BCBS SC Medicare Total Value
+172	BCBS AZ Medicare Advantage
+173	BostonMedical Medicare
+174	ESI Commercial
+1445	Prime Boeing Commercial
+1220	BostonMedical HIX Medicaid
+175	BostonMedical HIX Medicaid
+176	Universal BrandNewDay Medicare
+994	BS CA Commerical HIX
+995	BS CA Commerical HIX
+178	BS CA Medicare
+1322	BS CA Medicare EnhancedPDP
+1323	BS CA Medicare PlusPDP
+180	State CA Medicaid
+182	State CA Medicaid
+183	Cambia Health Solutions ID OR HIX
+184	Capital BlueCross Commercial HIX
+185	Capital BlueCross Medicare
+953	Capital District Commercial
+954	Capital District Physicians Health Plan HIX
+188	Capital District Medicare
+1251	BCBS FL Capital Health Commercial
+1353	CapitalRx Commercial
+189	State CA Medicaid
+190	WellCare Medicaid AZ
+192	HealthPlan Medicare CareWisconsin
+194	CareFirst Commercial HIX
+794	CareFirst Medicaid DC
+1386	CareFirst Medicare Core
+1387	CareFirst Medicare Enhanced
+195	Anthem Corporate Medicare CareMore
+197	CareOregon Medicaid
+1061	CareOregon Medicare
+1195	CarePartners of Connecticut Medicare
+1170	CareSource Medicaid GA
+1101	CareSource Medicaid IN
+200	CareSource HIX
+1102	CareSource Medicaid IN
+1075	CareSource MyCare OH MMP Medicare
+203	Caresource Medicaid OH
+205	Cascade Comprehensive Care HMO Medicaid
+206	Caterpillar Commercial
+208	CCHP Senior Program
+209	CCHP Senior Select Program (HMO SNP)
+210	CDPHP Medicaid Select Plan and Family Health Plus
+211	State CA Medicaid
+213	Centene Medicaid SC
+1534	Centene HIX Corporation
+215	Centene HIX Corporation
+1235	Centene HIX Corporation
+216	Centene HIX Corporation
+218	Centene HIX Corporation
+1492	Centene HIX Corporation
+1493	Centene HIX Corporation
+1131	Centene HIX Corporation
+1494	Centene HIX Corporation
+220	Centene HIX Corporation
+221	Centene HIX Corporation
+1430	Centene HIX Corporation
+1236	Centene HIX Corporation
+1495	Centene HIX Corporation
+223	Centene HIX Corporation
+1427	Centene HIX Corporation
+1240	Centene Medicaid NM
+1496	Centene HIX Corporation
+1238	Centene HIX Corporation
+224	Centene HIX Corporation
+1234	Centene HIX Corporation
+225	Centene HIX Corporation
+226	Centene HIX Corporation
+1237	Centene HIX Corporation
+228	Centene Medicaid OH
+230	State CA Medicaid
+1446	State NC Medicaid
+388	Centene Medicaid Healthnet AZ
+232	Centene Medicaid WA
+1146	Centene Employees
+1057	Centene Medicare MMP
+234	Centene Medicaid LA
+236	Centene Medicaid IN
+1089	Centene Medicaid NE
+237	Centene Medicaid NH
+238	Centene Medicaid GA
+1143	Centene Medicaid NV
+1373	Centene Medicaid TX
+241	Centene Medicaid OR
+247	CentersPlan Medicare
+248	CentersPlan Medicare SNP
+249	State CA Medicaid
+1359	California Alliance IHSS Commercial
+250	Central Health Medicare
+251	Central PA Teamsters
+1347	CerpassRx Commercial
+1513	Change Healthcare
+1100	Childrens Community Health Plan HIX
+252	Chinese Community Health Plan Commercial-HIX
+253	CHRISTUS Health Plan Generations
+254	CHRISTUS Health Plan HIX
+996	Cigna Commercial Legacy
+997	Cigna Commercial Advantage
+999	Cigna Commercial Legacy
+1000	Cigna Commercial Performance
+1001	Cigna Commercial Standard
+1002	Cigna Commercial Value
+256	Cigna HIX
+1535	Cigna Medicare PDP Saver
+1447	Cigna Commercial National Preferred
+1003	Cigna Medicare MAPD
+1005	Cigna Medicare PDP Secure
+1006	Cigna Medicare PDP Secure Extra
+1348	CitizensRx Commercial
+259	Clear Script Commercial
+1197	Clear Spring Health Medicare
+1340	Clear Spring Health Premier PDP
+1279	Clear Spring Health Value PDP
+1388	CleverCare Medicare
+260	Clover Health Medicare
+262	Colorado Access Corporation Managed Medicaid
+263	Common Ground HIX
+1468	CommonCareAlliance Medicare
+264	Commonwealth Care Alliance MMP
+265	Commonwealth Care Alliance Senior Care Options
+266	CommuniCare Advantage Cal MediConnect MMP
+1389	CommuniCare Medicare
+1390	CommuniCare Medicare
+270	Community Care OK
+271	Community Care Partnership Program
+272	State TX Commercial HIX Community First
+1391	CommunityFirst Medicare
+273	Community Health Choice HIX TX
+1284	Community Health Choice SNP
+274	State CA Medicaid
+1448	Community Health Network of Washington HIX
+275	CommunityHealth WA Medicaid
+277	CommunityHealth WA Medicare
+278	CommunityHealth WA Medicare
+279	CommunityCare Medicare
+280	ContraCosta Commercial
+281	State CA Medicaid
+282	CookCounty IL Medicaid
+283	Cox Health Plan Commercial
+1331	Cox Health Plan HIX
+1536	Cox Health Plan Medicare
+1007	Optum Commercial
+1087	CVS Commerical Opt In
+1376	CVS Commercial Advanced Control Autoimmune
+1028	CVS Commercial
+1024	CVS Commercial
+1440	CVS Commercial Advanced Control Autoimmune
+285	CVS Commercial
+1319	CVS Medicare Choice
+1073	CVS Medicare Plus
+1537	CVS Medicare SmartSaver
+290	DakotaCare Commercial
+291	Dean Medicare
+292	Dean Commercial HIX
+1538	Delaware First Health Medicaid
+1364	DenverHealth Commercial
+293	DenverHealth HIX Elevate
+294	DenverHealth Medicaid
+295	DenverHealth Medicare
+1198	Devoted Health Medicare Advantage
+1539	Devoted Health Medicare Advantage
+1540	Devoted Health Medicare Advantage
+1541	Devoted Health Medicare Advantage
+1285	Dignity Health Plan SNP
+1497	DMBA Commercial
+1199	Doctors HealthCare Medicare
+296	TRICARE
+551	Oregon CCO Medicaid
+1286	El Paso Health SNP
+299	Elderplan Medicare
+1302	Elderplan Medicare Assist
+1542	Elixir RxSecure EICS
+1018	EmblemHealth Commercial HIX ConnectiCare
+1019	EmblemHealth Commercial HIX ConnectiCare
+1252	EmblemHealth Medicare ConnectiCare
+301	EmblemHealth Medicaid
+302	EmblemHealth Medicare
+1263	EmblemHealth Medicare PDP
+304	EmblemHealth Commercial HIX
+305	EmblemHealth Commercial HIX
+306	EmblemHealth Commercial HIX
+1514	EmpiRx Commercial
+308	Envision Medicare
+1129	Envision Commercial
+1077	Envision Commercial
+1449	EpiphanyRx
+311	ESI Commercial
+1008	ESI Medicare EGWP
+313	ESI Medicare UAW
+314	Essence Medicare
+1469	EternalHealth Medicare
+1030	Excellus Commercial
+1032	Excellus Medicaid
+1265	Excellus HIX
+1033	Excellus HIX
+317	Excellus Medicare
+321	Fallon Commercial HIX
+322	Fallon Medicaid
+324	Fallon Medicare
+1470	FarmBureau Medicare
+1064	Farm Bureau Health Plans
+1543	Farm Bureau Health Plans
+328	Fidelis Care HIX Medicaid
+1544	First Choice SC HIX
+331	FirstMedical Commercial
+334	FirstCare Commercial HIX
+335	FirstHealth Medicare
+1515	FliptRx Commercial
+1471	FloridaCompleteCare Medicare
+132	Florida Health Care Plan Commercial
+1517	Florida Health Care Plan HIX
+133	Florida Health Medicare
+336	FreedomHealth Medicare
+1169	Friday Health Plans of Colorado HIX
+338	Gateway Medicare
+1365	Geisinger Medicaid CHIP
+340	Geisinger Commercial HIX
+341	Geisinger Medicaid
+342	Geisinger Medicare
+343	General Prescription Programs
+344	Generations Healthcare
+346	EmblemHealth Commercial HIX
+347	GlobalHealth FEHBP
+349	State CA Medicaid
+1545	Gold Kidney Medicare
+351	GEHA Commercial
+1153	Great Plains Medicare Advantage
+1281	Great Plains Medicare Advantage Gold SNP
+1394	GroupHealth Medicare EauClaire
+354	Group Health WI Commercial HIX
+355	UCare MN Medicare GroupSeniors
+358	GundersenLutheran Commercial HIX
+359	GundersenLutheran Medicare
+1228	H.E.B. Generic Program
+1287	Hamaspik Medicare SNP
+1056	HAP Midwest Medicare
+362	HAP Alliance Medicare
+1040	Harvard Pilgrim Commercial HIX
+1039	Harvard Pilgrim Commercial HIX
+368	Harvard Pilgrim Medicare
+370	HCSC Medicaid
+371	HCSC Medicaid
+1111	BCBS Medicaid TX
+1546	HCSC Medicare Blue Basic
+369	HCSC Medicare Blue Custom MMAI
+1547	HCSC Medicare Blue Enhanced
+372	HCSC Medicare Blue SemiCustom
+1548	HCSC Medicare Blue Value
+373	HCSC Commercial HIX
+374	HCSC Medicare DualCare
+376	Health Alliance Medicare
+377	Health Alliance IL Commercial HIX
+378	Health Alliance Commercial HIX
+379	IASIS Medicaid HealthChoice AZ
+381	IASIS Medicare
+383	IASIS Medicaid HealthChoice UT
+1426	Health Delegates National
+1118	HealthDelegates Commercial
+384	Health First Florida Commercial 3T
+385	Health First Florida Medicare
+984	Centene HealthNET Commercial HIX
+982	Centene HealthNET Commercial HIX
+390	State CA Medicaid
+1450	Centene HealthNet Medicare SeniorityPlus EGWP
+392	Centene HealthNET Commercial HIX
+393	Health NE Medicaid Be Healthy
+394	Health NE Commercial HIX
+395	Health New England Medicare
+396	Optum Medicare HealthOptions
+1549	Health Partners Medicare Platinum and Silver
+397	Health Partners Medicare Prime and Prime Plus
+398	Health Partners Medicare Special
+399	Health Partners Medicaid
+400	State CA Medicaid
+401	State CA Medicaid
+1550	Health Plan of San Mateo CareAdvantage
+1086	Optum Commercial
+407	HealthFirst HIX
+408	HealthFirst Medicare
+409	HealthFirst Medicaid
+1009	HealthNow Commercial-HIX
+1010	HealthNow Commercial-HIX
+1011	HealthNow Commercial-HIX
+1012	HealthNow Commercial-HIX
+1013	HealthNow Medicaid
+411	HealthNow Medicare
+1336	HealthNow RetireePDP Medicare
+412	HealthPartners Commercial HIX
+1124	HeathPartners Medicaid
+413	HealthPartners Medicare
+1103	HealthPartners Commercial HIX
+1076	HealthPartners UnityPointHealth Medicare
+1350	UnitedHealth Medicare HealthSelect
+416	HealthSmartRx
+421	Anthem Medicare Healthsun
+1310	HealthTeam Medicare
+1294	HealthTeam Diabetes and Heart Care Plan
+422	University Utah Medicaid
+1014	UnitedHealth Corporate Commercial HIX
+425	Highmark Commercial HIX
+1490	Highmark Commercial HIX
+1249	Highmark Medicaid DE
+1127	Highmark Commercial HIX
+1518	Highmark Medicare Advantage Incentive
+426	Highmark Medicare Advantage Performance
+1519	Highmark Medicare Advantage Venture
+1498	Highmark Medicaid PA
+429	HMSA Commercial HIX Medicaid
+431	HMSA Medicaid
+432	Hometown Medicare
+433	Hometown Commercial
+1126	Horizon Commercial HIX
+434	Horizon Commercial HIX
+437	Horizon Medicaid
+1147	BCBS Association Medicare Value
+1041	BCBS Association Medicare Value
+439	Hospitality Rx Formulary
+451	Humana Medicare Walmart Basic
+452	Humana Medicare Walmart Enhanced
+441	Humana Medicare IL
+443	Humana Medicare Group Plus
+440	Humana Commercial
+1551	Humana Healthy Horizons LA
+201	Humana Medicaid KY
+1189	Humana Medicare National5 MAPD
+445	Humana Medicare National5 MAPD
+447	Humana Medicare National6 MAPD
+448	Humana Medicare Plus5
+449	Humana Medicare Plus6 MAPD
+1190	Humana Medicare PR
+1452	Humana Medicaid SC
+1395	Humana Medicare SuperNational5AG MAPD
+1282	Humana Medicare Walmart Value
+453	IBC Commercial HIX
+455	IBC Medicare Select Preferred Choice
+457	IdealCare from Sendero Health Plans
+1473	InnovativeIntegrated Medicare
+458	IMCare
+459	IMCare Medicare
+1341	Imperial Health Plan CA Medicare
+1552	Imperial Health Plan HIX
+1154	Imperial Health Plan Medicare
+460	IndependentCare Medicare
+461	IndependentHealth Commercial HIX Medicaid
+960	IndependentHealth Medicare
+1202	IndependentHealth Medicare
+463	Indian Health Services Commercial
+464	IndianaUniversity Commercial HIX
+467	State CA Medicaid
+468	Inland Empire Medicare
+1078	Integrated Prescription Management
+472	InterCommunity Medicaid
+474	Jai Systems
+475	Johns Hopkins Advantage
+1083	Johns Hopkins EHP
+476	Kaiser Commercial HIX
+1233	Kaiser Commercial HIX CA
+1361	Kaiser Commercial HIX CO
+961	Kaiser Commercial HIX GA
+1362	Kaiser Commercial HIX MidAtlantic
+1241	State CA Medicaid
+1116	Kaiser Medicaid HI
+477	Kaiser Medicaid MD
+478	Kaiser Medicare
+1253	Kaiser Medicare WA
+479	KelseyCare Medicare
+480	KernCounty CA Medicaid
+1291	KeyCare Advatage
+482	Kroger Prescription Plans
+485	State CA Medicaid
+486	LACare HIX
+1553	LA Care Medicare Plus MMP
+1474	LeonHealth Medicare
+1475	LeonHealth Medicare
+1157	Liberty Advantage
+1476	LibertyAdvantage Medicare Heart
+1068	LifeWorks Advantage
+1554	LifeWorks Freedom
+1204	Longevity Health Medicare
+490	MagellanRx Commercial
+492	Maine Community Health Options
+1017	Mapfre Commercial
+494	Martins Point Medicare
+1292	Mary Washington Medicare
+495	MarylandPhysicians Medicaid
+1555	Mass General Brigham Medicare
+1477	MassAdvantage Medicare
+496	MaxCare
+497	Maxor Plus Commercial
+501	Mclaren Commercial HIX
+1478	McLaren Medicare
+502	MCS Medicare 1
+503	MCS Medicare 2
+1332	MCS Life EHB Value
+1179	MCS Medicare National
+504	Mclaren Medicaid MDWise
+1337	MedalistRx Formulary
+1092	Medica Commercial-HIX
+506	Medica Medicare DUAL
+507	UnitedHealth Medicare MA South Florida
+1499	Medica MN Medicaid
+508	Medica Medicare Prime
+509	Medical Assistance District of Columbia
+510	Medical Associates Health Plan
+511	MedicalMutual Commercial HIX
+513	MedicareBlue Rx Premier (BCBS IA MN MT NE ND SD WY)
+1556	MedicareBlue Rx Select
+515	MediGold Medicare
+516	MedImpact Commercial
+517	MedImpact Commercial Select
+518	MedImpact Commercial
+520	MedMutual Advantage
+1398	MedMutual Medicare Advantage
+1428	MedOne Commercial
+1419	MedStar DC Medicaid Healthy Families
+522	MedStar Medicaid
+1020	IndianaUniversity Medicare
+527	MemorialHermann Medicare
+1453	Memorial Hermann Commercial
+528	SouthwestCatholic Medicare
+529	SouthwestCatholic Medicaid
+530	Mercy Health System Corporation Commercial-HIX
+1046	Meridian Medicare MMP IL
+536	Meridian Medicaid IL
+537	Meridian Medicaid MI
+539	MetroPlus Child Health Plus
+541	MetroPlus Health Plan HIX NY
+542	MetroPlus Medicaid
+543	MetroPlus Medicare
+544	Metropolitan Health Plan
+545	Centene Medicaid IN
+546	Midwest Health Plan
+548	Missouri Medicare Select
+550	InnovaCare Medicare
+552	Moda Commercial
+553	Moda Medicare
+1345	Moda HIX
+554	Molina HIX
+555	State CA Medicaid
+1242	Molina Medicaid AZ
+1243	Molina Medicaid VA
+557	Molina HIX
+1500	Molina HIX
+1480	Molina HIX
+558	Molina Medicaid IL
+559	Molina Medicare IL MMP
+1501	Molina HIX
+560	Molina Medicaid NY
+561	Molina HIX
+1222	Molina Medicaid MI
+562	Molina Medicare MI MMP
+1333	Molina HIX
+563	Molina HIX
+1481	Molina Medicaid NV
+1356	Molina Affinity HIX Essential
+783	Molina Medicaid NY
+565	Molina HIX
+566	Molina Medicaid OH
+567	Molina Medicare OH MMP
+1334	Molina HIX
+568	Molina Medicaid SC
+569	Molina Medicare SC MMP
+570	Molina HIX
+1372	Molina Medicaid TX
+571	Molina Medicare TX MMP
+1125	Molina HIX
+572	Molina Medicaid UT
+573	Molina HIX
+574	Molina Medicaid WA
+575	Molina HIX
+1503	Mountain Health CO-OP Commercial-HIX
+1557	Mutual of Omaha Rx Essential
+1206	Mutual of Omaha Rx Plus
+1399	MutualOmaha Premier Medicare
+577	MVP Commercial HIX
+578	MVP Medicare
+579	MVP Medicaid
+1400	SoutheasternIndiana Mytrueadvantage Medicare
+1232	Nascentia Health Plus
+583	Fallon Medicare
+584	Navitus Health Solutions Commercial-HIX
+585	Navitus MedicareRx PDP
+764	State TX Medicaid Texas Childrens STAR
+588	Neighborhood RI HIX
+589	Neighborhood RI Medicaid
+1058	Neighborhood RI Medicare
+590	Network Cares Medicare
+591	NetworkHealth Commercial HIX
+1343	Network Cares Medicare
+594	New York Hotel Trades Council/Hotel Association of New York City
+595	Fidelis Care HIX Medicaid
+1401	HealthyDakota ND NextBlue Medicare
+1060	NHC Advantage
+601	NorthTexas Medicare
+602	Northwest Pharmacy Services
+1482	Oschner Medicare
+604	CalOptima Medicare
+1022	State MA Commercial
+605	Optima Commercial
+1123	Optima Medicaid
+1150	Optima Medicare Community Complete
+1558	Optima Medicare Engage
+1042	Optima Medicare Prime and Value
+1085	Optum Commercial
+607	Optum Commercial
+1326	Optum Medicare
+608	Moda Commercial HIX
+610	Oscar HIX
+1454	Oscar Cigna Commercial
+1295	Oscar Easy Care Medicare
+1172	Oscar HIX
+611	Oscar HIX
+612	Oscar HIX
+1171	Oscar HIX
+613	Oscar HIX
+1079	CVS Commercial Advanced Control Autoimmune
+614	PacificSource Community Medicaid
+615	PacificSource Commercial HIX
+1439	PacificSource Commercial HIX
+616	PacificSource Medicare
+1311	Paramount Elite Enhanced
+617	Paramount Elite Enhanced and Standard
+1183	Paramount Commercial HIX
+1344	Paramount Health Care HIX
+618	Paramount Medicaid OH
+1559	Paramount MAP Standard Indiana
+1560	Paramount MAP Standard Ohio
+1455	Paramount ProMedica Employee
+621	State CA Medicaid
+622	Passport Medicare
+623	Passport Medicaid
+1561	Patrius Health
+624	PBM Plus
+625	UnitedHealth Medicare PeoplesHealth
+1403	Perennial Medicare
+1562	Perennial Medicare
+1404	Perennial Medicare
+626	PERS Moda Health PPORX
+1349	PhamPix Commercial
+1182	Pharmacy Benefit Dimension
+1352	PharmAvail Commercial
+1069	PHPCare Medicare FIDA
+1278	PHP Medicare
+630	Physicians Michigan Commercial HIX
+631	PhysiciansHealthPlan NorthernIndiana Commercial
+1335	Piedmont Community HealthCare Commercial
+633	Piedmont Community HealthCare HIX
+635	Pinnacle RxSolutions Performance Drug List
+636	State PR Medicaid
+637	PositiveHealthcare Medicare
+640	PreferredOne Commercial
+641	Premera Medicare
+642	Premera Commercial HIX
+645	Presbyterian Medicaid
+646	Presbyterian Commercial
+647	Presbyterian Medicare
+1516	Prescryptive Commercial
+1016	Prime Commercial Uplan
+650	Prime Commercial
+651	PrimeTime Health Plans
+652	Primewest Medicaid
+653	PrimeWest Medicare
+654	PriorityHealth Medicare
+655	PriorityHealth Commercial HIX
+657	PriorityPartners Medicaid
+1346	ProAct Commercial
+1296	ProCare Medicare
+658	ProCare Rx
+659	Prominence Medicare
+660	Prominence Commercial HIX
+661	Providence Commercial HIX
+662	Providence Medicaid
+663	Providence Medicare
+1312	Provider Partners IL Advantage Plan
+1313	Provider Partners MD Advantage Plan
+1405	ProviderPartners Medicare MOAdvantage
+1066	Provider Partners PA Advantage Plan
+665	PruittHealth Premier
+1520	PSM Commercial
+667	Public Employees Health Program (PEHP)
+669	QualChoice Commercial HIX
+673	Cambia Regence Medicare
+674	Regence Omeda Commercial HIX
+1298	Reliance Medicare
+1406	Reliance Medicare Dual
+1521	Rightway
+678	ElderServe Medicare
+1223	UnitedHealth Medicaid CO
+682	Samaritan Advantage Medicare
+683	Samaritan Advantage Special Needs Plan HMO
+684	Samaritan Choice Plan
+1181	Samaritan Large Group Everyday Choices and Momentum Plans
+686	State CA Medicaid
+1483	Sanford Medicare
+688	Sanford Commercial HIX
+1563	Santa Clara Family Health Plan DualConnect HMO D-SNP
+692	State CA Medicaid
+694	Sav-Rx
+695	SCAN Health Medicare
+696	Scott White Commercial HIX
+697	Scott White Medicare SeniorCare
+698	Script Care
+699	ScriptGuideRx/4D
+700	Marshfield Medicare SecurityHealth
+701	Marshfield Commercial HIX
+702	IHC SelectHealth Medicare
+703	IHC SelectHealth Commercial HIX Medicaid
+704	IHC SelectHealth Commercial HIX Medicaid
+705	Senior Whole Health
+706	Serve You Prescription Services Commercial
+1407	Shared Health Mississippi
+1049	Sharp Medicare
+707	Sharp Health Plan Commercial-HIX
+708	Signature Advantage
+710	Anthem Corporate Medicare Simply
+1158	Simpra Advantage
+1211	Solis Health Medicare
+1408	Sonder Health Medicare
+711	SouthCounty Medicaid
+712	SouthCounty Medicare
+713	Southeastern Indiana Health Organization Commercial-HIX
+1425	Southern Scripts Core
+1564	St. Luke's HIX
+716	State AK Medicaid
+717	State AL Medicaid
+718	State AR Medicaid
+719	MedImpact Commercial
+720	State AZ Medicaid
+721	State CA CMSP
+722	State CA Commercial Exclusive Care
+723	State CA Medicaid
+724	State CA Commercial Ventura County
+725	State CO Medicaid
+726	State CT Medicaid
+727	State DE Medicaid
+728	State FL Medicaid
+729	State GA Medicaid
+730	State IA Medicaid
+731	State ID Medicaid
+732	State IL Medicaid
+733	State IN Medicaid
+1035	State KS Medicaid
+736	State KY Medicaid
+737	State LA Medicaid
+739	State MA Medicaid
+740	State MD Medicaid
+741	State ME Medicaid
+742	State MI Medicaid
+1021	State MI Medicaid
+744	State MN Medicaid
+745	State MO Medicaid
+746	State MS Medicaid
+747	State MT Medicaid
+748	State NC Medicaid
+1184	State NC Medicare
+749	State ND Medicaid
+750	State NE Medicaid
+751	State NH Medicaid
+1173	Optum Commercial
+752	State NJ Medicaid
+1174	Optum Commercial
+753	State NM Medicaid
+754	State NV Medicaid
+755	State NY Medicaid
+756	State OH Medicaid
+757	State OK Medicaid
+758	State OR Medicaid
+759	State PA Medicaid
+760	State RI Medicaid
+761	State SC Medicaid
+762	State SD Medicaid
+763	State TN Medicaid
+1375	State TX Medicaid FFS
+765	State of UT Medicaid
+766	State VA Medicaid
+767	State VT Medicaid
+768	State WA Medicaid
+769	State WI Medicaid
+770	State WV Medicaid
+771	State WY Medicaid
+772	Summacare Commercial HIX
+1342	Summacare Commercial HIX
+773	SummaCare Medicare
+774	Sutter Health
+1297	Texas Independence Health Plan I-SNP
+780	The Health Plan of Upper Ohio Valley
+781	The Health Plan SecureCare SecureChoice Medicare
+789	TributeHealth Medicare
+791	Triple S Medicare PlatinoPlus
+792	Triple S Medicare RoyalPlus
+793	Triple S Commercial
+1299	Troy HMO Medicare
+1351	TrueScripts Commercial
+798	Tufts Medicare
+796	Tufts Commercial HIX
+1422	Tufts Commercial HIX
+1225	Tufts Medicaid RITogether
+1325	Tufts Medicare SNP
+797	Tufts Medicaid
+799	Tufts Medicare MMP
+800	UCare MN HIX
+802	Ucare MN Medicare
+803	UCare MN Medicaid
+804	UCare MN Medicare MSHO
+805	UnitedHealth Corporate Commercial HIX
+806	UnitedHealth Corporate Commercial HIX
+1026	UnitedHealth Oxford Commercial HIX
+808	UnitedHealth Commercial SignatureValue
+809	UnitedHealth Corporate Commercial HIX
+810	UnitedHealth Medicaid AZ
+812	UnitedHealth Medicaid AZ
+1175	State CA Medicaid
+1456	UnitedHealth Medicaid IN
+1420	State KY Medicaid
+814	UnitedHealth Medicaid LA
+815	UnitedHealth Medicaid MD
+1504	UHC Medicaid MN
+1457	State NC Medicaid
+818	UnitedHealth Medicaid NJ
+820	UnitedHealth Medicaid NY
+821	UnitedHealth Medicaid NY
+822	UnitedHealth Medicaid OH
+823	UnitedHealth Medicaid PA
+824	UnitedHealth Medicaid PA CHIP
+825	UnitedHealth Medicaid HI
+826	UnitedHealth Medicaid RI
+827	UnitedHealth Medicaid WA
+1423	UnitedHealth Medicaid NE
+1374	UHC Medicaid TX
+473	UnitedHealth Medicaid VA
+1357	UHC Essential HIX NY
+1505	UHC HIX AL
+1431	UHC HIX AZ
+1506	UHC HIX FL
+1507	UHC HIX GA
+1508	UHC HIX IL
+1565	UHC HIX KS
+1509	UHC HIX LA
+1437	UHC HIX MD
+1510	UHC HIX MI
+1566	UHC HIX MO
+1567	UHC HIX MS
+1433	UHC HIX NC
+1568	UHC HIX OH
+1435	UHC HIX OK
+1436	UHC HIX TN
+1511	UHC HIX TX
+1432	UHC HIX VA
+1434	UHC HIX WA
+828	UnitedHealth HealthPlanNevada Commercial HIX
+829	UnitedHealth Medicaid NV
+831	UnitedHealth Medicare MCORE
+1409	UnitedHealth Medicare MCORE Enhanced
+832	UnitedHealth Medicare MCORE Plus
+1410	UnitedHealth Medicare MCSNP Enhanced
+1484	UnitedHealth Medicare MMP NY
+833	UnitedHealth Medicare MMP OH
+834	UnitedHealth Medicare MMP TX
+639	UnitedHealth Medicare MSOFLPlus
+835	UnitedHealth Medicare PDP Preferred
+836	UnitedHealth Medicare PDP Savers Plus
+1119	UnitedHealth Medicare PDP Walgreens
+1438	UHC RockyMountain HIX CO
+837	Ultimate Health Plans
+1485	Ultimate Health Plans Medicare SNP
+1300	Ultimate Health Plans Medicare SNP
+1360	Oregon Umpqua CCO Medicaid
+838	Uniform Plan (UMP)
+839	Optum Commercial
+843	Unity Commercial HIX
+844	Universal Rx Commercial
+1120	BannerHealth Medicaid
+845	University Alliance Commercial
+1230	University Center of El Paso
+846	MedImpact Commercial
+847	University of Maryland Health Advantage
+676	State MD Medicaid
+848	University of Michigan Commercial
+849	Optum Commercial
+1186	University of Utah Commercial
+850	University Utah HIX
+1038	UPMC Health Medicaid
+852	UPMC Health Commercial HIX
+853	UPMC Health Medicaid
+1062	UPMC Health Medicare
+858	Upper Peninsula Health Plan MI Health Link MMP
+861	US Script
+862	Valley Health Plan HIX CA
+1212	Valor Health Medicare
+863	Vantage Health Plan LA Commercial-HIX
+864	Vantage Medicare Plans
+865	Ventegra Commercial
+1411	BCBS VT Medicare BlueAdvantage
+866	VA Commercial
+1327	VibrantRx Medicare
+1051	VillageCare Medicare
+868	Virginia Premier Medicaid
+1063	Virginia Premier Medicare Elite
+1213	Vitality Health Plan of California Medicare Advantage
+870	Viva Commercial
+871	VIVA Medicare Extra Value
+872	VIVA Medicare
+1412	Triton VIVA Preferred Medicare
+874	VNSNY Medicare
+1486	VNSNY Medicare
+1487	VNSNY Medicare Plus
+875	VNSNY Medicaid
+1097	MagellanRx VRx Medicare
+876	Walmart Generics Program
+877	Washtenaw Health Plan B
+1266	WellSense Medicaid NH
+1569	WellCare 1T DSNP
+1413	WellCare Medicare CoreCSNP
+1303	WellCare Medicare Core
+1081	Wellcare Medicare Essential
+1414	WellCare Medicare GSCorePLUS
+882	WellCare Medicaid HI
+884	WellCare Medicaid KY
+1305	WellCare Medicare GSCoreEnhanced AET
+1488	WellCare Medicare GSCoreEnhancedPDP
+1084	Wellcare Medicare Select
+1522	WellCare NC HIX
+1458	State NC Medicaid
+886	WellCare Medicaid NJ
+891	WellDyneRx Formulary
+1489	Welllmark Medicare Advantage
+892	Wellmark Commercial
+893	Western Health Advantage Commercial-HIX
+1415	Western Health Medicare
+894	Western Oregon Advanced Health CCO Medicaid
+899	Wisconsin Physicians Commercial HIX
+900	WTC Prescription Plan
+1065	WVA Senior Advantage HMO-SNP
+901	Yale University Health Plan
+1354	Yamhill Medicaid OR
+1301	Zing Choice Medicare
+11280000	Advantage U Medicare
+50000	Aetna Commercial
+11760000	Aetna HIX
+10280000	Aetna Medicaid CA
+70000	Aetna Medicaid FL
+80000	Aetna Medicaid FL
+11440000	Aetna Medicaid IL
+10830000	Aetna Medicaid KS
+100000	Aetna Medicaid KY
+110000	Aetna Medicaid LA
+10290000	Aetna Medicaid MD
+120000	Aetna Medicaid MI
+150000	Aetna Medicaid NJ
+170000	Aetna Medicaid TX
+190000	Aetna Medicaid VA
+200000	Aetna Medicaid WV
+11270000	Aetna Medicare MA
+210000	Aetna Medicare
+11200000	Molina Affinity Essential
+230000	Affinity Medicaid
+250000	Affinity Commercial
+260000	Affinity HIX
+270000	Affinity Medicare
+280000	Affinity Medicare
+290000	AgeWell New York Medicare
+10940000	Align Senior Care
+300000	Alignment Health Plan Medicare
+5710000	AllCare Medicaid OR
+6080000	NeighborhoodHealth Commercial HIX
+6090000	NeighborhoodHealth Commercial HIX
+6100000	NeighborhoodHealth Medicaid
+340000	Alohacare Medicaid
+350000	Alohacare Medicare
+11770000	Alterwood Advantage Medicare
+420000	Anthem Medicaid Amerigroup GA
+430000	Anthem Medicaid Amerigroup IA
+450000	Anthem Medicaid Amerigroup LA
+460000	Anthem Medicaid Amerigroup MD
+480000	Anthem Medicaid Amerigroup NJ
+490000	Anthem Medicaid Amerigroup TN
+500000	Anthem Medicaid Amerigroup TX
+510000	Anthem Medicaid Amerigroup WA
+520000	Anthem Amerigroup Medicare
+12180000	AmeriHealth Caritas Delaware Health Exchange
+12190000	AmeriHealth HIX FL
+10300000	Amerihealth Medicaid DE
+530000	Amerihealth Medicaid DC
+6690000	Amerihealth Medicaid FL
+550000	Amerihealth Medicaid LA
+10850000	AmeriHealth Medicaid NH
+11670000	ST NC Medicaid
+570000	Amerihealth Medicaid PA
+580000	Amerihealth Medicaid PA
+590000	Amerihealth Medicaid SC
+12200000	AmeriHealth Medicare DE
+12210000	AmeriHealth Medicare FL
+600000	Amerihealth Medicare MI
+610000	Amerihealth Medicare PA
+620000	Amerihealth Medicare SC
+12150000	Ameriealth HIX NC
+640000	Amida Care, Inc. Managed Medicaid NY
+660000	Anthem Commercial HIX
+670000	Anthem Commercial HIX
+680000	Anthem Medicaid CA
+690000	Anthem Medicaid IN
+700000	Anthem Medicaid KY
+11450000	ST MO Medicaid
+11460000	Anthem Medicaid NE
+470000	Anthem Medicaid NV
+710000	Anthem Medicaid NY
+11680000	BCBS NC Medicaid
+720000	Anthem Medicaid VA
+730000	Anthem Medicaid WV
+740000	Anthem Medicaid WI
+750000	Anthem Medicare
+11780000	ApexHealth Medicare
+760000	BCBS AR Commercial
+770000	BCBS AR HIX
+780000	BCBS AR Medicare
+800000	Aspire Health Plan Medicare
+11560000	Aspirius Commercial HIX
+11290000	Aspirus Health Plan Medicare
+11470000	Aspirius Medicare
+11300000	Astiva Health Medicare
+820000	Cambia Asuris Medicare
+840000	ATRIO Health Plans, Inc. Medicare
+850000	AultCare Commercial Foundation
+860000	AultCare Foundation HIX
+870000	AultCare Health Foundation Medicare
+880000	Avera Commercial HIX
+890000	Avera Commercial HIX
+910000	BannerHealth Medicare Advantage
+10490000	BayCarePlus Medicare
+930000	BCBS MI BlueCross Commercial HIX
+940000	BCBS Association Commercial
+950000	BCBS MI BlueCross Commercial HIX
+960000	BCBS MI BlueCare Medicare
+970000	BCBS FL Commercial HIX
+980000	BCBS FL Commercial HIX
+1000000	BCBS FL Medicare
+1010000	BCBS KS Commercial
+1020000	BCBS KS HIX
+10160000	BCBS KS Medicare
+12220000	BCBS NE HIX
+1030000	BCBS NE Commercial
+1060000	HCSC BCBS NM Medicaid
+1070000	HCSC BCBS TX Commercial HIX
+1080000	HCSC BCBS TX Medicaid
+11550000	BCBS Association Commercial
+1090000	BCBS Association Commercial
+1100000	BCBS NE Medicare
+1110000	BCBS AL Commercial HIX
+1120000	BCBS AL Commercial HIX
+1130000	BCBS AL Medicare
+1140000	BCBS AZ Commercial
+1150000	BCBS AZ HIX
+1160000	BCBS AZ Medicare
+1170000	HCSC BCBS IL Commercial HIX
+1180000	HCSC BCBS IL Commercial HIX
+1190000	BCBS KS City Commercial
+11930000	Blue Cross Blue Shield of Kansas City HIX
+1210000	BCBS KS City Medicare
+1220000	BCBS MA Commercial HIX
+9950000	BCBS MA Commercial HIX
+1230000	BCBS MA Medicare
+1240000	BCBS MI BlueCross Commercial HIX
+1250000	BCBS MI BlueCross Commercial HIX
+1260000	BCBS MI Medicaid
+1270000	BCBS MI Medicare
+1280000	BCBS MN Commercial HIX
+1290000	BCBS MN Commercial HIX
+1300000	BCBS MN Medicaid
+1310000	BCBS MN Medicare
+1320000	BCBS MS Commercial
+1330000	HCSC BCBS MT Commercial HIX
+1340000	HCSC BCBS MT Commercial HIX
+1360000	HCSC BCBS NM Commercial HIX
+9830000	HCSC BCBS NM Commercial HIX
+1370000	BCBS NC Commercial
+1380000	BCBS NC HIX
+12140000	BCBS NC MMP
+1390000	BCBS NC Medicare
+11790000	Blue Cross Blue Shield of North Dakota Managed Medicaid
+1400000	HCSC BCBS OK Commercial HIX
+1410000	HCSC BCBS OK Commercial HIX
+1420000	BCBS RI Commercial HIX
+1430000	BCBS RI Commercial HIX
+1440000	BCBS RI Medicare
+1450000	BCBS SC Commercial HIX
+1460000	BCBS SC Commercial HIX
+1470000	BCBS SC Medicaid
+10170000	BCBS SC Medicare
+1480000	BCBS TN Commercial HIX
+1490000	BCBS TN Commercial HIX
+1500000	BCBS TN Medicaid
+1510000	BCBS TN Medicare
+1520000	HCSC BCBS TX Commercial HIX
+1530000	BCBS VT Commercial HIX
+9840000	BCBS VT Commercial HIX
+11310000	Blue Cross Blue Shield of Vermont Medicare
+1550000	BCBS WY Commercial HIX
+1560000	BCBS WY Commercial HIX
+1570000	HCSC BCBS IL Medicaid
+1580000	BCBS ID Commercial
+1590000	BCBS ID HIX
+1600000	BCBS ID Medicare
+1610000	BS CA Commercial HIX
+1620000	BS CA Commercial HIX
+1630000	BS CA Medicare
+1640000	BCBS LA Commercial HIX
+9790000	BCBS LA Commercial HIX
+1650000	BCBS LA Medicare
+1660000	BostonMedical HIX
+1670000	BostonMedical Medicaid MA
+1680000	BostonMedical Medicaid NH
+1690000	BostonMedical Medicare
+1720000	CalOptima Medicaid
+1730000	CalOptima Medicare
+3510000	CalViva Medicaid
+1740000	Cambia HIX
+1750000	Capital BlueCross Commercial
+1770000	Capital BlueCross, Inc. Medicare
+1780000	Capital District Physicians Health Plan, Inc. Commercial
+1790000	Capital District Physicians Health Plan, Inc. Health Exchange
+1800000	Capital District Physicians Health Plan, Inc. Managed Medicaid NY
+1810000	Capital District Medicare
+1820000	BCBS FL CapitalHealth Commercial
+1830000	BCBS Association Commercial
+1840000	BCBS FL CapitalHealth Medicare
+1850000	Care Oregon Medicaid
+1860000	Care Oregon, Inc. Medicare
+1870000	Care Wisconsin First Inc Managed Medicaid WI
+1880000	Wellcare Care1st Medicaid AZ
+1890000	BS CA Care1st Medicaid
+11330000	CareFirst  Medicare Advantage
+1910000	Carefirst Commercial HIX
+9960000	Carefirst Commercial HIX
+5610000	CareFirst Medicaid DC
+1920000	Anthem Caremore Medicare
+10500000	CarePartners of Connecticut
+1930000	CarePoint Health Plans Medicare
+1960000	Caresource HIX
+10320000	Caresource Medicaid GA
+9920000	Caresource Medicaid IN
+1950000	CareSource Medicaid OH
+1970000	Caresource Medicare
+1980000	Catholic Health Care System Medicare
+2000000	CenCal Health Managed Medicaid CA
+12230000	Centene Health Exchange AL
+10810000	Centene Health Exchange AZ
+2040000	Centene Health Exchange AR
+2050000	Centene Health Exchange FL
+2060000	Centene Health Exchange GA
+2070000	Centene Health Exchange IL
+2080000	Centene Health Exchange IN
+10330000	Centene Health Exchange KS
+11940000	Centene Health Exchange Kentucky
+11950000	Centene Health Exchange Louisiana
+11580000	Centene Health Exchange Michigan
+2100000	Centene Health Exchange MS
+10340000	Centene Health Exchange MO
+11960000	Centene Health Exchange Nebraska
+10350000	Centene Health Exchange NV
+2110000	Centene Health Exchange NH
+11970000	Centene Health Exchange NewJersey
+11570000	Centene Health Exchange NewMexico
+10800000	Centene Health Exchange NC
+2120000	Centene Health Exchange OH
+11980000	Centene Health Exchange Oklahoma
+10780000	Centene Health Exchange PA
+10820000	Centene Health Exchange SC
+10790000	Centene Health Exchange TN
+2130000	Centene Health Exchange TX
+2140000	Centene Health Exchange WA
+3970000	Centene HealthNet Medicaid
+2160000	Centene Medicaid CA
+2170000	Centene Medicaid FL
+2180000	Centene Medicaid GA
+2200000	Centene Medicaid IN
+10840000	Centene Medicaid IA
+2210000	Centene Medicaid KS
+2220000	Centene Medicaid LA
+2240000	Centene Medicaid MS
+2250000	ST MO Medicaid
+9860000	Centene Medicaid NE
+10190000	Centene Medicaid NV
+2260000	Centene Medicaid NH
+10770000	Centene Medicaid NM
+11690000	Centene Medicaid NC
+2270000	Centene Medicaid OH
+2280000	Centene Medicaid SC
+2290000	Centene Medicaid TX
+2300000	Centene Medicaid WA
+2310000	Centene Medicaid WI
+2320000	Centene Medicare
+2330000	Centene Medicare MMP
+2360000	CentersPlan Medicare
+11240000	Central California Commercial IHSS
+7060000	California Alliance Medicaid Commercial
+2370000	Central Health Health Exchange
+2390000	Central Health Plan of California, Inc. Medicare
+9930000	Children's Hospital and Health System Health Exchange
+2400000	Children's Hospital and Health System Managed Medicaid WI
+2410000	Children's Services Managed Medicaid FL
+2420000	Chinese Community Health Plan Corporation Commercial
+2430000	Chinese Community Health Plan Corporation Health Exchange
+2440000	Chinese Community Health Plan Corporation Medicare
+2450000	CHRISTUS Spohn Health System Health Exchange
+2470000	CHRISTUS Spohn Health System Medicare
+2480000	Cigna Commercial
+2490000	Cigna HIX
+2520000	Cigna Medicare
+10510000	Clear Spring Health
+11340000	Clever Care Health Plan Medicare
+9940000	ColoradoAccess Medicaid
+2570000	Common Ground Healthcare Cooperative Health Exchange
+2580000	Commonwealth Care Alliance, Inc. Medicare
+2590000	ST PR ADAP
+11350000	CommuniCare Advantage
+2620000	Community Care Organization, Inc. Wisconsin Medicare
+2630000	Community Care, Inc. Commercial
+11660000	Community Care, Inc. HIX
+2640000	Community Care, Inc. Medicare
+2650000	Community Health Choice, Inc. Health Exchange
+2660000	Community HealthChoice TX Medicaid
+10920000	Community Health Choice Medicare
+2670000	Community Health Group Managed Medicaid CA
+2690000	Community Health Network of Washington Health Exchange
+2700000	Community Health WA Medicaid
+2710000	Community Health Network of Washington Medicare
+2720000	Emblem Connecticare Commercial HIX
+2740000	Emblem Connecticare Commercial HIX
+2730000	Emblem Connecticare Medicare
+2760000	Contra Costa Health Services Commercial
+2770000	Contra Costa Health Services Managed Medicaid CA
+2780000	Cook Childrens TX Medicaid
+2790000	CookCounty Medicaid
+2820000	CMSP Commercial
+2850000	Cox Health Commercial
+11140000	Cox Health HIX
+12240000	CoxHealth Medicare
+2870000	Avera Dakotacare Commercial
+2890000	Dean Commercial HIX
+2900000	Dean Commercial HIX
+2910000	Dean Medicaid WI
+2920000	Dean Medicare
+12250000	Delaware First Health Managed Medicaid
+2930000	Denver Health Plan Health Exchange
+2940000	Denver Health Plan Managed Medicaid CO
+2950000	Denver Health Plan Medicare
+2960000	TRICARE Commercial
+2970000	VA Commercial
+10520000	Devoted Health Medicare
+10970000	Dignity Health Plan Medicare
+2980000	District of Columbia ADAP
+2990000	DC State Medicad
+10530000	Doctors HealthCare Plans Medicare
+3010000	Douglas County IPA, Inc. Managed Medicaid OR
+3020000	Driscoll Childrens TX Medicaid
+3030000	Oregon CCO Medicaid
+3040000	First HealthPlans El Paso Medicaid
+10910000	El Paso Medicare
+3050000	Elderplan, Inc. Medicare
+3060000	ElderServe Health, Inc. Medicare
+3070000	Emblem Commercial HIX
+3080000	Emblem Commercial HIX
+3090000	Emblem Medicaid
+3110000	Emblem Medicare
+11170000	EMI Health Commercial
+3140000	Essence, Inc. Medicare
+11800000	eternalHealth Medicare
+3160000	Excellus Commercial HIX
+3170000	Excellus Commercial HIX
+3180000	Excellus Medicaid
+3190000	Excellus Medicaid
+3200000	Excellus Medicare
+3220000	Exclusive Care Commercial
+3230000	Fallon Commercial
+3240000	Fallon Community Health Plan, Inc. Health Exchange
+3250000	Fallon Community Health Plan, Inc. Managed Medicaid MA
+3260000	Fallon Community Health Plan, Inc. Medicare
+12260000	Farm Bureau Advantage Medicare
+11210000	Centene Fidelis Essential
+3320000	Fidelis HIX
+3330000	Fidelis Medicaid
+3340000	Fidelis Medicaid
+3350000	Fidelis Medicare
+12270000	First Choice South Carolina Health Exchange
+3380000	FirstMedical Commercial
+3390000	FirstMedical Medicaid
+3420000	FirstCare HIX
+3430000	FirstCare TX Medicaid
+3450000	FirstHealth of the Carolinas Medicare
+11820000	Florida Complete Care Medicare
+3460000	Florida Health Commercial
+3470000	Florida Health Care Plans Health Exchange
+3480000	Florida Health Care Plans Medicare
+3490000	Freedom Health Medicare
+10360000	Friday Health Plans Health Exchange
+3530000	Gateway Medicare
+3540000	Geisinger Commercial
+3550000	Geisinger Health System Corporation Health Exchange
+3560000	Geisinger Medicaid
+3570000	Geisinger Medicare
+3580000	GlobalHealth, Inc. Commercial
+3590000	GlobalHealth, Inc. Medicare
+3600000	Gold Coast Health Plan, Inc. Managed Medicaid CA
+12280000	Gold Kidney Health Plan Medicare
+3620000	GEHA Commercial
+10200000	Great Plains Medicare
+3660000	Group Health Cooperative Eau Claire Managed Medicaid WI
+11360000	Group Health Cooperative of Eau Claire Medicare
+3680000	Group Health Cooperative of South Central Wisconsin Health Exchange
+3690000	Group Health Cooperative of South Central Wisconsin Managed Medicaid WI
+3700000	Group Health WI Commercial
+3710000	Quartz Gundersen Commercial
+3730000	Quartz Gundersen Medicare
+10980000	Hamaspik Medicare
+3770000	HarvardPilgrim Commercial HIX
+3780000	HarvardPilgrim Commercial HIX
+3790000	HavardPiligram Medicare
+3800000	HMSA Commercial HIX
+3810000	HMSA Commercial HIX
+3820000	HMSA Medicaid
+3830000	HMSA Medicare
+3840000	Health Alliance Commercial
+3850000	Health Alliance Plans, Inc. Health Exchange
+3870000	Health Alliance Plans, Inc. Medicare
+3880000	HAP Commercial
+3900000	HAP Medicaid
+3910000	HAP Medicare
+3930000	HCSC Corporate Medicare
+4630000	IASIS Medicaid HealthChoice AZ
+3950000	Health First, Inc. Florida Health Exchange
+3960000	Health First Florida Medicare
+3980000	Centene HealthNet Medicaid CA
+3990000	Centene HealthNet Medicare
+4040000	Centene HealthNet Commercial HIX CA
+4050000	Centene HealthNet Commercial HIX CA
+4060000	Centene HealthNet Commercial OR WA
+4080000	Health NE Medicaid
+4090000	Health New England, Inc. Medicare
+4070000	Health NE Commercial
+9880000	Health New England, Inc. Health Exchange
+4100000	Health One Alliance Commercial
+4120000	Health Partners Plans Managed Medicaid NC/PA
+4130000	Health Partners Medicaid PA
+4140000	Health Partners Plans Medicare
+4150000	Health Plan for Community Living, Inc. Medicare
+4160000	UHC HealthPlanNV SierraHealth Commercial
+4170000	UHC HealthPlanNV HIX
+4180000	UHC Medicaid NV
+4190000	San Joaquin Mediciad
+4200000	San Mateo Medicaid
+4210000	Health Plan of San Mateo, Inc. Medicare
+4250000	Healthfirst HIX
+4260000	Healthfirst Medicaid
+4270000	Healthfirst Medicaid
+4280000	Healthfirst Medicare
+4300000	HealthNow NY Commercial
+4310000	HealthNow New York, Inc. Health Exchange
+4320000	HealthNow New York, Inc. Managed Medicaid NY
+4330000	HealthNow New York, Inc. Medicare
+4340000	HealthPartners Commercial HIX
+4350000	HealthPartners Commercial HIX
+4360000	HealthPartners Medicaid
+4370000	HealthPartners Medicare
+4410000	Anthem HealthSun Medicare
+11250000	HEB
+4430000	Highmark Delaware Commercial HIX
+4440000	Highmark Delaware Commercial HIX
+4450000	Highmark Commercial HIX
+4460000	Highmark Commercial HIX
+4470000	Highmark Medicaid
+4490000	Highmark Medicare
+11990000	Highmark NY Commercial
+12000000	Highmark Medicaid PA
+11130000	HMAA Commercial
+4500000	Hometown Health, Inc. Commercial
+4510000	Hometown Health, Inc. Medicare
+4520000	Horizon Commercial HIX
+4530000	Horizon Commercial HIX
+4540000	Horizon Medicare
+4550000	Horizon Medicaid
+4570000	Humana Commercial
+4590000	Humana Medicaid FL
+1940000	Humana Medicaid KY
+12290000	Humana Medicaid LA
+11710000	Humana Medicaid KY
+4610000	Humana Medicare
+4640000	IASIS Healthcare Managed Medicaid UT
+4650000	IASIS Healthcare Medicare
+4660000	IHC Commercial
+4680000	IHC Commercial
+4690000	IHC Medicaid
+4700000	IHC Medicare
+10210000	Imperial Health Medicare
+12300000	Imperial Health Plan Health Exchange
+4710000	IBX Commercial HIX
+4720000	IBX Commercial HIX
+4730000	IBX Medicare
+4750000	Independent Care Health Plan Managed Medicaid WI
+4760000	IndependentCare Medicare
+4770000	Independent Commercial
+4780000	Independent Health Association, Inc. Health Exchange
+4790000	Independent Health Association, Inc. Managed Medicaid NY
+4800000	Independent Medicare
+4810000	HIS Commercial
+4820000	Indiana University Health, Inc. Commercial
+4840000	Indiana University Health, Inc. Medicare
+4860000	InlandEmpire Medicaid
+4870000	InlandEmpire Medicare
+4880000	Innocare Medicaid
+4890000	Innovacare Medicare
+11830000	Innovative Integrated Health Community Plans Medicare
+4940000	ITASCA Care Managed Medicaid MN
+4950000	JAI Systems, Inc. Managed Medicaid MD
+4970000	Johns Hopkins HealthCare LLC Medicare
+4980000	Kaiser California Commercial HIX
+4990000	Kaiser Colorado Commercial HIX
+5000000	Kaiser Georgia Commercial HIX
+5010000	Kaiser Hawaii Commercial HIX
+5020000	Kaiser MidAtlantic Commercial HIX
+5030000	Kaiser Northwest Commercial HIX
+3630000	Kaiser Washington Commercial HIX
+5040000	Kaiser California Commercial HIX
+5050000	Kaiser Colorado Commercial HIX
+5060000	Kaiser Georgia Commercial HIX
+5070000	Kaiser Hawaii Commercial HIX
+5080000	Kaiser MidAtlantic Commercial HIX
+5090000	Kaiser Northwest Commercial HIX
+10120000	Kaiser Washington Commercial HIX
+10760000	Kaiser California Medicaid
+5100000	Kaiser Hawaii Medicaid
+5110000	Kaiser MidAtlantic Medicaid
+5120000	Kasier Corporate Medicare
+3650000	Kasier Corporate Medicare
+10240000	Kansas Superior Select Medicare
+5130000	KelseyCare Advantage, Inc. Medicare
+2810000	KernCounty CA Medicaid
+11000000	KeyCare Medicare
+5140000	LACare HIX
+5160000	LA Care
+5170000	LACare Medicare
+11490000	Lasso Healthcare Medicare
+11840000	Leon Health Plan Medicare
+10250000	Liberty Advantage Medicare
+5210000	LifeWorks Advantage Medicare
+10560000	Longevity Health Plan Medicare
+9970000	Medicare MAC 15
+9980000	Medicare MAC 5
+9990000	Medicare MAC 6
+10000000	Medicare MAC 8
+10010000	Medicare MAC E
+10020000	Medicare MAC F
+10030000	Medicare MAC H
+10040000	Medicare MAC J
+10050000	Medicare MAC K
+10060000	Medicare MAC L
+10070000	Medicare MAC M
+10080000	Medicare MAC N
+5240000	Maine Community HIX
+5250000	Mapfre Praico Commercial
+5260000	Marquis Companies Medicare
+5270000	Marshfield Commercial SecurityHealth
+5280000	Marshfield Clinic HIX
+5290000	Marshfield Medicaid SecurityHealth
+5300000	Marshfield Medicare SecurityHealth
+5310000	Martins Point Health Care Medicare
+11010000	Mary Washington Healthcare Medicare
+5320000	Physicians Care Medicaid
+11850000	Mass Advantage Medicare
+12310000	Mass General Brigham Health Plan Medicare
+5360000	Mclaren Commercial HIX
+5370000	Mclaren Commercial HIX
+5380000	Mclaren Medicaid MI
+11860000	McLaren Health Care Medicare
+10390000	MCS Commercial
+5400000	MCS Medicare
+5420000	Mclaren Medicaid IN
+5430000	Medica Commercial HIX
+5440000	Medica Commercial HIX
+5480000	Medica Medicare
+5460000	UHC Medica Medicare
+12010000	Medica Medicaid MN
+11500000	Medical Associates Health Plan Medicare
+5490000	Medical Associates Health Plan, Inc. Commercial
+5500000	MedicalMutual Commercial HIX
+5510000	MedicalMutual Commercial HIX
+5520000	MedicalMutual Medicare
+5540000	MedStar Health Managed Medicaid MD
+11510000	MedStar Managed Medicaid DC
+11720000	Memorial Hermann Healthcare System Commercial
+5560000	Memorial Hermann Healthcare System Medicare
+12160000	Mennonite Commercial
+10710000	Mennonite Medicaid
+5570000	Mercy Health System Corporation Commercial
+5580000	Mercy Health System Corporation Health Exchange
+10700000	Mercy Medicaid
+5620000	Meridian Medicaid IL
+5630000	Meridian Medicaid MI
+5640000	Meridian Medicare
+5680000	Merle West Center Managed Medicaid OR
+5690000	Metropolitan Health Plan, Inc. Managed Medicaid MN
+5720000	Mid Rogue Health Plan Medicare
+5730000	Mid West Health Plan Medicare
+5740000	Minnesota Senior Health Options (MSHO) Medicare
+5760000	MO Select, LLC Medicare
+5770000	Moda Commercial HIX
+5780000	Moda Commercial HIX
+5790000	Moda Medicare
+10720000	Molina Medicaid AZ
+10740000	Molina Medicaid VA
+10680000	Molina HIX UT
+10670000	Molina HIX WI
+10660000	Molina Medicaid MS
+11220000	Molina Affinity Essential
+5800000	Molina HIX CA
+5810000	Molina HIX FL
+12020000	Molina HIX ID
+11870000	Molina HIX IL
+12030000	Molina HIX KY
+5820000	Molina HIX MI
+11150000	Molina HIX MS
+5830000	Molina HIX NM
+5840000	Molina HIX OH
+11160000	Molina HIX SC
+5850000	Molina HIX TX
+5870000	Molina HIX WA
+5890000	Molina Medicaid CA
+5900000	Molina Medicaid FL
+5910000	Molina Medicaid IL
+5920000	Molina Medicaid MI
+11880000	Molina Medicaid NV
+5940000	Molina Medicaid OH
+5960000	Molina Medicaid SC
+5970000	Molina Medicaid TX
+5980000	Molina Medicaid UT
+5990000	Molina Medicaid WA
+6000000	Molina Medicaid WI
+6010000	Molina Medicare
+6020000	MontanaHealth HIX
+12040000	Mountain Health Cooperative Commercial
+6030000	Medigold Medicare
+6040000	MVPHealth Commercial
+6050000	MVPHealth HIX
+6060000	MVPHealth Medicaid
+6070000	MVPHealth Medicare
+10580000	Nascentia Health Plus Medicare
+6110000	NeighborhoodHealth RI HIX
+6120000	NeighborhoodHealth RI Medicaid
+6130000	NeighborhoodHealth RI Medicare
+6160000	New York City Health and Hospitals Corporation Health Exchange
+6170000	New York City Health and Hospitals Corporation Managed Medicaid NY
+6180000	New York City Health and Hospitals Corporation Medicare
+10130000	New York Hotel Trades Council Commercial
+6210000	NHC Advantage Medicare
+6220000	Noridian Commercial HIX
+6230000	Noridian Commercial HIX
+11370000	Noridian Mutual Insurance Company Medicare
+9780000	ST NC Medicaid
+6250000	NorthTexas Medicare
+11890000	Ochsner Health Medicare
+6290000	Optimum Medicare
+6310000	Oscar HIX
+10900000	Oscar Medicare
+6320000	PacificSource Commercial
+6330000	PacificSource Health Plan Health Exchange
+6340000	PacificSource Medicaid
+6350000	PacificSource Health Plan Medicare
+6360000	Paramount Commercial
+6370000	Paramount Health Care, Inc. Health Exchange
+6380000	Paramount Medicaid OH
+6390000	Paramount Health Care, Inc. Medicare
+6400000	Parkland Medicaid
+6420000	Partners Health Plan Medicare
+6430000	Partnership CA Medicaid
+6440000	Passport Medicaid
+6450000	Passport Medicare
+12320000	Patrius Health Medicare
+6460000	UnitedHealth Medicare PeoplesHealth
+11380000	Perennial Advantage Medicare
+6500000	Physicians NorthernIndiana Commercial
+6520000	Piedmont Community Health Plan, Inc. Health Exchange
+11110000	Piedmont Commercial
+6550000	Positive Healthcare Medicare
+6560000	UHC Preferred Care Medicare
+6570000	PreferredOne Commercial
+6590000	Premera Commercial
+6600000	Premera HIX
+6610000	Premera Medicare
+6650000	Presbyterian Commercial
+12050000	Presbyterian Health Care Services HIX
+6670000	Presbyterian Medicaid
+6680000	Presbyterian Medicare
+6710000	PrimeWest Medicaid
+6720000	Prime West Central County Based Purchasing Initiative Inc. Medicare
+6730000	PriorityHealth Commercial
+6740000	PriorityHealth HIX
+6750000	PriorityHealth Medicaid MI
+6760000	PriorityHealth Medicare
+6770000	PriorityPartners Medicaid MD
+11030000	ProCare Advantage Medicare
+6790000	Providence Commercial HIX
+6800000	Providence Commercial HIX
+6810000	Providence Medicaid
+6820000	Providence Medicare
+6830000	Provider Partners Health Plan Medicare
+6840000	PruittHealth Corporation Medicare
+6850000	Qualchoice Commercial HIX
+9150000	Quartz Unity Commercial HIX
+9170000	Quartz Unity Medicaid
+6890000	Cambia Commercial
+6910000	Cambia Regence Medicare
+11040000	Reliance Healthcare Medicare
+9890000	UHC Rocky Mountain Commercial HIX
+10150000	UHC Medicaid CO
+6970000	Samaritan Health Services Commercial
+6980000	Samaritan Medicaid
+6990000	Samaritan Health Services Medicare
+7000000	SanFrancisco Medicaid
+7010000	Sanford Commercial HIX
+7020000	Sanford Commercial HIX
+11900000	Sanford Health Plan Medicare
+7040000	Santa Clara Family Health Plan Managed Medicaid CA
+7050000	Santa Clara Family Health Plan Medicare
+7070000	AvMed Commercial
+7080000	Santa Fe Healthcare Medicare
+7090000	SCAN Health Medicare
+7100000	Scott White Commercial
+7120000	Scott White Medicaid TX
+7130000	Scott White Medicare
+7140000	SeniorWholeHealth Medicare
+10260000	SeniorSelect Partners Medicare
+7150000	Sentara Commercial HIX
+7160000	Sentara Commercial HIX
+7170000	Sentara Medicaid
+7180000	Sentara Medicare
+7190000	Seton Healthcare Family Managed Medicaid TX
+11390000	BCBS TN SharedHealth Medicare
+7200000	Sharp HealthCare, Inc. Commercial
+7210000	Sharp HealthCare, Inc. Health Exchange
+7220000	Sharp HealthCare, Inc. Medicare
+7230000	UHC HealthPlanNV SierraHealth Commercial
+7240000	Signature HealthCARE Medicare
+410000	Anthem Medicaid Amerigroup FL
+7250000	Anthem SimplyHealth Medicaid FL
+7260000	Anthem SimplyHealth Medicare
+10590000	Solis Health Plan Medicare
+11400000	Sonder Health Plans Medicare
+7270000	SouthCouny Medicaid
+7280000	South Country Health Alliance, Inc. Medicare
+7290000	South Florida Community Care Network (SFCCN) Managed Medicaid FL
+7300000	SoutheasternIndiana Commercial
+11410000	Southeastern Indiana Health Organization, Inc. Medicare
+7330000	SWCNC Medicaid
+7340000	SWCNC Medicare
+10890000	Sparrow Medicare
+7350000	Physicians Michigan Commercial
+7360000	Sparrow Health System Health Exchange
+12330000	St. Luke's Health Plan Health Exchange
+7390000	ST CA Medicaid
+7400000	ST NY Medicaid
+7410000	ST NC Medicaid
+7420000	ST AL ADAP
+7430000	ST AL Medicaid
+7440000	ST AK ADAP
+7450000	ST AK Medicaid
+7460000	State of Arizona ADAP
+7480000	State AZ Medicaid
+7490000	ST AR ADAP
+7500000	ST AR Medicaid
+7510000	ST CA ADAP
+7530000	State of Colorado ADAP
+7540000	ST CO Medicaid
+7550000	ST CT ADAP
+7560000	ST CT Medicaid
+7570000	ST DE ADAP
+7580000	ST DE Medicaid
+7590000	State of Florida ADAP
+7600000	ST FL Medicaid
+7610000	State of Georgia ADAP
+7620000	ST GA Medicaid
+7630000	State of Hawaii ADAP
+7640000	ST ID ADAP
+7650000	ST ID Medicaid
+7660000	ST IL ADAP
+7670000	ST IL Medicaid
+7680000	State of Indiana ADAP
+7690000	ST IN Medicaid
+7700000	State of Iowa ADAP
+7710000	State IA Medicaid
+7720000	State of Kansas ADAP
+7730000	State of Kentucky ADAP
+7740000	ST KY Medicaid
+7750000	State of Louisiana ADAP
+7760000	ST LA Medicaid
+7770000	ST ME ADAP
+7780000	ST ME Medicaid
+7790000	State of Maryland ADAP
+7800000	ST MD Medicaid
+7820000	ST MA Medicaid
+7830000	State of Michigan ADAP
+7850000	Michigan State Medicaid
+7860000	State of Minnesota ADAP
+7870000	State MN Medicaid
+7880000	State of Mississippi ADAP
+7900000	ST MS Medicaid
+7910000	State of Missouri ADAP
+7920000	State of Missouri  State Medicaid
+7930000	ST MT ADAP
+7950000	ST MT Medicaid
+7960000	State of Nebraska ADAP
+7970000	ST NE Medicaid
+7980000	ST NV ADAP
+7990000	ST NV Medicaid
+8000000	State of New Hampshire ADAP
+8010000	ST NH Medicaid
+8020000	State of New Jersey Commercial
+8030000	ST NJ Medicaid
+8040000	State of New Mexico ADAP
+8050000	ST NM Medicaid
+8060000	ST NY ADAP
+8070000	ST NC ADAP
+10420000	UHC Corporate Medicare
+8080000	ST ND ADAP
+8090000	ST ND Medicaid
+8100000	State of Ohio ADAP
+8120000	ST OH Medicaid
+8130000	ST OK ADAP
+10450000	ST OK Commercial
+8140000	ST OK Medicaid
+8150000	State of Oregon ADAP
+8160000	ST OR Medicaid
+8170000	State of Pennsylvania ADAP
+8190000	State of Pennsylvania State Medicaid
+8200000	ST RI ADAP
+8210000	ST RI Medicaid
+8220000	ST SC ADAP
+8230000	ST SC Medicaid
+8240000	ST SD ADAP
+8250000	ST SD Medicaid
+8270000	State of Tennessee ADAP
+8280000	State of Texas ADAP
+8290000	State TX Medicaid
+8300000	State of Utah ADAP
+8320000	State of Utah State Medicaid
+8330000	ST VT ADAP
+8340000	ST VT Medicaid
+8350000	State of Virginia ADAP
+8360000	State of Virginia State Medicaid
+8370000	State of Washington ADAP
+8380000	ST WA Medicaid
+8390000	ST WV ADAP
+8400000	ST WV Medicaid
+8410000	ST WI ADAP
+8430000	ST WI Medicaid
+8440000	ST WY ADAP
+8450000	ST WY Medicaid
+8460000	Stonerise Healthcare Medicare
+8470000	SummaCare Commercial
+8480000	SummaCare, Inc. Health Exchange
+8490000	SummaCare, Inc. Medicare
+8500000	Sutter Health Plus Commercial
+11100000	TakeCare Health Plan
+8520000	TexasChildrens TX Medicaid
+8530000	The Alliance Commercial
+8540000	Alliance Medicaid
+8580000	HealthPlanUpperOhio Commercial
+8590000	HealthPlanUpperOhio Medicaid
+8600000	HealthPlanUpperOhio Medicare
+8660000	Tribute Health Plans Medicare
+8680000	Centene Trillium Medicaid
+8700000	Trilogy Health Insurance Managed Medicaid WI
+8710000	TripleS Commercial
+8720000	TripleS Commercial
+8730000	TripleS Medicaid
+8740000	TripleS Medicare
+11050000	Troy Medicare
+8760000	Tufts Commercial
+8770000	Tufts HIX
+8780000	Tufts Health Plan Managed Medicaid MA
+11920000	Tufts Health Plan Managed Medicaid RI
+8790000	Tufts Medicare
+8800000	Ucare HIX
+8810000	Ucare Medicaid
+8820000	Ucare Medicare
+8830000	Ultimate Health Plans, Inc. Medicare
+10470000	UMC of El Paso
+8860000	UHC Corporate Commercial HIX
+8870000	UHC Medicaid TX
+8880000	UHC Medicaid AZ
+10370000	UHC Medicaid CA
+8900000	UHC Medicaid FL
+8910000	UHC Medicaid HI
+11730000	UHC Medicaid IN
+8930000	UHC Medicaid KS
+11520000	UHC Medicaid KY
+8940000	UHC Medicaid LA
+8950000	UHC Medicaid MD
+8960000	UHC Medicaid MI
+12060000	UHC Medicaid MN
+8980000	UHC Medicaid MS
+10380000	ST MO Medicaid
+8990000	UHC Medicaid NE
+9000000	UHC Medicaid NJ
+11740000	UHC Medicaid NC
+9020000	UHC Medicaid NY
+9030000	UHC Medicaid NY
+9040000	UHC Medicaid OH
+9050000	UHC Medicaid PA
+9060000	UHC Medicaid RI
+9070000	UHC Medicaid TN
+4930000	UHC Medicaid VA
+9080000	UHC Medicaid WA
+9090000	UHC Medicaid WI
+11230000	UHC Essential HIX NY
+9100000	UHC Commercial FEHBP
+9110000	UHC Corporate Commercial HIX
+12070000	UHC HIX
+11590000	UHC HIX
+12080000	UHC HIX
+12090000	UHC HIX
+12100000	UHC HIX
+12340000	UHC HIX
+12110000	UHC HIX
+11650000	UHC HIX
+12120000	UHC HIX
+12350000	UHC HIX
+12360000	UHC HIX
+11610000	UHC HIX
+12370000	UHC HIX
+11630000	UHC HIX
+11640000	UHC HIX
+12130000	UHC HIX
+11600000	UHC HIX
+11620000	UHC HIX
+9120000	UHC Corporate Medicare
+9130000	UHC Oxford Commercial
+9140000	UHC Signature Value Commercial
+9180000	Molina Medicaid NY
+9200000	Universal Care, Inc. Medicare
+9210000	Prominence Commercial
+9240000	Universal Health Services, Inc. Medicare
+10140000	BannerHealth Medicaid
+9250000	Universityhealth Commercial
+9260000	University Health System Inc. Commercial
+9280000	University Health System Inc. Managed Medicaid TX
+11420000	University Health System Inc. Medicare
+6920000	Carefirst Medicaid MD
+9290000	University of Maryland System Medicare
+10440000	University of Utah Health Plans Commercial
+9300000	University Utah HIX
+9310000	University Utah Medicaid
+9320000	UPMC Commercial HIX
+9330000	UPMC Commercial HIX
+9340000	UPMC Commercial HIX
+9350000	UPMC Medicaid
+9360000	UPMC Medicaid
+9370000	UPMC Medicare
+9380000	Upper Peninsula Medicaid
+9390000	Upper Peninsula Health Plan Medicare
+9400000	Valley Health Plan (VHP) Health Exchange
+10600000	Valor Health Plan Medicare
+9410000	Vantage Health Corporation Commercial
+9420000	Vantage Health Corporation Medicare
+9440000	Ventura Commercial
+9460000	VillageCare Medicare
+9470000	Virginia Premier Health Plan, Inc. Managed Medicaid VA
+9480000	Virginia Premier Health Plan, Inc. Medicare
+9490000	Visiting Nurse Service of New York Managed Medicaid NY
+9500000	Visiting Nurse Service of New York Medicare
+10610000	Vitality Health Plan of California Medicare
+9510000	Viva Commercial
+9520000	Viva Health Corporation Medicare
+9530000	Wal-Mart Stores, Inc. Commercial
+11180000	Washington State Health Insurance Pool
+9540000	Washtenaw Health Plan Commercial
+12170000	WellCare Health Exchange North Carolina
+9600000	Wellcare Medicaid HI
+9620000	Wellcare Medicaid KY
+9640000	Wellcare Medicaid NJ
+11750000	WellCare Medicaid NC
+9670000	Wellcare Medicare
+9680000	Wellmark Commercial
+11910000	Wellmark Medicare
+9690000	Western Health Advantage Corporation Commercial
+9700000	Western Health Advantage Corporation Health Exchange
+11430000	Western Health Advantage Corporation Medicare
+9710000	Western Oregon Advanced Health, LLC. Managed Medicaid OR
+9730000	Wisconsin Physicians Commercial
+9760000	Yale Health Commercial
+11190000	Yamhill Medicaid OR
+11060000	Zing Medicar
