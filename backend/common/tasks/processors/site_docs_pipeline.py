@@ -28,6 +28,7 @@ class SiteDocsPipelineTaskProcessor(TaskProcessor):
             task = TaskLog(
                 payload=tasks.DocPipelineTask(
                     doc_doc_id=doc_doc.id,
+                    site_id=site.id,
                     reprocess=task_payload.reprocess,
                 ),
                 task_type="DocPipelineTask",

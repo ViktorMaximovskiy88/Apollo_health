@@ -58,6 +58,7 @@ class ScrapeMethodConfiguration(BaseModel):
     focus_section_configs: list[FocusSectionConfig] = []
     allow_docdoc_updates: bool = False
     cms_doc_types: list[CmsDocType] = []
+    debug: bool = False
 
 
 class UpdateScrapeMethodConfiguration(BaseModel):
@@ -81,6 +82,7 @@ class UpdateScrapeMethodConfiguration(BaseModel):
     focus_section_configs: list[FocusSectionConfig] | None = None
     allow_docdoc_updates: bool | None = None
     cms_doc_types: list[CmsDocType] = []
+    debug: bool = False
 
 
 class BaseUrl(BaseModel):
@@ -140,6 +142,10 @@ class Site(BaseDocument, NewSite):
     assignee: PydanticObjectId | None = None
     last_run_documents: int | None = None
     pipeline_stages: SitePipelineStages | None = None
+
+    @classmethod
+    async def get_active_sites(cls):
+        return await Site.find({"disabled": False})
 
 
 # Deprecated

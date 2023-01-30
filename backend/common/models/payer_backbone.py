@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import ClassVar, Type, Union
 
+import pymongo
 from beanie import UnionDoc
 
 from backend.common.models.base_document import BaseDocument
@@ -81,6 +82,56 @@ class PlanBenefit(BaseDocument):
 
     class Settings:
         union_doc = PayerBackboneUnionDoc
+        indexes = [
+            [
+                ("_class_id", pymongo.ASCENDING),
+                ("l_id", pymongo.ASCENDING),
+                ("start_date", pymongo.ASCENDING),
+                ("end_date", pymongo.ASCENDING),
+            ],
+            [
+                ("_class_id", pymongo.ASCENDING),
+                ("l_controller_id", pymongo.ASCENDING),
+                ("start_date", pymongo.ASCENDING),
+                ("end_date", pymongo.ASCENDING),
+            ],
+            [
+                ("_class_id", pymongo.ASCENDING),
+                ("l_plan_id", pymongo.ASCENDING),
+                ("start_date", pymongo.ASCENDING),
+                ("end_date", pymongo.ASCENDING),
+            ],
+            [
+                ("_class_id", pymongo.ASCENDING),
+                ("l_formulary_id", pymongo.ASCENDING),
+                ("start_date", pymongo.ASCENDING),
+                ("end_date", pymongo.ASCENDING),
+            ],
+            [
+                ("_class_id", pymongo.ASCENDING),
+                ("l_mco_id", pymongo.ASCENDING),
+                ("start_date", pymongo.ASCENDING),
+                ("end_date", pymongo.ASCENDING),
+            ],
+            [
+                ("_class_id", pymongo.ASCENDING),
+                ("l_parent_id", pymongo.ASCENDING),
+                ("start_date", pymongo.ASCENDING),
+                ("end_date", pymongo.ASCENDING),
+            ],
+            [
+                ("_class_id", pymongo.ASCENDING),
+                ("l_bm_id", pymongo.ASCENDING),
+                ("start_date", pymongo.ASCENDING),
+                ("end_date", pymongo.ASCENDING),
+            ],
+            [
+                ("_class_id", pymongo.ASCENDING),
+                ("l_ump_id", pymongo.ASCENDING),
+                ("start_date", pymongo.ASCENDING),
+                ("end_date", pymongo.ASCENDING),
+            ],
+        ]
 
 
 class Plan(BaseDocument):

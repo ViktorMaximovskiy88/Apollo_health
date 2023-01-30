@@ -82,6 +82,7 @@ class DownloadContext(BaseModel):
     request: Request
     response: Response = Response()
     direct_scrape: bool = False
+    playwright_download: bool = False
 
     file_name: str | None = None
     file_extension: str | None = None

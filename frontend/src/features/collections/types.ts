@@ -19,6 +19,7 @@ export interface WorkItem {
 }
 
 export interface BatchStatus {
+  batch_key: string;
   current_page: number;
   total_pages: number;
 }

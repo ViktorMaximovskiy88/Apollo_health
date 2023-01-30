@@ -86,13 +86,15 @@ export const useBreadcrumbs = async () => {
         const result: any = await dispatch(usersApi.endpoints.getUser.initiate(userId));
         return { url, label: result.data.full_name } as any;
       },
-      ':workQueueId': async (userId: string, url: string) => {
-        const result: any = await dispatch(workQueuesApi.endpoints.getWorkQueue.initiate(userId));
+      ':workQueueId': async (workQueueId: string, url: string) => {
+        const result: any = await dispatch(
+          workQueuesApi.endpoints.getWorkQueue.initiate(workQueueId)
+        );
         return { url, label: result.data.name } as any;
       },
-      ':translationId': async (userId: string, url: string) => {
+      ':translationId': async (translationId: string, url: string) => {
         const result: any = await dispatch(
-          translationsApi.endpoints.getTranslationConfig.initiate(userId)
+          translationsApi.endpoints.getTranslationConfig.initiate(translationId)
         );
         return { url, label: result.data.name } as any;
       },

@@ -3,6 +3,7 @@ import { CheckOutlined, CloseOutlined, DeleteOutlined, EditOutlined } from '@ant
 import { VirtualItem, Virtualizer } from '@tanstack/react-virtual';
 import { DocumentTag, TagUpdateStatus } from './types';
 import { useState } from 'react';
+import { priorityStyle } from '../doc_documents/useSiteDocDocumentColumns';
 
 function labelColorMap(type: string) {
   const colorMap: any = {
@@ -183,8 +184,11 @@ export function ReadTag({
         </div>
         <div className="flex items-center px-5">
           {tag.priority > 0 && (
-            <Tag color="red" className="select-none cursor-default">
-              Priority
+            <Tag
+              color={tag.priority === 1 ? 'blue' : tag.priority === 2 ? 'orange' : 'red'}
+              className="select-none cursor-default"
+            >
+              {priorityStyle(tag.priority)}
             </Tag>
           )}
           {tag.focus && (

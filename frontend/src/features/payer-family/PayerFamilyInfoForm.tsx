@@ -142,10 +142,6 @@ export function MatchingPlansModal() {
 export const PayerFamilyInfoForm = () => {
   const form = Form.useFormInstance();
 
-  useEffect(() => {
-    form.setFieldValue('payer_type', 'Not Selected');
-  }, [form]);
-
   const handlePlanChange = useCallback(() => {
     form.setFieldsValue({ payer_ids: [] });
   }, [form]);

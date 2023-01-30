@@ -72,15 +72,7 @@ export function WorkQueueHomePage() {
   ];
   const filters = [{ name: 'name', operator: 'contains', type: 'string', value: '' }];
   return (
-    <MainLayout
-      sectionToolbar={
-        <>
-          <Link className="ml-auto" to="new">
-            <Button>Create</Button>
-          </Link>
-        </>
-      }
-    >
+    <MainLayout>
       <ReactDataGrid
         dataSource={workQueues || []}
         defaultFilterValue={filters}

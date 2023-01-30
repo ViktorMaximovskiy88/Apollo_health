@@ -6,7 +6,7 @@ from backend.common.models.base_document import BaseDocument, BaseModel
 
 
 class PipelineStage(BaseModel):
-    version: int
+    version: str | int
     version_at: datetime
     is_locked: bool = False
 

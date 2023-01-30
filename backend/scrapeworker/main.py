@@ -34,6 +34,7 @@ log = logging.getLogger(__name__)
 
 accepting_tasks = True
 active_tasks: dict[PydanticObjectId | None, SiteScrapeTask] = {}
+project_root = Path(__file__).parent.parent.parent
 
 
 async def signal_handler():
@@ -101,19 +102,24 @@ async def worker_fn(
         )
 
         options = {"channel": "chrome"}
+        har_path = None
         if config.get("DEBUG", None):
-            options["headless"] = False
-            options["slow_mo"] = 60
-            options["devtools"] = True
+            har_path = project_root / "tmp" / "har"
+            options = {
+                **options,
+                "headless": False,
+                "slow_mo": 60,
+                "devtools": True,
+            }
 
         browser = await playwright.chromium.launch(**options)
-        worker = ScrapeWorker(playwright, browser, scrape_task, site)
+        worker = ScrapeWorker(playwright, browser, scrape_task, site, har_path=har_path)
         task = asyncio.create_task(heartbeat_task(scrape_task))
         active_tasks[scrape_task.id] = scrape_task
 
         try:
             await worker.run_scrape()
-            log.info(f"After scrape run. site_id={site.id}")
+            log.info(f"After scrape run. site_id={site.id} scrape_task_id={scrape_task.id}")
             await log_success(scrape_task, site)
         except CanceledTaskException as ex:
             await log_cancellation(scrape_task, site, ex)
@@ -122,7 +128,7 @@ async def worker_fn(
         except Exception as ex:
             await log_failure(scrape_task, site, ex)
         finally:
-            log.info(f"Finishing scrape run. site_id={site.id}")
+            log.info(f"Finishing scrape run. site_id={site.id} scrape_task_id={scrape_task.id}")
             del active_tasks[scrape_task.id]
             await browser.close()
             task.cancel()

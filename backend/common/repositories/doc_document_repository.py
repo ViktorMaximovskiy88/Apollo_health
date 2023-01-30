@@ -3,6 +3,7 @@ from backend.common.models.doc_document import DocDocument, UpdateDocDocument
 from backend.common.models.document_mixins import calc_final_effective_date
 from backend.common.models.user import User
 from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook, get_doc_change_info
+from backend.common.services.document_analysis import upsert_for_doc_doc
 
 
 class DocDocumentRepository:
@@ -30,6 +31,7 @@ class DocDocumentRepository:
         return await update_and_log_diff(self.logger, current_user, doc, updates)
 
     async def post_save(self, doc: DocDocument, current_user: User):
+        await upsert_for_doc_doc(doc)
         original = doc.dict()
         updated = await doc_document_save_hook(doc, self.change_info)
         patch = get_diff_patch(original, updated.dict())

@@ -7,7 +7,7 @@ from jarowinkler import jarowinkler_similarity
 from rapidfuzz import fuzz
 from scipy import spatial
 
-from backend.common.models.lineage import DocumentAnalysis, DocumentAttrs
+from backend.common.models.document_analysis import DocumentAnalysis, DocumentAttrs
 from backend.scrapeworker.common.utils import jaccard
 
 
