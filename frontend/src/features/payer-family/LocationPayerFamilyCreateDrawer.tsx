@@ -134,6 +134,7 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
         validateTrigger={['onBlur']}
         onFinish={onFinish}
         initialValues={{
+          payer_type: 'Not Selected',
           payer_ids: [],
           channels: [],
           benefits: [],
