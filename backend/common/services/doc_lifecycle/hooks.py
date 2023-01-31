@@ -87,7 +87,10 @@ async def update_document_family_counts(new_document_family_id, old_document_fam
     )
 
 
-async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = ChangeInfo()):
+async def doc_document_save_hook(
+    doc: DocDocument,
+    change_info: ChangeInfo = ChangeInfo(),
+):
     if change_info.translation_change and doc.translation_id:
         await enqueue_translation_task(doc)
 
@@ -133,7 +136,7 @@ async def doc_document_save_hook(doc: DocDocument, change_info: ChangeInfo = Cha
 
     await update_payer_family_counts(doc, change_info)
 
-    await DocLifecycleService().assess_document_status(doc)
+    return await DocLifecycleService().assess_document_status(doc)
 
 
 def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):

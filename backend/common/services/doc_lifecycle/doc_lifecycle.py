@@ -234,7 +234,6 @@ class DocLifecycleService:
                     }
                 },
             )
-
         return doc
 
     async def exec(self, doc_doc_ids: list[PydanticObjectId], site: Site):
