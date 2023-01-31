@@ -84,6 +84,9 @@ export function SiteEditPage() {
 
   async function tryUpdateSite(update: Partial<Site>) {
     update._id = params.siteId;
+    if (update.collection_method === CollectionMethod.Manual) {
+      delete update.scrape_method_configuration;
+    }
     await updateSite(update);
     if (
       site!.collection_method === CollectionMethod.Automated &&
