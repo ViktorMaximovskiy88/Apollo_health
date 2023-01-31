@@ -82,10 +82,12 @@ export function SiteEditPage() {
     assignee: currentUser._id,
   };
 
+  console.log(site);
+
   async function tryUpdateSite(update: Partial<Site>) {
     update._id = params.siteId;
-    if (update.collection_method === CollectionMethod.Manual) {
-      delete update.scrape_method_configuration;
+    if (update.collection_method === CollectionMethod.Manual && site) {
+      update.scrape_method_configuration = { ...site.scrape_method_configuration };
     }
     await updateSite(update);
     if (
