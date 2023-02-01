@@ -85,7 +85,10 @@ export function makeTableQueryParams(
 
   const additionalArgs = Object.entries(additionalQueryParams)
     .filter(([_, v]) => v)
-    .map(([key, value]) => `${key}=${encodeURIComponent(value)}`);
-
+    .map(([key, value]) =>
+      Array.isArray(value)
+        ? `${key}=${encodeURIComponent(JSON.stringify(value))}`
+        : `${key}=${encodeURIComponent(value)}`
+    );
   return args.concat(additionalArgs);
 }
