@@ -349,6 +349,30 @@ def convert_filepath_to_start_date(filepath: str):
     raise Exception(f"Unknown start date time file {filepath}")
 
 
+def create_not_a_plan(delivery: Delivery):
+    start_date = datetime(2000, 1, 1)
+    not_a_plan = Plan(
+        start_date=start_date,
+        l_id=-1,
+        name="Not a Plan",
+        type=PlanType.HMO,
+        channel=Channel.Commercial,
+    )
+    delivery.plans.setdefault(not_a_plan.l_id, not_a_plan)
+    delivery.p_plan_benefits.setdefault(
+        not_a_plan.l_id,
+        PlanBenefit(
+            start_date=not_a_plan.start_date,
+            type=not_a_plan.type,
+            channel=not_a_plan.channel,
+            benefit=Benefit.Pharmacy,
+            l_ump_id=-1,
+            l_controller_id=-1,
+            l_plan_id=-1,
+        ),
+    )
+
+
 async def process_backbone(filepath: str, previous_delivery: Delivery | None):
     start_date = convert_filepath_to_start_date(filepath)
     wb = load_workbook(str(this_folder.joinpath(filepath)))
@@ -364,6 +388,7 @@ async def process_backbone(filepath: str, previous_delivery: Delivery | None):
         process_line(h, line, start_date, delivery)
 
     create_plan_benefits(delivery)
+    create_not_a_plan(delivery)
 
     if not previous_delivery:
         return delivery
