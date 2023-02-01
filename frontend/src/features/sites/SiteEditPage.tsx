@@ -86,8 +86,18 @@ export function SiteEditPage() {
 
   async function tryUpdateSite(update: Partial<Site>) {
     update._id = params.siteId;
+    // Check if previous values exist for site collection setttings
     if (update.collection_method === CollectionMethod.Manual && site) {
-      update.scrape_method_configuration = { ...site.scrape_method_configuration };
+      if (update.scrape_method_configuration?.focus_section_configs) {
+        update.scrape_method_configuration = {
+          ...site.scrape_method_configuration,
+          focus_section_configs: update.scrape_method_configuration.focus_section_configs,
+        };
+      } else {
+        update.scrape_method_configuration = {
+          ...site.scrape_method_configuration,
+        };
+      }
     }
     await updateSite(update);
     if (
