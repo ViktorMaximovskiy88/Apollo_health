@@ -82,8 +82,6 @@ export function SiteEditPage() {
     assignee: currentUser._id,
   };
 
-  console.log(site);
-
   async function tryUpdateSite(update: Partial<Site>) {
     update._id = params.siteId;
     // Check if previous values exist for site collection setttings
