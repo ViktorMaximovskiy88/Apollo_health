@@ -53,6 +53,19 @@ export function prettyDateFromISO(value?: string, dateFormat = DateTime.DATE_MED
 }
 
 /**
+ * Short datetime format in UTC
+ * @param value
+ * @param dateFormat
+ * @returns
+ */
+export function prettyDateTimeUTCFromISO(
+  value?: string,
+  dateFormat = DateTime.DATETIME_MED
+): string {
+  return prettyFromISO(value, dateFormat, false);
+}
+
+/**
  * Short datetime format
  * @param value
  * @param dateFormat
