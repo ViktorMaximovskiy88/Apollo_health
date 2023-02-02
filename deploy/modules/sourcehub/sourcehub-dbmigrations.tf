@@ -9,7 +9,7 @@ resource "aws_cloudwatch_log_group" "dbmigrations" {
 }
 
 resource "aws_ecs_task_definition" "dbmigrations" {
-  family                   = "${local.service_name}-dbmigrations"
+  family                   = "${local.service_name}-dbmigrations-${var.environment}"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = 512 # 0.5 vCPU
@@ -77,11 +77,11 @@ resource "aws_ecs_task_definition" "dbmigrations" {
       secrets = concat(local.new_relic_secrets, [
         {
           name      = "REDIS_PASSWORD"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_auth_password"
+          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/${var.environment}/redis_auth_password"
         },
         {
           name      = "SMARTPROXY_PASSWORD"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/smartproxy_password"
+          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/${var.environment}/smartproxy_password"
         }
       ])
 
@@ -101,6 +101,9 @@ resource "aws_ecs_task_definition" "dbmigrations" {
   })
 }
 
+##
+# DEPRECATED. Use aws_iam_role.sourcehub
+##
 resource "aws_iam_role" "dbmigrations-task" {
   name = format("%s-%s-%s-dbmigrations-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
 

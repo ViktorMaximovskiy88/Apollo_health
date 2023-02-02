@@ -17,6 +17,10 @@ locals {
   })
 
   target_azs = {
+    "sbx" : [
+      "${var.region}b",
+      "${var.region}c"
+    ],
     "dev" : [
       "${var.region}b",
       "${var.region}c"
@@ -32,6 +36,18 @@ locals {
 
   }
 
+  ##
+  # VPCs are scoped to the AWS Account, NOT the Apollo environment
+  # This mapping will map the Apollo Environment to the VPC Environment
+  ##
+  vpc_env_mapping = {
+    "sbx": "dev"
+    "dev": "dev"
+    "tst": "tst"
+    "prd": "prd"
+  }
+  vpc_environment = local.vpc_env_mapping[var.environment]
+  
   event_source = "com.mmitnetwork.sourcehub"
 
   # Will leave the base mongodb-url unchanged in case other apps need a different auth mechanism
@@ -44,11 +60,11 @@ locals {
   new_relic_secrets = [
     {
       name      = "NEW_RELIC_LICENSE_KEY"
-      valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/new_relic_license_key"
+      valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/${var.environment}/new_relic_license_key"
     },
     {
       name      = "NEW_RELIC_API_KEY"
-      valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/new_relic_api_key"
+      valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/${var.environment}/new_relic_api_key"
     }
   ]
 }

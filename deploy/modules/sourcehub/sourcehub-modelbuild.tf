@@ -9,7 +9,7 @@ resource "aws_cloudwatch_log_group" "modelbuild" {
 }
 
 resource "aws_ecs_task_definition" "modelbuild" {
-  family                   = "${local.service_name}-modelbuild"
+  family                   = "${local.service_name}-modelbuild-${var.environment}"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   # TODO: Make cpu, memory a variable and determine appropriate thresholds
@@ -90,7 +90,7 @@ resource "aws_ecs_task_definition" "modelbuild" {
       secrets = concat(local.new_relic_secrets, [
         {
           name      = "REDIS_PASSWORD"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_auth_password"
+          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/${var.environment}/redis_auth_password"
         }
       ])
 

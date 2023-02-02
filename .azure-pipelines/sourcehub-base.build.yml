@@ -7,9 +7,14 @@ steps:
     inputs:
       awsCredentials: "Apollo-AWS-Dev-Apollo"
       regionName: 'us-east-1'
-      repository: 'sourcehub-base'
+      repository: 'sourcehub-base-dev'
       imageSource: 'imagetag'
       imageTag: 'latest'
+    continueOnError: true
+
+  - script: |
+      docker tag 307744843177.dkr.ecr.us-east-1.amazonaws.com/sourcehub-base-dev:latest sourcehub-base:latest
+    displayName: Re-tag SourceHub Base Image
     continueOnError: true
 
   - task: Docker@2
@@ -18,6 +23,6 @@ steps:
       command: build
       repository: sourcehub-base
       Dockerfile: Docker/base.Dockerfile
-      arguments: '--cache-from 307744843177.dkr.ecr.us-east-1.amazonaws.com/sourcehub-base:latest --build-arg BUILDKIT_INLINE_CACHE=1'
+      arguments: '--cache-from sourcehub-base:latest --build-arg BUILDKIT_INLINE_CACHE=1'
       tags: |
         latest
