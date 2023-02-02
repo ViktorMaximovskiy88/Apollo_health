@@ -547,6 +547,7 @@ class ScrapeWorker:
         )
 
     async def aetna_scrape(self) -> list[DownloadContext]:
+        downloads: list[DownloadContext] = []
         async with self.playwright_context(
             AetnaScraper.base_url, page_route=AetnaScraper.page_route
         ) as (page, context):
@@ -558,7 +559,8 @@ class ScrapeWorker:
                 scrape_method=self.site.scrape_method,
                 log=self.log,
             )
-            return await scraper.execute()
+            await scraper.execute(downloads)
+        return downloads
 
     async def tricare_scrape(self):
         search_term_buckets = await TricareScraper.get_search_term_buckets()

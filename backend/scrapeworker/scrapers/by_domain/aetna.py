@@ -60,12 +60,12 @@ class AetnaScraper(DirectDownloadScraper):
             )
         return downloads
 
-    async def execute(self) -> list[DownloadContext]:
+    async def execute(self, downloads: list[DownloadContext]) -> list[DownloadContext]:
         await self.page.route("**/*", self.page_route)
-        downloads: list[DownloadContext] = []
         offset = 0
         while True:
-            target_url = f"https://www.aetna.com/search/results.aspx?cfg=wwwcpcpbext&query=policy&offset={offset}&YearSelect=2023&years=2022-2023"  # noqa
+            target_url = f"https://www.aetna.com/search/results.aspx?cfg=wwwcpcpbext&query=policy&offset={offset}&YearSelect=&years=2022-2023"  # noqa
+            self.log.debug(f"Attempting goto {target_url}")
             await self.page.wait_for_timeout(1500)
             try:
                 await self.page.goto(target_url)
@@ -80,4 +80,5 @@ class AetnaScraper(DirectDownloadScraper):
                 break
             downloads += await self.parse_urls(urls)
             offset += 10
+            self.log.debug(f"Page scrape complete. Offset: {offset} Downloads: {len(downloads)}")
         return downloads
