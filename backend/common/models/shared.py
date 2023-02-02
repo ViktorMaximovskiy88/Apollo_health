@@ -118,6 +118,7 @@ class DocDocumentLocation(SiteLocation):
 class DocDocumentLocationView(DocDocumentLocation):
     site_name: str | None = None
     payer_family: PayerFamily | None = None
+    payer_work_instructions: str | None = None
 
 
 class MatchSource(str, Enum):

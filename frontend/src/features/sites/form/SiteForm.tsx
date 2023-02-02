@@ -11,6 +11,7 @@ import { useParams } from 'react-router-dom';
 import { useGetSiteQuery, useLazyGetSiteByNameQuery } from '../sitesApi';
 import { Rule } from 'antd/lib/form';
 import { useCallback } from 'react';
+import { PayerWorkInstruction } from './PayerWorkInstruction';
 
 const useMustBeUniqueNameRule = () => {
   const { siteId } = useParams();
@@ -92,6 +93,7 @@ const SiteInformation = ({ initialValues }: { initialValues?: Site }) => {
       </Form.Item>
       <Status />
       <Assignee />
+      <PayerWorkInstruction />
     </>
   );
 };
