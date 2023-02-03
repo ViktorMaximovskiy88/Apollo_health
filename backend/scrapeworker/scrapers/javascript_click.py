@@ -36,10 +36,6 @@ class JavascriptClick(PlaywrightBaseScraper):
         self.log.info(selector_string)
         return selector_string
 
-    async def cleanup_page(self, page: Page):
-        await asyncio.sleep(10)  # allow processes to complete
-        await page.close()
-
     # Handle special json responses which contain links to downloadable media.
     async def handle_json(self, response: PageResponse) -> DownloadContext | None:
         if not response.headers.get("content-type", False):
@@ -79,6 +75,7 @@ class JavascriptClick(PlaywrightBaseScraper):
     async def execute(self) -> list[DownloadContext]:
         downloads: list[DownloadContext] = []
         link_handle: ElementHandle
+        page_process_queue: list[asyncio.Future[None]] = []
 
         async def postprocess_response(response: PageResponse) -> None:
             accepted_types = [
@@ -138,7 +135,15 @@ class JavascriptClick(PlaywrightBaseScraper):
             except Exception:
                 logging.error("exception", exc_info=True)
 
-        self.context.on("page", self.cleanup_page)
+        async def cleanup_page(page: Page):
+            page.on("download", postprocess_download)
+            cleanup_future = asyncio.Future()
+            page_process_queue.append(cleanup_future)
+            await asyncio.sleep(10)  # allow processes to complete
+            await page.close()
+            cleanup_future.set_result(None)
+
+        self.context.on("page", cleanup_page)
         # Handle onclick json response where the json has link to pdf.
         self.context.on("response", postprocess_response)
         # Handle onclick download directly to pdf rather than response.
@@ -158,4 +163,5 @@ class JavascriptClick(PlaywrightBaseScraper):
                 self.log.error(ex, exc_info=True, stack_info=True)
                 await self.nav_to_base()
 
+        await asyncio.gather(*page_process_queue)  # be sure all downloads complete
         return downloads
