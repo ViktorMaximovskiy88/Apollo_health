@@ -216,6 +216,8 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
             [("locations.url", pymongo.ASCENDING)],
             [("locks.user_id", pymongo.ASCENDING)],
             [("locations.payer_family_id", pymongo.ASCENDING)],
+            [("therapy_tags.code", pymongo.ASCENDING), ("therapy_tags.focus", pymongo.ASCENDING)],
+            [("indication_tags.code", pymongo.ASCENDING)],
             [("name", pymongo.TEXT), ("locations.link_text", pymongo.TEXT)],
         ]
 
