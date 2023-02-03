@@ -20,9 +20,16 @@ class DocDocumentRepository:
         if bool(updates.__dict__):  # if updates is not empty
             updates = await self.update_user_edited_fields(doc, updates)
             self.handle_document_type_change(doc, updates)
-            final_effective_date = calc_final_effective_date(updates)
-            if final_effective_date:
-                updates.final_effective_date = final_effective_date
+            if (
+                updates.effective_date != doc.effective_date
+                or doc.last_updated_date != updates.last_updated_date
+                or doc.last_reviewed_date != updates.last_reviewed_date
+                or doc.published_date != updates.published_date
+                or doc.first_collected_date != updates.first_collected_date
+            ):
+                final_effective_date = calc_final_effective_date(updates)
+                if final_effective_date:
+                    updates.final_effective_date = final_effective_date
 
         self.change_info = get_doc_change_info(updates, doc)
         return updates
