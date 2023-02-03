@@ -64,7 +64,7 @@ const InternalDocs = [
 ];
 
 export const priorityOptions = [
-  { label: 'None', id: 0, value: 0 },
+  { label: 'No Priority', id: 0, value: 0 },
   { label: 'Low', id: 1, value: 1 },
   { label: 'High', id: 2, value: 2 },
   { label: 'Critical', id: 3, value: 3 },
