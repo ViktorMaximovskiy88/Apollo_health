@@ -12,7 +12,7 @@ from backend.common.models.site import FocusSectionConfig
 from backend.scrapeworker.document_tagging.base_tagger import BaseTagger
 from backend.scrapeworker.document_tagging.tag_focusing import FocusChecker
 
-SPECIAL_CHARACTERS = ["\u00AE", "\u2122", "\24C7", "\u2020", "\u271D"]
+SPECIAL_CHARACTERS = ["\u00AE", "\u2122", "\24C7", "\u2020", "\u271D", "\u002A", "\u2038"]
 
 
 class TherapyTagger(BaseTagger):
