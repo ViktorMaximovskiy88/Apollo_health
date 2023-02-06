@@ -124,6 +124,8 @@ class ScrapeWorker:
 
     async def html_to_pdf(self, url: str, download: DownloadContext, checksum: str, temp_path: str):
         dest_path = f"{checksum}.{download.file_extension}.pdf"
+        if self.doc_client.object_exists(dest_path):
+            return
         if download.direct_scrape or download.playwright_download:
             async with aiofiles.open(temp_path) as html_file:
                 html = await html_file.read()
@@ -280,6 +282,9 @@ class ScrapeWorker:
                 document = await RetrievedDocument.find_one(
                     RetrievedDocument.text_checksum == text_checksum
                 )
+                if document:
+                    checksum = document.checksum
+                    dest_path = f"{checksum}.{download.file_extension}"
 
             if not self.doc_client.object_exists(dest_path):
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
