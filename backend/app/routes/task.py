@@ -31,8 +31,7 @@ async def get_task(
 async def get_user_task(
     current_user: User = Security(get_current_user),
 ) -> list[tasks.TaskLog]:
-    tasks: list[tasks.TaskLog] = await tasks.TaskLog.get_incomplete_for_user(current_user)
-    return tasks
+    return await tasks.TaskLog.get_incomplete_for_user(current_user)
 
 
 async def enqueue_site_tasks(
@@ -61,10 +60,10 @@ async def bulk_sites_task(
 
 
 @router.post("/enqueue/{task_type}", response_model=tasks.TaskLog)
-async def enquque_task(
+async def enqueue_task(
     task_type: str,
     # TODO reconcile 'typing' between generics and pydantic
-    payload: tasks.DocTask | tasks.SiteTask | tasks.PDFDiffTask,
+    payload: tasks.DocTask | tasks.SiteTask | tasks.PDFDiffTask | tasks.RescrapeDocTask,
     current_user: User = Security(get_current_user),
 ) -> tasks.TaskLog:
     TaskType = getattr(tasks, task_type)

@@ -1,5 +1,7 @@
 import logging
 
+from backend.common.tasks.processors.rescrape_doc import RescrapeDocProcessor
+
 __all__ = ["content", "date", "doc_type", "lineage", "pdf_diff", "tag", "doc"]
 
 from backend.common.models.tasks import TaskLog
@@ -22,6 +24,8 @@ def task_processor_factory(task: TaskLog):
         Processor = TagTaskProcessor
     elif task_type == "DocTypeTask":
         Processor = DocTypeTaskProcessor
+    elif task_type == "RescrapeDocTask":
+        Processor = RescrapeDocProcessor
     else:
         return None
 

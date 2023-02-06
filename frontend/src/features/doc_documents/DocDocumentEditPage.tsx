@@ -48,6 +48,8 @@ export function DocDocumentEditPage() {
 
   if (!doc || !docId) return null;
 
+  console.log('doc is ', doc);
+
   return (
     <MainLayout
       sectionToolbar={

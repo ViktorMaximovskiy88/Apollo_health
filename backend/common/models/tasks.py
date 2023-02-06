@@ -17,6 +17,7 @@ GenericTaskType = TypeVar(
     "DocPipelineTask",
     "SiteDocsPipelineTask",
     "LineageTask",
+    "RescrapeDocTask",
 )
 T = TypeVar("T", bound="TaskLog")
 
@@ -57,6 +58,11 @@ class SiteDocsPipelineTask(SiteTask):
 
 
 class LineageTask(SiteTask):
+    pass
+
+
+class RescrapeDocTask(DocTask):
+    # retr_doc_id: PydanticObjectId
     pass
 
 
