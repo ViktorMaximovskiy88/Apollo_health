@@ -28,10 +28,9 @@ async def get_task(
 
 
 @router.get("/", response_model=list[tasks.TaskLog])
-async def get_user_task(
-    current_user: User = Security(get_current_user),
-) -> list[tasks.TaskLog]:
-    return await tasks.TaskLog.get_incomplete_for_user(current_user)
+async def get_user_task(current_user: User = Security(get_current_user)) -> list[tasks.TaskLog]:
+    result_tasks: list[tasks.TaskLog] = await tasks.TaskLog.get_incomplete_for_user(current_user.id)
+    return result_tasks
 
 
 async def enqueue_site_tasks(

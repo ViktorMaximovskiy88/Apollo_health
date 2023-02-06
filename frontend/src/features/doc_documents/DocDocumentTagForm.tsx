@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Radio, Checkbox, Input, Button } from 'antd';
+import { Radio, Checkbox, Input, Dropdown, Menu, Button } from 'antd';
 import { debounce, orderBy } from 'lodash';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { DocumentTag, UITherapyTag } from './types';
@@ -36,14 +36,12 @@ export function DocDocumentTagForm(props: {
     'indication',
     'therapy',
   ]);
-  const [priorityFilter, setPriorityFilter] = useState<('Critical' | 'High' | 'Low' | 'None')[]>([
-    'Critical',
-    'High',
-    'Low',
-  ]);
+  const [priorityFilter, setPriorityFilter] = useState<
+    ('Critical' | 'High' | 'Low' | 'No Priority')[]
+  >(['Critical', 'High', 'Low']);
   const [editTags, setEditTags] = useState<{ [index: string]: DocumentTag }>({});
   const [pageFilter, setPageFilter] = useState('page');
-  const [priorityFilterOpen, setPriorityFilterOpen] = useState(false);
+  const [priorityDropdownOpen, setPriorityDropdownOpen] = useState(false);
 
   const tagFilterOptions = [
     { label: 'Focus', value: 'focus' },
@@ -51,7 +49,45 @@ export function DocDocumentTagForm(props: {
     { label: 'Therapy', value: 'therapy' },
   ];
 
-  const priorityFilterOptions = priorityOptions.map((x) => ({ label: x.label, value: x.label }));
+  const priorityFilterOptions = (
+    <Menu
+      items={[
+        {
+          key: 'Clear All',
+          label: (
+            <Button
+              type="primary"
+              disabled={priorityFilter.length === 0}
+              onClick={(e) => setPriorityFilter([])}
+            >
+              {' '}
+              Clear All
+            </Button>
+          ),
+        },
+        ...priorityOptions.map((option: any) => {
+          return {
+            key: option.value,
+            label: (
+              <Checkbox
+                value={option.label}
+                checked={priorityFilter.includes(option.label)}
+                onChange={(e) =>
+                  setPriorityFilter((filter: any) => {
+                    return e.target.checked
+                      ? [...filter, e.target.value]
+                      : filter.filter((x: any) => x !== e.target.value);
+                  })
+                }
+              >
+                {option.label}
+              </Checkbox>
+            ),
+          };
+        }),
+      ]}
+    />
+  );
 
   const applyFilter = useCallback(
     (tag: DocumentTag) => {
@@ -61,10 +97,11 @@ export function DocDocumentTagForm(props: {
       if (tagTypeFilter.includes('focus')) {
         filter = filter && tag.focus ? tag.focus : false;
       }
-      let priorFilter: boolean = true;
+      if (tag._type !== 'therapy') return filter;
+      let priorFilter: boolean = false;
       for (const priority of priorityOptions) {
         if ((priorityFilter as any).includes(priority.label)) {
-          priorFilter = tag._type === 'therapy' && tag.priority === priority.value;
+          priorFilter = tag.priority === priority.value;
           if (priorFilter) break;
         }
       }
@@ -168,24 +205,25 @@ export function DocDocumentTagForm(props: {
             options={tagFilterOptions}
             value={tagTypeFilter}
             onChange={(values: any) => {
+              if (!values.includes('therapy')) {
+                setPriorityFilter([]);
+              }
               setTagTypeFilter(values);
             }}
           />
-          {priorityFilterOpen ? (
-            <Checkbox.Group
-              options={priorityFilterOptions}
-              value={priorityFilter}
-              onChange={(values: any) => {
-                setPriorityFilter(values);
-              }}
+          <span>Priority Filters ({priorityFilter.length} Applied)</span>
+          <div>
+            <Dropdown.Button
+              className="mr-4 h-full"
+              type={priorityFilter.length ? 'primary' : 'default'}
+              disabled={!tagTypeFilter.includes('therapy')}
+              open={priorityDropdownOpen}
+              icon={
+                <FilterTwoTone onClick={() => setPriorityDropdownOpen(!priorityDropdownOpen)} />
+              }
+              overlay={priorityFilterOptions}
             />
-          ) : (
-            <span>Priority Filters ({priorityFilter.length} Applied)</span>
-          )}
-          <Button
-            onClick={() => setPriorityFilterOpen(!priorityFilterOpen)}
-            icon={<FilterTwoTone />}
-          />
+          </div>
         </div>
       </div>
 

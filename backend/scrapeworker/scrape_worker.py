@@ -47,6 +47,7 @@ from backend.scrapeworker.common.utils import get_extension_from_path_like, supp
 from backend.scrapeworker.file_parsers import get_tags, parse_by_type, pdf
 from backend.scrapeworker.playbook import PlaybookException, ScrapePlaybook
 from backend.scrapeworker.scrapers import ScrapeHandler
+from backend.scrapeworker.scrapers.by_domain.aetna import AetnaScraper
 from backend.scrapeworker.scrapers.by_domain.tricare import TricareScraper
 from backend.scrapeworker.scrapers.cms.cms_scraper import CMSScrapeController
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
@@ -123,7 +124,9 @@ class ScrapeWorker:
 
     async def html_to_pdf(self, url: str, download: DownloadContext, checksum: str, temp_path: str):
         dest_path = f"{checksum}.{download.file_extension}.pdf"
-        if download.direct_scrape:
+        if self.doc_client.object_exists(dest_path):
+            return
+        if download.direct_scrape or download.playwright_download:
             async with aiofiles.open(temp_path) as html_file:
                 html = await html_file.read()
             story = fitz.Story(html=html)
@@ -282,6 +285,9 @@ class ScrapeWorker:
                 document = await RetrievedDocument.find_one(
                     RetrievedDocument.text_checksum == text_checksum
                 )
+                if document:
+                    checksum = document.checksum
+                    dest_path = f"{checksum}.{download.file_extension}"
 
             if not self.doc_client.object_exists(dest_path):
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
@@ -388,7 +394,7 @@ class ScrapeWorker:
 
     @asynccontextmanager
     async def playwright_context(
-        self, url: str, cookies: list[Cookie] = []
+        self, url: str, cookies: list[Cookie] = [], **kwargs
     ) -> AsyncGenerator[tuple[Page, BrowserContext], None]:
         self.log.debug(f"Creating context for {url}")
         context: BrowserContext | None = None
@@ -417,6 +423,8 @@ class ScrapeWorker:
                 page = await context.new_page()
                 await stealth_async(page)
                 page.on("dialog", handle_dialog)
+                if "page_route" in kwargs:
+                    await page.route("**/*", kwargs["page_route"])
 
                 self.log.info(f"Awaiting response for {url}")
                 base_url_timeout = self.site.scrape_method_configuration.base_url_timeout_ms
@@ -538,6 +546,30 @@ class ScrapeWorker:
         extension = get_extension_from_path_like(url)
         return extension in ["docx", "pdf", "xlsx"]
 
+    def is_aetna_scrape(self, url: str) -> bool:
+        parsed_url = urlparse(url)
+        return (
+            parsed_url.netloc == "www.aetna.com"
+            and parsed_url.path
+            == "/health-care-professionals/clinical-policy-bulletins/pharmacy-clinical-policy-bulletins/pharmacy-clinical-policy-bulletins-search-results.html"  # noqa
+        )
+
+    async def aetna_scrape(self) -> list[DownloadContext]:
+        downloads: list[DownloadContext] = []
+        async with self.playwright_context(
+            AetnaScraper.base_url, page_route=AetnaScraper.page_route
+        ) as (page, context):
+            scraper = AetnaScraper(
+                page=page,
+                context=context,
+                config=self.site.scrape_method_configuration,
+                url=AetnaScraper.base_url,
+                scrape_method=self.site.scrape_method,
+                log=self.log,
+            )
+            await scraper.execute(downloads)
+        return downloads
+
     async def tricare_scrape(self):
         search_term_buckets = await TricareScraper.get_search_term_buckets()
         await self.scrape_task.update(
@@ -606,6 +638,10 @@ class ScrapeWorker:
                 async for downloads in cms_scraper.batch_execute():
                     self.log.debug(f"Queueing {len(downloads)} CMS downloads")
                     all_downloads += downloads
+                continue
+            if self.is_aetna_scrape(url):
+                self.log.info(f"Running Aetna Scraper for {url}")
+                all_downloads += await self.aetna_scrape()
                 continue
 
             # NOTE if the base url ends in a handled file extension,

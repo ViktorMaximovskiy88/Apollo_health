@@ -9,7 +9,7 @@ resource "aws_cloudwatch_log_group" "parseworker" {
 }
 
 resource "aws_ecs_task_definition" "parseworker" {
-  family                   = "${local.service_name}-parseworker"
+  family                   = "${local.service_name}-parseworker-${var.environment}"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   # TODO: Make cpu, memory a variable and determine appropriate thresholds
@@ -87,7 +87,7 @@ resource "aws_ecs_task_definition" "parseworker" {
       secrets = concat(local.new_relic_secrets, [
         {
           name      = "REDIS_PASSWORD"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_auth_password"
+          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/${var.environment}/redis_auth_password"
         }
       ])
 
@@ -107,6 +107,9 @@ resource "aws_ecs_task_definition" "parseworker" {
   })
 }
 
+##
+# DEPRECATED. Use aws_iam_role.sourcehub
+##
 resource "aws_iam_role" "parseworker-task" {
   name = format("%s-%s-%s-parseworker-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
 
@@ -199,6 +202,7 @@ resource "aws_security_group" "parseworker" {
 }
 
 resource "aws_ecs_service" "parseworker" {
+  # Service Name should not include environment, since they are scoped to the Cluster which is scoped to an environment
   name             = "${local.service_name}-parseworker"
   platform_version = "LATEST"
   cluster          = data.aws_ecs_cluster.ecs-cluster.id

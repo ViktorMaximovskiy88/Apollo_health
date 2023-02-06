@@ -114,6 +114,7 @@ export function DocDocumentLocationForm({
 }: DocDocumentLocationFormTypes) {
   const baseUrl = Form.useWatch(['locations', index, 'base_url']);
   const url = Form.useWatch(['locations', index, 'url']);
+  const payerWorkInstructions = Form.useWatch(['locations', index, 'payer_work_instructions']);
 
   return (
     <div className="property-grid bg-white p-2 mb-4">
@@ -169,6 +170,24 @@ export function DocDocumentLocationForm({
               <LinkIcon href={url} />
             </Form.Item>
           </Col>
+        </Row>
+
+        <Row>
+          <Col span={23}>
+            <Form.Item
+              label="Payer Work Instructions"
+              name={['locations', index, 'payer_work_instructions']}
+            >
+              <Input readOnly={true} />
+            </Form.Item>
+          </Col>
+          {payerWorkInstructions ? (
+            <Col span={1}>
+              <Form.Item label=" ">
+                <LinkIcon href={payerWorkInstructions} />
+              </Form.Item>
+            </Col>
+          ) : null}
         </Row>
 
         <Form.Item label="Link Text" name={['locations', index, 'link_text']}>

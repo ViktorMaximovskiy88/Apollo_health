@@ -8,6 +8,7 @@ import { ReactNode, useCallback, useState } from 'react';
 import { PayerFamily } from './types';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
 import { CloseOutlined, WarningFilled } from '@ant-design/icons';
+import { isErrorWithData } from '../../common/helpers';
 
 interface PayerFamilyCreateDrawerPropTypes {
   location?: DocDocumentLocation;
@@ -35,9 +36,17 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
 
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
-      const payerFamily = await addPayerFamily(values).unwrap();
-      onSave(payerFamily);
-      form.resetFields();
+      try {
+        const payerFamily = await addPayerFamily(values).unwrap();
+        onSave(payerFamily);
+        form.resetFields();
+      } catch (err: any) {
+        if (isErrorWithData(err)) {
+          setPayerInfoError(err.data.detail);
+        } else {
+          setPayerInfoError('Error Creating A New Payer Family');
+        }
+      }
     },
     [addPayerFamily, onSave, form]
   );
