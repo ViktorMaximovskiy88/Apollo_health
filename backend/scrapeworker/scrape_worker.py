@@ -138,11 +138,14 @@ class ScrapeWorker:
                     story.draw(current_page)
                     writer.end_page()
                 writer.close()
-                yield pdf_temp.name
 
                 pdf_doc = fitz.Document(pdf_temp)
                 pdf_bytes: bytes = pdf_doc.tobytes()  # type: ignore
                 self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
+                # Yield the filename after pdf is written so that if anything happens during write,
+                # an exception will be raised. Otherwise, yielding before writing
+                # will swallow exception.
+                yield pdf_temp.name
         else:
             async with self.playwright_context(url, download.request.cookies) as (
                 page,
@@ -150,10 +153,10 @@ class ScrapeWorker:
             ):
                 await page.goto(url, wait_until="domcontentloaded")
                 pdf_bytes = await page.pdf(display_header_footer=False, print_background=True)
+                self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
                 with tempfile.NamedTemporaryFile() as pdf_temp:
                     pdf_temp.write(pdf_bytes)
                     yield pdf_temp.name
-                self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
 
     def get_updated_tags(
         self,
