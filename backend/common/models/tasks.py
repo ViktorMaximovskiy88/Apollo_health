@@ -62,7 +62,6 @@ class LineageTask(SiteTask):
 
 
 class RegeneratePdfTask(DocTask):
-    # retr_doc_id: PydanticObjectId
     pass
 
 
