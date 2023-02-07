@@ -10,16 +10,25 @@ import { useState } from 'react';
 export function PDFFileLoader({ docId, onPageChange }: { docId?: string; onPageChange: Function }) {
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
   const [pdfUrl, setPdfUrl] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { data } = useGetDocumentViewerUrlQuery(docId, { refetchOnMountOrArgChange: true });
 
   const enqueueTask = useTaskWorker((task: any) => {
     if (data) {
+      setIsLoading(false);
       setPdfUrl(task.result);
     }
   });
 
   if (!data) return null;
   if (!pdfUrl) setPdfUrl(data.url);
+
+  function handleRegeneratePdfClick() {
+    setIsLoading(true);
+    enqueueTask('RegeneratePdfTask', {
+      doc_doc_id: docId,
+    });
+  }
 
   const renderError = (error: LoadError) => {
     let message = '';
@@ -47,15 +56,7 @@ export function PDFFileLoader({ docId, onPageChange }: { docId?: string; onPageC
           {message}
           <br></br>
 
-          <Button
-            // disabled={isLoading}
-            onClick={async () => {
-              enqueueTask('RegeneratePdfTask', {
-                doc_doc_id: docId,
-              });
-            }}
-            className="ml-auto"
-          >
+          <Button disabled={isLoading} onClick={handleRegeneratePdfClick} className="ml-auto">
             Regenerate Pdf
           </Button>
         </div>
