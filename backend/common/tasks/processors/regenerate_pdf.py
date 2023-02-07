@@ -77,5 +77,9 @@ class RegeneratePdfProcessor(TaskProcessor):
             pdf_bytes: bytes = pdf_doc.tobytes()  # type: ignore
             doc_client.write_object_mem(relative_key=f"{doc_checksum}.html.pdf", object=pdf_bytes)
 
+        # Pass signed url so doc re-renders with new pdf.
+        url = doc_client.get_signed_url(f"{doc_checksum}.html.pdf", expires_in_seconds=60 * 60)
+        return url
+
     async def get_progress(self) -> float:
         return 0.0

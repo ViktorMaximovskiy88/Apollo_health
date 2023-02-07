@@ -5,13 +5,21 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Button } from 'antd';
 import { useTaskWorker } from '../features/tasks/taskSlice';
 import classNames from 'classnames';
+import { useState } from 'react';
 
 export function PDFFileLoader({ docId, onPageChange }: { docId?: string; onPageChange: Function }) {
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
+  const [pdfUrl, setPdfUrl] = useState('');
   const { data } = useGetDocumentViewerUrlQuery(docId, { refetchOnMountOrArgChange: true });
-  const enqueueTask = useTaskWorker();
+
+  const enqueueTask = useTaskWorker((task: any) => {
+    if (data) {
+      setPdfUrl(task.result);
+    }
+  });
 
   if (!data) return null;
+  if (!pdfUrl) setPdfUrl(data.url);
 
   const renderError = (error: LoadError) => {
     let message = '';
@@ -44,7 +52,6 @@ export function PDFFileLoader({ docId, onPageChange }: { docId?: string; onPageC
             onClick={async () => {
               enqueueTask('RegeneratePdfTask', {
                 doc_doc_id: docId,
-                // retr_doc_id: docId,
               });
             }}
             className="ml-auto"
@@ -74,7 +81,7 @@ export function PDFFileLoader({ docId, onPageChange }: { docId?: string; onPageC
     <ErrorBoundary FallbackComponent={ViewerErrorFallback}>
       <Viewer
         renderError={renderError} // Handle invalid fileUrl (missing pdf)
-        fileUrl={data.url}
+        fileUrl={pdfUrl}
         plugins={[defaultLayoutPluginInstance]}
         onPageChange={(e: PageChangeEvent) => {
           onPageChange(e.currentPage);
