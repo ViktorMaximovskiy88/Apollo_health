@@ -75,7 +75,7 @@ class RegeneratePdfProcessor(TaskProcessor):
 
             pdf_doc = fitz.Document(pdf_temp)
             pdf_bytes: bytes = pdf_doc.tobytes()  # type: ignore
-            self.doc_client.write_object_mem(relative_key=f"{doc_checksum}.pdf", object=pdf_bytes)
+            doc_client.write_object_mem(relative_key=f"{doc_checksum}.html.pdf", object=pdf_bytes)
 
     async def get_progress(self) -> float:
         return 0.0

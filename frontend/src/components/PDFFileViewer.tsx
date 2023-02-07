@@ -13,8 +13,6 @@ export function PDFFileLoader({ docId, onPageChange }: { docId?: string; onPageC
 
   if (!data) return null;
 
-  console.log('pdf file is', data);
-
   const renderError = (error: LoadError) => {
     let message = '';
     switch (
@@ -33,7 +31,6 @@ export function PDFFileLoader({ docId, onPageChange }: { docId?: string; onPageC
         className="flex items-center"
         style={{
           border: '1px solid rgba(0, 0, 0, 0.3)',
-          display: 'flex',
           height: '100%',
           justifyContent: 'center',
         }}

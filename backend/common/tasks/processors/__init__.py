@@ -1,6 +1,6 @@
 import logging
 
-from backend.common.tasks.processors.rescrape_doc import RegeneratePdfProcessor
+from backend.common.tasks.processors.regenerate_pdf import RegeneratePdfProcessor
 
 __all__ = ["content", "date", "doc_type", "lineage", "pdf_diff", "tag", "doc"]
 
