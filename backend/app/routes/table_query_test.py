@@ -44,7 +44,7 @@ async def logger():
     return MockLogger()
 
 
-def test_prepare_table_query():
+def test_prepare_table_query_different_value_type():
     filters = [
         TableFilterInfo(name="document_type", operator="notinlist", type="select", value=None),
         TableFilterInfo(
@@ -64,3 +64,40 @@ def test_prepare_table_query():
         ],
         [("name", -1)],
     )
+
+
+def test_prepare_table_query_sorts():
+    filters = [
+        TableFilterInfo(name="document_type", operator="notinlist", type="select", value=None),
+    ]
+    sorts = [TableSortInfo(name="name", dir=-1), TableSortInfo(name="name2", dir=1)]
+    match, sort_by = _prepare_table_query(sorts, filters)
+    assert sort_by == [("name", -1), ("name2", 1)]
+
+
+def test_prepare_table_query_no_filter_value_and_operator_in_list():
+    filters = [
+        TableFilterInfo(name="document_type", operator="empty", type="select", value=None),
+        TableFilterInfo(name="document_type", operator="notEmpty", type="select", value=None),
+        TableFilterInfo(name="document_type", operator="leq", type="select", value=None),
+        TableFilterInfo(name="document_type", operator="neq", type="select", value=None),
+        TableFilterInfo(name="document_type", operator="notinlist", type="select", value=None),
+    ]
+    sorts = [TableSortInfo(name="name", dir=-1)]
+    match, sort_by = _prepare_table_query(sorts, filters)
+    assert match == [
+        {"document_type": {"$in": [None, ""]}},
+        {"document_type": {"$exists": True, "$nin": [None, ""]}},
+        {"document_type": ""},
+        {"document_type": {"$ne": None}},
+        {"document_type": {"$nin": []}},
+    ]
+
+
+def test_prepare_table_query_no_filter_value_and_operator_not_in_list():
+    filters = [
+        TableFilterInfo(name="document_type", operator="textcontains", type="select", value=None),
+    ]
+    sorts = [TableSortInfo(name="name", dir=-1)]
+    match, sort_by = _prepare_table_query(sorts, filters)
+    assert match == []
