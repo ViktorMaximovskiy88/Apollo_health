@@ -1,27 +1,17 @@
-# import io
 import logging
 import tempfile
 
-# import aiofiles
-# import boto3
 import fitz
 
 import backend.common.models.tasks as tasks
-
-# from backend.app.core.settings import Settings
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
 from backend.common.models.pipeline import PipelineRegistry
-
-# from backend.common.models.shared import DocDocumentLocation
 from backend.common.storage.client import DocumentStorageClient, TextStorageClient
 from backend.common.tasks.task_processor import TaskProcessor
 
-# from backend.scrapeworker.common.models import DownloadContext, Request
-# from backend.scrapeworker.file_parsers import pdf
 
-
-class RescrapeDocProcessor(TaskProcessor):
+class RegeneratePdfProcessor(TaskProcessor):
 
     dependencies: list[str] = [
         "doc_client",
@@ -69,36 +59,23 @@ class RescrapeDocProcessor(TaskProcessor):
             raise Exception("Unable to regenerate pdf!")
 
         # Download the html file to temp file, parse to pdf, and upload to s3.
-        with doc_client.read_object_to_tempfile(f"{doc_checksum}.html") as html_file:
-            # download: DownloadContext = DownloadContext(
-            #     request=Request(url=temp_pdf_path), file_extension=doc_doc.file_extension
-            # )
-            html = await html_file.read()
-            story = fitz.Story(html=html)
-            page_bounds = fitz.paper_rect("letter")
-            content_bounds = page_bounds + (36, 54, -36, -54)  # borders of 0.5 and .75 inches
-            with tempfile.NamedTemporaryFile() as pdf_temp:
-                writer = fitz.DocumentWriter(pdf_temp)
-                more_pages = 1
-                while more_pages:
-                    current_page = writer.begin_page(page_bounds)
-                    more_pages, _ = story.place(content_bounds)
-                    story.draw(current_page)
-                    writer.end_page()
-                writer.close()
+        html = doc_client.read_utf8_object(f"{doc_checksum}.html")
+        story = fitz.Story(html=html)
+        page_bounds = fitz.paper_rect("letter")
+        content_bounds = page_bounds + (36, 54, -36, -54)  # borders of 0.5 and .75 inches
+        with tempfile.NamedTemporaryFile() as pdf_temp:
+            writer = fitz.DocumentWriter(pdf_temp)
+            more_pages = 1
+            while more_pages:
+                current_page = writer.begin_page(page_bounds)
+                more_pages, _ = story.place(content_bounds)
+                story.draw(current_page)
+                writer.end_page()
+            writer.close()
 
-                pdf_doc = fitz.Document(pdf_temp)
-                pdf_bytes: bytes = pdf_doc.tobytes()  # type: ignore
-                self.doc_client.write_object_mem(
-                    relative_key=f"{doc_checksum}.pdf", object=pdf_bytes
-                )
+            pdf_doc = fitz.Document(pdf_temp)
+            pdf_bytes: bytes = pdf_doc.tobytes()  # type: ignore
+            self.doc_client.write_object_mem(relative_key=f"{doc_checksum}.pdf", object=pdf_bytes)
 
-                # TODO: call this after to parse and update dates.
-                # location: DocDocumentLocation = doc_doc.locations[0]
-                # await pdf.PdfParse(
-                #     pdf_temp.name,
-                #     url,
-                #     link_text=location.link_text,
-                #     scrape_method_config=scrape_method_config,
-                #     download=download,
-                # ).update_parsed_content(parsed_content)
+    async def get_progress(self) -> float:
+        return 0.0

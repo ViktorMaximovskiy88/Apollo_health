@@ -1,6 +1,6 @@
 import logging
 
-from backend.common.tasks.processors.rescrape_doc import RescrapeDocProcessor
+from backend.common.tasks.processors.rescrape_doc import RegeneratePdfProcessor
 
 __all__ = ["content", "date", "doc_type", "lineage", "pdf_diff", "tag", "doc"]
 
@@ -24,8 +24,8 @@ def task_processor_factory(task: TaskLog):
         Processor = TagTaskProcessor
     elif task_type == "DocTypeTask":
         Processor = DocTypeTaskProcessor
-    elif task_type == "RescrapeDocTask":
-        Processor = RescrapeDocProcessor
+    elif task_type == "RegeneratePdfTask":
+        Processor = RegeneratePdfProcessor
     else:
         return None
 
