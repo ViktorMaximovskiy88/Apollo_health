@@ -92,7 +92,7 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => 
 
       form.submit();
     },
-    [form]
+    [convertPayerFamily, form, payer_family_id, queryPf]
   );
 
   useEffect(() => {
