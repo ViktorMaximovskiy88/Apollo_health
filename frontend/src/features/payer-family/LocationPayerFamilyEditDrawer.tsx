@@ -39,6 +39,7 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => 
     props.onClose();
     setPayerInfoError(undefined);
     form.resetFields();
+    setPopupOpen(false);
   }, [props.onClose]);
 
   const onSubmit = useCallback(
@@ -91,6 +92,7 @@ export const PayerFamilyEditDrawer = (props: PayerFamilyEditDrawerPropTypes) => 
       }
 
       form.submit();
+      setPopupOpen(false);
     },
     [convertPayerFamily, form, payer_family_id, queryPf]
   );

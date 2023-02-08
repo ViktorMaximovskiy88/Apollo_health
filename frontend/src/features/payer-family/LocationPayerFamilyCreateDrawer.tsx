@@ -32,6 +32,7 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
     props.onClose();
     setPayerInfoError('');
     form.resetFields();
+    setPopupOpen(false);
   }, [form, props]);
 
   const onFinish = useCallback(
