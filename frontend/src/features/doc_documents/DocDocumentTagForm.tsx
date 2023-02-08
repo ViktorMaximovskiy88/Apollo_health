@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Radio, Checkbox, Input, Dropdown, Menu, Button } from 'antd';
+import { Radio, Checkbox, Input, Dropdown, Menu, Button, Form } from 'antd';
 import { debounce, orderBy } from 'lodash';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { DocumentTag, UITherapyTag } from './types';
@@ -7,6 +7,7 @@ import { DocumentTag, UITherapyTag } from './types';
 import { EditTag, ReadTag } from './TagRow';
 import { priorityOptions } from './useSiteDocDocumentColumns';
 import { FilterTwoTone } from '@ant-design/icons';
+import { focusDocumentTypes } from './useOnFinish';
 
 function sortOrder(tags: any[], pageFilter: string) {
   if (pageFilter === 'page') {
@@ -23,9 +24,9 @@ function textFilter(tag: any, field: string, searchRegex: RegExp) {
 }
 
 export function DocDocumentTagForm(props: {
-  tags: Array<DocumentTag>;
+  tags: DocumentTag[];
   onDeleteTag: Function;
-  onEditTag: Function;
+  onEditTag: (newTag: DocumentTag, updateTags: boolean) => void;
   currentPage: number;
 }) {
   const { tags, onEditTag, onDeleteTag, currentPage } = props;
@@ -95,12 +96,14 @@ export function DocDocumentTagForm(props: {
     />
   );
 
+  const documentType = Form.useWatch('document_type');
+
   const applyFilter = useCallback(
     (tag: DocumentTag) => {
       const validPage = pageFilter === 'doc' ? true : currentPage === tag.page;
       console.debug(currentPage === tag.page, 'currentPage', currentPage, 'tag.page', tag.page);
       let filter: boolean = tagTypeFilter.includes(tag._type) && validPage;
-      if (tagTypeFilter.includes('focus')) {
+      if (!focusDocumentTypes.includes(documentType) && tagTypeFilter.includes('focus')) {
         filter = filter && tag.focus ? tag.focus : false;
       }
       if (tag._type !== 'therapy' || !priorityFilterApplied) return filter;
@@ -114,7 +117,7 @@ export function DocDocumentTagForm(props: {
       return filter && priorFilter;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pageFilter, currentPage, tagTypeFilter, priorityFilter]
+    [pageFilter, currentPage, tagTypeFilter, priorityFilter, documentType]
   );
 
   const applyFilters = useCallback(() => {

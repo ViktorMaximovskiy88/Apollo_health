@@ -1,17 +1,10 @@
 import { useMemo } from 'react';
 import { Form, FormInstance } from 'antd';
-import {
-  DocDocument,
-  DocumentTag,
-  IndicationTag,
-  TherapyTag,
-  UIIndicationTag,
-  UITherapyTag,
-} from './types';
+
+import { DocDocument } from './types';
 import { DocDocumentTagForm } from './DocDocumentTagForm';
 import { dateToMoment } from '../../common';
-import { useCallback, useEffect, useState } from 'react';
-import { isEqual } from 'lodash';
+import { useCallback, useEffect } from 'react';
 import { DocDocumentInfoForm } from './DocDocumentInfoForm';
 import { DocDocumentLocations } from './locations/DocDocumentLocations';
 import { useGetChangeLogQuery, useGetDocDocumentQuery } from './docDocumentApi';
@@ -21,6 +14,8 @@ import { DocStatusModal } from './DocStatusModal';
 import { HashRoutedTabs } from '../../components/HashRoutedTabs';
 import { CommentWall } from '../comments/CommentWall';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
+import { useTagsState } from './useTagsState';
+import { useOnFinish } from './useOnFinish';
 
 const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   const calculateFinalEffectiveDate = useCallback(() => {
@@ -32,80 +27,6 @@ const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   }, [form]);
 
   return calculateFinalEffectiveDate;
-};
-
-const useTagsState = (docId: string): [Array<DocumentTag>, (tags: Array<DocumentTag>) => void] => {
-  const { data: doc } = useGetDocDocumentQuery(docId);
-
-  const [tags, setTags] = useState<Array<DocumentTag>>([]);
-
-  useEffect(() => {
-    if (!doc) return;
-
-    const therapyTags: UITherapyTag[] = doc.therapy_tags.map((tag, i) => ({
-      ...tag,
-      id: `${i}-therapy`,
-      _type: 'therapy',
-      _normalized: `${tag.name.toLowerCase()}|${tag.text.toLowerCase()}`,
-    }));
-    const indicationTags: UIIndicationTag[] = doc.indication_tags.map((tag, i) => ({
-      ...tag,
-      id: `${i}-indication`,
-      _type: 'indication',
-      _normalized: tag.text.toLowerCase(),
-    }));
-    setTags([...therapyTags, ...indicationTags]);
-  }, [doc]);
-
-  return [tags, setTags];
-};
-
-interface UseOnFinishType {
-  onSubmit: (doc: Partial<DocDocument>) => Promise<void>;
-  tags: Array<DocumentTag>;
-  setIsSaving: (isSaving: boolean) => void;
-  docId: string;
-}
-const useOnFinish = ({
-  onSubmit,
-  tags,
-  setIsSaving,
-  docId,
-}: UseOnFinishType): ((doc: Partial<DocDocument>) => void) => {
-  const onFinish = async (submittedDoc: Partial<DocDocument>): Promise<void> => {
-    if (!submittedDoc) return;
-
-    setIsSaving(true);
-
-    try {
-      const indication_tags: IndicationTag[] = [];
-      const therapy_tags: TherapyTag[] = [];
-      for (const uiTag of tags) {
-        const { id, _type, _normalized, ...tag } = uiTag;
-        if (_type === 'indication') {
-          indication_tags.push(tag as IndicationTag);
-        } else {
-          therapy_tags.push(tag as TherapyTag);
-        }
-      }
-
-      submittedDoc.previous_par_id = submittedDoc.previous_par_id || null;
-      submittedDoc.document_family_id = submittedDoc.document_family_id || null;
-
-      await onSubmit({
-        ...submittedDoc,
-        indication_tags,
-        therapy_tags,
-        _id: docId,
-      });
-    } catch (error) {
-      //  TODO real errors please
-      console.error(error);
-    }
-    setIsSaving(false);
-  };
-
-  return onFinish;
 };
 
 const buildInitialValues = (doc: DocDocument) => ({
@@ -150,27 +71,9 @@ export function DocDocumentEditForm({
     calculateFinalEffectiveDate();
   }, [doc, calculateFinalEffectiveDate]);
 
-  const [tags, setTags] = useTagsState(docId);
-  const onFinish = useOnFinish({ onSubmit, tags, setIsSaving, docId });
+  const { tags, setTags, handleTagEdit } = useTagsState({ docId, setHasChanges });
 
-  function handleTagEdit(newTag: DocumentTag, updateTags: boolean = false) {
-    const update = [...tags];
-    const index = update.findIndex((tag) => {
-      return tag.id === newTag.id;
-    });
-    if (index > -1) {
-      if (updateTags) {
-        update.forEach((tag) => {
-          if (tag.id !== newTag.id && tag.text === newTag.text) {
-            tag.focus = newTag.focus;
-          }
-        });
-      }
-      if (!isEqual(newTag, update[index])) setHasChanges(true);
-      update[index] = newTag;
-    }
-    setTags(update);
-  }
+  const onFinish = useOnFinish({ onSubmit, tags, setIsSaving, docId });
 
   const initialValues = useMemo(() => (doc ? buildInitialValues(doc) : {}), [doc]);
   useEffect(() => {
