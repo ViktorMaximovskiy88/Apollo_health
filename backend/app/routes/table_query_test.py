@@ -4,12 +4,14 @@ from random import random
 import pytest
 import pytest_asyncio
 from beanie import PydanticObjectId
+from beanie.odm.queries.find import FindMany
 from pydantic import HttpUrl
 
 from backend.app.routes.table_query import (
     TableFilterInfo,
     TableSortInfo,
     _prepare_table_query,
+    query_table,
     transform_value,
 )
 from backend.common.core.enums import ApprovalStatus, CollectionMethod, ScrapeMethod, SiteStatus
@@ -137,7 +139,6 @@ def simple_doc_doc(site: Site, ret_doc: RetrievedDocument, i: int) -> DocDocumen
 
 
 async def populate_db():
-
     await init_db(mock=True)
     site = simple_site()
     await site.save()
@@ -224,8 +225,8 @@ def test_transform_value_boolean():
     value2 = "False"
     type = "boolean"
     resp1 = transform_value(value1, type)
-    assert resp1 is True
     resp2 = transform_value(value2, type)
+    assert resp1 is True
     assert resp2 is False
 
 
@@ -238,3 +239,32 @@ def test_transform_value_date_number():
     resp1 = transform_value(value1, type1)
     assert resp == datetime(2023, 2, 8)
     assert resp1 == 1
+
+
+async def test_construct_query_table():
+    await populate_db()
+    doc_query: FindMany = DocDocument.find({})
+    resp = await query_table(
+        doc_query,
+        None,
+        None,
+        [TableSortInfo(name="name", dir=-1)],
+        [
+            TableFilterInfo(
+                name="document_type", operator="eq", type="select", value=["Treatment Request Form"]
+            ),
+        ],
+    )
+    resp1 = await query_table(
+        doc_query,
+        None,
+        None,
+        [TableSortInfo(name="name", dir=-1)],
+        [
+            TableFilterInfo(
+                name="document_type", operator="eq", type="select", value=["doesn't exist"]
+            ),
+        ],
+    )
+    assert 10 == resp.total
+    assert 0 == resp1.total
