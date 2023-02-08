@@ -29,6 +29,7 @@ from backend.common.models.doc_document import (
     DocDocument,
     DocDocumentLimitTags,
     DocDocumentView,
+    IdOnlyDocument,
     UpdateDocDocument,
 )
 from backend.common.models.document_family import DocumentFamily
@@ -80,7 +81,7 @@ async def get_all_doc_document_ids(
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve tasks.")
         query["retrieved_document_id"] = {"$in": task.retrieved_document_ids}
 
-    query = DocDocument.find_many(query).project(DocDocumentLimitTags)
+    query = DocDocument.find_many(query).project(IdOnlyDocument)
     query = construct_table_query(query, [], filters)
     return [doc.id async for doc in query]
 
