@@ -81,6 +81,7 @@ def compile_label_rgx():
         r"\bdate of origin": "published_date",
         r"\bimplementation": "published_date",
         r"\bpublication date": "published_date",
+        r"\borigination": "published_date",
     }
     label_rgxs = [re.compile(fmt, flags=re.IGNORECASE) for fmt in label_hash.keys()]
     return label_rgxs, label_hash

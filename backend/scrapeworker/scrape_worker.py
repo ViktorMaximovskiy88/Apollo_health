@@ -44,6 +44,7 @@ from backend.scrapeworker.common.models import DownloadContext, Metadata, Reques
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.scrapeworker.common.update_documents import DocumentUpdater
 from backend.scrapeworker.common.utils import get_extension_from_path_like, supported_mimetypes
+from backend.scrapeworker.crawlers.search_crawler import SearchableCrawler
 from backend.scrapeworker.file_parsers import get_tags, parse_by_type, pdf
 from backend.scrapeworker.playbook import PlaybookException, ScrapePlaybook
 from backend.scrapeworker.scrapers import ScrapeHandler
@@ -51,7 +52,6 @@ from backend.scrapeworker.scrapers.by_domain.aetna import AetnaScraper
 from backend.scrapeworker.scrapers.by_domain.tricare import TricareScraper
 from backend.scrapeworker.scrapers.cms.cms_scraper import CMSScrapeController
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
-from backend.scrapeworker.search_crawler import SearchableCrawler
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -75,6 +75,7 @@ class ScrapeWorker:
         self.scrape_task = scrape_task
         self.site = site
         self.seen_urls = set()
+        self.seen_follow_urls = set()
         self.seen_hashes = set()
         self.doc_client = DocumentStorageClient()
         self.text_handler = TextHandler()
@@ -483,10 +484,16 @@ class ScrapeWorker:
         return [url for url in self.site.base_urls if url.status == "ACTIVE"]
 
     async def queue_downloads(
-        self, url: str, base_url: str, cookies: list[Cookie] = [], skip_playbook: bool = False
+        self,
+        url: str,
+        base_url: str,
+        cookies: list[Cookie] = [],
+        skip_playbook: bool = False,
+        is_follow_link: bool = False,
     ):
         all_downloads: list[DownloadContext] = []
-
+        follow_link_targets: set[FollowLinkScraper.FollowLink] = set()
+        scrape_config = self.site.scrape_method_configuration
         async with self.playwright_context(url, cookies) as (base_page, context):
             async for (page, playbook_context) in self.playbook.run_playbook(
                 base_page, skip_playbook=skip_playbook
@@ -496,39 +503,33 @@ class ScrapeWorker:
                     page=page,
                     playbook_context=playbook_context,
                     log=self.log,
-                    config=self.site.scrape_method_configuration,
+                    config=scrape_config,
                     scrape_method=self.site.scrape_method,
                 )
-                if await self.search_crawler.is_searchable(page):
+                if not is_follow_link and await self.search_crawler.is_searchable(page):
                     async for code in self.search_crawler.run_searchable(page, playbook_context):
-                        await scrape_handler.run_scrapers(
-                            url, base_url, all_downloads, {"file_name": code, "is_searchable": True}
-                        )
+                        if not scrape_config.follow_links or scrape_config.scrape_base_page:
+                            await scrape_handler.run_scrapers(
+                                url,
+                                base_url,
+                                all_downloads,
+                                {"file_name": code, "is_searchable": True},
+                            )
+                        follow_links = await scrape_handler.run_follow_link_scraper(url)
+                        follow_link_targets.update(follow_links)
                 else:
-                    await scrape_handler.run_scrapers(url, base_url, all_downloads)
+                    if (
+                        not scrape_config.follow_links
+                        or is_follow_link
+                        or scrape_config.scrape_base_page
+                    ):
+                        await scrape_handler.run_scrapers(url, base_url, all_downloads)
+                    if is_follow_link:
+                        continue
+                    follow_links = await scrape_handler.run_follow_link_scraper(url)
+                    follow_link_targets.update(follow_links)
 
-        return all_downloads
-
-    async def follow_links(self, url) -> tuple[set[str], list[Cookie]]:
-        urls: set[str] = set()
-        page: Page
-        context: BrowserContext
-        cookies: list[Cookie] = []
-        async with self.playwright_context(url) as (base_page, context):
-            async for page, _ in self.playbook.run_playbook(base_page):
-                crawler = FollowLinkScraper(
-                    page=page,
-                    context=context,
-                    config=self.site.scrape_method_configuration,
-                    url=url,
-                )
-
-                cookies = await context.cookies()
-                if await crawler.is_applicable():
-                    async for dl in crawler.execute():
-                        urls.add(dl.request.url)
-
-        return urls, cookies
+        return all_downloads, follow_link_targets
 
     def should_process_download(self, download: DownloadContext):
         url = download.request.url
@@ -653,16 +654,25 @@ class ScrapeWorker:
                 )
                 all_downloads.append(download)
                 continue
-
-            all_downloads += await self.queue_downloads(url, url)
-            if self.site.scrape_method_configuration.follow_links:
-                self.log.debug(f"Follow links for {url}")
-                (links_found, cookies) = await self.follow_links(url)
-                for nested_url in links_found:
-                    await self.scrape_task.update(Inc({SiteScrapeTask.follow_links_found: 1}))
-                    all_downloads += await self.queue_downloads(
-                        nested_url, base_url=url, cookies=cookies, skip_playbook=True
+            try:
+                downloads, follow_link_targets = await self.queue_downloads(url, url)
+                for target in follow_link_targets:
+                    if target.url in self.seen_follow_urls:
+                        continue
+                    follow_link_downloads, _ = await self.queue_downloads(
+                        target.url, url, target.cookies, skip_playbook=True, is_follow_link=True
                     )
+                    for download in follow_link_downloads:
+                        # use follow link as file name if no other file name found
+                        if download.file_name:
+                            continue
+                        download.file_name = target.link_text
+                        download.metadata.link_text = target.link_text
+                    downloads += follow_link_downloads
+                    self.seen_follow_urls.add(target.url)
+                all_downloads += downloads
+            except Exception:
+                self.log.error(f"Error queueing downloads for url {url}:", exc_info=True)
 
         download_queue = [
             download for download in all_downloads if self.should_process_download(download)

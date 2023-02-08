@@ -48,6 +48,7 @@ class SearchableType(str, Enum):
     CPTCODES = "CPTCODES"
     JCODES = "JCODES"
     TRICARE = "TRICARE"
+    UNIVERSAL = "UNIVERSAL"
 
 
 class DocumentType(str, Enum):

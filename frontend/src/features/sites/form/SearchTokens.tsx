@@ -10,6 +10,7 @@ export function SearchTokens() {
   const searchableTypes = [
     { value: SearchableType.CPTCodes, label: 'CPT Codes' },
     { value: SearchableType.JCodes, label: 'JCodes' },
+    { value: SearchableType.Universal, label: 'Universal Tokens' },
   ];
 
   const inputName = ['scrape_method_configuration', 'searchable_input'];
@@ -17,6 +18,13 @@ export function SearchTokens() {
 
   const groupDivClass = isSearchable ? 'border-solid border-slate-300 rounded p-2 pb-0' : undefined;
   const groupLabelClass = isSearchable ? 'text-lg' : undefined;
+
+  const normalizeBlankInput = (value: string) => {
+    if (value === '') {
+      return null;
+    }
+    return value;
+  };
 
   const SearchablePlaybook = () => (
     <div>
@@ -43,24 +51,37 @@ export function SearchTokens() {
 
   return (
     <div className={groupDivClass}>
-      <Form.Item
-        name={['scrape_method_configuration', 'searchable']}
-        label={<span className={groupLabelClass}>Search Tokens</span>}
-        tooltip={'Site should be searched using CPT or JCodes'}
-        valuePropName="checked"
-      >
-        <Switch className="flex justify-center" />
-      </Form.Item>
+      <div className="flex">
+        <Form.Item
+          name={['scrape_method_configuration', 'searchable']}
+          label={<span className={groupLabelClass}>Search Tokens</span>}
+          tooltip="Site should be searched using specified search codes"
+          valuePropName="checked"
+        >
+          <Switch className="flex justify-center" />
+        </Form.Item>
+      </div>
       {isSearchable ? (
         <>
-          <Form.Item
-            name={['scrape_method_configuration', 'searchable_type']}
-            label="Searchable Type"
-            rules={[{ required: true, message: 'Required' }]}
-            tooltip={'Type of inputs to search for'}
-          >
-            <Select options={searchableTypes} mode="multiple" />
-          </Form.Item>
+          <div className="flex gap-x-8">
+            <Form.Item
+              name={['scrape_method_configuration', 'searchable_type']}
+              label="Searchable Type"
+              rules={[{ required: true, message: 'Required' }]}
+              tooltip={'Type of inputs to search for'}
+              className="grow"
+            >
+              <Select options={searchableTypes} mode="multiple" />
+            </Form.Item>
+            <Form.Item
+              name={['scrape_method_configuration', 'search_prefix_length']}
+              label="Search Prefix Length"
+              tooltip="Shorten search terms to this character length. Leave blank to use whole search term"
+              normalize={normalizeBlankInput}
+            >
+              <Input allowClear type="number" step={1} min={1} max={100}></Input>
+            </Form.Item>
+          </div>
           <Form.Item
             name={inputName}
             label="ID Search Input"

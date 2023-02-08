@@ -1,9 +1,10 @@
-import { Button, Input, InputNumber, Popconfirm, Select, Switch, Tag } from 'antd';
+import { Button, Input, InputNumber, Popconfirm, Select, Tag } from 'antd';
 import { CheckOutlined, CloseOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { VirtualItem, Virtualizer } from '@tanstack/react-virtual';
 import { DocumentTag, TagUpdateStatus } from './types';
 import { useState } from 'react';
 import { priorityStyle } from '../doc_documents/useSiteDocDocumentColumns';
+import { EditFocusTag, ReadFocusTag } from './FocusTag';
 
 function labelColorMap(type: string) {
   const colorMap: any = {
@@ -36,7 +37,7 @@ export function EditTag({
 }: {
   existsCopy: boolean;
   onDeleteTag: Function;
-  onEditTag: Function;
+  onEditTag: (id: string, field: string, value: any) => void;
   onToggleEdit: Function;
   tag: DocumentTag;
   virtualRow: VirtualItem;
@@ -93,13 +94,7 @@ export function EditTag({
           className="flex items-center max-h-6"
         />
         <div className="flex-1 items-center px-5">
-          <Switch
-            defaultChecked={tag.focus}
-            id="focus"
-            onChange={(checked) => onEditTag(tag.id, 'focus', checked)}
-            checkedChildren="Focus"
-            unCheckedChildren="Focus"
-          />
+          <EditFocusTag tag={tag} onEditTag={onEditTag} />
         </div>
         <InputNumber
           controls={false}
@@ -191,11 +186,7 @@ export function ReadTag({
               {priorityStyle(tag.priority)}
             </Tag>
           )}
-          {tag.focus && (
-            <Tag color="gold" className="select-none cursor-default">
-              Focus
-            </Tag>
-          )}
+          <ReadFocusTag tag={tag} />
         </div>
         <div className="flex items-center px-2">{tag.page + 1}</div>
         <div className="flex items-center w-32 justify-center">

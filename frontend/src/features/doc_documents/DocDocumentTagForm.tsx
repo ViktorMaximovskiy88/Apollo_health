@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Radio, Checkbox, Input, Dropdown, Menu, Button } from 'antd';
+import { Radio, Checkbox, Input, Dropdown, Menu, Button, Form } from 'antd';
 import { debounce, orderBy } from 'lodash';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { DocumentTag, UITherapyTag } from './types';
@@ -7,6 +7,7 @@ import { DocumentTag, UITherapyTag } from './types';
 import { EditTag, ReadTag } from './TagRow';
 import { priorityOptions } from './useSiteDocDocumentColumns';
 import { FilterTwoTone } from '@ant-design/icons';
+import { focusDocumentTypes } from './useOnFinish';
 
 function sortOrder(tags: any[], pageFilter: string) {
   if (pageFilter === 'page') {
@@ -23,9 +24,9 @@ function textFilter(tag: any, field: string, searchRegex: RegExp) {
 }
 
 export function DocDocumentTagForm(props: {
-  tags: Array<DocumentTag>;
+  tags: DocumentTag[];
   onDeleteTag: Function;
-  onEditTag: Function;
+  onEditTag: (newTag: DocumentTag, updateTags: boolean) => void;
   currentPage: number;
 }) {
   const { tags, onEditTag, onDeleteTag, currentPage } = props;
@@ -42,6 +43,7 @@ export function DocDocumentTagForm(props: {
   const [editTags, setEditTags] = useState<{ [index: string]: DocumentTag }>({});
   const [pageFilter, setPageFilter] = useState('page');
   const [priorityDropdownOpen, setPriorityDropdownOpen] = useState(false);
+  const [priorityFilterApplied, setPriorityFilterApplied] = useState(true);
 
   const tagFilterOptions = [
     { label: 'Focus', value: 'focus' },
@@ -49,19 +51,22 @@ export function DocDocumentTagForm(props: {
     { label: 'Therapy', value: 'therapy' },
   ];
 
+  const handlePriorityFilterToggle = () => {
+    if (!priorityFilterApplied) {
+      setPriorityFilter(['Critical', 'High', 'Low']);
+    }
+    setPriorityFilterApplied(!priorityFilterApplied);
+  };
+
   const priorityFilterOptions = (
     <Menu
       items={[
         {
-          key: 'Clear All',
+          key: 'Filter',
           label: (
-            <Button
-              type="primary"
-              disabled={priorityFilter.length === 0}
-              onClick={(e) => setPriorityFilter([])}
-            >
+            <Button type="primary" onClick={handlePriorityFilterToggle}>
               {' '}
-              Clear All
+              {priorityFilterApplied ? 'Remove Filter' : 'Add Filter'}
             </Button>
           ),
         },
@@ -70,8 +75,10 @@ export function DocDocumentTagForm(props: {
             key: option.value,
             label: (
               <Checkbox
+                indeterminate={!priorityFilterApplied}
+                disabled={!priorityFilterApplied}
                 value={option.label}
-                checked={priorityFilter.includes(option.label)}
+                checked={priorityFilterApplied && priorityFilter.includes(option.label)}
                 onChange={(e) =>
                   setPriorityFilter((filter: any) => {
                     return e.target.checked
@@ -89,15 +96,17 @@ export function DocDocumentTagForm(props: {
     />
   );
 
+  const documentType = Form.useWatch('document_type');
+
   const applyFilter = useCallback(
     (tag: DocumentTag) => {
       const validPage = pageFilter === 'doc' ? true : currentPage === tag.page;
       console.debug(currentPage === tag.page, 'currentPage', currentPage, 'tag.page', tag.page);
       let filter: boolean = tagTypeFilter.includes(tag._type) && validPage;
-      if (tagTypeFilter.includes('focus')) {
+      if (!focusDocumentTypes.includes(documentType) && tagTypeFilter.includes('focus')) {
         filter = filter && tag.focus ? tag.focus : false;
       }
-      if (tag._type !== 'therapy') return filter;
+      if (tag._type !== 'therapy' || !priorityFilterApplied) return filter;
       let priorFilter: boolean = false;
       for (const priority of priorityOptions) {
         if ((priorityFilter as any).includes(priority.label)) {
@@ -108,7 +117,7 @@ export function DocDocumentTagForm(props: {
       return filter && priorFilter;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pageFilter, currentPage, tagTypeFilter, priorityFilter]
+    [pageFilter, currentPage, tagTypeFilter, priorityFilter, documentType]
   );
 
   const applyFilters = useCallback(() => {
@@ -132,7 +141,7 @@ export function DocDocumentTagForm(props: {
 
     _tags = sortOrder(_tags, pageFilter);
     setFilteredList(_tags);
-  }, [pageFilter, tagTypeFilter, searchTerm, applyFilters, tags]);
+  }, [pageFilter, tagTypeFilter, searchTerm, applyFilters, tags, priorityFilterApplied]);
 
   const onSearch = (e: any) => {
     const search = e.target.value;
@@ -205,17 +214,18 @@ export function DocDocumentTagForm(props: {
             options={tagFilterOptions}
             value={tagTypeFilter}
             onChange={(values: any) => {
-              if (!values.includes('therapy')) {
-                setPriorityFilter([]);
-              }
               setTagTypeFilter(values);
             }}
           />
-          <span>Priority Filters ({priorityFilter.length} Applied)</span>
           <div>
+            {tagTypeFilter.includes('therapy') ? (
+              <span>{priorityFilterApplied ? priorityFilter.length : 0} Filters Selected</span>
+            ) : (
+              <span>No Filter</span>
+            )}
             <Dropdown.Button
               className="mr-4 h-full"
-              type={priorityFilter.length ? 'primary' : 'default'}
+              type={priorityFilterApplied ? 'primary' : 'default'}
               disabled={!tagTypeFilter.includes('therapy')}
               open={priorityDropdownOpen}
               icon={
