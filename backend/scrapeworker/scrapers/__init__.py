@@ -17,6 +17,7 @@ from backend.scrapeworker.scrapers.direct_download import (
     DirectDownloadScraper,
     PlaywrightBaseScraper,
 )
+from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
 from backend.scrapeworker.scrapers.javascript_click import JavascriptClick
 from backend.scrapeworker.scrapers.targeted_html import TargetedHtmlScraper
 
@@ -67,6 +68,12 @@ class ScrapeHandler:
         if self.__is_google(download.request.url):
             google_id = self.__get_google_id(download.request.url)
             download.request.url = f"https://drive.google.com/u/0/uc?id={google_id}&export=download"
+
+    def run_follow_link_scraper(self, url: str):
+        scraper = FollowLinkScraper(
+            page=self.page, context=self.context, config=self.config, url=url
+        )
+        return scraper.execute()
 
     async def run_scrapers(
         self, url: str, base_url: str, downloads: list[DownloadContext], metadata: dict = {}

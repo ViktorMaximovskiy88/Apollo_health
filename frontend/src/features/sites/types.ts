@@ -35,8 +35,10 @@ export interface Site extends BaseDocument {
     follow_links: boolean;
     follow_link_keywords: string[];
     follow_link_url_keywords: string[];
+    scrape_base_page: boolean;
     searchable: boolean;
-    searchable_type: SearchableType | null;
+    search_prefix_length: number | null;
+    searchable_type: SearchableType[];
     searchable_input: AttrSelector | null;
     searchable_submit: AttrSelector | null;
     searchable_playbook: string | null;
@@ -94,6 +96,7 @@ export enum ScrapeMethod {
 export enum SearchableType {
   CPTCodes = 'CPTCODES',
   JCodes = 'JCODES',
+  Universal = 'UNIVERSAL',
 }
 
 export enum SectionType {
