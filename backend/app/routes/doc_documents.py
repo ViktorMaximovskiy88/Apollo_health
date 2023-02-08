@@ -13,6 +13,7 @@ from backend.app.routes.table_query import (
     TableFilterInfo,
     TableQueryResponse,
     TableSortInfo,
+    construct_table_query,
     get_query_json_list,
     query_table,
 )
@@ -30,7 +31,6 @@ from backend.common.models.doc_document import (
     DocDocumentView,
     UpdateDocDocument,
 )
-from backend.common.models.document import RetrievedDocument, RetrievedDocumentLimitTags
 from backend.common.models.document_family import DocumentFamily
 from backend.common.models.payer_backbone import PlanBenefit
 from backend.common.models.payer_family import PayerFamily
@@ -73,22 +73,16 @@ async def get_all_doc_document_ids(
     scrape_task_id: PydanticObjectId | None = None,
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
-    query = {"locations.site_id": site_id}
+    query = {"locations.site_id": site_id} if site_id else {}
     if scrape_task_id:
-        scrape_task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
-        if not scrape_task:
-            raise HTTPException(
-                status.HTTP_406_NOT_ACCEPTABLE,
-                f"Scrape Task {scrape_task_id} does not exist",
-            )
-        query["_id"] = {"$in": scrape_task.retrieved_document_ids}
-    docs = (
-        await RetrievedDocument.find(query)
-        .sort("-first_collected_date")
-        .project(RetrievedDocumentLimitTags)
-        .to_list()
-    )
-    return [doc.id for doc in docs]
+        task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
+        if not task:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve tasks.")
+        query["retrieved_document_id"] = {"$in": task.retrieved_document_ids}
+
+    query = DocDocument.find_many(query).project(DocDocumentLimitTags)
+    query = construct_table_query(query, [], filters)
+    return [doc.id async for doc in query]
 
 
 @router.get(
