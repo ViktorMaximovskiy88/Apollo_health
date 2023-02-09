@@ -1,7 +1,10 @@
 import asyncio
+import os
+import shutil
 import tempfile
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 from random import shuffle
 from typing import AsyncGenerator
 from urllib.parse import urlparse
@@ -70,6 +73,10 @@ class ScrapeWorker:
         if site.scrape_method_configuration.debug:
             _log.setLevel(logging.DEBUG)
 
+        temp_dir = tempfile.gettempdir()
+        self.scrape_temp_path = Path(temp_dir) / str(scrape_task.id)
+        os.makedirs(self.scrape_temp_path)
+
         self.playwright = playwright
         self.browser = browser
         self.scrape_task = scrape_task
@@ -79,7 +86,7 @@ class ScrapeWorker:
         self.seen_hashes = set()
         self.doc_client = DocumentStorageClient()
         self.text_handler = TextHandler()
-        self.downloader = AioDownloader(self.doc_client, _log)
+        self.downloader = AioDownloader(self.doc_client, _log, self.scrape_temp_path)
         self.playbook = ScrapePlaybook(self.site.playbook)
         self.search_crawler = SearchableCrawler(
             config=self.site.scrape_method_configuration, log=_log
@@ -703,7 +710,7 @@ class ScrapeWorker:
 
         await self.site.save()
         await self.downloader.close()
-
+        shutil.rmtree(self.scrape_temp_path)
         if not self.scrape_task.documents_found:
             raise NoDocsCollectedException("No documents collected.")
 
