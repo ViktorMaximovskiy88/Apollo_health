@@ -1,9 +1,11 @@
 import asyncio
+import csv
 import dataclasses
 import os
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime
+from functools import cache
 from pathlib import Path
 
 from openpyxl import load_workbook
@@ -174,6 +176,13 @@ def create_plan_benefits(delivery: Delivery):
             )
 
 
+@cache
+def legacy_group_labels():
+    current_path = os.path.dirname(os.path.realpath(__file__))
+    fixture_path = os.path.join(current_path, "./legacy_group_labels.txt")
+    return {int(id): label for id, label in csv.reader(open(fixture_path), delimiter="\t")}
+
+
 def process_line(h, line, start_date, delivery: Delivery):
     plan_id = line[h["Plan ID"]] or ""
     plan_name = line[h["Plan Name"]] or ""
@@ -276,6 +285,7 @@ def process_line(h, line, start_date, delivery: Delivery):
                 start_date=start_date,
                 l_id=int(medical_par_group_id),
                 name=f"{medical_par_group_name} (Medical)",
+                legacy_policy_label=legacy_group_labels().get(int(medical_par_group_id) * 10000),
                 benefit=Benefit.Medical,
             ),
         )
@@ -308,7 +318,7 @@ def process_line(h, line, start_date, delivery: Delivery):
         )
 
 
-async def insert_delivery(delivery: Delivery | None):
+async def insert_delivery(delivery: Delivery | None, enddated_only=False):
     if not delivery:
         return
 
@@ -317,16 +327,50 @@ async def insert_delivery(delivery: Delivery | None):
         payers: dict[str, PayerBackbone | None] = getattr(delivery, pfield.name)
         for payer in payers.values():
             if payer:
+                is_enddated = payer.end_date < datetime(2038, 1, 1)
+                if enddated_only and not is_enddated:
+                    continue
+                if hasattr(payer, "l_id") and hasattr(payer, "name"):
+                    if isinstance(payer, UMP) and payer.l_id > 10000:
+                        payer.name = f"{payer.name} | {payer.l_id // 10000}"
+                    else:
+                        payer.name = f"{payer.name} | {payer.l_id}"
                 inserts.append(payer.insert())
     await asyncio.gather(*inserts)
 
 
 def convert_filepath_to_start_date(filepath: str):
-    if "4Q22" in filepath:
+    if "2023Q1" in filepath:
+        return datetime(2023, 1, 1)
+    if "2022Q4" in filepath:
         return datetime(2022, 10, 1)
-    if "3Q22" in filepath:
+    if "2022Q3" in filepath:
         return datetime(2000, 1, 1)
     raise Exception(f"Unknown start date time file {filepath}")
+
+
+def create_not_a_plan(delivery: Delivery):
+    start_date = datetime(2000, 1, 1)
+    not_a_plan = Plan(
+        start_date=start_date,
+        l_id=-1,
+        name="Not a Plan",
+        type=PlanType.HMO,
+        channel=Channel.Commercial,
+    )
+    delivery.plans.setdefault(not_a_plan.l_id, not_a_plan)
+    delivery.p_plan_benefits.setdefault(
+        not_a_plan.l_id,
+        PlanBenefit(
+            start_date=not_a_plan.start_date,
+            type=not_a_plan.type,
+            channel=not_a_plan.channel,
+            benefit=Benefit.Pharmacy,
+            l_ump_id=-1,
+            l_controller_id=-1,
+            l_plan_id=-1,
+        ),
+    )
 
 
 async def process_backbone(filepath: str, previous_delivery: Delivery | None):
@@ -344,6 +388,7 @@ async def process_backbone(filepath: str, previous_delivery: Delivery | None):
         process_line(h, line, start_date, delivery)
 
     create_plan_benefits(delivery)
+    create_not_a_plan(delivery)
 
     if not previous_delivery:
         return delivery
@@ -364,7 +409,7 @@ async def process_backbone(filepath: str, previous_delivery: Delivery | None):
             if clean_prev != clean_payer:
                 prev_payer.end_date = payer.start_date
             else:
-                payers[id] = None
+                payers[id] = prev_payer
 
         # Deleted
         for id in prev_payers_ids:
@@ -374,18 +419,17 @@ async def process_backbone(filepath: str, previous_delivery: Delivery | None):
 
             prev_payer.end_date = start_date
 
-    await insert_delivery(previous_delivery)
+    await insert_delivery(previous_delivery, True)
 
     return delivery
 
 
 async def load_payer_backbone():
-    # await PayerBackboneUnionDoc.find_all().delete_many()
     if await PayerBackboneUnionDoc.count():
         return
 
     previous_delivery = None
-    for file in os.listdir(this_folder):
+    for file in sorted(os.listdir(this_folder)):
         if not file.endswith("xlsx"):
             continue
         previous_delivery = await process_backbone(file, previous_delivery)
@@ -394,6 +438,7 @@ async def load_payer_backbone():
 
 async def execute():
     await init_db()
+    await PayerBackboneUnionDoc.find_all().delete_many()
     await load_payer_backbone()
 
 

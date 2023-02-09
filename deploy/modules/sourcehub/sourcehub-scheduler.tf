@@ -9,7 +9,7 @@ resource "aws_cloudwatch_log_group" "scheduler" {
 }
 
 resource "aws_ecs_task_definition" "scheduler" {
-  family                   = "${local.service_name}-scheduler"
+  family                   = "${local.service_name}-scheduler-${var.environment}"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   # TODO: Make cpu, memory a variable and determine appropriate thresholds
@@ -64,7 +64,7 @@ resource "aws_ecs_task_definition" "scheduler" {
           value = data.aws_ssm_parameter.docrepo-bucket-name.value
         },
         {
-          name = "NEW_RELIC_APP_NAME"
+          name  = "NEW_RELIC_APP_NAME"
           value = "${local.new_relic_app_name}-Scheduler"
         }
       ]
@@ -87,7 +87,7 @@ resource "aws_ecs_task_definition" "scheduler" {
       secrets = concat(local.new_relic_secrets, [
         {
           name      = "REDIS_PASSWORD"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_auth_password"
+          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/${var.environment}/redis_auth_password"
         }
       ])
     }
@@ -106,6 +106,9 @@ resource "aws_ecs_task_definition" "scheduler" {
   })
 }
 
+##
+# DEPRECATED. Use aws_iam_role.sourcehub
+##
 resource "aws_iam_role" "scheduler-task" {
   name = format("%s-%s-%s-scheduler-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
 
@@ -177,7 +180,7 @@ resource "aws_iam_role" "scheduler-task" {
             "ecs:DescribeTasks",
             "ecs:StopTask"
           ]
-          Effect = "Allow"
+          Effect   = "Allow"
           Resource = "*"
         }
       ]
@@ -226,6 +229,7 @@ resource "aws_security_group" "scheduler" {
 }
 
 resource "aws_ecs_service" "scheduler" {
+  # Service Name should not include environment, since they are scoped to the Cluster which is scoped to an environment
   name             = "${local.service_name}-scheduler"
   platform_version = "LATEST"
   cluster          = data.aws_ecs_cluster.ecs-cluster.id

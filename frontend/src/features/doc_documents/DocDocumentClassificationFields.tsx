@@ -1,7 +1,6 @@
 import { Form, Select, DatePicker, Switch, Input, Tooltip } from 'antd';
-import { languageCodes } from '../retrieved_documents/types';
+import { DocumentTypes, languageCodes } from '../retrieved_documents/types';
 import { prettyDate } from '../../common';
-import { DocumentTypes } from '../retrieved_documents/types';
 import { DocCompareToPrevious } from './lineage/DocCompareToPrevious';
 import { useGetDocDocumentQuery } from './docDocumentApi';
 import { ExploreLineage } from './lineage/ExploreLineage';

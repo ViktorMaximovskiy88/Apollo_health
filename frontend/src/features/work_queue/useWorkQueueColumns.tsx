@@ -36,9 +36,7 @@ function useSiteSelectOptions() {
 
 const useHoldTypes = (queueId?: string) => {
   const { data: holdWorkQueue } = useGetWorkQueueQuery(queueId);
-  const name = holdWorkQueue?.name.slice(0, holdWorkQueue.name.length - 5) ?? ''; // remove "Hold" from name
-  const { data: workQueue } = useGetWorkQueueByNameQuery({ name });
-  const holdTypes = workQueue?.submit_actions[0].hold_types?.map((holdType) => ({
+  const holdTypes = holdWorkQueue?.hold_types?.map((holdType) => ({
     id: holdType,
     label: holdType,
   }));

@@ -341,7 +341,6 @@ class TagCompare:
         doc_focus_checker = await FocusChecker.with_all_location_configs(
             doc=doc, tag_type=tag_type, full_text=doc_text, url="", link_text=None
         )
-        print(doc_focus_checker.key_areas)
         return doc_focus_checker.key_areas
 
     async def compare_tags(

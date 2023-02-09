@@ -8,6 +8,7 @@ import { ReactNode, useCallback, useState } from 'react';
 import { PayerFamily } from './types';
 import { PayerFamilyInfoForm } from './PayerFamilyInfoForm';
 import { CloseOutlined, WarningFilled } from '@ant-design/icons';
+import { isErrorWithData } from '../../common/helpers';
 
 interface PayerFamilyCreateDrawerPropTypes {
   location?: DocDocumentLocation;
@@ -31,13 +32,22 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
     props.onClose();
     setPayerInfoError('');
     form.resetFields();
+    setPopupOpen(false);
   }, [form, props]);
 
   const onFinish = useCallback(
     async (values: Partial<PayerFamily>) => {
-      const payerFamily = await addPayerFamily(values).unwrap();
-      onSave(payerFamily);
-      form.resetFields();
+      try {
+        const payerFamily = await addPayerFamily(values).unwrap();
+        onSave(payerFamily);
+        form.resetFields();
+      } catch (err: any) {
+        if (isErrorWithData(err)) {
+          setPayerInfoError(err.data.detail);
+        } else {
+          setPayerInfoError('Error Creating A New Payer Family');
+        }
+      }
     },
     [addPayerFamily, onSave, form]
   );
@@ -46,6 +56,7 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
   const onSubmit = useCallback(
     async (e: any, confirmed: boolean = false) => {
       await form.validateFields();
+
       const { name, payer_type, payer_ids, channels, benefits, plan_types, regions } =
         form.getFieldsValue(true);
       if (
@@ -133,6 +144,7 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
         validateTrigger={['onBlur']}
         onFinish={onFinish}
         initialValues={{
+          payer_type: 'Not Selected',
           payer_ids: [],
           channels: [],
           benefits: [],
@@ -195,7 +207,13 @@ export const PayerFamilyCreateDrawer = (props: PayerFamilyCreateDrawerPropTypes)
 export function mustBeUniqueName(asyncValidator: Function) {
   return {
     async validator(_rule: Rule, value: string) {
-      const { data: payerFamily } = await asyncValidator({ name: value });
+      let payerFamily;
+      if (value) {
+        let { data } = await asyncValidator({ name: value });
+        payerFamily = data;
+      } else {
+        return Promise.reject();
+      }
       if (payerFamily) {
         return Promise.reject(`Payer family name "${payerFamily.name}" already exists`);
       }

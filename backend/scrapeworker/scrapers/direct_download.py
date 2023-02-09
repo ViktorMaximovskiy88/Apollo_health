@@ -52,11 +52,13 @@ class DirectDownloadScraper(PlaywrightBaseScraper):
     ) -> None:
         link_handle: ElementHandle
         base_tag_href = await self.get_base_href()
-
+        cookies = await self.context.cookies(base_url)
         for link_handle in link_handles:
             metadata: Metadata = await self.extract_metadata(link_handle, resource_attr)
             url = normalize_url(base_url, metadata.resource_value, base_tag_href)
-            downloads.append(DownloadContext(metadata=metadata, request=Request(url=url)))
+            downloads.append(
+                DownloadContext(metadata=metadata, request=Request(url=url, cookies=cookies))
+            )
 
     async def scrape_and_queue(self, downloads: list[DownloadContext], page: Page) -> None:
         link_handles = await page.query_selector_all(self.css_selector)

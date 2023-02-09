@@ -11,10 +11,11 @@ import { useParams } from 'react-router-dom';
 import { useGetSiteQuery, useLazyGetSiteByNameQuery } from '../sitesApi';
 import { Rule } from 'antd/lib/form';
 import { useCallback } from 'react';
+import { PayerWorkInstruction } from './PayerWorkInstruction';
 
 const useMustBeUniqueNameRule = () => {
   const { siteId } = useParams();
-  const { data: currentSite } = useGetSiteQuery(siteId);
+  const { data: currentSite } = useGetSiteQuery(siteId, { skip: !siteId });
   const [getSiteByName] = useLazyGetSiteByNameQuery();
 
   const mustBeUniqueName = useCallback(
@@ -51,9 +52,11 @@ const buildInitialValues = () => ({
     follow_links: false,
     follow_link_keywords: [],
     follow_link_url_keywords: [],
+    scrape_base_page: true,
     searchable: false,
+    search_prefix_length: null,
     searchable_playbook: null,
-    searchable_type: null,
+    searchable_type: [],
     searchable_input: null,
     searchable_submit: null,
     attr_selectors: [],
@@ -61,6 +64,7 @@ const buildInitialValues = () => ({
     html_exclusion_selectors: [],
     focus_section_configs: [],
     cms_doc_types: [],
+    debug: false,
   },
   doc_type_threshold_override: false,
   doc_type_threshold: 0.75,
@@ -91,6 +95,7 @@ const SiteInformation = ({ initialValues }: { initialValues?: Site }) => {
       </Form.Item>
       <Status />
       <Assignee />
+      <PayerWorkInstruction />
     </>
   );
 };

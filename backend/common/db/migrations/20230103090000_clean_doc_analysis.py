@@ -2,7 +2,7 @@ import logging
 
 from beanie import free_fall_migration
 
-from backend.common.models.lineage import DocumentAnalysis
+from backend.common.models.document_analysis import DocumentAnalysis
 
 
 class Forward:

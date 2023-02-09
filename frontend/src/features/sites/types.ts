@@ -35,8 +35,10 @@ export interface Site extends BaseDocument {
     follow_links: boolean;
     follow_link_keywords: string[];
     follow_link_url_keywords: string[];
+    scrape_base_page: boolean;
     searchable: boolean;
-    searchable_type: SearchableType | null;
+    search_prefix_length: number | null;
+    searchable_type: SearchableType[];
     searchable_input: AttrSelector | null;
     searchable_submit: AttrSelector | null;
     searchable_playbook: string | null;
@@ -45,6 +47,7 @@ export interface Site extends BaseDocument {
     html_exclusion_selectors: AttrSelector[];
     focus_section_configs: FocusSectionConfig[];
     cms_doc_types: CmsDocType[];
+    debug: boolean;
   };
   tags: string[];
   disabled: boolean;
@@ -87,11 +90,13 @@ export enum ScrapeMethod {
   Simple = 'SimpleDocumentScrape',
   Html = 'HtmlScrape',
   CMS = 'CMSScrape',
+  Tricare = 'TricareScrape',
 }
 
 export enum SearchableType {
   CPTCodes = 'CPTCODES',
   JCodes = 'JCODES',
+  Universal = 'UNIVERSAL',
 }
 
 export enum SectionType {

@@ -69,7 +69,7 @@ resource "aws_iam_role" "sourcehub" {
             "ecs:DescribeTasks",
             "ecs:StopTask"
           ]
-          Effect = "Allow"
+          Effect   = "Allow"
           Resource = "*"
         },
         {
@@ -100,4 +100,58 @@ resource "aws_iam_role" "sourcehub" {
     component = "${local.service_name}-app"
   })
 
+}
+
+resource "aws_iam_role" "scheduler" {
+  name        = format("%s-%s-%s-ebscheduler-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
+  description = "Role assumed by the EventBridge Scheduler service to invoke targets"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "scheduler.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  inline_policy {
+    name = "ecs-exec"
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Effect = "Allow"
+          Action = [
+            "ecs:RunTask"
+          ]
+          Resource = [
+            "${aws_ecs_task_definition.modelbuild.arn}"
+          ]
+          Condition = {
+            ArnEquals = {
+              "ecs:cluster" = data.aws_ecs_cluster.cluster.arn
+            }
+          }
+        },
+        {
+          Effect = "Allow"
+          Action = [
+            "iam:PassRole"
+          ]
+          Resource = [
+            "${data.aws_iam_role.ecs-execution.arn}",
+            "${aws_iam_role.sourcehub.arn}"
+          ]
+        }
+      ]
+    })
+  }
+
+  tags = merge(local.effective_tags, {
+    Name = format("%s-%s-%s-ebscheduler-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
+  })
 }

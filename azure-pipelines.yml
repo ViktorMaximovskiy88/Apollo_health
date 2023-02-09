@@ -42,7 +42,7 @@ stages:
               imageSource: "imagename"
               sourceImageName: "sourcehub-base"
               sourceImageTag: "latest"
-              repositoryName: "sourcehub-base"
+              repositoryName: "sourcehub-base-dev"
               pushTag: "latest"
 
           - template: .azure-pipelines/sourcehub-app.build.yml
@@ -74,7 +74,7 @@ stages:
               imageSource: "imagename"
               sourceImageName: "sourcehub-app"
               sourceImageTag: "$(Build.SourceVersion)"
-              repositoryName: "sourcehub-app"
+              repositoryName: "sourcehub-app-dev"
               pushTag: "$(Build.SourceVersion)"
 
           - task: ECRPushImage@1
@@ -85,7 +85,7 @@ stages:
               imageSource: "imagename"
               sourceImageName: "sourcehub-app"
               sourceImageTag: "$(Build.SourceVersion)"
-              repositoryName: "sourcehub-app"
+              repositoryName: "sourcehub-app-dev"
               pushTag: latest
           ##############################################################################################
 
@@ -195,7 +195,7 @@ stages:
                   inputs:
                     awsCredentials: "Apollo-AWS-Dev-Apollo"
                     regionName: "us-east-1"
-                    repository: "sourcehub-app"
+                    repository: "sourcehub-app-dev"
                     imageSource: "imagetag"
                     imageTag: "$(Build.SourceVersion)"
                     outputVariable: "DevImageId"
@@ -210,7 +210,7 @@ stages:
                     regionName: "us-east-1"
                     imageSource: "imageid"
                     sourceImageId: $(DevImageId)
-                    repositoryName: "sourcehub-app"
+                    repositoryName: "sourcehub-app-tst"
                     pushTag: "$(Build.SourceVersion)"
 
                 ##
@@ -276,7 +276,7 @@ stages:
                   inputs:
                     awsCredentials: "Apollo-AWS-Dev-Apollo"
                     regionName: "us-east-1"
-                    repository: "sourcehub-app"
+                    repository: "sourcehub-app-dev"
                     imageSource: "imagetag"
                     imageTag: "$(Build.SourceVersion)"
                     outputVariable: "DevImageId"
@@ -291,7 +291,7 @@ stages:
                     regionName: "us-east-1"
                     imageSource: "imageid"
                     sourceImageId: $(DevImageId)
-                    repositoryName: "sourcehub-app"
+                    repositoryName: "sourcehub-app-prd"
                     pushTag: "$(Build.SourceVersion)"
 
                 ##

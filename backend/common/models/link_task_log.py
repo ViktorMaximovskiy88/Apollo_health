@@ -26,8 +26,8 @@ class InvalidResponse(BaseModel):
 
 
 class LinkTask(BaseDocument):
-    site_id: PydanticObjectId
-    scrape_task_id: PydanticObjectId
+    site_id: Indexed(PydanticObjectId)
+    scrape_task_id: Indexed(PydanticObjectId)
 
     created_at: Indexed(
         datetime,

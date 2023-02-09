@@ -17,6 +17,13 @@ export interface WorkItem {
   is_current_version?: boolean;
   is_new: boolean;
 }
+
+export interface BatchStatus {
+  batch_key: string;
+  current_page: number;
+  total_pages: number;
+}
+
 export interface SiteScrapeTask extends BaseDocument {
   site_id: string;
   queued_time: string;
@@ -31,6 +38,7 @@ export interface SiteScrapeTask extends BaseDocument {
   collection_method: string;
   work_list: WorkItem[];
   retrieved_document_ids: string[];
+  batch_status: BatchStatus | null;
 }
 
 export enum BulkActionTypes {

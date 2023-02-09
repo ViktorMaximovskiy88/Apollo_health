@@ -6,7 +6,7 @@ import { useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { docDocumentTableState } from './docDocumentsSlice';
-import { prettyDateUTCFromISO } from '../../common';
+import { prettyDateUTCFromISO, prettyDateTimeUTCFromISO } from '../../common';
 import { ButtonLink } from '../../components';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useGetChangeLogQuery } from './docDocumentApi';
@@ -244,7 +244,7 @@ export const useColumns = ({
       },
       render: ({ data: doc }: { data: DocDocument }) => {
         if (!doc.first_collected_date) return null;
-        return prettyDateUTCFromISO(doc.first_collected_date);
+        return prettyDateTimeUTCFromISO(doc.first_collected_date);
       },
     },
     {
@@ -261,7 +261,7 @@ export const useColumns = ({
       },
       render: ({ data: doc }: { data: DocDocument }) => {
         if (!doc.last_collected_date) return null;
-        return prettyDateUTCFromISO(doc.last_collected_date);
+        return prettyDateTimeUTCFromISO(doc.last_collected_date);
       },
     },
     {

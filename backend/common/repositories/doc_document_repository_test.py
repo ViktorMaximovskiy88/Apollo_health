@@ -4,7 +4,7 @@ from random import random
 import pytest_asyncio
 from beanie import PydanticObjectId
 
-from backend.common.core.enums import ApprovalStatus
+from backend.common.core.enums import ApprovalStatus, ScrapeMethod
 from backend.common.db.init import init_db
 from backend.common.models import User
 from backend.common.models.doc_document import DocDocument, DocDocumentLocation, UpdateDocDocument
@@ -24,7 +24,7 @@ async def before_each_test():
 async def site():
     site = await Site(
         name="Test",
-        scrape_method="",
+        scrape_method=ScrapeMethod.Simple,
         scrape_method_configuration=ScrapeMethodConfiguration(
             document_extensions=[],
             url_keywords=[],
@@ -119,10 +119,10 @@ async def test_doc_document_save(simple_doc_doc, user):
     assert doc[0].document_type == "Authorization Policy"
 
 
-async def test_doc_document_post_save(simple_doc_doc):
+async def test_doc_document_post_save(simple_doc_doc, user):
     await simple_doc_doc.update({"$set": {"document_family_id": None}})
     doc_doc_repo = DocDocumentRepository()
     doc_doc_repo.change_info = ChangeInfo()
-    await doc_doc_repo.post_save(simple_doc_doc)
+    await doc_doc_repo.post_save(simple_doc_doc, user)
     doc = await DocDocument.find({"_id": simple_doc_doc.id}).to_list()
     assert doc[0].status == ApprovalStatus.PENDING

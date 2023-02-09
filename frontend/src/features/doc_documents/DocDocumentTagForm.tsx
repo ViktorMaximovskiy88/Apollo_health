@@ -1,10 +1,13 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Radio, Checkbox, Input } from 'antd';
+import { Radio, Checkbox, Input, Dropdown, Menu, Button, Form } from 'antd';
 import { debounce, orderBy } from 'lodash';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { DocumentTag, UITherapyTag } from './types';
 
 import { EditTag, ReadTag } from './TagRow';
+import { priorityOptions } from './useSiteDocDocumentColumns';
+import { FilterTwoTone } from '@ant-design/icons';
+import { focusDocumentTypes } from './useOnFinish';
 
 function sortOrder(tags: any[], pageFilter: string) {
   if (pageFilter === 'page') {
@@ -21,43 +24,100 @@ function textFilter(tag: any, field: string, searchRegex: RegExp) {
 }
 
 export function DocDocumentTagForm(props: {
-  tags: Array<DocumentTag>;
+  tags: DocumentTag[];
   onDeleteTag: Function;
-  onEditTag: Function;
+  onEditTag: (newTag: DocumentTag, updateTags: boolean) => void;
   currentPage: number;
 }) {
   const { tags, onEditTag, onDeleteTag, currentPage } = props;
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredList, setFilteredList] = useState(tags);
-  const [tagTypeFilter, setTagTypeFilter] = useState<
-    ('focus' | 'indication' | 'therapy' | 'priority')[]
-  >(['focus', 'indication', 'therapy']);
+  const [tagTypeFilter, setTagTypeFilter] = useState<('focus' | 'indication' | 'therapy')[]>([
+    'focus',
+    'indication',
+    'therapy',
+  ]);
+  const [priorityFilter, setPriorityFilter] = useState<
+    ('Critical' | 'High' | 'Low' | 'No Priority')[]
+  >(['Critical', 'High', 'Low']);
   const [editTags, setEditTags] = useState<{ [index: string]: DocumentTag }>({});
   const [pageFilter, setPageFilter] = useState('page');
+  const [priorityDropdownOpen, setPriorityDropdownOpen] = useState(false);
+  const [priorityFilterApplied, setPriorityFilterApplied] = useState(true);
 
   const tagFilterOptions = [
     { label: 'Focus', value: 'focus' },
     { label: 'Indication', value: 'indication' },
     { label: 'Therapy', value: 'therapy' },
   ];
-  if (tags.some((tag) => tag.priority)) {
-    tagFilterOptions.push({ label: 'Priority', value: 'priority' });
-  }
+
+  const handlePriorityFilterToggle = () => {
+    if (!priorityFilterApplied) {
+      setPriorityFilter(['Critical', 'High', 'Low']);
+    }
+    setPriorityFilterApplied(!priorityFilterApplied);
+  };
+
+  const priorityFilterOptions = (
+    <Menu
+      items={[
+        {
+          key: 'Filter',
+          label: (
+            <Button type="primary" onClick={handlePriorityFilterToggle}>
+              {' '}
+              {priorityFilterApplied ? 'Remove Filter' : 'Add Filter'}
+            </Button>
+          ),
+        },
+        ...priorityOptions.map((option: any) => {
+          return {
+            key: option.value,
+            label: (
+              <Checkbox
+                indeterminate={!priorityFilterApplied}
+                disabled={!priorityFilterApplied}
+                value={option.label}
+                checked={priorityFilterApplied && priorityFilter.includes(option.label)}
+                onChange={(e) =>
+                  setPriorityFilter((filter: any) => {
+                    return e.target.checked
+                      ? [...filter, e.target.value]
+                      : filter.filter((x: any) => x !== e.target.value);
+                  })
+                }
+              >
+                {option.label}
+              </Checkbox>
+            ),
+          };
+        }),
+      ]}
+    />
+  );
+
+  const documentType = Form.useWatch('document_type');
 
   const applyFilter = useCallback(
     (tag: DocumentTag) => {
       const validPage = pageFilter === 'doc' ? true : currentPage === tag.page;
       console.debug(currentPage === tag.page, 'currentPage', currentPage, 'tag.page', tag.page);
       let filter: boolean = tagTypeFilter.includes(tag._type) && validPage;
-      if (tagTypeFilter.includes('focus')) {
+      if (!focusDocumentTypes.includes(documentType) && tagTypeFilter.includes('focus')) {
         filter = filter && tag.focus ? tag.focus : false;
       }
-      if (tagTypeFilter.includes('priority')) {
-        filter = filter && tag._type === 'therapy' && tag.priority > 0;
+      if (tag._type !== 'therapy' || !priorityFilterApplied) return filter;
+      let priorFilter: boolean = false;
+      for (const priority of priorityOptions) {
+        if ((priorityFilter as any).includes(priority.label)) {
+          priorFilter = tag.priority === priority.value;
+          if (priorFilter) break;
+        }
       }
-      return filter;
+      return filter && priorFilter;
     },
-    [pageFilter, currentPage, tagTypeFilter]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pageFilter, currentPage, tagTypeFilter, priorityFilter, documentType]
   );
 
   const applyFilters = useCallback(() => {
@@ -81,7 +141,7 @@ export function DocDocumentTagForm(props: {
 
     _tags = sortOrder(_tags, pageFilter);
     setFilteredList(_tags);
-  }, [pageFilter, tagTypeFilter, searchTerm, applyFilters, tags]);
+  }, [pageFilter, tagTypeFilter, searchTerm, applyFilters, tags, priorityFilterApplied]);
 
   const onSearch = (e: any) => {
     const search = e.target.value;
@@ -157,6 +217,23 @@ export function DocDocumentTagForm(props: {
               setTagTypeFilter(values);
             }}
           />
+          <div>
+            {tagTypeFilter.includes('therapy') ? (
+              <span>{priorityFilterApplied ? priorityFilter.length : 0} Filters Selected</span>
+            ) : (
+              <span>No Filter</span>
+            )}
+            <Dropdown.Button
+              className="mr-4 h-full"
+              type={priorityFilterApplied ? 'primary' : 'default'}
+              disabled={!tagTypeFilter.includes('therapy')}
+              open={priorityDropdownOpen}
+              icon={
+                <FilterTwoTone onClick={() => setPriorityDropdownOpen(!priorityDropdownOpen)} />
+              }
+              overlay={priorityFilterOptions}
+            />
+          </div>
         </div>
       </div>
 

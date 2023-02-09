@@ -160,6 +160,7 @@ async def read_extraction_task(
         location: DocDocumentLocationView | None = doc.get_site_location(site.id)
         if location:
             location.site_name = site.name
+            location.payer_work_instructions = site.payer_work_instructions
         if location and location.payer_family_id:
             location.payer_family = await PayerFamily.get(location.payer_family_id)
 

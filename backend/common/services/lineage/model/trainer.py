@@ -14,7 +14,7 @@ from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
 from backend.common.db.init import init_db
-from backend.common.models.lineage import DocumentAnalysis
+from backend.common.models.document_analysis import DocumentAnalysis
 from backend.common.services.lineage.model.preprocessor import LineagePreprocessor
 
 

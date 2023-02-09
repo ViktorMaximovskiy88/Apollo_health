@@ -1,4 +1,4 @@
-import { Input, Form, Select, Radio, Typography } from 'antd';
+import { Input, Form, Select, Radio, Checkbox, Typography } from 'antd';
 
 import { CollectionMethod, ScrapeMethod, Site } from '../types';
 import {
@@ -37,6 +37,7 @@ function ScrapeMethodSelect() {
     { value: ScrapeMethod.Simple, label: 'Simple Document Scrape' },
     { value: ScrapeMethod.Html, label: 'Direct HTML Scrape' },
     { value: ScrapeMethod.CMS, label: 'CMS Scrape' },
+    { value: ScrapeMethod.Tricare, label: 'Tricare Scrape' },
   ];
 
   return (
@@ -134,6 +135,13 @@ export function CollectionSettings({ initialValues }: CollectionSettingsPropType
               <SearchInFrames />
               <ProxyExclusions />
               <FocusTagConfig initialValues={initialValues} />
+              <Form.Item
+                name={['scrape_method_configuration', 'debug']}
+                label={'Debug scrape'}
+                valuePropName="checked"
+              >
+                <Checkbox />
+              </Form.Item>
               <DocumentTypeThreshold />
               <LineageThreshold />
             </>

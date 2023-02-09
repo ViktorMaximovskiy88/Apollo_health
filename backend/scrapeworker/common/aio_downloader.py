@@ -58,7 +58,9 @@ class AioDownloader:
         return context
 
     async def close(self):
+        self.log.info("Before attempting downloader close")
         await self.session.close()
+        self.log.info("After attempting downloader close")
 
     def valid_cookie(self, cookie):
         """
@@ -182,9 +184,7 @@ class AioDownloader:
         await self.set_download_data(download, temp.name)
 
         download.file_hash = hasher.hexdigest()
-        self.log.info(
-            f"content_type={download.content_type} mimetype={download.mimetype} file_hash={download.file_hash}"  # noqa
-        )
+        self.log.info(f"mimetype={download.mimetype} file_hash={download.file_hash}")  # noqa
         return download.file_path, download.file_hash
 
     def open_direct_scrape(self, key: str, temp: tempfile._TemporaryFileWrapper):
@@ -207,9 +207,13 @@ class AioDownloader:
                 self.open_direct_scrape(dest_path, temp)
                 await self.set_download_data(download, temp.name)
                 self.log.info(
-                    f"content_type={download.content_type} mimetype={download.mimetype} file_hash={download.file_hash}"  # noqa
+                    f"mimetype={download.mimetype} file_hash={download.file_hash}"  # noqa
                 )
                 yield download.file_path, download.file_hash
+        elif download.file_path and download.playwright_download:
+            await self.set_download_data(download, download.file_path)
+            self.log.info(f"mimetype={download.mimetype} file_hash={download.file_hash}")  # noqa
+            yield download.file_path, download.file_hash
         else:
             response: ClientResponse | None = None
             proxy_url = None

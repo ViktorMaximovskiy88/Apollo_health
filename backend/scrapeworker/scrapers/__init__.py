@@ -5,16 +5,19 @@ from urllib.parse import urlparse
 
 from playwright.async_api import BrowserContext, Page
 
+from backend.common.core.enums import ScrapeMethod
 from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.playbook import PlaybookContext
 from backend.scrapeworker.scrapers.aspnet_webform import AspNetWebFormScraper
+from backend.scrapeworker.scrapers.by_domain.bcbsfl import BcbsflScraper
 from backend.scrapeworker.scrapers.by_domain.formulary_navigator import FormularyNavigatorScraper
 from backend.scrapeworker.scrapers.by_domain.humana import HumanaScraper
 from backend.scrapeworker.scrapers.direct_download import (
     DirectDownloadScraper,
     PlaywrightBaseScraper,
 )
+from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
 from backend.scrapeworker.scrapers.javascript_click import JavascriptClick
 from backend.scrapeworker.scrapers.targeted_html import TargetedHtmlScraper
 
@@ -24,6 +27,7 @@ scrapers: list[Type[PlaywrightBaseScraper]] = [
     JavascriptClick,
     TargetedHtmlScraper,
     HumanaScraper,
+    BcbsflScraper,
     FormularyNavigatorScraper,
 ]
 
@@ -36,12 +40,14 @@ class ScrapeHandler:
         playbook_context: PlaybookContext,
         log: Logger,
         config: ScrapeMethodConfiguration,
+        scrape_method: ScrapeMethod | None = None,
     ) -> None:
         self.context = context
         self.page = page
         self.playbook_context = playbook_context
         self.log = log
         self.config = config
+        self.scrape_method = scrape_method
 
     def __is_google(self, url: str) -> bool:
         parsed = urlparse(url)
@@ -63,6 +69,12 @@ class ScrapeHandler:
             google_id = self.__get_google_id(download.request.url)
             download.request.url = f"https://drive.google.com/u/0/uc?id={google_id}&export=download"
 
+    def run_follow_link_scraper(self, url: str):
+        scraper = FollowLinkScraper(
+            page=self.page, context=self.context, config=self.config, url=url
+        )
+        return scraper.execute()
+
     async def run_scrapers(
         self, url: str, base_url: str, downloads: list[DownloadContext], metadata: dict = {}
     ) -> None:
@@ -75,6 +87,7 @@ class ScrapeHandler:
                 url=url,
                 log=self.log,
                 metadata=metadata,
+                scrape_method=self.scrape_method,
             )
 
             if not await scraper.is_applicable():

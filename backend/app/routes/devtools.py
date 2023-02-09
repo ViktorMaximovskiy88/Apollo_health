@@ -23,12 +23,12 @@ router = APIRouter(
 )
 
 
-@router.post("/lineage/reprocess/{site_id}")
-async def reprocess_lineage_for_site(
+@router.post("/lineage/process/{site_id}")
+async def process_lineage_for_site(
     site_id: PydanticObjectId,
     current_user: User = Security(get_current_user),
 ):
-    task_payload = LineageTask(site_id=site_id, reprocess=True)
+    task_payload = LineageTask(site_id=site_id, reprocess=False)
     task = await task_queue.enqueue(task_payload, current_user.id)
     return {"task": task}
 

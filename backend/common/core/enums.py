@@ -47,6 +47,8 @@ class SiteStatus(str, Enum):
 class SearchableType(str, Enum):
     CPTCODES = "CPTCODES"
     JCODES = "JCODES"
+    TRICARE = "TRICARE"
+    UNIVERSAL = "UNIVERSAL"
 
 
 class DocumentType(str, Enum):
@@ -96,3 +98,10 @@ class CmsDocType(Enum):
     NCD = 1
     LCD = 2
     LCA = 3
+
+
+class ScrapeMethod(str, Enum):
+    Simple = "SimpleDocumentScrape"
+    Html = "HtmlScrape"
+    CMS = "CMSScrape"
+    Tricare = "TricareScrape"

@@ -1,3 +1,5 @@
+import asyncio
+import logging
 import re
 from typing import Type
 
@@ -18,10 +20,11 @@ from backend.app.services.payer_backbone.payer_backbone_querier import (
 )
 from backend.app.utils.logger import Logger, create_and_log, get_logger, update_and_log_diff
 from backend.app.utils.user import get_current_user
-from backend.common.models.doc_document import DocDocument
+from backend.common.models.doc_document import BulkUpdateResponse, DocDocument, UpdateDocDocument
 from backend.common.models.payer_backbone import PayerBackbone
 from backend.common.models.payer_family import NewPayerFamily, PayerFamily, UpdatePayerFamily
 from backend.common.models.user import User
+from backend.common.repositories.doc_document_repository import DocDocumentRepository
 
 router = APIRouter(prefix="/payer-family", tags=["Payer Family"])
 
@@ -165,8 +168,37 @@ async def delete_payer_family(
     logger: Logger = Depends(get_logger),
 ):
     await update_and_log_diff(logger, current_user, target, UpdatePayerFamily(disabled=True))
-    await DocDocument.get_motor_collection().update_many(
+    doc_documents_repo = DocDocumentRepository()
+
+    docs = await DocDocument.find_many(
         {"locations.payer_family_id": id},
-        {"$set": {"locations.$.payer_family_id": None}},
-    )
-    return {"success": True}
+    ).to_list()
+
+    counts, errors = {"suc": 0, "err": 0}, []
+
+    async def gather_tasks(tasks):
+        for res in await asyncio.gather(*tasks, return_exceptions=True):
+            if isinstance(res, Exception):
+                errors.append(str(res))
+                counts["err"] += 1
+                logging.error(res, exc_info=True)
+            else:
+                counts["suc"] += 1
+
+    tasks = []
+    for doc in docs:
+        for location in doc.locations:
+            if location.payer_family_id == id:
+                location.payer_family_id = None
+        tasks.append(
+            doc_documents_repo.execute(
+                doc, UpdateDocDocument(locations=doc.locations), current_user
+            )
+        )
+        if len(tasks) == 10:
+            await gather_tasks(tasks)
+            tasks = []
+
+    await gather_tasks(tasks)
+
+    return BulkUpdateResponse(count_success=counts["suc"], count_error=counts["err"], errors=errors)

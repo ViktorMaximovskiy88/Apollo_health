@@ -73,7 +73,9 @@ export const DocDocumentDocumentFamilyField = ({
   const document_family_id = Form.useWatch('document_family_id');
 
   const [docFamilyData, setDocFamilyData] = useState<any>(undefined);
-  let { data: docFamData } = useGetDocumentFamilyQuery(document_family_id, { skip });
+  let { data: docFamData } = useGetDocumentFamilyQuery(document_family_id, {
+    skip: !document_family_id,
+  });
 
   const [currentOption, setCurrentOption] = useState<any | undefined>(
     doc?.document_family
@@ -84,6 +86,8 @@ export const DocDocumentDocumentFamilyField = ({
   useOnDocTypeChangeClearDocumentFamily(setCurrentOption);
 
   const fetchDocFamilyOptions = useFetchDocFamilyOptions();
+
+  const additionalOptions = currentOption ? [currentOption] : [];
 
   useEffect(() => {
     if (document_family_id) {
@@ -111,6 +115,7 @@ export const DocDocumentDocumentFamilyField = ({
               form.setFieldsValue({ document_family_id });
               onFieldChange();
             }}
+            additionalOptions={additionalOptions}
           />
         </Form.Item>
         {document_family_id && (

@@ -1,5 +1,6 @@
 import { Button, Form, Input, Modal, Select } from 'antd';
-import { useCallback, useState } from 'react';
+import { Rule } from 'antd/lib/form';
+import { useCallback, useEffect, useState } from 'react';
 import { RemoteSelect } from '../../components';
 import {
   useGetPayerBackbonesQuery,
@@ -19,7 +20,9 @@ function PayerIdsSelector() {
   const [getPayers] = useLazyGetPayerBackbonesQuery();
   const backBoneValueOptions = useCallback(
     async (search: string) => {
-      if (!payerType) return [];
+      if (!payerType) {
+        return [];
+      }
       const { data } = await getPayers({
         type: payerType,
         limit: 20,
@@ -39,15 +42,21 @@ function PayerIdsSelector() {
       type: payerType,
       filterValue: [{ name: 'l_id', operator: 'eq', type: 'number', value: initialPayerIds }],
     },
-    { skip: !payerType || !initialPayerIds }
+    { skip: !payerType || !initialPayerIds || payerType === 'Not Selected' }
   );
   const initialPayerOptions =
     payers?.data.map((p) => ({ label: p.name, value: p.l_id.toString() })) || [];
 
   return (
-    <Form.Item label="Backbone Values" name="payer_ids" className="w-80">
+    <Form.Item
+      rules={[{ validator: (_rule, value) => backboneValueValidator(value, payerType) }]}
+      label="Backbone Values"
+      name="payer_ids"
+      className="w-80"
+    >
       <RemoteSelect
         mode="multiple"
+        disabled={payerType === 'Not Selected' ? true : false}
         className="w-full"
         fetchOptions={backBoneValueOptions}
         initialOptions={initialPayerOptions}
@@ -132,9 +141,11 @@ export function MatchingPlansModal() {
 
 export const PayerFamilyInfoForm = () => {
   const form = Form.useFormInstance();
+
   const handlePlanChange = useCallback(() => {
     form.setFieldsValue({ payer_ids: [] });
   }, [form]);
+
   return (
     <div className="mt-4">
       <h2>Payer</h2>
@@ -167,3 +178,10 @@ export const PayerFamilyInfoForm = () => {
     </div>
   );
 };
+
+function backboneValueValidator(payerValue: string[], payerType: string | null) {
+  if (payerValue.length === 0 && payerType !== 'Not Selected') {
+    return Promise.reject('Backbone value is required');
+  }
+  return Promise.resolve();
+}

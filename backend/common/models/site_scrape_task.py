@@ -28,6 +28,12 @@ class ManualWorkItem(BaseModel):
     is_new: bool | None = True
 
 
+class BatchStatus(BaseModel):
+    batch_key: str | None = None
+    current_page: int = 0
+    total_pages: int = 0
+
+
 class SiteScrapeTask(BaseDocument):
     site_id: Indexed(PydanticObjectId)  # type: ignore
     initiator_id: PydanticObjectId | None = None
@@ -50,6 +56,7 @@ class SiteScrapeTask(BaseDocument):
     collection_method: str | None = CollectionMethod.Automated
     scrape_method_configuration: ScrapeMethodConfiguration | None = None
     work_list: list[ManualWorkItem] | None = []
+    batch_status: BatchStatus | None = BatchStatus()
 
 
 class UpdateSiteScrapeTask(BaseModel):

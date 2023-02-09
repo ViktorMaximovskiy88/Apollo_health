@@ -5,14 +5,14 @@ data "aws_subnet" "first-app-subnet" {
   id = data.aws_subnets.app-subnet-ids.ids[0]
   tags = {
     subnet_role = "app"
-    environment = var.environment
+    environment = local.vpc_environment
   }
 }
 
 data "aws_subnets" "app-subnet-ids" {
   tags = {
     subnet_role = "app"
-    environment = var.environment
+    environment = local.vpc_environment
   }
 }
 
@@ -46,7 +46,7 @@ data "aws_ecs_cluster" "ecs-cluster" {
 }
 
 data "aws_ecr_repository" "sourcehub-app" {
-  name = "sourcehub-app"
+  name = "sourcehub-app-${var.environment}"
 }
 
 data "aws_lb" "alb" {
@@ -97,19 +97,19 @@ data "aws_ecs_cluster" "cluster" {
 }
 
 data "aws_ssm_parameter" "mongodb-url" {
-  name = "/apollo/mongodb_url"
+  name = "/apollo/${var.environment}/mongodb_url"
 }
 
 data "aws_ssm_parameter" "redis-url" {
-  name = "/apollo/redis_url"
+  name = "/apollo/${var.environment}/redis_url"
 }
 
 data "aws_ssm_parameter" "docrepo-bucket-name" {
-  name = "/apollo/docrepo_bucket_name"
+  name = "/apollo/${var.environment}/docrepo_bucket_name"
 }
 
 data "aws_ssm_parameter" "smartproxy-username" {
-  name = "/apollo/smartproxy_username"
+  name = "/apollo/${var.environment}/smartproxy_username"
 }
 
 data "aws_cloudwatch_event_bus" "sourcehub" {
