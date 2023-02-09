@@ -40,7 +40,8 @@ class ScrapeMethodConfiguration(BaseModel):
     document_extensions: list[str] = []
     url_keywords: list[str] = []
     proxy_exclusions: list[PydanticObjectId] = []
-    wait_for: list[str] = []
+    wait_for: list[str] = []  # wait for 'text'
+    wait_for_selector: str | None = None
     wait_for_timeout_ms: int = 500
     base_url_timeout_ms: int = 30000
     search_in_frames: bool = False
@@ -66,32 +67,6 @@ class ScrapeMethodConfiguration(BaseModel):
     searchable_type: list[SearchableType] = []
     searchable_input: AttrSelector | None = None
     searchable_submit: AttrSelector | None = None
-
-
-class UpdateScrapeMethodConfiguration(BaseModel):
-    document_extensions: list[str] | None = None
-    url_keywords: list[str] | None = None
-    proxy_exclusions: list[PydanticObjectId] | None = None
-    wait_for: list[str] | None = None
-    follow_links: bool | None = None
-    follow_link_keywords: list[str] | None = None
-    follow_link_url_keywords: list[str] | None = None
-    scrape_base_page: bool | None = None
-    searchable: bool | None = None
-    search_prefix_length: int | None = None
-    searchable_playbook: str | None = None
-    searchable_type: list[SearchableType] = []
-    searchable_input: AttrSelector | None = None
-    searchable_submit: AttrSelector | None = None
-    wait_for_timeout_ms: int = 0
-    search_in_frames: bool = False
-    attr_selectors: list[AttrSelector] | None = None
-    html_attr_selectors: list[AttrSelector] = []
-    html_exclusion_selectors: list[AttrSelector] = []
-    focus_section_configs: list[FocusSectionConfig] | None = None
-    allow_docdoc_updates: bool | None = None
-    cms_doc_types: list[CmsDocType] = []
-    debug: bool = False
 
 
 class BaseUrl(BaseModel):
@@ -128,7 +103,7 @@ class UpdateSite(BaseModel):
     cron: str | None = None
     disabled: bool | None = None
     last_run_time: datetime | None = None
-    scrape_method_configuration: UpdateScrapeMethodConfiguration | None = None
+    scrape_method_configuration: ScrapeMethodConfiguration | None = None
     playbook: str | None = None
     status: str | None = None
     assignee: PydanticObjectId | None = None

@@ -66,6 +66,9 @@ igraph = "^0.10.2"
 tqdm = "^4.64.1"
 lxml = "^4.9.2"
 pytesseract = "^0.3.10"
+aiobotocore = {extras = ["awscli"], version = "^2.4.2"}
+aioboto3 = "^10.4.0"
+aiopath = "^0.6.11"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"

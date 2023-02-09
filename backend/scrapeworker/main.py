@@ -27,6 +27,7 @@ from backend.common.models.site import Site
 from backend.common.models.site_scrape_task import SiteScrapeTask
 from backend.scrapeworker.common.exceptions import CanceledTaskException, NoDocsCollectedException
 from backend.scrapeworker.log import log_cancellation, log_failure, log_not_found, log_success
+from backend.scrapeworker.scrape_task import ScrapeTask
 from backend.scrapeworker.scrape_worker import ScrapeWorker
 
 app = typer.Typer()
@@ -114,7 +115,16 @@ async def worker_fn(
             }
 
         browser = await playwright.chromium.launch(**options)
-        worker = ScrapeWorker(playwright, browser, scrape_task, site, har_path=har_path)
+
+        # feature flag-ish...
+        if "scrape_beta" in site.tags:
+            logging.info(f"using scrape_beta site_id={site.id}")
+            worker = await ScrapeTask.create(
+                playwright, browser, scrape_task, site, har_path=har_path
+            )
+        else:
+            worker = ScrapeWorker(playwright, browser, scrape_task, site, har_path=har_path)
+
         task = asyncio.create_task(heartbeat_task(scrape_task))
         active_tasks[scrape_task.id] = scrape_task
 
@@ -131,7 +141,9 @@ async def worker_fn(
         finally:
             log.info(f"Finishing scrape run. site_id={site.id} scrape_task_id={scrape_task.id}")
             del active_tasks[scrape_task.id]
-            await browser.close()
+            await worker.close()
+            if browser:
+                await browser.close()
             task.cancel()
 
 
@@ -151,10 +163,8 @@ async def start_worker_async(task_arn):
     loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.create_task(signal_handler()))
 
     async with async_playwright() as playwright:
-        workers = []
-        for _ in range(1):
-            workers.append(worker_fn(task_arn, playwright))
-        await asyncio.gather(*workers)
+        await worker_fn(task_arn, playwright)
+
     typer.secho("Shutdown Complete", fg=typer.colors.BLUE)
 
 
