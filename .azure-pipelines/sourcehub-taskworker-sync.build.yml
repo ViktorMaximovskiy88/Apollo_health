@@ -1,15 +1,18 @@
 steps:
-  ##
-  # Pull Latest SourceHub Base Image from ECR if it exists. This will help improve build times of the Base and App images
-  ##
+  ## Pull Latest SourceHub App Image from ECR if it exists. This will help improve build time of the App image
   - task: ECRPullImage@1
     displayName: Pull Sourcehub Taskworker Sync Image
     inputs:
       awsCredentials: "Apollo-AWS-Dev-Apollo"
       regionName: "us-east-1"
-      repository: "sourcehub-taskworker-sync"
+      repository: "sourcehub-taskworker-sync-dev"
       imageSource: "imagetag"
       imageTag: "latest"
+    continueOnError: true
+
+  - script: |
+      docker tag 307744843177.dkr.ecr.us-east-1.amazonaws.com/sourcehub-taskworker-sync-dev:latest sourcehub-taskworker-sync:latest
+    displayName: Re-tag SourceHub Taskworker Sync Image
     continueOnError: true
 
   - task: Docker@2
@@ -18,7 +21,9 @@ steps:
       command: build
       repository: sourcehub-taskworker-sync
       Dockerfile: backend/taskworker_sync/Dockerfile
-      arguments: "--cache-from 307744843177.dkr.ecr.us-east-1.amazonaws.com/sourcehub-taskworker-sync:latest --build-arg BUILDKIT_INLINE_CACHE=1"
+      buildContext: $(Build.SourcesDirectory)
+      arguments: "--cache-from sourcehub-app:latest --build-arg BUILDKIT_INLINE_CACHE=1"
       tags: |
+        $(Build.BuildNumber)
         $(Build.SourceVersion)
         latest
