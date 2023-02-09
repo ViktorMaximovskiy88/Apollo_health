@@ -55,7 +55,8 @@ async def pull_task_from_queue(task_arn):
                 "last_active": now,
                 "task_arn": task_arn,
                 "status": TaskStatus.IN_PROGRESS,
-            }
+            },
+            "$inc": {"attempt_count": 1},
         },
         sort=[("queued_time", pymongo.ASCENDING)],
         return_document=ReturnDocument.AFTER,
