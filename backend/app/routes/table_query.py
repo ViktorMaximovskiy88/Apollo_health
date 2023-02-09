@@ -217,7 +217,7 @@ async def query_table(
         query = query.skip(skip)
 
     data_q: AggregationQuery[dict[str, Any]] | FindMany[T] = (
-        query_as_agg(query) if as_aggregation else query
+        query_as_agg(query, limit, skip) if as_aggregation else query
     ).to_list()
 
     if query.find_expressions == [{}]:
