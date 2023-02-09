@@ -1,8 +1,9 @@
-from backend.app.utils.logger import Logger, update_and_log_diff
+from backend.app.utils.logger import Logger, get_diff_patch, update_and_log_diff
 from backend.common.models.doc_document import DocDocument, UpdateDocDocument
 from backend.common.models.document_mixins import calc_final_effective_date
 from backend.common.models.user import User
 from backend.common.services.doc_lifecycle.hooks import doc_document_save_hook, get_doc_change_info
+from backend.common.services.document_analysis import upsert_for_doc_doc
 
 
 class DocDocumentRepository:
@@ -12,16 +13,23 @@ class DocDocumentRepository:
     async def execute(self, doc: DocDocument, updates: UpdateDocDocument, current_user: User):
         updates = await self.pre_save(doc, updates)
         updated = await self.save(doc, updates, current_user)
-        await self.post_save(doc)
+        await self.post_save(doc, current_user)
         return updated
 
     async def pre_save(self, doc: DocDocument, updates: UpdateDocDocument):
         if bool(updates.__dict__):  # if updates is not empty
             updates = await self.update_user_edited_fields(doc, updates)
             self.handle_document_type_change(doc, updates)
-            final_effective_date = calc_final_effective_date(updates)
-            if final_effective_date:
-                updates.final_effective_date = final_effective_date
+            if (
+                updates.effective_date != doc.effective_date
+                or doc.last_updated_date != updates.last_updated_date
+                or doc.last_reviewed_date != updates.last_reviewed_date
+                or doc.published_date != updates.published_date
+                or doc.first_collected_date != updates.first_collected_date
+            ):
+                final_effective_date = calc_final_effective_date(updates)
+                if final_effective_date:
+                    updates.final_effective_date = final_effective_date
 
         self.change_info = get_doc_change_info(updates, doc)
         return updates
@@ -29,8 +37,14 @@ class DocDocumentRepository:
     async def save(self, doc: DocDocument, updates: UpdateDocDocument, current_user: User):
         return await update_and_log_diff(self.logger, current_user, doc, updates)
 
-    async def post_save(self, doc: DocDocument):
-        await doc_document_save_hook(doc, self.change_info)
+    async def post_save(self, doc: DocDocument, current_user: User):
+        await upsert_for_doc_doc(doc)
+        original = doc.dict()
+        updated = await doc_document_save_hook(doc, self.change_info)
+        patch = get_diff_patch(original, updated.dict())
+        filtered_patch = [obj for obj in patch if "hold_info" not in obj["path"]]
+        if filtered_patch:
+            await self.logger.log_change(current_user, doc, "UPDATE", filtered_patch)
 
     def handle_document_type_change(self, doc: DocDocument, updates: UpdateDocDocument):
         if (

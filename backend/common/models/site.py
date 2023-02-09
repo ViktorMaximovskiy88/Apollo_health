@@ -44,14 +44,6 @@ class ScrapeMethodConfiguration(BaseModel):
     wait_for_timeout_ms: int = 500
     base_url_timeout_ms: int = 30000
     search_in_frames: bool = False
-    follow_links: bool = False
-    follow_link_keywords: list[str] = []
-    follow_link_url_keywords: list[str] = []
-    searchable: bool = False
-    searchable_playbook: str | None = None
-    searchable_type: list[SearchableType] = []
-    searchable_input: AttrSelector | None = None
-    searchable_submit: AttrSelector | None = None
     attr_selectors: list[AttrSelector] = []
     html_attr_selectors: list[AttrSelector] = []
     html_exclusion_selectors: list[AttrSelector] = []
@@ -59,6 +51,21 @@ class ScrapeMethodConfiguration(BaseModel):
     allow_docdoc_updates: bool = False
     cms_doc_types: list[CmsDocType] = []
     debug: bool = False
+
+    # Follow Links
+    follow_links: bool = False
+    follow_link_keywords: list[str] = []
+    follow_link_url_keywords: list[str] = []
+    # if Falsey and follow_links True, only scrape pages found by follow links
+    scrape_base_page: bool | None = None
+
+    # Searchables
+    searchable: bool = False
+    search_prefix_length: int | None = None
+    searchable_playbook: str | None = None
+    searchable_type: list[SearchableType] = []
+    searchable_input: AttrSelector | None = None
+    searchable_submit: AttrSelector | None = None
 
 
 class UpdateScrapeMethodConfiguration(BaseModel):
@@ -69,7 +76,9 @@ class UpdateScrapeMethodConfiguration(BaseModel):
     follow_links: bool | None = None
     follow_link_keywords: list[str] | None = None
     follow_link_url_keywords: list[str] | None = None
+    scrape_base_page: bool | None = None
     searchable: bool | None = None
+    search_prefix_length: int | None = None
     searchable_playbook: str | None = None
     searchable_type: list[SearchableType] = []
     searchable_input: AttrSelector | None = None
@@ -106,6 +115,7 @@ class NewSite(BaseModel):
     doc_type_threshold: float = 0.75
     lineage_threshold_override: bool = False
     lineage_threshold: float = 0.75
+    payer_work_instructions: str | None = None
 
 
 class UpdateSite(BaseModel):
@@ -127,6 +137,7 @@ class UpdateSite(BaseModel):
     lineage_threshold_override: bool | None = None
     lineage_threshold: float | None = None
     last_run_documents: int | None = None
+    payer_work_instructions: str | None = None
 
 
 class UpdateSiteAssigne(BaseModel):
@@ -142,6 +153,10 @@ class Site(BaseDocument, NewSite):
     assignee: PydanticObjectId | None = None
     last_run_documents: int | None = None
     pipeline_stages: SitePipelineStages | None = None
+
+    @classmethod
+    async def get_active_sites(cls):
+        return await Site.find({"disabled": False})
 
 
 # Deprecated

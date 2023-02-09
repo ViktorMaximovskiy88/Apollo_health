@@ -57,6 +57,7 @@ class SiteScrapeTask(BaseDocument):
     scrape_method_configuration: ScrapeMethodConfiguration | None = None
     work_list: list[ManualWorkItem] | None = []
     batch_status: BatchStatus | None = BatchStatus()
+    attempt_count: int = 0
 
 
 class UpdateSiteScrapeTask(BaseModel):
@@ -71,6 +72,7 @@ class UpdateSiteScrapeTask(BaseModel):
     retry_if_lost: bool | None = False
     scrape_method_configuration: ScrapeMethodConfiguration | None
     work_list: list[ManualWorkItem] = []
+    attempt_count: int | None = None
 
 
 # Deprecated

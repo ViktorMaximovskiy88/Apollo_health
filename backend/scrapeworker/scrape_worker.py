@@ -44,13 +44,14 @@ from backend.scrapeworker.common.models import DownloadContext, Metadata, Reques
 from backend.scrapeworker.common.proxy import convert_proxies_to_proxy_settings
 from backend.scrapeworker.common.update_documents import DocumentUpdater
 from backend.scrapeworker.common.utils import get_extension_from_path_like, supported_mimetypes
+from backend.scrapeworker.crawlers.search_crawler import SearchableCrawler
 from backend.scrapeworker.file_parsers import get_tags, parse_by_type, pdf
 from backend.scrapeworker.playbook import PlaybookException, ScrapePlaybook
 from backend.scrapeworker.scrapers import ScrapeHandler
+from backend.scrapeworker.scrapers.by_domain.aetna import AetnaScraper
 from backend.scrapeworker.scrapers.by_domain.tricare import TricareScraper
 from backend.scrapeworker.scrapers.cms.cms_scraper import CMSScrapeController
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
-from backend.scrapeworker.search_crawler import SearchableCrawler
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -63,6 +64,7 @@ class ScrapeWorker:
         browser: Browser,
         scrape_task: SiteScrapeTask,
         site: Site,
+        har_path: str | None = "",
     ) -> None:
         _log = logging.getLogger(str(scrape_task.id))
         if site.scrape_method_configuration.debug:
@@ -73,6 +75,7 @@ class ScrapeWorker:
         self.scrape_task = scrape_task
         self.site = site
         self.seen_urls = set()
+        self.seen_follow_urls = set()
         self.seen_hashes = set()
         self.doc_client = DocumentStorageClient()
         self.text_handler = TextHandler()
@@ -86,6 +89,7 @@ class ScrapeWorker:
         self.doc_lifecycle_service = DocLifecycleService(logger=_log)
         self.new_document_pairs: list[tuple[RetrievedDocument, DocDocument]] = []
         self.log = _log
+        self.har_path = har_path / f"{site.id}.json" if har_path else None
 
     @alru_cache
     async def get_proxy_settings(
@@ -121,7 +125,9 @@ class ScrapeWorker:
 
     async def html_to_pdf(self, url: str, download: DownloadContext, checksum: str, temp_path: str):
         dest_path = f"{checksum}.{download.file_extension}.pdf"
-        if download.direct_scrape:
+        if self.doc_client.object_exists(dest_path):
+            return
+        if download.direct_scrape or download.playwright_download:
             async with aiofiles.open(temp_path) as html_file:
                 html = await html_file.read()
             story = fitz.Story(html=html)
@@ -277,6 +283,9 @@ class ScrapeWorker:
                 document = await RetrievedDocument.find_one(
                     RetrievedDocument.text_checksum == text_checksum
                 )
+                if document:
+                    checksum = document.checksum
+                    dest_path = f"{checksum}.{download.file_extension}"
 
             if not self.doc_client.object_exists(dest_path):
                 self.doc_client.write_object(dest_path, temp_path, download.mimetype)
@@ -308,6 +317,7 @@ class ScrapeWorker:
                     document=document,
                     download=download,
                     parsed_content=parsed_content,
+                    focus_configs=scrape_method_config.focus_section_configs,
                 )
 
                 await self.doc_updater.update_doc_document(
@@ -382,7 +392,7 @@ class ScrapeWorker:
 
     @asynccontextmanager
     async def playwright_context(
-        self, url: str, cookies: list[Cookie] = []
+        self, url: str, cookies: list[Cookie] = [], **kwargs
     ) -> AsyncGenerator[tuple[Page, BrowserContext], None]:
         self.log.debug(f"Creating context for {url}")
         context: BrowserContext | None = None
@@ -404,12 +414,15 @@ class ScrapeWorker:
                     extra_http_headers=default_headers,
                     proxy=proxy,  # type: ignore
                     ignore_https_errors=True,
+                    record_har_path=self.har_path,
                 )
                 await context.add_cookies(cookies)  # type: ignore
 
                 page = await context.new_page()
                 await stealth_async(page)
                 page.on("dialog", handle_dialog)
+                if "page_route" in kwargs:
+                    await page.route("**/*", kwargs["page_route"])
 
                 self.log.info(f"Awaiting response for {url}")
                 base_url_timeout = self.site.scrape_method_configuration.base_url_timeout_ms
@@ -468,10 +481,16 @@ class ScrapeWorker:
         return [url for url in self.site.base_urls if url.status == "ACTIVE"]
 
     async def queue_downloads(
-        self, url: str, base_url: str, cookies: list[Cookie] = [], skip_playbook: bool = False
+        self,
+        url: str,
+        base_url: str,
+        cookies: list[Cookie] = [],
+        skip_playbook: bool = False,
+        is_follow_link: bool = False,
     ):
         all_downloads: list[DownloadContext] = []
-
+        follow_link_targets: set[FollowLinkScraper.FollowLink] = set()
+        scrape_config = self.site.scrape_method_configuration
         async with self.playwright_context(url, cookies) as (base_page, context):
             async for (page, playbook_context) in self.playbook.run_playbook(
                 base_page, skip_playbook=skip_playbook
@@ -481,39 +500,33 @@ class ScrapeWorker:
                     page=page,
                     playbook_context=playbook_context,
                     log=self.log,
-                    config=self.site.scrape_method_configuration,
+                    config=scrape_config,
                     scrape_method=self.site.scrape_method,
                 )
-                if await self.search_crawler.is_searchable(page):
+                if not is_follow_link and await self.search_crawler.is_searchable(page):
                     async for code in self.search_crawler.run_searchable(page, playbook_context):
-                        await scrape_handler.run_scrapers(
-                            url, base_url, all_downloads, {"file_name": code, "is_searchable": True}
-                        )
+                        if not scrape_config.follow_links or scrape_config.scrape_base_page:
+                            await scrape_handler.run_scrapers(
+                                url,
+                                base_url,
+                                all_downloads,
+                                {"file_name": code, "is_searchable": True},
+                            )
+                        follow_links = await scrape_handler.run_follow_link_scraper(url)
+                        follow_link_targets.update(follow_links)
                 else:
-                    await scrape_handler.run_scrapers(url, base_url, all_downloads)
+                    if (
+                        not scrape_config.follow_links
+                        or is_follow_link
+                        or scrape_config.scrape_base_page
+                    ):
+                        await scrape_handler.run_scrapers(url, base_url, all_downloads)
+                    if is_follow_link:
+                        continue
+                    follow_links = await scrape_handler.run_follow_link_scraper(url)
+                    follow_link_targets.update(follow_links)
 
-        return all_downloads
-
-    async def follow_links(self, url) -> tuple[set[str], list[Cookie]]:
-        urls: set[str] = set()
-        page: Page
-        context: BrowserContext
-        cookies: list[Cookie] = []
-        async with self.playwright_context(url) as (base_page, context):
-            async for page, _ in self.playbook.run_playbook(base_page):
-                crawler = FollowLinkScraper(
-                    page=page,
-                    context=context,
-                    config=self.site.scrape_method_configuration,
-                    url=url,
-                )
-
-                cookies = await context.cookies()
-                if await crawler.is_applicable():
-                    async for dl in crawler.execute():
-                        urls.add(dl.request.url)
-
-        return urls, cookies
+        return all_downloads, follow_link_targets
 
     def should_process_download(self, download: DownloadContext):
         url = download.request.url
@@ -530,6 +543,30 @@ class ScrapeWorker:
     def is_artifact_file(self, url: str):
         extension = get_extension_from_path_like(url)
         return extension in ["docx", "pdf", "xlsx"]
+
+    def is_aetna_scrape(self, url: str) -> bool:
+        parsed_url = urlparse(url)
+        return (
+            parsed_url.netloc == "www.aetna.com"
+            and parsed_url.path
+            == "/health-care-professionals/clinical-policy-bulletins/pharmacy-clinical-policy-bulletins/pharmacy-clinical-policy-bulletins-search-results.html"  # noqa
+        )
+
+    async def aetna_scrape(self) -> list[DownloadContext]:
+        downloads: list[DownloadContext] = []
+        async with self.playwright_context(
+            AetnaScraper.base_url, page_route=AetnaScraper.page_route
+        ) as (page, context):
+            scraper = AetnaScraper(
+                page=page,
+                context=context,
+                config=self.site.scrape_method_configuration,
+                url=AetnaScraper.base_url,
+                scrape_method=self.site.scrape_method,
+                log=self.log,
+            )
+            await scraper.execute(downloads)
+        return downloads
 
     async def tricare_scrape(self):
         search_term_buckets = await TricareScraper.get_search_term_buckets()
@@ -600,6 +637,10 @@ class ScrapeWorker:
                     self.log.debug(f"Queueing {len(downloads)} CMS downloads")
                     all_downloads += downloads
                 continue
+            if self.is_aetna_scrape(url):
+                self.log.info(f"Running Aetna Scraper for {url}")
+                all_downloads += await self.aetna_scrape()
+                continue
 
             # NOTE if the base url ends in a handled file extension,
             # queue it up for the aiohttp downloader
@@ -610,16 +651,25 @@ class ScrapeWorker:
                 )
                 all_downloads.append(download)
                 continue
-
-            all_downloads += await self.queue_downloads(url, url)
-            if self.site.scrape_method_configuration.follow_links:
-                self.log.debug(f"Follow links for {url}")
-                (links_found, cookies) = await self.follow_links(url)
-                for nested_url in links_found:
-                    await self.scrape_task.update(Inc({SiteScrapeTask.follow_links_found: 1}))
-                    all_downloads += await self.queue_downloads(
-                        nested_url, base_url=url, cookies=cookies, skip_playbook=True
+            try:
+                downloads, follow_link_targets = await self.queue_downloads(url, url)
+                for target in follow_link_targets:
+                    if target.url in self.seen_follow_urls:
+                        continue
+                    follow_link_downloads, _ = await self.queue_downloads(
+                        target.url, url, target.cookies, skip_playbook=True, is_follow_link=True
                     )
+                    for download in follow_link_downloads:
+                        # use follow link as file name if no other file name found
+                        if download.file_name:
+                            continue
+                        download.file_name = target.link_text
+                        download.metadata.link_text = target.link_text
+                    downloads += follow_link_downloads
+                    self.seen_follow_urls.add(target.url)
+                all_downloads += downloads
+            except Exception:
+                self.log.error(f"Error queueing downloads for url {url}:", exc_info=True)
 
         download_queue = [
             download for download in all_downloads if self.should_process_download(download)
@@ -628,11 +678,10 @@ class ScrapeWorker:
         await self.batch_downloads(download_queue)
 
         try:
-            # doc_ids = [doc.id for (doc, _) in self.new_document_pairs]
-            site_id = self.site.id
-            # TEMPORARY: lets see how the scrapeworker fares at this (vs our webapp...)
-            self.log.debug(f"before lineage_service.process_lineage_for_site site_id={site_id}")
-            await self.lineage_service.process_lineage_for_site(site_id)  # type: ignore
+            self.log.debug(
+                f"before lineage_service.process_lineage_for_site site_id={self.site.id}"
+            )
+            await self.lineage_service.process_lineage_for_site(self.site.id)  # type: ignore
 
             doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
             async for doc in DocDocument.find({"_id": {"$in": doc_doc_ids}}):
@@ -643,7 +692,7 @@ class ScrapeWorker:
                 )
                 await doc_document_save_hook(doc, change_info)
 
-            self.log.debug(f"after lineage_service.process_lineage_for_site site_id={site_id}")
+            self.log.debug(f"after lineage_service.process_lineage_for_site site_id={self.site.id}")
         except Exception as ex:
             self.log.error("Lineage error", exc_info=ex)
 

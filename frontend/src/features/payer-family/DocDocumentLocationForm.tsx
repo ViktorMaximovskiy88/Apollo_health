@@ -1,4 +1,4 @@
-import { Form, Button, Input, Row, Col } from 'antd';
+import { Form, Button, Input, Row, Col, Checkbox } from 'antd';
 import { Link } from 'react-router-dom';
 import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { DocDocumentLocation } from '../doc_documents/locations/types';
@@ -49,6 +49,7 @@ const PayerFamily = ({
 
   const fetchPayerFamilyOptions = useFetchPayerFamilyOptions();
 
+  const additionalOptions = currentOption ? [currentOption] : [];
   return (
     <Form.Item label="Payer Family">
       <div className="flex space-x-2 pt-1 multi-line-select">
@@ -71,6 +72,7 @@ const PayerFamily = ({
               setCurrentOption(option);
               form.setFieldsValue({ locations });
             }}
+            additionalOptions={additionalOptions}
           />
         </Form.Item>
         {updatedLocation?.payer_family_id ? (
@@ -94,6 +96,9 @@ const PayerFamily = ({
           <PlusOutlined />
           New
         </Button>
+        <Form.Item valuePropName="checked" name={['locations', index, 'pending_payer_update']}>
+          <Checkbox>Pending Payer Update</Checkbox>
+        </Form.Item>
       </div>
     </Form.Item>
   );
@@ -109,6 +114,7 @@ export function DocDocumentLocationForm({
 }: DocDocumentLocationFormTypes) {
   const baseUrl = Form.useWatch(['locations', index, 'base_url']);
   const url = Form.useWatch(['locations', index, 'url']);
+  const payerWorkInstructions = Form.useWatch(['locations', index, 'payer_work_instructions']);
 
   return (
     <div className="property-grid bg-white p-2 mb-4">
@@ -164,6 +170,24 @@ export function DocDocumentLocationForm({
               <LinkIcon href={url} />
             </Form.Item>
           </Col>
+        </Row>
+
+        <Row>
+          <Col span={23}>
+            <Form.Item
+              label="Payer Work Instructions"
+              name={['locations', index, 'payer_work_instructions']}
+            >
+              <Input readOnly={true} />
+            </Form.Item>
+          </Col>
+          {payerWorkInstructions ? (
+            <Col span={1}>
+              <Form.Item label=" ">
+                <LinkIcon href={payerWorkInstructions} />
+              </Form.Item>
+            </Col>
+          ) : null}
         </Row>
 
         <Form.Item label="Link Text" name={['locations', index, 'link_text']}>

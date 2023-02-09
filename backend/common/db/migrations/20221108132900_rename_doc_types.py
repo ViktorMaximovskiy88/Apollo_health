@@ -4,8 +4,8 @@ from beanie import free_fall_migration
 
 from backend.common.models.doc_document import DocDocument
 from backend.common.models.document import RetrievedDocument
+from backend.common.models.document_analysis import DocumentAnalysis
 from backend.common.models.document_family import DocumentFamily
-from backend.common.models.lineage import DocumentAnalysis
 
 
 # there were 2 :p

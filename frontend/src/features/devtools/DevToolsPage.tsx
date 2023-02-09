@@ -126,11 +126,11 @@ export function DevToolsPage({ showSiteFilter = false }: { showSiteFilter?: bool
             </Button>
             <Button
               onClick={async () => {
-                enqueueTask('LineageTask', { site_id: siteId, reprocess: true });
+                enqueueTask('LineageTask', { site_id: siteId, reprocess: false });
               }}
               className="ml-auto"
             >
-              Reprocess Lineage
+              Process Lineage
             </Button>
           </>
         )

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from logging import Logger
 
-from playwright.async_api import Page
+from playwright.async_api import Locator, Page
 
 from backend.common.models.search_codes import SearchCodeSet
 from backend.common.models.site import ScrapeMethodConfiguration
@@ -18,6 +18,20 @@ class NavState:
 
 
 class SearchableCrawler:
+    inside_a_tag_expression: str = """
+        (node) => {
+            let n = node;
+            while (n) {
+                let current_node_type = n.tagName;
+                if (current_node_type === "A") {
+                    return true
+                }
+                n = n.parentNode;
+            }
+            return false;
+        }
+    """
+
     def __init__(self, config: ScrapeMethodConfiguration, log: Logger) -> None:
         self.config = config
         self.input_selector: str | None = (
@@ -31,14 +45,36 @@ class SearchableCrawler:
         self.log = log
         self.searchable_playbook = ScrapePlaybook(config.searchable_playbook)
 
-    async def __codes(self):
-        search_codes_list = []
+    def _get_prefix_codes(self, search_codes: list[str], prefix_length: int) -> list[str]:
+        prefix_codes: set[str] = set()
+        for term in search_codes:
+            prefix_code = term[:prefix_length].lower()
+            prefix_codes.add(prefix_code)
+        prefix_codes_list = list(prefix_codes)
+        prefix_codes_list.sort()
+        return prefix_codes_list
+
+    async def __codes(self) -> list[str]:
+        search_codes_list: list[str] = []
         for search_code in self.config.searchable_type:
             search_codes = await SearchCodeSet.find_one({"type": search_code})
             if search_codes:
                 search_codes_list += list(search_codes.codes)
 
+        if self.config.search_prefix_length:
+            return self._get_prefix_codes(search_codes_list, self.config.search_prefix_length)
         return search_codes_list
+
+    async def __resolve_selector(self, page: Page) -> Locator:
+        if self.input_selector is None:
+            raise Exception("Input selector must be given.")
+        input_locators = page.locator(self.input_selector)
+        if await input_locators.count() == 1:
+            return input_locators
+        for locator in await input_locators.all():
+            if await locator.is_visible():
+                return locator
+        raise Exception("No visible locators found.")
 
     async def replay_playbook(self, page: Page, playbook_context: PlaybookContext):
         playbook = ScrapePlaybook(playbook_str=None, playbook_context=playbook_context)
@@ -51,6 +87,8 @@ class SearchableCrawler:
             continue
 
     async def is_searchable(self, page: Page):
+        timeout = self.config.wait_for_timeout_ms
+        await page.wait_for_timeout(timeout)
         locator_count = 0
         if self.config.searchable and self.input_selector:
             locators = page.locator(self.input_selector)
@@ -59,9 +97,9 @@ class SearchableCrawler:
         return locator_count > 0
 
     async def __type(self, page: Page, code: str):
-        assert self.input_selector is not None
-        await page.fill(self.input_selector, "")
-        await page.fill(self.input_selector, code)
+        input_locator = await self.__resolve_selector(page)
+        await input_locator.fill("")
+        await input_locator.fill(code)
 
     async def __select(self, page: Page, code: str):
         """
@@ -69,6 +107,11 @@ class SearchableCrawler:
         """
         try:
             select_locator = page.locator(":not(input)", has_text=code).last
+            if await select_locator.count() == 0:
+                return
+            in_anchor_tag = await select_locator.evaluate(self.inside_a_tag_expression)
+            if in_anchor_tag:
+                return
             await select_locator.click(timeout=5000)
         except Exception:
             return
@@ -92,9 +135,8 @@ class SearchableCrawler:
                 await self.__select(page, code)
                 await self.__search(page)
                 yield code
-            except Exception:
-                self.log.error("Searchable Execution Error", exc_info=True)
-
+            except Exception as e:
+                self.log.error(f"Searchable Execution Error: {e}", exc_info=e)
             if nav_state.has_navigated or page.url != base_url:
                 await page.goto(base_url)
                 await self.replay_playbook(page, playbook_context)

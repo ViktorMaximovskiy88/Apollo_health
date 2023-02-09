@@ -8,7 +8,7 @@ from beanie import PydanticObjectId
 from pydantic import Field
 
 from backend.common.db.init import init_db
-from backend.common.models.lineage import DocumentAnalysis
+from backend.common.models.document_analysis import DocumentAnalysis
 from backend.common.services.lineage.model.model import DocIndex, LineageModel
 
 

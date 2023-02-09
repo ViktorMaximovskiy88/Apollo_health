@@ -22,7 +22,7 @@ export const devtoolsApi = createApi({
   endpoints: (builder) => ({
     processSiteLineage: builder.mutation<Task, string | undefined>({
       query: (siteId) => ({
-        url: `/devtools/lineage/reprocess/${siteId}`,
+        url: `/devtools/lineage/process/${siteId}`,
         method: 'POST',
       }),
     }),

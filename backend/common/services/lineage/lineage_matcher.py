@@ -3,7 +3,7 @@ import logging
 from jarowinkler import jarowinkler_similarity
 from scipy import spatial
 
-from backend.common.models.lineage import DocumentAnalysis
+from backend.common.models.document_analysis import DocumentAnalysis
 from backend.scrapeworker.common.utils import jaccard
 
 

@@ -3,6 +3,7 @@ parameters:
     displayName: Short Environment (dev, tst, or prd)
     type: string
     values:
+      - sbx
       - dev
       - tst
       - prd

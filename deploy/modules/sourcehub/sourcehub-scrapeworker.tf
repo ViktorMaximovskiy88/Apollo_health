@@ -9,7 +9,7 @@ resource "aws_cloudwatch_log_group" "scrapeworker" {
 }
 
 resource "aws_ecs_task_definition" "scrapeworker" {
-  family                   = "${local.service_name}-scrapeworker"
+  family                   = "${local.service_name}-scrapeworker-${var.environment}"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   # TODO: Make cpu, memory a variable and determine appropriate thresholds
@@ -95,11 +95,11 @@ resource "aws_ecs_task_definition" "scrapeworker" {
       secrets = concat(local.new_relic_secrets, [
         {
           name      = "REDIS_PASSWORD"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_auth_password"
+          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/${var.environment}/redis_auth_password"
         },
         {
           name      = "SMARTPROXY_PASSWORD"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/smartproxy_password"
+          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/${var.environment}/smartproxy_password"
         }
       ])
 
@@ -131,6 +131,9 @@ resource "aws_ecs_task_definition" "scrapeworker" {
   })
 }
 
+##
+# DEPRECATED. Use aws_iam_role.sourcehub
+##
 resource "aws_iam_role" "scrapeworker-task" {
   name = format("%s-%s-%s-scrapeworker-mmit-role-%02d", local.app_name, var.environment, local.service_name, var.revision)
 
@@ -223,6 +226,7 @@ resource "aws_security_group" "scrapeworker" {
 }
 
 resource "aws_ecs_service" "scrapeworker" {
+  # Service Name should not include environment, since they are scoped to the Cluster which is scoped to an environment
   name             = "${local.service_name}-scrapeworker"
   platform_version = "LATEST"
   cluster          = data.aws_ecs_cluster.ecs-cluster.id

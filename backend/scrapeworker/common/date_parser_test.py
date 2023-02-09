@@ -55,6 +55,15 @@ def test_get_date_and_label():
     assert len(parser.unclassified_dates) == 1
     assert parser.end_date.date is None
 
+    text = """
+        Origination: 9/2017 Next Review: 9/2023
+    """
+    parser = DateParser(date_rgxs, label_rgxs)
+    parser.extract_dates(text)
+    assert len(parser.unclassified_dates) == 2
+    assert parser.published_date.date == datetime(2017, 9, 1)
+    assert parser.next_review_date.date == datetime(2023, 9, 1)
+
 
 def test_all_date_formats():
     text = """

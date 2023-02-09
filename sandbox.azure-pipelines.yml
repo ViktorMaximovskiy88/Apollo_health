@@ -1,0 +1,144 @@
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+      - sandbox
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  DOCKER_BUILDKIT: 1
+
+stages:
+  ##############################################################################################
+  # Build Stage
+  # - Build and Test SourceHub Back End
+  # - Validate Sbx Deploy
+  # - Package SourceHub
+  #
+  # NOTES:
+  # - Build and Validate jobs run in parallel
+  # - Once Build and Validate jobs are successful, then the Package SourceHub job commences.
+  ###############################################################################################
+  - stage: build
+    displayName: Build Stage
+    jobs:
+      - job: packageSourceHub
+        displayName: Package SourceHub
+        condition: succeeded()
+        steps:
+          - template: .azure-pipelines/sourcehub-base.build.yml
+
+          - task: ECRPushImage@1
+            displayName: Push SourceHub Base Image to ECR
+            inputs:
+              awsCredentials: "Apollo-AWS-Dev-Apollo"
+              regionName: "us-east-1"
+              imageSource: "imagename"
+              sourceImageName: "sourcehub-base-dev" # Source Image Name is sourcehub-base-dev, will push to sourcehub-base-sbx
+              sourceImageTag: "latest"
+              repositoryName: "sourcehub-base-sbx"
+              pushTag: "latest"
+
+          - template: .azure-pipelines/sourcehub-app.build.yml
+
+          - script: |
+              docker run -id --name test sourcehub-app-dev:$(Build.BuildNumber)
+              docker exec test bash -lc ". ./venv/bin/activate && pytest --junitxml='RESULTS.xml'"
+              TEST_EXIT_CODE=$?
+              docker cp test:/home/user/backend/RESULTS.xml RESULTS.xml
+              docker stop test
+              exit $TEST_EXIT_CODE
+            displayName: Test SourceHub
+            continueOnError: false
+
+          - task: PublishTestResults@2
+            displayName: Publish Test Results
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFiles: "**/RESULTS*.xml"
+              testRunTitle: "Test Results for SourceHub-$(Build.BuildNumber)"
+
+          - task: ECRPushImage@1
+            displayName: Push SourceHub App Image to ECR as SourceVersion
+            inputs:
+              awsCredentials: "Apollo-AWS-Dev-Apollo"
+              regionName: "us-east-1"
+              imageSource: "imagename"
+              sourceImageName: "sourcehub-app-dev" # Source Image Name is sourcehub-app-dev, will push to sourcehub-app-sbx
+              sourceImageTag: "$(Build.SourceVersion)"
+              repositoryName: "sourcehub-app-sbx"
+              pushTag: "$(Build.SourceVersion)"
+
+          - task: ECRPushImage@1
+            displayName: Push SourceHub App Image to ECR as latest
+            inputs:
+              awsCredentials: "Apollo-AWS-Dev-Apollo"
+              regionName: "us-east-1"
+              imageSource: "imagename"
+              sourceImageName: "sourcehub-app-dev" # Source Image Name is sourcehub-base-dev, will push to sourcehub-base-sbx
+              sourceImageTag: "$(Build.SourceVersion)"
+              repositoryName: "sourcehub-app-sbx"
+              pushTag: latest
+
+      - job: validateSbxDeploy
+        displayName: Validate and Plan Sandbox Deployment
+        steps:
+          - template: .azure-pipelines/source-hub.validate.yml
+            parameters:
+              environment: sbx
+              awsCredentials: "Apollo-AWS-Dev-Apollo"
+
+  ##############################################################################################
+  # Stage: Deploy to the Sandbox Environment
+  #
+  # - It is assumed that the container images have been pushed to Dev ECR in the Build Stage
+  # - This stage will pull the container images from Dev ECR and then push to Test ECR
+  # - This stage will use a template for the deployment job
+  ##############################################################################################
+  - stage: sandbox
+    displayName: Sandbox Stage
+    dependsOn: build
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/sandbox'), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature/')))
+    jobs:
+      - deployment: sbx_deployment
+        displayName: Deploy to SourceHub Sandbox
+        environment: SourceHub-Sbx
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                ##
+                # Pull SourceHub App Image from Sandbox ECR
+                ##
+                - task: ECRPullImage@1
+                  displayName: Pull SourceHub App Image
+                  inputs:
+                    awsCredentials: "Apollo-AWS-Dev-Apollo"
+                    regionName: "us-east-1"
+                    repository: "sourcehub-app-sbx"
+                    imageSource: "imagetag"
+                    imageTag: "$(Build.SourceVersion)"
+                    outputVariable: "SbxImageId"
+
+                ##
+                # Push SourceHub App Image to Sbx ECR
+                ##
+                - task: ECRPushImage@1
+                  displayName: Push SourceHub App Image to ECR as SourceVersion
+                  inputs:
+                    awsCredentials: "Apollo-AWS-Dev-Apollo"
+                    regionName: "us-east-1"
+                    imageSource: "imageid"
+                    sourceImageId: $(SbxImageId)
+                    repositoryName: "sourcehub-app-sbx"
+                    pushTag: "$(Build.SourceVersion)"
+                ##
+                # Deploy SourceHub to Sbx environment
+                ##
+                - template: .azure-pipelines/source-hub.deploy.yml
+                  parameters:
+                    environment: sbx
+                    awsCredentials: "Apollo-AWS-Dev-Apollo"

@@ -136,6 +136,16 @@ resource "aws_iam_role" "scheduler" {
               "ecs:cluster" = data.aws_ecs_cluster.cluster.arn
             }
           }
+        },
+        {
+          Effect = "Allow"
+          Action = [
+            "iam:PassRole"
+          ]
+          Resource = [
+            "${data.aws_iam_role.ecs-execution.arn}",
+            "${aws_iam_role.sourcehub.arn}"
+          ]
         }
       ]
     })

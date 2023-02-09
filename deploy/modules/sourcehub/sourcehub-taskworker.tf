@@ -9,7 +9,7 @@ resource "aws_cloudwatch_log_group" "taskworker" {
 }
 
 resource "aws_ecs_task_definition" "taskworker" {
-  family                   = "${local.service_name}-taskworker"
+  family                   = "${local.service_name}-taskworker-${var.environment}"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   # TODO: Make cpu, memory a variable and determine appropriate thresholds
@@ -86,7 +86,7 @@ resource "aws_ecs_task_definition" "taskworker" {
       secrets = concat(local.new_relic_secrets, [
         {
           name      = "REDIS_PASSWORD"
-          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/redis_auth_password"
+          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/${var.environment}/redis_auth_password"
         }
       ])
 
@@ -137,6 +137,7 @@ resource "aws_security_group" "taskworker" {
 }
 
 resource "aws_ecs_service" "taskworker" {
+  # Service Name should not include environment, since they are scoped to the Cluster which is scoped to an environment
   name             = "${local.service_name}-taskworker"
   platform_version = "LATEST"
   cluster          = data.aws_ecs_cluster.ecs-cluster.id
@@ -206,14 +207,15 @@ resource "aws_appautoscaling_target" "taskworker" {
   max_capacity       = 25
   min_capacity       = 2
   resource_id        = "service/${data.aws_ecs_cluster.ecs-cluster.cluster_name}/${local.service_name}-taskworker"
-  role_arn           = aws_iam_service_linked_role.autoscaling.arn
+  role_arn           = aws_iam_service_linked_role.autoscaling2.arn
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
 }
 
 resource "aws_appautoscaling_policy" "taskworker_scale_up" {
+
   policy_type        = "StepScaling"
-  name               = "${local.app_name}-${local.service_name}-taskworker-sqs-scale-up"
+  name               = "${local.app_name}-${local.service_name}-${var.environment}-taskworker-sqs-scale-up"
   resource_id        = aws_appautoscaling_target.taskworker.resource_id
   scalable_dimension = aws_appautoscaling_target.taskworker.scalable_dimension
   service_namespace  = aws_appautoscaling_target.taskworker.service_namespace
@@ -246,8 +248,9 @@ resource "aws_appautoscaling_policy" "taskworker_scale_up" {
 }
 
 resource "aws_appautoscaling_policy" "taskworker_scale_down" {
+
   policy_type        = "StepScaling"
-  name               = "${local.app_name}-${local.service_name}-taskworker-sqs-scale-down"
+  name               = "${local.app_name}-${local.service_name}-${var.environment}-taskworker-sqs-scale-down"
   resource_id        = aws_appautoscaling_target.taskworker.resource_id
   scalable_dimension = aws_appautoscaling_target.taskworker.scalable_dimension
   service_namespace  = aws_appautoscaling_target.taskworker.service_namespace
@@ -264,7 +267,8 @@ resource "aws_appautoscaling_policy" "taskworker_scale_down" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "taskworker_scale_up" {
-  alarm_name = "${local.app_name}-${local.service_name}-taskworker-sqs-scale-up-alarm"
+
+  alarm_name = "${local.app_name}-${local.service_name}-${var.environment}-taskworker-sqs-scale-up-alarm"
 
   comparison_operator       = "GreaterThanOrEqualToThreshold"
   evaluation_periods        = "1"
@@ -273,7 +277,7 @@ resource "aws_cloudwatch_metric_alarm" "taskworker_scale_up" {
   period                    = "60"
   threshold                 = "1"
   statistic                 = "Sum"
-  alarm_description         = "${local.app_name}-${local.service_name}-taskworker-sqs-scale-up-alarm"
+  alarm_description         = "${local.app_name}-${local.service_name}-${var.environment}-taskworker-sqs-scale-up-alarm"
   insufficient_data_actions = []
   alarm_actions = [
     aws_appautoscaling_policy.taskworker_scale_up.arn
@@ -285,7 +289,7 @@ resource "aws_cloudwatch_metric_alarm" "taskworker_scale_up" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "taskworker_scale_down" {
-  alarm_name = "${local.app_name}-${local.service_name}-taskworker-sqs-scale-down-alarm"
+  alarm_name = "${local.app_name}-${local.service_name}-${var.environment}-taskworker-sqs-scale-down-alarm"
 
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = "1"
@@ -294,7 +298,7 @@ resource "aws_cloudwatch_metric_alarm" "taskworker_scale_down" {
   period              = "60"
   threshold           = "1"
   statistic           = "Sum"
-  alarm_description   = "${local.app_name}-${local.service_name}-taskworker-sqs-scale-down-alarm"
+  alarm_description   = "${local.app_name}-${local.service_name}-${var.environment}-taskworker-sqs-scale-down-alarm"
   alarm_actions = [
     aws_appautoscaling_policy.taskworker_scale_down.arn
   ]

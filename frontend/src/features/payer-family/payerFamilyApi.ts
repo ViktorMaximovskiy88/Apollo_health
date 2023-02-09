@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from '../../app/base-api';
 import { makeTableQueryParams } from '../../common/helpers';
 import { TableInfoType } from '../../common/types';
 import { ChangeLog } from '../change-log/types';
+import { DocBulkUpdateResponse } from '../doc_documents/types';
 import { PayerFamily } from './types';
 
 export const payerFamilyApi = createApi({
@@ -43,7 +44,10 @@ export const payerFamilyApi = createApi({
         { type: 'ChangeLog', id },
       ],
     }),
-    deletePayerFamily: builder.mutation<void, Pick<PayerFamily, '_id'> & Partial<PayerFamily>>({
+    deletePayerFamily: builder.mutation<
+      DocBulkUpdateResponse,
+      Pick<PayerFamily, '_id'> & Partial<PayerFamily>
+    >({
       query: ({ _id: id }) => ({ url: `/payer-family/${id}`, method: 'DELETE' }),
       invalidatesTags: (_r, _e, { _id: id }) => [
         { type: 'PayerFamily', id },

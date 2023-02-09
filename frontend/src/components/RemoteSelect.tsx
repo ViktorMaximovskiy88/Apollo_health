@@ -1,13 +1,14 @@
 import { Spin } from 'antd';
 import Select, { SelectProps } from 'antd/lib/select';
 import debounce from 'lodash/debounce';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export interface RemoteSelectProps<ValueType = any>
   extends Omit<SelectProps<ValueType | ValueType[]>, 'options' | 'children'> {
   fetchOptions: (search: string) => Promise<ValueType[]>;
   initialOptions?: ValueType[];
   debounceTimeout?: number;
+  additionalOptions?: ValueType[];
 }
 
 export function RemoteSelect<
@@ -17,11 +18,22 @@ export function RemoteSelect<
   initialOptions = [],
   debounceTimeout = 300,
   notFoundContent = null,
+  additionalOptions = [],
   ...props
 }: RemoteSelectProps<ValueType>) {
   const [fetching, setFetching] = useState(false);
   const [options, setOptions] = useState<ValueType[] | undefined>();
   const fetchRef = useRef(0);
+
+  useEffect(() => {
+    setOptions((prevState) => {
+      if (prevState && additionalOptions) {
+        return [...prevState, ...additionalOptions];
+      }
+
+      return undefined;
+    });
+  }, [additionalOptions]);
 
   const debounceFetcher = useMemo(() => {
     const loadOptions = (value: string) => {
