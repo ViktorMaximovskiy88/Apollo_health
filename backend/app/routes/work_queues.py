@@ -189,17 +189,17 @@ async def get_work_queue_items(
     query: FindMany[IdNameLockOnlyDocument] = combine_queue_query_with_user_query(
         work_queue, sorts, filters
     )
-    docs: TableQueryResponse[IdNameLockOnlyDocument] = await query_table(
+    res: TableQueryResponse[IdNameLockOnlyDocument] = await query_table(
         query, limit, skip, as_aggregation=True
     )
 
     if "Hold" in work_queue.name:
-        for doc in docs:
+        for doc in res.data:
             comment: Comment | None = await get_hold_comment(doc.id, work_queue.name)
             if comment:
                 doc.hold_comment = comment.text
                 doc.hold_time = comment.time
-    return docs
+    return res
 
 
 class TakeLockResponse(BaseModel):
