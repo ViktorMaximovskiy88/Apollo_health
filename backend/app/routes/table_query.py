@@ -193,11 +193,11 @@ def query_as_agg(
             if isinstance(projection_value, dict):
                 if "$slice" in projection_value:
                     projection_value["$slice"] = [f"${projection_key}", projection_value["$slice"]]
+        agg_query.append({"$project": projection})
     if hasattr(query, "sort_expressions") and query.sort_expressions:
         agg_query.append({"$sort": {key: dir for key, dir in query.sort_expressions}})
 
     data = query.document_model.aggregate(agg_query)
-
     return data
 
 
