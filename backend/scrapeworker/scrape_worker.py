@@ -228,7 +228,10 @@ class ScrapeWorker:
                 await link_retrieved_task.save()
                 return
 
-            if download.mimetype not in supported_mimetypes:
+            if (
+                download.mimetype not in supported_mimetypes
+                or download.response.content_type == "application/json"
+            ):
                 message = f"Mimetype not supported. mimetype={download.mimetype}"
                 self.log.error(message)
                 link_retrieved_task.error_message = message
