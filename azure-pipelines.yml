@@ -101,7 +101,7 @@ stages:
               imageSource: "imagename"
               sourceImageName: "sourcehub-taskworker-sync"
               sourceImageTag: "$(Build.SourceVersion)"
-              repositoryName: "sourcehub-taskworker-sync"
+              repositoryName: "sourcehub-taskworker-sync-dev"
               pushTag: "$(Build.SourceVersion)"
 
           - task: ECRPushImage@1
@@ -112,7 +112,7 @@ stages:
               imageSource: "imagename"
               sourceImageName: "sourcehub-taskworker-sync"
               sourceImageTag: "latest"
-              repositoryName: "sourcehub-taskworker-sync"
+              repositoryName: "sourcehub-taskworker-sync-dev"
               pushTag: "latest"
           ##############################################################################################
 
@@ -221,7 +221,7 @@ stages:
                   inputs:
                     awsCredentials: "Apollo-AWS-Dev-Apollo"
                     regionName: "us-east-1"
-                    repository: "sourcehub-taskworker-sync"
+                    repository: "sourcehub-taskworker-sync-dev"
                     imageSource: "imagetag"
                     imageTag: "$(Build.SourceVersion)"
                     outputVariable: "DevImageId"
@@ -236,7 +236,7 @@ stages:
                     regionName: "us-east-1"
                     imageSource: "imageid"
                     sourceImageId: $(DevImageId)
-                    repositoryName: "sourcehub-taskworker-sync"
+                    repositoryName: "sourcehub-taskworker-sync-tst"
                     pushTag: "$(Build.SourceVersion)"
 
                 ##
@@ -317,7 +317,7 @@ stages:
                     regionName: "us-east-1"
                     imageSource: "imageid"
                     sourceImageId: $(DevImageId)
-                    repositoryName: "sourcehub-taskworker-sync"
+                    repositoryName: "sourcehub-taskworker-sync-prd"
                     pushTag: "$(Build.SourceVersion)"
 
                 ##

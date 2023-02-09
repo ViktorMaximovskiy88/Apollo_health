@@ -124,7 +124,6 @@ data "aws_iam_policy" "params-reader" {
   name = format("%s-%s-secrets-reader-mmit-policy-%02d", local.app_name, var.environment, var.revision)
 }
 
-# needs to be env specfic...
 data "aws_ecr_repository" "sourcehub-taskworker-sync" {
-  name = "sourcehub-taskworker-sync"
+  name = "sourcehub-taskworker-sync-${var.environment}"
 }
