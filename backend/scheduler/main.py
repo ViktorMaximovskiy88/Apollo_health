@@ -266,7 +266,13 @@ async def start_hung_task_checker():
     while True:
         now = datetime.now(tz=timezone.utc)
         async for task in get_hung_tasks(now):
-            if task.status == TaskStatus.IN_PROGRESS:
+            if task.attempt_count >= 5:
+                await task.update({"$set": {"status": TaskStatus.FAILED}})
+                await Site.find_one(Site.id == task.site_id).update(
+                    {"$set": {"last_run_status": TaskStatus.FAILED}}
+                )
+                logging.info(f"Task reached max attempts. Skipping requeue. Task ID: {task.id}")
+            elif task.status == TaskStatus.IN_PROGRESS:
                 await requeue_lost_task(task, now)
             elif task.status == TaskStatus.CANCELING:
                 await task.update({"$set": {"status": TaskStatus.CANCELED}})
