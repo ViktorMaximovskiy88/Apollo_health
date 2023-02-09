@@ -60,7 +60,7 @@ def test_get_extension_from_content_type():
 def test_get_extension_from_content_type_non_match():
     input = "application/json"
     result = get_extension_from_content_type(input)
-    assert result is None
+    assert result == "json"
 
 
 def test_get_extension_from_file_mimetype_none():

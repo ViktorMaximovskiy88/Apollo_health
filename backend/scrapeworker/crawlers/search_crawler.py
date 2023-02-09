@@ -69,9 +69,11 @@ class SearchableCrawler:
         if self.input_selector is None:
             raise Exception("Input selector must be given.")
         input_locators = page.locator(self.input_selector)
-        if await input_locators.count() == 1:
+        locator_count = await input_locators.count()
+        if locator_count == 1:
             return input_locators
-        for locator in await input_locators.all():
+        for i in range(0, locator_count):
+            locator = input_locators.nth(i)
             if await locator.is_visible():
                 return locator
         raise Exception("No visible locators found.")
