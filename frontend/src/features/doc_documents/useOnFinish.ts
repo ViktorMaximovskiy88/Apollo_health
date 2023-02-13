@@ -1,3 +1,4 @@
+import { useGetDocDocumentQuery } from './docDocumentApi';
 import { DocDocument, DocumentTag, IndicationTag, TherapyTag } from './types';
 
 export const focusDocumentTypes = [
@@ -24,6 +25,7 @@ export const useOnFinish = ({
   setIsSaving,
   docId,
 }: UseOnFinishType): ((doc: Partial<DocDocument>) => void) => {
+  const { data: doc } = useGetDocDocumentQuery(docId);
   const onFinish = async (submittedDoc: Partial<DocDocument>): Promise<void> => {
     if (!submittedDoc) return;
 
@@ -46,6 +48,10 @@ export const useOnFinish = ({
 
       submittedDoc.previous_par_id = submittedDoc.previous_par_id || null;
       submittedDoc.document_family_id = submittedDoc.document_family_id || null;
+      submittedDoc.locations = doc?.locations.map((loc, i) => ({
+        ...loc,
+        ...(submittedDoc.locations || [])[i],
+      }));
 
       await onSubmit({
         ...submittedDoc,

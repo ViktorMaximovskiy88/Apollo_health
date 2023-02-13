@@ -100,7 +100,12 @@ export function ManualCollectionButton(props: any) {
       if (unhandledDocNames.length > 0) {
         notification.error({
           message: 'Please review and update the following documents ',
-          description: unhandledDocNames.join(', '),
+          description: unhandledDocNames.map((name) => (
+            <>
+              {name}
+              <br />
+            </>
+          )),
         });
         return;
       }
@@ -117,7 +122,12 @@ export function ManualCollectionButton(props: any) {
             setIsLoading(false);
             notification.error({
               message: 'Please review and update the following documents',
-              description: response.data.errors.join(', '),
+              description: response.data.errors.map((err: any) => (
+                <>
+                  {err}
+                  <br />
+                </>
+              )),
             });
           }
         } catch (err) {

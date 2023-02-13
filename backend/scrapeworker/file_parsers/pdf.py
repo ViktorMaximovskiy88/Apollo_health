@@ -1,5 +1,7 @@
 import asyncio
 import os
+import random
+import string
 from pathlib import Path
 from typing import Any
 
@@ -74,7 +76,8 @@ class PdfParse(FileParser):
 
     async def get_images(self):
         root_dir = Path(self.file_path).parent
-        file_prefix = "image-tmp"
+        prefix = "".join(random.choices(string.ascii_uppercase, k=32))
+        file_prefix = f"{prefix}-image-tmp"
         process = await asyncio.create_subprocess_exec(
             "pdfimages",
             "-raw",
