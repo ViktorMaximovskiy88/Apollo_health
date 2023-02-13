@@ -129,6 +129,7 @@ async def family_queues():
                     "classification_status": "HOLD",
                     "family_status": "PENDING",
                 },
+                require_comment=True,
             ),
             SubmitAction(
                 label="Hold",
@@ -169,6 +170,7 @@ async def family_queues():
                     "classification_status": "HOLD",
                     "family_status": "PENDING",
                 },
+                require_comment=True,
             ),
             SubmitAction(label="Back To Queue", submit_action={"family_status": "QUEUED"}),
             SubmitAction(
@@ -203,6 +205,7 @@ async def translation_config_queues():
                     "classification_status": "HOLD",
                     "family_status": "PENDING",
                 },
+                require_comment=True,
             ),
             SubmitAction(
                 label="Reject Family",
@@ -210,6 +213,7 @@ async def translation_config_queues():
                     "family_status": "HOLD",
                     "content_extraction_status": "PENDING",
                 },
+                require_comment=True,
             ),
             SubmitAction(
                 label="Hold",
@@ -246,6 +250,7 @@ async def translation_config_queues():
                     "classification_status": "HOLD",
                     "family_status": "PENDING",
                 },
+                require_comment=True,
             ),
             SubmitAction(
                 label="Reject Family",
@@ -253,6 +258,7 @@ async def translation_config_queues():
                     "family_status": "HOLD",
                     "content_extraction_status": "PENDING",
                 },
+                require_comment=True,
             ),
             SubmitAction(
                 label="Back To Queue", submit_action={"content_extraction_status": "QUEUED"}
