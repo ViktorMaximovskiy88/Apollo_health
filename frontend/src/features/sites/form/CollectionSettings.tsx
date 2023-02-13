@@ -6,7 +6,8 @@ import {
   DocumentExtensions,
   UrlKeywords,
   ProxyExclusions,
-  WaitFor,
+  WaitForText,
+  WaitForSelector,
   WaitForTimeout,
   SearchInFrames,
 } from './ScrapeConfigFields';
@@ -126,7 +127,8 @@ export function CollectionSettings({ initialValues }: CollectionSettingsPropType
               <UrlKeywords />
               <HtmlScrapeConfig scrapeMethod={currentScrapeMethod} />
               <CustomSelectors />
-              <WaitFor />
+              <WaitForText />
+              <WaitForSelector />
               <WaitForTimeout />
               <Schedule />
               <FollowLinks />

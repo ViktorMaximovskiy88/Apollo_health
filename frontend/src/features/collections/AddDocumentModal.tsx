@@ -316,6 +316,16 @@ export function AddDocumentModal({
   );
 }
 
+const acceptableMimeTypes = [
+  'application/pdf', //                                                         .pdf
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', //       .xlsx
+  'application/vnd.ms-excel', //                                                .xls
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'application/msword', //                                                      .doc
+  'text/csv', //                                                                .csv
+  'text/plain', //                                                              .txt
+];
+
 function UploadItem(props: any) {
   const { setFileData, siteId, setLocationValues } = props;
   const [token, setToken] = useState('');
@@ -353,14 +363,21 @@ function UploadItem(props: any) {
         label="Document File"
         style={{ width: '100%' }}
       >
-        <Tooltip placement="top" title="Only upload .pdf, .xlsx and .docx">
+        <Tooltip placement="top" title="Only upload .pdf, .xlsx, .xls, .docx, .doc, .csv, or .txt">
           <QuestionCircleOutlined
             style={{ marginTop: '-26px', marginLeft: '105px', float: 'left' }}
           />
         </Tooltip>
         <Upload
           name="file"
-          accept=".pdf,.xlsx,.docx,.xls,.doc"
+          accept=".pdf,.xlsx,.xls,.docx,.doc,.csv,.txt"
+          beforeUpload={(file) => {
+            if (!acceptableMimeTypes.includes(file.type)) {
+              message.error(`${file.name} does not have an allowed filetype.`);
+              return false;
+            }
+            return true;
+          }}
           action={`${baseApiUrl}/documents/upload/${siteId}`}
           headers={{
             Authorization: `Bearer ${token}`,

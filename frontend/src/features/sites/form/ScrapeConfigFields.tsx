@@ -73,7 +73,7 @@ export function ProxyExclusions() {
   );
 }
 
-export function WaitFor() {
+export function WaitForText() {
   return (
     <Form.Item
       name={['scrape_method_configuration', 'wait_for']}
@@ -90,6 +90,27 @@ export function WaitFor() {
       }
     >
       <Select mode="tags" />
+    </Form.Item>
+  );
+}
+
+export function WaitForSelector() {
+  return (
+    <Form.Item
+      name={['scrape_method_configuration', 'wait_for_selector']}
+      label={
+        <>
+          <span style={{ marginRight: '5px' }}>Wait For Selector</span>
+          <Tooltip
+            placement="right"
+            title="Collection will wait for specific selector to appear before continuing."
+          >
+            <QuestionCircleOutlined />
+          </Tooltip>
+        </>
+      }
+    >
+      <Input />
     </Form.Item>
   );
 }
