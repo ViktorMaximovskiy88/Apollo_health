@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import json
 import re
 from typing import Any, Generic, TypeVar
@@ -187,13 +188,22 @@ def query_as_agg(
     # 'find' projection slice operator, n is the only input.
     # 'aggregation' projection slice operator, ['$array', n] is the input.
     if hasattr(query, "projection_model") and query.projection_model:
+        inclusion_projection = {}
         projection = get_projection(query.projection_model)
         for projection_key in projection:
-            projection_value = projection[projection_key]
+            # Copy dict value to new object so that changes to projection_value does not
+            # affect original projection (python dict value assign by ref).
+            projection_value = copy.copy(projection[projection_key])
+            # exclusion projection is any projection with value of 0.
+            # Used in find to exclude fields, but query_as_agg explicitly includes.
+            # Cannot mix inclusion projection with exclusion projection.
+            if projection_value == 0:
+                continue
             if isinstance(projection_value, dict):
                 if "$slice" in projection_value:
                     projection_value["$slice"] = [f"${projection_key}", projection_value["$slice"]]
-        agg_query.append({"$project": projection})
+            inclusion_projection[projection_key] = projection_value
+        agg_query.append({"$project": inclusion_projection})
     if hasattr(query, "sort_expressions") and query.sort_expressions:
         agg_query.append({"$sort": {key: dir for key, dir in query.sort_expressions}})
 
