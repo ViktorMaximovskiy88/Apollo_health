@@ -239,7 +239,7 @@ class DocDocumentLimitTags(DocDocument):
         projection = {
             "therapy_tags": {"$slice": 10},
             "indication_tags": {"$slice": 10},
-            "doc_vectors": 0,
+            # "doc_vectors": 0, cannot mix exclusion and inclusion.
             "retrieved_document_id": 1,
             "name": 1,
             "checksum": 1,
@@ -248,12 +248,12 @@ class DocDocumentLimitTags(DocDocument):
                 "base_url": 1,
                 "url": 1,
                 "site_id": 1,
-                "payer_family_id": 1,  # TODO: fix
+                "payer_family_id": 1,
             },
             "checksum": 1,
             "final_effective_date": 1,
             "document_type": 1,
-            "document_family_id": 1,  # TODO: fix DocDocumentView family?
+            "document_family_id": 1,
             "status": 1,
             "classification_status": 1,
             "family_status": 1,
@@ -261,7 +261,7 @@ class DocDocumentLimitTags(DocDocument):
             "first_collected_date": 1,
             "last_collected_date": 1,
             "is_current_version": 1,
-            "priority": 1,  # TODO: fix
+            "priority": 1,
         }
 
 

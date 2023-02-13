@@ -99,7 +99,7 @@ async def read_doc_documents(
         query["retrieved_document_id"] = {"$in": task.retrieved_document_ids}
 
     document_query = DocDocument.find(query).project(DocDocumentLimitTags)
-    docs = await query_table(document_query, limit, skip, as_aggregation=True)
+    docs = await query_table(document_query, limit, skip, sorts, filters, as_aggregation=True)
 
     return docs
 
