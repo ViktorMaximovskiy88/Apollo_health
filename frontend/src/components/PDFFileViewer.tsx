@@ -7,7 +7,15 @@ import { useTaskWorker } from '../features/tasks/taskSlice';
 import classNames from 'classnames';
 import { useState } from 'react';
 
-export function PDFFileLoader({ docId, onPageChange }: { docId?: string; onPageChange: Function }) {
+export function PDFFileLoader({
+  docId,
+  docDocId,
+  onPageChange,
+}: {
+  docId?: string;
+  docDocId?: string;
+  onPageChange: Function;
+}) {
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
   const [pdfUrl, setPdfUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +34,7 @@ export function PDFFileLoader({ docId, onPageChange }: { docId?: string; onPageC
   function handleRegeneratePdfClick() {
     setIsLoading(true);
     enqueueTask('RegeneratePdfTask', {
-      doc_doc_id: docId,
+      doc_doc_id: docDocId,
     });
   }
 

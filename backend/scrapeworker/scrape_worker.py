@@ -1,5 +1,6 @@
 import asyncio
 import tempfile
+import traceback
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from random import shuffle
@@ -8,6 +9,7 @@ from urllib.parse import urlparse
 
 import aiofiles
 import fitz
+import typer
 from async_lru import alru_cache
 from beanie.odm.operators.update.general import Inc, Set
 from playwright.async_api import Browser, BrowserContext, Cookie, Dialog, Page, ProxySettings
@@ -127,40 +129,49 @@ class ScrapeWorker:
         dest_path = f"{checksum}.{download.file_extension}.pdf"
         if self.doc_client.object_exists(dest_path):
             return
-        if download.direct_scrape or download.playwright_download:
-            async with aiofiles.open(temp_path) as html_file:
-                html = await html_file.read()
-            story = fitz.Story(html=html)
-            page_bounds = fitz.paper_rect("letter")
-            content_bounds = page_bounds + (36, 54, -36, -54)  # borders of 0.5 and .75 inches
-            with tempfile.NamedTemporaryFile() as pdf_temp:
-                writer = fitz.DocumentWriter(pdf_temp)
-                more_pages = 1
-                while more_pages:
-                    current_page = writer.begin_page(page_bounds)
-                    more_pages, _ = story.place(content_bounds)
-                    story.draw(current_page)
-                    writer.end_page()
-                writer.close()
-
-                pdf_doc = fitz.Document(pdf_temp)
-                pdf_bytes: bytes = pdf_doc.tobytes()  # type: ignore
-                self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
-                # Yield the filename after pdf is written so that if anything happens during write,
-                # an exception will be raised. Otherwise, yielding before writing
-                # will swallow exception.
-                yield pdf_temp.name
-        else:
-            async with self.playwright_context(url, download.request.cookies) as (
-                page,
-                _context,
-            ):
-                await page.goto(url, wait_until="domcontentloaded")
-                pdf_bytes = await page.pdf(display_header_footer=False, print_background=True)
-                self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
+        try:
+            if download.direct_scrape or download.playwright_download:
+                async with aiofiles.open(temp_path) as html_file:
+                    html = await html_file.read()
+                story = fitz.Story(html=html)
+                page_bounds = fitz.paper_rect("letter")
+                content_bounds = page_bounds + (36, 54, -36, -54)  # borders of 0.5 and .75 inches
                 with tempfile.NamedTemporaryFile() as pdf_temp:
-                    pdf_temp.write(pdf_bytes)
+                    writer = fitz.DocumentWriter(pdf_temp)
+                    more_pages = 1
+                    while more_pages:
+                        current_page = writer.begin_page(page_bounds)
+                        more_pages, _ = story.place(content_bounds)
+                        story.draw(current_page)
+                        writer.end_page()
+                    writer.close()
+
+                    pdf_doc = fitz.Document(pdf_temp)
+                    pdf_bytes: bytes = pdf_doc.tobytes()  # type: ignore
+                    self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
+                    # Yield the filename after pdf is written so that if anything happens
+                    # during write, an exception will be raised.
+                    # Otherwise, yielding before writing will swallow exception.
                     yield pdf_temp.name
+            else:
+                async with self.playwright_context(url, download.request.cookies) as (
+                    page,
+                    _context,
+                ):
+                    await page.goto(url, wait_until="domcontentloaded")
+                    pdf_bytes = await page.pdf(display_header_footer=False, print_background=True)
+                    self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
+                    with tempfile.NamedTemporaryFile() as pdf_temp:
+                        pdf_temp.write(pdf_bytes)
+                        yield pdf_temp.name
+        # If pdf fails to generate, log the exception and continue.
+        # When this was written, not able to track down pdf exception due to
+        # happening on production, but not local.
+        # Suspect pdf library called by subprocess.
+        except Exception as ex:
+            typer.secho("html_to_pdf Failed", fg=typer.colors.RED)
+            logging.error(ex)
+            traceback.print_exc()
 
     def get_updated_tags(
         self,
@@ -231,10 +242,7 @@ class ScrapeWorker:
                 await link_retrieved_task.save()
                 return
 
-            if (
-                download.mimetype not in supported_mimetypes
-                or download.response.content_type == "application/json"
-            ):
+            if download.mimetype not in supported_mimetypes:
                 message = f"Mimetype not supported. mimetype={download.mimetype}"
                 self.log.error(message)
                 link_retrieved_task.error_message = message
