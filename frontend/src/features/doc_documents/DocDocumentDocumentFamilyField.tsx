@@ -68,7 +68,6 @@ export const DocDocumentDocumentFamilyField = ({
   const form = Form.useFormInstance();
   const [isNewVisible, setIsNewVisible] = useState<boolean>(false);
   const [isEditVisible, setIsEditVisible] = useState<boolean>(false);
-  const [skip, setSkip] = useState<boolean>(true);
   const document_type_selected = Form.useWatch('document_type');
   const document_family_id = Form.useWatch('document_family_id');
 
@@ -91,7 +90,6 @@ export const DocDocumentDocumentFamilyField = ({
 
   useEffect(() => {
     if (document_family_id) {
-      setSkip(false);
       setDocFamilyData(docFamData);
     }
   }, [document_family_id, docFamData]);
