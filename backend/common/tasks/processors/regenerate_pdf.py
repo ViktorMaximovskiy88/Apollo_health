@@ -33,9 +33,8 @@ class RegeneratePdfProcessor(TaskProcessor):
         # Make sure doc has existing html doc already scraped.
         # If the html doc does not exist, you will need to refactor the
         # scraper to support rescraping 1 doc vs the entire site.
-        doc_checksum: str = f"{doc_doc.checksum}"
         self.doc_client: DocumentStorageClient = DocumentStorageClient()
-        if not self.doc_client.object_exists(f"{doc_checksum}.html"):
+        if not self.doc_client.object_exists(f"{doc_doc.checksum}.html"):
             raise Exception("Unable to regenerate pdf because html file does not exist!")
 
         direct_download = True
@@ -43,9 +42,9 @@ class RegeneratePdfProcessor(TaskProcessor):
         # use logic below to determine direct_download:
         # if download.direct_scrape or download.playwright_download:
         if direct_download:
-            download_link = self.regenerate_from_html(doc_checksum=doc_checksum)
+            download_link = self.regenerate_from_html(doc_checksum=doc_doc.checksum)
         else:
-            download_link = self.regenerate_from_scrape(doc_checksum=doc_checksum)
+            download_link = self.regenerate_from_scrape(doc_checksum=doc_doc.checksum)
         return download_link
 
     def regenerate_from_html(self, doc_checksum: str):
@@ -78,6 +77,7 @@ class RegeneratePdfProcessor(TaskProcessor):
         return url
 
     def regenerate_from_scrape(self, doc_checksum: str):
+
         # TODO: How to generate DownloadContext without scraping whole site?
         # See run_scrape to get how download is generated.
         # async with self.playwright_context(url, download.request.cookies) as (

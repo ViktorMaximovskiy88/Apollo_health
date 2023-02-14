@@ -53,7 +53,6 @@ class BaseS3Client:
         )
 
     def write_object_mem(self, relative_key: str, object: bytes | str) -> None:
-        # Double check object exists after put_object
         self.bucket.put_object(Key=self.get_full_path(relative_key), Body=object)
 
     def download_directory(self, relative_prefix, local_path):
