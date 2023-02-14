@@ -91,7 +91,7 @@ export function SiteDocDocumentsTable({
     return statusLabel.name;
   }
   const dateLabel = prettyDateTimeFromISO(
-    siteScrapeTask?.start_time || siteScrapeTask?.queued_time
+    siteScrapeTask?.end_time || siteScrapeTask?.start_time || siteScrapeTask?.queued_time
   );
   function elapsedLable(siteScrapeTask: SiteScrapeTask) {
     if (!siteScrapeTask || !siteScrapeTask.start_time) {
@@ -124,7 +124,8 @@ export function SiteDocDocumentsTable({
         <Alert
           message={
             <div>
-              <span className={classNames('mr-2')}>
+              <span className={classNames('mr-2 opacity-80')}>Filtered by Collection</span>|
+              <span className={classNames('mx-2')}>
                 {siteScrapeTaskStatusLabel(siteScrapeTask)} on {dateLabel}
               </span>
               |

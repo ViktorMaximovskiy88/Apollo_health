@@ -1,6 +1,7 @@
 import { Spin } from 'antd';
 import Select, { SelectProps } from 'antd/lib/select';
 import debounce from 'lodash/debounce';
+import some from 'lodash/some';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export interface RemoteSelectProps<ValueType = any>
@@ -28,7 +29,10 @@ export function RemoteSelect<
   useEffect(() => {
     setOptions((prevState) => {
       if (prevState && additionalOptions) {
-        return [...prevState, ...additionalOptions];
+        const newAdditionalOptions = additionalOptions.filter(
+          (option) => !some(prevState, ['value', option.value])
+        );
+        return [...prevState, ...newAdditionalOptions];
       }
 
       return undefined;
