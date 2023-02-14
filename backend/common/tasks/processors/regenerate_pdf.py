@@ -35,7 +35,7 @@ class RegeneratePdfProcessor(TaskProcessor):
         # scraper to support rescraping 1 doc vs the entire site.
         self.doc_client: DocumentStorageClient = DocumentStorageClient()
         if not self.doc_client.object_exists(f"{doc_doc.checksum}.html"):
-            raise Exception("Unable to regenerate pdf because html file does not exist!")
+            raise Exception("Unable to regenerate pdf because the html file was never scraped!")
 
         direct_download = True
         # TODO: Once regenerate_from_scrape implemented and have download context,
