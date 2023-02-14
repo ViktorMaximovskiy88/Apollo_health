@@ -25,7 +25,9 @@ import {
 import { useAppDispatch } from '../../app/store';
 
 function DocTypeUpdateModalToolbar() {
+  const [searchParams] = useSearchParams();
   const { siteId } = useParams();
+  const scrapeTaskId = searchParams.get('scrape_task_id') || undefined;
   const tableState = useSelector(siteDocDocumentTableState);
   const dispatch = useAppDispatch();
   const onBulkSubmit = useCallback(() => {
@@ -37,6 +39,7 @@ function DocTypeUpdateModalToolbar() {
       selection={tableState.selection}
       filterValue={tableState.filter}
       siteId={siteId}
+      scrapeTaskId={scrapeTaskId}
       onBulkSubmit={onBulkSubmit}
     />
   );
