@@ -176,7 +176,7 @@ class ScrapeWorker:
         # happening on production, but not local.
         # Suspect pdf library called by subprocess.
         except Exception as ex:
-            typer.secho("html_to_pdf Failed", fg=typer.colors.RED)
+            typer.secho(f"html_to_pdf Failed. checksum {checksum}", fg=typer.colors.RED)
             logging.error(ex)
             traceback.print_exc()
 
