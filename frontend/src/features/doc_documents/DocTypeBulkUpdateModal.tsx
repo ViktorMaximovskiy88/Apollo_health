@@ -14,6 +14,7 @@ interface DocTypeBulkUpdateModalPropTypes {
   selection?: TypeOnSelectionChangeArg;
   filterValue: TypeFilterValue;
   siteId?: string;
+  scrapeTaskId?: string;
   onBulkSubmit?: () => void;
 }
 
@@ -22,6 +23,7 @@ export function DocTypeUpdateModal({
   filterValue,
   onBulkSubmit,
   siteId,
+  scrapeTaskId,
 }: DocTypeBulkUpdateModalPropTypes) {
   const [form] = Form.useForm();
   const [getAllDocIds] = useLazyGetAllDocIdsQuery();
@@ -50,7 +52,7 @@ export function DocTypeUpdateModal({
 
     let ids: string[] = [];
     if (selection.selected === true) {
-      ids = await getAllDocIds({ siteId, filterValue }).unwrap();
+      ids = await getAllDocIds({ siteId, scrapeTaskId, filterValue }).unwrap();
     }
     if (selection.selected && typeof selection.selected === 'object') {
       ids = Object.keys(selection.selected);
