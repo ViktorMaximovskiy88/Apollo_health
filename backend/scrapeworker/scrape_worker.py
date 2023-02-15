@@ -10,6 +10,7 @@ from typing import AsyncGenerator
 from urllib.parse import urlparse
 
 import aiofiles
+import aiofiles.os
 import fitz
 from async_lru import alru_cache
 from beanie.odm.operators.update.general import Inc, Set
@@ -67,7 +68,7 @@ class ScrapeWorker:
         browser: Browser,
         scrape_task: SiteScrapeTask,
         site: Site,
-        har_path: str | None = "",
+        har_path: Path | None = None,
     ) -> None:
         _log = logging.getLogger(str(scrape_task.id))
         if site.scrape_method_configuration.debug:
@@ -96,7 +97,7 @@ class ScrapeWorker:
         self.doc_lifecycle_service = DocLifecycleService(logger=_log)
         self.new_document_pairs: list[tuple[RetrievedDocument, DocDocument]] = []
         self.log = _log
-        self.har_path = har_path / f"{site.id}.json" if har_path else None
+        self.har_path = Path(har_path) / f"{site.id}.json" if har_path else None
 
     @alru_cache
     async def get_proxy_settings(
@@ -355,7 +356,7 @@ class ScrapeWorker:
 
             link_retrieved_task.retrieved_document_id = document.id
 
-            if download.playwright_download:
+            if download.playwright_download and download.file_path:
                 await aiofiles.os.remove(download.file_path)
 
             await asyncio.wait(
@@ -424,8 +425,9 @@ class ScrapeWorker:
                     extra_http_headers=default_headers,
                     proxy=proxy,  # type: ignore
                     ignore_https_errors=True,
-                    record_har_path=self.har_path,
+                    record_har_path=self.har_path,  # type: ignore
                 )
+
                 await context.add_cookies(cookies)  # type: ignore
 
                 page = await context.new_page()
@@ -580,9 +582,7 @@ class ScrapeWorker:
 
     async def tricare_scrape(self):
         search_term_buckets = await TricareScraper.get_search_term_buckets()
-        await self.scrape_task.update(
-            Set({SiteScrapeTask.batch_status.total_pages: len(search_term_buckets)})
-        )
+        await self.scrape_task.update(Set({"batch_status.total_pages": len(search_term_buckets)}))
 
         page: Page
         context: BrowserContext
@@ -604,8 +604,8 @@ class ScrapeWorker:
                 await self.scrape_task.update(
                     Set(
                         {
-                            SiteScrapeTask.batch_status.current_page: batch_page,
-                            SiteScrapeTask.batch_status.batch_key: batch_key,
+                            "batch_status.current_page": batch_page,
+                            "batch_status.batch_key": batch_key,
                         }
                     )
                 )

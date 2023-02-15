@@ -9,6 +9,7 @@ from typing import AsyncGenerator
 from urllib.parse import urlparse
 
 import aiofiles
+import aiofiles.os
 import fitz
 from async_lru import alru_cache
 from beanie.odm.operators.update.general import Inc, Set
@@ -68,7 +69,7 @@ class ScrapeTask:
         site: Site,
         doc_client: AsyncS3Client,
         scrape_temp_path,
-        har_path: str | None = "",
+        har_path: Path | None = None,
     ) -> None:
         scrape_logger = logging.getLogger(str(scrape_task.id))
         if site.scrape_method_configuration.debug:
@@ -95,7 +96,7 @@ class ScrapeTask:
         self.log = scrape_logger
         self.scrape_temp_path = scrape_temp_path
         self.log.info(f"scrape_temp_path={scrape_temp_path}")
-        self.har_path = har_path / f"{site.id}.json" if har_path else None
+        self.har_path = Path(har_path) / f"{site.id}.json" if har_path else None
 
     @classmethod
     async def create(
@@ -104,7 +105,7 @@ class ScrapeTask:
         browser,
         scrape_task: SiteScrapeTask,
         site: Site,
-        har_path: str | None = "",
+        har_path: Path | None = None,
     ):
         # TODO will move into ... `helpers`
         doc_client = await AsyncS3Client.create(
@@ -199,7 +200,7 @@ class ScrapeTask:
                 await page.goto(url, wait_until="domcontentloaded")
                 pdf_bytes = await page.pdf(display_header_footer=False, print_background=True)
                 async with aiofiles.tempfile.NamedTemporaryFile() as pdf_temp:
-                    pdf_temp.write(pdf_bytes)
+                    await pdf_temp.write(pdf_bytes)
                     await self.doc_client.write_object_mem(relative_key=dest_path, object=pdf_bytes)
                     yield pdf_temp.name
 
@@ -339,7 +340,7 @@ class ScrapeTask:
             ):
                 async for pdf_path in self.html_to_pdf(url, download, checksum, temp_path):
                     await pdf.PdfParse(
-                        pdf_path,
+                        str(pdf_path),
                         url,
                         link_text=download.metadata.link_text,
                         scrape_method_config=scrape_method_config,
@@ -386,7 +387,7 @@ class ScrapeTask:
 
             link_retrieved_task.retrieved_document_id = document.id
 
-            if download.playwright_download:
+            if download.playwright_download and download.file_path:
                 await aiofiles.os.remove(download.file_path)
 
             await asyncio.gather(
@@ -423,12 +424,11 @@ class ScrapeTask:
         on_download=None,
         on_response=None,
     ) -> AsyncGenerator[tuple[Page, BrowserContext], None]:
-
+        context: BrowserContext | None = None
+        page: Page | None = None
+        response: PlaywrightResponse | None = None
         try:
             self.log.debug(f"Creating context for {url}")
-            context: BrowserContext | None = None
-            page: Page | None = None
-            response: PlaywrightResponse | None = None
 
             link_base_task: LinkBaseTask = LinkBaseTask(
                 base_url=url,
@@ -455,13 +455,13 @@ class ScrapeTask:
 
                     context = await self.browser.new_context(
                         extra_http_headers=default_headers,
-                        proxy=proxy,
+                        proxy=proxy,  # type: ignore
                         ignore_https_errors=True,
-                        record_har_path=self.har_path,
+                        record_har_path=self.har_path,  # type: ignore
                     )
 
                     # probably goes away...
-                    await context.add_cookies(cookies)
+                    await context.add_cookies(cookies)  # type: ignore
 
                     page = await context.new_page()
                     await stealth_async(page)
@@ -471,10 +471,10 @@ class ScrapeTask:
                         await page.route("**/*", page_route)
 
                     if on_download:
-                        await page.on("download", on_download)
+                        page.on("download", on_download)
 
                     if on_response:
-                        await page.on("on_response", on_response)
+                        page.on("response", on_response)
 
                     self.log.info(f"Attempt #{attempt_number} Awaiting response for base_url={url}")
                     base_url_timeout = self.scrape_config.base_url_timeout_ms
@@ -572,8 +572,8 @@ class ScrapeTask:
 
                 cookies = await context.cookies()
                 if await crawler.is_applicable():
-                    async for dl in crawler.execute():
-                        urls.add(dl.request.url)
+                    for dl in await crawler.execute():
+                        urls.add(dl.url)
 
         return urls, cookies
 
@@ -619,9 +619,7 @@ class ScrapeTask:
 
     async def tricare_scrape(self):
         search_term_buckets = await TricareScraper.get_search_term_buckets()
-        await self.scrape_task.update(
-            Set({SiteScrapeTask.batch_status.total_pages: len(search_term_buckets)})
-        )
+        await self.scrape_task.update(Set({"batch_status.total_pages": len(search_term_buckets)}))
 
         page: Page
         context: BrowserContext
@@ -643,8 +641,8 @@ class ScrapeTask:
                 await self.scrape_task.update(
                     Set(
                         {
-                            SiteScrapeTask.batch_status.current_page: batch_page,
-                            SiteScrapeTask.batch_status.batch_key: batch_key,
+                            "batch_status.current_page": batch_page,
+                            "batch_status.batch_key": batch_key,
                         }
                     )
                 )

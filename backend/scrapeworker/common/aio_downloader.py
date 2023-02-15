@@ -1,14 +1,14 @@
 import os
 import ssl
-import tempfile
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from http.cookies import CookieError, Morsel
 from random import shuffle
 from ssl import SSLContext
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Coroutine
 
 import aiofiles
+from aiofiles.threadpool.binary import AsyncBufferedReader
 from aiohttp import BasicAuth, ClientHttpProxyError, ClientResponse, ClientSession, TCPConnector
 from playwright.async_api import ProxySettings
 from tenacity._asyncio import AsyncRetrying
@@ -20,6 +20,7 @@ from backend.common.models.link_task_log import InvalidResponse, ValidResponse
 from backend.common.models.proxy import Proxy
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import DocStreamHasher
+from backend.common.storage.s3_client import AsyncS3Client
 from backend.scrapeworker.common.models import DownloadContext
 
 default_headers: dict[str, str] = {
@@ -39,7 +40,7 @@ class AioDownloader:
 
     session: ClientSession
 
-    def __init__(self, doc_client: DocumentStorageClient, log, scrape_temp_path):
+    def __init__(self, doc_client: DocumentStorageClient | AsyncS3Client, log, scrape_temp_path):
         self.doc_client = doc_client
         self.log = log
         self.session = ClientSession(connector=TCPConnector(ssl=self.permissive_ssl_context()))
@@ -133,7 +134,7 @@ class AioDownloader:
     def get_shuffled_proxies(
         self,
         proxies: list[tuple[Proxy | None, ProxySettings | None]] = [],
-    ) -> list[tuple[Proxy | None, AioProxy | None]]:
+    ) -> tuple[list[tuple[Proxy | None, AioProxy | None]], int]:
         _proxies = []
         for (proxy, _proxy_settings) in proxies:
             if proxy:
@@ -156,7 +157,7 @@ class AioDownloader:
         self,
         download: DownloadContext,
         response: ClientResponse,
-        temp: tempfile._TemporaryFileWrapper,
+        temp: AsyncBufferedReader,
     ):
         hasher = DocStreamHasher()
 
@@ -166,16 +167,19 @@ class AioDownloader:
                 hasher.update(data)
             await fd.flush()
 
-        await self.set_download_data(download, temp.name)
+        await self.set_download_data(download, str(temp.name))
 
         download.file_hash = hasher.hexdigest()
         self.log.info(f"mimetype={download.mimetype} file_hash={download.file_hash}")  # noqa
         return download.file_path, download.file_hash
 
-    def open_direct_scrape(self, key: str, temp: tempfile._TemporaryFileWrapper):
+    async def open_direct_scrape(self, key: str, temp: AsyncBufferedReader):
         doc = self.doc_client.read_object(key)
-        temp.write(doc)
-        temp.seek(0)
+        if isinstance(doc, Coroutine):
+            doc = await doc
+
+        await temp.write(doc)
+        await temp.seek(0)
 
     @asynccontextmanager
     async def try_download_to_tempfile(
@@ -189,8 +193,8 @@ class AioDownloader:
             self.log.debug(f"Before direct_scrape download {url}")
             dest_path = f"{download.file_hash}.{download.file_extension}"
             async with aiofiles.tempfile.NamedTemporaryFile(dir=self.scrape_temp_path) as temp:
-                self.open_direct_scrape(dest_path, temp)
-                await self.set_download_data(download, temp.name)
+                await self.open_direct_scrape(dest_path, temp)
+                await self.set_download_data(download, str(temp.name))
                 self.log.debug(
                     f"mimetype={download.mimetype} file_hash={download.file_hash}"
                 )  # noqa
@@ -204,7 +208,7 @@ class AioDownloader:
             self.log.debug(f"Before retry download {url}")
             response: ClientResponse | None = None
             proxy_url = None
-            proxies, proxy_count = self.get_shuffled_proxies(proxies)
+            aio_proxies, proxy_count = self.get_shuffled_proxies(proxies)
             retries = 3 * proxy_count if proxy_count else 3
             result = (None, None)
             async for attempt in AsyncRetrying(
@@ -220,9 +224,8 @@ class AioDownloader:
                     index = attempt_number - 1
 
                     _proxy_record, proxy = (
-                        proxies[index % proxy_count] if proxy_count else [None, None]
+                        aio_proxies[index % proxy_count] if proxy_count else [None, None]
                     )
-                    proxy_url = proxy.get("server") if proxy else None
 
                     async with aiofiles.tempfile.NamedTemporaryFile(
                         dir=self.scrape_temp_path
