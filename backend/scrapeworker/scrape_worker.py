@@ -13,7 +13,6 @@ from urllib.parse import urlparse
 import aiofiles
 import aiofiles.os
 import fitz
-import typer
 from async_lru import alru_cache
 from beanie.odm.operators.update.general import Inc, Set
 from playwright.async_api import Browser, BrowserContext, Cookie, Dialog, Page, ProxySettings
@@ -177,7 +176,7 @@ class ScrapeWorker:
         # happening on production, but not local.
         # Suspect pdf library called by subprocess.
         except Exception as ex:
-            typer.secho(f"html_to_pdf Failed. checksum {checksum}", fg=typer.colors.RED)
+            logging.error(f"html_to_pdf Failed. checksum {checksum}")
             logging.error(ex)
             traceback.print_exc()
 
