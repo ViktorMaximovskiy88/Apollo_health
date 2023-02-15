@@ -43,6 +43,17 @@ export function DocCompareToPrevious({
     diffExists();
   }, [getDiffExists, current_doc_id, prev_doc_id]);
 
+  const handleProcessCompare = () => {
+    enqueueTask('PDFDiffTask', {
+      current_doc_id: current_doc_id,
+      prev_doc_id: prev_doc_id,
+    });
+    if (compareResult) {
+      setCompareResult({ ...compareResult, pending: true });
+    }
+    setModalOpen(false);
+  };
+
   return (
     <div className="ml-auto flex space-x-8 items-center">
       {current_doc_id && prev_doc_id ? (
@@ -51,11 +62,8 @@ export function DocCompareToPrevious({
           className="mt-1"
           onClick={() => {
             if (compareResult && !compareResult.exists) {
-              enqueueTask('PDFDiffTask', {
-                current_doc_id: current_doc_id,
-                prev_doc_id: prev_doc_id,
-              });
-              setCompareResult({ ...compareResult, pending: true });
+              handleProcessCompare();
+              setModalOpen(false);
             } else {
               setModalOpen(true);
             }
@@ -77,6 +85,7 @@ export function DocCompareToPrevious({
         modalOpen={modalOpen}
         handleCloseModal={() => setModalOpen(false)}
         tagComparison={compareResult?.tag_comparison}
+        processCompare={handleProcessCompare}
       />
     </div>
   );

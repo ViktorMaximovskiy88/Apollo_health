@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass
+from difflib import SequenceMatcher
 
 from diff_match_patch import diff_match_patch
 
@@ -23,6 +24,9 @@ class WordSpan:
     start: int
     end: int
 
+    def __len__(self):
+        return self.end - self.start
+
 
 @dataclass
 class DiffSection:
@@ -31,6 +35,68 @@ class DiffSection:
     diff_text: str
     diff_method: int
     remove: bool = False
+
+    def remove_empty_spans(self):
+        self.word_spans = list(filter(lambda span: len(span) > 0, self.word_spans))
+
+    def spans_are_continuous(self):
+        # if multiple word spans, check that they are all sequential
+        span_pages: dict[int, tuple[int, int]] = {}
+        for span in self.word_spans:
+            if span.page_num in span_pages:
+                # check that start is 1 more than existing end or end is 1 less than existing start
+                if span.end + 1 == span_pages[span.page_num][0]:
+                    span_pages[span.page_num][0] = span.start
+                    continue
+                if span.start - 1 == span_pages[span.page_num][1]:
+                    span_pages[span.page_num][1] = span.end
+                    continue
+                return False
+
+            span_pages[span.page_num] = (span.start, span.end)
+        return True
+
+    def remove_words(self, start: int, length: int):
+        """
+        Update word spans to exclude words starting from `start` and covering `length` of words
+        """
+        end = start + length
+        found_start = False
+
+        if not self.spans_are_continuous():
+            return
+
+        for span in self.word_spans:
+            if not found_start:
+                if start > len(span):
+                    continue
+                found_start = True
+                new_end = start + span.start
+                previous_end = span.end
+                if len(span) >= end:  # range ends in this span
+                    new_span = WordSpan(
+                        page_num=span.page_num, start=end + span.start, end=previous_end
+                    )
+                    if len(new_span) > 0:
+                        self.word_spans.append(
+                            WordSpan(
+                                page_num=span.page_num, start=end + span.start, end=previous_end
+                            )
+                        )
+                    span.end = new_end
+                    break
+                span.end = new_end
+                current_length = previous_end - span.end
+                end = length - current_length
+                continue
+            elif len(span) < end:
+                end = end - len(span)
+                span.end = span.start
+                continue
+            else:
+                span.start = end
+                break
+        self.remove_empty_spans()
 
 
 class Dmp(diff_match_patch):
@@ -174,6 +240,30 @@ class Dmp(diff_match_patch):
         final_pages = map(lambda page: "\n".join(page), lines_by_page)
         return "\f".join(final_pages), removed_words
 
+    def _postprocess_diff(
+        self, inserts: list[DiffSection], deletes: list[DiffSection], match_precision: float = 0.95
+    ):
+        matched_del_idxs: list[int] = []
+        for i, insert_section in enumerate(inserts):
+            check_range = range(i - 1, i + 1)
+            for del_idx in check_range:
+                try:
+                    if del_idx in matched_del_idxs:
+                        continue
+                    del_section = deletes[del_idx]
+                    longest_substring = SequenceMatcher(
+                        None, insert_section.diff_text, del_section.diff_text
+                    ).find_longest_match()
+                    longest_possible = min(
+                        len(insert_section.diff_text), len(del_section.diff_text)
+                    )
+                    if longest_substring.size / longest_possible >= match_precision:
+                        insert_section.remove_words(longest_substring.a, longest_substring.size)
+                        del_section.remove_words(longest_substring.b, longest_substring.size)
+                        matched_del_idxs.append(del_idx)
+                except IndexError:  # delete section doesn't exist
+                    continue
+
     def preprocess_text(self, a_text: str, b_text: str) -> tuple[str, str]:
         cleaned_a, _ = self._remove_footers(a_text)
         cleaned_b, _ = self._remove_footers(b_text)
@@ -293,9 +383,13 @@ class Dmp(diff_match_patch):
                 word_spans.append(WordSpan(page_num=page_end, start=0, end=count))
         return word_end, page_end, word_spans
 
-    def get_diff_sections(self, diffs: list[tuple[int, str]], page_breaks: bool = True):
+    def get_diff_sections(
+        self, diffs: list[tuple[int, str]], page_breaks: bool = True, clean_diffs: bool = False
+    ):
         """
         Parse diffs and return DiffSections for inserts and deletes.
+
+        :@param clean_diffs: default False. If True, remove diffs that may be incorrect.
         """
 
         deletes: dict[str, DiffSection] = {}
@@ -358,6 +452,8 @@ class Dmp(diff_match_patch):
         final_deletes = [deletes[key] for key in deletes]
         final_inserts = [inserts[key] for key in inserts]
 
+        if clean_diffs:
+            self._postprocess_diff(inserts=final_inserts, deletes=final_deletes)
         return final_deletes, final_inserts
 
     def remove_diffs(

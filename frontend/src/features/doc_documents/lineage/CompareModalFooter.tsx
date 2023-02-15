@@ -6,6 +6,7 @@ import {
   PlusCircleFilled,
   RightCircleOutlined,
   RightOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import { Dispatch, SetStateAction, useCallback, useMemo, useState } from 'react';
 
@@ -57,7 +58,7 @@ function SectionItem({
       <div className="grid grid-cols-10 truncate items-center">
         {symbol}
         <div className="col-span-2 font-black">{statusText}</div>
-        <div className="col-span-6 truncate mr-1">{section.key_text}</div>
+        <div className="col-span-6 truncate mr-1 max-w-xs">{section.key_text}</div>
         <Button className="px-2" shape="circle" type="text" onClick={(e) => selectSection(key)}>
           <RightCircleOutlined />
         </Button>
@@ -273,14 +274,12 @@ function SectionNavigation({
             />
           }
         >
-          <Button className="max-h-8">
-            <CompassOutlined />
+          <Button className="max-h-8" icon={<CompassOutlined />}>
             Section Navigator
           </Button>
         </Popover>
       ) : (
-        <Button disabled>
-          <CompassOutlined />
+        <Button disabled icon={<CompassOutlined />}>
           Section Navigator
         </Button>
       )}
@@ -295,6 +294,7 @@ export function CompareModalFooter({
   hasDocPages,
   maxPage,
   latestPage,
+  processCompare,
 }: {
   tagComparison?: TagComparison;
   updateCurrentPdfPage: (page: number) => void;
@@ -302,6 +302,7 @@ export function CompareModalFooter({
   hasDocPages: boolean;
   maxPage?: number;
   latestPage: number;
+  processCompare?: () => void;
 }) {
   const [currentDocSection, setCurrentDocSection] = useState<number>();
 
@@ -323,6 +324,13 @@ export function CompareModalFooter({
             updateCurrentPdfPage={updateCurrentPdfPage}
             updatePreviousPdfPage={updatePreviousPdfPage}
           />
+          {processCompare ? (
+            <Button className="ml-auto mr-2" onClick={processCompare} icon={<ReloadOutlined />}>
+              Reprocess
+            </Button>
+          ) : (
+            <></>
+          )}
         </div>
       ) : (
         <></>

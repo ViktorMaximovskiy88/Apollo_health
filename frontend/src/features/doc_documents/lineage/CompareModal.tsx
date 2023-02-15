@@ -90,6 +90,7 @@ export function CompareModal(props: {
   modalOpen: boolean;
   handleCloseModal: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void;
   tagComparison?: TagComparison;
+  processCompare?: () => void;
 }) {
   const currentDocPages = useDocPages();
   const prevDocPages = useDocPages();
@@ -124,6 +125,7 @@ export function CompareModal(props: {
           hasDocPages={maxPage !== undefined}
           maxPage={maxPage}
           latestPage={latestPage}
+          processCompare={props.processCompare}
         />
       }
       open={props.modalOpen}
