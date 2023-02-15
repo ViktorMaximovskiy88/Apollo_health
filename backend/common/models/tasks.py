@@ -17,6 +17,7 @@ GenericTaskType = TypeVar(
     "DocPipelineTask",
     "SiteDocsPipelineTask",
     "LineageTask",
+    "RegeneratePdfTask",
 )
 T = TypeVar("T", bound="TaskLog")
 
@@ -57,6 +58,10 @@ class SiteDocsPipelineTask(SiteTask):
 
 
 class LineageTask(SiteTask):
+    pass
+
+
+class RegeneratePdfTask(DocTask):
     pass
 
 

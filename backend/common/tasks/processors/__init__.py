@@ -7,6 +7,7 @@ from backend.common.tasks.processors.content import ContentTaskProcessor
 from backend.common.tasks.processors.date import DateTaskProcessor
 from backend.common.tasks.processors.doc_type import DocTypeTaskProcessor
 from backend.common.tasks.processors.pdf_diff import PDFDiffTaskProcessor
+from backend.common.tasks.processors.regenerate_pdf import RegeneratePdfProcessor
 from backend.common.tasks.processors.tag import TagTaskProcessor
 
 
@@ -22,6 +23,8 @@ def task_processor_factory(task: TaskLog):
         Processor = TagTaskProcessor
     elif task_type == "DocTypeTask":
         Processor = DocTypeTaskProcessor
+    elif task_type == "RegeneratePdfTask":
+        Processor = RegeneratePdfProcessor
     else:
         return None
 
