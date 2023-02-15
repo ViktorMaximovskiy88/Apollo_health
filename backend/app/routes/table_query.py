@@ -181,9 +181,12 @@ def query_as_agg(
 ) -> AggregationQuery[dict[str, Any]]:
     agg_query: list = [
         {"$match": query.get_filter_query()},
-        {"$skip": skip or 0},
-        {"$limit": limit or 50},
     ]
+    # Sort, skip, limit.
+    if hasattr(query, "sort_expressions") and query.sort_expressions:
+        agg_query.append({"$sort": {key: dir for key, dir in query.sort_expressions}})
+    agg_query.append({"$skip": skip or 0})
+    agg_query.append({"$limit": limit or 0})
     # Convert projection from find syntax to aggregation syntax.
     # 'find' projection slice operator, n is the only input.
     # 'aggregation' projection slice operator, ['$array', n] is the input.
@@ -204,8 +207,6 @@ def query_as_agg(
                     projection_value["$slice"] = [f"${projection_key}", projection_value["$slice"]]
             inclusion_projection[projection_key] = projection_value
         agg_query.append({"$project": inclusion_projection})
-    if hasattr(query, "sort_expressions") and query.sort_expressions:
-        agg_query.append({"$sort": {key: dir for key, dir in query.sort_expressions}})
 
     data = query.document_model.aggregate(agg_query)
     return data
