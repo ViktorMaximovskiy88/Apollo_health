@@ -1,7 +1,5 @@
 import logging
 
-from backend.common.tasks.processors.regenerate_pdf import RegeneratePdfProcessor
-
 __all__ = ["content", "date", "doc_type", "lineage", "pdf_diff", "tag", "doc"]
 
 from backend.common.models.tasks import TaskLog
@@ -9,6 +7,7 @@ from backend.common.tasks.processors.content import ContentTaskProcessor
 from backend.common.tasks.processors.date import DateTaskProcessor
 from backend.common.tasks.processors.doc_type import DocTypeTaskProcessor
 from backend.common.tasks.processors.pdf_diff import PDFDiffTaskProcessor
+from backend.common.tasks.processors.regenerate_pdf import RegeneratePdfProcessor
 from backend.common.tasks.processors.tag import TagTaskProcessor
 
 
