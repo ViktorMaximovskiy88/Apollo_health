@@ -59,10 +59,10 @@ async def bulk_sites_task(
 
 
 @router.post("/enqueue/{task_type}", response_model=tasks.TaskLog)
-async def enquque_task(
+async def enqueue_task(
     task_type: str,
     # TODO reconcile 'typing' between generics and pydantic
-    payload: tasks.DocTask | tasks.SiteTask | tasks.PDFDiffTask,
+    payload: tasks.DocTask | tasks.SiteTask | tasks.PDFDiffTask | tasks.RegeneratePdfTask,
     current_user: User = Security(get_current_user),
 ) -> tasks.TaskLog:
     TaskType = getattr(tasks, task_type)

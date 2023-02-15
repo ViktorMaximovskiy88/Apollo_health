@@ -4,7 +4,7 @@ import os
 import zipfile
 from datetime import datetime, timedelta
 from logging import Logger
-from typing import Any, Hashable
+from typing import Any, Coroutine, Hashable
 
 import pandas as pd
 from pandas import DataFrame
@@ -14,6 +14,7 @@ from backend.common.core.enums import CmsDocType
 from backend.common.models.proxy import Proxy
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import hash_full_text
+from backend.common.storage.s3_client import AsyncS3Client
 from backend.scrapeworker.common.aio_downloader import AioDownloader
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.scrapers.cms.cms_doc import CmsDoc
@@ -133,7 +134,7 @@ class CMSScraper:
         cms_doc: CmsDoc,
         target_ids: list[int],
         downloader: AioDownloader,
-        doc_client: DocumentStorageClient,
+        doc_client: DocumentStorageClient | AsyncS3Client,
         proxies: list[tuple[Proxy | None, ProxySettings | None]],
         log: Logger,
     ) -> None:
@@ -160,7 +161,7 @@ class CMSScraper:
         """
         found_items = [item for item in self.data_source if item["file"] == name]
         if len(found_items) > 0:
-            return found_items[0]["content"]
+            return found_items[0]["content"]  # type: ignore
         return None
 
     def _extract_data_for_table(self, field, row_id) -> str:
@@ -538,12 +539,17 @@ class CMSScraper:
             html_table_template += "<t/r>"
         return html_table_template
 
-    def _save_html(self, html: str) -> str:
+    async def _save_html(self, html: str) -> str:
         checksum = hash_full_text(html)
         dest_path = f"{checksum}.html"
-        if not self.doc_client.object_exists(dest_path):
+        exists = self.doc_client.object_exists(dest_path)
+        if isinstance(exists, Coroutine):
+            exists = await exists
+        if not exists:
             bytes_obj = bytes(html, "utf-8")
-            self.doc_client.write_object_mem(dest_path, bytes_obj)
+            write = self.doc_client.write_object_mem(dest_path, bytes_obj)
+            if isinstance(write, Coroutine):
+                await write
         return checksum
 
     async def scrape_and_create(self, downloads: list[DownloadContext]) -> None:
@@ -604,7 +610,7 @@ class CMSScraper:
                     data_set_identifiers, mapping_item, self.target_ids
                 )
                 html_template = html_template.replace(f'${mapping_item["field"]}', table_template)
-        checksum = self._save_html(html_template)
+        checksum = await self._save_html(html_template)
         downloads.append(
             DownloadContext(
                 direct_scrape=True,
@@ -624,7 +630,7 @@ class CMSScrapeController:
         self,
         doc_types: list[CmsDocType],
         downloader: AioDownloader,
-        doc_client: DocumentStorageClient,
+        doc_client: DocumentStorageClient | AsyncS3Client,
         proxies: list[tuple[Proxy | None, ProxySettings | None]],
         log: Logger,
     ) -> None:

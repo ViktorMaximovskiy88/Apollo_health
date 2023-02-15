@@ -136,11 +136,16 @@ export const sitesApi = createApi({
       string[],
       {
         siteId?: string;
+        scrapeTaskId?: string;
         filterValue?: TypeFilterValue;
       }
     >({
-      query: ({ siteId, filterValue }) => {
-        const args = makeTableQueryParams({ filterValue }, { site_id: siteId }, textSearch);
+      query: ({ siteId, scrapeTaskId, filterValue }) => {
+        const args = makeTableQueryParams(
+          { filterValue },
+          { site_id: siteId, scrape_task_id: scrapeTaskId },
+          textSearch
+        );
         return `/doc-documents/ids?${args.join('&')}`;
       },
     }),

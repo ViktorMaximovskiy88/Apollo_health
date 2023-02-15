@@ -91,6 +91,7 @@ class NewSite(BaseModel):
     lineage_threshold_override: bool = False
     lineage_threshold: float = 0.75
     payer_work_instructions: str | None = None
+    additional_languages: list[str] = []
 
 
 class UpdateSite(BaseModel):
@@ -113,6 +114,7 @@ class UpdateSite(BaseModel):
     lineage_threshold: float | None = None
     last_run_documents: int | None = None
     payer_work_instructions: str | None = None
+    additional_languages: list[str] | None = None
 
 
 class UpdateSiteAssigne(BaseModel):

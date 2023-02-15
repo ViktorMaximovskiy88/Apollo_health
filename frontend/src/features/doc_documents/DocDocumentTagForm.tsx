@@ -224,7 +224,9 @@ export function DocDocumentTagForm(props: {
               <span>No Filter</span>
             )}
             <Dropdown.Button
+              trigger={['click']}
               className="mr-4 h-full"
+              onOpenChange={(open) => setPriorityDropdownOpen(open)}
               type={priorityFilterApplied ? 'primary' : 'default'}
               disabled={!tagTypeFilter.includes('therapy')}
               open={priorityDropdownOpen}
