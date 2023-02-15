@@ -104,10 +104,11 @@ async def read_doc_documents(
         if not task:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve tasks.")
         query["retrieved_document_id"] = {"$in": task.retrieved_document_ids}
-    document_query: FindMany[DocDocumentLimitTags] = DocDocument.find(query).project(
-        DocDocumentLimitTags
-    )
-    return await query_table(document_query, limit, skip, sorts, filters)
+
+    document_query = DocDocument.find(query).project(DocDocumentLimitTags)
+    docs = await query_table(document_query, limit, skip, sorts, filters, as_aggregation=True)
+
+    return docs
 
 
 class CompareResponse(BaseModel):

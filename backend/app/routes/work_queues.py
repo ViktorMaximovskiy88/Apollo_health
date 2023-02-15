@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Type
 
 from beanie import PydanticObjectId
+from beanie.odm.queries.find import FindMany
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
 from pydantic import Field
 from pymongo import ReturnDocument
@@ -180,12 +181,17 @@ async def get_work_queue_items(
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
-):
-    query = combine_queue_query_with_user_query(work_queue, sorts, filters)
-    res = await query_table(query, limit, skip)
+) -> TableQueryResponse[DocDocument]:
+    query: FindMany[IdNameLockOnlyDocument] = combine_queue_query_with_user_query(
+        work_queue, sorts, filters
+    )
+    res: TableQueryResponse[IdNameLockOnlyDocument] = await query_table(
+        query, limit, skip, as_aggregation=True
+    )
+
     if "Hold" in work_queue.name:
         for doc in res.data:
-            comment = await get_hold_comment(doc.id, work_queue.name)
+            comment: Comment | None = await get_hold_comment(doc.id, work_queue.name)
             if comment:
                 doc.hold_comment = comment.text
                 doc.hold_time = comment.time
