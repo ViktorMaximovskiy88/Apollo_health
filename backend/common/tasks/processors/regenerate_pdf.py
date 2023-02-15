@@ -33,7 +33,6 @@ class RegeneratePdfProcessor(TaskProcessor):
         # Make sure doc has existing html doc already scraped.
         # If the html doc does not exist, you will need to refactor the
         # scraper to support rescraping 1 doc vs the entire site.
-        self.doc_client: DocumentStorageClient = DocumentStorageClient()
         if not self.doc_client.object_exists(f"{doc_doc.checksum}.html"):
             raise Exception("Unable to regenerate pdf because the html file was never scraped!")
 
