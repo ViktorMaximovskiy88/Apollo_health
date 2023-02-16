@@ -70,7 +70,7 @@ const buildInitialValues = () => ({
   doc_type_threshold: 0.75,
   lineage_threshold_override: false,
   lineage_threshold: 0.75,
-  additional_languages: ['es'],
+  additional_languages: [],
 });
 
 /* eslint-disable no-template-curly-in-string */
@@ -89,11 +89,9 @@ export function AdditionalLanguages() {
   ];
 
   return (
-    <>
-      <Form.Item name="additional_languages" label="Additional Languages to Collect">
-        <Checkbox.Group options={languages} />
-      </Form.Item>
-    </>
+    <Form.Item name="additional_languages" label="Additional Languages to Collect">
+      <Checkbox.Group options={languages} />
+    </Form.Item>
   );
 }
 
