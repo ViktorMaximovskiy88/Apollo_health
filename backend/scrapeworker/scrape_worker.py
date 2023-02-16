@@ -627,8 +627,24 @@ class ScrapeWorker:
                 await self.stop_if_canceled()
                 await self.batch_downloads(downloads, 15)
 
-    # NOTE: this is the effective entryppoint from main.py
     async def run_scrape(self):
+        try:
+            await self._run_scrape()
+        finally:
+            doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
+            async for doc in DocDocument.find({"_id": {"$in": doc_doc_ids}}):
+                try:
+                    change_info = ChangeInfo(
+                        translation_change=bool(doc.translation_id),
+                        lineage_change=bool(doc.previous_doc_doc_id),
+                        document_family_change=bool(doc.document_family_id),
+                    )
+                    await doc_document_save_hook(doc, change_info)
+                except Exception as ex:
+                    self.log.error(ex, exc_info=True)
+
+    # NOTE: this is the effective entryppoint from main.py
+    async def _run_scrape(self):
         all_downloads: list[DownloadContext] = []
         base_urls: list[str] = [base_url.url for base_url in self.active_base_urls()]
 
@@ -702,15 +718,6 @@ class ScrapeWorker:
                 f"before lineage_service.process_lineage_for_site site_id={self.site.id}"
             )
             await self.lineage_service.process_lineage_for_site(self.site.id)  # type: ignore
-
-            doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
-            async for doc in DocDocument.find({"_id": {"$in": doc_doc_ids}}):
-                change_info = ChangeInfo(
-                    translation_change=bool(doc.translation_id),
-                    lineage_change=bool(doc.previous_doc_doc_id),
-                    document_family_change=bool(doc.document_family_id),
-                )
-                await doc_document_save_hook(doc, change_info)
 
             self.log.debug(f"after lineage_service.process_lineage_for_site site_id={self.site.id}")
         except Exception as ex:
