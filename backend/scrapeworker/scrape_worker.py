@@ -623,12 +623,15 @@ class ScrapeWorker:
         finally:
             doc_doc_ids = [doc.id for (_, doc) in self.new_document_pairs]
             async for doc in DocDocument.find({"_id": {"$in": doc_doc_ids}}):
-                change_info = ChangeInfo(
-                    translation_change=bool(doc.translation_id),
-                    lineage_change=bool(doc.previous_doc_doc_id),
-                    document_family_change=bool(doc.document_family_id),
-                )
-                await doc_document_save_hook(doc, change_info)
+                try:
+                    change_info = ChangeInfo(
+                        translation_change=bool(doc.translation_id),
+                        lineage_change=bool(doc.previous_doc_doc_id),
+                        document_family_change=bool(doc.document_family_id),
+                    )
+                    await doc_document_save_hook(doc, change_info)
+                except Exception as ex:
+                    self.log.error(ex, exc_info=True)
 
     # NOTE: this is the effective entryppoint from main.py
     async def _run_scrape(self):
