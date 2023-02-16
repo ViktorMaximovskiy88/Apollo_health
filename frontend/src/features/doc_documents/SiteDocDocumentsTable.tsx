@@ -91,7 +91,7 @@ export function SiteDocDocumentsTable({
     return statusLabel.name;
   }
   const dateLabel = prettyDateTimeFromISO(
-    siteScrapeTask?.end_time || siteScrapeTask?.start_time || siteScrapeTask?.queued_time
+    siteScrapeTask?.start_time || siteScrapeTask?.queued_time
   );
   function elapsedLable(siteScrapeTask: SiteScrapeTask) {
     if (!siteScrapeTask || !siteScrapeTask.start_time) {
