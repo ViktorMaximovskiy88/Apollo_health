@@ -28,9 +28,14 @@ async def classification_queues():
                 submit_action={"classification_status": "HOLD"},
                 hold_types=[
                     "Source Hub Issue",
-                    "Focus Tagging",
+                    "Reconfig Focus Tags",
                     "Medical Codes (J/CPT)",
                     "Spanish / Other Language",
+                    "Integration Send Back",
+                    "Document Preview Error",
+                    "SH DB Focus Tags",
+                    "Duplicate J Codes",
+                    "Document Preview Error",
                 ],
             ),
             SubmitAction(
@@ -63,9 +68,14 @@ async def classification_queues():
                 submit_action={"classification_status": "HOLD"},
                 hold_types=[
                     "Source Hub Issue",
-                    "Focus Tagging",
+                    "Reconfig Focus Tags",
                     "Medical Codes (J/CPT)",
                     "Spanish / Other Language",
+                    "Integration Send Back",
+                    "Document Preview Error",
+                    "SH DB Focus Tags",
+                    "Duplicate J Codes",
+                    "Document Preview Error",
                 ],
             ),
             SubmitAction(
@@ -89,9 +99,14 @@ async def classification_queues():
         },
         hold_types=[
             "Source Hub Issue",
-            "Focus Tagging",
+            "Reconfig Focus Tags",
             "Medical Codes (J/CPT)",
             "Spanish / Other Language",
+            "Integration Send Back",
+            "Document Preview Error",
+            "SH DB Focus Tags",
+            "Duplicate J Codes",
+            "Document Preview Error",
         ],
         sort_query=["-priority", "final_effective_date"],
         user_query={"roles": {"$in": ["admin", "classification"]}},
@@ -137,7 +152,13 @@ async def family_queues():
                 require_comment=True,
                 dest_queue="Document & Payer Family Hold",
                 submit_action={"family_status": "HOLD"},
-                hold_types=["Source Hub Issue", "Backbone Issue"],
+                hold_types=[
+                    "Source Hub Issue",
+                    "Backbone Issue",
+                    "Integration Send Back",
+                    "Sample",
+                    "Question",
+                ],
             ),
             SubmitAction(
                 label="Submit",
@@ -153,7 +174,13 @@ async def family_queues():
         collection_name="DocDocument",
         update_model_name="UpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
-        hold_types=["Source Hub Issue", "Backbone Issue"],
+        hold_types=[
+            "Source Hub Issue",
+            "Backbone Issue",
+            "Integration Send Back",
+            "Sample",
+            "Question",
+        ],
         document_query={
             "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "classification_status": "APPROVED",
@@ -221,6 +248,7 @@ async def translation_config_queues():
                 require_comment=True,
                 dest_queue="Translation Config Hold",
                 submit_action={"content_extraction_status": "HOLD"},
+                hold_types=["Integration Send Back"],
             ),
             SubmitAction(
                 label="Submit",
@@ -237,6 +265,7 @@ async def translation_config_queues():
         update_model_name="UpdateDocDocument",
         sort_query=["-priority", "final_effective_date"],
         frontend_component="DocDocumentClassificationPage",
+        hold_types=["Integration Send Back"],
         document_query={
             "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "content_extraction_status": "HOLD",
