@@ -166,25 +166,31 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
         # the tag differ doesnt account for removal? is that real?
 
         has_therapy_tag_updates = False
-        if new_therapy_tags and self.has_user_edit("therapy_tags"):
-            self.therapy_tags += new_therapy_tags
-            has_therapy_tag_updates = True
-        else:
-            has_therapy_tag_updates = (
-                len(pending_therapy_tags) != len(self.therapy_tags) or len(new_therapy_tags) > 0
-            )
-            self.therapy_tags = pending_therapy_tags
+        if new_therapy_tags:
+            if self.classification_status == ApprovalStatus.APPROVED or self.has_user_edit(
+                "therapy_tags"
+            ):
+                self.therapy_tags += new_therapy_tags
+                has_therapy_tag_updates = True
+            else:
+                has_therapy_tag_updates = (
+                    len(pending_therapy_tags) != len(self.therapy_tags) or len(new_therapy_tags) > 0
+                )
+                self.therapy_tags = pending_therapy_tags
 
         has_indication_tag_updates = False
-        if new_indication_tags and self.has_user_edit("indication_tags"):
-            has_indication_tag_updates = True
-            self.indication_tags += new_indication_tags
-        else:
-            has_indication_tag_updates = (
-                len(pending_indication_tags) != len(self.indication_tags)
-                or len(new_indication_tags) > 0
-            )
-            self.indication_tags = pending_indication_tags
+        if new_indication_tags:
+            if self.classification_status == ApprovalStatus.APPROVED or self.has_user_edit(
+                "indication_tags"
+            ):
+                has_indication_tag_updates = True
+                self.indication_tags += new_indication_tags
+            else:
+                has_indication_tag_updates = (
+                    len(pending_indication_tags) != len(self.indication_tags)
+                    or len(new_indication_tags) > 0
+                )
+                self.indication_tags = pending_indication_tags
 
         return has_therapy_tag_updates, has_indication_tag_updates
 
