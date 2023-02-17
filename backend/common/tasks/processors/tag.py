@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 import backend.common.models.tasks as tasks
 from backend.common.core.utils import now
@@ -53,7 +54,11 @@ class TagTaskProcessor(TaskProcessor):
         if not task.site_id:
             task.site_id = doc.locations[0].site_id
 
-        location: DocDocumentLocation = doc.get_site_location(task.site_id)
+        location: DocDocumentLocation | None = doc.get_site_location(task.site_id)
+
+        if not location:
+            raise Exception(f"doc_doc {doc.id} not found on site {task.site_id}")
+
         s3_key = doc.s3_text_key()
         raw_text = self.text_client.read_utf8_object(s3_key)
 
@@ -135,13 +140,14 @@ class TagTaskProcessor(TaskProcessor):
         if priority == 0 and indication_tags:
             priority = 1
 
-        updates = {
+        updates: dict[str, Any] = {
             "pipeline_stages": doc.pipeline_stages.dict(),
         }
 
         if has_therapy_tag_updates or has_tag_priority_update:
             updates["therapy_tags"] = [t.dict() for t in doc.therapy_tags]
-            run_assess_document_status = True
+            if has_therapy_tag_updates:
+                run_assess_document_status = True
 
         if has_indication_tag_updates:
             updates["indication_tags"] = [t.dict() for t in doc.indication_tags]
@@ -149,7 +155,6 @@ class TagTaskProcessor(TaskProcessor):
 
         if priority != doc.priority:
             updates["priority"] = priority
-            run_assess_document_status = True
 
         if len(tokens) != doc.token_count:
             updates["token_count"] = len(tokens)

@@ -166,7 +166,7 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
         # the tag differ doesnt account for removal? is that real?
 
         has_therapy_tag_updates = False
-        if self.has_user_edit("therapy_tags"):
+        if new_therapy_tags and self.has_user_edit("therapy_tags"):
             self.therapy_tags += new_therapy_tags
             has_therapy_tag_updates = True
         else:
@@ -176,7 +176,7 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
             self.therapy_tags = pending_therapy_tags
 
         has_indication_tag_updates = False
-        if self.has_user_edit("indication_tags"):
+        if new_indication_tags and self.has_user_edit("indication_tags"):
             has_indication_tag_updates = True
             self.indication_tags += new_indication_tags
         else:
@@ -302,7 +302,7 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     translation_id: PydanticObjectId | None = None
     content_extraction_task_id: PydanticObjectId | None = None
 
-    locations: list[DocDocumentLocation] | None
+    locations: list[DocDocumentLocation] | None = None
 
     user_edited_fields: list[str] = []
     include_later_documents_in_lineage_update: bool = False
