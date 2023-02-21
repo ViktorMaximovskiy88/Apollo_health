@@ -235,6 +235,8 @@ async def translation_config_queues():
         frontend_component="DocDocumentClassificationPage",
         document_query={
             "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
+            "family_status": "APPROVED",
+            "classification_status": "APPROVED",
             "content_extraction_status": "HOLD",
             "priority": {"$gt": 0},
         },
