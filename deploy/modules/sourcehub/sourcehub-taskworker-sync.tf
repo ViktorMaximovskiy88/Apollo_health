@@ -5,7 +5,7 @@ locals {
 resource "aws_lambda_function" "sourcehub-taskworker-sync" {
   function_name = local.function_name
   role          = aws_iam_role.sourcehub-taskworker-sync-function.arn
-  image_uri     = "${data.aws_ecr_repository.sourcehub-taskworker-sync.repository_url}:${var.sourcehub-taskworker-sync-version}"
+  image_uri     = "${data.aws_ecr_repository.sourcehub-taskworker-sync.repository_url}:${var.sourcehub-taskworker-version}"
 
   package_type = "Image"
   timeout      = 60 # seconds

@@ -60,12 +60,6 @@ variable "sourcehub-taskworker-version" {
   default     = "latest"
 }
 
-variable "sourcehub-taskworker-sync-version" {
-  type        = string
-  description = "Version tag of the SourceHub taskworker container"
-  default     = "latest"
-}
-
 variable "auth0-config" {
   type = object({
     domain        = string,
