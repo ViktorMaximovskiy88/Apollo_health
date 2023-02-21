@@ -22,7 +22,7 @@ steps:
       repository: sourcehub-taskworker-sync
       Dockerfile: backend/taskworker_sync/Dockerfile
       buildContext: $(Build.SourcesDirectory)
-      arguments: "--cache-from sourcehub-app:latest --build-arg BUILDKIT_INLINE_CACHE=1"
+      arguments: "--cache-from sourcehub-taskworker-sync:latest --build-arg BUILDKIT_INLINE_CACHE=1"
       tags: |
         $(Build.BuildNumber)
         $(Build.SourceVersion)
