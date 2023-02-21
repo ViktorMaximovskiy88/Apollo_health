@@ -302,7 +302,7 @@ stages:
                   inputs:
                     awsCredentials: "Apollo-AWS-Dev-Apollo"
                     regionName: "us-east-1"
-                    repository: "sourcehub-taskworker-sync"
+                    repository: "sourcehub-taskworker-sync-dev"
                     imageSource: "imagetag"
                     imageTag: "$(Build.SourceVersion)"
                     outputVariable: "DevImageId"
