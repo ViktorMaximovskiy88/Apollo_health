@@ -31,7 +31,7 @@ class BaseRetrievedDocument(BaseModel):
     next_review_date: datetime | None = None
     next_update_date: datetime | None = None
     published_date: datetime | None = None
-    first_collected_date: datetime | None = None
+    first_collected_date: Indexed(datetime) | None = None
     last_collected_date: datetime | None = None
     document_type: str | None = None
     doc_type_confidence: float | None = None

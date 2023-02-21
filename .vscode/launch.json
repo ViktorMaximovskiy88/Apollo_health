@@ -1,56 +1,70 @@
 {
-    "configurations": [
-        {"name":"Python: Current File","type":"python","request":"launch","program":"${file}","console":"integratedTerminal","justMyCode":true},
-        {
-            "name": "Python: FastAPI",
-            "type": "python",
-            "request": "launch",
-            "module": "uvicorn",
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            },
-            "cwd": "${workspaceFolder}/backend/app",
-            "args": [
-                "app:app",
-                "--reload",
-                "--port",
-                "8000",
-                "--host",
-                "0.0.0.0" 
-            ],
-            "jinja": true,
-            "justMyCode": true
-        },
-        {
-            "name": "Python: ParseWorker",
-            "type": "python",
-            "request": "launch",
-            "program": "main.py",
-            "console": "integratedTerminal",
-            "justMyCode": true,
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            },
-            "cwd": "${workspaceFolder}/backend/parseworker"
-        },
-        {
-            "name": "Python: ScrapeWorker",
-            "type": "python",
-            "request": "launch",
-            "program": "main.py",
-            "console": "integratedTerminal",
-            "justMyCode": true,
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            },
-            "cwd": "${workspaceFolder}/backend/scrapeworker"
-        },
-        {
-            "type": "pwa-chrome",
-            "request": "launch",
-            "name": "Launch Chrome against localhost",
-            "url": "http://localhost:3000",
-            "webRoot": "${workspaceFolder}"
-        }
-    ]
+  "configurations": [
+    {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Python: FastAPI",
+      "type": "python",
+      "request": "launch",
+      "module": "uvicorn",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "cwd": "${workspaceFolder}/backend/app",
+      "args": ["app:app", "--reload", "--port", "8000", "--host", "0.0.0.0"],
+      "jinja": true,
+      "justMyCode": true
+    },
+    {
+      "name": "Python: ParseWorker",
+      "type": "python",
+      "request": "launch",
+      "program": "main.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "cwd": "${workspaceFolder}/backend/parseworker"
+    },
+    {
+      "name": "Python: ScrapeWorker",
+      "type": "python",
+      "request": "launch",
+      "program": "main.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "cwd": "${workspaceFolder}/backend/scrapeworker"
+    },
+    {
+      "name": "Python: ScrapeWorker DEBUG",
+      "type": "python",
+      "request": "launch",
+      "program": "main.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}",
+        "DEBUG": "1",
+        "LOG_LEVEL": "debug"
+      },
+      "cwd": "${workspaceFolder}/backend/scrapeworker"
+    },
+    {
+      "type": "pwa-chrome",
+      "request": "launch",
+      "name": "Launch Chrome against localhost",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}"
+    }
+  ]
 }

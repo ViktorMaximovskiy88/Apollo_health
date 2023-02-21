@@ -182,7 +182,10 @@ class DocTextCompare:
         self.prev_doc.set_clean_text()
 
     def _get_fitz_doc(self, doc: RetrievedDocument | DocDocument):
-        key = f"{doc.checksum}.pdf"
+        if doc.file_extension == "html":
+            key = f"{doc.checksum}.html.pdf"
+        else:
+            key = f"{doc.checksum}.pdf"
         with self.doc_client.read_object_to_tempfile(key) as path:
             fitz_doc = fitz.Document(path)
         return fitz_doc
@@ -223,11 +226,21 @@ class DocTextCompare:
             self.current_doc.clean_text,
             ignore_special_chars=True,
         )
-        deletes, inserts = self.dmp.get_diff_sections(diffs, page_breaks=False)
+        deletes, inserts = self.dmp.get_diff_sections(diffs, page_breaks=False, clean_diffs=True)
         for section in deletes:
             self.prev_doc.apply_word_spans(section.word_spans, method=CompareDoc.DELETE)
         for section in inserts:
             self.current_doc.apply_word_spans(section.word_spans, method=CompareDoc.INSERT)
+
+    def compare_exists(
+        self, doc: RetrievedDocument | DocDocument, prev_doc: RetrievedDocument | DocDocument
+    ) -> bool:
+        base_diff_name = f"{doc.checksum}-{prev_doc.checksum}"
+        prev_diff_name = f"{base_diff_name}-prev.pdf"
+        new_diff_name = f"{base_diff_name}-new.pdf"
+        return self.doc_client.object_exists(new_diff_name) and self.doc_client.object_exists(
+            prev_diff_name
+        )
 
     def compare(
         self, doc: RetrievedDocument | DocDocument, prev_doc: RetrievedDocument | DocDocument

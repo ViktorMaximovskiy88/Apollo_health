@@ -194,3 +194,104 @@ class TestGetDiffSections:
                 remove=False,
             ),
         ]
+
+
+class TestDiffSection:
+    def test_remove_words_from_one_page(self):
+        diff_section = DiffSection(
+            char_spans=[(0, 20)],
+            word_spans=[WordSpan(page_num=0, start=10, end=20)],
+            diff_text="test",
+            diff_method=1,
+        )
+        remove_start = 0
+        remove_length = 5
+        diff_section.remove_words(start=remove_start, length=remove_length)
+        assert len(diff_section.word_spans) == 1
+        assert diff_section.word_spans == [
+            WordSpan(page_num=0, start=15, end=20),
+        ]
+
+    def test_remove_words_multiple_pages(self):
+        diff_section = DiffSection(
+            char_spans=[(0, 20)],
+            word_spans=[
+                WordSpan(page_num=0, start=10, end=20),
+                WordSpan(page_num=1, start=0, end=15),
+            ],
+            diff_text="test",
+            diff_method=1,
+        )
+        remove_start = 5
+        remove_length = 10
+        diff_section.remove_words(start=remove_start, length=remove_length)
+        assert diff_section.word_spans == [
+            WordSpan(page_num=0, start=10, end=15),
+            WordSpan(page_num=1, start=5, end=15),
+        ]
+
+        diff_section = DiffSection(
+            char_spans=[(0, 20)],
+            word_spans=[
+                WordSpan(page_num=0, start=10, end=20),
+                WordSpan(page_num=1, start=0, end=15),
+                WordSpan(page_num=2, start=0, end=20),
+            ],
+            diff_text="test",
+            diff_method=1,
+        )
+        remove_start = 0
+        remove_length = 30
+        diff_section.remove_words(start=remove_start, length=remove_length)
+        assert diff_section.word_spans == [
+            WordSpan(page_num=2, start=5, end=20),
+        ]
+
+        diff_section = DiffSection(
+            char_spans=[(0, 20)],
+            word_spans=[
+                WordSpan(page_num=0, start=10, end=20),
+                WordSpan(page_num=1, start=0, end=15),
+                WordSpan(page_num=2, start=0, end=20),
+            ],
+            diff_text="test",
+            diff_method=1,
+        )
+        remove_start = 0
+        remove_length = 15
+        diff_section.remove_words(start=remove_start, length=remove_length)
+        assert diff_section.word_spans == [
+            WordSpan(page_num=1, start=5, end=15),
+            WordSpan(page_num=2, start=0, end=20),
+        ]
+
+    def test_remove_all_words(self):
+        diff_section = DiffSection(
+            char_spans=[(0, 20)],
+            word_spans=[WordSpan(page_num=0, start=10, end=20)],
+            diff_text="test",
+            diff_method=1,
+        )
+        remove_start = 0
+        remove_length = 10
+        diff_section.remove_words(start=remove_start, length=remove_length)
+        assert len(diff_section.word_spans) == 0
+
+    def test_ignore_non_continuous_spans(self):
+        diff_section = DiffSection(
+            char_spans=[(0, 20)],
+            word_spans=[
+                WordSpan(page_num=None, start=10, end=20),
+                WordSpan(page_num=None, start=25, end=40),
+            ],
+            diff_text="test",
+            diff_method=1,
+        )
+        remove_start = 5
+        remove_length = 10
+        diff_section.remove_words(start=remove_start, length=remove_length)
+        assert len(diff_section.word_spans) == 2
+        assert diff_section.word_spans == [
+            WordSpan(page_num=None, start=10, end=20),
+            WordSpan(page_num=None, start=25, end=40),
+        ]

@@ -166,25 +166,31 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
         # the tag differ doesnt account for removal? is that real?
 
         has_therapy_tag_updates = False
-        if self.has_user_edit("therapy_tags"):
-            self.therapy_tags += new_therapy_tags
-            has_therapy_tag_updates = True
-        else:
-            has_therapy_tag_updates = (
-                len(pending_therapy_tags) != len(self.therapy_tags) or len(new_therapy_tags) > 0
-            )
-            self.therapy_tags = pending_therapy_tags
+        if new_therapy_tags:
+            if self.classification_status == ApprovalStatus.APPROVED or self.has_user_edit(
+                "therapy_tags"
+            ):
+                self.therapy_tags += new_therapy_tags
+                has_therapy_tag_updates = True
+            else:
+                has_therapy_tag_updates = (
+                    len(pending_therapy_tags) != len(self.therapy_tags) or len(new_therapy_tags) > 0
+                )
+                self.therapy_tags = pending_therapy_tags
 
         has_indication_tag_updates = False
-        if self.has_user_edit("indication_tags"):
-            has_indication_tag_updates = True
-            self.indication_tags += new_indication_tags
-        else:
-            has_indication_tag_updates = (
-                len(pending_indication_tags) != len(self.indication_tags)
-                or len(new_indication_tags) > 0
-            )
-            self.indication_tags = pending_indication_tags
+        if new_indication_tags:
+            if self.classification_status == ApprovalStatus.APPROVED or self.has_user_edit(
+                "indication_tags"
+            ):
+                has_indication_tag_updates = True
+                self.indication_tags += new_indication_tags
+            else:
+                has_indication_tag_updates = (
+                    len(pending_indication_tags) != len(self.indication_tags)
+                    or len(new_indication_tags) > 0
+                )
+                self.indication_tags = pending_indication_tags
 
         return has_therapy_tag_updates, has_indication_tag_updates
 
@@ -239,7 +245,29 @@ class DocDocumentLimitTags(DocDocument):
         projection = {
             "therapy_tags": {"$slice": 10},
             "indication_tags": {"$slice": 10},
-            "doc_vectors": 0,
+            # "doc_vectors": 0, cannot mix exclusion and inclusion.
+            "retrieved_document_id": 1,
+            "name": 1,
+            "checksum": 1,
+            "locations": {
+                "link_text": 1,
+                "base_url": 1,
+                "url": 1,
+                "site_id": 1,
+                "payer_family_id": 1,
+            },
+            "checksum": 1,
+            "final_effective_date": 1,
+            "document_type": 1,
+            "document_family_id": 1,
+            "status": 1,
+            "classification_status": 1,
+            "family_status": 1,
+            "content_extraction_status": 1,
+            "first_collected_date": 1,
+            "last_collected_date": 1,
+            "is_current_version": 1,
+            "priority": 1,
         }
 
 
@@ -280,7 +308,7 @@ class UpdateDocDocument(BaseModel, DocumentMixins):
     translation_id: PydanticObjectId | None = None
     content_extraction_task_id: PydanticObjectId | None = None
 
-    locations: list[DocDocumentLocation] | None
+    locations: list[DocDocumentLocation] | None = None
 
     user_edited_fields: list[str] = []
     include_later_documents_in_lineage_update: bool = False

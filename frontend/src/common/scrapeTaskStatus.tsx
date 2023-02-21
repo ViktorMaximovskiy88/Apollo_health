@@ -52,7 +52,7 @@ export function statusDisplayAndStyle(status: TaskStatus): StatusDisplay {
     case TaskStatus.Queued:
       return { name: 'Queued', style: 'text-yellow-500' };
     case TaskStatus.Finished:
-      return { name: 'Finished', style: 'text-green-500' };
+      return { name: 'Last Collected', style: 'text-green-500' };
     default:
       return {};
   }

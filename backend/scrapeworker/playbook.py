@@ -8,8 +8,10 @@ from backend.common.models.base_document import BaseModel
 
 class PlaybookAction(Enum):
     CLICK = "click"
+    CLICK_LOOP = "click_loop"
     SELECT = "select"
     WAIT_FOR_NAV = "wait"
+    TYPE = "type"
 
 
 class PlaybookStep(BaseModel):
@@ -69,12 +71,26 @@ class ScrapePlaybook:
                 step = PlaybookStep(action=PlaybookAction.SELECT, target=target, choice=choice)
                 steps.append(step)
                 continue
+            elif step_block.startswith("await page.type"):
+                _, target, _, choice, _ = lines[0].split("'")
+                step = PlaybookStep(action=PlaybookAction.TYPE, target=target, choice=choice)
+                steps.append(step)
+                continue
             elif len(lines) == 2:
                 is_wait_for = lines[0].startswith("await page.waitFor")
                 is_click = lines[1].startswith("await page.click")
                 if is_wait_for and is_click:
                     _, target, _ = lines[1].split("'")
                     step = PlaybookStep(action=PlaybookAction.CLICK, target=target)
+                    steps.append(step)
+                    continue
+            elif len(lines) == 4:
+                is_loop = lines[0].startswith("while (")
+                is_wait_for = lines[1].startswith("await page.waitFor")
+                is_click = lines[2].startswith("await page.click")
+                if is_loop and is_wait_for and is_click:
+                    _, target, _ = lines[2].split("'")
+                    step = PlaybookStep(action=PlaybookAction.CLICK_LOOP, target=target)
                     steps.append(step)
                     continue
 
@@ -135,9 +151,7 @@ class ScrapePlaybook:
 
                 print("soption", option_label)
                 await page.select_option(step.target, label=option_label)
-                new_context = context + [
-                    PlaybookStep(action=step.action, target=step.target, choice=option_label)
-                ]
+                new_context = context + [step]
                 async for page, context in self.next_step(page, step, remaining_steps, new_context):
                     yield page, context
         else:
@@ -147,9 +161,7 @@ class ScrapePlaybook:
             if not option_label:
                 raise Exception("Couldn't find option {step.choice} in select {step.target}")
             await page.select_option(step.target, value=step.choice)
-            new_context = context + [
-                PlaybookStep(action=step.action, target=step.target, choice=option_label)
-            ]
+            new_context = context + [step]
             async for page, context in self.next_step(page, step, remaining_steps, new_context):
                 yield page, context
 
@@ -170,6 +182,23 @@ class ScrapePlaybook:
         ):
             yield page, context
 
+    async def handle_click_loop(
+        self,
+        page: Page,
+        step: PlaybookStep,
+        remaining_steps: list[PlaybookStep],
+        context: PlaybookContext,
+    ) -> AsyncGenerator[tuple[Page, PlaybookContext], None]:
+        target = page.locator(step.target)
+        max_iter = 150
+        count = 0
+        while await target.count() > 0 and count < max_iter:
+            count += 1
+            await target.first.click()
+            new_context = context + [step]
+            async for page, context in self.next_step(page, step, remaining_steps, new_context):
+                yield page, context
+
     async def handle_wait_for_nav(
         self,
         page: Page,
@@ -188,6 +217,24 @@ class ScrapePlaybook:
             # if playwright error, we can't go back. Ignore and try next steps anyway
             return
 
+    async def handle_type(
+        self,
+        page: Page,
+        step: PlaybookStep,
+        remaining_steps: list[PlaybookStep],
+        context: PlaybookContext,
+    ) -> AsyncGenerator[tuple[Page, PlaybookContext], None]:
+        async def action(timeout):
+            input = page.locator(step.target).first
+            await input.fill("", timeout=timeout)
+            await input.fill(step.choice, timeout=timeout)
+
+        new_context = context + [step]
+        async for page, context in self.execute_step(
+            page, step, remaining_steps, new_context, action
+        ):
+            yield page, context
+
     async def playbook_step(
         self, page: Page, steps: list[PlaybookStep], context: PlaybookContext
     ) -> AsyncGenerator[tuple[Page, PlaybookContext], None]:
@@ -202,6 +249,10 @@ class ScrapePlaybook:
             next_steps = self.handle_select(page, step, remaining_steps, context)
         elif step.action == PlaybookAction.CLICK:
             next_steps = self.handle_click(page, step, remaining_steps, context)
+        elif step.action == PlaybookAction.TYPE:
+            next_steps = self.handle_type(page, step, remaining_steps, context)
+        elif step.action == PlaybookAction.CLICK_LOOP:
+            next_steps = self.handle_click_loop(page, step, remaining_steps, context)
 
         if not next_steps:
             raise PlaybookException(f"could not handle step {step}")

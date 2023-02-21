@@ -1,4 +1,4 @@
-import { Card, Col, Form, Input, Row, Select, Typography } from 'antd';
+import { Card, Checkbox, Col, Form, Input, Row, Select, Typography } from 'antd';
 import { FormInstance } from 'antd/lib/form/Form';
 import { Site, CollectionMethod } from '../types';
 import { UrlFormFields } from './UrlFormField';
@@ -70,6 +70,7 @@ const buildInitialValues = () => ({
   doc_type_threshold: 0.75,
   lineage_threshold_override: false,
   lineage_threshold: 0.75,
+  additional_languages: [],
 });
 
 /* eslint-disable no-template-curly-in-string */
@@ -80,6 +81,19 @@ const validateMessages = {
   },
 };
 /* eslint-enable no-template-curly-in-string */
+
+export function AdditionalLanguages() {
+  const languages = [
+    { value: 'es', label: 'Spanish' },
+    { value: 'other', label: 'All Other' },
+  ];
+
+  return (
+    <Form.Item name="additional_languages" label="Additional Languages to Collect">
+      <Checkbox.Group options={languages} />
+    </Form.Item>
+  );
+}
 
 const SiteInformation = ({ initialValues }: { initialValues?: Site }) => {
   const mustBeUniqueName = useMustBeUniqueNameRule();
@@ -93,6 +107,7 @@ const SiteInformation = ({ initialValues }: { initialValues?: Site }) => {
       <Form.Item name="tags" label="Site Tags">
         <Select mode="tags" />
       </Form.Item>
+      <AdditionalLanguages />
       <Status />
       <Assignee />
       <PayerWorkInstruction />

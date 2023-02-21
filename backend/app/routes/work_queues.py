@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Type
 
 from beanie import PydanticObjectId
+from beanie.odm.queries.find import FindMany
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
 from pydantic import Field
 from pymongo import ReturnDocument
@@ -22,16 +23,12 @@ from backend.common.models.comment import Comment, HoldType
 from backend.common.models.doc_document import (
     DocDocument,
     LockableDocument,
-    PartialDocDocumentUpdate,
     TaskLock,
+    UpdateDocDocument,
 )
 from backend.common.models.user import User
 from backend.common.models.work_queue import WorkQueue, WorkQueueLog, WorkQueueUpdate
-from backend.common.services.doc_lifecycle.hooks import (
-    ChangeInfo,
-    doc_document_save_hook,
-    get_doc_change_info,
-)
+from backend.common.repositories.doc_document_repository import DocDocumentRepository
 
 router = APIRouter(
     prefix="/work-queues",
@@ -184,12 +181,17 @@ async def get_work_queue_items(
     skip: int | None = None,
     sorts: list[TableSortInfo] = Depends(get_query_json_list("sorts", TableSortInfo)),
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
-):
-    query = combine_queue_query_with_user_query(work_queue, sorts, filters)
-    res = await query_table(query, limit, skip)
+) -> TableQueryResponse[DocDocument]:
+    query: FindMany[IdNameLockOnlyDocument] = combine_queue_query_with_user_query(
+        work_queue, sorts, filters
+    )
+    res: TableQueryResponse[IdNameLockOnlyDocument] = await query_table(
+        query, limit, skip, as_aggregation=True
+    )
+
     if "Hold" in work_queue.name:
         for doc in res.data:
-            comment = await get_hold_comment(doc.id, work_queue.name)
+            comment: Comment | None = await get_hold_comment(doc.id, work_queue.name)
             if comment:
                 doc.hold_comment = comment.text
                 doc.hold_time = comment.time
@@ -209,7 +211,8 @@ class TakeNextWorkQueueResponse(BaseModel):
 def get_valid_lock(locks: list[Any], work_queued_id: PydanticObjectId | None, now: datetime):
     return next(
         filter(
-            lambda l: l.work_queue_id == work_queued_id and l.expires.now(tz=timezone.utc) > now,
+            lambda lock: lock.work_queue_id == work_queued_id
+            and lock.expires.now(tz=timezone.utc) > now,
             locks,
         ),
         None,
@@ -381,14 +384,10 @@ async def submit_work_item(
 
     updates = UpdateModel.parse_obj(body.updates)
 
-    change_info = ChangeInfo()
-    if isinstance(item, DocDocument) and isinstance(updates, PartialDocDocumentUpdate):
-        change_info = get_doc_change_info(updates, item)
-
-    await update_and_log_diff(logger, current_user, item, updates)
-
-    if isinstance(item, DocDocument):
-        await doc_document_save_hook(item, change_info)
+    if isinstance(item, DocDocument) and isinstance(updates, UpdateDocDocument):
+        await DocDocumentRepository().execute(item, updates, current_user)
+    else:
+        await update_and_log_diff(logger, current_user, item, updates)
 
     await Collection.find_one({"_id": item_id}).update(
         {"$pull": {"locks": {"work_queue_id": work_queue.id}}}

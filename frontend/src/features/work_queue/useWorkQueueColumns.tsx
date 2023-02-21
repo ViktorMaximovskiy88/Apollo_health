@@ -13,7 +13,7 @@ import { useSelector } from 'react-redux';
 import DateFilter from '@inovua/reactdatagrid-community/DateFilter';
 import { priorityOptions, priorityStyle } from '../doc_documents/useSiteDocDocumentColumns';
 import { TypeFilterValue } from '@inovua/reactdatagrid-community/types';
-import { useGetWorkQueueByNameQuery, useGetWorkQueueQuery } from './workQueuesApi';
+import { useGetWorkQueueQuery } from './workQueuesApi';
 import { WorkQueue } from './types';
 
 function useSiteSelectOptions() {

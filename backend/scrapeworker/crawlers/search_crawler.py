@@ -69,9 +69,11 @@ class SearchableCrawler:
         if self.input_selector is None:
             raise Exception("Input selector must be given.")
         input_locators = page.locator(self.input_selector)
-        if await input_locators.count() == 1:
+        locator_count = await input_locators.count()
+        if locator_count == 1:
             return input_locators
-        for locator in await input_locators.all():
+        for i in range(0, locator_count):
+            locator = input_locators.nth(i)
             if await locator.is_visible():
                 return locator
         raise Exception("No visible locators found.")
@@ -135,9 +137,8 @@ class SearchableCrawler:
                 await self.__select(page, code)
                 await self.__search(page)
                 yield code
-            except Exception:
-                self.log.error("Searchable Execution Error", exc_info=True)
-
+            except Exception as e:
+                self.log.error(f"Searchable Execution Error: {e}", exc_info=e)
             if nav_state.has_navigated or page.url != base_url:
                 await page.goto(base_url)
                 await self.replay_playbook(page, playbook_context)

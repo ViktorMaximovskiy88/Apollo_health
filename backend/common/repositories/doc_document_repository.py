@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from backend.app.utils.logger import Logger, get_diff_patch, update_and_log_diff
+from backend.common.models.base_document import BaseModel
 from backend.common.models.doc_document import DocDocument, UpdateDocDocument
 from backend.common.models.document_mixins import calc_final_effective_date
 from backend.common.models.user import User
@@ -90,25 +93,25 @@ class DocDocumentRepository:
                 break
 
         # editable dates
-        if date_update_exists(doc.effective_date, updates.effective_date):
+        if date_update_exists(doc, updates, "effective_date"):
             current_user_edited_fields.append("effective_date")
 
-        if date_update_exists(doc.end_date, updates.end_date):
+        if date_update_exists(doc, updates, "end_date"):
             current_user_edited_fields.append("end_date")
 
-        if date_update_exists(doc.last_updated_date, updates.last_updated_date):
+        if date_update_exists(doc, updates, "last_updated_date"):
             current_user_edited_fields.append("last_updated_date")
 
-        if date_update_exists(doc.last_reviewed_date, updates.last_reviewed_date):
+        if date_update_exists(doc, updates, "last_reviewed_date"):
             current_user_edited_fields.append("last_reviewed_date")
 
-        if date_update_exists(doc.next_review_date, updates.next_review_date):
+        if date_update_exists(doc, updates, "next_review_date"):
             current_user_edited_fields.append("next_review_date")
 
-        if date_update_exists(doc.next_update_date, updates.next_update_date):
+        if date_update_exists(doc, updates, "next_update_date"):
             current_user_edited_fields.append("next_update_date")
 
-        if date_update_exists(doc.published_date, updates.published_date):
+        if date_update_exists(doc, updates, "published_date"):
             current_user_edited_fields.append("published_date")
 
         for field in doc.user_edited_fields:
@@ -119,9 +122,15 @@ class DocDocumentRepository:
         return updates
 
 
-def date_update_exists(original, update):
-    if not update:
+def date_update_exists(doc: BaseModel, updates: BaseModel, date_field: str):
+    if date_field not in updates.__fields_set__:
         return False
-    if not original:
+    update: datetime | None = getattr(updates, date_field)
+    original: datetime | None = getattr(doc, date_field)
+    if not original and update:
         return True
+    if original and not update:
+        return True
+    if not original or not update:
+        return False
     return original.date() != update.date()

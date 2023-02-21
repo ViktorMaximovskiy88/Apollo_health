@@ -71,10 +71,17 @@ async def get_target(id: PydanticObjectId) -> DocDocument:
 )
 async def get_all_doc_document_ids(
     site_id: PydanticObjectId | None = None,
+    scrape_task_id: PydanticObjectId | None = None,
     filters: list[TableFilterInfo] = Depends(get_query_json_list("filters", TableFilterInfo)),
 ):
-    match = {"locations.site_id": site_id} if site_id else {}
-    query = DocDocument.find_many(match).project(IdOnlyDocument)
+    query = {"locations.site_id": site_id} if site_id else {}
+    if scrape_task_id:
+        task: SiteScrapeTask | None = await SiteScrapeTask.get(scrape_task_id)
+        if not task:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve tasks.")
+        query["retrieved_document_id"] = {"$in": task.retrieved_document_ids}
+
+    query = DocDocument.find_many(query).project(IdOnlyDocument)
     query = construct_table_query(query, [], filters)
     return [doc.id async for doc in query]
 
@@ -97,10 +104,11 @@ async def read_doc_documents(
         if not task:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Not able to retrieve tasks.")
         query["retrieved_document_id"] = {"$in": task.retrieved_document_ids}
-    document_query: FindMany[DocDocumentLimitTags] = DocDocument.find(query).project(
-        DocDocumentLimitTags
-    )
-    return await query_table(document_query, limit, skip, sorts, filters)
+
+    document_query = DocDocument.find(query).project(DocDocumentLimitTags)
+    docs = await query_table(document_query, limit, skip, sorts, filters, as_aggregation=True)
+
+    return docs
 
 
 class CompareResponse(BaseModel):

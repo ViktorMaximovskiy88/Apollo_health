@@ -59,11 +59,4 @@ async def hash_content(text: str, files: list[str] = []) -> str:
         image_bytes = await get_raw_bytes(file)
         hasher.update(image_bytes)
 
-    # perform cleanup here too, mreh
-    for file in files:
-        try:
-            await aiofiles.os.remove(file)
-        except Exception:
-            pass
-
     return hasher.hexdigest()

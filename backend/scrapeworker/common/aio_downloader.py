@@ -1,25 +1,27 @@
 import os
 import ssl
-import tempfile
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from http.cookies import CookieError, Morsel
 from random import shuffle
 from ssl import SSLContext
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Coroutine
 
 import aiofiles
+from aiofiles.threadpool.binary import AsyncBufferedReader
 from aiohttp import BasicAuth, ClientHttpProxyError, ClientResponse, ClientSession, TCPConnector
 from playwright.async_api import ProxySettings
-from tenacity import AttemptManager
+from tenacity._asyncio import AsyncRetrying
+from tenacity.stop import stop_after_attempt
+from tenacity.wait import wait_random
 
 from backend.common.core.config import config
 from backend.common.models.link_task_log import InvalidResponse, ValidResponse
 from backend.common.models.proxy import Proxy
 from backend.common.storage.client import DocumentStorageClient
 from backend.common.storage.hash import DocStreamHasher
+from backend.common.storage.s3_client import AsyncS3Client
 from backend.scrapeworker.common.models import DownloadContext
-from backend.scrapeworker.common.rate_limiter import RateLimiter
 
 default_headers: dict[str, str] = {
     "Accept-Language": "en-US,en;q=0.9",
@@ -38,11 +40,11 @@ class AioDownloader:
 
     session: ClientSession
 
-    def __init__(self, doc_client: DocumentStorageClient, log):
+    def __init__(self, doc_client: DocumentStorageClient | AsyncS3Client, log, scrape_temp_path):
         self.doc_client = doc_client
         self.log = log
         self.session = ClientSession(connector=TCPConnector(ssl=self.permissive_ssl_context()))
-        self.rate_limiter = RateLimiter()
+        self.scrape_temp_path = scrape_temp_path
 
     def permissive_ssl_context(self):
         context = SSLContext()
@@ -129,10 +131,10 @@ class AioDownloader:
 
         return proxies
 
-    def convert_proxies(
+    def get_shuffled_proxies(
         self,
         proxies: list[tuple[Proxy | None, ProxySettings | None]] = [],
-    ) -> list[tuple[Proxy | None, AioProxy | None]]:
+    ) -> tuple[list[tuple[Proxy | None, AioProxy | None]], int]:
         _proxies = []
         for (proxy, _proxy_settings) in proxies:
             if proxy:
@@ -140,23 +142,7 @@ class AioDownloader:
                 [_proxies.append((proxy, aio_proxy)) for aio_proxy in aio_proxies]
 
         shuffle(_proxies)
-        return _proxies
-
-    async def proxy_with_backoff(
-        self,
-        proxies: list[tuple[Proxy | None, ProxySettings | None]] = [],
-    ) -> AsyncGenerator[tuple[AttemptManager, AioProxy | None], None]:
-        aio_proxies = self.convert_proxies(proxies)
-        async for attempt in self.rate_limiter.attempt_with_backoff():
-            i = attempt.retry_state.attempt_number - 1
-            proxy_count = len(aio_proxies)
-            proxy, proxy_settings = (
-                aio_proxies[i % proxy_count] if proxy_count > 0 else (None, None)
-            )
-            self.log.info(
-                f"{i} Using proxy {proxy and proxy.name} ({proxy_settings and proxy_settings.proxy})"  # noqa E501
-            )
-            yield attempt, proxy_settings
+        return _proxies, len(_proxies)
 
     async def set_download_data(self, download: DownloadContext, path: str) -> None:
         download.file_path = path
@@ -171,7 +157,7 @@ class AioDownloader:
         self,
         download: DownloadContext,
         response: ClientResponse,
-        temp: tempfile._TemporaryFileWrapper,
+        temp: AsyncBufferedReader,
     ):
         hasher = DocStreamHasher()
 
@@ -181,16 +167,19 @@ class AioDownloader:
                 hasher.update(data)
             await fd.flush()
 
-        await self.set_download_data(download, temp.name)
+        await self.set_download_data(download, str(temp.name))
 
         download.file_hash = hasher.hexdigest()
         self.log.info(f"mimetype={download.mimetype} file_hash={download.file_hash}")  # noqa
         return download.file_path, download.file_hash
 
-    def open_direct_scrape(self, key: str, temp: tempfile._TemporaryFileWrapper):
+    async def open_direct_scrape(self, key: str, temp: AsyncBufferedReader):
         doc = self.doc_client.read_object(key)
-        temp.write(doc)
-        temp.seek(0)
+        if isinstance(doc, Coroutine):
+            doc = await doc
+
+        await temp.write(doc)
+        await temp.seek(0)
 
     @asynccontextmanager
     async def try_download_to_tempfile(
@@ -198,38 +187,57 @@ class AioDownloader:
         download: DownloadContext,
         proxies: list[tuple[Proxy | None, ProxySettings | None]] = [],
     ) -> AsyncGenerator[tuple[str | None, str | None], None]:
-        url = download.request.url
-        self.log.info(f"Before attempting download {url}")
 
+        url = download.request.url
         if download.direct_scrape:
+            self.log.debug(f"Before direct_scrape download {url}")
             dest_path = f"{download.file_hash}.{download.file_extension}"
-            with tempfile.NamedTemporaryFile(suffix=f".{download.file_extension}") as temp:
-                self.open_direct_scrape(dest_path, temp)
-                await self.set_download_data(download, temp.name)
-                self.log.info(
-                    f"mimetype={download.mimetype} file_hash={download.file_hash}"  # noqa
-                )
+            async with aiofiles.tempfile.NamedTemporaryFile(dir=self.scrape_temp_path) as temp:
+                await self.open_direct_scrape(dest_path, temp)
+                await self.set_download_data(download, str(temp.name))
+                self.log.debug(
+                    f"mimetype={download.mimetype} file_hash={download.file_hash}"
+                )  # noqa
                 yield download.file_path, download.file_hash
         elif download.file_path and download.playwright_download:
+            self.log.debug(f"Before playwright_download download {url}")
             await self.set_download_data(download, download.file_path)
             self.log.info(f"mimetype={download.mimetype} file_hash={download.file_hash}")  # noqa
             yield download.file_path, download.file_hash
         else:
+            self.log.debug(f"Before retry download {url}")
             response: ClientResponse | None = None
             proxy_url = None
-            filedata_tuple = (None, None)
-            with tempfile.NamedTemporaryFile() as temp:
-                async for attempt, proxy in self.proxy_with_backoff(proxies):
-                    with attempt:
-                        self.log.info(f"Attempting download {url}")
+            aio_proxies, proxy_count = self.get_shuffled_proxies(proxies)
+            retries = 3 * proxy_count if proxy_count else 3
+            result = (None, None)
+            async for attempt in AsyncRetrying(
+                stop=stop_after_attempt(retries),
+                wait=wait_random(min=1, max=5),
+                reraise=True,
+            ):
+                with attempt:
+                    attempt_number = attempt.retry_state.attempt_number
+                    self.log.info(
+                        f"Attempt #{attempt_number} idle={attempt.retry_state.idle_for} url={url}"
+                    )
+                    index = attempt_number - 1
+
+                    _proxy_record, proxy = (
+                        aio_proxies[index % proxy_count] if proxy_count else [None, None]
+                    )
+
+                    async with aiofiles.tempfile.NamedTemporaryFile(
+                        dir=self.scrape_temp_path
+                    ) as temp:
                         proxy_url = proxy.proxy if proxy else None
+
                         try:
                             response = await self.send_request(download, proxy)
                             download.response.from_aio_response(response)
                             self.log.info(f"Attempting download {url} response")
                         except ClientHttpProxyError as proxy_error:
                             self.log.error(f"Client Proxy Error AIO {url}")
-                            # we catch so we can 'log' on the task and reraise for retry
                             download.invalid_responses.append(
                                 InvalidResponse(
                                     proxy_url=proxy_url,
@@ -239,17 +247,15 @@ class AioDownloader:
                             )
                             raise proxy_error
 
-                        self.log.info(f"Before link log {url} response")
+                        self.log.debug(f"Before link log {url} response")
 
-                        if not response or not response.ok:
+                        if not (response and response.ok):
                             invalid_response = InvalidResponse(
                                 proxy_url=proxy_url, **download.response.dict()
                             )
                             download.invalid_responses.append(invalid_response)
                             self.log.error(invalid_response)
-                            # if its 404 skip... maybe others we retry?
-                            yield (None, None)
-                            return
+                            raise Exception("invalid response but lets retry ¯\\_(ツ)_/¯")
                         else:
                             download.valid_response = ValidResponse(
                                 proxy_url=proxy_url, **download.response.dict()
@@ -258,7 +264,5 @@ class AioDownloader:
                             # We only need this now due to the xlsx lib needing an ext (derp)
                             # TODO see if we can unhave this; the excel lib is dumb
                             download.guess_extension()
-
-                        filedata_tuple = await self.write_response_to_file(download, response, temp)
-
-                yield filedata_tuple
+                            result = await self.write_response_to_file(download, response, temp)
+                            yield result

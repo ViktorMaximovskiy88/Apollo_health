@@ -29,15 +29,21 @@ class PDFDiffTaskProcessor(TaskProcessor):
             ),
         )
 
-        if tag_comparison is None:
-            tag_lineage = await TagCompare().execute(current_doc, prev_doc)
+        tag_lineage = await TagCompare().execute(current_doc, prev_doc)
+        if not tag_comparison:
             tag_comparison = await TagComparison(
                 current_doc_id=current_doc.id,
                 prev_doc_id=prev_doc.id,
                 therapy_tag_sections=tag_lineage.therapy_tag_sections,
                 indication_tag_sections=tag_lineage.indication_tag_sections,
             ).save()
+        else:
+            tag_comparison.therapy_tag_sections = tag_lineage.therapy_tag_sections
+            tag_comparison.indication_tag_sections = tag_lineage.indication_tag_sections
+            await tag_comparison.save()
 
+        # NOTE: we may want to add this for efficiency after comparison changes have slowed
+        # if not dtc.compare_exists(doc=current_doc, prev_doc=prev_doc):
         dtc.compare(doc=current_doc, prev_doc=prev_doc)
 
         return {
