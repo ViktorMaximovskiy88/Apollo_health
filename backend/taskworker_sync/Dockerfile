@@ -6,10 +6,10 @@ WORKDIR ${APP_DIR}
 RUN curl -LO https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie && chmod +x aws-lambda-rie
 RUN  pip install --target ${APP_DIR} awslambdaric
 
-COPY ./requirements.txt ${APP_DIR}
+COPY ./backend/taskworker_sync/requirements.txt ${APP_DIR}
 RUN  pip install -r requirements.txt --target "${APP_DIR}"
 
-COPY ./main.py ${APP_DIR}
+COPY ./backend/taskworker_sync/main.py ${APP_DIR}
 
 FROM python:3.10.3-slim-bullseye as release
 
