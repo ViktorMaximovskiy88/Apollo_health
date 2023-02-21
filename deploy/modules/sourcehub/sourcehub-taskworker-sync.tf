@@ -123,4 +123,8 @@ resource "aws_lambda_event_source_mapping" "sourcehub-taskworker-trigger" {
   enabled          = false
   function_name    = local.function_name
   batch_size       = 1
+
+  depends_on = [
+    aws_lambda_function.sourcehub-taskworker-sync
+  ]
 }
