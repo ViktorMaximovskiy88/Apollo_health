@@ -38,6 +38,16 @@ services:
       - "9324:9324"
       - "9325:9325"
 
+  taskworker_sync:
+    container_name: taskworker_sync
+    build:
+      context: ../
+      dockerfile: ./backend/taskworker_sync/Dockerfile
+    ports:
+      - "7070:8080"
+    env_file:
+      - ../backend/taskworker_sync/local.env
+
 volumes:
   mongo:
   minio:

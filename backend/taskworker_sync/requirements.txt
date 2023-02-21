@@ -1,0 +1,4 @@
+aws-lambda-powertools==2.6.0
+pydantic==1.10.4
+typing_extensions==4.4.0
+jmespath==1.0.1
