@@ -47,6 +47,7 @@ services:
       - "7070:8080"
     env_file:
       - ../backend/taskworker_sync/local.env
+    entrypoint: ["/app/aws-lambda-rie", "python", "-m", "awslambdaric"]
 
 volumes:
   mongo:

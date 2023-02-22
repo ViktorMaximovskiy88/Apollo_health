@@ -18,5 +18,5 @@ WORKDIR ${APP_DIR}
 
 COPY --from=builder /app /app
 
-ENTRYPOINT [ "/app/aws-lambda-rie", "python", "-m", "awslambdaric" ]
+ENTRYPOINT [ "python", "-m", "awslambdaric" ]
 CMD [ "main.handler" ]
