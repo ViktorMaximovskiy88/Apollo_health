@@ -11,5 +11,5 @@ We are using a separate virtual environment to reduce the size of our dependenci
 Rudimentary testing via curl (assumes your docker is running):
 
 ```bash
-curl -XPOST "http://localhost:7070/2015-03-31/functions/function/invocations" -d @./sample_event.json
+curl -XPOST "http://localhost:7070/2015-03-31/functions/function/invocations" -d @./backend/taskworker_sync/sample_event.json
 ```

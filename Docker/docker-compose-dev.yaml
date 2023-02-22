@@ -48,6 +48,7 @@ services:
     env_file:
       - ../backend/taskworker_sync/local.env
     entrypoint: ["/app/aws-lambda-rie", "python", "-m", "awslambdaric"]
+    command: "main.handler"
 
 volumes:
   mongo:
