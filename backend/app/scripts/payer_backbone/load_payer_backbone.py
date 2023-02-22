@@ -296,6 +296,7 @@ def process_line(h, line, start_date, delivery: Delivery):
                 start_date=start_date,
                 l_id=int(pharmacy_par_group_id),
                 name=f"{pharmacy_par_group_name} (Pharmacy)",
+                legacy_policy_label=legacy_group_labels().get(int(pharmacy_par_group_id)),
                 benefit=Benefit.Pharmacy,
             ),
         )
