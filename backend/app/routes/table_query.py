@@ -207,8 +207,10 @@ def query_as_agg(
                     projection_value["$slice"] = [f"${projection_key}", projection_value["$slice"]]
             inclusion_projection[projection_key] = projection_value
         agg_query.append({"$project": inclusion_projection})
-
-    data = query.document_model.aggregate(agg_query)
+    # Should almost always sort in memory, but in rare cases like search name
+    # or link text for all docs, may exceed 100mb sort limit.
+    # Disk sort needed - even with index.
+    data = query.document_model.aggregate(aggregation_pipeline=agg_query, allowDiskUse=True)
     return data
 
 
