@@ -13,6 +13,9 @@ from backend.scrapeworker.scrapers.aspnet_webform import AspNetWebFormScraper
 from backend.scrapeworker.scrapers.by_domain.bcbsfl import BcbsflScraper
 from backend.scrapeworker.scrapers.by_domain.formulary_navigator import FormularyNavigatorScraper
 from backend.scrapeworker.scrapers.by_domain.humana import HumanaScraper
+from backend.scrapeworker.scrapers.by_domain.par_formulary_navigator import (
+    ParFormularyNavigatorScraper,
+)
 from backend.scrapeworker.scrapers.direct_download import (
     DirectDownloadScraper,
     PlaywrightBaseScraper,
@@ -29,6 +32,7 @@ scrapers: list[Type[PlaywrightBaseScraper]] = [
     HumanaScraper,
     BcbsflScraper,
     FormularyNavigatorScraper,
+    ParFormularyNavigatorScraper,
 ]
 
 
