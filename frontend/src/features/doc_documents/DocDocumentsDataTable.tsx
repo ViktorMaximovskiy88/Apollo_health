@@ -1,6 +1,7 @@
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+
 import {
   setDocDocumentTableFilter,
   setDocDocumentTableSort,
@@ -10,7 +11,6 @@ import {
   setDocDocumentTableSelect,
 } from './docDocumentsSlice';
 import { GridPaginationToolbar } from '../../components';
-import { useLazyGetDocDocumentsQuery } from './docDocumentApi';
 import { DocDocument } from './types';
 import { useInterval } from '../../common/hooks';
 import { TypePaginationProps } from '@inovua/reactdatagrid-community/types';
@@ -99,11 +99,11 @@ const uniquePayerFamilyIds = (items: DocDocument[]) => {
   return Object.keys(usedPayerFamilyIds);
 };
 
-export function DocDocumentsDataTable() {
+export function DocDocumentsDataTable(props: { getDocDocumentsFn: any }) {
+  const { getDocDocumentsFn } = props;
   // Trigger update every 10 seconds by invalidating memoized callback
   const { isActive, setActive, watermark } = useInterval(10000);
 
-  const [getDocDocumentsFn] = useLazyGetDocDocumentsQuery();
   const { setSiteIds, siteNamesById } = useGetSiteNamesById();
   const { setPayerFamilyIds, payerFamilyNamesById } = useGetPayerFamilyNamesById();
   const { setDocumentFamilyIds, documentFamilyNamesById } = useGetDocumentFamilyNamesById();
