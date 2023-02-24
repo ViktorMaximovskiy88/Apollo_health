@@ -34,6 +34,7 @@ function DocTypeUpdateModalToolbar() {
     dispatch(setSiteDocDocumentTableForceUpdate());
     dispatch(setSiteDocDocumentTableSelect({ selected: {}, unselected: {} }));
   }, [dispatch, setSiteDocDocumentTableForceUpdate, setSiteDocDocumentTableSelect]);
+
   return (
     <DocTypeUpdateModal
       selection={tableState.selection}
