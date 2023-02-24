@@ -15,10 +15,12 @@ from backend.common.models.doc_document import (
 )
 from backend.common.models.document_family import DocumentFamily
 from backend.common.models.payer_family import PayerFamily
+from backend.common.models.shared import DocDocumentLocation
 from backend.common.services.doc_lifecycle.doc_lifecycle import DocLifecycleService
 from backend.common.services.extraction.extraction_delta import DeltaCreator
 from backend.common.services.lineage.start_new_lineage import start_new_lineage
 from backend.common.services.lineage.update_lineages import update_lineage
+from backend.common.services.payer_family import update_payer_family_site_ids
 from backend.common.services.tag_compare import TagCompare
 from backend.common.task_queues.unique_task_insert import try_queue_unique_task
 
@@ -29,6 +31,7 @@ class ChangeInfo(BaseModel):
     include_later_documents: bool = False
     old_payer_family_ids: list[PydanticObjectId | None] = []
     document_family_change: PydanticObjectId | bool = False
+    old_locations: list[DocDocumentLocation] = []
 
 
 async def recompare_tags(doc: DocDocument, prev_doc: DocDocument):
@@ -135,6 +138,7 @@ async def doc_document_save_hook(
             )
 
     await update_payer_family_counts(doc, change_info)
+    await update_payer_family_site_ids(doc, change_info.old_locations)
 
     return await DocLifecycleService().assess_document_status(doc)
 
@@ -166,6 +170,9 @@ def get_doc_change_info(updates: PartialDocDocumentUpdate, doc: DocDocument):
         updates.locations or doc.locations
     ):
         change_info.old_payer_family_ids = [location.payer_family_id for location in doc.locations]
+
+    if isinstance(updates, (UpdateDocDocument)) and (updates.locations or doc.locations):
+        change_info.old_locations = doc.locations
 
     return change_info
 

@@ -5,7 +5,7 @@ from backend.common.models.base_document import BaseDocument, BaseModel
 
 class PayerFamily(BaseDocument):
     name: Indexed(str)  # type: ignore
-    site_id: PydanticObjectId | None = None
+    site_ids: list[PydanticObjectId] = []
     payer_type: str | None = None
     payer_ids: list[str] = []
     channels: list[str] = []
@@ -18,7 +18,7 @@ class PayerFamily(BaseDocument):
 
 class NewPayerFamily(BaseModel):
     name: str
-    site_id: PydanticObjectId | None = None
+    site_ids: list[PydanticObjectId] = []
     payer_type: str | None = None
     payer_ids: list[str] = []
     channels: list[str] = []
@@ -30,7 +30,7 @@ class NewPayerFamily(BaseModel):
 
 class UpdatePayerFamily(BaseModel):
     name: str | None = None
-    site_id: PydanticObjectId | None = None
+    site_ids: list[PydanticObjectId] = []
     payer_type: str | None = None
     payer_ids: list[str] | None = None
     channels: list[str] | None = None

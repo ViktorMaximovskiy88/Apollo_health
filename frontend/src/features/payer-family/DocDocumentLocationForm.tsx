@@ -6,22 +6,37 @@ import { PayerFamily as PayerFamilyType } from '../payer-family/types';
 import { useLazyGetPayerFamiliesQuery } from '../payer-family/payerFamilyApi';
 import { RemoteSelect, TextEllipsis } from '../../components';
 import { LinkIcon } from '../../components/LinkIcon';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
-export const useFetchPayerFamilyOptions = () => {
+export const useFetchPayerFamilyOptions = ({
+  filterBySite,
+  location,
+}: {
+  filterBySite?: boolean;
+  location?: DocDocumentLocation;
+} = {}) => {
   const [getPayerFamilies] = useLazyGetPayerFamiliesQuery();
   const fetchPayerFamilyOptions = useCallback(
     async (search: string) => {
+      const filterValue = [{ name: 'name', operator: 'contains', type: 'string', value: search }];
+      if (filterBySite) {
+        filterValue.push({
+          name: 'site_ids',
+          operator: 'eq',
+          type: 'select',
+          value: location?.site_id ?? '',
+        });
+      }
       const { data } = await getPayerFamilies({
         limit: 50,
         skip: 0,
         sortInfo: { name: 'name', dir: 1 },
-        filterValue: [{ name: 'name', operator: 'contains', type: 'string', value: search }],
+        filterValue,
       });
       if (!data) return [];
       return data.data.map((item: PayerFamilyType) => ({ value: item._id, label: item.name }));
     },
-    [getPayerFamilies]
+    [filterBySite, getPayerFamilies, location?.site_id]
   );
   return fetchPayerFamilyOptions;
 };
@@ -47,7 +62,8 @@ const PayerFamily = ({
 
   const updatedLocation = Form.useWatch(['locations', index]);
 
-  const fetchPayerFamilyOptions = useFetchPayerFamilyOptions();
+  const [filterBySite, setFilterBySite] = useState(true);
+  const fetchPayerFamilyOptions = useFetchPayerFamilyOptions({ filterBySite, location });
 
   const additionalOptions = currentOption ? [currentOption] : [];
   return (
@@ -96,6 +112,11 @@ const PayerFamily = ({
           <PlusOutlined />
           New
         </Button>
+        <Form.Item>
+          <Checkbox onChange={() => setFilterBySite(!filterBySite)} checked={!filterBySite}>
+            Show All
+          </Checkbox>
+        </Form.Item>
         <Form.Item valuePropName="checked" name={['locations', index, 'pending_payer_update']}>
           <Checkbox>Pending Payer Update</Checkbox>
         </Form.Item>

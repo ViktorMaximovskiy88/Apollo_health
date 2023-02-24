@@ -9,4 +9,5 @@ export interface PayerFamily extends BaseDocument {
   benefits: string[];
   plan_types: string[];
   regions: string[];
+  site_ids: string[];
 }
