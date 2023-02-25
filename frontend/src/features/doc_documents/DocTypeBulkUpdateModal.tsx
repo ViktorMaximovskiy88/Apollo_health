@@ -26,7 +26,7 @@ export function DocTypeUpdateModal({
   scrapeTaskId,
 }: DocTypeBulkUpdateModalPropTypes) {
   const [form] = Form.useForm();
-  const [getAllDocIds, { isFetching }] = useLazyGetAllDocIdsQuery();
+  const [getAllDocIds] = useLazyGetAllDocIdsQuery();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const [canOpen, setCanOpen] = useState(false);
