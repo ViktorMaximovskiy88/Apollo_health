@@ -62,7 +62,7 @@ export function DocTypeUpdateModal({
       ids = ids.filter((id) => !unselected[id]);
     }
     setSelectedIds(ids);
-  }, [setOpen, selection, form, getAllDocIds, setSelectedIds]);
+  }, [setOpen, selection, form, getAllDocIds, setSelectedIds, filterValue]);
 
   const [bulkUpdate, { isLoading }] = useUpdateMultipleDocsMutation();
   const dispatch = useAppDispatch();
