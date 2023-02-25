@@ -93,7 +93,6 @@ async def classification_queues():
         update_model_name="UpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
         document_query={
-            "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "classification_status": "QUEUED",
             "priority": {"$gte": 3},
         },
@@ -133,7 +132,6 @@ async def classification_queues():
         update_model_name="UpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
         document_query={
-            "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "classification_status": "HOLD",
             "priority": {"$lt": 3},
         },
@@ -167,7 +165,6 @@ async def classification_queues():
         update_model_name="UpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
         document_query={
-            "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "classification_status": "HOLD",
             "priority": {"$gte": 3},
         },
@@ -249,7 +246,6 @@ async def family_queues():
         update_model_name="UpdateDocDocument",
         frontend_component="DocDocumentClassificationPage",
         document_query={
-            "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "classification_status": "APPROVED",
             "family_status": "QUEUED",
             "priority": {"$gte": 3},
@@ -342,7 +338,6 @@ async def family_queues():
             "Question",
         ],
         document_query={
-            "first_collected_date": {"$gte": datetime(2022, 12, 28, tzinfo=timezone.utc)},
             "classification_status": "APPROVED",
             "family_status": "HOLD",
             "priority": {"$gte": 3},
