@@ -68,7 +68,7 @@ class BaseDocDocument(BaseModel):
     last_collected_date: Indexed(datetime, pymongo.DESCENDING) | None = None  # type: ignore
 
     # Manual/Calculated Dates
-    final_effective_date: Indexed(datetime, pymongo.ASCENDING) | None = None
+    final_effective_date: datetime | None = None
     end_date: datetime | None = None
 
     # Lineage
