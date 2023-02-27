@@ -37,7 +37,7 @@ class BaseDocDocument(BaseModel):
 
     classification_lock: TaskLock | None = None
 
-    name: str  # type: ignore
+    name: Indexed(str)  # type: ignore # Used when sorting asc or desc
     checksum: Indexed(str)  # type: ignore
     file_extension: str | None = None
     text_checksum: Indexed(str) | None = None  # type: ignore
@@ -68,7 +68,7 @@ class BaseDocDocument(BaseModel):
     last_collected_date: Indexed(datetime, pymongo.DESCENDING) | None = None  # type: ignore
 
     # Manual/Calculated Dates
-    final_effective_date: datetime | None = None
+    final_effective_date: Indexed(datetime, pymongo.ASCENDING) | None = None
     end_date: datetime | None = None
 
     # Lineage
