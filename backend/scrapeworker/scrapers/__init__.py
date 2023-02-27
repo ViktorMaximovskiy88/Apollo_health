@@ -11,6 +11,7 @@ from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.playbook import PlaybookContext
 from backend.scrapeworker.scrapers.aspnet_webform import AspNetWebFormScraper
 from backend.scrapeworker.scrapers.by_domain.bcbsfl import BcbsflScraper
+from backend.scrapeworker.scrapers.by_domain.bcbsnj import BcbsnjScraper
 from backend.scrapeworker.scrapers.by_domain.formulary_navigator import FormularyNavigatorScraper
 from backend.scrapeworker.scrapers.by_domain.humana import HumanaScraper
 from backend.scrapeworker.scrapers.by_domain.par_formulary_navigator import (
@@ -31,6 +32,7 @@ scrapers: list[Type[PlaywrightBaseScraper]] = [
     TargetedHtmlScraper,
     HumanaScraper,
     BcbsflScraper,
+    BcbsnjScraper,
     FormularyNavigatorScraper,
     ParFormularyNavigatorScraper,
 ]
