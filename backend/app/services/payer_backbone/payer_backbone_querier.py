@@ -151,7 +151,9 @@ class PayerBackboneQuerier:
             ccbl[plan.l_controller_id][plan.channel][plan.benefit] += plan.lives
 
         controller_ids = ccbl.keys()
-        controllers = await asyncio.gather(*[self.lookup_controller(id) for id in controller_ids])
+        controllers = await asyncio.gather(
+            *[self.lookup_controller(id) for id in controller_ids if id != -1]
+        )
 
         controller_lives = []
         for controller in controllers:
