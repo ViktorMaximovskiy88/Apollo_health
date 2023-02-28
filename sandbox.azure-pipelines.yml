@@ -37,15 +37,15 @@ stages:
               awsCredentials: "Apollo-AWS-Dev-Apollo"
               regionName: "us-east-1"
               imageSource: "imagename"
-              sourceImageName: "sourcehub-base-dev" # Source Image Name is sourcehub-base-dev, will push to sourcehub-base-sbx
+              sourceImageName: "sourcehub-base" # Source Image Name is sourcehub-base, will push to sourcehub-base-sbx
               sourceImageTag: "latest"
-              repositoryName: "sourcehub-base-sbx"
+              repositoryName: "sourcehub-base-dev"
               pushTag: "latest"
 
           - template: .azure-pipelines/sourcehub-app.build.yml
 
           - script: |
-              docker run -id --name test sourcehub-app-dev:$(Build.BuildNumber)
+              docker run -id --name test sourcehub-app:$(Build.BuildNumber)
               docker exec test bash -lc ". ./venv/bin/activate && pytest --junitxml='RESULTS.xml'"
               TEST_EXIT_CODE=$?
               docker cp test:/home/user/backend/RESULTS.xml RESULTS.xml
@@ -67,7 +67,7 @@ stages:
               awsCredentials: "Apollo-AWS-Dev-Apollo"
               regionName: "us-east-1"
               imageSource: "imagename"
-              sourceImageName: "sourcehub-app-dev" # Source Image Name is sourcehub-app-dev, will push to sourcehub-app-sbx
+              sourceImageName: "sourcehub-app" # Source Image Name is sourcehub-app, will push to sourcehub-app-sbx
               sourceImageTag: "$(Build.SourceVersion)"
               repositoryName: "sourcehub-app-sbx"
               pushTag: "$(Build.SourceVersion)"
@@ -78,10 +78,37 @@ stages:
               awsCredentials: "Apollo-AWS-Dev-Apollo"
               regionName: "us-east-1"
               imageSource: "imagename"
-              sourceImageName: "sourcehub-app-dev" # Source Image Name is sourcehub-base-dev, will push to sourcehub-base-sbx
+              sourceImageName: "sourcehub-app" # Source Image Name is sourcehub-app, will push to sourcehub-app-sbx
               sourceImageTag: "$(Build.SourceVersion)"
               repositoryName: "sourcehub-app-sbx"
               pushTag: latest
+
+          ##############################################################################################
+          # SourceHub Taskworker Sync
+          - template: .azure-pipelines/sourcehub-taskworker-sync.build.yml
+
+          - task: ECRPushImage@1
+            displayName: Push SourceHub Taskworker Sync Image to ECR as SourceVersion
+            inputs:
+              awsCredentials: "Apollo-AWS-Dev-Apollo"
+              regionName: "us-east-1"
+              imageSource: "imagename"
+              sourceImageName: "sourcehub-taskworker-sync"
+              sourceImageTag: "$(Build.SourceVersion)"
+              repositoryName: "sourcehub-taskworker-sync-sbx"
+              pushTag: "$(Build.SourceVersion)"
+
+          - task: ECRPushImage@1
+            displayName: Push SourceHub Taskworker Sync Image to ECR
+            inputs:
+              awsCredentials: "Apollo-AWS-Dev-Apollo"
+              regionName: "us-east-1"
+              imageSource: "imagename"
+              sourceImageName: "sourcehub-taskworker-sync"
+              sourceImageTag: "latest"
+              repositoryName: "sourcehub-taskworker-sync-sbx"
+              pushTag: "latest"
+          ##############################################################################################
 
       - job: validateSbxDeploy
         displayName: Validate and Plan Sandbox Deployment
@@ -95,7 +122,7 @@ stages:
   # Stage: Deploy to the Sandbox Environment
   #
   # - It is assumed that the container images have been pushed to Dev ECR in the Build Stage
-  # - This stage will pull the container images from Dev ECR and then push to Test ECR
+  # - This stage will pull the container images from Dev ECR and then push to Sandbox ECR
   # - This stage will use a template for the deployment job
   ##############################################################################################
   - stage: sandbox
@@ -110,31 +137,7 @@ stages:
           runOnce:
             deploy:
               steps:
-                ##
-                # Pull SourceHub App Image from Sandbox ECR
-                ##
-                - task: ECRPullImage@1
-                  displayName: Pull SourceHub App Image
-                  inputs:
-                    awsCredentials: "Apollo-AWS-Dev-Apollo"
-                    regionName: "us-east-1"
-                    repository: "sourcehub-app-sbx"
-                    imageSource: "imagetag"
-                    imageTag: "$(Build.SourceVersion)"
-                    outputVariable: "SbxImageId"
-
-                ##
-                # Push SourceHub App Image to Sbx ECR
-                ##
-                - task: ECRPushImage@1
-                  displayName: Push SourceHub App Image to ECR as SourceVersion
-                  inputs:
-                    awsCredentials: "Apollo-AWS-Dev-Apollo"
-                    regionName: "us-east-1"
-                    imageSource: "imageid"
-                    sourceImageId: $(SbxImageId)
-                    repositoryName: "sourcehub-app-sbx"
-                    pushTag: "$(Build.SourceVersion)"
+                ##############################################################################################
                 ##
                 # Deploy SourceHub to Sbx environment
                 ##
