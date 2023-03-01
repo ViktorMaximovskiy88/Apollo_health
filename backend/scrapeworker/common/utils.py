@@ -65,6 +65,7 @@ def compile_label_rgx():
         r"\bcurrent": "last_updated_date",
         r"\bversion": "last_updated_date",
         r"\blast res\.": "last_updated_date",
+        r"\brevisado": "last_updated_date",
         r"\breviewed": "last_reviewed_date",  # this may need to be narrowed back to 'reviewed on', etc
         r"\blast review": "last_reviewed_date",
         r"\brecent review": "last_reviewed_date",
