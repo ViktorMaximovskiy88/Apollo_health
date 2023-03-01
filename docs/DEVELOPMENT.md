@@ -279,6 +279,16 @@ Access minio console:
 - Username: admin
 - Password: adminadmin
 
+### Using Sandbox Env
+
+To push your branch to the sandbox environment:
+
+- git push origin HEAD:sandbox
+
+Can be accessed at https://sourcehub-sbx.dev.mmitnetwork.com/
+
+Please coordinate with other developers to share use of this env
+
 ## Testing
 
 ### Frontend Tests

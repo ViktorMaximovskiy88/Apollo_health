@@ -145,12 +145,24 @@ class ScrapePlaybook:
         print("attempt", step)
         if step.choice == "SH_ALL":
             option_selector = f"{step.target} option"
-            for option_label in await page.locator(option_selector).all_text_contents():
-                if option_label.startswith("--") or option_label.lower() == "select":
+            option_locator = page.locator(option_selector)
+            select_locator = page.locator(step.target)
+            for i in range(0, await page.locator(option_selector).count()):
+                option = option_locator.nth(i)
+                option_label = await option.text_content()
+                option_value = await option.get_attribute("value")
+                if (
+                    option_label is None
+                    or option_label.startswith("--")
+                    or option_label.lower() == "select"
+                ):
                     continue
 
                 print("soption", option_label)
-                await page.select_option(step.target, label=option_label)
+                if option_value:
+                    await select_locator.select_option(value=option_value)
+                else:
+                    await select_locator.select_option(label=option_label)
                 new_context = context + [step]
                 async for page, context in self.next_step(page, step, remaining_steps, new_context):
                     yield page, context
@@ -194,10 +206,14 @@ class ScrapePlaybook:
         count = 0
         while await target.count() > 0 and count < max_iter:
             count += 1
-            await target.first.click()
+            try:
+                await target.first.click()
+            except TimeoutError:
+                break
             new_context = context + [step]
             async for page, context in self.next_step(page, step, remaining_steps, new_context):
                 yield page, context
+            target = page.locator(step.target)
 
     async def handle_wait_for_nav(
         self,

@@ -723,17 +723,23 @@ class ScrapeWorker:
                 )
                 all_downloads.append(download)
                 continue
+
+            retrieved_downloads = []
             try:
                 batch_size = 20
-                download_queue = []
                 async for downloads in self.retrieve_downloads(url, url):
-                    download_queue += [
-                        download for download in downloads if self.should_process_download(download)
-                    ]
-                    if len(download_queue) >= batch_size:
+                    retrieved_downloads += downloads
+                    if len(retrieved_downloads) >= batch_size:
+                        download_queue = [
+                            download
+                            for download in retrieved_downloads
+                            if self.should_process_download(download)
+                        ]
                         await self.batch_downloads(download_queue, batch_size)
-                        download_queue = []
+                        retrieved_downloads = []
+                all_downloads += retrieved_downloads
             except Exception:
+                all_downloads += retrieved_downloads
                 self.log.error(f"Error queueing downloads for url {url}:", exc_info=True)
 
         download_queue = [
