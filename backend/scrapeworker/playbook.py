@@ -146,7 +146,7 @@ class ScrapePlaybook:
         if step.choice == "SH_ALL":
             option_selector = f"{step.target} option"
             for option_label in await page.locator(option_selector).all_text_contents():
-                if option_label.startswith("--"):
+                if option_label.startswith("--") or option_label.lower() == "select":
                     continue
 
                 print("soption", option_label)
