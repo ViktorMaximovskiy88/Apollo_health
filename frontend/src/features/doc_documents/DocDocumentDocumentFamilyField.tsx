@@ -104,7 +104,7 @@ export const DocDocumentDocumentFamilyField = ({
             initialOptions={currentOption ? [currentOption] : []}
             fetchOptions={fetchDocFamilyOptions}
             value={currentOption}
-            onClear={() => {
+            onDeselect={() => {
               form.setFieldsValue({ document_family_id: null });
               setCurrentOption(undefined);
             }}
