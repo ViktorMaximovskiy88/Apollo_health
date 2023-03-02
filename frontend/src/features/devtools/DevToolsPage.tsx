@@ -31,7 +31,7 @@ function DocActionMenu({ doc }: { doc: DevToolsDoc }) {
   return (
     <Menu
       onClick={(e: any) => {
-        enqueueTask(e.key, { doc_doc_id: doc._id });
+        enqueueTask(e.key, { doc_doc_id: doc._id, reprocess: true });
       }}
     >
       <Menu.Item key="ContentTask">Content Extraction</Menu.Item>
