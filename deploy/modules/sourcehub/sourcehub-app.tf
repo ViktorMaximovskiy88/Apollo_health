@@ -338,10 +338,14 @@ resource "aws_alb_listener_rule" "app-https" {
     type             = "forward"
   }
   condition {
-    path_pattern {
-      values = ["/*"]
+    host_header {
+      values = [
+        local.dns_host
+      ]
     }
   }
+  priority = 10
+  
   listener_arn = data.aws_lb_listener.https.arn
 
   tags = merge(local.effective_tags, {

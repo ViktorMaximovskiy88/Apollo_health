@@ -67,4 +67,16 @@ locals {
       valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/apollo/${var.environment}/new_relic_api_key"
     }
   ]
+
+  ##
+  # DNS Domains are scoped to the AWS Account, NOT the Apollo environment
+  # This mapping will map the Apollo Enviroment to the DNS Host
+  ##
+  dns_host_env_mapping = {
+    "sbx": "sourcehub-sbx.dev.mmitnetwork.com"
+    "dev": "sourcehub.dev.mmitnetwork.com"
+    "tst": "sourcehub.test.mmitnetwork.com"
+    "prd": "sourcehub.mmitnetwork.com"
+  }
+  dns_host = local.dns_host_env_mapping[var.environment]
 }
