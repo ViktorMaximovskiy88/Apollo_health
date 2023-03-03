@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Form, FormInstance } from 'antd';
 
-import { DocDocument } from './types';
+import { DocDocument, DocumentTag } from './types';
 import { DocDocumentTagForm } from './DocDocumentTagForm';
 import { dateToMoment } from '../../common';
 import { useCallback, useEffect } from 'react';
@@ -16,6 +16,7 @@ import { CommentWall } from '../comments/CommentWall';
 import { ChangeLogModal } from '../change-log/ChangeLogModal';
 import { useTagsState } from './useTagsState';
 import { useOnFinish } from './useOnFinish';
+import { focusDocumentTypes } from './useOnFinish';
 
 const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   const calculateFinalEffectiveDate = useCallback(() => {
@@ -27,6 +28,19 @@ const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
   }, [form]);
 
   return calculateFinalEffectiveDate;
+};
+
+const useSetDocumentTypeFocusTags = (form: FormInstance, tags: DocumentTag[]): (() => void) => {
+  const setDocumentTypeFocusTags = useCallback(() => {
+    const documentType = form.getFieldValue('document_type');
+    if (focusDocumentTypes.includes(documentType)) {
+      tags.forEach((tag) => {
+        tag.focus = true;
+      });
+    }
+  }, [form, tags]);
+
+  return setDocumentTypeFocusTags;
 };
 
 const buildInitialValues = (doc: DocDocument) => ({
@@ -72,7 +86,7 @@ export function DocDocumentEditForm({
   }, [doc, calculateFinalEffectiveDate]);
 
   const { tags, setTags, handleTagEdit } = useTagsState({ docId, setHasChanges });
-
+  const setDocumentTypeFocusTags = useSetDocumentTypeFocusTags(form, tags);
   const onFinish = useOnFinish({ onSubmit, tags, setIsSaving, docId });
 
   const initialValues = useMemo(() => (doc ? buildInitialValues(doc) : {}), [doc]);
@@ -83,6 +97,7 @@ export function DocDocumentEditForm({
   }, [initialValues, setHasChanges, form]);
 
   if (!doc) return null;
+
   const tabs = [
     {
       label: 'Info',
@@ -92,6 +107,7 @@ export function DocDocumentEditForm({
           onFieldChange={() => {
             setHasChanges(true);
             calculateFinalEffectiveDate();
+            setDocumentTypeFocusTags();
           }}
         />
       ),
@@ -139,6 +155,7 @@ export function DocDocumentEditForm({
         onFieldsChange={() => {
           setHasChanges(true);
           calculateFinalEffectiveDate();
+          setDocumentTypeFocusTags();
         }}
         className="h-full"
         layout="vertical"

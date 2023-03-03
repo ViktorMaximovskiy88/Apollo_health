@@ -35,9 +35,6 @@ export const useOnFinish = ({
       const indication_tags: IndicationTag[] = [];
       const therapy_tags: TherapyTag[] = [];
       for (const uiTag of tags) {
-        if (focusDocumentTypes.includes(submittedDoc.document_type ?? '')) {
-          uiTag.focus = true;
-        }
         const { id, _type, _normalized, ...tag } = uiTag;
         if (_type === 'indication') {
           indication_tags.push(tag as IndicationTag);
