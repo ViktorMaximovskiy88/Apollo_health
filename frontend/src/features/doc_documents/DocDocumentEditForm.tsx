@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Form, FormInstance } from 'antd';
 
 import { DocDocument, DocumentTag } from './types';
@@ -31,12 +31,18 @@ const useCalculateFinalEffectiveDate = (form: FormInstance): (() => void) => {
 };
 
 const useSetDocumentTypeFocusTags = (form: FormInstance, tags: DocumentTag[]): (() => void) => {
+  const [hasSetInitialTagsToFocus, setHasSetInitialTagsToFocus] = useState(false);
+
   const setDocumentTypeFocusTags = useCallback(() => {
-    const documentType = form.getFieldValue('document_type');
-    if (focusDocumentTypes.includes(documentType)) {
+    if (
+      !hasSetInitialTagsToFocus &&
+      form.isFieldTouched('document_type') &&
+      focusDocumentTypes.includes(form.getFieldValue('document_type'))
+    ) {
       tags.forEach((tag) => {
         tag.focus = true;
       });
+      setHasSetInitialTagsToFocus(true);
     }
   }, [form, tags]);
 
