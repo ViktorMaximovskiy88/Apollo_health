@@ -39,7 +39,7 @@ export function DocDocumentTagForm(props: {
   ]);
   const [priorityFilter, setPriorityFilter] = useState<
     ('Critical' | 'High' | 'Low' | 'No Priority')[]
-  >(['Critical', 'High', 'Low']);
+  >(['Critical', 'High', 'Low', 'No Priority']);
   const [editTags, setEditTags] = useState<{ [index: string]: DocumentTag }>({});
   const [pageFilter, setPageFilter] = useState('page');
   const [priorityDropdownOpen, setPriorityDropdownOpen] = useState(false);
