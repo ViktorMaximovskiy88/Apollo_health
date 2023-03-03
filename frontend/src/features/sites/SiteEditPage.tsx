@@ -13,6 +13,7 @@ import { useForm } from 'antd/lib/form/Form';
 import { SiteSubmitButton } from './form/SiteSubmitButton';
 import { Link } from 'react-router-dom';
 import { useNotifyMutation } from '../../common/hooks/use-notify-mutation';
+import { SiteTransfer } from './SiteTransfer';
 
 const { confirm } = Modal;
 
@@ -111,6 +112,13 @@ export function SiteEditPage() {
       sectionToolbar={
         <Form.Item className="m-1">
           <Space>
+            <SiteTransfer
+              site={site}
+              onPaste={(data: Partial<Site>) => {
+                form.setFieldsValue(data);
+              }}
+            />
+
             <SiteSubmitButton form={form} />
             <Link to="/sites">
               <Button htmlType="submit">Cancel</Button>

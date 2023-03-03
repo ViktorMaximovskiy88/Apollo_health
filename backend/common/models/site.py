@@ -51,6 +51,7 @@ class ScrapeMethodConfiguration(BaseModel):
     focus_section_configs: list[FocusSectionConfig] = []
     allow_docdoc_updates: bool = False
     cms_doc_types: list[CmsDocType] = []
+    prompt_button_selector: str | None = None
     debug: bool = False
 
     # Follow Links

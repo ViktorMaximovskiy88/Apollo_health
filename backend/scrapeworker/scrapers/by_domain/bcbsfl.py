@@ -1,3 +1,5 @@
+from urllib.parse import ParseResult, urlparse
+
 from aiofiles import tempfile
 from playwright.async_api import Error
 from playwright.async_api import Request as RouteRequest
@@ -19,10 +21,10 @@ class BcbsflScraper(PlaywrightBaseScraper):
         ".rpRootGroup .rpGroup.rpLevel1 > .rpItem.rpLast .rpGroup.rpLevel2 > .rpItem span.rpText"
     )
 
-    async def is_applicable(self) -> bool:
-        self.log.debug(f"self.parsed_url.netloc={self.parsed_url.netloc}")
-        result = self.parsed_url.netloc in ["mcgs.bcbsfl.com"]
-        self.log.info(f"{self.__class__.__name__} is_applicable -> {result}")
+    @staticmethod
+    def scrape_select(url, config: None = None) -> bool:
+        parsed_url: ParseResult = urlparse(url)
+        result = parsed_url.netloc == "mcgs.bcbsfl.com"
         return result
 
     async def click_welcome_menu_elements(self):

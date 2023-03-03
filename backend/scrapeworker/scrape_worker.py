@@ -53,10 +53,11 @@ from backend.scrapeworker.crawlers.search_crawler import SearchableCrawler
 from backend.scrapeworker.file_parsers import get_tags, parse_by_type, pdf
 from backend.scrapeworker.playbook import PlaybookException, ScrapePlaybook
 from backend.scrapeworker.scrapers import ScrapeHandler
-from backend.scrapeworker.scrapers.by_domain.aetna import AetnaScraper
+from backend.scrapeworker.scrapers.by_domain import select_domain_scraper
 from backend.scrapeworker.scrapers.by_domain.tricare import TricareScraper
 from backend.scrapeworker.scrapers.cms.cms_scraper import CMSScrapeController
 from backend.scrapeworker.scrapers.follow_link import FollowLinkScraper
+from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -442,6 +443,7 @@ class ScrapeWorker:
 
                 page = await context.new_page()
                 await stealth_async(page)
+
                 page.on("dialog", handle_dialog)
                 if "page_route" in kwargs:
                     await page.route("**/*", kwargs["page_route"])
@@ -488,6 +490,14 @@ class ScrapeWorker:
 
         # TODO wait_for_desired_content is for text; lets do custom selectors
         await self.wait_for_desired_content(page)
+
+        if self.site.scrape_method_configuration.prompt_button_selector:
+            button = await page.query_selector(
+                self.site.scrape_method_configuration.prompt_button_selector
+            )
+            if button:
+                async with page.expect_navigation():
+                    await button.click()
 
         try:
             yield page, context
@@ -602,28 +612,26 @@ class ScrapeWorker:
         extension = get_extension_from_path_like(url)
         return extension in ["docx", "pdf", "xlsx"]
 
-    def is_aetna_scrape(self, url: str) -> bool:
-        parsed_url = urlparse(url)
-        return (
-            parsed_url.netloc == "www.aetna.com"
-            and parsed_url.path
-            == "/health-care-professionals/clinical-policy-bulletins/pharmacy-clinical-policy-bulletins/pharmacy-clinical-policy-bulletins-search-results.html"  # noqa
-        )
-
-    async def aetna_scrape(self) -> list[DownloadContext]:
+    async def by_domain_scrape(
+        self,
+        DomainScraper: type[PlaywrightBaseScraper],
+        url: str,
+    ):
         downloads: list[DownloadContext] = []
-        async with self.playwright_context(
-            AetnaScraper.base_url, page_route=AetnaScraper.page_route
-        ) as (page, context):
-            scraper = AetnaScraper(
+        base_url = DomainScraper.base_url if DomainScraper.base_url else url
+        async with self.playwright_context(base_url, page_route=DomainScraper.page_route) as (
+            page,
+            context,
+        ):
+            scraper = DomainScraper(
                 page=page,
                 context=context,
                 config=self.site.scrape_method_configuration,
-                url=AetnaScraper.base_url,
+                url=base_url,
                 scrape_method=self.site.scrape_method,
                 log=self.log,
             )
-            await scraper.execute(downloads)
+            downloads += await scraper.execute()
         return downloads
 
     async def tricare_scrape(self):
@@ -709,9 +717,10 @@ class ScrapeWorker:
                     self.log.debug(f"Queueing {len(downloads)} CMS downloads")
                     all_downloads += downloads
                 continue
-            if self.is_aetna_scrape(url):
-                self.log.info(f"Running Aetna Scraper for {url}")
-                all_downloads += await self.aetna_scrape()
+
+            if DomainScraper := select_domain_scraper(url, self.site):
+                self.log.info(f"Running {DomainScraper.__class__.__name__} for {url}")
+                all_downloads += await self.by_domain_scrape(DomainScraper, url)
                 continue
 
             # NOTE if the base url ends in a handled file extension,

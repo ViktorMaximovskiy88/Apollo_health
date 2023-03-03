@@ -1,5 +1,5 @@
 import re
-from urllib.parse import parse_qsl
+from urllib.parse import ParseResult, parse_qsl, urlparse
 
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
@@ -33,10 +33,10 @@ class FormularyNavigatorScraper(PlaywrightBaseScraper):
             "content-type": "application/json",
         }
 
-    async def is_applicable(self) -> bool:
-        self.log.debug(f"self.parsed_url.netloc={self.parsed_url.netloc}")
-        result = self.parsed_url.netloc in ["client.formularynavigator.com"]
-        self.log.info(f"{self.__class__.__name__} is_applicable -> {result}")
+    @staticmethod
+    def scrape_select(url, config: None = None) -> bool:
+        parsed_url: ParseResult = urlparse(url)
+        result = parsed_url.netloc == "client.formularynavigator.com"
         return result
 
     async def execute(self) -> list[DownloadContext]:

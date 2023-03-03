@@ -64,6 +64,7 @@ const buildInitialValues = () => ({
     html_exclusion_selectors: [],
     focus_section_configs: [],
     cms_doc_types: [],
+    prompt_button_selector: null,
     debug: false,
   },
   doc_type_threshold_override: false,

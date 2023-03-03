@@ -1,4 +1,5 @@
 from functools import cached_property
+from urllib.parse import ParseResult, urlparse
 
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.selectors import filter_by_href
@@ -9,6 +10,12 @@ class HumanaScraper(PlaywrightBaseScraper):
 
     type: str = "Humana"
     downloads: list[DownloadContext] = []
+
+    @staticmethod
+    def scrape_select(url, config: None = None) -> bool:
+        parsed_url: ParseResult = urlparse(url)
+        result = parsed_url.netloc == "apps.humana.com"
+        return result
 
     @cached_property
     def css_selector(self) -> str:

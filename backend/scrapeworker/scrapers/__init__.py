@@ -9,14 +9,6 @@ from backend.common.core.enums import ScrapeMethod
 from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.models import DownloadContext
 from backend.scrapeworker.playbook import PlaybookContext
-from backend.scrapeworker.scrapers.aspnet_webform import AspNetWebFormScraper
-from backend.scrapeworker.scrapers.by_domain.bcbsfl import BcbsflScraper
-from backend.scrapeworker.scrapers.by_domain.bcbsnj import BcbsnjScraper
-from backend.scrapeworker.scrapers.by_domain.formulary_navigator import FormularyNavigatorScraper
-from backend.scrapeworker.scrapers.by_domain.humana import HumanaScraper
-from backend.scrapeworker.scrapers.by_domain.par_formulary_navigator import (
-    ParFormularyNavigatorScraper,
-)
 from backend.scrapeworker.scrapers.direct_download import (
     DirectDownloadScraper,
     PlaywrightBaseScraper,
@@ -26,15 +18,9 @@ from backend.scrapeworker.scrapers.javascript_click import JavascriptClick
 from backend.scrapeworker.scrapers.targeted_html import TargetedHtmlScraper
 
 scrapers: list[Type[PlaywrightBaseScraper]] = [
-    AspNetWebFormScraper,
     DirectDownloadScraper,
     JavascriptClick,
     TargetedHtmlScraper,
-    HumanaScraper,
-    BcbsflScraper,
-    BcbsnjScraper,
-    FormularyNavigatorScraper,
-    ParFormularyNavigatorScraper,
 ]
 
 

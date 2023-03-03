@@ -3,6 +3,7 @@ import logging
 import os
 import re
 from functools import cached_property
+from urllib.parse import ParseResult, urlparse
 
 from playwright._impl._api_structures import SetCookieParam
 from playwright.async_api import Download, ElementHandle, Locator
@@ -15,20 +16,19 @@ from backend.scrapeworker.common.selectors import filter_by_href, to_xpath
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 
 
-class AspNetWebFormScraper(PlaywrightBaseScraper):
+class AultcasScraper(PlaywrightBaseScraper):
 
-    type: str = "AspNetWebForm"
+    type: str = "Aultcas"
     requests: list[Request | None] = []
     metadatas: list[Metadata] = []
     downloads: list[DownloadContext] = []
     links_found: int = 0
     last_metadata_index: int = 0
 
-    # OPT IN
-    async def is_applicable(self) -> bool:
-        self.log.debug(f"self.parsed_url.netloc={self.parsed_url.netloc}")
-        result = self.parsed_url.netloc in ["www.aultcas.com"]
-        self.log.info(f"{self.__class__.__name__} is_applicable -> {result}")
+    @staticmethod
+    def scrape_select(url, config: None = None) -> bool:
+        parsed_url: ParseResult = urlparse(url)
+        result = parsed_url.netloc == "www.aultcas.com"
         return result
 
     @cached_property

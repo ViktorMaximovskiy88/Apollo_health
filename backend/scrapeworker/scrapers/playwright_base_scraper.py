@@ -48,6 +48,8 @@ sibling_text_expression: str = """
 
 
 class PlaywrightBaseScraper(ABC):
+    base_url: str = None
+
     def __init__(
         self,
         context: BrowserContext,
@@ -91,16 +93,22 @@ class PlaywrightBaseScraper(ABC):
         return css_handle is not None or xpath_locator_count > 0
 
     async def dismiss_modals(self):
-        modal_handles = await self.page.query_selector_all("div:visible")
 
-        for modal_handle in modal_handles:
-            maybe_modal = await modal_handle.evaluate(is_maybe_modal)
-            if maybe_modal:
-                button = await modal_handle.query_selector(
-                    'button:text-matches("(yes|agree|continue|accept|ok)", "i")'
-                )
-                if button:
-                    await button.click()
+        if self.config.prompt_button_selector:
+            button = await self.page.query_selector(self.config.prompt_button_selector)
+            if button:
+                await button.click()
+        else:
+            modal_handles = await self.page.query_selector_all("div:visible")
+
+            for modal_handle in modal_handles:
+                maybe_modal = await modal_handle.evaluate(is_maybe_modal)
+                if maybe_modal:
+                    button = await modal_handle.query_selector(
+                        'button:text-matches("(yes|agree|continue|accept|ok)", "i")'
+                    )
+                    if button:
+                        await button.click()
 
     async def is_applicable(self) -> bool:
 

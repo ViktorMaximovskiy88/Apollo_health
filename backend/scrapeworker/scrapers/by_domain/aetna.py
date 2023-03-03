@@ -1,3 +1,5 @@
+from urllib.parse import ParseResult, urlparse
+
 from aiofiles import tempfile
 from playwright.async_api import Request as PlaywrightRequest
 from playwright.async_api import Route, TimeoutError
@@ -10,6 +12,13 @@ from backend.scrapeworker.scrapers.direct_download import DirectDownloadScraper
 class AetnaScraper(DirectDownloadScraper):
     type: str = "Aetna"
     base_url = "https://www.aetna.com/search/results.aspx?cfg=wwwcpcpbext&query=policy&offset=0&YearSelect=2023&years=2022-2023"  # noqa
+
+    @staticmethod
+    def scrape_select(url, config: None = None) -> bool:
+        parsed_url: ParseResult = urlparse(url)
+        path_match = "/health-care-professionals/clinical-policy-bulletins/pharmacy-clinical-policy-bulletins/pharmacy-clinical-policy-bulletins-search-results.html"  # noqa
+        result = parsed_url.netloc == "www.aetna.com" and parsed_url.path == path_match
+        return result
 
     @staticmethod
     def page_route(route: Route, request: PlaywrightRequest):
@@ -60,7 +69,8 @@ class AetnaScraper(DirectDownloadScraper):
             )
         return downloads
 
-    async def execute(self, downloads: list[DownloadContext]) -> list[DownloadContext]:
+    async def execute(self) -> list[DownloadContext]:
+        downloads: list[DownloadContext] = []
         await self.page.route("**/*", self.page_route)
         offset = 0
         while True:

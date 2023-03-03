@@ -10,6 +10,7 @@ import {
   WaitForSelector,
   WaitForTimeout,
   SearchInFrames,
+  PromptButtonSelector,
 } from './ScrapeConfigFields';
 
 import { AttrSelectors } from './AttrSelectorField';
@@ -135,6 +136,7 @@ export function CollectionSettings({ initialValues }: CollectionSettingsPropType
               <SearchTokens />
               <Playbook />
               <SearchInFrames />
+              <PromptButtonSelector />
               <ProxyExclusions />
               <FocusTagConfig initialValues={initialValues} />
               <Form.Item

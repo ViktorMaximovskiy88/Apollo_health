@@ -161,3 +161,24 @@ export function SearchInFrames() {
     </Form.Item>
   );
 }
+
+export function PromptButtonSelector() {
+  return (
+    <Form.Item
+      name={['scrape_method_configuration', 'prompt_button_selector']}
+      label={
+        <>
+          <span style={{ marginRight: '5px' }}>Prompt Button Selector</span>
+          <Tooltip
+            placement="right"
+            title="The result of this selector is clicked. It is used to continue during after a site prompt."
+          >
+            <QuestionCircleOutlined />
+          </Tooltip>
+        </>
+      }
+    >
+      <Input />
+    </Form.Item>
+  );
+}

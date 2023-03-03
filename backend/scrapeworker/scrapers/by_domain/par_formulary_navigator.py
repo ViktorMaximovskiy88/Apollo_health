@@ -1,3 +1,5 @@
+from urllib.parse import ParseResult, urlparse
+
 from aiohttp import ClientSession
 
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
@@ -8,6 +10,12 @@ class ParFormularyNavigatorScraper(PlaywrightBaseScraper):
 
     type: str = "ParFormularyNavigatorScraper"
     downloads: list[DownloadContext] = []
+
+    @staticmethod
+    def scrape_select(url, config: None = None) -> bool:
+        parsed_url: ParseResult = urlparse(url)
+        result = parsed_url.netloc == "fn-doc-api.mmitnetwork.com"
+        return result
 
     async def is_applicable(self) -> bool:
         self.log.debug(f"self.parsed_url.netloc={self.parsed_url.netloc}")
