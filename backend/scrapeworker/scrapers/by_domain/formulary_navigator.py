@@ -4,6 +4,7 @@ from urllib.parse import ParseResult, parse_qsl, urlparse
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 
+from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 
@@ -34,7 +35,7 @@ class FormularyNavigatorScraper(PlaywrightBaseScraper):
         }
 
     @staticmethod
-    def scrape_select(url, config: None = None) -> bool:
+    def scrape_select(url, config: ScrapeMethodConfiguration | None = None) -> bool:
         parsed_url: ParseResult = urlparse(url)
         result = parsed_url.netloc == "client.formularynavigator.com"
         return result

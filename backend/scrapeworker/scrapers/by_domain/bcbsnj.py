@@ -1,5 +1,6 @@
 from urllib.parse import ParseResult, urlparse
 
+from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
 
@@ -12,7 +13,7 @@ class BcbsnjScraper(PlaywrightBaseScraper):
     alphabetical_menu_selector = "area#HotspotRectangle54_1"
 
     @staticmethod
-    def scrape_select(url, config: None = None) -> bool:
+    def scrape_select(url, config: ScrapeMethodConfiguration | None = None) -> bool:
         parsed_url: ParseResult = urlparse(url)
         result = parsed_url.netloc == "services3.horizon-bcbsnj.com"
         return result

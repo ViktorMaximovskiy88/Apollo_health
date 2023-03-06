@@ -85,6 +85,13 @@ class ScrapePlaybook:
                     steps.append(step)
                     continue
             elif len(lines) == 4:
+                """
+                Some pseudo-code. Formatted like:
+                while (selector) {
+                await page.waitForSelector('')
+                await page.click('')
+                }
+                """
                 is_loop = lines[0].startswith("while (")
                 is_wait_for = lines[1].startswith("await page.waitFor")
                 is_click = lines[2].startswith("await page.click")
@@ -207,7 +214,7 @@ class ScrapePlaybook:
         while await target.count() > 0 and count < max_iter:
             count += 1
             try:
-                await target.first.click()
+                await target.first.click(timeout=5000)
             except TimeoutError:
                 break
             new_context = context + [step]

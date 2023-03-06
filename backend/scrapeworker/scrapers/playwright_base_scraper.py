@@ -2,9 +2,17 @@ import asyncio
 import logging
 from abc import ABC, abstractmethod
 from functools import cached_property
+from typing import AsyncGenerator, Callable
 from urllib.parse import urlparse, urlsplit
 
-from playwright.async_api import BrowserContext, ElementHandle, Page, ProxySettings
+from playwright.async_api import (
+    BrowserContext,
+    ElementHandle,
+    Error,
+    Page,
+    ProxySettings,
+    TimeoutError,
+)
 
 from backend.common.core.config import config
 from backend.common.core.enums import ScrapeMethod
@@ -49,6 +57,9 @@ sibling_text_expression: str = """
 
 class PlaywrightBaseScraper(ABC):
     base_url: str = None
+    is_batchable = False
+    batch_size = 20
+    page_route: Callable | None = None
 
     def __init__(
         self,
@@ -79,6 +90,39 @@ class PlaywrightBaseScraper(ABC):
     @cached_property
     def xpath_selector(self) -> str | None:
         return None
+
+    @staticmethod
+    def scrape_select(url, config: ScrapeMethodConfiguration | None = None) -> bool:
+        raise NotImplementedError("scrape_select is not implemented on this scraper")
+
+    async def _fetch(
+        self,
+        url,
+        method: str = "GET",
+        headers: dict | None = None,
+        data: dict | None = None,
+        params: dict | None = None,
+    ):
+        try:
+            response = await self.page.request.fetch(
+                url,
+                method=method,
+                data=data,
+                params=params,
+                headers=headers,
+                fail_on_status_code=True,
+            )
+
+            result = await response.body()
+            await response.dispose()
+            return result
+
+        except TimeoutError as ex:
+            self.log.error(f"data={data}", exc_info=ex)
+        except Error as ex:
+            self.log.error(f"data={data}", exc_info=ex)
+        except Exception as ex:
+            self.log.error(f"data={data}", exc_info=ex)
 
     async def find_in_page(self, page: Page) -> bool:
         css_handle = None
@@ -218,6 +262,10 @@ class PlaywrightBaseScraper(ABC):
             await self.replay_playbook()
         except Exception as ex:
             self.log.error(ex, exc_info=True, stack_info=True)
+
+    async def execute_batches(self) -> AsyncGenerator[list[DownloadContext], None]:
+        downloads: list[DownloadContext] = []
+        yield downloads
 
     @abstractmethod
     async def execute(self) -> list[DownloadContext]:

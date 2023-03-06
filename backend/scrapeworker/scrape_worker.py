@@ -445,7 +445,7 @@ class ScrapeWorker:
                 await stealth_async(page)
 
                 page.on("dialog", handle_dialog)
-                if "page_route" in kwargs:
+                if "page_route" in kwargs and kwargs["page_route"] is not None:
                     await page.route("**/*", kwargs["page_route"])
 
                 self.log.info(f"Awaiting response for {url}")
@@ -631,7 +631,22 @@ class ScrapeWorker:
                 scrape_method=self.site.scrape_method,
                 log=self.log,
             )
-            downloads += await scraper.execute()
+            if not DomainScraper.is_batchable:
+                return await scraper.execute()
+
+            batch_size = DomainScraper.batch_size
+            retrieved_downloads: list[DownloadContext] = []
+            async for batch_downloads in scraper.execute_batches():
+                retrieved_downloads += batch_downloads
+                if len(retrieved_downloads) >= batch_size:
+                    download_queue = [
+                        download
+                        for download in retrieved_downloads
+                        if self.should_process_download(download)
+                    ]
+                    await self.batch_downloads(download_queue, batch_size)
+                    retrieved_downloads = []
+            downloads += retrieved_downloads
         return downloads
 
     async def tricare_scrape(self):
@@ -718,7 +733,7 @@ class ScrapeWorker:
                     all_downloads += downloads
                 continue
 
-            if DomainScraper := select_domain_scraper(url, self.site):
+            if DomainScraper := select_domain_scraper(url, self.site.scrape_method_configuration):
                 self.log.info(f"Running {DomainScraper.__class__.__name__} for {url}")
                 all_downloads += await self.by_domain_scrape(DomainScraper, url)
                 continue

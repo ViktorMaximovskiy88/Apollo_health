@@ -1,6 +1,7 @@
 from functools import cached_property
 from urllib.parse import ParseResult, urlparse
 
+from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.common.selectors import filter_by_href
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
@@ -12,7 +13,7 @@ class HumanaScraper(PlaywrightBaseScraper):
     downloads: list[DownloadContext] = []
 
     @staticmethod
-    def scrape_select(url, config: None = None) -> bool:
+    def scrape_select(url, config: ScrapeMethodConfiguration | None = None) -> bool:
         parsed_url: ParseResult = urlparse(url)
         result = parsed_url.netloc == "apps.humana.com"
         return result

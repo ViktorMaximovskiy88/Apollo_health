@@ -5,6 +5,7 @@ from playwright.async_api import Error
 from playwright.async_api import Request as RouteRequest
 from playwright.async_api import Route, TimeoutError
 
+from backend.common.models.site import ScrapeMethodConfiguration
 from backend.common.storage.hash import hash_bytes
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
@@ -22,7 +23,7 @@ class BcbsflScraper(PlaywrightBaseScraper):
     )
 
     @staticmethod
-    def scrape_select(url, config: None = None) -> bool:
+    def scrape_select(url, config: ScrapeMethodConfiguration | None = None) -> bool:
         parsed_url: ParseResult = urlparse(url)
         result = parsed_url.netloc == "mcgs.bcbsfl.com"
         return result
@@ -112,32 +113,3 @@ class BcbsflScraper(PlaywrightBaseScraper):
         await self.page.unroute("**/*", self.intercept)
 
         return downloads
-
-    async def _fetch(
-        self,
-        url,
-        method: str = "GET",
-        headers: dict | None = None,
-        data: dict | None = None,
-        params: dict | None = None,
-    ):
-        try:
-            response = await self.page.request.fetch(
-                url,
-                method=method,
-                data=data,
-                params=params,
-                headers=headers,
-                fail_on_status_code=True,
-            )
-
-            result = await response.body()
-            await response.dispose()
-            return result
-
-        except TimeoutError as ex:
-            self.log.error(f"data={data}", exc_info=ex)
-        except Error as ex:
-            self.log.error(f"data={data}", exc_info=ex)
-        except Exception as ex:
-            self.log.error(f"data={data}", exc_info=ex)

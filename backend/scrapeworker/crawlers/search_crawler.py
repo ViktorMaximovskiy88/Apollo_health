@@ -142,3 +142,4 @@ class SearchableCrawler:
             if nav_state.has_navigated or page.url != base_url:
                 await page.goto(base_url)
                 await self.replay_playbook(page, playbook_context)
+                await page.wait_for_timeout(self.config.wait_for_timeout_ms)

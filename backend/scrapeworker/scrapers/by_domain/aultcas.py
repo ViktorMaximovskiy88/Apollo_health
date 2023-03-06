@@ -11,6 +11,7 @@ from playwright.async_api import Request as RouteRequest
 from playwright.async_api import Route
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
+from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request, Response
 from backend.scrapeworker.common.selectors import filter_by_href, to_xpath
 from backend.scrapeworker.scrapers.playwright_base_scraper import PlaywrightBaseScraper
@@ -26,7 +27,7 @@ class AultcasScraper(PlaywrightBaseScraper):
     last_metadata_index: int = 0
 
     @staticmethod
-    def scrape_select(url, config: None = None) -> bool:
+    def scrape_select(url, config: ScrapeMethodConfiguration | None = None) -> bool:
         parsed_url: ParseResult = urlparse(url)
         result = parsed_url.netloc == "www.aultcas.com"
         return result

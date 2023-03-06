@@ -4,6 +4,7 @@ from aiofiles import tempfile
 from playwright.async_api import Request as PlaywrightRequest
 from playwright.async_api import Route, TimeoutError
 
+from backend.common.models.site import ScrapeMethodConfiguration
 from backend.common.storage.hash import hash_bytes
 from backend.scrapeworker.common.models import DownloadContext, Metadata, Request
 from backend.scrapeworker.scrapers.direct_download import DirectDownloadScraper
@@ -14,7 +15,7 @@ class AetnaScraper(DirectDownloadScraper):
     base_url = "https://www.aetna.com/search/results.aspx?cfg=wwwcpcpbext&query=policy&offset=0&YearSelect=2023&years=2022-2023"  # noqa
 
     @staticmethod
-    def scrape_select(url, config: None = None) -> bool:
+    def scrape_select(url, config: ScrapeMethodConfiguration | None = None) -> bool:
         parsed_url: ParseResult = urlparse(url)
         path_match = "/health-care-professionals/clinical-policy-bulletins/pharmacy-clinical-policy-bulletins/pharmacy-clinical-policy-bulletins-search-results.html"  # noqa
         result = parsed_url.netloc == "www.aetna.com" and parsed_url.path == path_match
