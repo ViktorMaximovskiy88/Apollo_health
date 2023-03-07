@@ -64,7 +64,7 @@ class BaseDocDocument(BaseModel):
     first_created_date: datetime | None = None
     published_date: datetime | None = None
     identified_dates: list[datetime] | None = None
-    first_collected_date: Indexed(datetime, pymongo.DESCENDING) | None = None  # type: ignore
+    first_collected_date: datetime | None = None  # type: ignore
     last_collected_date: Indexed(datetime, pymongo.DESCENDING) | None = None  # type: ignore
 
     # Manual/Calculated Dates
@@ -205,6 +205,7 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
             ],
             [
                 ("priority", pymongo.DESCENDING),
+                ("classification_status", pymongo.ASCENDING),
                 ("family_status", pymongo.ASCENDING),
                 ("final_effective_date", pymongo.ASCENDING),
                 ("first_collected_date", pymongo.ASCENDING),
@@ -212,6 +213,8 @@ class DocDocument(BaseDocument, BaseDocDocument, LockableDocument, DocumentMixin
             ],
             [
                 ("priority", pymongo.DESCENDING),
+                ("classification_status", pymongo.ASCENDING),
+                ("family_status", pymongo.ASCENDING),
                 ("content_extraction_status", pymongo.ASCENDING),
                 ("final_effective_date", pymongo.ASCENDING),
                 ("first_collected_date", pymongo.ASCENDING),
