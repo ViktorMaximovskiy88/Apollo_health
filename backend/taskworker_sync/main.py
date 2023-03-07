@@ -11,8 +11,8 @@ class Settings(BaseSettings):
 
     mongo_url: AnyUrl
     mongo_db: str
-    mongo_user: str
-    mongo_password: str
+    mongo_user: str | None = None
+    mongo_password: str | None = None
 
     task_worker_queue_url: str
 
@@ -22,7 +22,6 @@ class Test(BaseModel):
 
 
 settings = Settings()
-print(settings)
 
 
 @event_parser(model=Test, envelope=envelopes.SqsEnvelope)

@@ -1,5 +1,5 @@
 locals {
-  function_name = format("%s-%s-%s-%s-mmit-func-%02d", local.app_name, var.environment, local.service_name, local.short_region, var.revision)
+  function_name = format("%s-%s-%s-%s-%s-mmit-func-%02d", local.app_name, var.environment, local.service_name, local.short_region, "taskworker-sync", var.revision)
 }
 
 resource "aws_lambda_function" "sourcehub-taskworker-sync" {
