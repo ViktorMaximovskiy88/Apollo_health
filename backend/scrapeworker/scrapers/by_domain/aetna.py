@@ -11,7 +11,7 @@ from backend.scrapeworker.scrapers.direct_download import DirectDownloadScraper
 
 
 class AetnaScraper(DirectDownloadScraper):
-    type: str = "Aetna"
+    type: str = "AetnaScraper"
     base_url = "https://www.aetna.com/search/results.aspx?cfg=wwwcpcpbext&query=policy&offset=0&YearSelect=2023&years=2022-2023"  # noqa
 
     @staticmethod
@@ -31,7 +31,7 @@ class AetnaScraper(DirectDownloadScraper):
         else:
             return route.continue_()
 
-    async def parse_urls(self, urls: list[str]):
+    async def parse_urls(self, urls: list[str]) -> str:
         downloads: list[DownloadContext] = []
         for url in urls:
             cleaned_url = url.strip()

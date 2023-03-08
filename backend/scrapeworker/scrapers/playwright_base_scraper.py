@@ -62,6 +62,7 @@ class PlaywrightBaseScraper(ABC):
     is_batchable = False
     batch_size = 20
     page_route: Callable | None = None
+    skip_hash_check: bool = False
 
     def __init__(
         self,

@@ -596,7 +596,7 @@ class ScrapeWorker:
 
         yield downloads
 
-    def should_process_download(self, download: DownloadContext):
+    def should_process_download(self, download: DownloadContext, skip_hash_check=False):
         url = download.request.url
         filename = (
             download.response.content_disposition_filename
@@ -605,8 +605,10 @@ class ScrapeWorker:
         )
 
         return (
-            not self.skip_url(url) and self.url_not_seen(url, filename)
-        ) or self.file_hash_not_seen(download.file_hash)
+            (not self.skip_url(url) and self.url_not_seen(url, filename))
+            or skip_hash_check
+            or self.file_hash_not_seen(download.file_hash)
+        )
 
     def is_artifact_file(self, url: str):
         extension = get_extension_from_path_like(url)
@@ -642,7 +644,7 @@ class ScrapeWorker:
                     download_queue = [
                         download
                         for download in retrieved_downloads
-                        if self.should_process_download(download)
+                        if self.should_process_download(download, scraper.skip_hash_check)
                     ]
                     await self.batch_downloads(download_queue, batch_size)
                     retrieved_downloads = []

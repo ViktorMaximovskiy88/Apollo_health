@@ -1,5 +1,6 @@
 from backend.common.models.site import ScrapeMethodConfiguration
 from backend.scrapeworker.scrapers.by_domain.aetna import AetnaScraper
+from backend.scrapeworker.scrapers.by_domain.aetnamedicare import AetnaMedicareScraper
 from backend.scrapeworker.scrapers.by_domain.aultcas import AultcasScraper
 from backend.scrapeworker.scrapers.by_domain.bcbsfl import BcbsflScraper
 from backend.scrapeworker.scrapers.by_domain.bcbsnj import BcbsnjScraper
@@ -15,6 +16,7 @@ from backend.scrapeworker.scrapers.direct_download import PlaywrightBaseScraper
 
 domain_scrapers: list[type[PlaywrightBaseScraper]] = [
     AetnaScraper,
+    AetnaMedicareScraper,
     AultcasScraper,
     BcbsflScraper,
     BcbsnjScraper,
