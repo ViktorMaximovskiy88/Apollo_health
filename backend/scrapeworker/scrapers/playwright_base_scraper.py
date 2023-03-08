@@ -11,6 +11,8 @@ from playwright.async_api import (
     Error,
     Page,
     ProxySettings,
+    Request,
+    Route,
     TimeoutError,
 )
 
@@ -270,3 +272,7 @@ class PlaywrightBaseScraper(ABC):
     @abstractmethod
     async def execute(self) -> list[DownloadContext]:
         pass
+
+    @staticmethod
+    async def page_route(route: Route, request: Request):
+        await route.continue_()

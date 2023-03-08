@@ -685,7 +685,7 @@ class ScrapeTask:
                 continue
 
             if DomainScraper := select_domain_scraper(url, self.site):
-                self.log.info(f"Running {DomainScraper.__class__.__name__} for {url}")
+                self.log.info(f"Running {DomainScraper.__name__} for {url}")
                 all_downloads += self.by_domain_scrape(DomainScraper, url)
                 continue
 

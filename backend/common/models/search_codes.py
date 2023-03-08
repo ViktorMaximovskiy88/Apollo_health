@@ -10,3 +10,8 @@ class SearchCodeSet(BaseDocument):
     async def get_tricare_tokens(cls) -> list[str]:
         result = await cls.find_one({"type": SearchableType.TRICARE})
         return result.codes
+
+    @classmethod
+    async def get_universal_tokens(cls) -> list[str]:
+        result = await cls.find_one({"type": SearchableType.UNIVERSAL})
+        return result.codes

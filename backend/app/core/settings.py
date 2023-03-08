@@ -22,6 +22,11 @@ class Auth0Settings(BaseSettings):
     userinfo_url: str = Field(default=None, env="AUTH0_USERINFO_URL")
 
 
+class FormularyNavigator(BaseSettings):
+    formulary_navigator_username: str = Field(default=None, env="FORMULARY_NAVIGATOR_USERNAME")
+    formulary_navigator_password: str = Field(default=None, env="FORMULARY_NAVIGATOR_PASSWORD")
+
+
 class Settings(BaseSettings):
     secret_key: str
     access_token_expire_minutes: int
@@ -48,6 +53,8 @@ class Settings(BaseSettings):
 
     redis_url: RedisDsn
     redis_password: str
+
+    formulary_navigator: FormularyNavigator = FormularyNavigator()
 
     disable_proxies: bool = False
     log_level: str = "INFO"

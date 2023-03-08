@@ -5,6 +5,7 @@ import re
 import unicodedata
 from html import unescape
 from itertools import groupby
+from typing import Callable
 from urllib.parse import unquote, urljoin, urlparse
 
 import magic
@@ -171,6 +172,10 @@ def group_by_attr(items: list, attr: str):
 def group_by_key(items: list, key: str):
     sorted_items = sort_by_key(items, key)
     return groupby(sorted_items, lambda x: x[key])
+
+
+def find(func: Callable, items: list[any]):
+    return next((item for item in items if func(item)), None)
 
 
 def compact(input: list[str]) -> list[str]:
