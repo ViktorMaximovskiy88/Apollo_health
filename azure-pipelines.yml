@@ -4,6 +4,8 @@ trigger:
   branches:
     include:
       - main
+      - release
+      - dev
 
 pool:
   vmImage: ubuntu-latest
@@ -118,6 +120,7 @@ stages:
 
       - job: validateDevDeploy
         displayName: Validate and Plan Dev Deployment
+        condition: eq(variables['System.PullRequest.TargetBranch'], 'refs/heads/dev')
         steps:
           - template: .azure-pipelines/source-hub.validate.yml
             parameters:
@@ -126,6 +129,7 @@ stages:
 
       - job: validateTstDeploy
         displayName: Validate and Plan Test Deployment
+        condition: eq(variables['System.PullRequest.TargetBranch'], 'refs/heads/release')
         steps:
           - template: .azure-pipelines/source-hub.validate.yml
             parameters:
@@ -134,6 +138,7 @@ stages:
 
       - job: validatePrdDeploy
         displayName: Validate and Plan Prod Deployment
+        condition: eq(variables['System.PullRequest.TargetBranch'], 'refs/heads/main')
         steps:
           - template: .azure-pipelines/source-hub.validate.yml
             parameters:
@@ -149,7 +154,7 @@ stages:
   - stage: development
     displayName: Development Stage
     dependsOn: build
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/dev'))
     jobs:
       - deployment: dev_deployment
         displayName: Deploy to SourceHub Dev
@@ -178,7 +183,7 @@ stages:
   - stage: test
     displayName: Test Stage
     dependsOn: build
-    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/release'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/*')))
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/release'))
     jobs:
       - deployment: tst_deployment
         displayName: Deploy to SourceHub Test
@@ -258,8 +263,8 @@ stages:
   ##############################################################################################
   - stage: production
     displayName: Production Stage
-    dependsOn: test
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/release'))
+    dependsOn: build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
       - deployment: prd_deployment
         displayName: Deploy to SourceHub Prod
